@@ -4,14 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Vetrina di Carte – FANTABALLONE</title>
-  <meta name="description" content="Vetrina di carte collezionabili con filtri, valutazioni e commenti." />
+  <meta name="description" content="Vetrina di carte collezionabili con filtri, valutazioni e commenti (demo senza backend)." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* --- Stili invariati (ho lasciato il tuo design originale) --- */
     :root{
-      --bg: #0b0f19;
+      --bg: #0b0f19; /* blu notte */
       --panel: #0f1526; 
       --card: #121a2e;
       --card-2: #0d1325;
@@ -30,7 +29,82 @@
       margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg);
       color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
     }
-    /* ... (mantieni tutti i tuoi stili originali qui) ... */
+    header{
+      position:sticky; top:0; z-index:100; backdrop-filter: blur(10px);
+      background: linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6));
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .wrap{max-width:1200px; margin:0 auto; padding: 20px;}
+    .title{
+      display:flex; gap:16px; align-items:center; justify-content:space-between;
+    }
+    h1{font-size: clamp(20px, 3.6vw, 34px); margin:0; letter-spacing:.3px}
+    .subtitle{color:var(--muted); margin-top:6px}
+
+    .toolbar{
+      display:grid; grid-template-columns: 1fr; gap:12px; margin-top:16px;
+    }
+    @media (min-width: 900px){
+      .toolbar{grid-template-columns: 1.2fr .8fr .8fr .8fr .8fr auto}
+    }
+
+    .search, select, .range, button, .tag{
+      background: linear-gradient(180deg, #121a2e, #0d1325);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:12px; color: var(--text);
+      padding:12px 14px; outline:none; box-shadow: var(--shadow);
+    }
+    .search{display:flex; gap:10px; align-items:center}
+    .search input{flex:1; background:transparent; border:none; color:var(--text)}
+    .search input::placeholder{color:#98a3c7}
+    select{appearance:none; background-image: linear-gradient(180deg, transparent, transparent), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat:no-repeat; background-position:right 10px center; padding-right:38px}
+    .range{display:flex; gap:10px; align-items:center}
+    .range input{width:100%}
+    button.primary{background: linear-gradient(180deg, #1b2a4d, #152141); border-color: rgba(110,231,255,.35)}
+    button.primary:focus, .search:focus-within, select:focus, .range:focus-within{box-shadow:0 0 0 3px var(--ring)}
+
+    .grid{display:grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap:16px; margin:22px 0 80px}
+    @media (min-width:600px){.grid{grid-template-columns: repeat(2, minmax(0,1fr));}}
+    @media (min-width:900px){.grid{grid-template-columns: repeat(3, minmax(0,1fr));}}
+    @media (min-width:1200px){.grid{grid-template-columns: repeat(4, minmax(0,1fr));}}
+
+    .card{
+      background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card);
+      border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); overflow:hidden; position:relative;
+      transition: transform .16s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .card:hover{ transform: translateY(-2px); border-color: rgba(110,231,255,.35); box-shadow:0 16px 38px rgba(0,0,0,.5)}
+    .thumb{aspect-ratio: 3/4; width:100%; background:#0b0f19; object-fit:cover}
+    .content{padding:12px 14px}
+    .name{font-weight:600; font-size:16px}
+    .meta{font-size:13px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; margin-top:4px}
+    .stars{display:flex; gap:4px; align-items:center; margin-top:8px}
+    .stars button{background:none; border:none; cursor:pointer; padding:0}
+    .stars .s{width:18px; height:18px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3))}
+    .badge{position:absolute; top:10px; left:10px; background: rgba(0,0,0,.5); backdrop-filter: blur(6px); border:1px solid rgba(255,255,255,.15); color:white; padding:6px 8px; border-radius:999px; font-size:12px}
+    .open{position:absolute; bottom:10px; right:10px}
+
+    .tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+    .tag{padding:6px 10px; font-size:12px; border-radius:999px; border-color: rgba(255,255,255,.12)}
+
+    /* Modal */
+    dialog{border:none; padding:0; border-radius: 18px; overflow:hidden; width:min(900px, 96vw); box-shadow:0 20px 80px rgba(0,0,0,.65)}
+    dialog::backdrop{background: rgba(0,0,0,.65)}
+    .modal{display:grid; grid-template-columns: 1fr; background: var(--panel)}
+    @media(min-width:900px){.modal{grid-template-columns: .95fr 1.05fr}}
+    .modal .left{background: radial-gradient(500px 320px at 20% 0, rgba(110,231,255,.05), transparent), var(--card-2); padding:18px}
+    .modal .right{padding:18px 18px 6px}
+    .modal .big{width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.08); aspect-ratio:3/4; object-fit:cover}
+    .modal .close{position:absolute; top:10px; right:10px; background: rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18); padding:8px 10px; border-radius:10px; color:white}
+    .field{display:grid; gap:8px; margin: 8px 0}
+    textarea, input[type="text"]{background:#0d1325; border:1px solid rgba(255,255,255,.1); border-radius:10px; color:var(--text); padding:10px}
+    .comment{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)); border:1px solid rgba(255,255,255,.09); border-radius:12px; padding:10px; margin-top:10px}
+    .comment .author{font-weight:600; font-size:13px}
+    .comment .text{font-size:14px; color: #d9e1ff}
+
+    footer{position:sticky; bottom:0; background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6)); border-top:1px solid rgba(255,255,255,.06)}
+    .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
   </style>
 </head>
 <body>
@@ -39,16 +113,42 @@
       <div class="title">
         <div>
           <h1>Vetrina di Carte di Fantaballa</h1>
-          <div class="subtitle">Demo con filtri, valutazioni e commenti (dati locali)</div>
+          <div class="subtitle">Demo con filtri, valutazioni fantaballa&friends ⭐ e commenti 💬 (dati locali)</div>
         </div>
+        <button class="primary" id="addSample">➕ Aggiungi 3 carte di esempio</button>
       </div>
-      <div class="toolbar">
-        <div class="search">🔎 <input id="q" type="search" placeholder="Cerca..."/></div>
-        <select id="fGame"><option value="">Tutte le squadre</option></select>
-        <select id="fRarity"><option value="">Tutte le rarità</option></select>
-        <select id="fYear"><option value="">Tutti gli anni</option></select>
-        <div class="range">⭐ Min: <input id="fRating" type="range" min="0" max="5" value="0" step="1" /><span id="fRatingVal">0</span></div>
-        <select id="fSort">
+
+      <div class="toolbar" aria-label="Filtri e ricerca">
+        <div class="search" role="search">
+          🔎 <input id="q" type="search" placeholder="Cerca per nome, serie o testo..." aria-label="Cerca" />
+        </div>
+        <select id="fGame" aria-label="Gioco">
+          <option value="">Tutte le squadre</option>
+          <option>Fantaballa FC</option>
+          <option>Gotham City</option>
+          <option>Svincolato</option>
+        </select>
+        <select id="fRarity" aria-label="Rarità">
+          <option value="">Tutte le rarità</option>
+          <option>Comune</option>
+          <option>Non Comune</option>
+          <option>Rara</option>
+          <option>Ultra Rara</option>
+        </select>
+        <select id="fYear" aria-label="Anno">
+          <option value="">Tutti gli anni</option>
+          <option>1999</option>
+          <option>2002</option>
+          <option>2010</option>
+          <option>2016</option>
+          <option>2020</option>
+          <option>2024</option>
+        </select>
+        <div class="range" title="Valutazione minima">
+          ⭐ Min: <input id="fRating" type="range" min="0" max="5" value="0" step="1" />
+          <span id="fRatingVal">0</span>
+        </div>
+        <select id="fSort" aria-label="Ordina per">
           <option value="name">Ordina: Nome</option>
           <option value="rating">Ordina: Valutazione</option>
           <option value="year">Ordina: Anno</option>
@@ -62,21 +162,61 @@
   </main>
 
   <footer>
-    <div class="foot"><span class="pill">⚠️ Le immagini sono caricate da GitHub Pages</span></div>
+    <div class="foot">
+      <span class="pill">⚠️ Le immagini sono segnaposto da picsum.photos (solo a scopo demo).</span>
+    </div>
   </footer>
 
-  <!-- Modal -->
-  <dialog id="dlg"> ... (mantieni il codice modale originale) ... </dialog>
+  <!-- Template Modal Dettaglio -->
+  <dialog id="dlg">
+    <form method="dialog" class="modal">
+      <button class="close" aria-label="Chiudi">✕</button>
+      <div class="left">
+        <img id="dlgImg" alt="Immagine carta" class="big" />
+      </div>
+      <div class="right">
+        <h2 id="dlgName" style="margin:0 0 8px"></h2>
+        <div id="dlgMeta" class="meta"></div>
+        <div class="stars" id="dlgStars" aria-label="Valuta questa carta"></div>
+        <div class="tags" id="dlgTags"></div>
 
-  <!-- Template card -->
+        <h3 style="margin:14px 0 6px">Commenti</h3>
+        <div id="comments"></div>
+
+        <div class="field">
+          <label for="author">Nome</label>
+          <input id="author" type="text" placeholder="Il tuo nome" />
+        </div>
+        <div class="field">
+          <label for="message">Commento</label>
+          <textarea id="message" rows="3" placeholder="Scrivi un commento..." ></textarea>
+        </div>
+        <div class="field">
+          <label for="ratingSel">Voto (1-5)</label>
+          <select id="ratingSel">
+            <option value="5">5</option>
+            <option value="4">4</option>
+            <option value="3">3</option>
+            <option value="2">2</option>
+            <option value="1">1</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:10px; margin:12px 0 6px">
+          <button class="primary" id="saveC">💾 Pubblica commento</button>
+          <button id="clearC" type="button" title="Solo su questo dispositivo">🗑️ Svuota commenti</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
   <template id="tplCard">
-    <article class="card">
+    <article class="card" role="article">
       <div class="badge"></div>
       <img class="thumb" alt="Immagine carta" />
       <div class="content">
         <div class="name"></div>
         <div class="meta"></div>
-        <div class="stars"></div>
+        <div class="stars" aria-label="Valutazione media"></div>
         <div class="tags"></div>
         <button class="primary open">Apri</button>
       </div>
@@ -84,69 +224,94 @@
   </template>
 
   <script>
+    // ====== Util ======
     const $ = sel => document.querySelector(sel);
     const $$ = sel => Array.from(document.querySelectorAll(sel));
     const esc = (s='') => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
     const STAR_OUT = 'M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.401 8.169L12 18.896l-7.335 3.87 1.401-8.169L.132 9.21l8.2-1.192z';
-    function starSVG(filled){
-      return `<svg class="s" viewBox="0 0 24 24"><path d="${STAR_OUT}" fill="${filled? 'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"/></svg>`;
-    }
-    function avg(arr){return arr.length? (arr.reduce((a,b)=>a+b,0)/arr.length):0}
-    function keyFor(id, type){return `cardhub_${type}_${id}`}
-    function loadRatings(id){const raw=localStorage.getItem(keyFor(id,'ratings')); return raw? JSON.parse(raw):[];}
-    function saveRating(id,val){const list=loadRatings(id); list.push(val); localStorage.setItem(keyFor(id,'ratings'),JSON.stringify(list));}
-    function loadComments(id){const raw=localStorage.getItem(keyFor(id,'comments')); return raw? JSON.parse(raw):[];}
-    function addComment(id,c){const list=loadComments(id); list.push(c); localStorage.setItem(keyFor(id,'comments'),JSON.stringify(list));}
-    function clearComments(id){localStorage.removeItem(keyFor(id,'comments'));}
 
-    // ====== Data loader da cards.json ======
-    let CARDS = [];
-    async function loadCards() {
-      try {
-        const res = await fetch('cards.json', { cache: 'no-store' });
-        if (!res.ok) throw new Error('cards.json non trovato');
-        CARDS = await res.json();
-      } catch (e) {
-        console.error('[ERRORE CARICAMENTO CARTE]', e);
-        CARDS = [];
-      } finally {
-        applyFilters();
-      }
+    function starSVG(filled){
+      return `<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_OUT}" fill="${filled? 'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"/></svg>`;
     }
+
+    function avg(arr){return arr.length? (arr.reduce((a,b)=>a+b,0)/arr.length):0}
+
+    function keyFor(id, type){return `cardhub_${type}_${id}`}
+
+    function loadRatings(id){
+      const raw = localStorage.getItem(keyFor(id,'ratings'));
+      return raw? JSON.parse(raw): [];
+    }
+    function saveRating(id, value){
+      const list = loadRatings(id);
+      list.push(value);
+      localStorage.setItem(keyFor(id,'ratings'), JSON.stringify(list));
+    }
+
+    function loadComments(id){
+      const raw = localStorage.getItem(keyFor(id,'comments'));
+      return raw? JSON.parse(raw): [];
+    }
+    function addComment(id, comment){
+      const list = loadComments(id);
+      list.push(comment);
+      localStorage.setItem(keyFor(id,'comments'), JSON.stringify(list));
+    }
+    function clearComments(id){
+      localStorage.removeItem(keyFor(id,'comments'));
+    }
+
+    // ====== Demo Data ======
+    let CARDS = [
+     { id:'pkm-charizard-2016', name:'Marioski Dark Souls', game:'Gotham City', rarity:'Ultra Rara', year:2025, series:'Dark Souls', tags:['Dark Souls','DS'], img:'https://github.com/pavoniingrifati/vetrina-carte/blob/main/Marioski%20Dark.png?raw=true', text:'Il leggendario drago di fuoco.' },
+      { id:'ygo-darkmagician-2002', name:'Johnny Mclaren', game:'Fantaballa FC', rarity:'Ultra Rara', year:2025, series:'F1', tags:['Tiratore','TRQ'], img:'https://github.com/pavoniingrifati/vetrina-carte/blob/main/johnny%20f1.png?raw=true', text:'Il mago definitivo in termini di attacco e difesa.' },
+      { id:'mtg-blacklotus-1999', name:'Attilio Dark Souls', game:'Gotham City', rarity:'Ultra Rara', year:2025, series:'Dark Souls', tags:['Artefatto','DS'], img:'https://github.com/pavoniingrifati/vetrina-carte/blob/main/Attilio%20Dark.png?raw=true', text:'Aggiunge tre mana di qualsiasi colore.' },
+      { id:'pkm-pikachu-2024', name:'Bruno Dream', game:'Fantaballa FC', rarity:'Ultra Rara', year:2024, series:'Dream', tags:['DS'], img:'https://github.com/pavoniingrifati/vetrina-carte/blob/main/Bruno%20dream.png?raw=true', text:'Il miglior Bruno della storia? Difficile dirlo' },
+      { id:'ygo-blueeyes-2002', name:'Bruno Tots5', game:'Fantaballa FC', rarity:'Rara', year:2024, series:'Tots 5', tags:['Tots','DS'], img:'https://github.com/pavoniingrifati/vetrina-carte/blob/main/Bruno%20Tots5.png?raw=true', text:'Carta pressochè mai usata, ma sicuro bidone' },
+      { id:'mtg-shivan-2010', name:'Marioski', game:'Gotham City', rarity:'Ultra Rara', year:2025, series:'Dream', tags:['Goleador','DS'], img:'https://github.com/pavoniingrifati/vetrina-carte/blob/main/Marioski%20dream.png?raw=true', text:'Un drago antico con un alito incandescente.' }
+    ];
+
+    // ====== Rendering ======
+    const grid = $('#grid');
 
     function renderStars(container, value, onRate){
-      container.innerHTML='';
-      const full=Math.round(value);
+      container.innerHTML = '';
+      const full = Math.round(value);
       for(let i=1;i<=5;i++){
-        const btn=document.createElement(onRate?'button':'div');
-        btn.innerHTML=starSVG(i<=full);
-        if(onRate) btn.addEventListener('click',()=>onRate(i));
+        const btn = document.createElement(onRate? 'button':'div');
+        btn.className='star';
+        btn.innerHTML = starSVG(i<=full);
+        if(onRate){
+          btn.type='button';
+          btn.title = `Dai ${i} stelle`;
+          btn.addEventListener('click', ()=> onRate(i));
+        }
         container.appendChild(btn);
       }
-      const label=document.createElement('span');
-      label.textContent=value?` ${value.toFixed(1)}/5`:' Nessuna valutazione';
+      const label = document.createElement('span');
+      label.textContent = value? ` ${value.toFixed(1)}/5` : ' Nessuna valutazione';
       container.appendChild(label);
     }
 
     function applyFilters(){
-      const q=$('#q').value.trim().toLowerCase();
-      const game=$('#fGame').value;
-      const rarity=$('#fRarity').value;
-      const year=$('#fYear').value;
-      const minR=+$('#fRating').value;
-      const sort=$('#fSort').value;
+      const q = $('#q').value.trim().toLowerCase();
+      const game = $('#fGame').value;
+      const rarity = $('#fRarity').value;
+      const year = $('#fYear').value;
+      const minR = +$('#fRating').value;
+      const sort = $('#fSort').value;
 
-      let items=CARDS.map(c=>({...c,rating:avg(loadRatings(c.id))}));
-      if(q) items=items.filter(c=>(c.name+" "+c.series+" "+c.text).toLowerCase().includes(q));
-      if(game) items=items.filter(c=>c.game===game);
-      if(rarity) items=items.filter(c=>c.rarity===rarity);
-      if(year) items=items.filter(c=>String(c.year)===year);
-      if(minR>0) items=items.filter(c=>Math.round(c.rating)>=minR);
+      let items = CARDS.map(c=>({ ...c, rating: avg(loadRatings(c.id)) }));
+      if(q){ items = items.filter(c=> (c.name+" "+c.series+" "+c.text).toLowerCase().includes(q)); }
+      if(game){ items = items.filter(c=> c.game===game); }
+      if(rarity){ items = items.filter(c=> c.rarity===rarity); }
+      if(year){ items = items.filter(c=> String(c.year)===year); }
+      if(minR>0){ items = items.filter(c=> Math.round(c.rating) >= minR); }
 
       items.sort((a,b)=>{
-        if(sort==='rating') return (b.rating||0)-(a.rating||0);
-        if(sort==='year') return b.year-a.year;
+        if(sort==='rating') return (b.rating||0) - (a.rating||0);
+        if(sort==='year') return b.year - a.year;
         return a.name.localeCompare(b.name);
       });
 
@@ -154,35 +319,101 @@
     }
 
     function renderGrid(items){
-      const grid=$('#grid');
+      const grid = document.getElementById('grid');
       grid.innerHTML='';
-      if(!items.length){ grid.innerHTML='<p style="color:var(--muted)">Nessuna carta trovata.</p>'; return }
-      const tpl=$('#tplCard');
+      if(!items.length){ grid.innerHTML = '<p style="color:var(--muted)">Nessuna carta trovata. Prova a cambiare i filtri.</p>'; return }
+      const tpl = document.getElementById('tplCard');
       for(const c of items){
-        const node=tpl.content.firstElementChild.cloneNode(true);
-        node.querySelector('.badge').textContent=c.rarity;
-        const img=node.querySelector('.thumb');
-        img.src=c.img; img.alt=`Carta ${c.name}`;
-        node.querySelector('.name').textContent=c.name;
-        node.querySelector('.meta').textContent=`${c.game} • ${c.series} • ${c.year}`;
+        const node = tpl.content.firstElementChild.cloneNode(true);
+        node.querySelector('.badge').textContent = c.rarity;
+        const img = node.querySelector('.thumb');
+        img.src = c.img; img.loading='lazy'; img.alt = `Carta ${c.name}`;
+        node.querySelector('.name').textContent = c.name;
+        node.querySelector('.meta').textContent = `${c.game} • ${c.series} • ${c.year}`;
         renderStars(node.querySelector('.stars'), c.rating||0, null);
-        const tags=node.querySelector('.tags');
-        c.tags.forEach(t=>{const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s);});
-        node.querySelector('.open').addEventListener('click',()=>openModal(c));
+        const tags = node.querySelector('.tags');
+        c.tags.forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s);});
+        node.querySelector('.open').addEventListener('click', ()=> openModal(c));
         grid.appendChild(node);
       }
     }
 
+    // ====== Modal ======
+    const dlg = document.getElementById('dlg');
+    const dlgImg = document.getElementById('dlgImg');
+    const dlgName = document.getElementById('dlgName');
+    const dlgMeta = document.getElementById('dlgMeta');
+    const dlgStars = document.getElementById('dlgStars');
+    const dlgTags = document.getElementById('dlgTags');
+    const commentsBox = document.getElementById('comments');
+
+    let current = null;
+
     function openModal(card){
-      // qui mantieni il tuo codice originale del modale
+      current = card;
+      dlgImg.src = card.img;
+      document.getElementById('dlgName').textContent = card.name;
+      document.getElementById('dlgMeta').textContent = `${card.game} • ${card.series} • ${card.year}`;
+      dlgTags.innerHTML=''; card.tags.forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; dlgTags.appendChild(s)});
+      const rating = avg(loadRatings(card.id));
+      renderStars(dlgStars, rating, (v)=>{ saveRating(card.id, v); applyFilters(); openModal(card) });
+      renderComments(card.id);
+      dlg.showModal();
     }
 
+    dlg.addEventListener('close', ()=>{ current=null });
+
+    function renderComments(id){
+      commentsBox.innerHTML='';
+      const list = loadComments(id);
+      if(!list.length){ commentsBox.innerHTML = '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>'; return }
+      for(const c of list.slice().reverse()){
+        const div = document.createElement('div');
+        div.className='comment';
+        div.innerHTML = `<div class="author">${esc(c.author||'Anonimo')}</div><div class="text">${esc(c.text||'')}</div><div class="meta" style="margin-top:6px">Voto: ${'★'.repeat(c.rating)}${'☆'.repeat(5-c.rating)} • ${new Date(c.ts).toLocaleString()}</div>`;
+        commentsBox.appendChild(div);
+      }
+    }
+
+    document.getElementById('saveC').addEventListener('click', (e)=>{
+      e.preventDefault();
+      if(!current) return;
+      const author = document.getElementById('author').value.trim() || 'Anonimo';
+      const text = document.getElementById('message').value.trim();
+      const rating = parseInt(document.getElementById('ratingSel').value,10);
+      if(!text){ alert('Scrivi un commento!'); return }
+      addComment(current.id, {author, text, rating, ts: Date.now()});
+      saveRating(current.id, rating);
+      document.getElementById('message').value='';
+      renderComments(current.id);
+      applyFilters();
+    });
+
+    document.getElementById('clearC').addEventListener('click', ()=>{
+      if(!current) return;
+      if(confirm('Sicuro di voler cancellare tutti i commenti per questa carta?')){
+        clearComments(current.id);
+        renderComments(current.id);
+      }
+    });
+
     // ====== Events ======
-    ['q','fGame','fRarity','fYear','fSort'].forEach(id=>$('#'+id).addEventListener('input',applyFilters));
-    $('#fRating').addEventListener('input',()=>{$('#fRatingVal').textContent=$('#fRating').value; applyFilters();});
+    ['q','fGame','fRarity','fYear','fSort'].forEach(id=> document.getElementById(id).addEventListener('input', applyFilters));
+    document.getElementById('fRating').addEventListener('input', ()=>{ document.getElementById('fRatingVal').textContent=document.getElementById('fRating').value; applyFilters();});
+
+    document.getElementById('addSample').addEventListener('click', ()=>{
+      // Aggiunge 3 carte dimostrative in più
+      const extra = [
+        { id:'pkm-gyarados-2020', name:'Gyarados', game:'Pokémon', rarity:'Rara', year:2020, series:'Sword & Shield', tags:['Acqua'], img:'https://picsum.photos/seed/gyarados/600/800', text:'Una volta Carpaccio, ora una furia marina.' },
+        { id:'ygo-red-eyes-2002', name:'Red-Eyes B. Dragon', game:'Yu-Gi-Oh!', rarity:'Rara', year:2002, series:'Metal Raiders', tags:['Drago'], img:'https://picsum.photos/seed/redeyes/600/800', text:'Un drago che cresce con il duellante.' },
+        { id:'mtg-llanowar-2010', name:'Llanowar Elves', game:'Magic: The Gathering', rarity:'Comune', year:2010, series:'M10', tags:['Elfo','Mana'], img:'https://picsum.photos/seed/llanowar/600/800', text:'Gli elfi che accelerano il tuo gioco.' }
+      ];
+      CARDS = CARDS.concat(extra);
+      applyFilters();
+    });
 
     // ====== Init ======
-    loadCards();
+    applyFilters();
   </script>
 </body>
 </html>
