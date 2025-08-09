@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Vetrina di Carte – FANTABALLONE</title>
-  <meta name="description" content="Vetrina di carte collezionabili con filtri, valutazioni e commenti (demo senza backend)." />
+  <meta name="description" content="Vetrina di carte collezionabili con filtri, valutazioni e commenti (dati locali)." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -35,17 +35,13 @@
       border-bottom:1px solid rgba(255,255,255,.06);
     }
     .wrap{max-width:1200px; margin:0 auto; padding: 20px;}
-    .title{
-      display:flex; gap:16px; align-items:center; justify-content:space-between;
-    }
+    .title{display:flex; gap:16px; align-items:center; justify-content:space-between;}
     h1{font-size: clamp(20px, 3.6vw, 34px); margin:0; letter-spacing:.3px}
     .subtitle{color:var(--muted); margin-top:6px}
 
-    .toolbar{
-      display:grid; grid-template-columns: 1fr; gap:12px; margin-top:16px;
-    }
+    .toolbar{display:grid; grid-template-columns: 1fr; gap:12px; margin-top:16px;}
     @media (min-width: 900px){
-      .toolbar{grid-template-columns: 1.2fr .8fr .8fr .8fr .8fr auto}
+      .toolbar{grid-template-columns: 1.2fr .8fr .8fr .8fr .8fr}
     }
 
     .search, select, .range, button, .tag{
@@ -83,11 +79,8 @@
     .stars .s{width:18px; height:18px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3))}
     .badge{position:absolute; top:10px; left:10px; background: rgba(0,0,0,.5); backdrop-filter: blur(6px); border:1px solid rgba(255,255,255,.15); color:white; padding:6px 8px; border-radius:999px; font-size:12px}
     .open{position:absolute; bottom:10px; right:10px}
-
     .tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
     .tag{padding:6px 10px; font-size:12px; border-radius:999px; border-color: rgba(255,255,255,.12)}
-
-    /* Modal */
     dialog{border:none; padding:0; border-radius: 18px; overflow:hidden; width:min(900px, 96vw); box-shadow:0 20px 80px rgba(0,0,0,.65)}
     dialog::backdrop{background: rgba(0,0,0,.65)}
     .modal{display:grid; grid-template-columns: 1fr; background: var(--panel)}
@@ -101,7 +94,6 @@
     .comment{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)); border:1px solid rgba(255,255,255,.09); border-radius:12px; padding:10px; margin-top:10px}
     .comment .author{font-weight:600; font-size:13px}
     .comment .text{font-size:14px; color: #d9e1ff}
-
     footer{position:sticky; bottom:0; background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6)); border-top:1px solid rgba(255,255,255,.06)}
     .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
     .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
@@ -113,9 +105,8 @@
       <div class="title">
         <div>
           <h1>Vetrina di Carte di Fantaballa</h1>
-          <div class="subtitle">Demo con filtri, valutazioni ⭐ e commenti 💬 (dati locali)</div>
+          <div class="subtitle">Filtri, valutazioni ⭐ e commenti 💬 (dati locali)</div>
         </div>
-        <button class="primary" id="addSample">➕ Aggiungi 3 carte di esempio</button>
       </div>
 
       <div class="toolbar" aria-label="Filtri e ricerca">
@@ -135,20 +126,12 @@
           <option>Rara</option>
           <option>Ultra Rara</option>
         </select>
-    <select id="fRole" aria-label="Ruolo">
-  <option value="">Tutti i ruoli</option>
-  <option>POR</option>
-  <option>DC</option>
-  <option>DS</option>
-  <option>DD</option>
-  <option>MC</option>
-  <option>CC</option>
-  <option>TRQ</option>
-  <option>AS</option>
-  <option>AD</option>
-  <option>ATT</option>
-</select>
-
+        <select id="fRole" aria-label="Ruolo">
+          <option value="">Tutti i ruoli</option>
+          <option>POR</option><option>DC</option><option>DS</option><option>DD</option>
+          <option>MC</option><option>CC</option><option>TRQ</option>
+          <option>AS</option><option>AD</option><option>ATT</option>
+        </select>
         <div class="range" title="Valutazione minima">
           ⭐ Min: <input id="fRating" type="range" min="0" max="5" value="0" step="1" />
           <span id="fRatingVal">0</span>
@@ -156,7 +139,7 @@
         <select id="fSort" aria-label="Ordina per">
           <option value="name">Ordina: Nome</option>
           <option value="rating">Ordina: Valutazione</option>
-          <option value="year">Ordina: Anno</option>
+          <option value="role">Ordina: Ruolo</option>
         </select>
       </div>
     </div>
@@ -168,11 +151,10 @@
 
   <footer>
     <div class="foot">
-      <span class="pill">ℹ️ Le immagini possono essere nel repo (cartella img/) o link Pages diretti. </span>
+      <span class="pill">ℹ️ Le carte sono caricate da <code>cards.json</code>. Aggiorna quel file per aggiungerne di nuove.</span>
     </div>
   </footer>
 
-  <!-- Template Modal Dettaglio -->
   <dialog id="dlg">
     <form method="dialog" class="modal">
       <button class="close" aria-label="Chiudi">✕</button>
@@ -181,7 +163,6 @@
       </div>
       <div class="right">
         <h2 id="dlgName" style="margin:0 0 8px"></h2>
-
         <div id="dlgMeta" class="meta"></div>
         <div class="stars" id="dlgStars" aria-label="Valuta questa carta"></div>
         <div class="tags" id="dlgTags"></div>
@@ -230,75 +211,45 @@
   </template>
 
   <script>
-    // ====== Util ======
     const $ = sel => document.querySelector(sel);
-    const $$ = sel => Array.from(document.querySelectorAll(sel));
     const esc = (s='') => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
     const STAR_OUT = 'M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.401 8.169L12 18.896l-7.335 3.87 1.401-8.169L.132 9.21l8.2-1.192z';
-
-    function starSVG(filled){
-      return `<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_OUT}" fill="${filled? 'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"/></svg>`;
-    }
-
+    function starSVG(filled){ return `<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_OUT}" fill="${filled? 'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"/></svg>`; }
     function avg(arr){return arr.length? (arr.reduce((a,b)=>a+b,0)/arr.length):0}
-
     function keyFor(id, type){return `cardhub_${type}_${id}`}
+    function loadRatings(id){ const raw = localStorage.getItem(keyFor(id,'ratings')); return raw? JSON.parse(raw): []; }
+    function saveRating(id,val){ const list = loadRatings(id); list.push(val); localStorage.setItem(keyFor(id,'ratings'), JSON.stringify(list)); }
+    function loadComments(id){ const raw = localStorage.getItem(keyFor(id,'comments')); return raw? JSON.parse(raw): []; }
+    function addComment(id,c){ const list = loadComments(id); list.push(c); localStorage.setItem(keyFor(id,'comments'), JSON.stringify(list)); }
+    function clearComments(id){ localStorage.removeItem(keyFor(id,'comments')); }
 
-    function loadRatings(id){
-      const raw = localStorage.getItem(keyFor(id,'ratings'));
-      return raw? JSON.parse(raw): [];
-    }
-    function saveRating(id, value){
-      const list = loadRatings(id);
-      list.push(value);
-      localStorage.setItem(keyFor(id,'ratings'), JSON.stringify(list));
-    }
-
-    function loadComments(id){
-      const raw = localStorage.getItem(keyFor(id,'comments'));
-      return raw? JSON.parse(raw): [];
-    }
-    function addComment(id, comment){
-      const list = loadComments(id);
-      list.push(comment);
-      localStorage.setItem(keyFor(id,'comments'), JSON.stringify(list));
-    }
-    function clearComments(id){
-      localStorage.removeItem(keyFor(id,'comments'));
-    }
-
-    // ====== Data loader da cards.json ======
     let CARDS = [];
-
-    async function loadCards() {
-      try {
+    async function loadCards(){
+      try{
         const res = await fetch('cards.json', { cache: 'no-store' });
-        if (!res.ok) throw new Error('cards.json non trovato');
+        if(!res.ok) throw new Error('cards.json non trovato');
         CARDS = await res.json();
-      } catch (e) {
+      }catch(e){
         console.error('[ERRORE CARICAMENTO CARTE]', e);
         CARDS = [];
-      } finally {
+      }finally{
         applyFilters();
       }
     }
 
-    // ====== Rendering ======
     const grid = $('#grid');
-
+    function starEl(val, onRate){
+      const div = document.createElement(onRate?'button':'div');
+      div.innerHTML = starSVG(val);
+      return div;
+    }
     function renderStars(container, value, onRate){
-      container.innerHTML = '';
+      container.innerHTML='';
       const full = Math.round(value);
       for(let i=1;i<=5;i++){
         const btn = document.createElement(onRate? 'button':'div');
-        btn.className='star';
         btn.innerHTML = starSVG(i<=full);
-        if(onRate){
-          btn.type='button';
-          btn.title = `Dai ${i} stelle`;
-          btn.addEventListener('click', ()=> onRate(i));
-        }
+        if(onRate) btn.addEventListener('click', ()=> onRate(i));
         container.appendChild(btn);
       }
       const label = document.createElement('span');
@@ -310,7 +261,7 @@
       const q = $('#q').value.trim().toLowerCase();
       const game = $('#fGame').value;
       const rarity = $('#fRarity').value;
-      const year = $('#fYear').value;
+      const role = $('#fRole').value;
       const minR = +$('#fRating').value;
       const sort = $('#fSort').value;
 
@@ -318,12 +269,12 @@
       if(q){ items = items.filter(c=> (c.name+" "+c.series+" "+c.text).toLowerCase().includes(q)); }
       if(game){ items = items.filter(c=> c.game===game); }
       if(rarity){ items = items.filter(c=> c.rarity===rarity); }
-      if(year){ items = items.filter(c=> String(c.year)===year); }
+      if(role){ items = items.filter(c=> c.role===role); }
       if(minR>0){ items = items.filter(c=> Math.round(c.rating) >= minR); }
 
       items.sort((a,b)=>{
         if(sort==='rating') return (b.rating||0) - (a.rating||0);
-        if(sort==='year') return b.year - a.year;
+        if(sort==='role') return (a.role||'').localeCompare(b.role||'');
         return a.name.localeCompare(b.name);
       });
 
@@ -333,14 +284,14 @@
     function renderGrid(items){
       grid.innerHTML='';
       if(!items.length){ grid.innerHTML = '<p style="color:var(--muted)">Nessuna carta trovata. Prova a cambiare i filtri.</p>'; return }
-      const tpl = $('#tplCard');
+      const tpl = document.getElementById('tplCard');
       for(const c of items){
         const node = tpl.content.firstElementChild.cloneNode(true);
         node.querySelector('.badge').textContent = c.rarity;
         const img = node.querySelector('.thumb');
         img.src = c.img; img.loading='lazy'; img.alt = `Carta ${c.name}`;
         node.querySelector('.name').textContent = c.name;
-        node.querySelector('.meta').textContent = `${c.game} • ${c.series} • ${c.year}`;
+        node.querySelector('.meta').textContent = `${c.game} • ${c.series} • ${c.role || '—'}`;
         renderStars(node.querySelector('.stars'), c.rating||0, null);
         const tags = node.querySelector('.tags');
         (c.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s);});
@@ -349,22 +300,20 @@
       }
     }
 
-    // ====== Modal ======
-    const dlg = $('#dlg');
-    const dlgImg = $('#dlgImg');
-    const dlgName = $('#dlgName');
-    const dlgMeta = $('#dlgMeta');
-    const dlgStars = $('#dlgStars');
-    const dlgTags = $('#dlgTags');
-    const commentsBox = $('#comments');
-
+    const dlg = document.getElementById('dlg');
+    const dlgImg = document.getElementById('dlgImg');
+    const dlgName = document.getElementById('dlgName');
+    const dlgMeta = document.getElementById('dlgMeta');
+    const dlgStars = document.getElementById('dlgStars');
+    const dlgTags = document.getElementById('dlgTags');
+    const commentsBox = document.getElementById('comments');
     let current = null;
 
     function openModal(card){
       current = card;
       dlgImg.src = card.img;
       dlgName.textContent = card.name;
-      dlgMeta.textContent = `${card.game} • ${card.series} • ${card.year}`;
+      dlgMeta.textContent = `${card.game} • ${card.series} • ${card.role || '—'}`;
       dlgTags.innerHTML=''; (card.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; dlgTags.appendChild(s)});
       const rating = avg(loadRatings(card.id));
       renderStars(dlgStars, rating, (v)=>{ saveRating(card.id, v); applyFilters(); openModal(card) });
@@ -386,21 +335,21 @@
       }
     }
 
-    $('#saveC').addEventListener('click', (e)=>{
+    document.getElementById('saveC').addEventListener('click', (e)=>{
       e.preventDefault();
       if(!current) return;
-      const author = $('#author').value.trim() || 'Anonimo';
-      const text = $('#message').value.trim();
-      const rating = parseInt($('#ratingSel').value,10);
+      const author = document.getElementById('author').value.trim() || 'Anonimo';
+      const text = document.getElementById('message').value.trim();
+      const rating = parseInt(document.getElementById('ratingSel').value,10);
       if(!text){ alert('Scrivi un commento!'); return }
       addComment(current.id, {author, text, rating, ts: Date.now()});
       saveRating(current.id, rating);
-      $('#message').value='';
+      document.getElementById('message').value='';
       renderComments(current.id);
       applyFilters();
     });
 
-    $('#clearC').addEventListener('click', ()=>{
+    document.getElementById('clearC').addEventListener('click', ()=>{
       if(!current) return;
       if(confirm('Sicuro di voler cancellare tutti i commenti per questa carta?')){
         clearComments(current.id);
@@ -408,21 +357,9 @@
       }
     });
 
-    // ====== Events ======
-    ['q','fGame','fRarity','fYear','fSort'].forEach(id=> document.getElementById(id).addEventListener('input', applyFilters));
+    ['q','fGame','fRarity','fRole','fSort'].forEach(id=> document.getElementById(id).addEventListener('input', applyFilters));
     document.getElementById('fRating').addEventListener('input', ()=>{ document.getElementById('fRatingVal').textContent=document.getElementById('fRating').value; applyFilters();});
 
-    document.getElementById('addSample').addEventListener('click', ()=>{
-      const extra = [
-        { id:'pkm-gyarados-2020', name:'Gyarados', game:'Pokémon', rarity:'Rara', year:2020, series:'Sword & Shield', tags:['Acqua'], img:'https://picsum.photos/seed/gyarados/600/800', text:'Una volta Carpaccio, ora una furia marina.' },
-        { id:'ygo-red-eyes-2002', name:'Red-Eyes B. Dragon', game:'Yu-Gi-Oh!', rarity:'Rara', year:2002, series:'Metal Raiders', tags:['Drago'], img:'https://picsum.photos/seed/redeyes/600/800', text:'Un drago che cresce con il duellante.' },
-        { id:'mtg-llanowar-2010', name:'Llanowar Elves', game:'Magic: The Gathering', rarity:'Comune', year:2010, series:'M10', tags:['Elfo','Mana'], img:'https://picsum.photos/seed/llanowar/600/800', text:'Gli elfi che accelerano il tuo gioco.' }
-      ];
-      CARDS = CARDS.concat(extra);
-      applyFilters();
-    });
-
-    // ====== Init ======
     loadCards();
   </script>
 </body>
