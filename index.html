@@ -151,7 +151,7 @@
 
   <footer>
     <div class="foot">
-      <span class="pill">ℹ️ Le carte sono caricate da <code>cards.json</code>. Aggiorna quel file per aggiungerne di nuove.</span>
+      <span class="pill">ℹ️ Mostriamo 6 carte casuali all'avvio. Usa i filtri per cercare tra tutte.</span>
     </div>
   </footer>
 
@@ -238,11 +238,6 @@
     }
 
     const grid = $('#grid');
-    function starEl(val, onRate){
-      const div = document.createElement(onRate?'button':'div');
-      div.innerHTML = starSVG(val);
-      return div;
-    }
     function renderStars(container, value, onRate){
       container.innerHTML='';
       const full = Math.round(value);
@@ -255,6 +250,16 @@
       const label = document.createElement('span');
       label.textContent = value? ` ${value.toFixed(1)}/5` : ' Nessuna valutazione';
       container.appendChild(label);
+    }
+
+    function noFiltersActive(){
+      return (
+        !$('#q').value &&
+        !$('#fGame').value &&
+        !$('#fRarity').value &&
+        !$('#fRole').value &&
+        String($('#fRating').value) === "0"
+      );
     }
 
     function applyFilters(){
@@ -277,6 +282,11 @@
         if(sort==='role') return (a.role||'').localeCompare(b.role||'');
         return a.name.localeCompare(b.name);
       });
+
+      // Se non ci sono filtri attivi, mostra solo 6 carte casuali
+      if (noFiltersActive()) {
+        items = items.slice().sort(() => Math.random() - 0.5).slice(0, 6);
+      }
 
       renderGrid(items);
     }
