@@ -458,17 +458,20 @@
     }
 
     function showStage(cards){
-      const wrap = $('#stageWrap');
-      const stage = $('#stage');
-      stage.innerHTML = '';
-      wrap.classList.add('show');
+  const wrap = $('#stageWrap');
+  const stage = $('#stage');
+  stage.innerHTML = '';
+  wrap.classList.add('show');
 
-      const lastIdx = cards.length - 1;
+  const lastIdx = cards.length - 1;
 
-      cards.forEach((c, i) => {
-        const el = makeCardEl(c, i===lastIdx);
-        stage.appendChild(el);
-        setDropIn(el, i);
+  cards.forEach((c, i) => {
+    // assegna la classe final all'ultima carta, ma niente auto-reveal
+    const el = makeCardEl(c, i === lastIdx);
+    stage.appendChild(el);
+    setDropIn(el, i); // animazione di caduta
+  });
+}
 
         // Auto reveal solo per l'ultima (più rara), DOPO la caduta
         if(i === lastIdx){
@@ -521,7 +524,7 @@
       chosen.sort((a,b)=> (rarityRank[a.rarity] - rarityRank[b.rarity]));
 
       // mostra sul tavolo coperte
-      showStage(chosen);
+      (chosen);
 
       // reset flash
       setTimeout(()=>{ flashLine.classList.remove('active'); flashScreen.classList.remove('active'); }, 400);
