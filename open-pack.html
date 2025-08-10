@@ -5,253 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Fantaballa – Open Pack</title>
   <meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e screenshot. Usa cards.json. Retro personalizzato." />
+
+  <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Preload asset chiave per evitare flicker su retro carta -->
+  <link rel="preload" as="image" href="Deck%20back%20ORO.png" imagesrcset="Deck%20back%20ORO.png 1x" />
+
   <!-- Screenshot DOM -> PNG -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
-  <style>
-    :root{
-      --bg: #0b0f19;
-      --panel: #0f1526;
-      --card: #121a2e;
-      --card-2: #0d1325;
-      --text: #ecf0ff;
-      --muted: #a7b0d3;
-      --accent: #6ee7ff;
-      --radius: 18px;
 
-      /* Glow per rarità */
-      --g-comune:      rgba(154,163,178,.30);
-      --g-non-comune:  rgba(52,211,153,.35);
-      --g-rara:        rgba(96,165,250,.45);
-      --g-epica:       rgba(167,139,250,.55);
-      --g-ultra-rara:  rgba(251,191,36,.65);
-      --g-season:      rgba(239,68,68,.7);
-    }
+  <!-- Stili separati -->
+  <link rel="stylesheet" href="style.css" />
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg);
-      color:var(--text);
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      overflow-x: hidden;
-    }
-    a{color:var(--accent); text-decoration:none}
-
-    header{
-      position:sticky; top:0; z-index:20; backdrop-filter: blur(10px);
-      background: linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6));
-      border-bottom:1px solid rgba(255,255,255,.06);
-    }
-    .wrap{max-width:1200px; margin:0 auto; padding: 20px;}
-    .title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
-    h1{margin:0; font-size: clamp(20px, 3.6vw, 34px)}
-    .subtitle{color:var(--muted)}
-
-    .toolbar{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap}
-    .pill{
-      display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text)
-    }
-    .btn{
-      background: linear-gradient(180deg, #1b2a4d, #152141);
-      border:1px solid rgba(110,231,255,.35);
-      border-radius:12px; color:white; padding:12px 16px; cursor:pointer;
-    }
-    .btn:disabled{opacity:.6; cursor:not-allowed}
-
-    /* ===== FLASH DORATO ===== */
-    .flash-line, .flash-screen{
-      position: fixed; inset: 0; pointer-events:none; z-index: 40; opacity: 0;
-    }
-    .flash-line::before{
-      content:""; position:absolute; top:0; bottom:0; width:32vw;
-      background: linear-gradient(90deg, transparent, rgba(255,230,120,.55), rgba(255,201,44,.8), rgba(255,230,120,.55), transparent);
-      filter: blur(8px);
-      transform: translateX(-40vw) skewX(-12deg);
-    }
-    .flash-line.active{ animation: sweep 0.75s ease-out forwards; }
-    @keyframes sweep{ 0%{opacity:0} 10%{opacity:1} 100%{opacity:1} }
-    .flash-line.active::before{ animation: sweepMove 0.75s ease-out forwards; }
-    @keyframes sweepMove{ to { transform: translateX(120vw) skewX(-12deg); } }
-    .flash-screen{ background: radial-gradient(circle at 50% 50%, rgba(255,232,120,.45), transparent 55%); }
-    .flash-screen.active{ animation: flash 0.35s ease-out forwards; }
-    @keyframes flash{ 0%{opacity:0} 30%{opacity:1} 100%{opacity:0} }
-
-    /* ===== PACK SOLO (inizio) ===== */
-    .packArea{
-      display:flex; align-items:center; justify-content:center;
-      min-height: min(76vh, 900px);
-      position:relative;
-    }
-    .pack{
-      width:min(520px, 86vw);
-      aspect-ratio: 690 / 987;
-      background: url('Deck%20back%20ORO.png') center/cover no-repeat;
-      border-radius: var(--radius);
-      box-shadow:
-        0 8px 24px rgba(0,0,0,.5),
-        0 0 0 1px rgba(255,255,255,.08);
-      transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
-      position:relative;
-      isolation:isolate;
-    }
-    .pack:hover{ transform: translateY(-2px); box-shadow:
-      0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.12); filter: brightness(1.05) }
-    .pack.shake{ animation: shake .35s ease-in-out 1; }
-    @keyframes shake{
-      0%,100%{ transform: translateX(0) rotate(0) }
-      25%{ transform: translateX(-6px) rotate(-1deg) }
-      50%{ transform: translateX(5px) rotate(1deg) }
-      75%{ transform: translateX(-3px) rotate(-.6deg) }
-    }
-    .pack.opening{ animation: packOpen .9s cubic-bezier(.16,.84,.29,1) forwards; }
-    @keyframes packOpen{
-      0%   { transform: scale(1) translateY(0); opacity:1 }
-      55%  { transform: scale(.92) translateY(6px); filter:brightness(1.08) }
-      75%  { transform: scale(1.02) translateY(-6px); filter:brightness(1.25) }
-      100% { transform: scale(.88) translateY(-12px); opacity:0 }
-    }
-
-    /* ===== STAGE CARTE ===== */
-    .stageWrap{ display:none; }
-    .stageWrap.show{ display:block; animation: stageIn .5s ease .25s both; }
-    @keyframes stageIn{ from{opacity:0; transform: translateY(8px)} to{opacity:1; transform:none} }
-
-    .stage{
-      margin:22px 0 40px; display:grid; gap:16px; grid-template-columns: repeat(1, minmax(0,1fr));
-    }
-    @media(min-width:720px){.stage{grid-template-columns: repeat(2, minmax(0,1fr))}}
-    @media(min-width:1100px){.stage{grid-template-columns: repeat(3, minmax(0,1fr))}}
-
-    .cCard{
-      position:relative; width:100%; aspect-ratio: 690 / 987; border-radius: var(--radius);
-      transform-style: preserve-3d; perspective: 1200px;
-    }
-    .scene{
-      position:absolute; inset:0; border-radius:inherit; transform-style: preserve-3d;
-      transition: transform .7s cubic-bezier(.22,.75,.2,1);
-      transform: rotateY(0deg);
-      box-shadow: 0 10px 28px rgba(0,0,0,.45);
-      background: var(--card);
-    }
-    .face{
-      position:absolute; inset:0; border-radius:inherit; overflow:hidden;
-      backface-visibility: hidden;
-      border:1px solid rgba(255,255,255,.08);
-      display:flex; align-items:center; justify-content:center;
-    }
-    .back img, .front img { width:100%; height:100%; object-fit:cover; display:block; aspect-ratio: 690 / 987; }
-    .back img{ filter: drop-shadow(0 10px 30px rgba(0,0,0,.45)); }
-    .front{ transform: rotateY(180deg); }
-
-    /* Drop-in dall'alto */
-    .drop{ opacity:0; transform: translateY(-40px) scale(.96); }
-    .drop.in{ animation: dropIn .5s cubic-bezier(.2,.8,.2,1) forwards; }
-    @keyframes dropIn{
-      0%{ opacity:0; transform: translateY(-50px) scale(.96) }
-      70%{ opacity:1; transform: translateY(6px) scale(1.02) }
-      100%{ opacity:1; transform: translateY(0) scale(1) }
-    }
-
-    /* Coperta vs scoperta */
-    .cCard[data-state="back"] .scene{ transform: rotateY(0deg); }
-    .cCard[data-state="front"] .scene{ transform: rotateY(180deg); }
-
-    /* Badge rarità */
-    .badge{
-      position:absolute; top:10px; right:10px; z-index:2;
-      padding:6px 8px; border-radius:999px; font-size:12px; font-weight:700; color:white;
-      border:1px solid rgba(255,255,255,.15);
-    }
-    .r-comune      .badge{ background: rgba(154,163,178,.85) }
-    .r-non-comune  .badge{ background: rgba(52,211,153,.85) }
-    .r-rara        .badge{ background: rgba(96,165,250,.9) }
-    .r-epica       .badge{ background: rgba(167,139,250,.95) }
-    .r-ultra-rara  .badge{ background: rgba(251,191,36,.95); color:#000 }
-    .r-season      .badge{ background: rgba(239,68,68,.95) }
-
-    /* Glow per rarità */
-    .cCard::after{
-      content:""; position:absolute; inset:-2px; border-radius:inherit; pointer-events:none; opacity:0;
-      background: radial-gradient(500px 600px at 50% -10%, var(--rarGlow, rgba(255,255,255,.18)), transparent 60%);
-      filter: blur(12px); transition: opacity .5s ease;
-    }
-    .cCard.revealed::after{ opacity:.9 }
-    .cCard.r-comune      { --rarGlow: var(--g-comune) }
-    .cCard.r-non-comune  { --rarGlow: var(--g-non-comune) }
-    .cCard.r-rara        { --rarGlow: var(--g-rara); animation: bluePulse 2.3s ease-in-out infinite; }
-    @keyframes bluePulse{ 0%,100%{ filter:none } 50%{ filter: drop-shadow(0 0 18px rgba(96,165,250,.45)) } }
-    .cCard.r-epica       { --rarGlow: var(--g-epica) }
-    .cCard.r-ultra-rara,
-    .cCard.r-season      { --rarGlow: var(--g-ultra-rara) }
-
-    /* Raggi rotanti per Ultra/Season */
-    .rays{
-      position:absolute; inset:-20px; border-radius:inherit; pointer-events:none; z-index:0;
-      background:
-        conic-gradient(from 0deg, rgba(255,220,120,.0), rgba(255,220,120,.35), rgba(255,220,120,.0) 30%);
-      mix-blend-mode: screen; opacity:0;
-      animation: rays 2.5s linear infinite;
-      transform: rotate(0deg);
-    }
-    .cCard.r-ultra-rara .rays,
-    .cCard.r-season .rays{ opacity:.8 }
-
-    @keyframes rays{ to { transform: rotate(360deg); } }
-
-    /* Particelle scintillanti */
-    .spark{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
-    .spark i{
-      position:absolute; width:2px; height:10px; background: white; opacity:.0;
-      box-shadow: 0 0 10px white, 0 0 16px var(--rarGlow);
-      transform: translate(-50%,-50%) rotate(var(--rot,0deg));
-      animation: fall .9s ease-out forwards;
-    }
-    @keyframes fall{
-      0%{ transform: translate(var(--x,50%), -20%) rotate(var(--rot,0deg)); opacity:0 }
-      30%{ opacity:1 }
-      100%{ transform: translate(var(--xEnd,50%), 120%) rotate(var(--rot,0deg)); opacity:0 }
-    }
-
-    /* Ultima carta: stile epico quando la giri (ma non auto-reveal) */
-    .cCard.final .scene{ transition-duration: 1s; }
-    .cCard.final.revealed{ animation: epicIn 1s cubic-bezier(.2,.8,.2,1) forwards; opacity:1 !important; }
-    @keyframes epicIn{
-      0%{ transform: translateY(8px) scale(.96); }
-      60%{ transform: translateY(-6px) scale(1.04); }
-      100%{ transform: translateY(0) scale(1); }
-    }
-    .cCard.final .veil{
-      content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
-      background: linear-gradient(180deg, rgba(255,255,255,.25), transparent 30%, transparent 70%, rgba(255,255,255,.18));
-      opacity:0;
-    }
-    .cCard.final.revealed .veil{ animation: veilUp 1s ease-out forwards; }
-    @keyframes veilUp{
-      0%{ opacity:1; clip-path: inset(0 0 0 0 round 18px) }
-      100%{ opacity:0; clip-path: inset(100% 0 0 0 round 18px) }
-    }
-
-    .log{ margin-top:8px; font-size:13px; color:var(--muted); }
-
-    footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6))}
-    .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
-    .pillFoot{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
-
-    @media (max-width: 600px) {
-      .wrap { padding: 12px; }
-      .stage { grid-template-columns: 1fr; }
-    }
-  </style>
+  <!-- Script modulare -->
+  <script type="module" src="script.js" defer></script>
 </head>
 <body>
   <!-- Flash -->
-  <div class="flash-line" id="flashLine"></div>
-  <div class="flash-screen" id="flashScreen"></div>
+  <div class="flash-line" id="flashLine" aria-hidden="true"></div>
+  <div class="flash-screen" id="flashScreen" aria-hidden="true"></div>
 
   <header>
     <div class="wrap">
@@ -264,18 +39,18 @@
       </div>
 
       <div class="toolbar">
-        <span class="pill">🎲 Probabilità bilanciate • Garanzia Rara+ attiva</span>
+        <span class="pill" id="fairnessNote">🎲 Probabilità bilanciate • Garanzia Rara+ attiva</span>
         <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
-        <button id="shotBtn" class="btn">📸 Screenshot pacchetto</button>
+        <button id="shotBtn" class="btn" disabled>📸 Screenshot pacchetto</button>
       </div>
-      <div class="log" id="log"></div>
+      <div class="log" id="log" role="status" aria-live="polite"></div>
     </div>
   </header>
 
   <main class="wrap">
     <!-- Solo pacchetto iniziale -->
     <section class="packArea" id="packArea">
-      <div class="pack" id="pack"></div>
+      <div class="pack" id="pack" title="Apri pacchetto"></div>
     </section>
 
     <!-- Dopo l'apertura mostriamo le carte (coperte) -->
@@ -289,275 +64,624 @@
       <span class="pillFoot">ℹ️ Metti “Deck back ORO.png” accanto a questa pagina. Per lo screenshot, tieni le immagini delle carte nel repo (path relativi) per evitare CORS.</span>
     </div>
   </footer>
+</body>
+</html>
 
-  <!-- Template carta -->
-  <template id="tplCard">
+:root{
+  --bg: #0b0f19;
+  --panel: #0f1526;
+  --card: #121a2e;
+  --card-2: #0d1325;
+  --text: #ecf0ff;
+  --muted: #a7b0d3;
+  --accent: #6ee7ff;
+  --radius: 18px;
+
+  /* Glow per rarità */
+  --g-comune:      rgba(154,163,178,.30);
+  --g-non-comune:  rgba(52,211,153,.35);
+  --g-rara:        rgba(96,165,250,.45);
+  --g-epica:       rgba(167,139,250,.55);
+  --g-ultra-rara:  rgba(251,191,36,.65);
+  --g-season:      rgba(239,68,68,.7);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg);
+  color:var(--text);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  overflow-x: hidden;
+}
+a{color:var(--accent); text-decoration:none}
+
+header{
+  position:sticky; top:0; z-index:20; backdrop-filter: blur(10px);
+  background: linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6));
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.wrap{max-width:1200px; margin:0 auto; padding: 20px;}
+.title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+h1{margin:0; font-size: clamp(20px, 3.6vw, 34px)}
+.subtitle{color:var(--muted)}
+
+.toolbar{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap}
+.pill{
+  display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text)
+}
+.btn{
+  background: linear-gradient(180deg, #1b2a4d, #152141);
+  border:1px solid rgba(110,231,255,.35);
+  border-radius:12px; color:white; padding:12px 16px; cursor:pointer;
+}
+.btn:disabled{opacity:.6; cursor:not-allowed}
+
+/* ===== FLASH DORATO ===== */
+.flash-line, .flash-screen{
+  position: fixed; inset: 0; pointer-events:none; z-index: 40; opacity: 0;
+}
+.flash-line::before{
+  content:""; position:absolute; top:0; bottom:0; width:32vw;
+  background: linear-gradient(90deg, transparent, rgba(255,230,120,.55), rgba(255,201,44,.8), rgba(255,230,120,.55), transparent);
+  filter: blur(8px);
+  transform: translateX(-40vw) skewX(-12deg);
+}
+.flash-line.active{ animation: sweep 0.75s ease-out forwards; }
+@keyframes sweep{ 0%{opacity:0} 10%{opacity:1} 100%{opacity:1} }
+.flash-line.active::before{ animation: sweepMove 0.75s ease-out forwards; }
+@keyframes sweepMove{ to { transform: translateX(120vw) skewX(-12deg); } }
+.flash-screen{ background: radial-gradient(circle at 50% 50%, rgba(255,232,120,.45), transparent 55%); }
+.flash-screen.active{ animation: flash 0.35s ease-out forwards; }
+@keyframes flash{ 0%{opacity:0} 30%{opacity:1} 100%{opacity:0} }
+
+/* ===== PACK SOLO (inizio) ===== */
+.packArea{
+  display:flex; align-items:center; justify-content:center;
+  min-height: min(76vh, 900px);
+  position:relative;
+}
+.pack{
+  width:min(520px, 86vw);
+  aspect-ratio: 690 / 987;
+  background: url('Deck%20back%20ORO.png') center/cover no-repeat;
+  border-radius: var(--radius);
+  box-shadow:
+    0 8px 24px rgba(0,0,0,.5),
+    0 0 0 1px rgba(255,255,255,.08);
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+  position:relative;
+  isolation:isolate;
+  will-change: transform, filter; /* perf */
+}
+.pack:hover{ transform: translateY(-2px); box-shadow:
+  0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.12); filter: brightness(1.05) }
+.pack.shake{ animation: shake .35s ease-in-out 1; }
+@keyframes shake{
+  0%,100%{ transform: translateX(0) rotate(0) }
+  25%{ transform: translateX(-6px) rotate(-1deg) }
+  50%{ transform: translateX(5px) rotate(1deg) }
+  75%{ transform: translateX(-3px) rotate(-.6deg) }
+}
+.pack.opening{ animation: packOpen .9s cubic-bezier(.16,.84,.29,1) forwards; }
+@keyframes packOpen{
+  0%   { transform: scale(1) translateY(0); opacity:1 }
+  55%  { transform: scale(.92) translateY(6px); filter:brightness(1.08) }
+  75%  { transform: scale(1.02) translateY(-6px); filter:brightness(1.25) }
+  100% { transform: scale(.88) translateY(-12px); opacity:0 }
+}
+
+/* ===== STAGE CARTE ===== */
+.stageWrap{ display:none; }
+.stageWrap.show{ display:block; animation: stageIn .5s ease .25s both; }
+@keyframes stageIn{ from{opacity:0; transform: translateY(8px)} to{opacity:1; transform:none} }
+
+.stage{
+  margin:22px 0 40px; display:grid; gap:16px; grid-template-columns: repeat(1, minmax(0,1fr));
+}
+@media(min-width:720px){.stage{grid-template-columns: repeat(2, minmax(0,1fr))}}
+@media(min-width:1100px){.stage{grid-template-columns: repeat(3, minmax(0,1fr))}}
+
+.cCard{
+  position:relative; width:100%; aspect-ratio: 690 / 987; border-radius: var(--radius);
+  transform-style: preserve-3d; perspective: 1200px;
+}
+.scene{
+  position:absolute; inset:0; border-radius:inherit; transform-style: preserve-3d;
+  transition: transform .7s cubic-bezier(.22,.75,.2,1);
+  transform: rotateY(0deg);
+  box-shadow: 0 10px 28px rgba(0,0,0,.45);
+  background: var(--card);
+  will-change: transform; /* perf */
+}
+.face{
+  position:absolute; inset:0; border-radius:inherit; overflow:hidden;
+  backface-visibility: hidden;
+  border:1px solid rgba(255,255,255,.08);
+  display:flex; align-items:center; justify-content:center;
+}
+.back img, .front img { width:100%; height:100%; object-fit:cover; display:block; aspect-ratio: 690 / 987; }
+.back img{ filter: drop-shadow(0 10px 30px rgba(0,0,0,.45)); }
+.front{ transform: rotateY(180deg); }
+
+/* Drop-in dall'alto */
+.drop{ opacity:0; transform: translateY(-40px) scale(.96); }
+.drop.in{ animation: dropIn .5s cubic-bezier(.2,.8,.2,1) forwards; }
+@keyframes dropIn{
+  0%{ opacity:0; transform: translateY(-50px) scale(.96) }
+  70%{ opacity:1; transform: translateY(6px) scale(1.02) }
+  100%{ opacity:1; transform: translateY(0) scale(1) }
+}
+
+/* Coperta vs scoperta */
+.cCard[data-state="back"] .scene{ transform: rotateY(0deg); }
+.cCard[data-state="front"] .scene{ transform: rotateY(180deg); }
+
+/* Badge rarità */
+.badge{
+  position:absolute; top:10px; right:10px; z-index:2;
+  padding:6px 8px; border-radius:999px; font-size:12px; font-weight:700; color:white;
+  border:1px solid rgba(255,255,255,.15);
+}
+.r-comune      .badge{ background: rgba(154,163,178,.85) }
+.r-non-comune  .badge{ background: rgba(52,211,153,.85) }
+.r-rara        .badge{ background: rgba(96,165,250,.9) }
+.r-epica       .badge{ background: rgba(167,139,250,.95) }
+.r-ultra-rara  .badge{ background: rgba(251,191,36,.95); color:#000 }
+.r-season      .badge{ background: rgba(239,68,68,.95) }
+
+/* Glow per rarità */
+.cCard::after{
+  content:""; position:absolute; inset:-2px; border-radius:inherit; pointer-events:none; opacity:0;
+  background: radial-gradient(500px 600px at 50% -10%, var(--rarGlow, rgba(255,255,255,.18)), transparent 60%);
+  filter: blur(12px); transition: opacity .5s ease;
+}
+.cCard.revealed::after{ opacity:.9 }
+.cCard.r-comune      { --rarGlow: var(--g-comune) }
+.cCard.r-non-comune  { --rarGlow: var(--g-non-comune) }
+.cCard.r-rara        { --rarGlow: var(--g-rara); animation: bluePulse 2.3s ease-in-out infinite; }
+@keyframes bluePulse{ 0%,100%{ filter:none } 50%{ filter: drop-shadow(0 0 18px rgba(96,165,250,.45)) } }
+.cCard.r-epica       { --rarGlow: var(--g-epica) }
+.cCard.r-ultra-rara,
+.cCard.r-season      { --rarGlow: var(--g-ultra-rara) }
+
+/* Raggi rotanti per Ultra/Season */
+.rays{
+  position:absolute; inset:-20px; border-radius:inherit; pointer-events:none; z-index:0;
+  background:
+    conic-gradient(from 0deg, rgba(255,220,120,.0), rgba(255,220,120,.35), rgba(255,220,120,.0) 30%);
+  mix-blend-mode: screen; opacity:0;
+  animation: rays 2.5s linear infinite;
+  transform: rotate(0deg);
+}
+.cCard.r-ultra-rara .rays,
+.cCard.r-season .rays{ opacity:.8 }
+
+@keyframes rays{ to { transform: rotate(360deg); } }
+
+/* Particelle scintillanti */
+.spark{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.spark i{
+  position:absolute; width:2px; height:10px; background: white; opacity:.0;
+  box-shadow: 0 0 10px white, 0 0 16px var(--rarGlow);
+  transform: translate(-50%,-50%) rotate(var(--rot,0deg));
+  animation: fall .9s ease-out forwards;
+  will-change: transform, opacity; /* perf */
+}
+@keyframes fall{
+  0%{ transform: translate(var(--x,50%), -20%) rotate(var(--rot,0deg)); opacity:0 }
+  30%{ opacity:1 }
+  100%{ transform: translate(var(--xEnd,50%), 120%) rotate(var(--rot,0deg)); opacity:0 }
+}
+
+/* Ultima carta: stile epico quando la giri (ma non auto-reveal) */
+.cCard.final .scene{ transition-duration: 1s; }
+.cCard.final.revealed{ animation: epicIn 1s cubic-bezier(.2,.8,.2,1) forwards; opacity:1 !important; }
+@keyframes epicIn{
+  0%{ transform: translateY(8px) scale(.96); }
+  60%{ transform: translateY(-6px) scale(1.04); }
+  100%{ transform: translateY(0) scale(1); }
+}
+.cCard.final .veil{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background: linear-gradient(180deg, rgba(255,255,255,.25), transparent 30%, transparent 70%, rgba(255,255,255,.18));
+  opacity:0;
+}
+.cCard.final.revealed .veil{ animation: veilUp 1s ease-out forwards; }
+@keyframes veilUp{
+  0%{ opacity:1; clip-path: inset(0 0 0 0 round 18px) }
+  100%{ opacity:0; clip-path: inset(100% 0 0 0 round 18px) }
+}
+
+.log{ margin-top:8px; font-size:13px; color:var(--muted); }
+
+footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6))}
+.foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
+.pillFoot{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
+
+@media (max-width: 600px) {
+  .wrap { padding: 12px; }
+  .stage { grid-template-columns: 1fr; }
+
+  /* ==============================
+   Fantaballa – Open Pack (refactor)
+   Grafica invariata, codice migliorato
+   ============================== */
+
+// ===== Config centralizzata
+const CONFIG = {
+  CARDS_JSON: 'cards.json',
+  BACK_IMG: 'Deck%20back%20ORO.png',
+  COUNT: 6,
+  // Pesi rarità (mantieni i tuoi valori):
+  WEIGHTS: { 'Season':1, 'Ultra Rara':3, 'Epica':6, 'Rara':10, 'Non Comune':20, 'Comune':60 },
+  // Timeout fetch cards.json
+  FETCH_TIMEOUT_MS: 8000
+};
+
+// ===== Utilità DOM
+const $ = (s, el=document) => el.querySelector(s);
+const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
+// ===== Stato
+const rarityRank = { 'Comune':0, 'Non Comune':1, 'Rara':2, 'Epica':3, 'Ultra Rara':4, 'Season':5 };
+const slug = r => (r||'').toLowerCase().replace(/\s+/g,'-');
+
+// ===== Audio (robusto)
+let audioCtx = null;
+function ensureAudio(){
+  try { if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
+  catch(_) { audioCtx = null; }
+}
+function tone(freq, dur=0.15, gain=0.08, type='sine'){
+  if(!audioCtx) return; // se bloccato dal browser
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.value = gain;
+  o.connect(g).connect(audioCtx.destination);
+  o.start();
+  g.gain.setTargetAtTime(0, audioCtx.currentTime+dur, 0.03);
+  o.stop(audioCtx.currentTime + dur + 0.08);
+}
+function noiseBoom(dur=0.5, gain=0.15){
+  if(!audioCtx) return;
+  const bufferSize = audioCtx.sampleRate * dur;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * Math.pow(1-i/bufferSize, 2); }
+  const src = audioCtx.createBufferSource(); src.buffer = buffer;
+  const g = audioCtx.createGain(); g.gain.value = gain;
+  const biquad = audioCtx.createBiquadFilter(); biquad.type='lowpass'; biquad.frequency.value=400;
+  src.connect(biquad).connect(g).connect(audioCtx.destination);
+  src.start();
+  g.gain.setTargetAtTime(0, audioCtx.currentTime+dur*0.7, 0.2);
+}
+function playByRarity(r){
+  if(r==='Comune' || r==='Non Comune'){ tone(520,0.07,0.06,'triangle'); tone(660,0.07,0.05,'triangle'); return; }
+  if(r==='Rara'){ tone(660,0.12,0.08,'sine'); tone(880,0.16,0.06,'sine'); return; }
+  if(r==='Epica'){ tone(660,0.18,0.09,'sine'); tone(990,0.22,0.08,'sine'); tone(1320,0.24,0.06,'sine'); return; }
+  if(r==='Ultra Rara' || r==='Season'){ noiseBoom(0.7,0.18); tone(880,0.18,0.1,'square'); tone(1320,0.22,0.08,'square'); }
+}
+
+// ===== PackOpener (classe)
+class PackOpener {
+  constructor(){
+    this.ALL = [];
+    this.used = new Set();
+
+    // cache elementi
+    this.$openBtn = $('#openBtn');
+    this.$shotBtn = $('#shotBtn');
+    this.$packArea = $('#packArea');
+    this.$pack = $('#pack');
+    this.$flashLine = $('#flashLine');
+    this.$flashScreen = $('#flashScreen');
+    this.$stageWrap = $('#stageWrap');
+    this.$stage = $('#stage');
+    this.$log = $('#log');
+
+    this.bindEvents();
+    this.prewarm();
+  }
+
+  bindEvents(){
+    this.$openBtn.addEventListener('click', ()=> this.doOpen());
+    this.$pack.addEventListener('click', ()=> this.$openBtn.click(), { passive:true });
+    this.$shotBtn.addEventListener('click', ()=> this.doShot());
+
+    // Attiva audio al primo gesto dell'utente
+    ['click','keydown','touchstart'].forEach(ev => window.addEventListener(ev, ()=>{ ensureAudio(); }, { once:true }));
+  }
+
+  // Precarica asset card back + micro idle preload
+  prewarm(){
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = CONFIG.BACK_IMG;
+
+    if('requestIdleCallback' in window){
+      requestIdleCallback(()=> this.idlePreload(), { timeout: 1500 });
+    } else {
+      setTimeout(()=> this.idlePreload(), 800);
+    }
+  }
+
+  idlePreload(){
+    // piccolo preload del JSON senza bloccare il thread
+    this.loadData().catch(()=>{});
+  }
+
+  async loadData(){
+    if(this.ALL.length) return; // già caricato
+
+    const ctrl = new AbortController();
+    const t = setTimeout(()=> ctrl.abort(), CONFIG.FETCH_TIMEOUT_MS);
+
+    try{
+      const res = await fetch(CONFIG.CARDS_JSON, { cache:'no-store', signal: ctrl.signal });
+      if(!res.ok) throw new Error(`Impossibile caricare ${CONFIG.CARDS_JSON} (HTTP ${res.status})`);
+      const json = await res.json();
+
+      // Validazione base: array di carte con proprietà minime
+      if(!Array.isArray(json)) throw new Error('Formato non valido: atteso un array');
+      const cleaned = [];
+      const ids = new Set();
+      for(const c of json){
+        if(!c || typeof c !== 'object') continue;
+        const id = c.id ?? `${c.name||'card'}-${Math.random().toString(36).slice(2,8)}`;
+        const name = String(c.name||'');
+        const rarity = String(c.rarity||'');
+        const img = String(c.img||'');
+        if(!name || !rarity || !img) continue; // scarta incomplete
+        if(ids.has(id)) continue; // deduplica
+        ids.add(id);
+        cleaned.push({ id, name, rarity, img });
+      }
+      if(!cleaned.length) throw new Error('Nessuna carta valida trovata in cards.json');
+      this.ALL = cleaned;
+      this.$log.textContent = `Caricate ${this.ALL.length} carte.`;
+    }catch(err){
+      const reason = (err && err.name === 'AbortError') ? 'timeout nel caricamento delle carte' : (err?.message || 'Errore sconosciuto');
+      this.$log.textContent = `⚠️ ${reason}`;
+      console.error(err);
+      this.ALL = []; // stato coerente
+    }finally{
+      clearTimeout(t);
+    }
+  }
+
+  pickRarity(){
+    const entries = Object.entries(CONFIG.WEIGHTS);
+    const tot = entries.reduce((s,[,w])=>s+w,0);
+    let r = Math.random()*tot;
+    for(const [rar, w] of entries){ if(r < w) return rar; r -= w; }
+    return 'Comune';
+  }
+
+  pickCardByRarity(rarity){
+    let pool = this.ALL.filter(c => c.rarity===rarity && !this.used.has(c.id));
+    if(!pool.length) pool = this.ALL.filter(c => !this.used.has(c.id));
+    if(!pool.length) return null;
+    return pool[Math.floor(Math.random()*pool.length)];
+  }
+
+  ensureRarePlus(cards){
+    const ok = cards.some(c => rarityRank[c.rarity] >= rarityRank['Rara']);
+    if(ok) return cards;
+    const pool = this.ALL.filter(c => rarityRank[c.rarity] >= rarityRank['Rara']);
+    if(!pool.length) return cards;
+    const i = Math.floor(Math.random()*cards.length);
+    cards[i] = pool[Math.floor(Math.random()*pool.length)];
+    return cards;
+  }
+
+  // DOM builders
+  makeCardEl(data, isFinal){
+    const tpl = document.getElementById('tplCard');
+    // Se il template non esiste (robustezza)
+    if(!tpl || !tpl.content || !tpl.content.firstElementChild){
+      const fallback = document.createElement('article');
+      fallback.className = 'cCard';
+      fallback.textContent = data.name;
+      return fallback;
+    }
+
+    const node = tpl.content.firstElementChild.cloneNode(true);
+    const rslug = slug(data.rarity);
+    if(rslug) node.classList.add('r-'+rslug);
+    if(isFinal) node.classList.add('final');
+
+    // front
+    const frontImg = node.querySelector('.front img');
+    frontImg.src = data.img || '';
+    frontImg.alt = `Carta ${data.name || ''}`;
+    frontImg.loading = 'lazy';
+    frontImg.decoding = 'async';
+
+    // back
+    const backImg = node.querySelector('.back img');
+    backImg.loading = 'eager';
+    backImg.decoding = 'async';
+
+    const badge = node.querySelector('.badge');
+    badge.textContent = data.rarity || '';
+
+    node.dataset.state = 'back';
+
+    // delega: il click è gestito qui per ciascuna card ma la logica è leggera
+    node.addEventListener('click', ()=>{
+      if(node.dataset.state === 'back'){
+        this.revealCard(node, data);
+      }else{
+        node.dataset.state = 'back';
+        node.classList.remove('revealed');
+      }
+    }, { passive:true });
+
+    return node;
+  }
+
+  addSparks(el, n=10){
+    const c = el.querySelector('.spark');
+    if(!c) return;
+    c.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    for(let i=0;i<n;i++){
+      const s = document.createElement('i');
+      const x = 10 + Math.random()*80;
+      const xEnd = x + (-8 + Math.random()*16);
+      const rot = -15 + Math.random()*30;
+      s.style.setProperty('--x', x + '%');
+      s.style.setProperty('--xEnd', xEnd + '%');
+      s.style.setProperty('--rot', rot + 'deg');
+      s.style.left = x + '%';
+      s.style.top = (5 + Math.random()*20) + '%';
+      frag.appendChild(s);
+    }
+    c.appendChild(frag);
+  }
+
+  revealCard(node, data){
+    const frontImg = node.querySelector('.front img');
+    if(frontImg && !frontImg.src) { frontImg.src = data.img || ''; }
+
+    node.dataset.state = 'front';
+    node.classList.add('revealed');
+
+    const rank = rarityRank[data.rarity] ?? 0;
+    this.addSparks(node, Math.min(6 + rank*4, 28));
+
+    playByRarity(data.rarity);
+  }
+
+  setDropIn(el, idx, extraDelay=0){
+    el.classList.add('drop');
+    setTimeout(()=> el.classList.add('in'), 120*idx + extraDelay);
+  }
+
+  showStage(cards){
+    const wrap = this.$stageWrap;
+    const stage = this.$stage;
+    stage.innerHTML = '';
+    wrap.classList.add('show');
+
+    const lastIdx = cards.length - 1;
+
+    const frag = document.createDocumentFragment();
+    cards.forEach((c, i) => {
+      const el = this.makeCardEl(c, i === lastIdx);
+      frag.appendChild(el);
+      this.setDropIn(el, i);
+    });
+    stage.appendChild(frag);
+
+    this.$shotBtn.disabled = false; // ora è possibile lo screenshot
+    this.$log.textContent = 'Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.';
+  }
+
+  async doOpen(){
+    const BTN = this.$openBtn;
+    const SHOT = this.$shotBtn;
+
+    BTN.disabled = true; SHOT.disabled = true;
+    this.$log.textContent = 'Preparazione pacchetto…';
+
+    await this.loadData();
+    if(!this.ALL.length){ this.$log.textContent = 'Nessuna carta trovata in cards.json'; BTN.disabled = false; return; }
+
+    // shake
+    this.$pack.classList.add('shake');
+    await delay(360);
+    this.$pack.classList.remove('shake');
+
+    // flash + apertura
+    this.$flashLine.classList.add('active');
+    this.$flashScreen.classList.add('active');
+    this.$pack.classList.add('opening');
+    await delay(900);
+    this.$packArea.style.display = 'none';
+
+    // estrai carte
+    this.used.clear();
+    let chosen = [];
+    const N = CONFIG.COUNT;
+    for(let i=0;i<N;i++){
+      const rar = this.pickRarity();
+      const card = this.pickCardByRarity(rar) || this.pickCardByRarity('Comune');
+      if(!card) break;
+      this.used.add(card.id); chosen.push(card);
+    }
+    chosen = this.ensureRarePlus(chosen);
+    chosen.sort((a,b)=> (rarityRank[a.rarity] - rarityRank[b.rarity]));
+
+    // mostra sul tavolo coperte
+    this.showStage(chosen);
+
+    // reset flash
+    setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active'); }, 400);
+
+    // Cambia bottone per reset
+    BTN.textContent = '🔁 Nuovo pacchetto';
+    BTN.disabled = false; SHOT.disabled = false;
+
+    BTN.onclick = async () => {
+      BTN.disabled = true; SHOT.disabled = true;
+      this.$stageWrap.classList.remove('show');
+      this.$stage.innerHTML = '';
+      this.$packArea.style.display = 'flex';
+      this.$pack.classList.remove('opening');
+      BTN.textContent = '🎁 Apri pacchetto';
+      this.$log.textContent = '';
+      await delay(100);
+      BTN.disabled = false;
+      // ripristina handler originale
+      BTN.onclick = ()=> this.doOpen();
+    };
+  }
+
+  async doShot(){
+    const area = this.$stageWrap;
+    try{
+      if(!window.html2canvas) { alert('html2canvas non ancora caricato, riprova tra un secondo.'); return; }
+      const canvas = await html2canvas(area, { backgroundColor: null, useCORS: true, scale: 2 });
+      const link = document.createElement('a');
+      link.download = `fantaballa-pack-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }catch(e){
+      console.error(e);
+      alert('Impossibile salvare il PNG. Per evitare blocchi CORS, ospita le immagini delle carte nel tuo repo e usa percorsi relativi (es. img/...).');
+    }
+  }
+}
+
+// ===== Template carta (rimane in pagina per tenere la stessa grafica) =====
+(function injectTemplate(){
+  const tpl = document.createElement('template');
+  tpl.id = 'tplCard';
+  tpl.innerHTML = `
     <article class="cCard drop" data-state="back">
       <div class="rays"></div>
       <div class="scene">
         <div class="face back">
-          <!-- Retro (se rinomini, aggiorna il src) -->
-          <img src="Deck%20back%20ORO.png" alt="Retro carta" />
+          <img src="${CONFIG.BACK_IMG}" alt="Retro carta" loading="eager" decoding="async" />
         </div>
         <div class="face front">
           <span class="badge"></span>
-          <img alt="">
+          <img alt="" loading="lazy" decoding="async">
         </div>
       </div>
       <div class="veil"></div>
       <div class="spark"></div>
-    </article>
-  </template>
+    </article>`;
+  document.body.appendChild(tpl);
+})();
 
-  <script>
-    // ===== Utils
-    const $ = s => document.querySelector(s);
-    const $$ = s => Array.from(document.querySelectorAll(s));
-    const delay = ms => new Promise(r => setTimeout(r, ms));
-    const rarityRank = { 'Comune':0, 'Non Comune':1, 'Rara':2, 'Epica':3, 'Ultra Rara':4, 'Season':5 };
-    const slug = r => (r||'').toLowerCase().replace(/\s+/g,'-');
-
-    // ===== Audio Synth (WebAudio) – suoni per rarità
-    let audioCtx;
-    function ensureAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
-    function tone(freq, dur=0.15, gain=0.08, type='sine'){
-      ensureAudio();
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      o.type = type; o.frequency.value = freq;
-      g.gain.value = gain;
-      o.connect(g).connect(audioCtx.destination);
-      o.start();
-      g.gain.setTargetAtTime(0, audioCtx.currentTime+dur, 0.03);
-      o.stop(audioCtx.currentTime + dur + 0.08);
-    }
-    function noiseBoom(dur=0.5, gain=0.15){
-      ensureAudio();
-      const bufferSize = audioCtx.sampleRate * dur;
-      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * Math.pow(1-i/bufferSize, 2); }
-      const src = audioCtx.createBufferSource(); src.buffer = buffer;
-      const g = audioCtx.createGain(); g.gain.value = gain;
-      const biquad = audioCtx.createBiquadFilter(); biquad.type='lowpass'; biquad.frequency.value=400;
-      src.connect(biquad).connect(g).connect(audioCtx.destination);
-      src.start();
-      g.gain.setTargetAtTime(0, audioCtx.currentTime+dur*0.7, 0.2);
-    }
-    function playByRarity(r){
-      if(r==='Comune' || r==='Non Comune'){ tone(520,0.07,0.06,'triangle'); tone(660,0.07,0.05,'triangle'); return; }
-      if(r==='Rara'){ tone(660,0.12,0.08,'sine'); tone(880,0.16,0.06,'sine'); return; }
-      if(r==='Epica'){ tone(660,0.18,0.09,'sine'); tone(990,0.22,0.08,'sine'); tone(1320,0.24,0.06,'sine'); return; }
-      if(r==='Ultra Rara' || r==='Season'){ noiseBoom(0.7,0.18); tone(880,0.18,0.1,'square'); tone(1320,0.22,0.08,'square'); }
-    }
-
-    // ===== Dati
-    let ALL = [];
-    async function loadData(){
-      try{
-        const res = await fetch('cards.json', { cache:'no-store' });
-        if(!res.ok) throw new Error('cards.json non trovato');
-        ALL = await res.json();
-      }catch(e){
-        console.error(e); ALL = [];
-      }
-    }
-
-    // ===== Probabilità
-    const WEIGHTS = { 'Season':1, 'Ultra Rara':3, 'Epica':6, 'Rara':10, 'Non Comune':20, 'Comune':60 };
-    function pickRarity(){
-      const entries = Object.entries(WEIGHTS);
-      const tot = entries.reduce((s,[,w])=>s+w,0);
-      let r = Math.random()*tot;
-      for(const [rar, w] of entries){ if(r < w) return rar; r -= w; }
-      return 'Comune';
-    }
-    function pickCardByRarity(rarity, used){
-      let pool = ALL.filter(c => c.rarity===rarity && !used.has(c.id));
-      if(!pool.length) pool = ALL.filter(c => !used.has(c.id));
-      if(!pool.length) return null;
-      return pool[Math.floor(Math.random()*pool.length)];
-    }
-    function ensureRarePlus(cards){
-      const ok = cards.some(c => rarityRank[c.rarity] >= rarityRank['Rara']);
-      if(ok) return cards;
-      const pool = ALL.filter(c => rarityRank[c.rarity] >= rarityRank['Rara']);
-      if(!pool.length) return cards;
-      const i = Math.floor(Math.random()*cards.length);
-      cards[i] = pool[Math.floor(Math.random()*pool.length)];
-      return cards;
-    }
-
-    // ===== Rendering
-    function makeCardEl(data, isFinal){
-      const node = $('#tplCard').content.firstElementChild.cloneNode(true);
-      const rslug = slug(data.rarity);
-      if(rslug) node.classList.add('r-'+rslug);
-      if(isFinal) node.classList.add('final');
-
-      // set front subito (sicurezza)
-      const frontImg = node.querySelector('.front img');
-      frontImg.src = data.img || '';
-      frontImg.alt = `Carta ${data.name || ''}`;
-
-      const badge = node.querySelector('.badge');
-      badge.textContent = data.rarity || '';
-
-      // stato iniziale coperta
-      node.dataset.state = 'back';
-
-      // click to flip
-      node.addEventListener('click', ()=>{
-        if(node.dataset.state === 'back'){
-          revealCard(node, data);
-        }else{
-          node.dataset.state = 'back';
-          node.classList.remove('revealed');
-        }
-      });
-
-      return node;
-    }
-
-    function addSparks(el, n=10){
-      const c = el.querySelector('.spark');
-      c.innerHTML = '';
-      for(let i=0;i<n;i++){
-        const s = document.createElement('i');
-        const x = 10 + Math.random()*80;
-        const xEnd = x + (-8 + Math.random()*16);
-        const rot = -15 + Math.random()*30;
-        s.style.setProperty('--x', x + '%');
-        s.style.setProperty('--xEnd', xEnd + '%');
-        s.style.setProperty('--rot', rot + 'deg');
-        s.style.left = x + '%';
-        s.style.top = (5 + Math.random()*20) + '%';
-        c.appendChild(s);
-      }
-    }
-
-    function revealCard(node, data){
-      // ridondante ma sicuro
-      const frontImg = node.querySelector('.front img');
-      if(frontImg && !frontImg.src) { frontImg.src = data.img || ''; }
-
-      node.dataset.state = 'front';
-      node.classList.add('revealed');
-
-      // particelle / intensità in base alla rarità
-      const rank = rarityRank[data.rarity] ?? 0;
-      addSparks(node, Math.min(6 + rank*4, 28));
-
-      // suono
-      playByRarity(data.rarity);
-    }
-
-    function setDropIn(el, idx, extraDelay=0){
-      el.classList.add('drop');
-      setTimeout(()=> el.classList.add('in'), 120*idx + extraDelay);
-    }
-
-    function showStage(cards){
-      const wrap = $('#stageWrap');
-      const stage = $('#stage');
-      stage.innerHTML = '';
-      wrap.classList.add('show');
-
-      const lastIdx = cards.length - 1;
-
-      cards.forEach((c, i) => {
-        // ultima con classe "final", ma resta coperta (niente auto-reveal)
-        const el = makeCardEl(c, i === lastIdx);
-        stage.appendChild(el);
-        setDropIn(el, i);
-      });
-
-      // Messaggio: l'utente deve toccare per rivelare TUTTE le carte (anche l'ultima)
-      $('#log').textContent = 'Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.';
-    }
-
-    // ===== Apertura del pacchetto
-    async function doOpen(){
-      const BTN = $('#openBtn');
-      const SHOT = $('#shotBtn');
-      const packArea = $('#packArea');
-      const pack = $('#pack');
-      const flashLine = $('#flashLine');
-      const flashScreen = $('#flashScreen');
-      BTN.disabled = true; SHOT.disabled = true;
-      $('#log').textContent = 'Preparazione pacchetto…';
-
-      if(!ALL.length) await loadData();
-      if(!ALL.length){ $('#log').textContent = 'Nessuna carta trovata in cards.json'; BTN.disabled = false; return; }
-
-      // shake
-      pack.classList.add('shake');
-      await delay(360);
-      pack.classList.remove('shake');
-
-      // flash + apertura
-      flashLine.classList.add('active');
-      flashScreen.classList.add('active');
-      pack.classList.add('opening');
-      await delay(900);
-      packArea.style.display = 'none';
-
-      // estrai 6 carte e ordinale per rarità (ultima = più rara)
-      const used = new Set(); const N = 6;
-      let chosen = [];
-      for(let i=0;i<N;i++){
-        const rar = pickRarity();
-        const card = pickCardByRarity(rar, used) || pickCardByRarity('Comune', used);
-        if(!card) break;
-        used.add(card.id); chosen.push(card);
-      }
-      chosen = ensureRarePlus(chosen);
-      chosen.sort((a,b)=> (rarityRank[a.rarity] - rarityRank[b.rarity]));
-
-      // mostra sul tavolo coperte (nessuna auto-rivelata)
-      showStage(chosen);
-
-      // reset flash
-      setTimeout(()=>{ flashLine.classList.remove('active'); flashScreen.classList.remove('active'); }, 400);
-
-      // riabilita azioni
-      BTN.textContent = '🔁 Nuovo pacchetto';
-      BTN.disabled = false; SHOT.disabled = false;
-
-      // Nuovo click = reset
-      BTN.onclick = async () => {
-        BTN.disabled = true; SHOT.disabled = true;
-        $('#stageWrap').classList.remove('show');
-        $('#stage').innerHTML = '';
-        packArea.style.display = 'flex';
-        pack.classList.remove('opening');
-        BTN.textContent = '🎁 Apri pacchetto';
-        $('#log').textContent = '';
-        await delay(100);
-        BTN.disabled = false;
-      };
-    }
-
-    // ===== Screenshot del pacchetto
-    async function doShot(){
-      const area = $('#stageWrap');
-      try{
-        if(!window.html2canvas) { alert('html2canvas non ancora caricato, riprova tra un secondo.'); return; }
-        const canvas = await html2canvas(area, { backgroundColor: null, useCORS: true, scale: 2 });
-        const link = document.createElement('a');
-        link.download = `fantaballa-pack-${Date.now()}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      }catch(e){
-        console.error(e);
-        alert('Impossibile salvare il PNG. Per evitare blocchi CORS, ospita le immagini delle carte nel tuo repo e usa percorsi relativi (es. img/...).');
-      }
-    }
-
-    // Init
-    $('#openBtn').addEventListener('click', doOpen);
-    $('#pack').addEventListener('click', ()=> $('#openBtn').click());
-    $('#shotBtn').addEventListener('click', doShot);
-  </script>
-</body>
-</html>
+// ===== Avvio app =====
+window.addEventListener('DOMContentLoaded', ()=> {
+  new PackOpener();
+});
