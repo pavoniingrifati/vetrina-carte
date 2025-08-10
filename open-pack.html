@@ -14,7 +14,7 @@
   <!-- Preload retro per evitare flicker -->
   <link rel="preload" as="image" href="Deck%20back%20ORO.png" imagesrcset="Deck%20back%20ORO.png 1x" />
 
-  <!-- Screenshot DOM -> PNG -->
+  <!-- Screenshot DOM -> PNG (opzionale) -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
 
   <style>
@@ -167,32 +167,79 @@
   </template>
 
   <script type="module">
+    // ===== Config e fallback integrato =====
     const CONFIG = { CARDS_JSON:'cards.json', BACK_IMG:'Deck%20back%20ORO.png', COUNT:6, WEIGHTS:{'Season':1,'Ultra Rara':3,'Epica':6,'Rara':10,'Non Comune':20,'Comune':60}, FETCH_TIMEOUT_MS:8000 };
+
+    // Se cards.json non è raggiungibile (es. file:// o 404), useremo questi dati demo
+    const FALLBACK_CARDS = [
+      {id:'c1', name:'Carta Comune 1', rarity:'Comune', img:'Deck%20back%20ORO.png'},
+      {id:'c2', name:'Carta Comune 2', rarity:'Comune', img:'Deck%20back%20ORO.png'},
+      {id:'c3', name:'Carta Non Comune', rarity:'Non Comune', img:'Deck%20back%20ORO.png'},
+      {id:'c4', name:'Carta Rara', rarity:'Rara', img:'Deck%20back%20ORO.png'},
+      {id:'c5', name:'Carta Epica', rarity:'Epica', img:'Deck%20back%20ORO.png'},
+      {id:'c6', name:'Carta Ultra', rarity:'Ultra Rara', img:'Deck%20back%20ORO.png'}
+    ];
+
+    // ===== Utilità
     const $ = (s,el=document)=>el.querySelector(s); const $$=(s,el=document)=>Array.from(el.querySelectorAll(s)); const delay=ms=>new Promise(r=>setTimeout(r,ms));
-    const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5}; const slug=r=>(r||'').toLowerCase().replace(/\s+/g,'-');
+    const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5};
+
+    // ===== Audio opzionale
     let audioCtx=null; function ensureAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)() }catch{} }
     function tone(f,d=.15,g=.08,t='sine'){ if(!audioCtx) return; const o=audioCtx.createOscillator(),A=audioCtx.createGain(); o.type=t; o.frequency.value=f; A.gain.value=g; o.connect(A).connect(audioCtx.destination); o.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d,.03); o.stop(audioCtx.currentTime+d+.08) }
     function noiseBoom(d=.5,g=.15){ if(!audioCtx) return; const N=audioCtx.sampleRate*d, b=audioCtx.createBuffer(1,N,audioCtx.sampleRate), x=b.getChannelData(0); for(let i=0;i<N;i++) x[i]=(Math.random()*2-1)*Math.pow(1-i/N,2); const s=audioCtx.createBufferSource(); s.buffer=b; const A=audioCtx.createGain(); A.gain.value=g; const F=audioCtx.createBiquadFilter(); F.type='lowpass'; F.frequency.value=400; s.connect(F).connect(A).connect(audioCtx.destination); s.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d*.7,.2) }
-    function playByRarity(r){ if(r==='Comune'||r==='Non Comune'){ tone(520,.07,.06,'triangle'); tone(660,.07,.05,'triangle'); return } if(r==='Rara'){ tone(660,.12,.08,'sine'); tone(880,.16,.06,'sine'); return } if(r==='Epica'){ tone(660,.18,.09,'sine'); tone(990,.22,.08,'sine'); tone(1320,.24,.06,'sine'); return } if(r==='Ultra Rara'||r==='Season'){ noiseBoom(.7,.18); tone(880,.18,.1,'square'); tone(1320,.22,.08,'square') } }
+    function playByRarity(r){ if(r==='Comune'||r==='Non Comune'){ tone(520,.07,.06,'triangle'); tone(660,.07,.05,'triangle') } else if(r==='Rara'){ tone(660,.12,.08,'sine'); tone(880,.16,.06,'sine') } else if(r==='Epica'){ tone(660,.18,.09,'sine'); tone(990,.22,.08,'sine'); tone(1320,.24,.06,'sine') } else if(r==='Ultra Rara'||r==='Season'){ noiseBoom(.7,.18); tone(880,.18,.1,'square'); tone(1320,.22,.08,'square') } }
 
-    class PackOpener{ constructor(){ this.ALL=[]; this.used=new Set(); this.$openBtn=$('#openBtn'); this.$shotBtn=$('#shotBtn'); this.$packArea=$('#packArea'); this.$pack=$('#pack'); this.$flashLine=$('#flashLine'); this.$flashScreen=$('#flashScreen'); this.$stageWrap=$('#stageWrap'); this.$stage=$('#stage'); this.$log=$('#log'); this.bind(); this.prewarm() }
-      bind(){ this.$openBtn.addEventListener('click',()=>this.doOpen()); this.$pack.addEventListener('click',()=>this.$openBtn.click(),{passive:true}); this.$shotBtn.addEventListener('click',()=>this.doShot()); ['click','keydown','touchstart'].forEach(e=>window.addEventListener(e,()=>{ensureAudio()}, {once:true})) }
+    class PackOpener {
+      constructor(){
+        this.ALL=[]; this.used=new Set();
+        this.$openBtn=$('#openBtn'); this.$shotBtn=$('#shotBtn'); this.$packArea=$('#packArea'); this.$pack=$('#pack');
+        this.$flashLine=$('#flashLine'); this.$flashScreen=$('#flashScreen'); this.$stageWrap=$('#stageWrap'); this.$stage=$('#stage'); this.$log=$('#log');
+        this.bind(); this.prewarm();
+      }
+      bind(){
+        this.$openBtn.addEventListener('click',()=>this.doOpen());
+        this.$pack.addEventListener('click',()=>this.$openBtn.click(),{passive:true});
+        this.$shotBtn.addEventListener('click',()=>this.doShot());
+        ['click','keydown','touchstart'].forEach(e=>window.addEventListener(e,()=>{ensureAudio()}, {once:true}))
+      }
       prewarm(){ const img=new Image(); img.decoding='async'; img.src=CONFIG.BACK_IMG; if('requestIdleCallback' in window){ requestIdleCallback(()=>this.idlePreload(),{timeout:1500}) } else { setTimeout(()=>this.idlePreload(),800) } }
       idlePreload(){ this.loadData().catch(()=>{}) }
-      async loadData(){ if(this.ALL.length) return; const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),CONFIG.FETCH_TIMEOUT_MS); try{ const res=await fetch(CONFIG.CARDS_JSON,{cache:'no-store',signal:ctrl.signal}); if(!res.ok) throw new Error(`Impossibile caricare ${CONFIG.CARDS_JSON} (HTTP ${res.status})`); const json=await res.json(); if(!Array.isArray(json)) throw new Error('Formato non valido: atteso un array'); const cleaned=[]; const ids=new Set(); for(const c of json){ if(!c||typeof c!=='object') continue; const id=c.id??`${c.name||'card'}-${Math.random().toString(36).slice(2,8)}`; const name=String(c.name||''); const rarity=String(c.rarity||''); const img=String(c.img||''); if(!name||!rarity||!img) continue; if(ids.has(id)) continue; ids.add(id); cleaned.push({id,name,rarity,img}) } if(!cleaned.length) throw new Error('Nessuna carta valida trovata in cards.json'); this.ALL=cleaned; this.$log.textContent=`Caricate ${this.ALL.length} carte.` }catch(err){ const reason=(err&&err.name==='AbortError')?'timeout nel caricamento delle carte':(err?.message||'Errore sconosciuto'); this.$log.textContent=`⚠️ ${reason}`; console.error(err); this.ALL=[] } finally{ clearTimeout(t) } }
+      async loadData(){
+        if(this.ALL.length) return;
+        const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),CONFIG.FETCH_TIMEOUT_MS);
+        try{
+          const res=await fetch(CONFIG.CARDS_JSON,{cache:'no-store',signal:ctrl.signal});
+          if(!res.ok) throw new Error(`HTTP ${res.status}`);
+          const json=await res.json();
+          if(!Array.isArray(json)) throw new Error('Formato non valido (atteso array)');
+          const cleaned=[]; const ids=new Set();
+          for(const c of json){ if(!c||typeof c!=='object') continue; const id=c.id??`${c.name||'card'}-${Math.random().toString(36).slice(2,8)}`; const name=String(c.name||''); const rarity=String(c.rarity||''); const img=String(c.img||''); if(!name||!rarity||!img) continue; if(ids.has(id)) continue; ids.add(id); cleaned.push({id,name,rarity,img}) }
+          if(!cleaned.length) throw new Error('Nessuna carta valida in cards.json');
+          this.ALL=cleaned; this.$log.textContent=`Caricate ${this.ALL.length} carte.`;
+        }catch(err){
+          console.warn('cards.json non caricato, uso fallback:', err?.message||err);
+          this.ALL = FALLBACK_CARDS; // Fallback che funziona anche da file://
+          this.$log.textContent='⚠️ Non trovo cards.json, uso carte di esempio.';
+        }finally{ clearTimeout(t) }
+      }
       pickRarity(){ const E=Object.entries(CONFIG.WEIGHTS); const tot=E.reduce((s,[,w])=>s+w,0); let r=Math.random()*tot; for(const [rar,w] of E){ if(r<w) return rar; r-=w } return 'Comune' }
       pickCardByRarity(r){ let pool=this.ALL.filter(c=>c.rarity===r&&!this.used.has(c.id)); if(!pool.length) pool=this.ALL.filter(c=>!this.used.has(c.id)); if(!pool.length) return null; return pool[Math.floor(Math.random()*pool.length)] }
       ensureRarePlus(cards){ const ok=cards.some(c=>rarityRank[c.rarity]>=rarityRank['Rara']); if(ok) return cards; const pool=this.ALL.filter(c=>rarityRank[c.rarity]>=rarityRank['Rara']); if(!pool.length) return cards; const i=Math.floor(Math.random()*cards.length); cards[i]=pool[Math.floor(Math.random()*pool.length)]; return cards }
-      makeCardEl(d,isFinal){ const tpl=document.getElementById('tplCard'); if(!tpl||!tpl.content||!tpl.content.firstElementChild){ const f=document.createElement('article'); f.className='cCard'; f.textContent=d.name; return f } const n=tpl.content.firstElementChild.cloneNode(true); const rslug=(d.rarity||'').toLowerCase().replace(/\s+/g,'-'); if(rslug) n.classList.add('r-'+rslug); if(isFinal) n.classList.add('final'); const front=n.querySelector('.front img'); front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async'; const back=n.querySelector('.back img'); back.loading='eager'; back.decoding='async'; n.querySelector('.badge').textContent=d.rarity||''; n.dataset.state='back'; n.addEventListener('click',()=>{ if(n.dataset.state==='back'){ this.revealCard(n,d) } else { n.dataset.state='back'; n.classList.remove('revealed') } },{passive:true}); return n }
-      addSparks(el,n=10){ const c=el.querySelector('.spark'); if(!c) return; c.innerHTML=''; const frag=document.createDocumentFragment(); for(let i=0;i<n;i++){ const s=document.createElement('i'); const x=10+Math.random()*80, xEnd=x+(-8+Math.random()*16), rot=-15+Math.random()*30; s.style.setProperty('--x',x+'%'); s.style.setProperty('--xEnd',xEnd+'%'); s.style.setProperty('--rot',rot+'deg'); s.style.left=x+'%'; s.style.top=(5+Math.random()*20)+'%'; frag.appendChild(s) } c.appendChild(frag) }
+      makeCardEl(d,isFinal){ const tpl=document.getElementById('tplCard'); const n=tpl.content.firstElementChild.cloneNode(true); const rslug=(d.rarity||'').toLowerCase().replace(/\s+/g,'-'); if(rslug) n.classList.add('r-'+rslug); if(isFinal) n.classList.add('final'); const front=n.querySelector('.front img'); front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async'; n.querySelector('.badge').textContent=d.rarity||''; n.dataset.state='back'; n.addEventListener('click',()=>{ if(n.dataset.state==='back'){ this.revealCard(n,d) } else { n.dataset.state='back'; n.classList.remove('revealed') } },{passive:true}); return n }
+      addSparks(el,n=10){ const c=el.querySelector('.spark'); c.innerHTML=''; const frag=document.createDocumentFragment(); for(let i=0;i<n;i++){ const s=document.createElement('i'); const x=10+Math.random()*80, xEnd=x+(-8+Math.random()*16), rot=-15+Math.random()*30; s.style.setProperty('--x',x+'%'); s.style.setProperty('--xEnd',xEnd+'%'); s.style.setProperty('--rot',rot+'deg'); s.style.left=x+'%'; s.style.top=(5+Math.random()*20)+'%'; frag.appendChild(s) } c.appendChild(frag) }
       revealCard(n,d){ const front=n.querySelector('.front img'); if(front && !front.src) front.src=d.img||''; n.dataset.state='front'; n.classList.add('revealed'); const rank=rarityRank[d.rarity]??0; this.addSparks(n,Math.min(6+rank*4,28)); playByRarity(d.rarity) }
-      setDropIn(el,i,extra=0){ el.classList.add('drop'); setTimeout(()=>el.classList.add('in'), 120*i+extra) }
-      showStage(cards){ const wrap=this.$stageWrap, stage=this.$stage; stage.innerHTML=''; wrap.classList.add('show'); const last=cards.length-1; const frag=document.createDocumentFragment(); cards.forEach((c,i)=>{ const el=this.makeCardEl(c,i===last); frag.appendChild(el); this.setDropIn(el,i) }); stage.appendChild(frag); this.$shotBtn.disabled=false; this.$log.textContent='Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.' }
-      async doOpen(){ const BTN=this.$openBtn, SHOT=this.$shotBtn; BTN.disabled=true; SHOT.disabled=true; this.$log.textContent='Preparazione pacchetto…'; await this.loadData(); if(!this.ALL.length){ this.$log.textContent='Nessuna carta trovata in cards.json'; BTN.disabled=false; return } this.$pack.classList.add('shake'); await delay(360); this.$pack.classList.remove('shake'); this.$flashLine.classList.add('active'); this.$flashScreen.classList.add('active'); this.$pack.classList.add('opening'); await delay(900); this.$packArea.style.display='none'; this.used.clear(); let chosen=[]; for(let i=0;i<CONFIG.COUNT;i++){ const rar=this.pickRarity(); const card=this.pickCardByRarity(rar)||this.pickCardByRarity('Comune'); if(!card) break; this.used.add(card.id); chosen.push(card) } chosen=this.ensureRarePlus(chosen); chosen.sort((a,b)=>rarityRank[a.rarity]-rarityRank[b.rarity]); this.showStage(chosen); setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active') },400); BTN.textContent='🔁 Nuovo pacchetto'; BTN.disabled=false; SHOT.disabled=false; BTN.onclick=async()=>{ BTN.disabled=true; SHOT.disabled=true; this.$stageWrap.classList.remove('show'); this.$stage.innerHTML=''; this.$packArea.style.display='flex'; this.$pack.classList.remove('opening'); BTN.textContent='🎁 Apri pacchetto'; this.$log.textContent=''; await delay(100); BTN.disabled=false; BTN.onclick=()=>this.doOpen() } }
+      setDropIn(el,i,extra=0){ el.classList.add('drop'); setTimeout(()=>el.classList.add('in'),120*i+extra) }
+      showStage(cards){ const wrap=this.$stageWrap, stage=this.$stage; stage.innerHTML=''; wrap.classList.add('show'); const last=cards.length-1; const frag=document.createDocumentFragment(); cards.forEach((c,i)=>{ const el=this.makeCardEl(c,i===last); // aggiungi contenitori spark/rays/veil
+        if(!el.querySelector('.spark')){ const sp=document.createElement('div'); sp.className='spark'; el.appendChild(sp) }
+        if(!el.querySelector('.rays')){ const ry=document.createElement('div'); ry.className='rays'; el.appendChild(ry) }
+        if(!el.querySelector('.veil')){ const ve=document.createElement('div'); ve.className='veil'; el.appendChild(ve) }
+        frag.appendChild(el); this.setDropIn(el,i) });
+        stage.appendChild(frag);
+        this.$shotBtn.disabled=false; this.$log.textContent='Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.' }
+      async doOpen(){ const BTN=this.$openBtn, SHOT=this.$shotBtn; BTN.disabled=true; SHOT.disabled=true; this.$log.textContent='Preparazione pacchetto…'; await this.loadData(); if(!this.ALL.length){ this.$log.textContent='Nessuna carta disponibile'; BTN.disabled=false; return } this.$pack.classList.add('shake'); await delay(360); this.$pack.classList.remove('shake'); this.$flashLine.classList.add('active'); this.$flashScreen.classList.add('active'); this.$pack.classList.add('opening'); await delay(900); this.$packArea.style.display='none'; this.used.clear(); let chosen=[]; for(let i=0;i<CONFIG.COUNT;i++){ const rar=this.pickRarity(); const card=this.pickCardByRarity(rar)||this.pickCardByRarity('Comune'); if(!card) break; this.used.add(card.id); chosen.push(card) } chosen=this.ensureRarePlus(chosen); chosen.sort((a,b)=>rarityRank[a.rarity]-rarityRank[b.rarity]); this.showStage(chosen); setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active') },400); BTN.textContent='🔁 Nuovo pacchetto'; BTN.disabled=false; SHOT.disabled=false; BTN.onclick=async()=>{ BTN.disabled=true; SHOT.disabled=true; this.$stageWrap.classList.remove('show'); this.$stage.innerHTML=''; this.$packArea.style.display='flex'; this.$pack.classList.remove('opening'); BTN.textContent='🎁 Apri pacchetto'; this.$log.textContent=''; await delay(100); BTN.disabled=false; BTN.onclick=()=>this.doOpen() } }
       async doShot(){ const area=this.$stageWrap; try{ if(!window.html2canvas){ alert('html2canvas non ancora caricato, riprova tra un secondo.'); return } const canvas=await html2canvas(area,{backgroundColor:null,useCORS:true,scale:2}); const a=document.createElement('a'); a.download=`fantaballa-pack-${Date.now()}.png`; a.href=canvas.toDataURL('image/png'); a.click() }catch(e){ console.error(e); alert('Impossibile salvare il PNG. Per evitare blocchi CORS, ospita le immagini delle carte nel tuo repo e usa percorsi relativi (es. img/...).') } }
     }
-
-    function playByRarity(r){ if(r==='Comune'||r==='Non Comune'){ tone(520,.07,.06,'triangle'); tone(660,.07,.05,'triangle') } else if(r==='Rara'){ tone(660,.12,.08,'sine'); tone(880,.16,.06,'sine') } else if(r==='Epica'){ tone(660,.18,.09,'sine'); tone(990,.22,.08,'sine'); tone(1320,.24,.06,'sine') } else if(r==='Ultra Rara'||r==='Season'){ noiseBoom(.7,.18); tone(880,.18,.1,'square'); tone(1320,.22,.08,'square') } }
 
     window.addEventListener('DOMContentLoaded',()=>{ new PackOpener() })
   </script>
