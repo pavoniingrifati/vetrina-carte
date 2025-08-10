@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Open Pack • No Duplicati + Ordine Rarità</title>
+  <title>Open Pack • 6 carte • Ordine ascendente</title>
 
   <link rel="preload" as="image" href="Deck%20back%20ORO.png">
   <link rel="preload" as="fetch" href="cards.json" crossorigin="anonymous">
@@ -14,17 +14,17 @@
       --fg: #e6f0ff;
       --muted:#9bb0c7;
       --acc:#38bdf8;
-      --card-w: 240px;          /* più grande */
-      --card-h: 340px;          /* più grande */
-      --radius: 16px;
-      --shadow: 0 10px 36px rgba(0,0,0,.48);
-      --gap: 18px;
+      --card-w: 300px;            /* ancora più grandi */
+      --card-h: 420px;            /* ancora più grandi */
+      --radius: 18px;
+      --shadow: 0 12px 40px rgba(0,0,0,.5);
+      --gap: 20px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0; font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      background: radial-gradient(1300px 760px at 50% -10%, #152131 0%, #0b0f14 60%, #06080b 100%);
+      margin:0; font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: radial-gradient(1400px 820px at 50% -10%, #152131 0%, #0b0f14 60%, #06080b 100%);
       color:var(--fg);
     }
     header{
@@ -48,16 +48,39 @@
 
     main{ display:grid; place-items:center; padding: 8px 16px 40px }
     .stage{
-      position:relative; width: min(100%, 1200px);   /* area più grande */
-      padding: 34px; border-radius: 20px;
+      position:relative; width: min(100%, 1420px);
+      padding: 34px; border-radius: 22px;
       background: linear-gradient(180deg,#0b1220,#0b0f14);
       border:1px solid #172135;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.05), var(--shadow);
-      min-height: calc(var(--card-h) + 80px);
+      min-height: calc(var(--card-h) + 120px);
     }
     .pack-area{
       position:relative; display:flex; flex-wrap:wrap; gap: var(--gap);
       justify-content:center; align-items:center;
+    }
+
+    /* Pacchetto chiuso (cover) */
+    .sealed-wrap{
+      display:grid; place-items:center; min-height: calc(var(--card-h) + 140px);
+    }
+    .sealed-pack{
+      width: clamp(260px, 40vw, 420px);
+      aspect-ratio: 2.5/3.5;
+      border-radius: 22px;
+      background: #0b1020 url("Deck%20back%20ORO.png") center/cover no-repeat;
+      border: 1px solid #223454;
+      box-shadow: 0 20px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
+      cursor:pointer;
+      transform: translateZ(0);
+      transition: transform .18s ease;
+      position: relative;
+      outline: none;
+    }
+    .sealed-pack:focus{ outline: 3px solid #6ee7ff; outline-offset: 6px }
+    .sealed-pack:hover{ transform: scale(1.03) }
+    .sealed-pack::after{
+      content:"Clicca per aprire"; position:absolute; bottom:-46px; left:0; right:0; text-align:center; color:var(--muted); font-weight:700; letter-spacing:.2px;
     }
 
     /* Carta */
@@ -84,49 +107,49 @@
       border-radius: var(--radius);
     }
     .cCard .front{
-      padding:12px;
-      background: radial-gradient(900px 460px at 50% -20%, rgba(255,255,255,.08), rgba(0,0,0,.5)), #0a0e16;
+      padding:14px;
+      background: radial-gradient(1100px 520px at 50% -20%, rgba(255,255,255,.08), rgba(0,0,0,.5)), #0a0e16;
       border: 1px solid #243048; border-radius: var(--radius);
       transform: rotateY(180deg);
     }
 
-    /* Immagine più grande + non tagliata */
+    /* Immagine molto grande e non tagliata */
     .imgwrap{
-      width: 94%;
-      aspect-ratio: 5 / 7;        /* mantiene proporzioni */
-      display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius: 14px;
+      width: 96%;
+      aspect-ratio: 5 / 7;
+      display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius: 16px;
       background: #0b1220; border:1px solid #21304a;
     }
     .imgwrap img{
-      max-width:100%; max-height:100%;
-      width:100%; height:100%; object-fit: contain; display:block;
+      width:100%; height:100%;
+      object-fit: contain; display:block;
     }
 
-    .meta{ width:100%; padding:10px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px }
-    .title{ font-weight:800; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+    .meta{ width:100%; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px }
+    .title{ font-weight:800; font-size:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
     .rarity{ font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.4px }
 
     /* Flip + zoom quando rivelata */
     .cCard[data-state="back"] .front{ transform: rotateY(180deg) }
     .cCard[data-state="back"] .back{ transform: rotateY(0) }
-    .cCard[data-state="front"]{ transform: scale(1.06) }  /* zoom soft */
+    .cCard[data-state="front"]{ transform: scale(1.07) }
     .cCard[data-state="front"] .front{ transform: rotateY(0) }
     .cCard[data-state="front"] .back{ transform: rotateY(180deg) }
     .front, .back{ transition: transform .6s cubic-bezier(.2,.7,.2,1) }
 
-    /* Raggi/flash scena */
+    /* Scena */
     .scene{ position:absolute; inset:-30px; pointer-events:none; mix-blend-mode:screen; opacity:.9; filter: blur(0.3px) }
     .rays{
       position:absolute; inset:0;
       background:
         conic-gradient(from 0deg at 50% 50%, rgba(56,189,248,.20), transparent 20%, rgba(245,158,11,.20), transparent 40%, rgba(99,102,241,.20), transparent 60%, rgba(56,189,248,.20), transparent 80%, rgba(245,158,11,.20));
-      mask: radial-gradient(260px 160px at 50% 120%, rgba(0,0,0,.9), transparent 72%); /* maschera un filo più ampia */
+      mask: radial-gradient(320px 190px at 50% 120%, rgba(0,0,0,.9), transparent 72%);
       animation: spin 9s linear infinite;
     }
     @keyframes spin{ to{ transform: rotate(360deg) } }
     .flash-line{ position:absolute; left:-20%; right:-20%; top:40%; height:2px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.8), transparent); transform: translateY(-50%); filter: blur(1px); animation: sweep 2.5s ease-in-out infinite }
     @keyframes sweep{ 0%,100%{ opacity:0 } 50%{ opacity:1 } }
-    .flash-screen{ position:absolute; inset:0; background: radial-gradient(480px 260px at 50% 50%, rgba(255,255,255,.25), transparent 70%); opacity:0; animation: pop .9s ease; pointer-events:none }
+    .flash-screen{ position:absolute; inset:0; background: radial-gradient(540px 300px at 50% 50%, rgba(255,255,255,.25), transparent 70%); opacity:0; animation: pop .9s ease; pointer-events:none }
     @keyframes pop{ 0%{opacity:0} 25%{opacity:1} 100%{opacity:0} }
 
     /* Colori rarità */
@@ -142,29 +165,35 @@
       .front, .back, .rays, .flash-line, .flash-screen{ animation: none !important; transition: none !important }
       .cCard:hover{ transform:none }
       .cCard[data-state="front"]{ transform:none }
+      .sealed-pack:hover{ transform:none }
     }
 
     /* Mobile migliorato */
-    @media (max-width: 880px){
-      :root{ --card-w: 200px; --card-h: 290px; --gap: 14px }
-      .stage{ padding:22px; min-height: calc(var(--card-h) + 70px) }
+    @media (max-width: 1100px){
+      :root{ --card-w: 260px; --card-h: 364px; --gap: 18px }
+    }
+    @media (max-width: 900px){
+      :root{ --card-w: 230px; --card-h: 322px; --gap: 16px }
+      .title{ font-size:15px }
+    }
+    @media (max-width: 720px){
+      :root{ --card-w: 200px; --card-h: 280px; --gap: 14px }
       .title{ font-size:14px }
     }
     @media (max-width: 560px){
-      :root{ --card-w: 172px; --card-h: 252px; --gap: 12px }
-      .stage{ padding:18px; min-height: calc(var(--card-h) + 60px) }
+      :root{ --card-w: 180px; --card-h: 252px; --gap: 12px }
+      .stage{ padding:18px; min-height: calc(var(--card-h) + 80px) }
       .title{ font-size:13px }
     }
-    @media (max-width: 400px){
-      :root{ --card-w: 150px; --card-h: 220px; --gap: 10px }
+    @media (max-width: 420px){
+      :root{ --card-w: 164px; --card-h: 228px; --gap: 10px }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Open Pack <span class="badge">No Duplicati • Ordinato</span></h1>
+    <h1>Open Pack <span class="badge">6 carte • meno→più rara</span></h1>
     <div class="toolbar" role="group" aria-label="Comandi pack">
-      <button id="openBtn" class="btn primary">🎁 Apri pacchetto</button>
       <button id="revealAllBtn" class="btn ghost" disabled>👀 Scopri tutte</button>
       <button id="newBtn" class="btn ghost" disabled>🔁 Nuovo pacchetto</button>
       <button id="shotBtn" class="btn warn" disabled>📸 Screenshot</button>
@@ -172,7 +201,7 @@
     </div>
   </header>
 
-  <div id="log" role="status" aria-live="polite">Carico le carte…</div>
+  <div id="log" role="status" aria-live="polite">Clicca il pacchetto per generare 6 carte (nessun duplicato).</div>
 
   <main>
     <section id="stage" class="stage" aria-label="Tavolo pacchetto">
@@ -180,7 +209,13 @@
         <div class="rays"></div>
         <div class="flash-line"></div>
       </div>
-      <div id="packArea" class="pack-area"></div>
+
+      <!-- Stato iniziale: pacchetto chiuso -->
+      <div id="sealedWrap" class="sealed-wrap">
+        <div id="sealedPack" class="sealed-pack" role="button" tabindex="0" aria-label="Pacchetto chiuso, clicca per aprire"></div>
+      </div>
+
+      <div id="packArea" class="pack-area" hidden></div>
       <div id="flash" class="flash-screen" hidden></div>
     </section>
   </main>
@@ -191,10 +226,14 @@
   const $ = sel => document.querySelector(sel);
   const $$ = sel => Array.from(document.querySelectorAll(sel));
   const LOG = $('#log'), AREA = $('#packArea'), FLASH = $('#flash');
-  const BTN_OPEN = $('#openBtn'), BTN_NEW = $('#newBtn'), BTN_REVEAL_ALL = $('#revealAllBtn'), BTN_SHOT = $('#shotBtn'), BTN_MUTE = $('#muteBtn');
+  const BTN_NEW = $('#newBtn'), BTN_REVEAL_ALL = $('#revealAllBtn'), BTN_SHOT = $('#shotBtn'), BTN_MUTE = $('#muteBtn');
+  const SEALED_WRAP = $('#sealedWrap'), SEALED_PACK = $('#sealedPack');
 
   function setLog(msg){ LOG.textContent = msg }
   function qsParam(name){ const u=new URL(location.href); return u.searchParams.get(name); }
+
+  // Flash visivo
+  function flash(){ FLASH.hidden=false; FLASH.getAnimations().forEach(a=>a.cancel()); FLASH.animate([{opacity:0},{opacity:1,offset:.25},{opacity:0}],{duration:900,easing:'ease'}).onfinish=()=>FLASH.hidden=true }
 
   // PRNG deterministica opzionale (?seed=1234)
   function mulberry32(a){ return function(){ let t = a += 0x6D2B79F5; t = Math.imul(t ^ t>>>15, t | 1); t ^= t + Math.imul(t ^ t>>>7, t | 61); return ((t ^ t>>>14) >>> 0) / 4294967296; } }
@@ -205,7 +244,7 @@
     if(Number.isFinite(s)) rng = mulberry32((s>>>0) || 1);
   }
 
-  // Audio on/off (semplice synth)
+  // Audio on/off
   let MUTED = false;
   BTN_MUTE.addEventListener('click', ()=>{
     MUTED = !MUTED;
@@ -229,7 +268,6 @@
     const g = AC.createGain(); g.gain.value = gain; src.connect(g); g.connect(AC.destination);
     const t = AC.currentTime; src.start(); g.gain.exponentialRampToValueAtTime(1e-4, t+dur); src.stop(t+dur);
   }
-  function flash(){ FLASH.hidden=false; FLASH.getAnimations().forEach(a=>a.cancel()); FLASH.animate([{opacity:0},{opacity:1,offset:.25},{opacity:0}],{duration:900,easing:'ease'}).onfinish=()=>FLASH.hidden=true }
 
   /* ===== Dati ===== */
   let ALL = [];
@@ -248,18 +286,18 @@
       const json = await res.json();
       ALL = Array.isArray(json) ? json.map(safeCard) : [];
       if(ALL.length === 0) throw new Error('Nessuna carta valida');
-      setLog(`Trovate ${ALL.length} carte. Pronto!`);
-      BTN_OPEN.disabled = false;
+      setLog(`Trovate ${ALL.length} carte. Clicca il pacchetto per aprire.`);
+      BTN_NEW.disabled = true; BTN_REVEAL_ALL.disabled = true; BTN_SHOT.disabled = true;
     }catch(err){
       setLog(`Errore: non riesco a caricare le carte (${err.message}).`);
-      BTN_OPEN.disabled = true; BTN_REVEAL_ALL.disabled = true; BTN_NEW.disabled = true; BTN_SHOT.disabled = true;
+      BTN_NEW.disabled = true; BTN_REVEAL_ALL.disabled = true; BTN_SHOT.disabled = true;
     }
   }
 
-  /* ===== Logica pack (no duplicati + ordine rarità) ===== */
-  const PACK_SIZE = 5;
+  /* ===== Logica pack ===== */
+  const PACK_SIZE = 6;
 
-  // Pesi per estrazione (tutte le rarità sono abilitate)
+  // Tutte le rarità abilitate + pesi
   const RARITY_WEIGHTS = {
     'Comune': 60,
     'Non Comune': 25,
@@ -269,8 +307,8 @@
     'Season': 0.2
   };
 
-  // Ordine di visualizzazione (rare -> comuni). Cambia l’array per invertire.
-  const RARITY_ORDER = ['Season','Ultra Rara','Epica','Rara','Non Comune','Comune'];
+  // Ordine ASCENDENTE: meno rara -> più rara
+  const RARITY_ORDER_ASC = ['Comune','Non Comune','Rara','Epica','Ultra Rara','Season'];
 
   function pickWeighted(weights){
     const entries = Object.entries(weights);
@@ -282,7 +320,6 @@
     return entries.at(-1)[0];
   }
 
-  // Estrazione senza rimpiazzo per evitare duplicati
   function pickCardByRarityUnique(rarity, usedIds){
     const pool = ALL.filter(c => c.rarity === rarity && !usedIds.has(c.id));
     if(pool.length === 0) return null;
@@ -294,33 +331,22 @@
   function makePack(){
     const used = new Set();
     const picks = [];
-    // prime PACK_SIZE - 1 carte dai pesi base
-    for(let i=0;i<PACK_SIZE-1;i++){
+    // Estrai fino a PACK_SIZE carte rispettando pesi e senza duplicati
+    while(picks.length < PACK_SIZE){
       let r = pickWeighted(RARITY_WEIGHTS);
       let c = pickCardByRarityUnique(r, used);
       if(!c){
-        // se pool vuoto per quella rarità, prova a scivolare a rarità vicine mantenendo varietà
-        for(const rr of RARITY_ORDER.slice().reverse()){ // prova da più comune a più rara
+        // Se non c'è disponibilità in quella rarità, prova dalle meno rare alle più rare
+        for(const rr of RARITY_ORDER_ASC){
           c = pickCardByRarityUnique(rr, used);
           if(c) break;
         }
       }
       if(c) picks.push(c);
+      else break; // pool esaurito del tutto
     }
-    // ultima carta: bias verso Rara+
-    const rarePlusWeights = {'Rara': RARITY_WEIGHTS['Rara'],'Epica': RARITY_WEIGHTS['Epica'],'Ultra Rara': RARITY_WEIGHTS['Ultra Rara'],'Season': RARITY_WEIGHTS['Season']};
-    let r2 = pickWeighted(rarePlusWeights);
-    let final = pickCardByRarityUnique(r2, used);
-    if(!final){
-      for(const rr of ['Season','Ultra Rara','Epica','Rara','Non Comune','Comune']){
-        final = pickCardByRarityUnique(rr, used);
-        if(final) break;
-      }
-    }
-    if(final) picks.push(final);
-
-    // Ordina per rarità (rare -> comuni)
-    picks.sort((a,b)=> RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
+    // Ordina per rarità: meno -> più rara
+    picks.sort((a,b)=> RARITY_ORDER_ASC.indexOf(a.rarity) - RARITY_ORDER_ASC.indexOf(b.rarity));
     return picks;
   }
 
@@ -366,19 +392,27 @@
     return art;
   }
 
+  function showSealed(){
+    AREA.hidden = true;
+    SEALED_WRAP.hidden = false;
+    BTN_REVEAL_ALL.disabled = true; BTN_SHOT.disabled = true; BTN_NEW.disabled = true;
+    setLog('Clicca il pacchetto per far apparire 6 carte (ordine: meno rara → più rara).');
+  }
+
   function showStage(cards){
     AREA.innerHTML = '';
     const frag = document.createDocumentFragment();
     cards.forEach(c => frag.appendChild(cardTemplate(c)));
     AREA.appendChild(frag);
+    SEALED_WRAP.hidden = true;
+    AREA.hidden = false;
     BTN_REVEAL_ALL.disabled = false; BTN_NEW.disabled = false; BTN_SHOT.disabled = false;
-    setLog('Carte ordinate per rarità. Clicca per rivelare (niente doppioni).');
+    setLog('Carte posizionate (meno→più rara). Clicca per rivelare. Nessun duplicato.');
   }
 
   function resetStage(){
     AREA.innerHTML = '';
-    BTN_REVEAL_ALL.disabled = true; BTN_SHOT.disabled = true;
-    setLog('Pronto per un nuovo pacchetto.');
+    showSealed();
   }
 
   function checkAllRevealed(){
@@ -398,15 +432,18 @@
     }catch(err){ setLog('Screenshot fallito: ' + err.message); }
   }
 
-  /* ===== Bottoni ===== */
-  BTN_OPEN.addEventListener('click', ()=>{
-    BTN_OPEN.disabled = true;
+  /* ===== Bottoni & eventi ===== */
+  function openFromSealed(){
     const cards = makePack();
     showStage(cards);
     flash(); tone(440,.08,'sawtooth',.03); noiseBoom(0.25, 0.14);
-  });
+  }
+  SEALED_PACK.addEventListener('click', openFromSealed);
+  SEALED_PACK.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openFromSealed(); } });
+
   BTN_NEW.addEventListener('click', ()=>{
-    resetStage(); BTN_OPEN.disabled = false; tone(392,.06,'square',.02);
+    resetStage();
+    tone(392,.06,'square',.02);
   });
   BTN_REVEAL_ALL.addEventListener('click', ()=>{
     const backs = $$('.cCard[data-state="back"]'); backs.forEach((el, i)=> setTimeout(()=> el.click(), i*120));
@@ -415,8 +452,8 @@
 
   /* ===== Avvio ===== */
   (async function init(){
-    BTN_OPEN.disabled = true; BTN_REVEAL_ALL.disabled = true; BTN_NEW.disabled = true; BTN_SHOT.disabled = true;
     await loadData();
+    showSealed();
   })();
   </script>
 </body>
