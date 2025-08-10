@@ -2,10 +2,9 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Open Pack • Accessibile & Deterministico</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Open Pack • No Duplicati + Ordine Rarità</title>
 
-  <!-- Preload asset comuni -->
   <link rel="preload" as="image" href="Deck%20back%20ORO.png">
   <link rel="preload" as="fetch" href="cards.json" crossorigin="anonymous">
 
@@ -15,33 +14,28 @@
       --fg: #e6f0ff;
       --muted:#9bb0c7;
       --acc:#38bdf8;
-      --acc-2:#f59e0b;
-      --card-w: 200px;
-      --card-h: 280px;
-      --radius: 14px;
-      --shadow: 0 8px 30px rgba(0,0,0,.45);
+      --card-w: 240px;          /* più grande */
+      --card-h: 340px;          /* più grande */
+      --radius: 16px;
+      --shadow: 0 10px 36px rgba(0,0,0,.48);
+      --gap: 18px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0; font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      background: radial-gradient(1200px 700px at 50% -10%, #152131 0%, #0b0f14 60%, #06080b 100%);
+      margin:0; font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1300px 760px at 50% -10%, #152131 0%, #0b0f14 60%, #06080b 100%);
       color:var(--fg);
     }
     header{
-      padding:20px;
-      display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      padding:20px; display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
     }
-    header .left{display:flex; align-items:center; gap:12px}
-    h1{
-      font-size: clamp(18px, 3vw, 24px); margin:0; letter-spacing:.3px;
-      display:flex; align-items:center; gap:10px;
-    }
-    .badge{font-size:12px; color:#071018; background:linear-gradient(90deg,#67e8f9,#facc15); padding:4px 8px; border-radius:999px; font-weight:600}
+    h1{ margin:0; font-size: clamp(18px, 3.2vw, 26px) }
+    .badge{font-size:12px; color:#071018; background:linear-gradient(90deg,#67e8f9,#facc15); padding:4px 8px; border-radius:999px; font-weight:700; margin-left:8px}
     .toolbar{display:flex; gap:8px; flex-wrap:wrap}
     .btn{
       background:#111826; color:var(--fg); border:1px solid #1f2b3a;
-      border-radius:10px; padding:10px 14px; font-weight:600; cursor:pointer;
+      border-radius:12px; padding:10px 14px; font-weight:700; cursor:pointer;
       box-shadow: var(--shadow); transition: transform .05s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
       user-select:none;
     }
@@ -50,81 +44,92 @@
     .btn.primary{ background: linear-gradient(180deg,#0ea5e9,#0369a1); border-color:#0ea5e9 }
     .btn.warn{ background: linear-gradient(180deg,#f59e0b,#b45309); border-color:#f59e0b }
     .btn.ghost{ background: #101826 }
-    #log{
-      min-height: 24px; color: var(--muted); padding: 0 20px 12px; font-size:14px;
-    }
+    #log{ min-height: 24px; color: var(--muted); padding: 0 20px 12px; font-size:14px }
 
-    main{ display:grid; place-items:center; padding: 14px 20px 40px }
+    main{ display:grid; place-items:center; padding: 8px 16px 40px }
     .stage{
-      position:relative; width: min(100%, 1100px);
-      padding: 28px; border-radius: 18px;
+      position:relative; width: min(100%, 1200px);   /* area più grande */
+      padding: 34px; border-radius: 20px;
       background: linear-gradient(180deg,#0b1220,#0b0f14);
       border:1px solid #172135;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.05), var(--shadow);
+      min-height: calc(var(--card-h) + 80px);
     }
     .pack-area{
-      position:relative; display:flex; flex-wrap:wrap; gap: 16px;
-      justify-content:center; align-items:center; min-height: calc(var(--card-h) + 30px);
+      position:relative; display:flex; flex-wrap:wrap; gap: var(--gap);
+      justify-content:center; align-items:center;
     }
 
-    /* Singola carta */
+    /* Carta */
     .cCard{
       position:relative; width:var(--card-w); height:var(--card-h);
       border-radius: var(--radius); overflow:hidden;
       background: #0d1220; border:1px solid #1c2840;
       box-shadow: var(--shadow);
       outline: none;
-      transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
+      transition: transform .18s ease, box-shadow .2s ease, border-color .2s ease;
       contain: content; content-visibility: auto;
+      will-change: transform;
     }
     .cCard:focus{ outline: 3px solid #6ee7ff; outline-offset: 4px }
     .cCard:hover{ transform: translateY(-2px) }
+
     .cCard .inner{ position:absolute; inset:0; display:grid; grid-template-rows: 1fr auto; }
     .cCard .front, .cCard .back{
-      position:absolute; inset:0; display:grid; place-items:center; backface-visibility:hidden; transform-style:preserve-3d;
+      position:absolute; inset:0; display:grid; place-items:center;
+      backface-visibility:hidden; transform-style:preserve-3d;
     }
     .cCard .back{
       background: #0b1020 url("Deck%20back%20ORO.png") center/cover no-repeat;
       border-radius: var(--radius);
     }
     .cCard .front{
-      padding:10px; background: radial-gradient(800px 400px at 50% -20%, rgba(255,255,255,.08), rgba(0,0,0,.5)), #0a0e16;
-      border: 1px solid #243048; border-radius: var(--radius); transform: rotateY(180deg);
+      padding:12px;
+      background: radial-gradient(900px 460px at 50% -20%, rgba(255,255,255,.08), rgba(0,0,0,.5)), #0a0e16;
+      border: 1px solid #243048; border-radius: var(--radius);
+      transform: rotateY(180deg);
     }
+
+    /* Immagine più grande + non tagliata */
     .imgwrap{
-      width: 90%; height: 80%; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius: 12px;
+      width: 94%;
+      aspect-ratio: 5 / 7;        /* mantiene proporzioni */
+      display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius: 14px;
       background: #0b1220; border:1px solid #21304a;
     }
-    .imgwrap img{ max-width:100%; max-height:100%; display:block }
-    .meta{ width:100%; padding:8px 10px; display:flex; align-items:center; justify-content:space-between; gap:8px }
-    .title{ font-weight:700; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-    .rarity{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.4px }
+    .imgwrap img{
+      max-width:100%; max-height:100%;
+      width:100%; height:100%; object-fit: contain; display:block;
+    }
 
-    /* Flip */
+    .meta{ width:100%; padding:10px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px }
+    .title{ font-weight:800; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+    .rarity{ font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.4px }
+
+    /* Flip + zoom quando rivelata */
     .cCard[data-state="back"] .front{ transform: rotateY(180deg) }
     .cCard[data-state="back"] .back{ transform: rotateY(0) }
+    .cCard[data-state="front"]{ transform: scale(1.06) }  /* zoom soft */
     .cCard[data-state="front"] .front{ transform: rotateY(0) }
     .cCard[data-state="front"] .back{ transform: rotateY(180deg) }
     .front, .back{ transition: transform .6s cubic-bezier(.2,.7,.2,1) }
 
-    /* Raggi/flash scenici */
+    /* Raggi/flash scena */
     .scene{ position:absolute; inset:-30px; pointer-events:none; mix-blend-mode:screen; opacity:.9; filter: blur(0.3px) }
     .rays{
       position:absolute; inset:0;
       background:
-         conic-gradient(from 0deg at 50% 50%, rgba(56,189,248,.20), transparent 20%, rgba(245,158,11,.20), transparent 40%, rgba(99,102,241,.20), transparent 60%, rgba(56,189,248,.20), transparent 80%, rgba(245,158,11,.20));
-      mask: radial-gradient(200px 120px at 50% 120%, rgba(0,0,0,.9), transparent 70%);
+        conic-gradient(from 0deg at 50% 50%, rgba(56,189,248,.20), transparent 20%, rgba(245,158,11,.20), transparent 40%, rgba(99,102,241,.20), transparent 60%, rgba(56,189,248,.20), transparent 80%, rgba(245,158,11,.20));
+      mask: radial-gradient(260px 160px at 50% 120%, rgba(0,0,0,.9), transparent 72%); /* maschera un filo più ampia */
       animation: spin 9s linear infinite;
     }
     @keyframes spin{ to{ transform: rotate(360deg) } }
-
-    .flash-line{ position:absolute; left:-20%; right:-20%; top:40%; height:2px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.8), transparent); transform: translateY(-50%); filter: blur(1px); animation: sweep 2.5s ease-in-out infinite; }
+    .flash-line{ position:absolute; left:-20%; right:-20%; top:40%; height:2px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.8), transparent); transform: translateY(-50%); filter: blur(1px); animation: sweep 2.5s ease-in-out infinite }
     @keyframes sweep{ 0%,100%{ opacity:0 } 50%{ opacity:1 } }
-
-    .flash-screen{ position:absolute; inset:0; background: radial-gradient(400px 220px at 50% 50%, rgba(255,255,255,.25), transparent 70%); opacity:0; animation: pop .9s ease; pointer-events:none }
+    .flash-screen{ position:absolute; inset:0; background: radial-gradient(480px 260px at 50% 50%, rgba(255,255,255,.25), transparent 70%); opacity:0; animation: pop .9s ease; pointer-events:none }
     @keyframes pop{ 0%{opacity:0} 25%{opacity:1} 100%{opacity:0} }
 
-    /* Rarità colori */
+    /* Colori rarità */
     .rar-Comune{ color:#93c5fd }
     .rar-Non\\ Comune{ color:#34d399 }
     .rar-Rara{ color:#f59e0b }
@@ -132,23 +137,32 @@
     .rar-Ultra\\ Rara{ color:#fb7185 }
     .rar-Season{ color:#22d3ee }
 
-    /* Riduzione motion rispettata */
+    /* Riduzione motion */
     @media (prefers-reduced-motion: reduce){
       .front, .back, .rays, .flash-line, .flash-screen{ animation: none !important; transition: none !important }
       .cCard:hover{ transform:none }
+      .cCard[data-state="front"]{ transform:none }
     }
 
-    /* Helper responsive */
-    @media (max-width: 520px){
-      :root{ --card-w: 150px; --card-h: 210px }
+    /* Mobile migliorato */
+    @media (max-width: 880px){
+      :root{ --card-w: 200px; --card-h: 290px; --gap: 14px }
+      .stage{ padding:22px; min-height: calc(var(--card-h) + 70px) }
+      .title{ font-size:14px }
+    }
+    @media (max-width: 560px){
+      :root{ --card-w: 172px; --card-h: 252px; --gap: 12px }
+      .stage{ padding:18px; min-height: calc(var(--card-h) + 60px) }
+      .title{ font-size:13px }
+    }
+    @media (max-width: 400px){
+      :root{ --card-w: 150px; --card-h: 220px; --gap: 10px }
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="left">
-      <h1>Open Pack <span class="badge">A11y + Seed</span></h1>
-    </div>
+    <h1>Open Pack <span class="badge">No Duplicati • Ordinato</span></h1>
     <div class="toolbar" role="group" aria-label="Comandi pack">
       <button id="openBtn" class="btn primary">🎁 Apri pacchetto</button>
       <button id="revealAllBtn" class="btn ghost" disabled>👀 Scopri tutte</button>
@@ -158,7 +172,7 @@
     </div>
   </header>
 
-  <div id="log" role="status" aria-live="polite">Carico i dati delle carte…</div>
+  <div id="log" role="status" aria-live="polite">Carico le carte…</div>
 
   <main>
     <section id="stage" class="stage" aria-label="Tavolo pacchetto">
@@ -171,25 +185,18 @@
     </section>
   </main>
 
-  <!-- html2canvas per screenshot -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" integrity="sha256-Y6N2pAsyYV5JqQ9C0tAsyK1nW+0sIh+pgOqj7+Q4rXQ=" crossorigin="anonymous"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" crossorigin="anonymous"></script>
   <script>
-  /* ===========================
-     Utils base
-  ============================ */
+  /* ===== Utils ===== */
   const $ = sel => document.querySelector(sel);
   const $$ = sel => Array.from(document.querySelectorAll(sel));
   const LOG = $('#log'), AREA = $('#packArea'), FLASH = $('#flash');
   const BTN_OPEN = $('#openBtn'), BTN_NEW = $('#newBtn'), BTN_REVEAL_ALL = $('#revealAllBtn'), BTN_SHOT = $('#shotBtn'), BTN_MUTE = $('#muteBtn');
 
   function setLog(msg){ LOG.textContent = msg }
-  function qsParam(name){
-    const url = new URL(location.href);
-    return url.searchParams.get(name);
-  }
+  function qsParam(name){ const u=new URL(location.href); return u.searchParams.get(name); }
 
-  // PRNG deterministica
+  // PRNG deterministica opzionale (?seed=1234)
   function mulberry32(a){ return function(){ let t = a += 0x6D2B79F5; t = Math.imul(t ^ t>>>15, t | 1); t ^= t + Math.imul(t ^ t>>>7, t | 61); return ((t ^ t>>>14) >>> 0) / 4294967296; } }
   let rng = Math.random;
   const seedParam = qsParam('seed');
@@ -198,24 +205,20 @@
     if(Number.isFinite(s)) rng = mulberry32((s>>>0) || 1);
   }
 
-  // Audio on/off
+  // Audio on/off (semplice synth)
   let MUTED = false;
   BTN_MUTE.addEventListener('click', ()=>{
     MUTED = !MUTED;
     BTN_MUTE.setAttribute('aria-pressed', String(MUTED));
     BTN_MUTE.textContent = MUTED ? '🔇 Audio off' : '🔊 Audio';
   });
-
-  // Mini sintetizzatore per effetti (no asset esterni)
   const AC = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
   function tone(freq=440, dur=0.08, type='sine', gain=0.04){
     if(MUTED || !AC) return;
     const o = AC.createOscillator(); const g = AC.createGain();
     o.type = type; o.frequency.value = freq;
     g.gain.value = gain; o.connect(g); g.connect(AC.destination);
-    const t = AC.currentTime; o.start();
-    g.gain.exponentialRampToValueAtTime(1e-4, t+dur);
-    o.stop(t+dur);
+    const t = AC.currentTime; o.start(); g.gain.exponentialRampToValueAtTime(1e-4, t+dur); o.stop(t+dur);
   }
   function noiseBoom(dur=0.25, gain=0.12){
     if(MUTED || !AC) return;
@@ -223,22 +226,12 @@
     const data = buffer.getChannelData(0);
     for (let i=0; i<data.length; i++){ data[i] = (Math.random()*2-1) * (1 - i/data.length); }
     const src = AC.createBufferSource(); src.buffer = buffer;
-    const g = AC.createGain(); g.gain.value = gain;
-    src.connect(g); g.connect(AC.destination);
+    const g = AC.createGain(); g.gain.value = gain; src.connect(g); g.connect(AC.destination);
     const t = AC.currentTime; src.start(); g.gain.exponentialRampToValueAtTime(1e-4, t+dur); src.stop(t+dur);
   }
-
-  // Flash visivo
   function flash(){ FLASH.hidden=false; FLASH.getAnimations().forEach(a=>a.cancel()); FLASH.animate([{opacity:0},{opacity:1,offset:.25},{opacity:0}],{duration:900,easing:'ease'}).onfinish=()=>FLASH.hidden=true }
 
-  /* ===========================
-     Dati carte
-  ============================ */
-  /**
-   * cards.json atteso come array di oggetti:
-   * { id, name, rarity, img }
-   * rarità supportate: Comune, Non Comune, Rara, Epica, Ultra Rara, Season
-   */
+  /* ===== Dati ===== */
   let ALL = [];
   function safeCard(raw){
     return {
@@ -255,20 +248,18 @@
       const json = await res.json();
       ALL = Array.isArray(json) ? json.map(safeCard) : [];
       if(ALL.length === 0) throw new Error('Nessuna carta valida');
-      setLog(`Trovate ${ALL.length} carte. Pronto ad aprire!`);
+      setLog(`Trovate ${ALL.length} carte. Pronto!`);
       BTN_OPEN.disabled = false;
     }catch(err){
-      setLog(`Errore: non riesco a caricare le carte (${err.message}). Assicurati che "cards.json" sia presente.`);
+      setLog(`Errore: non riesco a caricare le carte (${err.message}).`);
       BTN_OPEN.disabled = true; BTN_REVEAL_ALL.disabled = true; BTN_NEW.disabled = true; BTN_SHOT.disabled = true;
     }
   }
 
-  /* ===========================
-     Logica pack
-  ============================ */
+  /* ===== Logica pack (no duplicati + ordine rarità) ===== */
   const PACK_SIZE = 5;
 
-  // Pesi base delle rarità
+  // Pesi per estrazione (tutte le rarità sono abilitate)
   const RARITY_WEIGHTS = {
     'Comune': 60,
     'Non Comune': 25,
@@ -278,8 +269,8 @@
     'Season': 0.2
   };
 
-  // Garanzia: almeno una "Rara o meglio" nel pacchetto
-  function isRarePlus(r){ return ['Rara','Epica','Ultra Rara','Season'].includes(r) }
+  // Ordine di visualizzazione (rare -> comuni). Cambia l’array per invertire.
+  const RARITY_ORDER = ['Season','Ultra Rara','Epica','Rara','Non Comune','Comune'];
 
   function pickWeighted(weights){
     const entries = Object.entries(weights);
@@ -291,67 +282,66 @@
     return entries.at(-1)[0];
   }
 
-  function pickCardByRarity(r){
-    const pool = ALL.filter(c => c.rarity === r);
+  // Estrazione senza rimpiazzo per evitare duplicati
+  function pickCardByRarityUnique(rarity, usedIds){
+    const pool = ALL.filter(c => c.rarity === rarity && !usedIds.has(c.id));
     if(pool.length === 0) return null;
-    return pool[Math.floor(rng() * pool.length)];
+    const c = pool[Math.floor(rng() * pool.length)];
+    usedIds.add(c.id);
+    return c;
   }
 
   function makePack(){
+    const used = new Set();
     const picks = [];
-    // scegli PACK_SIZE - 1 dal peso base
+    // prime PACK_SIZE - 1 carte dai pesi base
     for(let i=0;i<PACK_SIZE-1;i++){
-      const r = pickWeighted(RARITY_WEIGHTS);
-      const c = pickCardByRarity(r) || pickCardByRarity('Comune');
-      picks.push(c);
+      let r = pickWeighted(RARITY_WEIGHTS);
+      let c = pickCardByRarityUnique(r, used);
+      if(!c){
+        // se pool vuoto per quella rarità, prova a scivolare a rarità vicine mantenendo varietà
+        for(const rr of RARITY_ORDER.slice().reverse()){ // prova da più comune a più rara
+          c = pickCardByRarityUnique(rr, used);
+          if(c) break;
+        }
+      }
+      if(c) picks.push(c);
     }
-    // ultima carta: assicurare Rara+
-    let r2 = pickWeighted({
-      'Rara': RARITY_WEIGHTS['Rara'],
-      'Epica': RARITY_WEIGHTS['Epica'],
-      'Ultra Rara': RARITY_WEIGHTS['Ultra Rara'],
-      'Season': RARITY_WEIGHTS['Season'],
-    });
-    let final = pickCardByRarity(r2);
+    // ultima carta: bias verso Rara+
+    const rarePlusWeights = {'Rara': RARITY_WEIGHTS['Rara'],'Epica': RARITY_WEIGHTS['Epica'],'Ultra Rara': RARITY_WEIGHTS['Ultra Rara'],'Season': RARITY_WEIGHTS['Season']};
+    let r2 = pickWeighted(rarePlusWeights);
+    let final = pickCardByRarityUnique(r2, used);
     if(!final){
-      // fallback: cerca la migliore disponibile dalla lista rare+
-      const fallbacks = ['Season','Ultra Rara','Epica','Rara'];
-      for(const rr of fallbacks){ final = pickCardByRarity(rr); if(final) break; }
-      final = final || pickCardByRarity('Comune');
+      for(const rr of ['Season','Ultra Rara','Epica','Rara','Non Comune','Comune']){
+        final = pickCardByRarityUnique(rr, used);
+        if(final) break;
+      }
     }
-    picks.push(final);
-    // shuffle leggero con rng deterministico
-    for(let i=picks.length-1;i>0;i--){
-      const j = Math.floor(rng()*(i+1)); [picks[i], picks[j]] = [picks[j], picks[i]];
-    }
+    if(final) picks.push(final);
+
+    // Ordina per rarità (rare -> comuni)
+    picks.sort((a,b)=> RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
     return picks;
   }
 
-  /* ===========================
-     UI: render carte
-  ============================ */
+  /* ===== UI ===== */
   function cardTemplate(card){
     const art = document.createElement('article');
-    art.className = 'cCard drop';
+    art.className = 'cCard';
     art.dataset.state = 'back';
-    art.setAttribute('role','button');
-    art.setAttribute('tabindex','0');
+    art.setAttribute('role','button'); art.setAttribute('tabindex','0');
     art.setAttribute('aria-pressed','false');
     art.setAttribute('aria-label','Carta coperta, premi Invio o Spazio per rivelare');
 
-    const inner = document.createElement('div');
-    inner.className = 'inner';
-    const back = document.createElement('div');
-    back.className = 'back';
-    const front = document.createElement('div');
-    front.className = 'front';
+    const inner = document.createElement('div'); inner.className = 'inner';
+    const back = document.createElement('div'); back.className = 'back';
+    const front = document.createElement('div'); front.className = 'front';
 
     const imgwrap = document.createElement('div'); imgwrap.className = 'imgwrap';
     const img = document.createElement('img');
     if(card.img){ img.src = card.img; img.alt = card.name; }
     else { img.alt = 'Immagine non disponibile'; }
-    img.loading = 'lazy';
-    imgwrap.appendChild(img);
+    img.loading = 'lazy'; imgwrap.appendChild(img);
 
     const meta = document.createElement('div'); meta.className = 'meta';
     const title = document.createElement('div'); title.className = 'title'; title.textContent = card.name;
@@ -362,22 +352,16 @@
     inner.append(back, front);
     art.append(inner);
 
-    // Interazioni
     function reveal(){
       if(art.dataset.state === 'front') return;
       art.dataset.state = 'front';
       art.setAttribute('aria-pressed','true');
       art.setAttribute('aria-label', `Carta ${card.name} rivelata, rarità ${card.rarity}`);
-      // effetti
-      flash();
-      noiseBoom(0.18, 0.10);
-      tone(220, .06, 'triangle', .02);
+      flash(); noiseBoom(0.18, 0.10); tone(220, .06, 'triangle', .02);
       checkAllRevealed();
     }
     art.addEventListener('click', reveal);
-    art.addEventListener('keydown', (e)=>{
-      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); reveal(); }
-    });
+    art.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); reveal(); } });
 
     return art;
   }
@@ -387,33 +371,23 @@
     const frag = document.createDocumentFragment();
     cards.forEach(c => frag.appendChild(cardTemplate(c)));
     AREA.appendChild(frag);
-    BTN_REVEAL_ALL.disabled = false;
-    BTN_NEW.disabled = false;
-    BTN_SHOT.disabled = false;
-    setLog('Clicca su una carta per rivelarla. Usa Tab + Invio/Spazio da tastiera.');
+    BTN_REVEAL_ALL.disabled = false; BTN_NEW.disabled = false; BTN_SHOT.disabled = false;
+    setLog('Carte ordinate per rarità. Clicca per rivelare (niente doppioni).');
   }
 
   function resetStage(){
     AREA.innerHTML = '';
-    BTN_REVEAL_ALL.disabled = true;
-    BTN_SHOT.disabled = true;
+    BTN_REVEAL_ALL.disabled = true; BTN_SHOT.disabled = true;
     setLog('Pronto per un nuovo pacchetto.');
   }
 
   function checkAllRevealed(){
-    const remains = $$('.cCard[data-state="back"]').length;
-    if(remains === 0){
-      setLog('Tutte le carte sono state rivelate! 🎉');
-    }
+    if($$('.cCard[data-state="back"]').length === 0){ setLog('Tutte rivelate! 🎉'); }
   }
 
-  /* ===========================
-     Screenshot (toBlob)
-  ============================ */
   async function takeShot(){
     try{
       const canvas = await html2canvas(AREA, {backgroundColor: null, useCORS: true, scale: 2});
-      await new Promise(res => canvas.toBlob(res, 'image/png'));
       const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
       if(!blob) throw new Error('Impossibile creare l’immagine');
       const url = URL.createObjectURL(blob);
@@ -421,57 +395,28 @@
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(()=>URL.revokeObjectURL(url), 2000);
       tone(880, .08, 'sine', .03);
-    }catch(err){
-      setLog('Screenshot fallito: ' + err.message);
-    }
+    }catch(err){ setLog('Screenshot fallito: ' + err.message); }
   }
 
-  /* ===========================
-     Debug distribuzione (URL ?debug=1)
-  ============================ */
-  async function debugDistribution(){
-    const dbg = Number(qsParam('debug') || 0);
-    if(!dbg) return;
-    const N = 5000;
-    const tally = {'Comune':0,'Non Comune':0,'Rara':0,'Epica':0,'Ultra Rara':0,'Season':0};
-    for(let i=0;i<N;i++){
-      const pack = makePack();
-      pack.forEach(c => tally[c.rarity]++);
-    }
-    console.table(tally);
-  }
-
-  /* ===========================
-     Wiring bottoni
-  ============================ */
+  /* ===== Bottoni ===== */
   BTN_OPEN.addEventListener('click', ()=>{
     BTN_OPEN.disabled = true;
     const cards = makePack();
     showStage(cards);
     flash(); tone(440,.08,'sawtooth',.03); noiseBoom(0.25, 0.14);
   });
-
   BTN_NEW.addEventListener('click', ()=>{
-    resetStage();
-    BTN_OPEN.disabled = false;
-    // Riattiva un piccolo “shake” virtuale con suoni
-    tone(392,.06,'square',.02);
+    resetStage(); BTN_OPEN.disabled = false; tone(392,.06,'square',.02);
   });
-
   BTN_REVEAL_ALL.addEventListener('click', ()=>{
-    const backs = $$('.cCard[data-state="back"]');
-    backs.forEach((el, i)=> setTimeout(()=> el.click(), i*120));
+    const backs = $$('.cCard[data-state="back"]'); backs.forEach((el, i)=> setTimeout(()=> el.click(), i*120));
   });
-
   BTN_SHOT.addEventListener('click', takeShot);
 
-  /* ===========================
-     Avvio
-  ============================ */
+  /* ===== Avvio ===== */
   (async function init(){
     BTN_OPEN.disabled = true; BTN_REVEAL_ALL.disabled = true; BTN_NEW.disabled = true; BTN_SHOT.disabled = true;
     await loadData();
-    await debugDistribution();
   })();
   </script>
 </body>
