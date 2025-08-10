@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Fantaballa – Open Pack</title>
-  <meta name="description" content="Simulatore apertura pacchetti con rarità, animazioni e reveal progressivo (dati locali da cards.json)." />
+  <meta name="description" content="Simulatore apertura pacchetti con rarità, animazioni e reveal automatico (dati locali da cards.json)." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -40,7 +40,7 @@
 
     /* Toolbar impostazioni pack */
     .toolbar{display:grid; grid-template-columns: 1fr; gap:12px; margin-top:16px;}
-    @media (min-width: 980px){ .toolbar{grid-template-columns: .7fr .7fr .7fr 1fr auto} }
+    @media (min-width: 980px){ .toolbar{grid-template-columns: .7fr .7fr 1fr auto} }
     .control{
       background: linear-gradient(180deg, #121a2e, #0d1325);
       border:1px solid rgba(255,255,255,.08);
@@ -57,29 +57,25 @@
     }
     .btn:disabled{opacity:.6; cursor:not-allowed}
 
-    /* Tavolo pack: layout elastico */
+    /* Tavolo pack: layout elastico, centrato */
     .stage{
       margin:22px 0 40px; display:grid; gap:18px;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       justify-items:center; align-items:start;
     }
 
-    /* Carta: contenitore dimensionale a 690×987 su desktop */
+    /* Carta: contenitore a 690×987 (si riduce su mobile) */
     .card{
       position:relative; border-radius: var(--radius);
       transform-style: preserve-3d; transition: transform .6s ease;
-      cursor: pointer; width: 690px; /* LARGHEZZA REALE */
-      aspect-ratio: 690/987;       /* mantiene il rapporto */
+      width: 690px;                /* larghezza reale */
+      aspect-ratio: 690/987;       /* mantiene il rapporto corretto */
       max-width: 100%;             /* su schermi stretti si riduce */
+      cursor: default;
       box-shadow: 0 6px 18px rgba(0,0,0,.35);
       --glow: #6ee7ff;
     }
-    /* Mobile: il contenitore si adatta alla colonna e l’immagine si ridimensiona in proporzione */
-    @media (max-width: 720px){
-      .card{ width: 100%; }
-    }
 
-    /* Stato flip/reveal */
     .card.flip{ transform: rotateY(180deg); }
     .face{
       position:absolute; inset:0; border-radius:var(--radius); overflow:hidden;
@@ -95,14 +91,15 @@
       font-weight:700; letter-spacing:.5px; color:#a7e9ff;
     }
     .front{ transform: rotateY(180deg); display:grid; grid-template-rows: auto 1fr auto }
-    /* IMMAGINE: mostra sempre tutta la carta senza tagli */
+
+    /* IMMAGINE: tutta visibile, senza tagli */
     .front img{
-      width: 690px;         /* LARGHEZZA REALE */
-      height: 987px;        /* ALTEZZA REALE */
-      max-width: 100%;      /* si riduce su schermi piccoli */
-      height: auto;         /* mantiene proporzione quando si riduce */
-      display:block; margin:0 auto; background:#0b0f19;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;   /* nessun taglio */
+      background:#0b0f19;
     }
+
     .front .meta{ padding:10px 12px; font-size:13px; color:#aeb7d9; display:flex; gap:8px; flex-wrap:wrap }
     .front .name{ padding:10px 12px 0; font-weight:600 }
     .badge{
@@ -127,7 +124,7 @@
     .r-epica       { box-shadow: 0 0 0 1px rgba(167,139,250,.45), 0 12px 30px rgba(0,0,0,.45) }
     .r-season      { box-shadow: 0 0 0 1px rgba(239,68,68,.55), 0 12px 30px rgba(0,0,0,.45) }
 
-    /* --- Animazione “ventaglio” + glow pulse + flash reveal --- */
+    /* --- Animazioni: ventaglio + glow pulse + flash --- */
     .fan{
       transform: translateY(10px) rotate(calc(var(--r, 0deg)));
       opacity: 0; animation: fanIn .6s ease forwards var(--delay, 0ms);
@@ -137,9 +134,7 @@
       from { opacity: 0; transform: translateY(20px) rotate(calc(var(--r, 0deg) - 6deg)); }
       to   { opacity: 1; transform: translateY(0) rotate(var(--r, 0deg)); }
     }
-    .pulse{
-      animation: glow 1.2s ease-in-out infinite;
-    }
+    .pulse{ animation: glow 1.2s ease-in-out infinite; }
     @keyframes glow{
       0%,100%{ box-shadow: 0 0 0 0 rgba(110,231,255,.0), 0 12px 30px rgba(0,0,0,.45) }
       50%{    box-shadow: 0 0 20px 6px rgba(110,231,255,.25), 0 12px 30px rgba(0,0,0,.45)}
@@ -151,6 +146,23 @@
       animation: flash .6s ease forwards;
     }
     @keyframes flash{ 0%{opacity:0} 20%{opacity:1} 100%{opacity:0; transform:scale(1)} }
+
+    /* Ultima carta: animazione speciale (più lenta + flash più forte + zoom-in) */
+    .last-card {
+      animation: lastZoom 1s ease forwards;
+    }
+    @keyframes lastZoom {
+      0% { transform: scale(0.9) rotateY(180deg); opacity: 0; }
+      40% { opacity: 1; }
+      100% { transform: scale(1) rotateY(180deg); opacity: 1; }
+    }
+    .flash-strong::after{
+      content:''; position:absolute; inset:0; pointer-events:none;
+      background: radial-gradient(closest-side, rgba(255,255,255,.95), transparent 60%);
+      opacity:0; transform: scale(.8);
+      animation: flashStrong .9s ease forwards;
+    }
+    @keyframes flashStrong { 0%{opacity:0} 25%{opacity:1} 100%{opacity:0; transform:scale(1)} }
 
     .log{ margin-top:8px; font-size:13px; color:var(--muted); }
 
@@ -185,13 +197,6 @@
           <input id="packSize" type="number" min="3" max="12" value="6" />
         </div>
         <div class="control">
-          Reveal
-          <select id="revealMode">
-            <option value="seq">Sequenziale</option>
-            <option value="all">Tutte insieme</option>
-          </select>
-        </div>
-        <div class="control">
           Garanzia Rara+
           <select id="guarantee">
             <option value="1" selected>Attiva</option>
@@ -223,8 +228,8 @@
   </footer>
 
   <template id="tplCard">
-    <div class="card pulse fan">
-      <div class="face back">Tocca per rivelare</div>
+    <div class="card fan pulse">
+      <div class="face back">• • •</div>
       <div class="face front">
         <div class="badge"></div>
         <img alt="">
@@ -238,7 +243,6 @@
     // ============== Utils
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
-    const shuffle = arr => arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]);
 
     // ============== Caricamento dati
     let ALL = [];
@@ -290,10 +294,9 @@
       return cards;
     }
 
-    // ============== Rendering
+    // ============== Rendering placeholders
     function makePlaceholder(){
-      const node = $('#tplCard').content.firstElementChild.cloneNode(true);
-      return node;
+      return $('#tplCard').content.firstElementChild.cloneNode(true);
     }
 
     function renderPackPlaceholders(n){
@@ -301,8 +304,8 @@
       stage.innerHTML = '';
       for(let i=0;i<n;i++){
         const ph = makePlaceholder();
-        // set variabili per ventaglio: angolo da -12° a +12° e delay progressivo
-        const spread = 24; // ampiezza totale
+        // ventaglio: angolo da -24° a +24°, ritardo progressivo
+        const spread = 24;
         const angle = (i/(n-1||1))*spread - (spread/2);
         ph.style.setProperty('--r', angle+'deg');
         ph.style.setProperty('--delay', (80 * i)+'ms');
@@ -311,25 +314,25 @@
       return $$('#stage .card');
     }
 
-    function revealCard(cardEl, data){
+    function revealCard(cardEl, data, isLast=false){
       const slug = (data.rarity||'').toLowerCase().replace(/\s+/g,'-');
       if(slug) cardEl.classList.add('r-'+slug);
-      // front
+
       cardEl.querySelector('.badge').textContent = data.rarity;
       const img = cardEl.querySelector('img');
       img.src = data.img; img.alt = `Carta ${data.name}`;
       cardEl.querySelector('.name').textContent = data.name;
       cardEl.querySelector('.meta').textContent = `${data.game} • ${data.series} • ${data.role||'—'}`;
+
       // reveal
-      cardEl.classList.add('flash');
+      if(isLast){
+        cardEl.classList.add('flash-strong');
+        cardEl.classList.add('last-card'); // zoom + più lenta
+      }else{
+        cardEl.classList.add('flash');
+      }
       cardEl.classList.add('flip');
       cardEl.classList.remove('pulse');
-      // toggle flip al click
-      let toggled = true;
-      cardEl.addEventListener('click', ()=>{
-        toggled = !toggled;
-        cardEl.classList.toggle('flip', toggled);
-      }, { once:false });
     }
 
     async function openPack(){
@@ -338,7 +341,6 @@
       $('#log').textContent = 'Estrazione in corso…';
 
       const size = Math.max(3, Math.min(12, parseInt($('#packSize').value||6,10)));
-      const mode = $('#revealMode').value; // "seq" | "all"
       const weights = getWeights($('#weightsPreset').value);
       const guarantee = $('#guarantee').value === '1';
 
@@ -376,32 +378,30 @@
         }
       }
 
-      // Placeholders e ventaglio
+      // Placeholders + ventaglio
       const cardsEls = renderPackPlaceholders(chosen.length);
 
-      // Reveal
-      if(mode==='all'){
-        chosen.forEach((c, i)=> {
-          setTimeout(()=> revealCard(cardsEls[i], c), 120*i);
-        });
-      }else{
-        for(let i=0;i<chosen.length;i++){
-          await new Promise(r=> setTimeout(r, i===0? 400: 520));
-          revealCard(cardsEls[i], chosen[i]);
-        }
+      // Reveal automatico: una ogni 520ms, ultima con attesa maggiore
+      for(let i=0;i<chosen.length;i++){
+        const isLast = (i === chosen.length-1);
+        const delay = isLast ? 900 : 520;  // ultima più lenta
+        await new Promise(r=> setTimeout(r, delay));
+        revealCard(cardsEls[i], chosen[i], isLast);
       }
 
       // Riepilogo
       const counts = chosen.reduce((acc,c)=>{ acc[c.rarity]=(acc[c.rarity]||0)+1; return acc; },{});
-      const summary = Object.entries(counts).sort((a,b)=> (b[1]-a[1]) || ( (RANK[b[0]]||0)-(RANK[a[0]]||0) ) ).map(([k,v])=>`${v}× ${k}`).join(' • ');
+      const summary = Object.entries(counts)
+        .sort((a,b)=> (b[1]-a[1]) || ((RANK[b[0]]||0)-(RANK[a[0]]||0)))
+        .map(([k,v])=>`${v}× ${k}`).join(' • ');
       $('#log').textContent = `Pacchetto: ${summary}`;
 
       openBtn.disabled = false;
     }
 
-    // ============== Init
+    // Init
     $('#openBtn').addEventListener('click', openPack);
-    loadData().then(openPack);
+    loadData().then(openPack); // demo: apre subito un pacchetto
   </script>
 </body>
 </html>
