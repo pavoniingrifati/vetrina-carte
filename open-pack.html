@@ -4,39 +4,51 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Fantaballa – Open Pack</title>
-  <meta name="description" content="Simulatore apertura pacchetti con retro personalizzato, animazioni e glow (dati da cards.json)." />
+  <meta name="description" content="Simulatore apertura pacchetto con animazione, ordinamento per rarità e reveal epico dell'ultima carta." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg: #0b0f19;
-      --panel: #0f1526; 
+      --panel: #0f1526;
       --card: #121a2e;
       --card-2: #0d1325;
       --text: #ecf0ff;
       --muted: #a7b0d3;
       --accent: #6ee7ff;
       --radius: 16px;
+
+      /* glow per rarità */
+      --g-comune:      rgba(154,163,178,.35);
+      --g-non-comune:  rgba(52,211,153,.35);
+      --g-rara:        rgba(96,165,250,.45);
+      --g-epica:       rgba(167,139,250,.55);
+      --g-ultra-rara:  rgba(251,191,36,.65);
+      --g-season:      rgba(239,68,68,.7);
     }
+
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg);
-      color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      margin:0;
+      background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg);
+      color:var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
     a{color:var(--accent); text-decoration:none}
+
     header{
-      position:sticky; top:0; z-index:100; backdrop-filter: blur(10px);
+      position:sticky; top:0; z-index:10; backdrop-filter: blur(10px);
       background: linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6));
       border-bottom:1px solid rgba(255,255,255,.06);
     }
     .wrap{max-width:1200px; margin:0 auto; padding: 20px;}
-    .title{display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap}
-    h1{font-size: clamp(20px, 3.6vw, 34px); margin:0}
-    .subtitle{color:var(--muted); margin-top:6px}
+    .title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+    h1{margin:0; font-size: clamp(20px, 3.6vw, 34px)}
+    .subtitle{color:var(--muted)}
 
-    .toolbar{display:grid; grid-template-columns: 1fr auto; gap:12px; margin-top:16px;}
+    .toolbar{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap}
     .pill{
       display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px;
       border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text)
@@ -48,123 +60,154 @@
     }
     .btn:disabled{opacity:.6; cursor:not-allowed}
 
-    /* Griglia tavolo pack */
-    .stage{margin:22px 0 40px; display:grid; gap:16px; grid-template-columns: repeat(1, minmax(0,1fr))}
-    @media(min-width:700px){.stage{grid-template-columns: repeat(2, minmax(0,1fr))}}
+    /* ====== SEZIONE PACK (solo il pacchetto all'inizio) ====== */
+    .packArea{
+      display:flex; align-items:center; justify-content:center;
+      min-height: min(76vh, 900px);
+      position:relative;
+    }
+    .pack{
+      width:min(520px, 86vw);
+      aspect-ratio: 690 / 987;
+      background: url('Deck%20back%20ORO.png') center/cover no-repeat;
+      border-radius: 18px;
+      box-shadow:
+        0 8px 24px rgba(0,0,0,.5),
+        0 0 0 1px rgba(255,255,255,.08);
+      transition: transform .25s ease, box-shadow .25s ease;
+      position:relative;
+      isolation:isolate;
+    }
+    .pack:hover{ transform: translateY(-2px) rotateX(2deg) rotateY(-2deg); box-shadow:
+      0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.12) }
+    .packGlow{
+      position:absolute; inset:-16px; border-radius:22px; pointer-events:none; opacity:.0;
+      background: radial-gradient(500px 700px at 50% -10%, rgba(110,231,255,.25), transparent 60%);
+      filter: blur(10px);
+      transition: opacity .25s ease;
+    }
+    .pack:hover + .packGlow{ opacity: .6 }
+
+    /* animazione apertura pack */
+    .pack.opening{
+      animation: packOpen .9s cubic-bezier(.16,.84,.29,1) forwards;
+    }
+    @keyframes packOpen{
+      0%   { transform: scale(1) translateY(0); opacity:1 }
+      55%  { transform: scale(.92) translateY(6px); filter:brightness(1.08) }
+      75%  { transform: scale(1.02) translateY(-6px); filter:brightness(1.25) }
+      100% { transform: scale(.88) translateY(-12px); opacity:0 }
+    }
+
+    /* ====== TAVOLO CARTE ====== */
+    .stageWrap{ display:none; }
+    .stageWrap.show{ display:block; animation: stageIn .5s ease .3s both; }
+    @keyframes stageIn{ from{opacity:0; transform: translateY(8px)} to{opacity:1; transform:none} }
+
+    .stage{
+      margin:22px 0 40px; display:grid; gap:16px; grid-template-columns: repeat(1, minmax(0,1fr))
+    }
+    @media(min-width:720px){.stage{grid-template-columns: repeat(2, minmax(0,1fr))}}
     @media(min-width:1100px){.stage{grid-template-columns: repeat(3, minmax(0,1fr))}}
 
-    /* Carta 690x987 */
-    .card{
-      position:relative; border-radius: var(--radius);
-      width: 100%; aspect-ratio: 690 / 987; /* proporzione reale */
-      transform-style: preserve-3d;
-      transition: transform .7s cubic-bezier(.22,.75,.2,1), filter .3s ease, box-shadow .3s ease;
-      cursor: pointer;
-      box-shadow: 0 12px 24px rgba(0,0,0,.45);
-      perspective: 1200px;
-      --rarGlow: rgba(255,255,255,.25); /* base */
-      --revealGlow: rgba(110,231,255,.45); /* modificata al reveal */
-      --glowSize: 36px;
-    }
-    .card:hover{ transform: translateY(-2px) rotateX(3deg) rotateY(-3deg); }
-
-    .scene{
-      position:absolute; inset:0; border-radius: var(--radius);
-      transform: translateZ(0); transform-style: preserve-3d;
-    }
-
-    .face{
-      position:absolute; inset:0; border-radius:var(--radius); overflow:hidden;
-      backface-visibility: hidden;
+    .cCard{
+      position:relative; width:100%; aspect-ratio: 690 / 987; border-radius: 18px;
+      overflow:hidden; background: var(--card);
       border:1px solid rgba(255,255,255,.08);
-      background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card);
-      display:flex; align-items:center; justify-content:center;
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,.06),
-        0 22px 50px rgba(0,0,0,.5),
-        0 0 var(--glowSize) var(--revealGlow);
-      transform: rotateY(0deg);
-      transition: box-shadow .35s ease;
+      box-shadow: 0 10px 28px rgba(0,0,0,.45);
+      transform: translateY(10px) scale(.98);
+      opacity:0;
     }
-
-    /* Retro con la tua immagine */
-    .back{
-      background: none; /* useremo l'img */
-    }
-    .back img{
-      width: 100%; height: 100%; object-fit: cover;
-      aspect-ratio: 690 / 987; display:block;
-      filter: drop-shadow(0 10px 30px rgba(0,0,0,.45));
-      transform: translateZ(1px);
-      pointer-events: none;
-    }
-
-    /* Fronte */
-    .front{
-      transform: rotateY(180deg);
-      display:grid; grid-template-rows: auto 1fr auto;
-      background: var(--card);
-    }
-    .front img{
-      width:100%; height:100%; object-fit:cover; aspect-ratio: 690 / 987; background:#0b0f19;
-    }
-    .front .name{ padding:10px 12px 0; font-weight:600 }
-    .front .meta{ padding:10px 12px 12px; font-size:13px; color:#aeb7d9; display:flex; gap:8px; flex-wrap:wrap }
-
-    /* Badge rarità */
-    .badge{
-      position:absolute; top:10px; right:10px; z-index:2;
+    .cCard .badge{
+      position:absolute; top:10px; right:10px;
       padding:6px 8px; border-radius:999px; font-size:12px; font-weight:700; color:white;
-      border:1px solid rgba(255,255,255,.15);
-      transform: translateZ(3px);
+      border:1px solid rgba(255,255,255,.15); z-index:2;
     }
-    .r-comune      .badge{ background: rgba(154,163,178,.85)}
-    .r-non-comune  .badge{ background: rgba(52,211,153,.85)}
-    .r-rara        .badge{ background: rgba(96,165,250,.85)}
-    .r-ultra-rara  .badge{ background: rgba(251,191,36,.9); color:#000}
-    .r-epica       .badge{ background: rgba(167,139,250,.9)}
-    .r-season      .badge{ background: rgba(239,68,68,.9)}
+    /* badge colori */
+    .cCard.r-comune      .badge{ background: rgba(154,163,178,.85) }
+    .cCard.r-non-comune  .badge{ background: rgba(52,211,153,.85) }
+    .cCard.r-rara        .badge{ background: rgba(96,165,250,.9) }
+    .cCard.r-epica       .badge{ background: rgba(167,139,250,.95) }
+    .cCard.r-ultra-rara  .badge{ background: rgba(251,191,36,.95); color:#000 }
+    .cCard.r-season      .badge{ background: rgba(239,68,68,.95) }
 
-    /* Glow per rarità */
-    .r-comune      { --rarGlow: rgba(154,163,178,.35) }
-    .r-non-comune  { --rarGlow: rgba(52,211,153,.35) }
-    .r-rara        { --rarGlow: rgba(96,165,250,.35) }
-    .r-ultra-rara  { --rarGlow: rgba(251,191,36,.45) }
-    .r-epica       { --rarGlow: rgba(167,139,250,.45) }
-    .r-season      { --rarGlow: rgba(239,68,68,.55) }
+    .cCard img{ width:100%; height:100%; object-fit:cover; display:block }
 
-    /* Stati flip */
-    .card[data-state="back"] .scene{ transform: rotateY(0deg); }
-    .card[data-state="front"] .scene{ transform: rotateY(180deg); }
-    .card.revealing{
-      animation: pop .45s ease-out;
+    /* reveal normale (slide + fade + glow) */
+    .cCard.revealed{
+      animation: cardIn .48s cubic-bezier(.2,.8,.2,1) forwards;
     }
-    @keyframes pop{
-      0%{ transform: scale(.96) }
-      60%{ transform: scale(1.02) }
-      100%{ transform: scale(1) }
+    @keyframes cardIn{
+      0%{ opacity:0; transform: translateY(26px) scale(.96); filter: brightness(.9) }
+      60%{ opacity:1; transform: translateY(-4px) scale(1.01) }
+      100%{ opacity:1; transform: translateY(0) scale(1); filter: none }
     }
 
-    /* Bagliore al reveal */
-    .burst::after{
-      content:""; position:absolute; inset:-6px; border-radius:inherit; pointer-events:none;
-      box-shadow: 0 0 42px var(--revealGlow), 0 0 86px var(--rarGlow);
-      opacity:0; animation: burst .7s ease-out forwards;
+    /* cerchio glow morbido in base alla rarità */
+    .cCard::after{
+      content:""; position:absolute; inset:-2px; border-radius:20px; pointer-events:none; opacity:0;
+      background: radial-gradient(500px 600px at 50% -10%, var(--rarGlow, rgba(255,255,255,.18)), transparent 60%);
+      filter: blur(12px);
+      transition: opacity .4s ease;
     }
-    @keyframes burst{
-      0%{ opacity:.85 }
-      100%{ opacity:0 }
+    .cCard.revealed::after{ opacity:.9 }
+
+    /* mappa var(--rarGlow) dalle classi */
+    .cCard.r-comune      { --rarGlow: var(--g-comune) }
+    .cCard.r-non-comune  { --rarGlow: var(--g-non-comune) }
+    .cCard.r-rara        { --rarGlow: var(--g-rara) }
+    .cCard.r-epica       { --rarGlow: var(--g-epica) }
+    .cCard.r-ultra-rara  { --rarGlow: var(--g-ultra-rara) }
+    .cCard.r-season      { --rarGlow: var(--g-season) }
+
+    /* ====== EPIC REVEAL per l'ULTIMA CARTA ====== */
+    .cCard.epic{
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.12),
+        0 18px 48px rgba(0,0,0,.6),
+        0 0 80px var(--rarGlow);
+      animation: epicIn .95s cubic-bezier(.2,.8,.2,1) forwards;
+    }
+    @keyframes epicIn{
+      0%{ opacity:0; transform: translateY(36px) scale(.94) rotate(-1deg) }
+      45%{ opacity:1; transform: translateY(-6px) scale(1.03) rotate(0.4deg) }
+      80%{ transform: translateY(0) scale(1) }
+      100%{ transform: translateY(0) scale(1) }
+    }
+
+    /* spotlight e particelle */
+    .cCard.epic::before{
+      content:""; position:absolute; inset:-10px; border-radius:22px; pointer-events:none;
+      background:
+        radial-gradient(320px 260px at 50% 0%, rgba(255,255,255,.18), transparent 60%),
+        radial-gradient(800px 560px at 50% -20%, var(--rarGlow), transparent 70%);
+      mix-blend-mode: screen; opacity:0; animation: spot .9s ease forwards .2s;
+    }
+    @keyframes spot{ from{opacity:0} to{opacity:.9} }
+
+    .cCard.epic .spark{
+      position:absolute; inset:0; pointer-events:none; overflow:hidden;
+    }
+    .spark i{
+      position:absolute; width:2px; height:10px; background: white; opacity:.9;
+      box-shadow: 0 0 10px white, 0 0 20px var(--rarGlow);
+      transform: translate(-50%,-50%) rotate(var(--rot,0deg));
+      animation: fall .9s ease-out forwards;
+    }
+    @keyframes fall{
+      0%{ transform: translate(var(--x,50%), -20%) rotate(var(--rot,0deg)); opacity:0 }
+      30%{ opacity:1 }
+      100%{ transform: translate(var(--xEnd,50%), 120%) rotate(var(--rot,0deg)); opacity:0 }
     }
 
     .log{ margin-top:8px; font-size:13px; color:var(--muted); }
 
-    footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6)); position:sticky; bottom:0}
+    footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6))}
     .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
     .pillFoot{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
 
     @media (max-width: 600px) {
       .wrap { padding: 12px; }
-      .toolbar { grid-template-columns: 1fr; }
       .stage { grid-template-columns: 1fr; }
     }
   </style>
@@ -175,64 +218,53 @@
       <div class="title">
         <div>
           <h1>Open Pack – Fantaballa</h1>
-          <div class="subtitle">Retro personalizzato • 6 carte • flip sequenziale</div>
+          <div class="subtitle">Mostra solo il pacchetto → apertura → carte in ordine di rarità (ultima epica)</div>
         </div>
-        <div style="display:flex; gap:10px; align-items:center">
-          <a href="index.html" class="pill">⬅️ Torna alla vetrina</a>
-        </div>
+        <a href="index.html" class="pill">⬅️ Torna alla vetrina</a>
       </div>
 
-      <div class="toolbar" aria-label="Comandi">
-        <div class="pill">🎲 Probabilità bilanciate • Garanzia Rara+ attiva</div>
-        <button id="openBtn" class="btn">🎁 Apri un pacchetto</button>
+      <div class="toolbar">
+        <span class="pill">🎲 Probabilità bilanciate • Garanzia Rara+ attiva</span>
+        <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
       </div>
       <div class="log" id="log"></div>
     </div>
   </header>
 
   <main class="wrap">
-    <section id="stage" class="stage" aria-live="polite"></section>
+    <!-- Solo pacchetto iniziale -->
+    <section class="packArea" id="packArea">
+      <div class="pack" id="pack"></div>
+      <div class="packGlow"></div>
+    </section>
+
+    <!-- Dopo l'apertura mostriamo le carte -->
+    <section class="stageWrap" id="stageWrap">
+      <div id="stage" class="stage" aria-live="polite"></div>
+    </section>
   </main>
 
   <footer>
     <div class="foot">
-      <span class="pillFoot">ℹ️ Assicurati di caricare anche “Deck back ORO.png” accanto a questo file.</span>
+      <span class="pillFoot">ℹ️ Assicurati di caricare “Deck back ORO.png” accanto a questa pagina.</span>
     </div>
   </footer>
 
   <template id="tplCard">
-    <div class="card r-comune" data-state="back">
-      <div class="scene">
-        <div class="face back">
-          <!-- Retro (immagine tua). Se rinomini il file, aggiorna qui il src -->
-          <img src="Deck%20back%20ORO.png" alt="Retro carta" />
-        </div>
-        <div class="face front">
-          <div class="badge"></div>
-          <img alt="">
-          <div class="name"></div>
-          <div class="meta"></div>
-        </div>
-      </div>
-    </div>
+    <article class="cCard">
+      <span class="badge"></span>
+      <img alt="">
+      <div class="spark"></div>
+    </article>
   </template>
 
   <script>
     // ===== Utils
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
-    const delay = ms => new Promise(r=>setTimeout(r, ms));
-    const randGlow = () => {
-      const colors = [
-        'rgba(110,231,255,0.55)',
-        'rgba(251,191,36,0.55)',
-        'rgba(167,139,250,0.55)',
-        'rgba(52,211,153,0.55)',
-        'rgba(239,68,68,0.55)',
-        'rgba(96,165,250,0.55)'
-      ];
-      return colors[Math.floor(Math.random()*colors.length)];
-    };
+    const delay = ms => new Promise(r => setTimeout(r, ms));
+    const rarityRank = { 'Comune':0, 'Non Comune':1, 'Rara':2, 'Epica':3, 'Ultra Rara':4, 'Season':5 };
+    const slug = r => (r||'').toLowerCase().replace(/\s+/g,'-');
 
     // ===== Dati
     let ALL = [];
@@ -242,8 +274,7 @@
         if(!res.ok) throw new Error('cards.json non trovato');
         ALL = await res.json();
       }catch(e){
-        console.error(e);
-        ALL = [];
+        console.error(e); ALL = [];
       }
     }
 
@@ -253,7 +284,7 @@
       const entries = Object.entries(WEIGHTS);
       const tot = entries.reduce((s,[,w])=>s+w,0);
       let r = Math.random()*tot;
-      for(const [rar,w] of entries){ if(r < w) return rar; r -= w; }
+      for(const [rar, w] of entries){ if(r < w) return rar; r -= w; }
       return 'Comune';
     }
     function pickCardByRarity(rarity, used){
@@ -263,9 +294,9 @@
       return pool[Math.floor(Math.random()*pool.length)];
     }
     function ensureRarePlus(cards){
-      const ok = cards.some(c => ['Rara','Epica','Ultra Rara','Season'].includes(c.rarity));
+      const ok = cards.some(c => rarityRank[c.rarity] >= rarityRank['Rara']);
       if(ok) return cards;
-      const pool = ALL.filter(c => ['Rara','Epica','Ultra Rara','Season'].includes(c.rarity));
+      const pool = ALL.filter(c => rarityRank[c.rarity] >= rarityRank['Rara']);
       if(!pool.length) return cards;
       const i = Math.floor(Math.random()*cards.length);
       cards[i] = pool[Math.floor(Math.random()*pool.length)];
@@ -273,52 +304,63 @@
     }
 
     // ===== Rendering
-    function makePlaceholder(){
+    function makeCard(data){
       const node = $('#tplCard').content.firstElementChild.cloneNode(true);
-      node.dataset.state = 'back';
-      // glow iniziale più soft
-      node.style.setProperty('--revealGlow', 'rgba(255,255,255,0.08)');
+      const rslug = slug(data.rarity);
+      if(rslug) node.classList.add('r-'+rslug);
+      node.querySelector('.badge').textContent = data.rarity;
+      const img = node.querySelector('img');
+      img.src = data.img; img.alt = `Carta ${data.name}`;
       return node;
     }
-    function renderPlaceholders(n){
-      const stage = $('#stage'); stage.innerHTML = '';
-      for(let i=0;i<n;i++) stage.appendChild(makePlaceholder());
-      return $$('#stage .card');
+
+    function addSparks(el, n=12){
+      const c = el.querySelector('.spark');
+      c.innerHTML = '';
+      for(let i=0;i<n;i++){
+        const s = document.createElement('i');
+        const x = 10 + Math.random()*80;
+        const xEnd = x + (-10 + Math.random()*20);
+        const rot = -15 + Math.random()*30;
+        s.style.setProperty('--x', x + '%');
+        s.style.setProperty('--xEnd', xEnd + '%');
+        s.style.setProperty('--rot', rot + 'deg');
+        s.style.left = x + '%';
+        s.style.top = (5 + Math.random()*15) + '%';
+        c.appendChild(s);
+      }
     }
 
-    function applyRarityStyling(cardEl, rarity){
-      const slug = (rarity||'').toLowerCase().replace(/\s+/g,'-');
-      cardEl.classList.remove('r-comune','r-non-comune','r-rara','r-ultra-rara','r-epica','r-season');
-      if(slug) cardEl.classList.add('r-'+slug);
-    }
+    function showStage(cards){
+      const wrap = $('#stageWrap');
+      const stage = $('#stage');
+      stage.innerHTML = '';
+      wrap.classList.add('show');
 
-    function revealCard(cardEl, data){
-      // rarità, badge e contenuti
-      applyRarityStyling(cardEl, data.rarity);
-      cardEl.querySelector('.badge').textContent = data.rarity;
-      const img = cardEl.querySelector('.front img');
-      img.src = data.img; img.alt = `Carta ${data.name}`;
-      cardEl.querySelector('.name').textContent = data.name;
-      cardEl.querySelector('.meta').textContent = `${data.game} • ${data.series} • ${data.role || '—'}`;
+      // reveal in ordine (dalla più bassa alla più alta)
+      cards.forEach((c, i) => {
+        const el = makeCard(c);
+        stage.appendChild(el);
 
-      // glow casuale miscelato con glow rarità
-      cardEl.style.setProperty('--revealGlow', `color-mix(in oklab, ${randGlow()} 60%, var(--rarGlow, rgba(255,255,255,.25)))`);
-
-      // flip + effetti
-      cardEl.classList.add('revealing','burst');
-      cardEl.dataset.state = 'front';
-      setTimeout(()=> cardEl.classList.remove('burst'), 750);
-
-      // tap per ribaltare avanti/indietro
-      cardEl.addEventListener('click', ()=>{
-        const st = cardEl.dataset.state === 'front' ? 'back' : 'front';
-        cardEl.dataset.state = st;
+        const isLast = i === cards.length - 1;
+        setTimeout(() => {
+          if(isLast){
+            // EPIC reveal
+            addSparks(el, 18);
+            el.classList.add('epic', 'revealed');
+          } else {
+            el.classList.add('revealed');
+          }
+        }, 350 * i + (isLast ? 250 : 0)); // l'ultima parte più tardi
       });
     }
 
-    async function openPack(){
+    async function doOpen(){
       const BTN = $('#openBtn');
-      BTN.disabled = true; $('#log').textContent = 'Estrazione in corso…';
+      const pack = $('#pack');
+      const packArea = $('#packArea');
+      const stageWrap = $('#stageWrap');
+      BTN.disabled = true;
 
       if(!ALL.length) await loadData();
       if(!ALL.length){
@@ -326,38 +368,55 @@
         BTN.disabled = false; return;
       }
 
-      const PACK_SIZE = 6;
-      const used = new Set();
+      // 1) Anima il pack (sparisce)
+      pack.classList.add('opening');
+      await delay(900);
+      packArea.style.display = 'none';
+
+      // 2) Estrai carte e ORDINA per rarità
+      const used = new Set(); const N = 6;
       let chosen = [];
-      for(let i=0;i<PACK_SIZE;i++){
+      for(let i=0;i<N;i++){
         const rar = pickRarity();
         const card = pickCardByRarity(rar, used) || pickCardByRarity('Comune', used);
         if(!card) break;
-        used.add(card.id);
-        chosen.push(card);
+        used.add(card.id); chosen.push(card);
       }
       chosen = ensureRarePlus(chosen);
 
-      const cardsEls = renderPlaceholders(chosen.length);
+      // ordina per rarità crescente, così l'ultima è la più rara
+      chosen.sort((a,b) => (rarityRank[a.rarity] - rarityRank[b.rarity]));
 
-      // reveal sequenziale con flip (tutte partono col retro)
-      for(let i=0;i<chosen.length;i++){
-        await delay(i===0 ? 350 : 480);
-        revealCard(cardsEls[i], chosen[i]);
-      }
+      // 3) Mostra le carte con reveal, ultima epica
+      showStage(chosen);
 
-      // riepilogo
+      // 4) Log riepilogo
       const counts = chosen.reduce((acc,c)=>{ acc[c.rarity]=(acc[c.rarity]||0)+1; return acc; },{});
       const summary = Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${v}× ${k}`).join(' • ');
       $('#log').textContent = `Pacchetto: ${summary}`;
 
+      BTN.textContent = '🔁 Apri un altro pacchetto';
       BTN.disabled = false;
+
+      // 5) Al nuovo click: reset e ri-mostra pack + nuova apertura
+      BTN.onclick = async () => {
+        BTN.disabled = true;
+        // reset stage
+        stageWrap.classList.remove('show');
+        $('#stage').innerHTML = '';
+        // ripresenta pack
+        packArea.style.display = 'flex';
+        pack.classList.remove('opening');
+        BTN.textContent = '🎁 Apri pacchetto';
+        await delay(100);
+        BTN.disabled = false;
+      };
     }
 
-    // init
-    $('#openBtn').addEventListener('click', openPack);
-    // auto-apri un pacchetto all’avvio per demo
-    loadData().then(openPack);
+    // Init
+    $('#openBtn').addEventListener('click', doOpen);
+    // Click sul pack = apri
+    $('#pack').addEventListener('click', () => $('#openBtn').click());
   </script>
 </body>
 </html>
