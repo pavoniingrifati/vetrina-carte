@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg: #0b0f19; /* blu notte */
+      --bg: #0b0f19;
       --panel: #0f1526; 
       --card: #121a2e;
       --card-2: #0d1325;
@@ -39,6 +39,48 @@
     h1{font-size: clamp(20px, 3.6vw, 34px); margin:0; letter-spacing:.3px}
     .subtitle{color:var(--muted); margin-top:6px}
 
+    /* ---------- HERO NUOVI PACCHETTI ---------- */
+    .hero { margin-top: 16px; }
+    .hero-head {
+      display:flex; align-items:center; justify-content:space-between;
+      margin: 4px 2px 10px;
+    }
+    .hero-head h2 { font-size: clamp(16px,2.4vw,22px); margin:0; }
+    .hero-viewall {
+      font-size: 14px; color: var(--accent); text-decoration: none;
+      border:1px solid rgba(110,231,255,.35); padding:6px 10px; border-radius:999px;
+    }
+    .hero-scroller{
+      display:flex; gap:12px; overflow-x:auto; padding: 6px 2px 8px;
+      scroll-snap-type: x mandatory;
+    }
+    .hero-scroller::-webkit-scrollbar{ height:8px }
+    .hero-scroller::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.15); border-radius:999px }
+
+    .pack {
+      position:relative; flex: 0 0 240px; scroll-snap-align: start;
+      background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card);
+      border:1px solid rgba(255,255,255,.08); border-radius: 16px; overflow:hidden;
+      box-shadow: var(--shadow);
+      transition: transform .15s ease, border-color .2s ease;
+    }
+    .pack:hover{ transform: translateY(-2px); border-color: rgba(110,231,255,.35); }
+    .pack img{ width:100%; height:150px; object-fit:cover; background:#0b0f19; display:block }
+    .pack .p-body{ padding:10px 12px }
+    .pack .p-title{ font-weight:600; font-size:14px; margin:0 0 4px }
+    .pack .p-meta{ font-size:12px; color:var(--muted) }
+    .badge-new{
+      position:absolute; top:8px; left:8px; font-size:12px; padding:6px 8px; border-radius:999px;
+      background: rgba(0,0,0,.5); backdrop-filter: blur(6px);
+      border:1px solid rgba(255,255,255,.15);
+    }
+    .p-cta{
+      display:inline-flex; align-items:center; gap:6px; margin-top:10px;
+      font-size:12px; color:var(--accent);
+      border:1px solid rgba(110,231,255,.35); padding:6px 10px; border-radius:999px; text-decoration:none;
+    }
+
+    /* ---------- Toolbar / filtri ---------- */
     .toolbar{display:grid; grid-template-columns: 1fr; gap:12px; margin-top:16px;}
     @media (min-width: 900px){
       .toolbar{grid-template-columns: 1.2fr .8fr .8fr .8fr .8fr}
@@ -54,20 +96,16 @@
     .search input{flex:1; background:transparent; border:none; color:var(--text)}
     .search input::placeholder{color:#98a3c7}
     select{appearance:none; background-image: linear-gradient(180deg, transparent, transparent), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat:no-repeat; background-position:right 10px center; padding-right:38px}
-select, select option {
-  color: var(--text);
-  background-color: var(--card);
-}
-
-select option {
-  padding: 8px;
-}
+    /* visibilità opzioni dropdown */
+    select, select option { color: var(--text); background-color: var(--card); }
+    select option { padding: 8px; }
 
     .range{display:flex; gap:10px; align-items:center}
     .range input{width:100%}
     button.primary{background: linear-gradient(180deg, #1b2a4d, #152141); border-color: rgba(110,231,255,.35)}
     button.primary:focus, .search:focus-within, select:focus, .range:focus-within{box-shadow:0 0 0 3px var(--ring)}
 
+    /* ---------- Cards grid ---------- */
     .grid{display:grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap:16px; margin:22px 0 80px}
     @media (min-width:600px){.grid{grid-template-columns: repeat(2, minmax(0,1fr));}}
     @media (min-width:900px){.grid{grid-template-columns: repeat(3, minmax(0,1fr));}}
@@ -90,6 +128,8 @@ select option {
     .open{position:absolute; bottom:10px; right:10px}
     .tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
     .tag{padding:6px 10px; font-size:12px; border-radius:999px; border-color: rgba(255,255,255,.12)}
+
+    /* ---------- Modal ---------- */
     dialog{border:none; padding:0; border-radius: 18px; overflow:hidden; width:min(900px, 96vw); box-shadow:0 20px 80px rgba(0,0,0,.65)}
     dialog::backdrop{background: rgba(0,0,0,.65)}
     .modal{display:grid; grid-template-columns: 1fr; background: var(--panel)}
@@ -103,20 +143,24 @@ select option {
     .comment{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)); border:1px solid rgba(255,255,255,.09); border-radius:12px; padding:10px; margin-top:10px}
     .comment .author{font-weight:600; font-size:13px}
     .comment .text{font-size:14px; color: #d9e1ff}
+
     footer{position:sticky; bottom:0; background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6)); border-top:1px solid rgba(255,255,255,.06)}
     .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
     .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
-    @media (max-width: 500px) {
-  .wrap { padding: 10px; }
-  .card .name { font-size: 14px; }
-  .card .meta { font-size: 12px; }
-  .toolbar { overflow-x: auto; display: flex; gap: 8px; padding-bottom: 6px; }
-  .toolbar > * { flex: 0 0 auto; }
-  dialog { width: 100%; height: 100%; border-radius: 0; }
-  .modal { grid-template-columns: 1fr !important; height: 100%; }
-  .modal .big { max-height: 50vh; object-fit: contain; }
-}
 
+    /* ---------- Mobile tweaks ---------- */
+    @media (max-width: 500px) {
+      .wrap { padding: 10px; }
+      .card .name { font-size: 14px; }
+      .card .meta { font-size: 12px; }
+      .toolbar { overflow-x: auto; display: flex; gap: 8px; padding-bottom: 6px; }
+      .toolbar > * { flex: 0 0 auto; }
+      dialog { width: 100%; height: 100%; border-radius: 0; }
+      .modal { grid-template-columns: 1fr !important; height: 100%; }
+      .modal .big { max-height: 50vh; object-fit: contain; }
+      .pack{ flex-basis: 72%; }
+      .pack img{ height: 130px; }
+    }
   </style>
 </head>
 <body>
@@ -128,6 +172,15 @@ select option {
           <div class="subtitle">Non hai ancora una carta? Segui le live su Tik Tok di Fanataballa!</div>
         </div>
       </div>
+
+      <!-- HERO: Nuovi pacchetti -->
+      <section class="hero" aria-label="Nuovi pacchetti in arrivo">
+        <div class="hero-head">
+          <h2>Nuovi pacchetti in arrivo</h2>
+          <a id="packsViewAll" href="#" class="hero-viewall">Vedi tutti</a>
+        </div>
+        <div class="hero-scroller" id="packsScroller"><!-- popolato via JS --></div>
+      </section>
 
       <div class="toolbar" aria-label="Filtri e ricerca">
         <div class="search" role="search">
@@ -173,10 +226,11 @@ select option {
 
   <footer>
     <div class="foot">
-      <span class="pill">ℹ️Usa i filtri per cercare tutte le carte.</span>
+      <span class="pill">ℹ️ Mostriamo 8 carte casuali all’avvio. Usa i filtri per cercare tra tutte.</span>
     </div>
   </footer>
 
+  <!-- Modal -->
   <dialog id="dlg">
     <form method="dialog" class="modal">
       <button class="close" aria-label="Chiudi">✕</button>
@@ -236,15 +290,45 @@ select option {
     const $ = sel => document.querySelector(sel);
     const esc = (s='') => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const STAR_OUT = 'M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.401 8.169L12 18.896l-7.335 3.87 1.401-8.169L.132 9.21l8.2-1.192z';
-    function starSVG(filled){ return `<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_OUT}" fill="${filled? 'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"/></svg>`; }
-    function avg(arr){return arr.length? (arr.reduce((a,b)=>a+b,0)/arr.length):0}
-    function keyFor(id, type){return `cardhub_${type}_${id}`}
-    function loadRatings(id){ const raw = localStorage.getItem(keyFor(id,'ratings')); return raw? JSON.parse(raw): []; }
-    function saveRating(id,val){ const list = loadRatings(id); list.push(val); localStorage.setItem(keyFor(id,'ratings'), JSON.stringify(list)); }
-    function loadComments(id){ const raw = localStorage.getItem(keyFor(id,'comments')); return raw? JSON.parse(raw): []; }
-    function addComment(id,c){ const list = loadComments(id); list.push(c); localStorage.setItem(keyFor(id,'comments'), JSON.stringify(list)); }
-    function clearComments(id){ localStorage.removeItem(keyFor(id,'comments')); }
+    const starSVG = filled => `<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_OUT}" fill="${filled? 'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"/></svg>`;
+    const avg = arr => arr.length? (arr.reduce((a,b)=>a+b,0)/arr.length):0;
+    const keyFor = (id, type) => `cardhub_${type}_${id}`;
+    const loadRatings = id => JSON.parse(localStorage.getItem(keyFor(id,'ratings'))||'[]');
+    const saveRating = (id,v)=> localStorage.setItem(keyFor(id,'ratings'), JSON.stringify([...loadRatings(id), v]));
+    const loadComments = id => JSON.parse(localStorage.getItem(keyFor(id,'comments'))||'[]');
+    const addComment = (id,c)=> localStorage.setItem(keyFor(id,'comments'), JSON.stringify([...loadComments(id), c]));
+    const clearComments = id => localStorage.removeItem(keyFor(id,'comments'));
 
+    /* ---------- HERO DATA ---------- */
+    const PACKS = [
+      { id:"pkm-shrouded-fable", title:"Shrouded Fable", date:"Set 2024", img:"https://images.unsplash.com/photo-1520975922284-9bcd61b6d7fe?w=1200&q=80", url:"https://tcg.pokemon.com/it-it/" },
+      { id:"pkm-twilight-masquerade", title:"Twilight Masquerade", date:"Estate 2024", img:"https://images.unsplash.com/photo-1607252650355-f7fd0460ccdb?w=1200&q=80", url:"https://tcg.pokemon.com/it-it/" },
+      { id:"pkm-scarlet-violet", title:"Scarlet & Violet", date:"Nuova ristampa", img:"https://images.unsplash.com/photo-1520975594083-8efc64a6e23a?w=1200&q=80", url:"https://tcg.pokemon.com/it-it/" }
+    ];
+
+    function renderPacks() {
+      const box = document.getElementById('packsScroller');
+      if (!box) return;
+      box.innerHTML = '';
+      PACKS.forEach(p => {
+        const a = document.createElement('a');
+        a.className = 'pack';
+        a.href = p.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        a.innerHTML = `
+          <span class="badge-new">Nuovo</span>
+          <img src="${p.img}" alt="Pacchetto ${p.title}">
+          <div class="p-body">
+            <div class="p-title">${p.title}</div>
+            <div class="p-meta">${p.date}</div>
+            <span class="p-cta">Scopri &rsaquo;</span>
+          </div>`;
+        box.appendChild(a);
+      });
+      const viewAll = document.getElementById('packsViewAll');
+      if (viewAll) viewAll.onclick = (e)=>{ e.preventDefault(); window.open('https://tcg.pokemon.com/it-it/', '_blank'); };
+    }
+
+    /* ---------- CARDS ---------- */
     let CARDS = [];
     async function loadCards(){
       try{
@@ -255,14 +339,14 @@ select option {
         console.error('[ERRORE CARICAMENTO CARTE]', e);
         CARDS = [];
       }finally{
+        renderPacks();
         applyFilters();
       }
     }
 
     const grid = $('#grid');
     function renderStars(container, value, onRate){
-      container.innerHTML='';
-      const full = Math.round(value);
+      container.innerHTML=''; const full = Math.round(value);
       for(let i=1;i<=5;i++){
         const btn = document.createElement(onRate? 'button':'div');
         btn.innerHTML = starSVG(i<=full);
@@ -276,11 +360,8 @@ select option {
 
     function noFiltersActive(){
       return (
-        !$('#q').value &&
-        !$('#fGame').value &&
-        !$('#fRarity').value &&
-        !$('#fRole').value &&
-        String($('#fRating').value) === "0"
+        !$('#q').value && !$('#fGame').value && !$('#fRarity').value &&
+        !$('#fRole').value && String($('#fRating').value) === "0"
       );
     }
 
@@ -305,10 +386,8 @@ select option {
         return a.name.localeCompare(b.name);
       });
 
-      // Se non ci sono filtri attivi, mostra solo 6 carte casuali
-      if (noFiltersActive()) {
-        items = items.slice().sort(() => Math.random() - 0.5).slice(0, 8);
-      }
+      // Nessun filtro → mostra 8 casuali
+      if (noFiltersActive()) items = items.slice().sort(()=>Math.random()-0.5).slice(0,8);
 
       renderGrid(items);
     }
@@ -332,6 +411,7 @@ select option {
       }
     }
 
+    // Modal
     const dlg = document.getElementById('dlg');
     const dlgImg = document.getElementById('dlgImg');
     const dlgName = document.getElementById('dlgName');
@@ -352,7 +432,6 @@ select option {
       renderComments(card.id);
       dlg.showModal();
     }
-
     dlg.addEventListener('close', ()=>{ current=null });
 
     function renderComments(id){
@@ -392,6 +471,7 @@ select option {
     ['q','fGame','fRarity','fRole','fSort'].forEach(id=> document.getElementById(id).addEventListener('input', applyFilters));
     document.getElementById('fRating').addEventListener('input', ()=>{ document.getElementById('fRatingVal').textContent=document.getElementById('fRating').value; applyFilters();});
 
+    // Start
     loadCards();
   </script>
 </body>
