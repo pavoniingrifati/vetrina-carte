@@ -17,7 +17,6 @@
       --text: #ecf0ff;
       --muted: #a7b0d3;
       --accent: #6ee7ff;
-      --danger: #ff6b6b;
       --radius: 16px;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
@@ -28,6 +27,7 @@
       color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
     a{color:var(--accent); text-decoration:none}
+
     header{
       position:sticky; top:0; z-index:100; backdrop-filter: blur(10px);
       background: linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6));
@@ -40,7 +40,7 @@
 
     /* Toolbar impostazioni pack */
     .toolbar{display:grid; grid-template-columns: 1fr; gap:12px; margin-top:16px;}
-    @media (min-width: 900px){ .toolbar{grid-template-columns: .7fr .7fr .7fr 1fr auto} }
+    @media (min-width: 980px){ .toolbar{grid-template-columns: .7fr .7fr .7fr 1fr auto} }
     .control{
       background: linear-gradient(180deg, #121a2e, #0d1325);
       border:1px solid rgba(255,255,255,.08);
@@ -57,18 +57,29 @@
     }
     .btn:disabled{opacity:.6; cursor:not-allowed}
 
-    /* Tavolo pack */
-    .stage{margin:22px 0 40px; display:grid; gap:16px; grid-template-columns: repeat(1, minmax(0,1fr))}
-    @media(min-width:600px){.stage{grid-template-columns: repeat(2, minmax(0,1fr))}}
-    @media(min-width:900px){.stage{grid-template-columns: repeat(3, minmax(0,1fr))}}
-    @media(min-width:1200px){.stage{grid-template-columns: repeat(4, minmax(0,1fr))}}
+    /* Tavolo pack: layout elastico */
+    .stage{
+      margin:22px 0 40px; display:grid; gap:18px;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      justify-items:center; align-items:start;
+    }
 
-    /* Carta (fronte/retro) */
+    /* Carta: contenitore dimensionale a 690×987 su desktop */
     .card{
       position:relative; border-radius: var(--radius);
       transform-style: preserve-3d; transition: transform .6s ease;
-      cursor: pointer; min-height: 320px; box-shadow: 0 6px 18px rgba(0,0,0,.35);
+      cursor: pointer; width: 690px; /* LARGHEZZA REALE */
+      aspect-ratio: 690/987;       /* mantiene il rapporto */
+      max-width: 100%;             /* su schermi stretti si riduce */
+      box-shadow: 0 6px 18px rgba(0,0,0,.35);
+      --glow: #6ee7ff;
     }
+    /* Mobile: il contenitore si adatta alla colonna e l’immagine si ridimensiona in proporzione */
+    @media (max-width: 720px){
+      .card{ width: 100%; }
+    }
+
+    /* Stato flip/reveal */
     .card.flip{ transform: rotateY(180deg); }
     .face{
       position:absolute; inset:0; border-radius:var(--radius); overflow:hidden;
@@ -78,20 +89,20 @@
       display:flex; align-items:center; justify-content:center;
     }
     .back{
-      background: radial-gradient(800px 500px at 20% -10%, rgba(110,231,255,.15), transparent), var(--card-2);
-      border:1px solid rgba(110,231,255,.25);
-      box-shadow: inset 0 0 40px rgba(110,231,255,.18), 0 14px 40px rgba(0,0,0,.5);
+      background: radial-gradient(800px 500px at 20% -10%, rgba(110,231,255,.18), transparent), var(--card-2);
+      border:1px solid rgba(110,231,255,.28);
+      box-shadow: inset 0 0 40px rgba(110,231,255,.22), 0 14px 40px rgba(0,0,0,.5);
       font-weight:700; letter-spacing:.5px; color:#a7e9ff;
     }
     .front{ transform: rotateY(180deg); display:grid; grid-template-rows: auto 1fr auto }
-.front img {
-  width: 690px;
-  height: 987px;
-  object-fit: cover;
-  background: #0b0f19;
-  display: block;
-  margin: 0 auto;
-}
+    /* IMMAGINE: mostra sempre tutta la carta senza tagli */
+    .front img{
+      width: 690px;         /* LARGHEZZA REALE */
+      height: 987px;        /* ALTEZZA REALE */
+      max-width: 100%;      /* si riduce su schermi piccoli */
+      height: auto;         /* mantiene proporzione quando si riduce */
+      display:block; margin:0 auto; background:#0b0f19;
+    }
     .front .meta{ padding:10px 12px; font-size:13px; color:#aeb7d9; display:flex; gap:8px; flex-wrap:wrap }
     .front .name{ padding:10px 12px 0; font-weight:600 }
     .badge{
@@ -108,7 +119,7 @@
     .r-epica       .badge{ background: rgba(167,139,250,.9)}
     .r-season      .badge{ background: rgba(239,68,68,.9)}
 
-    /* Glow per rarità sul bordo */
+    /* Glow bordo per rarità */
     .r-comune      { box-shadow: 0 0 0 1px rgba(154,163,178,.35), 0 12px 30px rgba(0,0,0,.45) }
     .r-non-comune  { box-shadow: 0 0 0 1px rgba(52,211,153,.35), 0 12px 30px rgba(0,0,0,.45) }
     .r-rara        { box-shadow: 0 0 0 1px rgba(96,165,250,.35), 0 12px 30px rgba(0,0,0,.45) }
@@ -116,26 +127,42 @@
     .r-epica       { box-shadow: 0 0 0 1px rgba(167,139,250,.45), 0 12px 30px rgba(0,0,0,.45) }
     .r-season      { box-shadow: 0 0 0 1px rgba(239,68,68,.55), 0 12px 30px rgba(0,0,0,.45) }
 
-    /* Effetti */
-    .pulse{ animation: pulse 1.2s ease-in-out infinite }
-    @keyframes pulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.02)} }
-    .hidden{ visibility:hidden }
-
-    /* Box log */
-    .log{
-      margin-top:8px; font-size:13px; color:var(--muted);
+    /* --- Animazione “ventaglio” + glow pulse + flash reveal --- */
+    .fan{
+      transform: translateY(10px) rotate(calc(var(--r, 0deg)));
+      opacity: 0; animation: fanIn .6s ease forwards var(--delay, 0ms);
+      filter: drop-shadow(0 20px 40px rgba(0,0,0,.5));
     }
+    @keyframes fanIn {
+      from { opacity: 0; transform: translateY(20px) rotate(calc(var(--r, 0deg) - 6deg)); }
+      to   { opacity: 1; transform: translateY(0) rotate(var(--r, 0deg)); }
+    }
+    .pulse{
+      animation: glow 1.2s ease-in-out infinite;
+    }
+    @keyframes glow{
+      0%,100%{ box-shadow: 0 0 0 0 rgba(110,231,255,.0), 0 12px 30px rgba(0,0,0,.45) }
+      50%{    box-shadow: 0 0 20px 6px rgba(110,231,255,.25), 0 12px 30px rgba(0,0,0,.45)}
+    }
+    .flash::after{
+      content:''; position:absolute; inset:0; pointer-events:none;
+      background: radial-gradient(closest-side, rgba(255,255,255,.75), transparent 60%);
+      opacity:0; transform: scale(.8);
+      animation: flash .6s ease forwards;
+    }
+    @keyframes flash{ 0%{opacity:0} 20%{opacity:1} 100%{opacity:0; transform:scale(1)} }
+
+    .log{ margin-top:8px; font-size:13px; color:var(--muted); }
 
     footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6)); position:sticky; bottom:0}
     .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
     .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
 
     /* Mobile tweaks */
-    @media (max-width: 500px) {
+    @media (max-width: 700px) {
       .wrap { padding: 10px; }
       .toolbar { overflow-x: auto; display:flex; gap:8px; }
       .toolbar > * { flex:0 0 auto }
-      .card { min-height: 280px; }
     }
   </style>
 </head>
@@ -196,7 +223,7 @@
   </footer>
 
   <template id="tplCard">
-    <div class="card pulse">
+    <div class="card pulse fan">
       <div class="face back">Tocca per rivelare</div>
       <div class="face front">
         <div class="badge"></div>
@@ -230,9 +257,10 @@
     function getWeights(preset){
       if(preset==='juicy')   return { 'Season':2, 'Ultra Rara':5, 'Epica':8, 'Rara':15, 'Non Comune':25, 'Comune':45 };
       if(preset==='harsh')   return { 'Season':1, 'Ultra Rara':2, 'Epica':4, 'Rara':8,  'Non Comune':15, 'Comune':70 };
-      // default
       return { 'Season':1, 'Ultra Rara':3, 'Epica':6, 'Rara':10, 'Non Comune':20, 'Comune':60 };
     }
+
+    const RANK = { 'Comune':1, 'Non Comune':2, 'Rara':3, 'Epica':4, 'Ultra Rara':5, 'Season':6 };
 
     function pickRarity(weights){
       const entries = Object.entries(weights);
@@ -246,7 +274,6 @@
     }
 
     function pickCardByRarity(rarity, usedIds=new Set()){
-      // Prova stessa rarità; fallback a qualsiasi se vuoto
       let pool = ALL.filter(c => (c.rarity === rarity) && !usedIds.has(c.id));
       if(!pool.length) pool = ALL.filter(c => !usedIds.has(c.id));
       if(!pool.length) return null;
@@ -254,17 +281,16 @@
     }
 
     function ensureAtLeastRare(cards){
-      const hasRarePlus = cards.some(c => ['Rara','Epica','Ultra Rara','Season'].includes(c.rarity));
+      const hasRarePlus = cards.some(c => RANK[c.rarity] >= RANK['Rara']);
       if(hasRarePlus) return cards;
-      // upgrade: rimpiazza una carta random con una Rara+ se esiste
-      const pool = ALL.filter(c => ['Rara','Epica','Ultra Rara','Season'].includes(c.rarity));
+      const pool = ALL.filter(c => RANK[c.rarity] >= RANK['Rara']);
       if(!pool.length) return cards;
       const idx = Math.floor(Math.random()*cards.length);
       cards[idx] = pool[Math.floor(Math.random()*pool.length)];
       return cards;
     }
 
-    // ============== Rendering carte placeholder + reveal
+    // ============== Rendering
     function makePlaceholder(){
       const node = $('#tplCard').content.firstElementChild.cloneNode(true);
       return node;
@@ -275,13 +301,17 @@
       stage.innerHTML = '';
       for(let i=0;i<n;i++){
         const ph = makePlaceholder();
+        // set variabili per ventaglio: angolo da -12° a +12° e delay progressivo
+        const spread = 24; // ampiezza totale
+        const angle = (i/(n-1||1))*spread - (spread/2);
+        ph.style.setProperty('--r', angle+'deg');
+        ph.style.setProperty('--delay', (80 * i)+'ms');
         stage.appendChild(ph);
       }
       return $$('#stage .card');
     }
 
     function revealCard(cardEl, data){
-      // classe rarità per glow/badge
       const slug = (data.rarity||'').toLowerCase().replace(/\s+/g,'-');
       if(slug) cardEl.classList.add('r-'+slug);
       // front
@@ -290,17 +320,16 @@
       img.src = data.img; img.alt = `Carta ${data.name}`;
       cardEl.querySelector('.name').textContent = data.name;
       cardEl.querySelector('.meta').textContent = `${data.game} • ${data.series} • ${data.role||'—'}`;
-      // flip
+      // reveal
+      cardEl.classList.add('flash');
       cardEl.classList.add('flip');
       cardEl.classList.remove('pulse');
-      // al tocco dopo il flip: apri/chiudi per rivedere il retro
-      let toggled = false;
+      // toggle flip al click
+      let toggled = true;
       cardEl.addEventListener('click', ()=>{
         toggled = !toggled;
         cardEl.classList.toggle('flip', toggled);
-      });
-      // avvia in stato "fronte visibile"
-      setTimeout(()=>{ cardEl.classList.add('flip'); },0);
+      }, { once:false });
     }
 
     async function openPack(){
@@ -320,7 +349,7 @@
         return;
       }
 
-      // Selezione logica
+      // Estrazione
       const used = new Set();
       let chosen = [];
       for(let i=0;i<size;i++){
@@ -332,24 +361,39 @@
       }
       if(guarantee) chosen = ensureAtLeastRare(chosen);
 
-      // Placeholders in scena
+      // Porta la carta più rara in ultima posizione
+      if(chosen.length){
+        let bestIdx = 0, bestRank = -1;
+        for(let i=0;i<chosen.length;i++){
+          const r = RANK[chosen[i].rarity] || 0;
+          if(r > bestRank){ bestRank = r; bestIdx = i; }
+        }
+        const last = chosen.length - 1;
+        if(bestIdx !== last){
+          const tmp = chosen[last];
+          chosen[last] = chosen[bestIdx];
+          chosen[bestIdx] = tmp;
+        }
+      }
+
+      // Placeholders e ventaglio
       const cardsEls = renderPackPlaceholders(chosen.length);
 
       // Reveal
       if(mode==='all'){
-        // Riempi e gira tutte insieme
-        chosen.forEach((c, i)=> revealCard(cardsEls[i], c));
+        chosen.forEach((c, i)=> {
+          setTimeout(()=> revealCard(cardsEls[i], c), 120*i);
+        });
       }else{
-        // Sequenziale: una ogni ~450ms
         for(let i=0;i<chosen.length;i++){
-          await new Promise(r=> setTimeout(r, i===0? 300: 450));
+          await new Promise(r=> setTimeout(r, i===0? 400: 520));
           revealCard(cardsEls[i], chosen[i]);
         }
       }
 
-      // Messaggio di esito
+      // Riepilogo
       const counts = chosen.reduce((acc,c)=>{ acc[c.rarity]=(acc[c.rarity]||0)+1; return acc; },{});
-      const summary = Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${v}× ${k}`).join(' • ');
+      const summary = Object.entries(counts).sort((a,b)=> (b[1]-a[1]) || ( (RANK[b[0]]||0)-(RANK[a[0]]||0) ) ).map(([k,v])=>`${v}× ${k}`).join(' • ');
       $('#log').textContent = `Pacchetto: ${summary}`;
 
       openBtn.disabled = false;
@@ -357,7 +401,6 @@
 
     // ============== Init
     $('#openBtn').addEventListener('click', openPack);
-    // Apri subito un pacchetto per demo
     loadData().then(openPack);
   </script>
 </body>
