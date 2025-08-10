@@ -74,11 +74,31 @@ select option {
     @media (min-width:1200px){.grid{grid-template-columns: repeat(4, minmax(0,1fr));}}
 
     .card{
-      background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card);
-      border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); overflow:hidden; position:relative;
-      transition: transform .16s ease, box-shadow .2s ease, border-color .2s ease;
-    }
-    .card:hover{ transform: translateY(-2px); border-color: rgba(110,231,255,.35); box-shadow:0 16px 38px rgba(0,0,0,.5)}
+  background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius);
+  overflow:hidden;
+  position:relative;
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+  transition: transform .16s ease, box-shadow .25s ease, border-color .25s ease, filter .25s ease;
+  --glow: #6ee7ff;
+  --glow-soft: rgba(110,231,255,.30);
+}
+
+
+.card.r-comune      { --glow:#9aa3b2;  --glow-soft:rgba(154,163,178,.35); }
+.card.r-non-comune  { --glow:#34d399;  --glow-soft:rgba(52,211,153,.35); }
+.card.r-rara        { --glow:#60a5fa;  --glow-soft:rgba(96,165,250,.35); }
+.card.r-ultra-rara  { --glow:#fbbf24;  --glow-soft:rgba(251,191,36,.35); }
+
+
+.card:hover{
+  transform: translateY(-3px);
+  border-color: var(--glow);
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.55),
+    0 0 0 1px var(--glow),
+    0 14px 40px var(--glow-soft);
     .thumb{aspect-ratio: 3/4; width:100%; background:#0b0f19; object-fit:cover}
     .content{padding:12px 14px}
     .name{font-weight:600; font-size:16px}
@@ -319,6 +339,8 @@ select option {
       const tpl = document.getElementById('tplCard');
       for(const c of items){
         const node = tpl.content.firstElementChild.cloneNode(true);
+        const rarSlug = (c.rarity || '').toLowerCase().replace(/\s+/g,'-'); // es. "Ultra Rara" -> "ultra-rara"
+if (rarSlug) node.classList.add('r-' + rarSlug);
         node.querySelector('.badge').textContent = c.rarity;
         const img = node.querySelector('.thumb');
         img.src = c.img; img.loading='lazy'; img.alt = `Carta ${c.name}`;
