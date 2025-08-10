@@ -1,6 +1,9 @@
+<!doctype html>
 <!DOCTYPE html>
 <html lang="it">
 <head>
+  <meta charset="utf-8" />
+  <title>Vetrina Carte – TOTS</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Fantaballa – Open Pack</title>
@@ -20,6 +23,25 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
 
   <style>
+    :root { --bg:#0f1115; --card:#151823; --ink:#e6e7ea; --muted:#a7acb9; --chip:#23283a; --accent:#6aa3ff; }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    header{padding:20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;border-bottom:1px solid #1f2330}
+    .title{font-weight:700;font-size:20px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    select,input[type="search"]{background:var(--card);border:1px solid #222740;color:var(--ink);padding:10px 12px;border-radius:12px;outline:none}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding:20px;max-width:1200px;margin:0 auto}
+    .card{background:var(--card);border:1px solid #1b2030;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:transform .12s ease, box-shadow .12s ease}
+    .card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+    .thumb{aspect-ratio:4/5;background:#0b0d13;display:block;width:100%;object-fit:cover}
+    .body{padding:12px}
+    .name{font-weight:700;margin:0 0 6px;font-size:16px}
+    .meta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 10px}
+    .chip{background:var(--chip);color:var(--muted);border-radius:999px;padding:4px 8px;font-size:12px;border:1px solid #2a3147}
+    .text{color:var(--muted);font-size:13px;margin:0}
+    .footer{padding:0 20px 20px;color:var(--muted);text-align:center}
+    .badge{color:#fff;background:var(--accent);border-radius:8px;padding:4px 8px;font-weight:600;font-size:12px}
+    .empty{opacity:.7;text-align:center;padding:40px}
+    a{color:inherit;text-decoration:none}
     :root{ --bg:#0b0f19; --panel:#0f1526; --card:#121a2e; --card-2:#0d1325; --text:#ecf0ff; --muted:#a7b0d3; --accent:#6ee7ff; --radius:18px; --g-comune:rgba(154,163,178,.30); --g-non-comune:rgba(52,211,153,.35); --g-rara:rgba(96,165,250,.45); --g-epica:rgba(167,139,250,.55); --g-ultra-rara:rgba(251,191,36,.65); --g-season:rgba(239,68,68,.7) }
     *{box-sizing:border-box} html,body{height:100%}
     body{ margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; overflow-x:hidden }
@@ -138,6 +160,12 @@
   <div class="flash-screen" id="flashScreen" aria-hidden="true"></div>
 
   <header>
+    <div class="title">Vetrina Carte <span class="badge">TOTS</span></div>
+    <div class="controls">
+      <select id="roleSelect" aria-label="Filtra per ruolo">
+        <option value="">Tutti i ruoli</option>
+      </select>
+      <input id="searchInput" type="search" placeholder="Cerca nome / tag..." />
     <div class="wrap">
       <div class="title">
         <div>
@@ -160,6 +188,9 @@
     </div>
   </header>
 
+  <main>
+    <section id="cards" class="grid" aria-live="polite"></section>
+    <div id="status" class="footer"></div>
   <main class="wrap">
     <section class="packArea" id="packArea">
       <div class="pack" id="pack" title="Apri pacchetto"></div>
@@ -170,6 +201,12 @@
     </section>
   </main>
 
+  <script>
+    const EL = {
+      grid: document.getElementById('cards'),
+      role: document.getElementById('roleSelect'),
+      search: document.getElementById('searchInput'),
+      status: document.getElementById('status')
   <footer>
     <div class="foot">
       <span class="pillFoot">ℹ️ Metti “Deck back ORO.png”, “Deck back Tots.png” e “Deck back wonderkid.png” accanto a questa pagina. Tieni le immagini carte in repo con percorsi relativi.</span>
@@ -216,6 +253,22 @@ const PACKS = {
       FETCH_TIMEOUT_MS:8000
     };
 
+    // --- Caricamento dati con fallback: prima cards.json, poi cards-ruolo.json
+    async function loadData() {
+      const sources = ['cards.json', 'cards-ruolo.json'];
+      for (const url of sources) {
+        try {
+          const res = await fetch(url, { cache: 'no-store' });
+          if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+          const data = await res.json();
+          if (!Array.isArray(data)) throw new Error('Formato non valido');
+          return data;
+        } catch (e) {
+          // prova la prossima fonte
+        }
+      }
+      throw new Error('Impossibile caricare i dati dalle sorgenti indicate.');
+    }
     // Fallback carte per test locale (series incluse)
     const FALLBACK_CARDS = [
       {id:'wk1', name:'Wonderkid A', rarity:'Comune',     img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
@@ -230,12 +283,31 @@ const PACKS = {
       {id:'r4',  name:'Base 4',      rarity:'Epica',      img:'Deck%20back%20ORO.png'},
     ];
 
+    // --- UNICA MODIFICA RILEVANTE: filtro TOTS basato su "series"
+    function filterTots(data) {
+      return data.filter(c => (c.series || '').toLowerCase() === 'tots');
+    }
     // === Utilità
     const $ = (s,el=document)=>el.querySelector(s);
     const delay = ms => new Promise(r=>setTimeout(r,ms));
     const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5};
     const norm = v => String(v||'').trim().toLowerCase();
 
+    function normalize(str){ return (str || '').toString().toLowerCase(); }
+
+    function applyFilters(data){
+      const role = normalize(EL.role.value);
+      const q = normalize(EL.search.value);
+      return data.filter(c => {
+        const okRole = !role || normalize(c.role) === role;
+        const hay = [
+          c.name, c.text, c.game, c.rarity, c.role,
+          ...(Array.isArray(c.tags) ? c.tags : [])
+        ].map(normalize).join(' ');
+        const okQuery = !q || hay.includes(q);
+        return okRole && okQuery;
+      });
+    }
     // Audio opzionale
     let audioCtx=null;
     function ensureAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)() }catch{} }
@@ -298,6 +370,20 @@ const PACKS = {
         }finally{ clearTimeout(t) }
       }
 
+    function render(list){
+      EL.grid.innerHTML = '';
+      if (!list.length) {
+        EL.grid.innerHTML = '<div class="empty">Nessuna carta trovata.</div>';
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      list.forEach(c => {
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.innerHTML = `
+          <img class="thumb" alt="${(c.name||'Carta')}" src="${c.img || ''}">
+          <div class="body">
+            <h3 class="name">${c.name || 'Senza nome'}</h3>
       // UI anteprime
       renderChoices(){
         const frag=document.createDocumentFragment();
@@ -310,6 +396,18 @@ const PACKS = {
           btn.innerHTML = `
             <div class="prev" style="background-image:url('${p.back}')"></div>
             <div class="meta">
+              ${c.role ? `<span class="chip">Ruolo: ${c.role}</span>` : ''}
+              ${c.rarity ? `<span class="chip">${c.rarity}</span>` : ''}
+              ${c.game ? `<span class="chip">${c.game}</span>` : ''}
+              ${c.series ? `<span class="chip">Serie: ${c.series}</span>` : ''}
+            </div>
+            ${c.text ? `<p class="text">${c.text}</p>` : ''}
+          </div>
+        `;
+        frag.appendChild(card);
+      });
+      EL.grid.appendChild(frag);
+    }
               <span class="name">${p.label}</span>
               <span class="price">Costo: ${p.cost}</span>
             </div>`;
@@ -336,6 +434,15 @@ const PACKS = {
         this.$pack.style.backgroundImage = `url('${pack.back}')`;
       }
 
+    function populateRoles(data){
+      const roles = Array.from(new Set(
+        data.map(c => c.role).filter(Boolean)
+      )).sort((a,b)=>a.localeCompare(b));
+      for (const r of roles){
+        const opt = document.createElement('option');
+        opt.value = r;
+        opt.textContent = r;
+        EL.role.appendChild(opt);
       pickRarity(){
         const E=Object.entries(CONFIG.WEIGHTS);
         const tot=E.reduce((s,[,w])=>s+w,0);
@@ -404,20 +511,35 @@ const PACKS = {
         this.$shotBtn.disabled=false;
         this.$log.textContent='Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.';
       }
+    }
 
+    (async function init(){
+      EL.status.textContent = 'Caricamento…';
+      try {
+        const raw = await loadData();
       async doOpen(){
         const BTN=this.$openBtn, SHOT=this.$shotBtn; BTN.disabled=true; SHOT.disabled=true;
         this.$log.textContent='Preparazione pacchetto…';
         await this.loadData(); if(!this.ALL.length){ this.$log.textContent='Nessuna carta disponibile'; BTN.disabled=false; return }
 
+        // >>> QUI succede la "modifica": prendi solo le TOTS guardando series
+        const tots = filterTots(raw);
         const pack = PACKS[this.currentPackKey];
         const pool = this.ALL.filter(pack.filter);
         if(!pool.length){ this.$log.textContent='⚠️ Nessuna carta compatibile con questo pacchetto (controlla "series").'; BTN.disabled=false; SHOT.disabled=true; return }
 
+        populateRoles(tots);
+        const renderNow = () => render(applyFilters(tots));
+        EL.role.addEventListener('change', renderNow);
+        EL.search.addEventListener('input', renderNow);
+        renderNow();
         this.$pack.classList.add('shake'); await delay(360); this.$pack.classList.remove('shake');
         this.$flashLine.classList.add('active'); this.$flashScreen.classList.add('active'); this.$pack.classList.add('opening');
         await delay(900); this.$packArea.style.display='none';
 
+        EL.status.textContent = `Mostrate ${tots.length} carte TOTS.`;
+      } catch (err) {
+        EL.status.textContent = 'Errore: ' + err.message;
         this.used.clear(); let chosen=[];
         for(let i=0;i<CONFIG.COUNT;i++){
           const rar=this.pickRarity();
@@ -438,6 +560,7 @@ const PACKS = {
           await delay(100); BTN.disabled=false; BTN.onclick=()=>this.doOpen();
         };
       }
+    })();
 
       async doShot(){
         const area=this.$stageWrap;
