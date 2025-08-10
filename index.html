@@ -3,497 +3,456 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fantaballa – FUT Tik Tok</title>
-  <meta name="description" content="Vetrina di carte collezionabili con filtri, valutazioni e commenti (dati locali)." />
+  <title>Fantaballa – Open Pack</title>
+  <meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e screenshot. Include anteprime pacchetti e prezzi. Usa cards.json (series=Wonderkid/Tots)." />
+
+  <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Preload retro per evitare flicker -->
+  <link rel="preload" as="image" href="Deck%20back%20ORO.png" />
+  <link rel="preload" as="image" href="Deck%20back%20Tots.png" />
+  <link rel="preload" as="image" href="Deck%20back%20wonderkid.png" />
+
+  <!-- Screenshot DOM -> PNG (opzionale) -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+
   <style>
-    :root{
-      --bg: #0b0f19;
-      --panel: #0f1526; 
-      --card: #121a2e;
-      --card-2: #0d1325;
-      --text: #ecf0ff;
-      --muted: #a7b0d3;
-      --accent: #6ee7ff;
-      --danger: #ff6b6b;
-      --radius: 16px;
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    :root{ --bg:#0b0f19; --panel:#0f1526; --card:#121a2e; --card-2:#0d1325; --text:#ecf0ff; --muted:#a7b0d3; --accent:#6ee7ff; --radius:18px; --g-comune:rgba(154,163,178,.30); --g-non-comune:rgba(52,211,153,.35); --g-rara:rgba(96,165,250,.45); --g-epica:rgba(167,139,250,.55); --g-ultra-rara:rgba(251,191,36,.65); --g-season:rgba(239,68,68,.7) }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{ margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; overflow-x:hidden }
+    a{color:var(--accent); text-decoration:none}
+    header{ position:sticky; top:0; z-index:20; backdrop-filter: blur(10px); background:linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6)); border-bottom:1px solid rgba(255,255,255,.06)}
+    .wrap{max-width:1200px; margin:0 auto; padding:20px}
+    .title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+    h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
+    .toolbar{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text)}
+    .btn{background:linear-gradient(180deg,#1b2a4d,#152141); border:1px solid rgba(110,231,255,.35); border-radius:12px; color:#fff; padding:12px 16px; cursor:pointer}
+    .btn:disabled{opacity:.6; cursor:not-allowed}
+
+    /* FLASH */
+    .flash-line,.flash-screen{position:fixed; inset:0; pointer-events:none; z-index:40; opacity:0}
+    .flash-line::before{content:""; position:absolute; top:0; bottom:0; width:32vw; background:linear-gradient(90deg,transparent,rgba(255,230,120,.55),rgba(255,201,44,.8),rgba(255,230,120,.55),transparent); filter:blur(8px); transform:translateX(-40vw) skewX(-12deg)}
+    .flash-line.active{animation:sweep .75s ease-out forwards}
+    @keyframes sweep{0%{opacity:0}10%{opacity:1}100%{opacity:1}}
+    .flash-line.active::before{animation:sweepMove .75s ease-out forwards}
+    @keyframes sweepMove{to{transform:translateX(120vw) skewX(-12deg)}}
+    .flash-screen{background:radial-gradient(circle at 50% 50%, rgba(255,232,120,.45), transparent 55%)}
+    .flash-screen.active{animation:flash .35s ease-out forwards}
+    @keyframes flash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
+
+    /* CHOICES (anteprime pacchetti) */
+    .choices{ display:flex; gap:14px; margin-top:12px; flex-wrap:wrap }
+    .choice{ display:flex; align-items:center; gap:10px; padding:8px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03); border-radius:14px; cursor:pointer; }
+    .choice[aria-selected="true"]{ outline:2px solid rgba(110,231,255,.5); background:rgba(255,255,255,.06) }
+    .prev{
+      width:90px; aspect-ratio: 690/987; border-radius:12px;
+      background-size:cover; background-position:center;
+      box-shadow:0 6px 16px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08);
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg);
-      color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    .meta{ display:flex; flex-direction:column; line-height:1.15 }
+    .meta .name{ font-weight:700 }
+    .meta .price{ color:var(--muted); font-size:12px }
+
+    /* PACK */
+    .packArea{display:flex; align-items:center; justify-content:center; min-height:min(76vh,900px); position:relative}
+    .pack{
+      width:min(520px,86vw); aspect-ratio:690/987;
+      background: center/cover no-repeat;  /* impostata da JS */
+      border-radius:var(--radius); box-shadow:0 8px 24px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08);
+      transition:transform .2s ease, box-shadow .2s ease, filter .2s ease; position:relative; isolation:isolate; will-change:transform,filter
     }
-    body.modal-open{ overflow:hidden; touch-action:none; }
+    .pack:hover{ transform:translateY(-2px); box-shadow:0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.12); filter:brightness(1.05)}
+    .pack.shake{animation:shake .35s ease-in-out 1}
+    @keyframes shake{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-6px) rotate(-1deg)}50%{transform:translateX(5px) rotate(1deg)}75%{transform:translateX(-3px) rotate(-.6deg)}}
+    .pack.opening{animation:packOpen .9s cubic-bezier(.16,.84,.29,1) forwards}
+    @keyframes packOpen{0%{transform:scale(1) translateY(0); opacity:1}55%{transform:scale(.92) translateY(6px); filter:brightness(1.08)}75%{transform:scale(1.02) translateY(-6px); filter:brightness(1.25)}100%{transform:scale(.88) translateY(-12px); opacity:0}}
 
-    header{
-      position:sticky; top:0; z-index:100; backdrop-filter: blur(10px);
-      background: linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6));
-      border-bottom:1px solid rgba(255,255,255,.06);
-    }
-    .wrap{max-width:1200px; margin:0 auto; padding: 20px;}
-    .title{display:flex; gap:16px; align-items:center; justify-content:space-between;}
-    h1{font-size: clamp(20px, 3.6vw, 34px); margin:0}
-    .subtitle{color:var(--muted); margin-top:6px}
+    /* STAGE */
+    .stageWrap{display:none}
+    .stageWrap.show{display:block; animation:stageIn .5s ease .25s both}
+    @keyframes stageIn{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
+    .stage{margin:22px 0 40px; display:grid; gap:16px; grid-template-columns:repeat(1,minmax(0,1fr))}
+    @media(min-width:720px){.stage{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(min-width:1100px){.stage{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
-    .toolbar{display:grid; grid-template-columns: 1fr; gap:12px; margin-top:16px;}
-    @media (min-width: 900px){
-      .toolbar{grid-template-columns: 1.2fr .8fr .8fr .8fr .8fr}
-    }
+    .cCard{position:relative; width:100%; aspect-ratio:690/987; border-radius:var(--radius); transform-style:preserve-3d; perspective:1200px}
+    .scene{position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d; transition:transform .7s cubic-bezier(.22,.75,.2,1); transform:rotateY(0deg); box-shadow:0 10px 28px rgba(0,0,0,.45); background:var(--card); will-change:transform}
+    .face{position:absolute; inset:0; border-radius:inherit; overflow:hidden; backface-visibility:hidden; border:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center}
+    .back img,.front img{width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:690/987}
+    .back img{filter:drop-shadow(0 10px 30px rgba(0,0,0,.45))}
+    .front{transform:rotateY(180deg)}
 
-    .search, select, .range, button, .tag{
-      background: linear-gradient(180deg, #121a2e, #0d1325);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:12px; color: var(--text);
-      padding:12px 14px; outline:none;
-    }
-    .search{display:flex; gap:10px; align-items:center}
-    .search input{flex:1; background:transparent; border:none; color:var(--text)}
-    .search input::placeholder{color:#98a3c7}
-    select{
-      appearance:none;
-      background-image: linear-gradient(180deg, transparent, transparent), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>');
-      background-repeat:no-repeat; background-position:right 10px center; padding-right:38px
-    }
-    select, select option { color: var(--text); background-color: var(--card); }
-    select option { padding: 8px; }
+    .drop{opacity:0; transform:translateY(-40px) scale(.96)}
+    .drop.in{animation:dropIn .5s cubic-bezier(.2,.8,.2,1) forwards}
+    @keyframes dropIn{0%{opacity:0; transform:translateY(-50px) scale(.96)}70%{opacity:1; transform:translateY(6px) scale(1.02)}100%{opacity:1; transform:translateY(0) scale(1)}}
 
-    .range{display:flex; gap:10px; align-items:center}
-    .range input{width:100%}
+    .cCard[data-state="back"] .scene{transform:rotateY(0deg)}
+    .cCard[data-state="front"] .scene{transform:rotateY(180deg)}
 
-    .grid{display:grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap:16px; margin:22px 0 80px}
-    @media (min-width:600px){.grid{grid-template-columns: repeat(2, minmax(0,1fr));}}
-    @media (min-width:900px){.grid{grid-template-columns: repeat(3, minmax(0,1fr));}}
-    @media (min-width:1200px){.grid{grid-template-columns: repeat(4, minmax(0,1fr));}}
+    .badge{position:absolute; top:10px; right:10px; z-index:2; padding:6px 8px; border-radius:999px; font-size:12px; font-weight:700; color:#fff; border:1px solid rgba(255,255,255,.15)}
+    .r-comune .badge{background:rgba(154,163,178,.85)}
+    .r-non-comune .badge{background:rgba(52,211,153,.85)}
+    .r-rara .badge{background:rgba(96,165,250,.9)}
+    .r-epica .badge{background:rgba(167,139,250,.95)}
+    .r-ultra-rara .badge{background:rgba(251,191,36,.95); color:#000}
+    .r-season .badge{background:rgba(239,68,68,.95)}
 
-    /* Carte con glow + ombre */
-    .card{
-      background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius: var(--radius);
-      overflow:hidden; position:relative;
-      box-shadow: 0 6px 18px rgba(0,0,0,.35);
-      transition: transform .16s ease, box-shadow .25s ease, border-color .25s ease, filter .25s ease;
-      --glow: #6ee7ff; /* default */
-      opacity:0; transform: translateY(6px);
-      animation: cardIn .35s ease forwards;
-    }
-    @keyframes cardIn{to{opacity:1; transform: translateY(0)}}
-    @media (prefers-reduced-motion: reduce){ .card{ animation:none; opacity:1; transform:none } }
+    .cCard::after{content:""; position:absolute; inset:-2px; border-radius:inherit; pointer-events:none; opacity:0; background:radial-gradient(500px 600px at 50% -10%, var(--rarGlow, rgba(255,255,255,.18)), transparent 60%); filter:blur(12px); transition:opacity .5s ease}
+    .cCard.revealed::after{opacity:.9}
+    .cCard.r-comune{--rarGlow:var(--g-comune)}
+    .cCard.r-non-comune{--rarGlow:var(--g-non-comune)}
+    .cCard.r-rara{--rarGlow:var(--g-rara); animation:bluePulse 2.3s ease-in-out infinite}
+    @keyframes bluePulse{0%,100%{filter:none}50%{filter:drop-shadow(0 0 18px rgba(96,165,250,.45))}}
+    .cCard.r-epica{--rarGlow:var(--g-epica)}
+    .cCard.r-ultra-rara,.cCard.r-season{--rarGlow:var(--g-ultra-rara)}
 
-    /* palette glow per rarità */
-    .card.r-comune      { --glow:#9aa3b2; }
-    .card.r-non-comune  { --glow:#34d399; }
-    .card.r-rara        { --glow:#60a5fa; }
-    .card.r-ultra-rara  { --glow:#fbbf24; }
-    .card.r-epica       { --glow:#a78bfa; }
-    .card.r-season      { --glow:#ef4444; }
+    .rays{position:absolute; inset:-20px; border-radius:inherit; pointer-events:none; z-index:0; background:conic-gradient(from 0deg, rgba(255,220,120,.0), rgba(255,220,120,.35), rgba(255,220,120,.0) 30%); mix-blend-mode:screen; opacity:0; animation:rays 2.5s linear infinite; transform:rotate(0deg)}
+    .cCard.r-ultra-rara .rays,.cCard.r-season .rays{opacity:.8}
+    @keyframes rays{to{transform:rotate(360deg)}}
 
-    .card:hover{
-      transform: translateY(-3px);
-      border-color: var(--glow);
-      box-shadow:
-        0 10px 30px rgba(0,0,0,.55),
-        0 0 0 1px var(--glow),
-        0 14px 40px color-mix(in oklab, var(--glow) 35%, transparent);
-    }
+    .spark{position:absolute; inset:0; pointer-events:none; overflow:hidden}
+    .spark i{position:absolute; width:2px; height:10px; background:#fff; opacity:0; box-shadow:0 0 10px #fff, 0 0 16px var(--rarGlow); transform:translate(-50%,-50%) rotate(var(--rot,0deg)); animation:fall .9s ease-out forwards; will-change:transform,opacity}
+    @keyframes fall{0%{transform:translate(var(--x,50%),-20%) rotate(var(--rot,0deg)); opacity:0}30%{opacity:1}100%{transform:translate(var(--xEnd,50%),120%) rotate(var(--rot,0deg)); opacity:0}}
 
-    .thumb{aspect-ratio: 3/4; width:100%; background:#0b0f19; object-fit:cover}
-    .content{padding:12px 14px}
-    .name{font-weight:600; font-size:16px}
-    .meta{font-size:13px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; margin-top:4px}
-    .stars{display:flex; gap:4px; align-items:center; margin-top:8px}
-    .stars .s{width:18px; height:18px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3))}
+    .cCard.final .scene{transition-duration:1s}
+    .cCard.final.revealed{animation:epicIn 1s cubic-bezier(.2,.8,.2,1) forwards; opacity:1!important}
+    @keyframes epicIn{0%{transform:translateY(8px) scale(.96)}60%{transform:translateY(-6px) scale(1.04)}100%{transform:translateY(0) scale(1)}}
+    .cCard.final .veil{content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; background:linear-gradient(180deg, rgba(255,255,255,.25), transparent 30%, transparent 70%, rgba(255,255,255,.18)); opacity:0}
+    .cCard.final.revealed .veil{animation:veilUp 1s ease-out forwards}
+    @keyframes veilUp{0%{opacity:1; clip-path:inset(0 0 0 0 round 18px)}100%{opacity:0; clip-path:inset(100% 0 0 0 round 18px)}}
 
-    /* Badge rarità a destra + colori */
-    .badge{
-      position:absolute; top:10px; right:10px;
-      background: rgba(0,0,0,.5); backdrop-filter: blur(6px);
-      border:1px solid rgba(255,255,255,.15);
-      color:white; padding:6px 8px; border-radius:999px; font-size:12px; font-weight:600;
-    }
-    .card.r-comune      .badge { background: rgba(154,163,178,0.8); }
-    .card.r-non-comune  .badge { background: rgba(52,211,153,0.8); }
-    .card.r-rara        .badge { background: rgba(96,165,250,0.8); }
-    .card.r-ultra-rara  .badge { background: rgba(251,191,36,0.85); color: #000; }
-    .card.r-epica       .badge { background: rgba(167,139,250,0.85); }
-    .card.r-season      .badge { background: rgba(239,68,68,0.85); }
-
-    .open{position:absolute; bottom:10px; right:10px}
-
-    .tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
-    .tag{
-      padding: 3px 8px; font-size: 11px; line-height: 1.2;
-      border-radius: 999px; border: 1px solid rgba(255,255,255,.12);
-      white-space: nowrap; margin-top: 4px;
-    }
-
-    /* ===== Modal: mobile-first, full-screen, scorrevole ===== */
-    dialog{
-      inset: 0; margin: 0; padding: 0; border: none;
-      width: 100vw; max-width: none;
-      height: 100svh; /* viewport stabile su mobile */
-      height: 100dvh; /* fallback */
-      background: transparent;
-    }
-    dialog::backdrop{ background: rgba(0,0,0,.65) }
-    .modal{
-      display: grid; grid-template-columns: 1fr;
-      width: 100%; height: 100%;
-      background: var(--panel);
-    }
-    @media(min-width:900px){ .modal{ grid-template-columns: .95fr 1.05fr; height: auto; max-height: 90vh; border-radius: 18px; } }
-
-    .modal .left{ background: radial-gradient(500px 320px at 20% 0, rgba(110,231,255,.05), transparent), var(--card-2); padding:12px }
-    .modal .big{ width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.08); aspect-ratio:3/4; object-fit:cover }
-    .modal .close{ position:absolute; top:10px; right:10px; background: rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18); padding:8px 10px; border-radius:10px; color:white }
-
-    /* Colonna destra scrollabile, con actions sticky */
-    .modal .right{
-      display:flex; flex-direction:column; min-height:0;
-      padding:12px 12px calc(12px + var(--safe-bottom));
-    }
-    .scroll{
-      flex:1 1 auto; min-height:0; overflow:auto;
-      padding-right:2px;
-    }
-    .actions{
-      position: sticky; bottom: 0;
-      background: linear-gradient(180deg, rgba(15,21,38,.7), var(--panel));
-      border-top: 1px solid rgba(255,255,255,.08);
-      padding: 10px 0 calc(10px + var(--safe-bottom));
-      display:flex; gap:10px;
-    }
-
-    .field{display:grid; gap:8px; margin: 8px 0}
-    textarea, input[type="text"]{background:#0d1325; border:1px solid rgba(255,255,255,.1); border-radius:10px; color:var(--text); padding:10px}
-
-    .comment{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)); border:1px solid rgba(255,255,255,.09); border-radius:12px; padding:10px; margin-top:10px}
-    .comment .author{font-weight:600; font-size:13px}
-    .comment .text{font-size:14px; color: #d9e1ff}
-
-    footer{position:sticky; bottom:0; background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6)); border-top:1px solid rgba(255,255,255,.06)}
+    .log{margin-top:8px; font-size:13px; color:var(--muted)}
+    footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6))}
     .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
-    .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
+    .pillFoot{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
 
-    /* Toolbar scorrevole su mobile */
-    @media (max-width: 500px) {
-      .wrap { padding: 10px; }
-      .toolbar { overflow-x: auto; display: flex; gap: 8px; padding-bottom: 6px; }
-      .toolbar > * { flex: 0 0 auto; }
-      .card .name { font-size: 14px; }
-      .card .meta { font-size: 12px; }
-    }
+    @media(max-width:600px){.wrap{padding:12px} .stage{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
+  <div class="flash-line" id="flashLine" aria-hidden="true"></div>
+  <div class="flash-screen" id="flashScreen" aria-hidden="true"></div>
+
   <header>
     <div class="wrap">
       <div class="title">
         <div>
-          <h1>Le carte FUT del canale Fantaballa!</h1>
-          <div class="subtitle">Non hai ancora una carta? Segui le live su Tik Tok di Fanataballa!</div>
+          <h1>Open Pack – Fantaballa</h1>
+          <div class="subtitle">Scegli il pacchetto → flash dorato → carte in ordine di rarità (click to flip).</div>
         </div>
+        <span class="pill" id="pricePill">💰 Costo: 1000</span>
+        <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
+        <button id="shotBtn" class="btn" disabled>📸 Screenshot pacchetto</button>
       </div>
-<a class="pill" href="open-pack.html">🎁 Apri un pacchetto</a>
 
-      <div class="toolbar" aria-label="Filtri e ricerca">
-        <div class="search" role="search">
-          🔎 <input id="q" type="search" placeholder="Cerca per nome, serie o testo..." aria-label="Cerca" />
-        </div>
-        <select id="fGame" aria-label="Squadra/Gioco">
-          <option value="">Tutte le squadre</option>
-          <option>Fantaballa FC</option>
-          <option>Gotham City</option>
-          <option>Svincolato</option>
-        </select>
-        <select id="fRarity" aria-label="Rarità">
-          <option value="">Tutte le rarità</option>
-          <option>Comune</option>
-          <option>Non Comune</option>
-          <option>Rara</option>
-          <option>Ultra Rara</option>
-          <option>Epica</option>
-          <option>Season</option>
-        </select>
-        <select id="fRole" aria-label="Ruolo">
-          <option value="">Tutti i ruoli</option>
-          <option>POR</option><option>DC</option><option>DS</option><option>DD</option>
-          <option>MC</option><option>CC</option><option>TRQ</option>
-          <option>AS</option><option>AD</option><option>ATT</option>
-        </select>
-        <div class="range" title="Valutazione minima">
-          ⭐ Min: <input id="fRating" type="range" min="0" max="5" value="0" step="1" />
-          <span id="fRatingVal">0</span>
-        </div>
-        <select id="fSort" aria-label="Ordina per">
-          <option value="name">Ordina: Nome</option>
-          <option value="rating">Ordina: Valutazione</option>
-          <option value="role">Ordina: Ruolo</option>
-        </select>
+      <div class="toolbar">
+        <span class="pill" id="fairnessNote">🎲 Probabilità bilanciate • Garanzia Rara+ attiva</span>
       </div>
+
+      <!-- Anteprime pacchetti -->
+      <div class="choices" id="choices"></div>
+
+      <div class="log" id="log" role="status" aria-live="polite"></div>
     </div>
   </header>
 
   <main class="wrap">
-    <div id="grid" class="grid" aria-live="polite"></div>
+    <section class="packArea" id="packArea">
+      <div class="pack" id="pack" title="Apri pacchetto"></div>
+    </section>
+
+    <section class="stageWrap" id="stageWrap">
+      <div id="stage" class="stage" aria-live="polite"></div>
+    </section>
   </main>
 
   <footer>
     <div class="foot">
-      <span class="pill">ℹ️ Usa i filtri per cercare tra tutte le carte. All’avvio mostriamo 8 carte casuali.</span>
+      <span class="pillFoot">ℹ️ Metti “Deck back ORO.png”, “Deck back Tots.png” e “Deck back wonderkid.png” accanto a questa pagina. Tieni le immagini carte in repo con percorsi relativi.</span>
     </div>
   </footer>
 
-  <!-- Modal Dettaglio -->
-  <dialog id="dlg">
-    <form method="dialog" class="modal">
-      <button class="close" aria-label="Chiudi">✕</button>
-      <div class="left">
-        <img id="dlgImg" alt="Immagine carta" class="big" />
-      </div>
-      <div class="right">
-        <div class="scroll">
-          <h2 id="dlgName" style="margin:0 0 8px"></h2>
-          <div id="dlgMeta" class="meta"></div>
-          <div class="stars" id="dlgStars" aria-label="Valuta questa carta"></div>
-          <div class="tags" id="dlgTags"></div>
-
-          <h3 style="margin:14px 0 6px">Commenti</h3>
-          <div id="comments"></div>
-
-          <div class="field">
-            <label for="author">Nome</label>
-            <input id="author" type="text" placeholder="Il tuo nome" autocomplete="name" />
-          </div>
-          <div class="field">
-            <label for="message">Commento</label>
-            <textarea id="message" rows="3" placeholder="Scrivi un commento..."></textarea>
-          </div>
-          <div class="field">
-            <label for="ratingSel">Voto (1-5)</label>
-            <select id="ratingSel">
-              <option value="5">5</option>
-              <option value="4">4</option>
-              <option value="3">3</option>
-              <option value="2">2</option>
-              <option value="1">1</option>
-            </select>
-          </div>
-        </div>
-        <div class="actions">
-          <button class="primary" id="saveC">💾 Pubblica commento</button>
-          <button id="clearC" type="button" title="Solo su questo dispositivo">🗑️ Svuota commenti</button>
-        </div>
-      </div>
-    </form>
-  </dialog>
-
-  <!-- Template Card -->
+  <!-- Template carta -->
   <template id="tplCard">
-    <article class="card" role="article">
-      <div class="badge"></div>
-      <img class="thumb" alt="Immagine carta" />
-      <div class="content">
-        <div class="name"></div>
-        <div class="meta"></div>
-        <div class="stars" aria-label="Valutazione media"></div>
-        <div class="tags"></div>
-        <button class="primary open">Apri</button>
+    <article class="cCard drop" data-state="back">
+      <div class="rays"></div>
+      <div class="scene">
+        <div class="face back">
+          <img src="Deck%20back%20ORO.png" alt="Retro carta" loading="eager" decoding="async" />
+        </div>
+        <div class="face front">
+          <span class="badge"></span>
+          <img alt="" loading="lazy" decoding="async">
+        </div>
       </div>
+      <div class="veil"></div>
+      <div class="spark"></div>
     </article>
   </template>
 
-  <script>
-    // ====== Util ======
-    const $ = sel => document.querySelector(sel);
-    const esc = (s='') => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const STAR_OUT = 'M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.401 8.169L12 18.896l-7.335 3.87 1.401-8.169L.132 9.21l8.2-1.192z';
-    function starSVG(filled){ return `<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_OUT}" fill="${filled? 'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"/></svg>`; }
-    function avg(arr){return arr.length? (arr.reduce((a,b)=>a+b,0)/arr.length):0}
-    function keyFor(id, type){return `cardhub_${type}_${id}`}
-    function loadRatings(id){ const raw = localStorage.getItem(keyFor(id,'ratings')); return raw? JSON.parse(raw): []; }
-    function saveRating(id,val){ const list = loadRatings(id); list.push(val); localStorage.setItem(keyFor(id,'ratings'), JSON.stringify(list)); }
-    function loadComments(id){ const raw = localStorage.getItem(keyFor(id,'comments')); return raw? JSON.parse(raw): []; }
-    function addComment(id,c){ const list = loadComments(id); list.push(c); localStorage.setItem(keyFor(id,'comments'), JSON.stringify(list)); }
-    function clearComments(id){ localStorage.removeItem(keyFor(id,'comments')); }
+  <script type="module">
+   // Utility per match STRETTO sul campo "series"
+const seriesIs = (c, v) => String(c.series ?? '').trim() === v;
 
-    // ====== Data Load ======
-    let CARDS = [];
-    async function loadCards(){
-      try{
-        const res = await fetch('cards.json', { cache: 'no-store' });
-        if(!res.ok) throw new Error('cards.json non trovato');
-        CARDS = await res.json();
-      }catch(e){
-        console.error('[ERRORE CARICAMENTO CARTE]', e);
-        CARDS = [];
-      }finally{
-        applyFilters();
+// Definizione pacchetti (usa SOLO series: "Wonderkid" / "Tots")
+const PACKS = {
+  random:    { key:'random',    label:'Random',    cost:1000, back:'Deck%20back%20ORO.png',
+               filter: c => true },
+  wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1800, back:'Deck%20back%20wonderkid.png',
+               filter: c => seriesIs(c, 'Wonderkid') },
+  tots:      { key:'tots',      label:'TOTS',      cost:1400, back:'Deck%20back%20Tots.png',
+               filter: c => seriesIs(c, 'Tots') }
+};
+    const DEFAULT_PACK_KEY = 'random';
+
+    const CONFIG = {
+      CARDS_JSON:'cards.json',
+      COUNT:6,
+      WEIGHTS:{'Season':1,'Ultra Rara':3,'Epica':6,'Rara':10,'Non Comune':20,'Comune':60},
+      FETCH_TIMEOUT_MS:8000
+    };
+
+    // Fallback carte per test locale (series incluse)
+    const FALLBACK_CARDS = [
+      {id:'wk1', name:'Wonderkid A', rarity:'Comune',     img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
+      {id:'wk2', name:'Wonderkid B', rarity:'Rara',       img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
+      {id:'wk3', name:'Wonderkid C', rarity:'Epica',      img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
+      {id:'t1',  name:'TOTS Alpha',  rarity:'Comune',     img:'Deck%20back%20Tots.png',      series:'Tots'},
+      {id:'t2',  name:'TOTS Beta',   rarity:'Rara',       img:'Deck%20back%20Tots.png',      series:'Tots'},
+      {id:'t3',  name:'TOTS Omega',  rarity:'Ultra Rara', img:'Deck%20back%20Tots.png',      series:'Tots'},
+      {id:'r1',  name:'Base 1',      rarity:'Comune',     img:'Deck%20back%20ORO.png'},
+      {id:'r2',  name:'Base 2',      rarity:'Non Comune', img:'Deck%20back%20ORO.png'},
+      {id:'r3',  name:'Base 3',      rarity:'Rara',       img:'Deck%20back%20ORO.png'},
+      {id:'r4',  name:'Base 4',      rarity:'Epica',      img:'Deck%20back%20ORO.png'},
+    ];
+
+    // === Utilità
+    const $ = (s,el=document)=>el.querySelector(s);
+    const delay = ms => new Promise(r=>setTimeout(r,ms));
+    const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5};
+    const norm = v => String(v||'').trim().toLowerCase();
+
+    // Audio opzionale
+    let audioCtx=null;
+    function ensureAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)() }catch{} }
+    function tone(f,d=.15,g=.08,t='sine'){ if(!audioCtx) return; const o=audioCtx.createOscillator(),A=audioCtx.createGain(); o.type=t; o.frequency.value=f; A.gain.value=g; o.connect(A).connect(audioCtx.destination); o.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d,.03); o.stop(audioCtx.currentTime+d+.08) }
+    function noiseBoom(d=.5,g=.15){ if(!audioCtx) return; const N=audioCtx.sampleRate*d, b=audioCtx.createBuffer(1,N,audioCtx.sampleRate), x=b.getChannelData(0); for(let i=0;i<N;i++) x[i]=(Math.random()*2-1)*Math.pow(1-i/N,2); const s=audioCtx.createBufferSource(); s.buffer=b; const A=audioCtx.createGain(); A.gain.value=g; const F=audioCtx.createBiquadFilter(); F.type='lowpass'; F.frequency.value=400; s.connect(F).connect(A).connect(audioCtx.destination); s.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d*.7,.2) }
+    function playByRarity(r){ if(r==='Comune'||r==='Non Comune'){ tone(520,.07,.06,'triangle'); tone(660,.07,.05,'triangle') } else if(r==='Rara'){ tone(660,.12,.08,'sine'); tone(880,.16,.06,'sine') } else if(r==='Epica'){ tone(660,.18,.09,'sine'); tone(990,.22,.08,'sine'); tone(1320,.24,.06,'sine') } else if(r==='Ultra Rara'||r==='Season'){ noiseBoom(.7,.18); tone(880,.18,.1,'square'); tone(1320,.22,.08,'square') } }
+
+    class PackOpener{
+      constructor(){
+        this.ALL=[]; this.used=new Set();
+        this.currentPackKey = DEFAULT_PACK_KEY;
+
+        this.$openBtn=$('#openBtn'); this.$shotBtn=$('#shotBtn');
+        this.$packArea=$('#packArea'); this.$pack=$('#pack');
+        this.$flashLine=$('#flashLine'); this.$flashScreen=$('#flashScreen');
+        this.$stageWrap=$('#stageWrap'); this.$stage=$('#stage'); this.$log=$('#log');
+        this.$pricePill=$('#pricePill'); this.$choices=$('#choices');
+
+        this.bind(); this.prewarm();
+        this.renderChoices();
+        this.applyPackVisual();
+      }
+      bind(){
+        this.$openBtn.addEventListener('click',()=>this.doOpen());
+        this.$pack.addEventListener('click',()=>this.$openBtn.click(),{passive:true});
+        this.$shotBtn.addEventListener('click',()=>this.doShot());
+        ['click','keydown','touchstart'].forEach(e=>window.addEventListener(e,()=>{ensureAudio()}, {once:true}));
+      }
+      prewarm(){
+        // Precarica immagini retro
+        ['Deck%20back%20ORO.png','Deck%20back%20Tots.png','Deck%20back%20wonderkid.png'].forEach(src=>{ const im=new Image(); im.decoding='async'; im.src=src; });
+        this.loadData().catch(()=>{});
+      }
+      async loadData(){
+        if(this.ALL.length) return;
+        const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),CONFIG.FETCH_TIMEOUT_MS);
+        try{
+          const res=await fetch(CONFIG.CARDS_JSON,{cache:'no-store',signal:ctrl.signal});
+          if(!res.ok) throw new Error(`HTTP ${res.status}`);
+          const json=await res.json();
+          if(!Array.isArray(json)) throw new Error('Formato non valido (atteso array)');
+          const cleaned=[]; const ids=new Set();
+          for(const c of json){
+            if(!c||typeof c!=='object') continue;
+            const id=c.id??`${c.name||'card'}-${Math.random().toString(36).slice(2,8)}`;
+            const name=String(c.name||'');
+            const rarity=String(c.rarity||'');
+            const img=String(c.img||'');
+            const series=String(c.series||'');
+            if(!name||!rarity||!img) continue;
+            if(ids.has(id)) continue; ids.add(id);
+            cleaned.push({id,name,rarity,img,series});
+          }
+          if(!cleaned.length) throw new Error('Nessuna carta valida in cards.json');
+          this.ALL=cleaned; this.$log.textContent=`Caricate ${this.ALL.length} carte.`;
+        }catch(err){
+          console.warn('cards.json non caricato, uso fallback:', err?.message||err);
+          this.ALL = FALLBACK_CARDS;
+          this.$log.textContent='⚠️ Non trovo cards.json, uso carte di esempio.';
+        }finally{ clearTimeout(t) }
+      }
+
+      // UI anteprime
+      renderChoices(){
+        const frag=document.createDocumentFragment();
+        Object.values(PACKS).forEach(p=>{
+          const btn=document.createElement('button');
+          btn.type='button';
+          btn.className='choice';
+          btn.setAttribute('data-pack',p.key);
+          btn.setAttribute('aria-selected', String(p.key===this.currentPackKey));
+          btn.innerHTML = `
+            <div class="prev" style="background-image:url('${p.back}')"></div>
+            <div class="meta">
+              <span class="name">${p.label}</span>
+              <span class="price">Costo: ${p.cost}</span>
+            </div>`;
+          btn.addEventListener('click', ()=>{
+            this.currentPackKey = p.key;
+            this.updatePrice();
+            this.applyPackVisual();
+            // aggiorna evidenziazione
+            [...this.$choices.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
+            btn.setAttribute('aria-selected','true');
+          });
+          frag.appendChild(btn);
+        });
+        this.$choices.innerHTML='';
+        this.$choices.appendChild(frag);
+        this.updatePrice();
+      }
+      updatePrice(){
+        const pack=PACKS[this.currentPackKey];
+        this.$pricePill.textContent = `💰 Costo: ${pack.cost}`;
+      }
+      applyPackVisual(){
+        const pack=PACKS[this.currentPackKey];
+        this.$pack.style.backgroundImage = `url('${pack.back}')`;
+      }
+
+      pickRarity(){
+        const E=Object.entries(CONFIG.WEIGHTS);
+        const tot=E.reduce((s,[,w])=>s+w,0);
+        let r=Math.random()*tot;
+        for(const [rar,w] of E){ if(r<w) return rar; r-=w }
+        return 'Comune'
+      }
+      pickCardByRarity(rarity, pool){
+        let candidates = pool.filter(c => c.rarity===rarity && !this.used.has(c.id));
+        if(!candidates.length) candidates = pool.filter(c => !this.used.has(c.id));
+        if(!candidates.length) candidates = pool; // permetti duplicati se serve
+        if(!candidates.length) return null;
+        return candidates[Math.floor(Math.random()*candidates.length)];
+      }
+      ensureRarePlus(cards, pool){
+        const ok=cards.some(c=>rarityRank[c.rarity] >= rarityRank['Rara']);
+        if(ok) return cards;
+        const rarePool = pool.filter(c=>rarityRank[c.rarity] >= rarityRank['Rara']);
+        if(!rarePool.length) return cards;
+        const i=Math.floor(Math.random()*cards.length);
+        cards[i] = rarePool[Math.floor(Math.random()*rarePool.length)];
+        return cards;
+      }
+
+      makeCardEl(d,isFinal){
+        const tpl=document.getElementById('tplCard');
+        const n=tpl.content.firstElementChild.cloneNode(true);
+        const rslug=String(d.rarity||'').toLowerCase().replace(/\s+/g,'-');
+        if(rslug) n.classList.add('r-'+rslug);
+        if(isFinal) n.classList.add('final');
+        const front=n.querySelector('.front img');
+        front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async';
+        n.querySelector('.badge').textContent=d.rarity||'';
+        n.dataset.state='back';
+        n.addEventListener('click',()=>{ if(n.dataset.state==='back'){ this.revealCard(n,d) } else { n.dataset.state='back'; n.classList.remove('revealed') } },{passive:true});
+        return n
+      }
+      addSparks(el,n=10){
+        let cont=el.querySelector('.spark');
+        if(!cont){ cont=document.createElement('div'); cont.className='spark'; el.appendChild(cont) }
+        cont.innerHTML=''; const frag=document.createDocumentFragment();
+        for(let i=0;i<n;i++){
+          const s=document.createElement('i');
+          const x=10+Math.random()*80, xEnd=x+(-8+Math.random()*16), rot=-15+Math.random()*30;
+          s.style.setProperty('--x',x+'%'); s.style.setProperty('--xEnd',xEnd+'%'); s.style.setProperty('--rot',rot+'deg');
+          s.style.left=x+'%'; s.style.top=(5+Math.random()*20)+'%';
+          frag.appendChild(s)
+        }
+        cont.appendChild(frag)
+      }
+      revealCard(n,d){
+        const front=n.querySelector('.front img');
+        if(front && !front.src) front.src=d.img||'';
+        n.dataset.state='front'; n.classList.add('revealed');
+        const rank=rarityRank[d.rarity]??0;
+        this.addSparks(n,Math.min(6+rank*4,28));
+        playByRarity(d.rarity)
+      }
+      setDropIn(el,i,extra=0){ el.classList.add('drop'); setTimeout(()=>el.classList.add('in'),120*i+extra) }
+      showStage(cards){
+        const wrap=this.$stageWrap, stage=this.$stage;
+        stage.innerHTML=''; wrap.classList.add('show');
+        const last=cards.length-1; const frag=document.createDocumentFragment();
+        cards.forEach((c,i)=>{ const el=this.makeCardEl(c,i===last); frag.appendChild(el); this.setDropIn(el,i) });
+        stage.appendChild(frag);
+        this.$shotBtn.disabled=false;
+        this.$log.textContent='Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.';
+      }
+
+      async doOpen(){
+        const BTN=this.$openBtn, SHOT=this.$shotBtn; BTN.disabled=true; SHOT.disabled=true;
+        this.$log.textContent='Preparazione pacchetto…';
+        await this.loadData(); if(!this.ALL.length){ this.$log.textContent='Nessuna carta disponibile'; BTN.disabled=false; return }
+
+        const pack = PACKS[this.currentPackKey];
+        const pool = this.ALL.filter(pack.filter);
+        if(!pool.length){ this.$log.textContent='⚠️ Nessuna carta compatibile con questo pacchetto (controlla "series").'; BTN.disabled=false; SHOT.disabled=true; return }
+
+        this.$pack.classList.add('shake'); await delay(360); this.$pack.classList.remove('shake');
+        this.$flashLine.classList.add('active'); this.$flashScreen.classList.add('active'); this.$pack.classList.add('opening');
+        await delay(900); this.$packArea.style.display='none';
+
+        this.used.clear(); let chosen=[];
+        for(let i=0;i<CONFIG.COUNT;i++){
+          const rar=this.pickRarity();
+          const card=this.pickCardByRarity(rar,pool);
+          if(!card) break;
+          this.used.add(card.id); chosen.push(card)
+        }
+        chosen=this.ensureRarePlus(chosen,pool);
+        chosen.sort((a,b)=>rarityRank[a.rarity]-rarityRank[b.rarity]);
+        this.showStage(chosen);
+
+        setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active') },400);
+        BTN.textContent=`🔁 Nuovo pacchetto ${pack.label}`; BTN.disabled=false; SHOT.disabled=false;
+        BTN.onclick=async()=>{
+          BTN.disabled=true; SHOT.disabled=true;
+          this.$stageWrap.classList.remove('show'); this.$stage.innerHTML=''; this.$packArea.style.display='flex'; this.$pack.classList.remove('opening');
+          BTN.textContent='🎁 Apri pacchetto'; this.$log.textContent='';
+          await delay(100); BTN.disabled=false; BTN.onclick=()=>this.doOpen();
+        };
+      }
+
+      async doShot(){
+        const area=this.$stageWrap;
+        try{
+          if(!window.html2canvas){ alert('html2canvas non ancora caricato, riprova tra un secondo.'); return }
+          const canvas=await html2canvas(area,{backgroundColor:null,useCORS:true,scale:2});
+          const a=document.createElement('a'); a.download=`fantaballa-pack-${Date.now()}.png`; a.href=canvas.toDataURL('image/png'); a.click()
+        }catch(e){
+          console.error(e);
+          alert('Impossibile salvare il PNG. Per evitare CORS, ospita le immagini nel repo e usa percorsi relativi.')
+        }
       }
     }
 
-    // ====== Stars ======
-    function renderStars(container, value, onRate){
-      container.innerHTML='';
-      const full = Math.round(value);
-      for(let i=1;i<=5;i++){
-        const btn = document.createElement(onRate? 'button':'div');
-        btn.innerHTML = starSVG(i<=full);
-        if(onRate) btn.addEventListener('click', ()=> onRate(i));
-        container.appendChild(btn);
-      }
-      const label = document.createElement('span');
-      label.textContent = value? ` ${value.toFixed(1)}/5` : ' Nessuna valutazione';
-      container.appendChild(label);
-    }
-
-    // ====== Filters ======
-    function noFiltersActive(){
-      return (
-        !$('#q').value &&
-        !$('#fGame').value &&
-        !$('#fRarity').value &&
-        !$('#fRole').value &&
-        String($('#fRating').value) === "0"
-      );
-    }
-
-    function applyFilters(){
-      const q = $('#q').value.trim().toLowerCase();
-      const game = $('#fGame').value;
-      const rarity = $('#fRarity').value;
-      const role = $('#fRole').value;
-      const minR = +$('#fRating').value;
-      const sort = $('#fSort').value;
-
-      let items = CARDS.map(c=>({ ...c, rating: avg(loadRatings(c.id)) }));
-      if(q){ items = items.filter(c=> (c.name+" "+c.series+" "+c.text).toLowerCase().includes(q)); }
-      if(game){ items = items.filter(c=> c.game===game); }
-      if(rarity){ items = items.filter(c=> c.rarity===rarity); }
-      if(role){ items = items.filter(c=> c.role===role); }
-      if(minR>0){ items = items.filter(c=> Math.round(c.rating) >= minR); }
-
-      items.sort((a,b)=>{
-        if(sort==='rating') return (b.rating||0) - (a.rating||0);
-        if(sort==='role') return (a.role||'').localeCompare(b.role||'');
-        return a.name.localeCompare(b.name);
-      });
-
-      // Nessun filtro attivo → 8 carte casuali
-      if (noFiltersActive()) {
-        items = items.slice().sort(() => Math.random() - 0.5).slice(0, 8);
-      }
-
-      renderGrid(items);
-    }
-
-    // ====== Grid ======
-    const grid = $('#grid');
-    function renderGrid(items){
-      grid.innerHTML='';
-      if(!items.length){ grid.innerHTML = '<p style="color:var(--muted)">Nessuna carta trovata. Prova a cambiare i filtri.</p>'; return }
-      const tpl = document.getElementById('tplCard');
-      for(const c of items){
-        const node = tpl.content.firstElementChild.cloneNode(true);
-
-        // classe rarità -> glow + badge colorato
-        const rarSlug = (c.rarity || '').toLowerCase().replace(/\s+/g,'-');
-        if (rarSlug) node.classList.add('r-' + rarSlug);
-
-        node.querySelector('.badge').textContent = c.rarity;
-        const img = node.querySelector('.thumb');
-        img.src = c.img; img.loading='lazy'; img.alt = `Carta ${c.name}`;
-        node.querySelector('.name').textContent = c.name;
-        node.querySelector('.meta').textContent = `${c.game} • ${c.series} • ${c.role || '—'}`;
-        renderStars(node.querySelector('.stars'), c.rating||0, null);
-        const tags = node.querySelector('.tags');
-        (c.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s);});
-        node.querySelector('.open').addEventListener('click', ()=> openModal(c));
-        grid.appendChild(node);
-      }
-    }
-
-    // ====== Modal ======
-    const dlg = document.getElementById('dlg');
-    const dlgImg = document.getElementById('dlgImg');
-    const dlgName = document.getElementById('dlgName');
-    const dlgMeta = document.getElementById('dlgMeta');
-    const dlgStars = document.getElementById('dlgStars');
-    const dlgTags = document.getElementById('dlgTags');
-    const commentsBox = document.getElementById('comments');
-    let current = null;
-
-    function openModal(card){
-      current = card;
-      dlgImg.src = card.img;
-      dlgName.textContent = card.name;
-      dlgMeta.textContent = `${card.game} • ${card.series} • ${card.role || '—'}`;
-      dlgTags.innerHTML=''; (card.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; dlgTags.appendChild(s)});
-      const rating = avg(loadRatings(card.id));
-      renderStars(dlgStars, rating, (v)=>{ saveRating(card.id, v); applyFilters(); openModal(card) });
-      renderComments(card.id);
-      document.body.classList.add('modal-open');
-      dlg.showModal();
-
-      // Focus su commento e spostalo in vista (mobile)
-      setTimeout(()=>{
-        const msg = document.getElementById('message');
-        if(msg){ msg.focus({preventScroll:true}); msg.scrollIntoView({block:'center'}); }
-      }, 120);
-    }
-
-    dlg.addEventListener('close', ()=>{
-      current=null;
-      document.body.classList.remove('modal-open');
-    });
-
-    function renderComments(id){
-      commentsBox.innerHTML='';
-      const list = loadComments(id);
-      if(!list.length){ commentsBox.innerHTML = '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>'; return }
-      for(const c of list.slice().reverse()){
-        const div = document.createElement('div');
-        div.className='comment';
-        div.innerHTML = `<div class="author">${esc(c.author||'Anonimo')}</div><div class="text">${esc(c.text||'')}</div><div class="meta" style="margin-top:6px">Voto: ${'★'.repeat(c.rating)}${'☆'.repeat(5-c.rating)} • ${new Date(c.ts).toLocaleString()}</div>`;
-        commentsBox.appendChild(div);
-      }
-    }
-
-    document.getElementById('saveC').addEventListener('click', (e)=>{
-      e.preventDefault();
-      if(!current) return;
-      const author = document.getElementById('author').value.trim() || 'Anonimo';
-      const text = document.getElementById('message').value.trim();
-      const rating = parseInt(document.getElementById('ratingSel').value,10);
-      if(!text){ alert('Scrivi un commento!'); return }
-      addComment(current.id, {author, text, rating, ts: Date.now()});
-      saveRating(current.id, rating);
-      document.getElementById('message').value='';
-      renderComments(current.id);
-      applyFilters();
-    });
-
-    document.getElementById('clearC').addEventListener('click', ()=>{
-      if(!current) return;
-      if(confirm('Sicuro di voler cancellare tutti i commenti per questa carta?')){
-        clearComments(current.id);
-        renderComments(current.id);
-      }
-    });
-
-    // ====== Events ======
-    ['q','fGame','fRarity','fRole','fSort'].forEach(id=> document.getElementById(id).addEventListener('input', applyFilters));
-    document.getElementById('fRating').addEventListener('input', ()=>{
-      document.getElementById('fRatingVal').textContent=document.getElementById('fRating').value;
-      applyFilters();
-    });
-
-    // ====== Init ======
-    loadCards();
+    window.addEventListener('DOMContentLoaded',()=>{ new PackOpener() })
   </script>
 </body>
 </html>
