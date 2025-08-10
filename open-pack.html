@@ -217,7 +217,7 @@
       100%{ transform: translate(var(--xEnd,50%), 120%) rotate(var(--rot,0deg)); opacity:0 }
     }
 
-    /* Ultima carta: zoom + tendina/spotlight + più lenta */
+    /* Ultima carta: stile epico quando la giri (ma non auto-reveal) */
     .cCard.final .scene{ transition-duration: 1s; }
     .cCard.final.revealed{ animation: epicIn 1s cubic-bezier(.2,.8,.2,1) forwards; opacity:1 !important; }
     @keyframes epicIn{
@@ -258,7 +258,7 @@
       <div class="title">
         <div>
           <h1>Open Pack – Fantaballa</h1>
-          <div class="subtitle">Pack → flash dorato → carte in ordine di rarità (click to flip). Ultima: reveal epico.</div>
+          <div class="subtitle">Pack → flash dorato → carte in ordine di rarità (click to flip). Ultima: reveal epico solo al click.</div>
         </div>
         <a href="index.html" class="pill">⬅️ Torna alla vetrina</a>
       </div>
@@ -395,7 +395,7 @@
       if(rslug) node.classList.add('r-'+rslug);
       if(isFinal) node.classList.add('final');
 
-      // IMP: settiamo subito i contenuti del fronte, così al flip ci sono sempre
+      // set front subito (sicurezza)
       const frontImg = node.querySelector('.front img');
       frontImg.src = data.img || '';
       frontImg.alt = `Carta ${data.name || ''}`;
@@ -403,10 +403,10 @@
       const badge = node.querySelector('.badge');
       badge.textContent = data.rarity || '';
 
-      // stato iniziale coperto
+      // stato iniziale coperta
       node.dataset.state = 'back';
 
-      // click to flip (per tutte, anche la finale se vuoi rivederla)
+      // click to flip
       node.addEventListener('click', ()=>{
         if(node.dataset.state === 'back'){
           revealCard(node, data);
@@ -437,7 +437,7 @@
     }
 
     function revealCard(node, data){
-      // set front image IN OGNI CASO (ridondante ma sicuro)
+      // ridondante ma sicuro
       const frontImg = node.querySelector('.front img');
       if(frontImg && !frontImg.src) { frontImg.src = data.img || ''; }
 
@@ -458,31 +458,22 @@
     }
 
     function showStage(cards){
-  const wrap = $('#stageWrap');
-  const stage = $('#stage');
-  stage.innerHTML = '';
-  wrap.classList.add('show');
+      const wrap = $('#stageWrap');
+      const stage = $('#stage');
+      stage.innerHTML = '';
+      wrap.classList.add('show');
 
-  const lastIdx = cards.length - 1;
+      const lastIdx = cards.length - 1;
 
-  cards.forEach((c, i) => {
-    // assegna la classe final all'ultima carta, ma niente auto-reveal
-    const el = makeCardEl(c, i === lastIdx);
-    stage.appendChild(el);
-    setDropIn(el, i); // animazione di caduta
-  });
-}
-
-        // Auto reveal solo per l'ultima (più rara), DOPO la caduta
-        if(i === lastIdx){
-          // attendo il drop + un piccolo delay, poi reveal
-          setTimeout(()=>{
-            revealCard(el, c);
-            // Epic animation
-            el.classList.add('revealed');
-          }, 120*i + 800);
-        }
+      cards.forEach((c, i) => {
+        // ultima con classe "final", ma resta coperta (niente auto-reveal)
+        const el = makeCardEl(c, i === lastIdx);
+        stage.appendChild(el);
+        setDropIn(el, i);
       });
+
+      // Messaggio: l'utente deve toccare per rivelare TUTTE le carte (anche l'ultima)
+      $('#log').textContent = 'Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.';
     }
 
     // ===== Apertura del pacchetto
@@ -523,16 +514,11 @@
       chosen = ensureRarePlus(chosen);
       chosen.sort((a,b)=> (rarityRank[a.rarity] - rarityRank[b.rarity]));
 
-      // mostra sul tavolo coperte
-      (chosen);
+      // mostra sul tavolo coperte (nessuna auto-rivelata)
+      showStage(chosen);
 
       // reset flash
       setTimeout(()=>{ flashLine.classList.remove('active'); flashScreen.classList.remove('active'); }, 400);
-
-      // log
-      const counts = chosen.reduce((acc,c)=>{ acc[c.rarity]=(acc[c.rarity]||0)+1; return acc; },{});
-      const summary = Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${v}× ${k}`).join(' • ');
-      $('#log').textContent = `Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle. – ${summary}`;
 
       // riabilita azioni
       BTN.textContent = '🔁 Nuovo pacchetto';
