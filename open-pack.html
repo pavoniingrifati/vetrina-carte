@@ -1,460 +1,563 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Open Pack • 6 carte • Ordine ascendente</title>
-
-  <link rel="preload" as="image" href="Deck%20back%20ORO.png">
-  <link rel="preload" as="fetch" href="cards.json" crossorigin="anonymous">
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fantaballa – Open Pack</title>
+  <meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e screenshot. Usa cards.json. Retro personalizzato." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Screenshot DOM -> PNG -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
   <style>
     :root{
-      --bg: #0b0f14;
-      --fg: #e6f0ff;
-      --muted:#9bb0c7;
-      --acc:#38bdf8;
-      --card-w: 300px;            /* ancora più grandi */
-      --card-h: 420px;            /* ancora più grandi */
+      --bg: #0b0f19;
+      --panel: #0f1526;
+      --card: #121a2e;
+      --card-2: #0d1325;
+      --text: #ecf0ff;
+      --muted: #a7b0d3;
+      --accent: #6ee7ff;
       --radius: 18px;
-      --shadow: 0 12px 40px rgba(0,0,0,.5);
-      --gap: 20px;
+
+      /* Glow per rarità */
+      --g-comune:      rgba(154,163,178,.30);
+      --g-non-comune:  rgba(52,211,153,.35);
+      --g-rara:        rgba(96,165,250,.45);
+      --g-epica:       rgba(167,139,250,.55);
+      --g-ultra-rara:  rgba(251,191,36,.65);
+      --g-season:      rgba(239,68,68,.7);
     }
+
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0; font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      background: radial-gradient(1400px 820px at 50% -10%, #152131 0%, #0b0f14 60%, #06080b 100%);
-      color:var(--fg);
+      margin:0;
+      background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg);
+      color:var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      overflow-x: hidden;
     }
+    a{color:var(--accent); text-decoration:none}
+
     header{
-      padding:20px; display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      position:sticky; top:0; z-index:20; backdrop-filter: blur(10px);
+      background: linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6));
+      border-bottom:1px solid rgba(255,255,255,.06);
     }
-    h1{ margin:0; font-size: clamp(18px, 3.2vw, 26px) }
-    .badge{font-size:12px; color:#071018; background:linear-gradient(90deg,#67e8f9,#facc15); padding:4px 8px; border-radius:999px; font-weight:700; margin-left:8px}
-    .toolbar{display:flex; gap:8px; flex-wrap:wrap}
+    .wrap{max-width:1200px; margin:0 auto; padding: 20px;}
+    .title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+    h1{margin:0; font-size: clamp(20px, 3.6vw, 34px)}
+    .subtitle{color:var(--muted)}
+
+    .toolbar{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap}
+    .pill{
+      display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text)
+    }
     .btn{
-      background:#111826; color:var(--fg); border:1px solid #1f2b3a;
-      border-radius:12px; padding:10px 14px; font-weight:700; cursor:pointer;
-      box-shadow: var(--shadow); transition: transform .05s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
-      user-select:none;
+      background: linear-gradient(180deg, #1b2a4d, #152141);
+      border:1px solid rgba(110,231,255,.35);
+      border-radius:12px; color:white; padding:12px 16px; cursor:pointer;
     }
-    .btn[disabled]{opacity:.5; cursor:not-allowed}
-    .btn:active{ transform: translateY(1px) }
-    .btn.primary{ background: linear-gradient(180deg,#0ea5e9,#0369a1); border-color:#0ea5e9 }
-    .btn.warn{ background: linear-gradient(180deg,#f59e0b,#b45309); border-color:#f59e0b }
-    .btn.ghost{ background: #101826 }
-    #log{ min-height: 24px; color: var(--muted); padding: 0 20px 12px; font-size:14px }
+    .btn:disabled{opacity:.6; cursor:not-allowed}
 
-    main{ display:grid; place-items:center; padding: 8px 16px 40px }
-    .stage{
-      position:relative; width: min(100%, 1420px);
-      padding: 34px; border-radius: 22px;
-      background: linear-gradient(180deg,#0b1220,#0b0f14);
-      border:1px solid #172135;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.05), var(--shadow);
-      min-height: calc(var(--card-h) + 120px);
+    /* ===== FLASH DORATO ===== */
+    .flash-line, .flash-screen{
+      position: fixed; inset: 0; pointer-events:none; z-index: 40; opacity: 0;
     }
-    .pack-area{
-      position:relative; display:flex; flex-wrap:wrap; gap: var(--gap);
-      justify-content:center; align-items:center;
+    .flash-line::before{
+      content:""; position:absolute; top:0; bottom:0; width:32vw;
+      background: linear-gradient(90deg, transparent, rgba(255,230,120,.55), rgba(255,201,44,.8), rgba(255,230,120,.55), transparent);
+      filter: blur(8px);
+      transform: translateX(-40vw) skewX(-12deg);
     }
+    .flash-line.active{ animation: sweep 0.75s ease-out forwards; }
+    @keyframes sweep{ 0%{opacity:0} 10%{opacity:1} 100%{opacity:1} }
+    .flash-line.active::before{ animation: sweepMove 0.75s ease-out forwards; }
+    @keyframes sweepMove{ to { transform: translateX(120vw) skewX(-12deg); } }
+    .flash-screen{ background: radial-gradient(circle at 50% 50%, rgba(255,232,120,.45), transparent 55%); }
+    .flash-screen.active{ animation: flash 0.35s ease-out forwards; }
+    @keyframes flash{ 0%{opacity:0} 30%{opacity:1} 100%{opacity:0} }
 
-    /* Pacchetto chiuso (cover) */
-    .sealed-wrap{
-      display:grid; place-items:center; min-height: calc(var(--card-h) + 140px);
+    /* ===== PACK SOLO (inizio) ===== */
+    .packArea{
+      display:flex; align-items:center; justify-content:center;
+      min-height: min(76vh, 900px);
+      position:relative;
     }
-    .sealed-pack{
-      width: clamp(260px, 40vw, 420px);
-      aspect-ratio: 2.5/3.5;
-      border-radius: 22px;
-      background: #0b1020 url("Deck%20back%20ORO.png") center/cover no-repeat;
-      border: 1px solid #223454;
-      box-shadow: 0 20px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
-      cursor:pointer;
-      transform: translateZ(0);
-      transition: transform .18s ease;
-      position: relative;
-      outline: none;
-    }
-    .sealed-pack:focus{ outline: 3px solid #6ee7ff; outline-offset: 6px }
-    .sealed-pack:hover{ transform: scale(1.03) }
-    .sealed-pack::after{
-      content:"Clicca per aprire"; position:absolute; bottom:-46px; left:0; right:0; text-align:center; color:var(--muted); font-weight:700; letter-spacing:.2px;
-    }
-
-    /* Carta */
-    .cCard{
-      position:relative; width:var(--card-w); height:var(--card-h);
-      border-radius: var(--radius); overflow:hidden;
-      background: #0d1220; border:1px solid #1c2840;
-      box-shadow: var(--shadow);
-      outline: none;
-      transition: transform .18s ease, box-shadow .2s ease, border-color .2s ease;
-      contain: content; content-visibility: auto;
-      will-change: transform;
-    }
-    .cCard:focus{ outline: 3px solid #6ee7ff; outline-offset: 4px }
-    .cCard:hover{ transform: translateY(-2px) }
-
-    .cCard .inner{ position:absolute; inset:0; display:grid; grid-template-rows: 1fr auto; }
-    .cCard .front, .cCard .back{
-      position:absolute; inset:0; display:grid; place-items:center;
-      backface-visibility:hidden; transform-style:preserve-3d;
-    }
-    .cCard .back{
-      background: #0b1020 url("Deck%20back%20ORO.png") center/cover no-repeat;
+    .pack{
+      width:min(520px, 86vw);
+      aspect-ratio: 690 / 987;
+      background: url('Deck%20back%20ORO.png') center/cover no-repeat;
       border-radius: var(--radius);
+      box-shadow:
+        0 8px 24px rgba(0,0,0,.5),
+        0 0 0 1px rgba(255,255,255,.08);
+      transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+      position:relative;
+      isolation:isolate;
     }
-    .cCard .front{
-      padding:14px;
-      background: radial-gradient(1100px 520px at 50% -20%, rgba(255,255,255,.08), rgba(0,0,0,.5)), #0a0e16;
-      border: 1px solid #243048; border-radius: var(--radius);
-      transform: rotateY(180deg);
+    .pack:hover{ transform: translateY(-2px); box-shadow:
+      0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.12); filter: brightness(1.05) }
+    .pack.shake{ animation: shake .35s ease-in-out 1; }
+    @keyframes shake{
+      0%,100%{ transform: translateX(0) rotate(0) }
+      25%{ transform: translateX(-6px) rotate(-1deg) }
+      50%{ transform: translateX(5px) rotate(1deg) }
+      75%{ transform: translateX(-3px) rotate(-.6deg) }
+    }
+    .pack.opening{ animation: packOpen .9s cubic-bezier(.16,.84,.29,1) forwards; }
+    @keyframes packOpen{
+      0%   { transform: scale(1) translateY(0); opacity:1 }
+      55%  { transform: scale(.92) translateY(6px); filter:brightness(1.08) }
+      75%  { transform: scale(1.02) translateY(-6px); filter:brightness(1.25) }
+      100% { transform: scale(.88) translateY(-12px); opacity:0 }
     }
 
-    /* Immagine molto grande e non tagliata */
-    .imgwrap{
-      width: 96%;
-      aspect-ratio: 5 / 7;
-      display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius: 16px;
-      background: #0b1220; border:1px solid #21304a;
+    /* ===== STAGE CARTE ===== */
+    .stageWrap{ display:none; }
+    .stageWrap.show{ display:block; animation: stageIn .5s ease .25s both; }
+    @keyframes stageIn{ from{opacity:0; transform: translateY(8px)} to{opacity:1; transform:none} }
+
+    .stage{
+      margin:22px 0 40px; display:grid; gap:16px; grid-template-columns: repeat(1, minmax(0,1fr));
     }
-    .imgwrap img{
-      width:100%; height:100%;
-      object-fit: contain; display:block;
+    @media(min-width:720px){.stage{grid-template-columns: repeat(2, minmax(0,1fr))}}
+    @media(min-width:1100px){.stage{grid-template-columns: repeat(3, minmax(0,1fr))}}
+
+    .cCard{
+      position:relative; width:100%; aspect-ratio: 690 / 987; border-radius: var(--radius);
+      transform-style: preserve-3d; perspective: 1200px;
+    }
+    .scene{
+      position:absolute; inset:0; border-radius:inherit; transform-style: preserve-3d;
+      transition: transform .7s cubic-bezier(.22,.75,.2,1);
+      transform: rotateY(0deg);
+      box-shadow: 0 10px 28px rgba(0,0,0,.45);
+      background: var(--card);
+    }
+    .face{
+      position:absolute; inset:0; border-radius:inherit; overflow:hidden;
+      backface-visibility: hidden;
+      border:1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .back img, .front img { width:100%; height:100%; object-fit:cover; display:block; aspect-ratio: 690 / 987; }
+    .back img{ filter: drop-shadow(0 10px 30px rgba(0,0,0,.45)); }
+    .front{ transform: rotateY(180deg); }
+
+    /* Drop-in dall'alto */
+    .drop{ opacity:0; transform: translateY(-40px) scale(.96); }
+    .drop.in{ animation: dropIn .5s cubic-bezier(.2,.8,.2,1) forwards; }
+    @keyframes dropIn{
+      0%{ opacity:0; transform: translateY(-50px) scale(.96) }
+      70%{ opacity:1; transform: translateY(6px) scale(1.02) }
+      100%{ opacity:1; transform: translateY(0) scale(1) }
     }
 
-    .meta{ width:100%; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px }
-    .title{ font-weight:800; font-size:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-    .rarity{ font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.4px }
+    /* Coperta vs scoperta */
+    .cCard[data-state="back"] .scene{ transform: rotateY(0deg); }
+    .cCard[data-state="front"] .scene{ transform: rotateY(180deg); }
 
-    /* Flip + zoom quando rivelata */
-    .cCard[data-state="back"] .front{ transform: rotateY(180deg) }
-    .cCard[data-state="back"] .back{ transform: rotateY(0) }
-    .cCard[data-state="front"]{ transform: scale(1.07) }
-    .cCard[data-state="front"] .front{ transform: rotateY(0) }
-    .cCard[data-state="front"] .back{ transform: rotateY(180deg) }
-    .front, .back{ transition: transform .6s cubic-bezier(.2,.7,.2,1) }
+    /* Badge rarità */
+    .badge{
+      position:absolute; top:10px; right:10px; z-index:2;
+      padding:6px 8px; border-radius:999px; font-size:12px; font-weight:700; color:white;
+      border:1px solid rgba(255,255,255,.15);
+    }
+    .r-comune      .badge{ background: rgba(154,163,178,.85) }
+    .r-non-comune  .badge{ background: rgba(52,211,153,.85) }
+    .r-rara        .badge{ background: rgba(96,165,250,.9) }
+    .r-epica       .badge{ background: rgba(167,139,250,.95) }
+    .r-ultra-rara  .badge{ background: rgba(251,191,36,.95); color:#000 }
+    .r-season      .badge{ background: rgba(239,68,68,.95) }
 
-    /* Scena */
-    .scene{ position:absolute; inset:-30px; pointer-events:none; mix-blend-mode:screen; opacity:.9; filter: blur(0.3px) }
+    /* Glow per rarità */
+    .cCard::after{
+      content:""; position:absolute; inset:-2px; border-radius:inherit; pointer-events:none; opacity:0;
+      background: radial-gradient(500px 600px at 50% -10%, var(--rarGlow, rgba(255,255,255,.18)), transparent 60%);
+      filter: blur(12px); transition: opacity .5s ease;
+    }
+    .cCard.revealed::after{ opacity:.9 }
+    .cCard.r-comune      { --rarGlow: var(--g-comune) }
+    .cCard.r-non-comune  { --rarGlow: var(--g-non-comune) }
+    .cCard.r-rara        { --rarGlow: var(--g-rara); animation: bluePulse 2.3s ease-in-out infinite; }
+    @keyframes bluePulse{ 0%,100%{ filter:none } 50%{ filter: drop-shadow(0 0 18px rgba(96,165,250,.45)) } }
+    .cCard.r-epica       { --rarGlow: var(--g-epica) }
+    .cCard.r-ultra-rara,
+    .cCard.r-season      { --rarGlow: var(--g-ultra-rara) }
+
+    /* Raggi rotanti per Ultra/Season */
     .rays{
-      position:absolute; inset:0;
+      position:absolute; inset:-20px; border-radius:inherit; pointer-events:none; z-index:0;
       background:
-        conic-gradient(from 0deg at 50% 50%, rgba(56,189,248,.20), transparent 20%, rgba(245,158,11,.20), transparent 40%, rgba(99,102,241,.20), transparent 60%, rgba(56,189,248,.20), transparent 80%, rgba(245,158,11,.20));
-      mask: radial-gradient(320px 190px at 50% 120%, rgba(0,0,0,.9), transparent 72%);
-      animation: spin 9s linear infinite;
+        conic-gradient(from 0deg, rgba(255,220,120,.0), rgba(255,220,120,.35), rgba(255,220,120,.0) 30%);
+      mix-blend-mode: screen; opacity:0;
+      animation: rays 2.5s linear infinite;
+      transform: rotate(0deg);
     }
-    @keyframes spin{ to{ transform: rotate(360deg) } }
-    .flash-line{ position:absolute; left:-20%; right:-20%; top:40%; height:2px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.8), transparent); transform: translateY(-50%); filter: blur(1px); animation: sweep 2.5s ease-in-out infinite }
-    @keyframes sweep{ 0%,100%{ opacity:0 } 50%{ opacity:1 } }
-    .flash-screen{ position:absolute; inset:0; background: radial-gradient(540px 300px at 50% 50%, rgba(255,255,255,.25), transparent 70%); opacity:0; animation: pop .9s ease; pointer-events:none }
-    @keyframes pop{ 0%{opacity:0} 25%{opacity:1} 100%{opacity:0} }
+    .cCard.r-ultra-rara .rays,
+    .cCard.r-season .rays{ opacity:.8 }
 
-    /* Colori rarità */
-    .rar-Comune{ color:#93c5fd }
-    .rar-Non\\ Comune{ color:#34d399 }
-    .rar-Rara{ color:#f59e0b }
-    .rar-Epica{ color:#a78bfa }
-    .rar-Ultra\\ Rara{ color:#fb7185 }
-    .rar-Season{ color:#22d3ee }
+    @keyframes rays{ to { transform: rotate(360deg); } }
 
-    /* Riduzione motion */
-    @media (prefers-reduced-motion: reduce){
-      .front, .back, .rays, .flash-line, .flash-screen{ animation: none !important; transition: none !important }
-      .cCard:hover{ transform:none }
-      .cCard[data-state="front"]{ transform:none }
-      .sealed-pack:hover{ transform:none }
+    /* Particelle scintillanti */
+    .spark{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+    .spark i{
+      position:absolute; width:2px; height:10px; background: white; opacity:.0;
+      box-shadow: 0 0 10px white, 0 0 16px var(--rarGlow);
+      transform: translate(-50%,-50%) rotate(var(--rot,0deg));
+      animation: fall .9s ease-out forwards;
+    }
+    @keyframes fall{
+      0%{ transform: translate(var(--x,50%), -20%) rotate(var(--rot,0deg)); opacity:0 }
+      30%{ opacity:1 }
+      100%{ transform: translate(var(--xEnd,50%), 120%) rotate(var(--rot,0deg)); opacity:0 }
     }
 
-    /* Mobile migliorato */
-    @media (max-width: 1100px){
-      :root{ --card-w: 260px; --card-h: 364px; --gap: 18px }
+    /* Ultima carta: stile epico quando la giri (ma non auto-reveal) */
+    .cCard.final .scene{ transition-duration: 1s; }
+    .cCard.final.revealed{ animation: epicIn 1s cubic-bezier(.2,.8,.2,1) forwards; opacity:1 !important; }
+    @keyframes epicIn{
+      0%{ transform: translateY(8px) scale(.96); }
+      60%{ transform: translateY(-6px) scale(1.04); }
+      100%{ transform: translateY(0) scale(1); }
     }
-    @media (max-width: 900px){
-      :root{ --card-w: 230px; --card-h: 322px; --gap: 16px }
-      .title{ font-size:15px }
+    .cCard.final .veil{
+      content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+      background: linear-gradient(180deg, rgba(255,255,255,.25), transparent 30%, transparent 70%, rgba(255,255,255,.18));
+      opacity:0;
     }
-    @media (max-width: 720px){
-      :root{ --card-w: 200px; --card-h: 280px; --gap: 14px }
-      .title{ font-size:14px }
+    .cCard.final.revealed .veil{ animation: veilUp 1s ease-out forwards; }
+    @keyframes veilUp{
+      0%{ opacity:1; clip-path: inset(0 0 0 0 round 18px) }
+      100%{ opacity:0; clip-path: inset(100% 0 0 0 round 18px) }
     }
-    @media (max-width: 560px){
-      :root{ --card-w: 180px; --card-h: 252px; --gap: 12px }
-      .stage{ padding:18px; min-height: calc(var(--card-h) + 80px) }
-      .title{ font-size:13px }
-    }
-    @media (max-width: 420px){
-      :root{ --card-w: 164px; --card-h: 228px; --gap: 10px }
+
+    .log{ margin-top:8px; font-size:13px; color:var(--muted); }
+
+    footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6))}
+    .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
+    .pillFoot{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
+
+    @media (max-width: 600px) {
+      .wrap { padding: 12px; }
+      .stage { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
+  <!-- Flash -->
+  <div class="flash-line" id="flashLine"></div>
+  <div class="flash-screen" id="flashScreen"></div>
+
   <header>
-    <h1>Open Pack <span class="badge">6 carte • meno→più rara</span></h1>
-    <div class="toolbar" role="group" aria-label="Comandi pack">
-      <button id="revealAllBtn" class="btn ghost" disabled>👀 Scopri tutte</button>
-      <button id="newBtn" class="btn ghost" disabled>🔁 Nuovo pacchetto</button>
-      <button id="shotBtn" class="btn warn" disabled>📸 Screenshot</button>
-      <button id="muteBtn" class="btn ghost" aria-pressed="false">🔊 Audio</button>
+    <div class="wrap">
+      <div class="title">
+        <div>
+          <h1>Open Pack – Fantaballa</h1>
+          <div class="subtitle">Pack → flash dorato → carte in ordine di rarità (click to flip). Ultima: reveal epico solo al click.</div>
+        </div>
+        <a href="index.html" class="pill">⬅️ Torna alla vetrina</a>
+      </div>
+
+      <div class="toolbar">
+        <span class="pill">🎲 Probabilità bilanciate • Garanzia Rara+ attiva</span>
+        <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
+        <button id="shotBtn" class="btn">📸 Screenshot pacchetto</button>
+      </div>
+      <div class="log" id="log"></div>
     </div>
   </header>
 
-  <div id="log" role="status" aria-live="polite">Clicca il pacchetto per generare 6 carte (nessun duplicato).</div>
+  <main class="wrap">
+    <!-- Solo pacchetto iniziale -->
+    <section class="packArea" id="packArea">
+      <div class="pack" id="pack"></div>
+    </section>
 
-  <main>
-    <section id="stage" class="stage" aria-label="Tavolo pacchetto">
-      <div class="scene">
-        <div class="rays"></div>
-        <div class="flash-line"></div>
-      </div>
-
-      <!-- Stato iniziale: pacchetto chiuso -->
-      <div id="sealedWrap" class="sealed-wrap">
-        <div id="sealedPack" class="sealed-pack" role="button" tabindex="0" aria-label="Pacchetto chiuso, clicca per aprire"></div>
-      </div>
-
-      <div id="packArea" class="pack-area" hidden></div>
-      <div id="flash" class="flash-screen" hidden></div>
+    <!-- Dopo l'apertura mostriamo le carte (coperte) -->
+    <section class="stageWrap" id="stageWrap">
+      <div id="stage" class="stage" aria-live="polite"></div>
     </section>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" crossorigin="anonymous"></script>
+  <footer>
+    <div class="foot">
+      <span class="pillFoot">ℹ️ Metti “Deck back ORO.png” accanto a questa pagina. Per lo screenshot, tieni le immagini delle carte nel repo (path relativi) per evitare CORS.</span>
+    </div>
+  </footer>
+
+  <!-- Template carta -->
+  <template id="tplCard">
+    <article class="cCard drop" data-state="back">
+      <div class="rays"></div>
+      <div class="scene">
+        <div class="face back">
+          <!-- Retro (se rinomini, aggiorna il src) -->
+          <img src="Deck%20back%20ORO.png" alt="Retro carta" />
+        </div>
+        <div class="face front">
+          <span class="badge"></span>
+          <img alt="">
+        </div>
+      </div>
+      <div class="veil"></div>
+      <div class="spark"></div>
+    </article>
+  </template>
+
   <script>
-  /* ===== Utils ===== */
-  const $ = sel => document.querySelector(sel);
-  const $$ = sel => Array.from(document.querySelectorAll(sel));
-  const LOG = $('#log'), AREA = $('#packArea'), FLASH = $('#flash');
-  const BTN_NEW = $('#newBtn'), BTN_REVEAL_ALL = $('#revealAllBtn'), BTN_SHOT = $('#shotBtn'), BTN_MUTE = $('#muteBtn');
-  const SEALED_WRAP = $('#sealedWrap'), SEALED_PACK = $('#sealedPack');
+    // ===== Utils
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const delay = ms => new Promise(r => setTimeout(r, ms));
+    const rarityRank = { 'Comune':0, 'Non Comune':1, 'Rara':2, 'Epica':3, 'Ultra Rara':4, 'Season':5 };
+    const slug = r => (r||'').toLowerCase().replace(/\s+/g,'-');
 
-  function setLog(msg){ LOG.textContent = msg }
-  function qsParam(name){ const u=new URL(location.href); return u.searchParams.get(name); }
-
-  // Flash visivo
-  function flash(){ FLASH.hidden=false; FLASH.getAnimations().forEach(a=>a.cancel()); FLASH.animate([{opacity:0},{opacity:1,offset:.25},{opacity:0}],{duration:900,easing:'ease'}).onfinish=()=>FLASH.hidden=true }
-
-  // PRNG deterministica opzionale (?seed=1234)
-  function mulberry32(a){ return function(){ let t = a += 0x6D2B79F5; t = Math.imul(t ^ t>>>15, t | 1); t ^= t + Math.imul(t ^ t>>>7, t | 61); return ((t ^ t>>>14) >>> 0) / 4294967296; } }
-  let rng = Math.random;
-  const seedParam = qsParam('seed');
-  if(seedParam !== null){
-    const s = Number(seedParam);
-    if(Number.isFinite(s)) rng = mulberry32((s>>>0) || 1);
-  }
-
-  // Audio on/off
-  let MUTED = false;
-  BTN_MUTE.addEventListener('click', ()=>{
-    MUTED = !MUTED;
-    BTN_MUTE.setAttribute('aria-pressed', String(MUTED));
-    BTN_MUTE.textContent = MUTED ? '🔇 Audio off' : '🔊 Audio';
-  });
-  const AC = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
-  function tone(freq=440, dur=0.08, type='sine', gain=0.04){
-    if(MUTED || !AC) return;
-    const o = AC.createOscillator(); const g = AC.createGain();
-    o.type = type; o.frequency.value = freq;
-    g.gain.value = gain; o.connect(g); g.connect(AC.destination);
-    const t = AC.currentTime; o.start(); g.gain.exponentialRampToValueAtTime(1e-4, t+dur); o.stop(t+dur);
-  }
-  function noiseBoom(dur=0.25, gain=0.12){
-    if(MUTED || !AC) return;
-    const buffer = AC.createBuffer(1, AC.sampleRate * dur, AC.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i=0; i<data.length; i++){ data[i] = (Math.random()*2-1) * (1 - i/data.length); }
-    const src = AC.createBufferSource(); src.buffer = buffer;
-    const g = AC.createGain(); g.gain.value = gain; src.connect(g); g.connect(AC.destination);
-    const t = AC.currentTime; src.start(); g.gain.exponentialRampToValueAtTime(1e-4, t+dur); src.stop(t+dur);
-  }
-
-  /* ===== Dati ===== */
-  let ALL = [];
-  function safeCard(raw){
-    return {
-      id: raw?.id ?? crypto.randomUUID(),
-      name: String(raw?.name ?? 'Senza nome'),
-      rarity: ['Comune','Non Comune','Rara','Epica','Ultra Rara','Season'].includes(raw?.rarity) ? raw.rarity : 'Comune',
-      img: String(raw?.img ?? ''),
-    };
-  }
-  async function loadData(){
-    try{
-      const res = await fetch('cards.json', {cache:'no-store'});
-      if(!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      ALL = Array.isArray(json) ? json.map(safeCard) : [];
-      if(ALL.length === 0) throw new Error('Nessuna carta valida');
-      setLog(`Trovate ${ALL.length} carte. Clicca il pacchetto per aprire.`);
-      BTN_NEW.disabled = true; BTN_REVEAL_ALL.disabled = true; BTN_SHOT.disabled = true;
-    }catch(err){
-      setLog(`Errore: non riesco a caricare le carte (${err.message}).`);
-      BTN_NEW.disabled = true; BTN_REVEAL_ALL.disabled = true; BTN_SHOT.disabled = true;
+    // ===== Audio Synth (WebAudio) – suoni per rarità
+    let audioCtx;
+    function ensureAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
+    function tone(freq, dur=0.15, gain=0.08, type='sine'){
+      ensureAudio();
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type; o.frequency.value = freq;
+      g.gain.value = gain;
+      o.connect(g).connect(audioCtx.destination);
+      o.start();
+      g.gain.setTargetAtTime(0, audioCtx.currentTime+dur, 0.03);
+      o.stop(audioCtx.currentTime + dur + 0.08);
     }
-  }
-
-  /* ===== Logica pack ===== */
-  const PACK_SIZE = 6;
-
-  // Tutte le rarità abilitate + pesi
-  const RARITY_WEIGHTS = {
-    'Comune': 60,
-    'Non Comune': 25,
-    'Rara': 9,
-    'Epica': 4,
-    'Ultra Rara': 1.8,
-    'Season': 0.2
-  };
-
-  // Ordine ASCENDENTE: meno rara -> più rara
-  const RARITY_ORDER_ASC = ['Comune','Non Comune','Rara','Epica','Ultra Rara','Season'];
-
-  function pickWeighted(weights){
-    const entries = Object.entries(weights);
-    const total = entries.reduce((s, [,w])=>s+w, 0);
-    let roll = rng() * total;
-    for(const [key, w] of entries){
-      if((roll -= w) <= 0) return key;
+    function noiseBoom(dur=0.5, gain=0.15){
+      ensureAudio();
+      const bufferSize = audioCtx.sampleRate * dur;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * Math.pow(1-i/bufferSize, 2); }
+      const src = audioCtx.createBufferSource(); src.buffer = buffer;
+      const g = audioCtx.createGain(); g.gain.value = gain;
+      const biquad = audioCtx.createBiquadFilter(); biquad.type='lowpass'; biquad.frequency.value=400;
+      src.connect(biquad).connect(g).connect(audioCtx.destination);
+      src.start();
+      g.gain.setTargetAtTime(0, audioCtx.currentTime+dur*0.7, 0.2);
     }
-    return entries.at(-1)[0];
-  }
+    function playByRarity(r){
+      if(r==='Comune' || r==='Non Comune'){ tone(520,0.07,0.06,'triangle'); tone(660,0.07,0.05,'triangle'); return; }
+      if(r==='Rara'){ tone(660,0.12,0.08,'sine'); tone(880,0.16,0.06,'sine'); return; }
+      if(r==='Epica'){ tone(660,0.18,0.09,'sine'); tone(990,0.22,0.08,'sine'); tone(1320,0.24,0.06,'sine'); return; }
+      if(r==='Ultra Rara' || r==='Season'){ noiseBoom(0.7,0.18); tone(880,0.18,0.1,'square'); tone(1320,0.22,0.08,'square'); }
+    }
 
-  function pickCardByRarityUnique(rarity, usedIds){
-    const pool = ALL.filter(c => c.rarity === rarity && !usedIds.has(c.id));
-    if(pool.length === 0) return null;
-    const c = pool[Math.floor(rng() * pool.length)];
-    usedIds.add(c.id);
-    return c;
-  }
-
-  function makePack(){
-    const used = new Set();
-    const picks = [];
-    // Estrai fino a PACK_SIZE carte rispettando pesi e senza duplicati
-    while(picks.length < PACK_SIZE){
-      let r = pickWeighted(RARITY_WEIGHTS);
-      let c = pickCardByRarityUnique(r, used);
-      if(!c){
-        // Se non c'è disponibilità in quella rarità, prova dalle meno rare alle più rare
-        for(const rr of RARITY_ORDER_ASC){
-          c = pickCardByRarityUnique(rr, used);
-          if(c) break;
-        }
+    // ===== Dati
+    let ALL = [];
+    async function loadData(){
+      try{
+        const res = await fetch('cards.json', { cache:'no-store' });
+        if(!res.ok) throw new Error('cards.json non trovato');
+        ALL = await res.json();
+      }catch(e){
+        console.error(e); ALL = [];
       }
-      if(c) picks.push(c);
-      else break; // pool esaurito del tutto
     }
-    // Ordina per rarità: meno -> più rara
-    picks.sort((a,b)=> RARITY_ORDER_ASC.indexOf(a.rarity) - RARITY_ORDER_ASC.indexOf(b.rarity));
-    return picks;
-  }
 
-  /* ===== UI ===== */
-  function cardTemplate(card){
-    const art = document.createElement('article');
-    art.className = 'cCard';
-    art.dataset.state = 'back';
-    art.setAttribute('role','button'); art.setAttribute('tabindex','0');
-    art.setAttribute('aria-pressed','false');
-    art.setAttribute('aria-label','Carta coperta, premi Invio o Spazio per rivelare');
-
-    const inner = document.createElement('div'); inner.className = 'inner';
-    const back = document.createElement('div'); back.className = 'back';
-    const front = document.createElement('div'); front.className = 'front';
-
-    const imgwrap = document.createElement('div'); imgwrap.className = 'imgwrap';
-    const img = document.createElement('img');
-    if(card.img){ img.src = card.img; img.alt = card.name; }
-    else { img.alt = 'Immagine non disponibile'; }
-    img.loading = 'lazy'; imgwrap.appendChild(img);
-
-    const meta = document.createElement('div'); meta.className = 'meta';
-    const title = document.createElement('div'); title.className = 'title'; title.textContent = card.name;
-    const rarity = document.createElement('div'); rarity.className = `rarity rar-${card.rarity.replace(' ','\\ ')}`; rarity.textContent = card.rarity;
-    meta.append(title, rarity);
-
-    front.append(imgwrap, meta);
-    inner.append(back, front);
-    art.append(inner);
-
-    function reveal(){
-      if(art.dataset.state === 'front') return;
-      art.dataset.state = 'front';
-      art.setAttribute('aria-pressed','true');
-      art.setAttribute('aria-label', `Carta ${card.name} rivelata, rarità ${card.rarity}`);
-      flash(); noiseBoom(0.18, 0.10); tone(220, .06, 'triangle', .02);
-      checkAllRevealed();
+    // ===== Probabilità
+    const WEIGHTS = { 'Season':1, 'Ultra Rara':3, 'Epica':6, 'Rara':10, 'Non Comune':20, 'Comune':60 };
+    function pickRarity(){
+      const entries = Object.entries(WEIGHTS);
+      const tot = entries.reduce((s,[,w])=>s+w,0);
+      let r = Math.random()*tot;
+      for(const [rar, w] of entries){ if(r < w) return rar; r -= w; }
+      return 'Comune';
     }
-    art.addEventListener('click', reveal);
-    art.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); reveal(); } });
+    function pickCardByRarity(rarity, used){
+      let pool = ALL.filter(c => c.rarity===rarity && !used.has(c.id));
+      if(!pool.length) pool = ALL.filter(c => !used.has(c.id));
+      if(!pool.length) return null;
+      return pool[Math.floor(Math.random()*pool.length)];
+    }
+    function ensureRarePlus(cards){
+      const ok = cards.some(c => rarityRank[c.rarity] >= rarityRank['Rara']);
+      if(ok) return cards;
+      const pool = ALL.filter(c => rarityRank[c.rarity] >= rarityRank['Rara']);
+      if(!pool.length) return cards;
+      const i = Math.floor(Math.random()*cards.length);
+      cards[i] = pool[Math.floor(Math.random()*pool.length)];
+      return cards;
+    }
 
-    return art;
-  }
+    // ===== Rendering
+    function makeCardEl(data, isFinal){
+      const node = $('#tplCard').content.firstElementChild.cloneNode(true);
+      const rslug = slug(data.rarity);
+      if(rslug) node.classList.add('r-'+rslug);
+      if(isFinal) node.classList.add('final');
 
-  function showSealed(){
-    AREA.hidden = true;
-    SEALED_WRAP.hidden = false;
-    BTN_REVEAL_ALL.disabled = true; BTN_SHOT.disabled = true; BTN_NEW.disabled = true;
-    setLog('Clicca il pacchetto per far apparire 6 carte (ordine: meno rara → più rara).');
-  }
+      // set front subito (sicurezza)
+      const frontImg = node.querySelector('.front img');
+      frontImg.src = data.img || '';
+      frontImg.alt = `Carta ${data.name || ''}`;
 
-  function showStage(cards){
-    AREA.innerHTML = '';
-    const frag = document.createDocumentFragment();
-    cards.forEach(c => frag.appendChild(cardTemplate(c)));
-    AREA.appendChild(frag);
-    SEALED_WRAP.hidden = true;
-    AREA.hidden = false;
-    BTN_REVEAL_ALL.disabled = false; BTN_NEW.disabled = false; BTN_SHOT.disabled = false;
-    setLog('Carte posizionate (meno→più rara). Clicca per rivelare. Nessun duplicato.');
-  }
+      const badge = node.querySelector('.badge');
+      badge.textContent = data.rarity || '';
 
-  function resetStage(){
-    AREA.innerHTML = '';
-    showSealed();
-  }
+      // stato iniziale coperta
+      node.dataset.state = 'back';
 
-  function checkAllRevealed(){
-    if($$('.cCard[data-state="back"]').length === 0){ setLog('Tutte rivelate! 🎉'); }
-  }
+      // click to flip
+      node.addEventListener('click', ()=>{
+        if(node.dataset.state === 'back'){
+          revealCard(node, data);
+        }else{
+          node.dataset.state = 'back';
+          node.classList.remove('revealed');
+        }
+      });
 
-  async function takeShot(){
-    try{
-      const canvas = await html2canvas(AREA, {backgroundColor: null, useCORS: true, scale: 2});
-      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-      if(!blob) throw new Error('Impossibile creare l’immagine');
-      const url = URL.createObjectURL(blob);
-      const a = Object.assign(document.createElement('a'), {download:`open-pack-${Date.now()}.png`, href:url});
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(()=>URL.revokeObjectURL(url), 2000);
-      tone(880, .08, 'sine', .03);
-    }catch(err){ setLog('Screenshot fallito: ' + err.message); }
-  }
+      return node;
+    }
 
-  /* ===== Bottoni & eventi ===== */
-  function openFromSealed(){
-    const cards = makePack();
-    showStage(cards);
-    flash(); tone(440,.08,'sawtooth',.03); noiseBoom(0.25, 0.14);
-  }
-  SEALED_PACK.addEventListener('click', openFromSealed);
-  SEALED_PACK.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openFromSealed(); } });
+    function addSparks(el, n=10){
+      const c = el.querySelector('.spark');
+      c.innerHTML = '';
+      for(let i=0;i<n;i++){
+        const s = document.createElement('i');
+        const x = 10 + Math.random()*80;
+        const xEnd = x + (-8 + Math.random()*16);
+        const rot = -15 + Math.random()*30;
+        s.style.setProperty('--x', x + '%');
+        s.style.setProperty('--xEnd', xEnd + '%');
+        s.style.setProperty('--rot', rot + 'deg');
+        s.style.left = x + '%';
+        s.style.top = (5 + Math.random()*20) + '%';
+        c.appendChild(s);
+      }
+    }
 
-  BTN_NEW.addEventListener('click', ()=>{
-    resetStage();
-    tone(392,.06,'square',.02);
-  });
-  BTN_REVEAL_ALL.addEventListener('click', ()=>{
-    const backs = $$('.cCard[data-state="back"]'); backs.forEach((el, i)=> setTimeout(()=> el.click(), i*120));
-  });
-  BTN_SHOT.addEventListener('click', takeShot);
+    function revealCard(node, data){
+      // ridondante ma sicuro
+      const frontImg = node.querySelector('.front img');
+      if(frontImg && !frontImg.src) { frontImg.src = data.img || ''; }
 
-  /* ===== Avvio ===== */
-  (async function init(){
-    await loadData();
-    showSealed();
-  })();
+      node.dataset.state = 'front';
+      node.classList.add('revealed');
+
+      // particelle / intensità in base alla rarità
+      const rank = rarityRank[data.rarity] ?? 0;
+      addSparks(node, Math.min(6 + rank*4, 28));
+
+      // suono
+      playByRarity(data.rarity);
+    }
+
+    function setDropIn(el, idx, extraDelay=0){
+      el.classList.add('drop');
+      setTimeout(()=> el.classList.add('in'), 120*idx + extraDelay);
+    }
+
+    function showStage(cards){
+      const wrap = $('#stageWrap');
+      const stage = $('#stage');
+      stage.innerHTML = '';
+      wrap.classList.add('show');
+
+      const lastIdx = cards.length - 1;
+
+      cards.forEach((c, i) => {
+        // ultima con classe "final", ma resta coperta (niente auto-reveal)
+        const el = makeCardEl(c, i === lastIdx);
+        stage.appendChild(el);
+        setDropIn(el, i);
+      });
+
+      // Messaggio: l'utente deve toccare per rivelare TUTTE le carte (anche l'ultima)
+      $('#log').textContent = 'Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.';
+    }
+
+    // ===== Apertura del pacchetto
+    async function doOpen(){
+      const BTN = $('#openBtn');
+      const SHOT = $('#shotBtn');
+      const packArea = $('#packArea');
+      const pack = $('#pack');
+      const flashLine = $('#flashLine');
+      const flashScreen = $('#flashScreen');
+      BTN.disabled = true; SHOT.disabled = true;
+      $('#log').textContent = 'Preparazione pacchetto…';
+
+      if(!ALL.length) await loadData();
+      if(!ALL.length){ $('#log').textContent = 'Nessuna carta trovata in cards.json'; BTN.disabled = false; return; }
+
+      // shake
+      pack.classList.add('shake');
+      await delay(360);
+      pack.classList.remove('shake');
+
+      // flash + apertura
+      flashLine.classList.add('active');
+      flashScreen.classList.add('active');
+      pack.classList.add('opening');
+      await delay(900);
+      packArea.style.display = 'none';
+
+      // estrai 6 carte e ordinale per rarità (ultima = più rara)
+      const used = new Set(); const N = 6;
+      let chosen = [];
+      for(let i=0;i<N;i++){
+        const rar = pickRarity();
+        const card = pickCardByRarity(rar, used) || pickCardByRarity('Comune', used);
+        if(!card) break;
+        used.add(card.id); chosen.push(card);
+      }
+      chosen = ensureRarePlus(chosen);
+      chosen.sort((a,b)=> (rarityRank[a.rarity] - rarityRank[b.rarity]));
+
+      // mostra sul tavolo coperte (nessuna auto-rivelata)
+      showStage(chosen);
+
+      // reset flash
+      setTimeout(()=>{ flashLine.classList.remove('active'); flashScreen.classList.remove('active'); }, 400);
+
+      // riabilita azioni
+      BTN.textContent = '🔁 Nuovo pacchetto';
+      BTN.disabled = false; SHOT.disabled = false;
+
+      // Nuovo click = reset
+      BTN.onclick = async () => {
+        BTN.disabled = true; SHOT.disabled = true;
+        $('#stageWrap').classList.remove('show');
+        $('#stage').innerHTML = '';
+        packArea.style.display = 'flex';
+        pack.classList.remove('opening');
+        BTN.textContent = '🎁 Apri pacchetto';
+        $('#log').textContent = '';
+        await delay(100);
+        BTN.disabled = false;
+      };
+    }
+
+    // ===== Screenshot del pacchetto
+    async function doShot(){
+      const area = $('#stageWrap');
+      try{
+        if(!window.html2canvas) { alert('html2canvas non ancora caricato, riprova tra un secondo.'); return; }
+        const canvas = await html2canvas(area, { backgroundColor: null, useCORS: true, scale: 2 });
+        const link = document.createElement('a');
+        link.download = `fantaballa-pack-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }catch(e){
+        console.error(e);
+        alert('Impossibile salvare il PNG. Per evitare blocchi CORS, ospita le immagini delle carte nel tuo repo e usa percorsi relativi (es. img/...).');
+      }
+    }
+
+    // Init
+    $('#openBtn').addEventListener('click', doOpen);
+    $('#pack').addEventListener('click', ()=> $('#openBtn').click());
+    $('#shotBtn').addEventListener('click', doShot);
   </script>
 </body>
 </html>
