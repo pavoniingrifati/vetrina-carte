@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Fantaballa – Open Pack</title>
-  <meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e screenshot. Usa cards.json. Retro personalizzato." />
+  <meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e screenshot. Usa cards.json. Retro personalizzato. Include selezione tipo pacchetto e prezzi." />
 
   <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,6 +28,7 @@
     h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
     .toolbar{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap}
     .pill{display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text)}
+    .pill.sel select{ background:transparent; border:0; color:var(--text); font: inherit; outline:none; appearance:none; padding-left:6px; }
     .btn{background:linear-gradient(180deg,#1b2a4d,#152141); border:1px solid rgba(110,231,255,.35); border-radius:12px; color:#fff; padding:12px 16px; cursor:pointer}
     .btn:disabled{opacity:.6; cursor:not-allowed}
 
@@ -126,6 +127,15 @@
 
       <div class="toolbar">
         <span class="pill" id="fairnessNote">🎲 Probabilità bilanciate • Garanzia Rara+ attiva</span>
+        <span class="pill sel">
+          Tipo:
+          <select id="packType" aria-label="Tipo di pacchetto">
+            <option value="random">Random</option>
+            <option value="wonderkid">Wonderkid</option>
+            <option value="tots">TOTS</option>
+          </select>
+        </span>
+        <span class="pill" id="pricePill">💰 Costo: 1000</span>
         <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
         <button id="shotBtn" class="btn" disabled>📸 Screenshot pacchetto</button>
       </div>
@@ -167,24 +177,45 @@
   </template>
 
   <script type="module">
-    // ===== Config e fallback integrato =====
+    // ===== Config con tipi pacchetto =====
+    const PACKS = {
+      random:   { label:'Random',    cost:1000,  filter: c => true },
+      wonderkid:{ label:'Wonderkid', cost:1400,  filter: c => hasTag(c,'wonderkid') },
+      tots:     { label:'TOTS',      cost:1800,  filter: c => hasTag(c,'tots') || /tots/i.test(String(c.set||c.category||c.type||'')) }
+    };
     const CONFIG = { CARDS_JSON:'cards.json', BACK_IMG:'Deck%20back%20ORO.png', COUNT:6, WEIGHTS:{'Season':1,'Ultra Rara':3,'Epica':6,'Rara':10,'Non Comune':20,'Comune':60}, FETCH_TIMEOUT_MS:8000 };
 
-    // Se cards.json non è raggiungibile (es. file:// o 404), useremo questi dati demo
+    // Fallback carte se cards.json non carica (utile anche da file://)
     const FALLBACK_CARDS = [
-      {id:'c1', name:'Carta Comune 1', rarity:'Comune', img:'Deck%20back%20ORO.png'},
-      {id:'c2', name:'Carta Comune 2', rarity:'Comune', img:'Deck%20back%20ORO.png'},
-      {id:'c3', name:'Carta Non Comune', rarity:'Non Comune', img:'Deck%20back%20ORO.png'},
-      {id:'c4', name:'Carta Rara', rarity:'Rara', img:'Deck%20back%20ORO.png'},
-      {id:'c5', name:'Carta Epica', rarity:'Epica', img:'Deck%20back%20ORO.png'},
-      {id:'c6', name:'Carta Ultra', rarity:'Ultra Rara', img:'Deck%20back%20ORO.png'}
+      // Wonderkid esempi
+      {id:'wk1', name:'Wonderkid A', rarity:'Comune',      img:'Deck%20back%20ORO.png', tags:['wonderkid']},
+      {id:'wk2', name:'Wonderkid B', rarity:'Non Comune',  img:'Deck%20back%20ORO.png', tags:['wonderkid']},
+      {id:'wk3', name:'Wonderkid C', rarity:'Rara',        img:'Deck%20back%20ORO.png', tags:['wonderkid']},
+      {id:'wk4', name:'Wonderkid D', rarity:'Epica',       img:'Deck%20back%20ORO.png', tags:['wonderkid']},
+      {id:'wk5', name:'Wonderkid E', rarity:'Ultra Rara',  img:'Deck%20back%20ORO.png', tags:['wonderkid']},
+      // TOTS esempi
+      {id:'t1', name:'TOTS Alpha',   rarity:'Comune',      img:'Deck%20back%20ORO.png', tags:['tots']},
+      {id:'t2', name:'TOTS Beta',    rarity:'Rara',        img:'Deck%20back%20ORO.png', tags:['tots']},
+      {id:'t3', name:'TOTS Gamma',   rarity:'Epica',       img:'Deck%20back%20ORO.png', tags:['tots']},
+      {id:'t4', name:'TOTS Omega',   rarity:'Ultra Rara',  img:'Deck%20back%20ORO.png', tags:['tots']},
+      // Random generiche
+      {id:'r1', name:'Base 1',       rarity:'Comune',      img:'Deck%20back%20ORO.png'},
+      {id:'r2', name:'Base 2',       rarity:'Non Comune',  img:'Deck%20back%20ORO.png'},
+      {id:'r3', name:'Base 3',       rarity:'Rara',        img:'Deck%20back%20ORO.png'},
+      {id:'r4', name:'Base 4',       rarity:'Epica',       img:'Deck%20back%20ORO.png'},
     ];
 
-    // ===== Utilità
+    // ===== Utilità DOM/varie =====
     const $ = (s,el=document)=>el.querySelector(s); const $$=(s,el=document)=>Array.from(el.querySelectorAll(s)); const delay=ms=>new Promise(r=>setTimeout(r,ms));
     const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5};
+    const slug = r => (r||'').toLowerCase().replace(/\s+/g,'-');
+    function hasTag(c, t){
+      const arr = Array.isArray(c?.tags) ? c.tags : (typeof c?.tags === 'string' ? c.tags.split(',') : []);
+      const extra = [c?.set, c?.category, c?.type].filter(Boolean);
+      return [...arr, ...extra].some(s => String(s).toLowerCase().includes(String(t).toLowerCase()));
+    }
 
-    // ===== Audio opzionale
+    // ===== Audio opzionale =====
     let audioCtx=null; function ensureAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)() }catch{} }
     function tone(f,d=.15,g=.08,t='sine'){ if(!audioCtx) return; const o=audioCtx.createOscillator(),A=audioCtx.createGain(); o.type=t; o.frequency.value=f; A.gain.value=g; o.connect(A).connect(audioCtx.destination); o.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d,.03); o.stop(audioCtx.currentTime+d+.08) }
     function noiseBoom(d=.5,g=.15){ if(!audioCtx) return; const N=audioCtx.sampleRate*d, b=audioCtx.createBuffer(1,N,audioCtx.sampleRate), x=b.getChannelData(0); for(let i=0;i<N;i++) x[i]=(Math.random()*2-1)*Math.pow(1-i/N,2); const s=audioCtx.createBufferSource(); s.buffer=b; const A=audioCtx.createGain(); A.gain.value=g; const F=audioCtx.createBiquadFilter(); F.type='lowpass'; F.frequency.value=400; s.connect(F).connect(A).connect(audioCtx.destination); s.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d*.7,.2) }
@@ -195,13 +226,19 @@
         this.ALL=[]; this.used=new Set();
         this.$openBtn=$('#openBtn'); this.$shotBtn=$('#shotBtn'); this.$packArea=$('#packArea'); this.$pack=$('#pack');
         this.$flashLine=$('#flashLine'); this.$flashScreen=$('#flashScreen'); this.$stageWrap=$('#stageWrap'); this.$stage=$('#stage'); this.$log=$('#log');
-        this.bind(); this.prewarm();
+        this.$packType=$('#packType'); this.$pricePill=$('#pricePill');
+        this.bind(); this.prewarm(); this.updatePrice();
       }
       bind(){
         this.$openBtn.addEventListener('click',()=>this.doOpen());
         this.$pack.addEventListener('click',()=>this.$openBtn.click(),{passive:true});
         this.$shotBtn.addEventListener('click',()=>this.doShot());
+        this.$packType.addEventListener('change',()=>this.updatePrice());
         ['click','keydown','touchstart'].forEach(e=>window.addEventListener(e,()=>{ensureAudio()}, {once:true}))
+      }
+      updatePrice(){
+        const k=this.$packType.value; const pack=PACKS[k];
+        this.$pricePill.textContent = `💰 Costo: ${pack.cost}`;
       }
       prewarm(){ const img=new Image(); img.decoding='async'; img.src=CONFIG.BACK_IMG; if('requestIdleCallback' in window){ requestIdleCallback(()=>this.idlePreload(),{timeout:1500}) } else { setTimeout(()=>this.idlePreload(),800) } }
       idlePreload(){ this.loadData().catch(()=>{}) }
@@ -214,30 +251,74 @@
           const json=await res.json();
           if(!Array.isArray(json)) throw new Error('Formato non valido (atteso array)');
           const cleaned=[]; const ids=new Set();
-          for(const c of json){ if(!c||typeof c!=='object') continue; const id=c.id??`${c.name||'card'}-${Math.random().toString(36).slice(2,8)}`; const name=String(c.name||''); const rarity=String(c.rarity||''); const img=String(c.img||''); if(!name||!rarity||!img) continue; if(ids.has(id)) continue; ids.add(id); cleaned.push({id,name,rarity,img}) }
+          for(const c of json){
+            if(!c||typeof c!=='object') continue;
+            const id=c.id??`${c.name||'card'}-${Math.random().toString(36).slice(2,8)}`;
+            const name=String(c.name||'');
+            const rarity=String(c.rarity||'');
+            const img=String(c.img||'');
+            const tags=Array.isArray(c.tags)?c.tags: (typeof c.tags==='string'? c.tags.split(','): []);
+            if(!name||!rarity||!img) continue;
+            if(ids.has(id)) continue; ids.add(id);
+            cleaned.push({id,name,rarity,img,tags, set:c.set, category:c.category, type:c.type});
+          }
           if(!cleaned.length) throw new Error('Nessuna carta valida in cards.json');
           this.ALL=cleaned; this.$log.textContent=`Caricate ${this.ALL.length} carte.`;
         }catch(err){
           console.warn('cards.json non caricato, uso fallback:', err?.message||err);
-          this.ALL = FALLBACK_CARDS; // Fallback che funziona anche da file://
+          this.ALL = FALLBACK_CARDS;
           this.$log.textContent='⚠️ Non trovo cards.json, uso carte di esempio.';
         }finally{ clearTimeout(t) }
       }
       pickRarity(){ const E=Object.entries(CONFIG.WEIGHTS); const tot=E.reduce((s,[,w])=>s+w,0); let r=Math.random()*tot; for(const [rar,w] of E){ if(r<w) return rar; r-=w } return 'Comune' }
-      pickCardByRarity(r){ let pool=this.ALL.filter(c=>c.rarity===r&&!this.used.has(c.id)); if(!pool.length) pool=this.ALL.filter(c=>!this.used.has(c.id)); if(!pool.length) return null; return pool[Math.floor(Math.random()*pool.length)] }
-      ensureRarePlus(cards){ const ok=cards.some(c=>rarityRank[c.rarity]>=rarityRank['Rara']); if(ok) return cards; const pool=this.ALL.filter(c=>rarityRank[c.rarity]>=rarityRank['Rara']); if(!pool.length) return cards; const i=Math.floor(Math.random()*cards.length); cards[i]=pool[Math.floor(Math.random()*pool.length)]; return cards }
+      pickCardByRarity(rarity, pool){
+        // prova senza duplicati
+        let candidates = pool.filter(c => c.rarity===rarity && !this.used.has(c.id));
+        if(!candidates.length) candidates = pool.filter(c => !this.used.has(c.id));
+        // se ancora vuoto, permetti duplicati
+        if(!candidates.length) candidates = pool;
+        if(!candidates.length) return null;
+        return candidates[Math.floor(Math.random()*candidates.length)];
+      }
+      ensureRarePlus(cards, pool){
+        const ok=cards.some(c=>rarityRank[c.rarity] >= rarityRank['Rara']);
+        if(ok) return cards;
+        const rarePool = pool.filter(c=>rarityRank[c.rarity] >= rarityRank['Rara']);
+        if(!rarePool.length) return cards;
+        const i=Math.floor(Math.random()*cards.length);
+        cards[i] = rarePool[Math.floor(Math.random()*rarePool.length)];
+        return cards;
+      }
       makeCardEl(d,isFinal){ const tpl=document.getElementById('tplCard'); const n=tpl.content.firstElementChild.cloneNode(true); const rslug=(d.rarity||'').toLowerCase().replace(/\s+/g,'-'); if(rslug) n.classList.add('r-'+rslug); if(isFinal) n.classList.add('final'); const front=n.querySelector('.front img'); front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async'; n.querySelector('.badge').textContent=d.rarity||''; n.dataset.state='back'; n.addEventListener('click',()=>{ if(n.dataset.state==='back'){ this.revealCard(n,d) } else { n.dataset.state='back'; n.classList.remove('revealed') } },{passive:true}); return n }
-      addSparks(el,n=10){ const c=el.querySelector('.spark'); c.innerHTML=''; const frag=document.createDocumentFragment(); for(let i=0;i<n;i++){ const s=document.createElement('i'); const x=10+Math.random()*80, xEnd=x+(-8+Math.random()*16), rot=-15+Math.random()*30; s.style.setProperty('--x',x+'%'); s.style.setProperty('--xEnd',xEnd+'%'); s.style.setProperty('--rot',rot+'deg'); s.style.left=x+'%'; s.style.top=(5+Math.random()*20)+'%'; frag.appendChild(s) } c.appendChild(frag) }
+      addSparks(el,n=10){ const c=el.querySelector('.spark'); if(!c){ const sp=document.createElement('div'); sp.className='spark'; el.appendChild(sp); } const cont=el.querySelector('.spark'); cont.innerHTML=''; const frag=document.createDocumentFragment(); for(let i=0;i<n;i++){ const s=document.createElement('i'); const x=10+Math.random()*80, xEnd=x+(-8+Math.random()*16), rot=-15+Math.random()*30; s.style.setProperty('--x',x+'%'); s.style.setProperty('--xEnd',xEnd+'%'); s.style.setProperty('--rot',rot+'deg'); s.style.left=x+'%'; s.style.top=(5+Math.random()*20)+'%'; frag.appendChild(s) } cont.appendChild(frag) }
       revealCard(n,d){ const front=n.querySelector('.front img'); if(front && !front.src) front.src=d.img||''; n.dataset.state='front'; n.classList.add('revealed'); const rank=rarityRank[d.rarity]??0; this.addSparks(n,Math.min(6+rank*4,28)); playByRarity(d.rarity) }
       setDropIn(el,i,extra=0){ el.classList.add('drop'); setTimeout(()=>el.classList.add('in'),120*i+extra) }
-      showStage(cards){ const wrap=this.$stageWrap, stage=this.$stage; stage.innerHTML=''; wrap.classList.add('show'); const last=cards.length-1; const frag=document.createDocumentFragment(); cards.forEach((c,i)=>{ const el=this.makeCardEl(c,i===last); // aggiungi contenitori spark/rays/veil
+      showStage(cards){ const wrap=this.$stageWrap, stage=this.$stage; stage.innerHTML=''; wrap.classList.add('show'); const last=cards.length-1; const frag=document.createDocumentFragment(); cards.forEach((c,i)=>{ const el=this.makeCardEl(c,i===last); // assicura contenitori
         if(!el.querySelector('.spark')){ const sp=document.createElement('div'); sp.className='spark'; el.appendChild(sp) }
         if(!el.querySelector('.rays')){ const ry=document.createElement('div'); ry.className='rays'; el.appendChild(ry) }
         if(!el.querySelector('.veil')){ const ve=document.createElement('div'); ve.className='veil'; el.appendChild(ve) }
         frag.appendChild(el); this.setDropIn(el,i) });
         stage.appendChild(frag);
         this.$shotBtn.disabled=false; this.$log.textContent='Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.' }
-      async doOpen(){ const BTN=this.$openBtn, SHOT=this.$shotBtn; BTN.disabled=true; SHOT.disabled=true; this.$log.textContent='Preparazione pacchetto…'; await this.loadData(); if(!this.ALL.length){ this.$log.textContent='Nessuna carta disponibile'; BTN.disabled=false; return } this.$pack.classList.add('shake'); await delay(360); this.$pack.classList.remove('shake'); this.$flashLine.classList.add('active'); this.$flashScreen.classList.add('active'); this.$pack.classList.add('opening'); await delay(900); this.$packArea.style.display='none'; this.used.clear(); let chosen=[]; for(let i=0;i<CONFIG.COUNT;i++){ const rar=this.pickRarity(); const card=this.pickCardByRarity(rar)||this.pickCardByRarity('Comune'); if(!card) break; this.used.add(card.id); chosen.push(card) } chosen=this.ensureRarePlus(chosen); chosen.sort((a,b)=>rarityRank[a.rarity]-rarityRank[b.rarity]); this.showStage(chosen); setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active') },400); BTN.textContent='🔁 Nuovo pacchetto'; BTN.disabled=false; SHOT.disabled=false; BTN.onclick=async()=>{ BTN.disabled=true; SHOT.disabled=true; this.$stageWrap.classList.remove('show'); this.$stage.innerHTML=''; this.$packArea.style.display='flex'; this.$pack.classList.remove('opening'); BTN.textContent='🎁 Apri pacchetto'; this.$log.textContent=''; await delay(100); BTN.disabled=false; BTN.onclick=()=>this.doOpen() } }
+      async doOpen(){
+        const BTN=this.$openBtn, SHOT=this.$shotBtn; BTN.disabled=true; SHOT.disabled=true; this.$log.textContent='Preparazione pacchetto…';
+        await this.loadData(); if(!this.ALL.length){ this.$log.textContent='Nessuna carta disponibile'; BTN.disabled=false; return }
+        // filtra per tipo pacchetto
+        const key=this.$packType.value; const pack=PACKS[key]; const pool=this.ALL.filter(pack.filter);
+        if(!pool.length){ this.$log.textContent='⚠️ Nessuna carta compatibile con questo pacchetto.'; BTN.disabled=false; SHOT.disabled=true; return }
+
+        this.$pack.classList.add('shake'); await delay(360); this.$pack.classList.remove('shake');
+        this.$flashLine.classList.add('active'); this.$flashScreen.classList.add('active'); this.$pack.classList.add('opening');
+        await delay(900); this.$packArea.style.display='none';
+
+        this.used.clear(); let chosen=[]; for(let i=0;i<CONFIG.COUNT;i++){ const rar=this.pickRarity(); const card=this.pickCardByRarity(rar,pool); if(!card) break; this.used.add(card.id); chosen.push(card) }
+        chosen=this.ensureRarePlus(chosen,pool); chosen.sort((a,b)=>rarityRank[a.rarity]-rarityRank[b.rarity]);
+        this.showStage(chosen);
+
+        setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active') },400);
+        BTN.textContent=`🔁 Nuovo pacchetto ${pack.label}`; BTN.disabled=false; SHOT.disabled=false;
+        BTN.onclick=async()=>{ BTN.disabled=true; SHOT.disabled=true; this.$stageWrap.classList.remove('show'); this.$stage.innerHTML=''; this.$packArea.style.display='flex'; this.$pack.classList.remove('opening'); BTN.textContent='🎁 Apri pacchetto'; this.$log.textContent=''; await delay(100); BTN.disabled=false; BTN.onclick=()=>this.doOpen() };
+      }
       async doShot(){ const area=this.$stageWrap; try{ if(!window.html2canvas){ alert('html2canvas non ancora caricato, riprova tra un secondo.'); return } const canvas=await html2canvas(area,{backgroundColor:null,useCORS:true,scale:2}); const a=document.createElement('a'); a.download=`fantaballa-pack-${Date.now()}.png`; a.href=canvas.toDataURL('image/png'); a.click() }catch(e){ console.error(e); alert('Impossibile salvare il PNG. Per evitare blocchi CORS, ospita le immagini delle carte nel tuo repo e usa percorsi relativi (es. img/...).') } }
     }
 
