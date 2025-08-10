@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Fantaballa – Open Pack</title>
-  <meta name="description" content="Simulatore apertura pacchetti con rarità, animazioni e glow colorati (dati locali da cards.json)." />
+  <meta name="description" content="Simulatore apertura pacchetti con retro personalizzato, animazioni e glow (dati da cards.json)." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -18,7 +18,6 @@
       --muted: #a7b0d3;
       --accent: #6ee7ff;
       --radius: 16px;
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -37,7 +36,6 @@
     h1{font-size: clamp(20px, 3.6vw, 34px); margin:0}
     .subtitle{color:var(--muted); margin-top:6px}
 
-    /* Toolbar */
     .toolbar{display:grid; grid-template-columns: 1fr auto; gap:12px; margin-top:16px;}
     .pill{
       display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px;
@@ -55,44 +53,71 @@
     @media(min-width:700px){.stage{grid-template-columns: repeat(2, minmax(0,1fr))}}
     @media(min-width:1100px){.stage{grid-template-columns: repeat(3, minmax(0,1fr))}}
 
-    /* Carta (dimensioni esatte 690x987 con aspect-ratio) */
+    /* Carta 690x987 */
     .card{
       position:relative; border-radius: var(--radius);
-      transform-style: preserve-3d; transition: transform .6s ease;
-      cursor: pointer; width: 100%;
-      aspect-ratio: 690 / 987;  /* proporzione reale */
-      box-shadow: 0 6px 18px rgba(0,0,0,.35);
-      --glow: rgba(110,231,255,.35); /* sarà cambiato on-the-fly */
+      width: 100%; aspect-ratio: 690 / 987; /* proporzione reale */
+      transform-style: preserve-3d;
+      transition: transform .7s cubic-bezier(.22,.75,.2,1), filter .3s ease, box-shadow .3s ease;
+      cursor: pointer;
+      box-shadow: 0 12px 24px rgba(0,0,0,.45);
+      perspective: 1200px;
+      --rarGlow: rgba(255,255,255,.25); /* base */
+      --revealGlow: rgba(110,231,255,.45); /* modificata al reveal */
+      --glowSize: 36px;
     }
-    .card.flip{ transform: rotateY(180deg); }
+    .card:hover{ transform: translateY(-2px) rotateX(3deg) rotateY(-3deg); }
+
+    .scene{
+      position:absolute; inset:0; border-radius: var(--radius);
+      transform: translateZ(0); transform-style: preserve-3d;
+    }
+
     .face{
       position:absolute; inset:0; border-radius:var(--radius); overflow:hidden;
       backface-visibility: hidden;
       border:1px solid rgba(255,255,255,.08);
       background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card);
       display:flex; align-items:center; justify-content:center;
-      box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 16px 40px rgba(0,0,0,.45), 0 0 24px var(--glow);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.06),
+        0 22px 50px rgba(0,0,0,.5),
+        0 0 var(--glowSize) var(--revealGlow);
+      transform: rotateY(0deg);
+      transition: box-shadow .35s ease;
     }
+
+    /* Retro con la tua immagine */
     .back{
-      background: radial-gradient(800px 500px at 20% -10%, rgba(110,231,255,.15), transparent), var(--card-2);
-      border:1px solid rgba(110,231,255,.25);
-      color:#a7e9ff; font-weight:700; letter-spacing:.5px;
-      text-transform:uppercase;
+      background: none; /* useremo l'img */
     }
-    .front{ transform: rotateY(180deg); display:grid; grid-template-rows: auto 1fr auto }
+    .back img{
+      width: 100%; height: 100%; object-fit: cover;
+      aspect-ratio: 690 / 987; display:block;
+      filter: drop-shadow(0 10px 30px rgba(0,0,0,.45));
+      transform: translateZ(1px);
+      pointer-events: none;
+    }
+
+    /* Fronte */
+    .front{
+      transform: rotateY(180deg);
+      display:grid; grid-template-rows: auto 1fr auto;
+      background: var(--card);
+    }
     .front img{
-      width:100%; height:100%; object-fit:cover;
-      aspect-ratio: 690 / 987; background:#0b0f19;
+      width:100%; height:100%; object-fit:cover; aspect-ratio: 690 / 987; background:#0b0f19;
     }
-    .front .meta{ padding:10px 12px; font-size:13px; color:#aeb7d9; display:flex; gap:8px; flex-wrap:wrap }
     .front .name{ padding:10px 12px 0; font-weight:600 }
+    .front .meta{ padding:10px 12px 12px; font-size:13px; color:#aeb7d9; display:flex; gap:8px; flex-wrap:wrap }
+
+    /* Badge rarità */
     .badge{
       position:absolute; top:10px; right:10px; z-index:2;
       padding:6px 8px; border-radius:999px; font-size:12px; font-weight:700; color:white;
       border:1px solid rgba(255,255,255,.15);
+      transform: translateZ(3px);
     }
-
-    /* Colori badge per rarità */
     .r-comune      .badge{ background: rgba(154,163,178,.85)}
     .r-non-comune  .badge{ background: rgba(52,211,153,.85)}
     .r-rara        .badge{ background: rgba(96,165,250,.85)}
@@ -100,7 +125,7 @@
     .r-epica       .badge{ background: rgba(167,139,250,.9)}
     .r-season      .badge{ background: rgba(239,68,68,.9)}
 
-    /* Glow di base per rarità (fuso con glow random) */
+    /* Glow per rarità */
     .r-comune      { --rarGlow: rgba(154,163,178,.35) }
     .r-non-comune  { --rarGlow: rgba(52,211,153,.35) }
     .r-rara        { --rarGlow: rgba(96,165,250,.35) }
@@ -108,10 +133,28 @@
     .r-epica       { --rarGlow: rgba(167,139,250,.45) }
     .r-season      { --rarGlow: rgba(239,68,68,.55) }
 
-    /* Effetti */
-    .pulse{ animation: pulse 1.2s ease-in-out infinite }
-    @keyframes pulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.02)} }
-    .hidden{ visibility:hidden }
+    /* Stati flip */
+    .card[data-state="back"] .scene{ transform: rotateY(0deg); }
+    .card[data-state="front"] .scene{ transform: rotateY(180deg); }
+    .card.revealing{
+      animation: pop .45s ease-out;
+    }
+    @keyframes pop{
+      0%{ transform: scale(.96) }
+      60%{ transform: scale(1.02) }
+      100%{ transform: scale(1) }
+    }
+
+    /* Bagliore al reveal */
+    .burst::after{
+      content:""; position:absolute; inset:-6px; border-radius:inherit; pointer-events:none;
+      box-shadow: 0 0 42px var(--revealGlow), 0 0 86px var(--rarGlow);
+      opacity:0; animation: burst .7s ease-out forwards;
+    }
+    @keyframes burst{
+      0%{ opacity:.85 }
+      100%{ opacity:0 }
+    }
 
     .log{ margin-top:8px; font-size:13px; color:var(--muted); }
 
@@ -119,7 +162,6 @@
     .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
     .pillFoot{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
 
-    /* Mobile tweaks */
     @media (max-width: 600px) {
       .wrap { padding: 12px; }
       .toolbar { grid-template-columns: 1fr; }
@@ -133,7 +175,7 @@
       <div class="title">
         <div>
           <h1>Open Pack – Fantaballa</h1>
-          <div class="subtitle">Simulatore di apertura pacchetti (6 carte) – usa <code>cards.json</code></div>
+          <div class="subtitle">Retro personalizzato • 6 carte • flip sequenziale</div>
         </div>
         <div style="display:flex; gap:10px; align-items:center">
           <a href="index.html" class="pill">⬅️ Torna alla vetrina</a>
@@ -154,18 +196,23 @@
 
   <footer>
     <div class="foot">
-      <span class="pillFoot">ℹ️ Demo offline: nessun salvataggio online.</span>
+      <span class="pillFoot">ℹ️ Assicurati di caricare anche “Deck back ORO.png” accanto a questo file.</span>
     </div>
   </footer>
 
   <template id="tplCard">
-    <div class="card pulse">
-      <div class="face back">Tocca per rivelare</div>
-      <div class="face front">
-        <div class="badge"></div>
-        <img alt="">
-        <div class="name"></div>
-        <div class="meta"></div>
+    <div class="card r-comune" data-state="back">
+      <div class="scene">
+        <div class="face back">
+          <!-- Retro (immagine tua). Se rinomini il file, aggiorna qui il src -->
+          <img src="Deck%20back%20ORO.png" alt="Retro carta" />
+        </div>
+        <div class="face front">
+          <div class="badge"></div>
+          <img alt="">
+          <div class="name"></div>
+          <div class="meta"></div>
+        </div>
       </div>
     </div>
   </template>
@@ -174,19 +221,18 @@
     // ===== Utils
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
-    const shuffle = arr => arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]);
-    const rand = (min,max)=> Math.random()*(max-min)+min;
-
-    // Palette glow casuale (RGBA morbide)
-    const GLOW_COLORS = [
-      'rgba(110,231,255,0.45)', // azzurro
-      'rgba(251,191,36,0.45)',  // oro
-      'rgba(167,139,250,0.45)', // viola
-      'rgba(52,211,153,0.45)',  // verde
-      'rgba(239,68,68,0.45)',   // rosso
-      'rgba(96,165,250,0.45)',  // blu
-    ];
-    function randomGlow(){ return GLOW_COLORS[Math.floor(Math.random()*GLOW_COLORS.length)] }
+    const delay = ms => new Promise(r=>setTimeout(r, ms));
+    const randGlow = () => {
+      const colors = [
+        'rgba(110,231,255,0.55)',
+        'rgba(251,191,36,0.55)',
+        'rgba(167,139,250,0.55)',
+        'rgba(52,211,153,0.55)',
+        'rgba(239,68,68,0.55)',
+        'rgba(96,165,250,0.55)'
+      ];
+      return colors[Math.floor(Math.random()*colors.length)];
+    };
 
     // ===== Dati
     let ALL = [];
@@ -207,10 +253,7 @@
       const entries = Object.entries(WEIGHTS);
       const tot = entries.reduce((s,[,w])=>s+w,0);
       let r = Math.random()*tot;
-      for(const [rar,w] of entries){
-        if(r < w) return rar;
-        r -= w;
-      }
+      for(const [rar,w] of entries){ if(r < w) return rar; r -= w; }
       return 'Comune';
     }
     function pickCardByRarity(rarity, used){
@@ -232,6 +275,9 @@
     // ===== Rendering
     function makePlaceholder(){
       const node = $('#tplCard').content.firstElementChild.cloneNode(true);
+      node.dataset.state = 'back';
+      // glow iniziale più soft
+      node.style.setProperty('--revealGlow', 'rgba(255,255,255,0.08)');
       return node;
     }
     function renderPlaceholders(n){
@@ -240,30 +286,34 @@
       return $$('#stage .card');
     }
 
-    function revealCard(cardEl, data){
-      // rarità -> classe + badge
-      const slug = (data.rarity||'').toLowerCase().replace(/\s+/g,'-');
+    function applyRarityStyling(cardEl, rarity){
+      const slug = (rarity||'').toLowerCase().replace(/\s+/g,'-');
+      cardEl.classList.remove('r-comune','r-non-comune','r-rara','r-ultra-rara','r-epica','r-season');
       if(slug) cardEl.classList.add('r-'+slug);
-      cardEl.querySelector('.badge').textContent = data.rarity;
+    }
 
-      // contenuti
-      const img = cardEl.querySelector('img');
+    function revealCard(cardEl, data){
+      // rarità, badge e contenuti
+      applyRarityStyling(cardEl, data.rarity);
+      cardEl.querySelector('.badge').textContent = data.rarity;
+      const img = cardEl.querySelector('.front img');
       img.src = data.img; img.alt = `Carta ${data.name}`;
       cardEl.querySelector('.name').textContent = data.name;
-      cardEl.querySelector('.meta').textContent = `${data.game} • ${data.series} • ${data.role||'—'}`;
+      cardEl.querySelector('.meta').textContent = `${data.game} • ${data.series} • ${data.role || '—'}`;
 
-      // glow casuale + mescolato a glow rarità
-      const rngGlow = randomGlow();
-      cardEl.style.setProperty('--glow', `color-mix(in oklab, ${rngGlow} 55%, var(--rarGlow, rgba(255,255,255,.25)))`);
+      // glow casuale miscelato con glow rarità
+      cardEl.style.setProperty('--revealGlow', `color-mix(in oklab, ${randGlow()} 60%, var(--rarGlow, rgba(255,255,255,.25)))`);
 
-      // flip + interazione
-      cardEl.classList.add('flip');
-      cardEl.classList.remove('pulse');
-      let flipped = true;
+      // flip + effetti
+      cardEl.classList.add('revealing','burst');
+      cardEl.dataset.state = 'front';
+      setTimeout(()=> cardEl.classList.remove('burst'), 750);
+
+      // tap per ribaltare avanti/indietro
       cardEl.addEventListener('click', ()=>{
-        flipped = !flipped;
-        cardEl.classList.toggle('flip', flipped);
-      }, { once:false });
+        const st = cardEl.dataset.state === 'front' ? 'back' : 'front';
+        cardEl.dataset.state = st;
+      });
     }
 
     async function openPack(){
@@ -290,9 +340,9 @@
 
       const cardsEls = renderPlaceholders(chosen.length);
 
-      // reveal sequenziale con leggero delay e glow random
+      // reveal sequenziale con flip (tutte partono col retro)
       for(let i=0;i<chosen.length;i++){
-        await new Promise(r=> setTimeout(r, i===0? 300 : 450));
+        await delay(i===0 ? 350 : 480);
         revealCard(cardsEls[i], chosen[i]);
       }
 
@@ -306,6 +356,7 @@
 
     // init
     $('#openBtn').addEventListener('click', openPack);
+    // auto-apri un pacchetto all’avvio per demo
     loadData().then(openPack);
   </script>
 </body>
