@@ -17,11 +17,9 @@
       --text: #ecf0ff;
       --muted: #a7b0d3;
       --accent: #6ee7ff;
-      --accent-2: #9bff9b;
       --danger: #ff6b6b;
-      --ring: rgba(110,231,255,.4);
-      --shadow: 0 10px 24px rgba(0,0,0,.45);
       --radius: 16px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -29,6 +27,8 @@
       margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg);
       color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
     }
+    body.modal-open{ overflow:hidden; touch-action:none; }
+
     header{
       position:sticky; top:0; z-index:100; backdrop-filter: blur(10px);
       background: linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6));
@@ -36,7 +36,7 @@
     }
     .wrap{max-width:1200px; margin:0 auto; padding: 20px;}
     .title{display:flex; gap:16px; align-items:center; justify-content:space-between;}
-    h1{font-size: clamp(20px, 3.6vw, 34px); margin:0; letter-spacing:.3px}
+    h1{font-size: clamp(20px, 3.6vw, 34px); margin:0}
     .subtitle{color:var(--muted); margin-top:6px}
 
     .toolbar{display:grid; grid-template-columns: 1fr; gap:12px; margin-top:16px;}
@@ -48,13 +48,11 @@
       background: linear-gradient(180deg, #121a2e, #0d1325);
       border:1px solid rgba(255,255,255,.08);
       border-radius:12px; color: var(--text);
-      padding:12px 14px; outline:none; box-shadow: var(--shadow);
+      padding:12px 14px; outline:none;
     }
     .search{display:flex; gap:10px; align-items:center}
     .search input{flex:1; background:transparent; border:none; color:var(--text)}
     .search input::placeholder{color:#98a3c7}
-
-    /* select accessibili e coerenti col tema */
     select{
       appearance:none;
       background-image: linear-gradient(180deg, transparent, transparent), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>');
@@ -65,15 +63,13 @@
 
     .range{display:flex; gap:10px; align-items:center}
     .range input{width:100%}
-    button.primary{background: linear-gradient(180deg, #1b2a4d, #152141); border-color: rgba(110,231,255,.35)}
-    button.primary:focus, .search:focus-within, select:focus, .range:focus-within{box-shadow:0 0 0 3px var(--ring)}
 
     .grid{display:grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap:16px; margin:22px 0 80px}
     @media (min-width:600px){.grid{grid-template-columns: repeat(2, minmax(0,1fr));}}
     @media (min-width:900px){.grid{grid-template-columns: repeat(3, minmax(0,1fr));}}
     @media (min-width:1200px){.grid{grid-template-columns: repeat(4, minmax(0,1fr));}}
 
-    /* === Carte: ombre morbide + glow per rarità === */
+    /* Carte con glow + ombre */
     .card{
       background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card);
       border:1px solid rgba(255,255,255,.08);
@@ -81,23 +77,20 @@
       overflow:hidden; position:relative;
       box-shadow: 0 6px 18px rgba(0,0,0,.35);
       transition: transform .16s ease, box-shadow .25s ease, border-color .25s ease, filter .25s ease;
-      --glow: #6ee7ff;              /* default */
-      --glow-soft: rgba(110,231,255,.30);
-      opacity: 0; transform: translateY(6px); /* fade-in */
+      --glow: #6ee7ff; /* default */
+      opacity:0; transform: translateY(6px);
       animation: cardIn .35s ease forwards;
     }
-    @keyframes cardIn{ to{ opacity:1; transform: translateY(0); } }
-    @media (prefers-reduced-motion: reduce){
-      .card{ animation: none; opacity:1; transform:none; }
-    }
+    @keyframes cardIn{to{opacity:1; transform: translateY(0)}}
+    @media (prefers-reduced-motion: reduce){ .card{ animation:none; opacity:1; transform:none } }
 
     /* palette glow per rarità */
-    .card.r-comune      { --glow:#9aa3b2;  --glow-soft:rgba(154,163,178,.35); }
-    .card.r-non-comune  { --glow:#34d399;  --glow-soft:rgba(52,211,153,.35); }
-    .card.r-rara        { --glow:#60a5fa;  --glow-soft:rgba(96,165,250,.35); }
-    .card.r-ultra-rara  { --glow:#fbbf24;  --glow-soft:rgba(251,191,36,.35); }
-    .card.r-epica       { --glow:#a78bfa;  --glow-soft:rgba(167,139,250,.35); }
-    .card.r-season      { --glow:#ef4444;  --glow-soft:rgba(239,68,68,.35); }  /* rosso */
+    .card.r-comune      { --glow:#9aa3b2; }
+    .card.r-non-comune  { --glow:#34d399; }
+    .card.r-rara        { --glow:#60a5fa; }
+    .card.r-ultra-rara  { --glow:#fbbf24; }
+    .card.r-epica       { --glow:#a78bfa; }
+    .card.r-season      { --glow:#ef4444; }
 
     .card:hover{
       transform: translateY(-3px);
@@ -105,7 +98,7 @@
       box-shadow:
         0 10px 30px rgba(0,0,0,.55),
         0 0 0 1px var(--glow),
-        0 14px 40px var(--glow-soft);
+        0 14px 40px color-mix(in oklab, var(--glow) 35%, transparent);
     }
 
     .thumb{aspect-ratio: 3/4; width:100%; background:#0b0f19; object-fit:cover}
@@ -113,10 +106,9 @@
     .name{font-weight:600; font-size:16px}
     .meta{font-size:13px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; margin-top:4px}
     .stars{display:flex; gap:4px; align-items:center; margin-top:8px}
-    .stars button{background:none; border:none; cursor:pointer; padding:0}
     .stars .s{width:18px; height:18px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3))}
 
-    /* Badge rarità spostato a destra + colore per tipo */
+    /* Badge rarità a destra + colori */
     .badge{
       position:absolute; top:10px; right:10px;
       background: rgba(0,0,0,.5); backdrop-filter: blur(6px);
@@ -133,49 +125,67 @@
     .open{position:absolute; bottom:10px; right:10px}
 
     .tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
-    /* TAG compatti */
     .tag{
-      padding: 3px 8px;
-      font-size: 11px;
-      line-height: 1.2;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.12);
-      white-space: nowrap;
-      margin-top: 4px;
+      padding: 3px 8px; font-size: 11px; line-height: 1.2;
+      border-radius: 999px; border: 1px solid rgba(255,255,255,.12);
+      white-space: nowrap; margin-top: 4px;
     }
 
-    dialog{border:none; padding:0; border-radius: 18px; overflow:hidden; width:min(900px, 96vw); box-shadow:0 20px 80px rgba(0,0,0,.65)}
-    dialog::backdrop{background: rgba(0,0,0,.65)}
-    .modal{display:grid; grid-template-columns: 1fr; background: var(--panel)}
-    @media(min-width:900px){.modal{grid-template-columns: .95fr 1.05fr}}
-    .modal .left{background: radial-gradient(500px 320px at 20% 0, rgba(110,231,255,.05), transparent), var(--card-2); padding:18px}
-    .modal .right{padding:18px 18px 6px}
-    .modal .big{width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.08); aspect-ratio:3/4; object-fit:cover}
-    .modal .close{position:absolute; top:10px; right:10px; background: rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18); padding:8px 10px; border-radius:10px; color:white}
+    /* ===== Modal: mobile-first, full-screen, scorrevole ===== */
+    dialog{
+      inset: 0; margin: 0; padding: 0; border: none;
+      width: 100vw; max-width: none;
+      height: 100svh; /* viewport stabile su mobile */
+      height: 100dvh; /* fallback */
+      background: transparent;
+    }
+    dialog::backdrop{ background: rgba(0,0,0,.65) }
+    .modal{
+      display: grid; grid-template-columns: 1fr;
+      width: 100%; height: 100%;
+      background: var(--panel);
+    }
+    @media(min-width:900px){ .modal{ grid-template-columns: .95fr 1.05fr; height: auto; max-height: 90vh; border-radius: 18px; } }
+
+    .modal .left{ background: radial-gradient(500px 320px at 20% 0, rgba(110,231,255,.05), transparent), var(--card-2); padding:12px }
+    .modal .big{ width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.08); aspect-ratio:3/4; object-fit:cover }
+    .modal .close{ position:absolute; top:10px; right:10px; background: rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18); padding:8px 10px; border-radius:10px; color:white }
+
+    /* Colonna destra scrollabile, con actions sticky */
+    .modal .right{
+      display:flex; flex-direction:column; min-height:0;
+      padding:12px 12px calc(12px + var(--safe-bottom));
+    }
+    .scroll{
+      flex:1 1 auto; min-height:0; overflow:auto;
+      padding-right:2px;
+    }
+    .actions{
+      position: sticky; bottom: 0;
+      background: linear-gradient(180deg, rgba(15,21,38,.7), var(--panel));
+      border-top: 1px solid rgba(255,255,255,.08);
+      padding: 10px 0 calc(10px + var(--safe-bottom));
+      display:flex; gap:10px;
+    }
+
     .field{display:grid; gap:8px; margin: 8px 0}
     textarea, input[type="text"]{background:#0d1325; border:1px solid rgba(255,255,255,.1); border-radius:10px; color:var(--text); padding:10px}
+
     .comment{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)); border:1px solid rgba(255,255,255,.09); border-radius:12px; padding:10px; margin-top:10px}
     .comment .author{font-weight:600; font-size:13px}
     .comment .text{font-size:14px; color: #d9e1ff}
+
     footer{position:sticky; bottom:0; background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6)); border-top:1px solid rgba(255,255,255,.06)}
     .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
     .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
 
-    /* Modal mobile: full-screen, scorrevole e pulsanti sempre visibili */
+    /* Toolbar scorrevole su mobile */
     @media (max-width: 500px) {
       .wrap { padding: 10px; }
-      .card .name { font-size: 14px; }
-      .card .meta { font-size: 12px; }
       .toolbar { overflow-x: auto; display: flex; gap: 8px; padding-bottom: 6px; }
       .toolbar > * { flex: 0 0 auto; }
-
-      dialog { width: 100%; height: 100%; border-radius: 0; margin: 0; padding: 0; }
-      .modal { display: flex !important; flex-direction: column; height: 100%; overflow-y: auto; }
-      .modal .left { flex: 0 0 auto; padding: 8px; }
-      .modal .right { flex: 1 1 auto; display: flex; flex-direction: column; padding: 12px; }
-      #comments { flex: 1 1 auto; overflow-y: auto; margin-bottom: 12px; }
-      .field { flex: 0 0 auto; }
-      .modal .right > div:last-child { position: sticky; bottom: 0; background: var(--panel); padding-top: 8px; border-top: 1px solid rgba(255,255,255,.08); }
+      .card .name { font-size: 14px; }
+      .card .meta { font-size: 12px; }
     }
   </style>
 </head>
@@ -245,33 +255,35 @@
         <img id="dlgImg" alt="Immagine carta" class="big" />
       </div>
       <div class="right">
-        <h2 id="dlgName" style="margin:0 0 8px"></h2>
-        <div id="dlgMeta" class="meta"></div>
-        <div class="stars" id="dlgStars" aria-label="Valuta questa carta"></div>
-        <div class="tags" id="dlgTags"></div>
+        <div class="scroll">
+          <h2 id="dlgName" style="margin:0 0 8px"></h2>
+          <div id="dlgMeta" class="meta"></div>
+          <div class="stars" id="dlgStars" aria-label="Valuta questa carta"></div>
+          <div class="tags" id="dlgTags"></div>
 
-        <h3 style="margin:14px 0 6px">Commenti</h3>
-        <div id="comments"></div>
+          <h3 style="margin:14px 0 6px">Commenti</h3>
+          <div id="comments"></div>
 
-        <div class="field">
-          <label for="author">Nome</label>
-          <input id="author" type="text" placeholder="Il tuo nome" />
+          <div class="field">
+            <label for="author">Nome</label>
+            <input id="author" type="text" placeholder="Il tuo nome" autocomplete="name" />
+          </div>
+          <div class="field">
+            <label for="message">Commento</label>
+            <textarea id="message" rows="3" placeholder="Scrivi un commento..."></textarea>
+          </div>
+          <div class="field">
+            <label for="ratingSel">Voto (1-5)</label>
+            <select id="ratingSel">
+              <option value="5">5</option>
+              <option value="4">4</option>
+              <option value="3">3</option>
+              <option value="2">2</option>
+              <option value="1">1</option>
+            </select>
+          </div>
         </div>
-        <div class="field">
-          <label for="message">Commento</label>
-          <textarea id="message" rows="3" placeholder="Scrivi un commento..."></textarea>
-        </div>
-        <div class="field">
-          <label for="ratingSel">Voto (1-5)</label>
-          <select id="ratingSel">
-            <option value="5">5</option>
-            <option value="4">4</option>
-            <option value="3">3</option>
-            <option value="2">2</option>
-            <option value="1">1</option>
-          </select>
-        </div>
-        <div style="display:flex; gap:10px; margin:12px 0 6px">
+        <div class="actions">
           <button class="primary" id="saveC">💾 Pubblica commento</button>
           <button id="clearC" type="button" title="Solo su questo dispositivo">🗑️ Svuota commenti</button>
         </div>
@@ -370,7 +382,7 @@
         return a.name.localeCompare(b.name);
       });
 
-      // Nessun filtro attivo → mostra 8 carte casuali
+      // Nessun filtro attivo → 8 carte casuali
       if (noFiltersActive()) {
         items = items.slice().sort(() => Math.random() - 0.5).slice(0, 8);
       }
@@ -388,7 +400,7 @@
         const node = tpl.content.firstElementChild.cloneNode(true);
 
         // classe rarità -> glow + badge colorato
-        const rarSlug = (c.rarity || '').toLowerCase().replace(/\s+/g,'-'); // "Ultra Rara" -> "ultra-rara"
+        const rarSlug = (c.rarity || '').toLowerCase().replace(/\s+/g,'-');
         if (rarSlug) node.classList.add('r-' + rarSlug);
 
         node.querySelector('.badge').textContent = c.rarity;
@@ -423,10 +435,20 @@
       const rating = avg(loadRatings(card.id));
       renderStars(dlgStars, rating, (v)=>{ saveRating(card.id, v); applyFilters(); openModal(card) });
       renderComments(card.id);
+      document.body.classList.add('modal-open');
       dlg.showModal();
+
+      // Focus su commento e spostalo in vista (mobile)
+      setTimeout(()=>{
+        const msg = document.getElementById('message');
+        if(msg){ msg.focus({preventScroll:true}); msg.scrollIntoView({block:'center'}); }
+      }, 120);
     }
 
-    dlg.addEventListener('close', ()=>{ current=null });
+    dlg.addEventListener('close', ()=>{
+      current=null;
+      document.body.classList.remove('modal-open');
+    });
 
     function renderComments(id){
       commentsBox.innerHTML='';
