@@ -54,14 +54,9 @@
     .search input{flex:1; background:transparent; border:none; color:var(--text)}
     .search input::placeholder{color:#98a3c7}
     select{appearance:none; background-image: linear-gradient(180deg, transparent, transparent), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat:no-repeat; background-position:right 10px center; padding-right:38px}
-select, select option {
-  color: var(--text);
-  background-color: var(--card);
-}
-
-select option {
-  padding: 8px;
-}
+    /* migliora visibilità dropdown */
+    select, select option { color: var(--text); background-color: var(--card); }
+    select option { padding: 8px; }
 
     .range{display:flex; gap:10px; align-items:center}
     .range input{width:100%}
@@ -73,12 +68,34 @@ select option {
     @media (min-width:900px){.grid{grid-template-columns: repeat(3, minmax(0,1fr));}}
     @media (min-width:1200px){.grid{grid-template-columns: repeat(4, minmax(0,1fr));}}
 
+    /* === Carte: ombre morbide + glow per rarità === */
     .card{
       background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card);
-      border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); overflow:hidden; position:relative;
-      transition: transform .16s ease, box-shadow .2s ease, border-color .2s ease;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      overflow:hidden; position:relative;
+      box-shadow: 0 6px 18px rgba(0,0,0,.35);
+      transition: transform .16s ease, box-shadow .25s ease, border-color .25s ease, filter .25s ease;
+      --glow: #6ee7ff;              /* default */
+      --glow-soft: rgba(110,231,255,.30);
     }
-    .card:hover{ transform: translateY(-2px); border-color: rgba(110,231,255,.35); box-shadow:0 16px 38px rgba(0,0,0,.5)}
+    /* palette glow per rarità */
+    .card.r-comune      { --glow:#9aa3b2;  --glow-soft:rgba(154,163,178,.35); } /* grigio */
+    .card.r-non-comune  { --glow:#34d399;  --glow-soft:rgba(52,211,153,.35); }  /* verde */
+    .card.r-rara        { --glow:#60a5fa;  --glow-soft:rgba(96,165,250,.35); }  /* blu */
+    .card.r-ultra-rara  { --glow:#fbbf24;  --glow-soft:rgba(251,191,36,.35); }  /* oro */
+    .card.r-epica       { --glow:#a78bfa;  --glow-soft:rgba(167,139,250,.35); } /* viola */
+    .card.r-season      { --glow:#22d3ee;  --glow-soft:rgba(34,211,238,.35); }  /* ciano */
+
+    .card:hover{
+      transform: translateY(-3px);
+      border-color: var(--glow);
+      box-shadow:
+        0 10px 30px rgba(0,0,0,.55),
+        0 0 0 1px var(--glow),
+        0 14px 40px var(--glow-soft);
+    }
+
     .thumb{aspect-ratio: 3/4; width:100%; background:#0b0f19; object-fit:cover}
     .content{padding:12px 14px}
     .name{font-weight:600; font-size:16px}
@@ -106,17 +123,18 @@ select option {
     footer{position:sticky; bottom:0; background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6)); border-top:1px solid rgba(255,255,255,.06)}
     .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
     .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
-    @media (max-width: 500px) {
-  .wrap { padding: 10px; }
-  .card .name { font-size: 14px; }
-  .card .meta { font-size: 12px; }
-  .toolbar { overflow-x: auto; display: flex; gap: 8px; padding-bottom: 6px; }
-  .toolbar > * { flex: 0 0 auto; }
-  dialog { width: 100%; height: 100%; border-radius: 0; }
-  .modal { grid-template-columns: 1fr !important; height: 100%; }
-  .modal .big { max-height: 50vh; object-fit: contain; }
-}
 
+    /* Mobile tweaks */
+    @media (max-width: 500px) {
+      .wrap { padding: 10px; }
+      .card .name { font-size: 14px; }
+      .card .meta { font-size: 12px; }
+      .toolbar { overflow-x: auto; display: flex; gap: 8px; padding-bottom: 6px; }
+      .toolbar > * { flex: 0 0 auto; }
+      dialog { width: 100%; height: 100%; border-radius: 0; }
+      .modal { grid-template-columns: 1fr !important; height: 100%; }
+      .modal .big { max-height: 50vh; object-fit: contain; }
+    }
   </style>
 </head>
 <body>
@@ -305,7 +323,7 @@ select option {
         return a.name.localeCompare(b.name);
       });
 
-      // Se non ci sono filtri attivi, mostra solo 6 carte casuali
+      // Nessun filtro attivo → mostra 8 carte casuali
       if (noFiltersActive()) {
         items = items.slice().sort(() => Math.random() - 0.5).slice(0, 8);
       }
@@ -319,6 +337,11 @@ select option {
       const tpl = document.getElementById('tplCard');
       for(const c of items){
         const node = tpl.content.firstElementChild.cloneNode(true);
+
+        // === classe rarità per glow colorato ===
+        const rarSlug = (c.rarity || '').toLowerCase().replace(/\s+/g,'-'); // "Ultra Rara" -> "ultra-rara"
+        if (rarSlug) node.classList.add('r-' + rarSlug);
+
         node.querySelector('.badge').textContent = c.rarity;
         const img = node.querySelector('.thumb');
         img.src = c.img; img.loading='lazy'; img.alt = `Carta ${c.name}`;
