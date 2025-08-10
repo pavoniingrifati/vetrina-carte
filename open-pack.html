@@ -195,15 +195,18 @@
   </template>
 
   <script type="module">
-    // === Config pacchetti (con immagini e prezzi)
-    const PACKS = {
-      random:   { key:'random',    label:'Random',    cost:1000,  back:'Deck%20back%20ORO.png',
-                  filter: c => true },
-      wonderkid:{ key:'wonderkid', label:'Wonderkid', cost:1400,  back:'Deck%20back%20wonderkid.png',
-                  filter: c => norm(c.series) === 'wonderkid' },
-      tots:     { key:'tots',      label:'TOTS',      cost:1800,  back:'Deck%20back%20Tots.png',
-                  filter: c => norm(c.series) === 'tots' }
-    };
+   // Utility per match STRETTO sul campo "series"
+const seriesIs = (c, v) => String(c.series ?? '').trim() === v;
+
+// Definizione pacchetti (usa SOLO series: "Wonderkid" / "Tots")
+const PACKS = {
+  random:    { key:'random',    label:'Random',    cost:1000, back:'Deck%20back%20ORO.png',
+               filter: c => true },
+  wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1400, back:'Deck%20back%20wonderkid.png',
+               filter: c => seriesIs(c, 'Wonderkid') },
+  tots:      { key:'tots',      label:'TOTS',      cost:1800, back:'Deck%20back%20Tots.png',
+               filter: c => seriesIs(c, 'Tots') }
+};
     const DEFAULT_PACK_KEY = 'random';
 
     const CONFIG = {
