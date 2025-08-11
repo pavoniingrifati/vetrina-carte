@@ -1,506 +1,695 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fantaballa – FUT Tik Tok</title>
-  <meta name="description" content="Vetrina di carte collezionabili con filtri, valutazioni e commenti (dati locali)." />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Fantaballa – Vetrina Carte</title>
+  <meta name="description" content="Vetrina di carte collezionabili: cerca, filtra, aggiungi ai preferiti e confronta fino a 3 carte." />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg: #0b0f19;
-      --panel: #0f1526; 
-      --card: #121a2e;
-      --card-2: #0d1325;
-      --text: #ecf0ff;
-      --muted: #a7b0d3;
-      --accent: #6ee7ff;
-      --danger: #ff6b6b;
-      --radius: 16px;
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --bg:#0b1020;
+      --bg2:#111735;
+      --surface:#151d43;
+      --accent:#6cc0ff;
+      --text:#ffffff;
+      --muted:#9fb0d3;
+      --card-gap:18px;           /* grid spacing aumentato */
+      --radius:14px;
+      --shadow:0 8px 24px rgba(0,0,0,.35);
+      --shadow-sm:0 4px 14px rgba(0,0,0,.28);
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg);
-      color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, #1a2655 0%, transparent 55%), var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
-    body.modal-open{ overflow:hidden; touch-action:none; }
-
+    a{color:var(--accent);text-decoration:none}
     header{
-      position:sticky; top:0; z-index:100; backdrop-filter: blur(10px);
-      background: linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6));
+      position:sticky; top:0; z-index:50;
+      background: linear-gradient(180deg, rgba(17,23,53,.95), rgba(17,23,53,.85));
+      backdrop-filter:saturate(1.1) blur(6px);
       border-bottom:1px solid rgba(255,255,255,.06);
     }
-    .wrap{max-width:1200px; margin:0 auto; padding: 20px;}
-    .title{display:flex; gap:16px; align-items:center; justify-content:space-between;}
-    h1{font-size: clamp(20px, 3.6vw, 34px); margin:0}
-    .subtitle{color:var(--muted); margin-top:6px}
-
-    .toolbar{display:grid; grid-template-columns: 1fr; gap:12px; margin-top:16px;}
-    @media (min-width: 900px){
-      .toolbar{grid-template-columns: 1.2fr .8fr .8fr .8fr .8fr}
+    .wrap{max-width:1200px; margin:0 auto; padding:16px 16px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand h1{font-size:clamp(18px,3.5vw,22px); margin:0}
+    .toolbar{
+      display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+      margin-top:12px
     }
-
-    .search, select, .range, button, .tag{
-      background: linear-gradient(180deg, #121a2e, #0d1325);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:12px; color: var(--text);
-      padding:12px 14px; outline:none;
+    .search{
+      flex:1 1 260px; display:flex; align-items:center; gap:8px;
+      background:var(--surface); border:1px solid rgba(255,255,255,.08);
+      padding:10px 12px; border-radius:999px;
+      box-shadow:var(--shadow-sm)
     }
-    .search{display:flex; gap:10px; align-items:center}
-    .search input{flex:1; background:transparent; border:none; color:var(--text)}
-    .search input::placeholder{color:#98a3c7}
-    select{
-      appearance:none;
-      background-image: linear-gradient(180deg, transparent, transparent), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>');
-      background-repeat:no-repeat; background-position:right 10px center; padding-right:38px
+    .search input{
+      flex:1; background:transparent; border:0; outline:0; color:var(--text);
+      font-size:15px;
     }
-    select, select option { color: var(--text); background-color: var(--card); }
-    select option { padding: 8px; }
-
-    .range{display:flex; gap:10px; align-items:center}
-    .range input{width:100%}
-
-    .grid{display:grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap:16px; margin:22px 0 80px}
-    @media (min-width:600px){.grid{grid-template-columns: repeat(2, minmax(0,1fr));}}
-    @media (min-width:900px){.grid{grid-template-columns: repeat(3, minmax(0,1fr));}}
-    @media (min-width:1200px){.grid{grid-template-columns: repeat(4, minmax(0,1fr));}}
-
-    /* Carte con glow + ombre */
+    .btn, button{
+      appearance:none; border:0; cursor:pointer; color:var(--text);
+      background:linear-gradient(180deg,#2a376e,#1f2a58);
+      border:1px solid rgba(255,255,255,.12);
+      padding:10px 14px; border-radius:12px; font-weight:600;
+      box-shadow:var(--shadow-sm);
+    }
+    .btn.secondary{
+      background:transparent; border:1px solid rgba(255,255,255,.16)
+    }
+    .btn.ghost{
+      background:transparent; border:0; padding:8px 10px; opacity:.8
+    }
+    .pill{
+      padding:8px 12px; border-radius:999px; font-weight:600;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(108,192,255,.08)
+    }
+    main{padding:18px 16px 80px}
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(1,minmax(0,1fr));
+      gap:var(--card-gap);
+      max-width:1200px; margin:0 auto;
+    }
+    @media (min-width:520px){
+      .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media (min-width:900px){
+      .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+    }
+    @media (min-width:1200px){
+      .grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+    }
     .card{
-      background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card);
+      position:relative; overflow:hidden; border-radius:var(--radius);
+      background:linear-gradient(180deg,#111735,#0c1330);
       border:1px solid rgba(255,255,255,.08);
-      border-radius: var(--radius);
-      overflow:hidden; position:relative;
-      box-shadow: 0 6px 18px rgba(0,0,0,.35);
-      transition: transform .16s ease, box-shadow .25s ease, border-color .25s ease, filter .25s ease;
-      --glow: #6ee7ff; /* default */
-      opacity:0; transform: translateY(6px);
-      animation: cardIn .35s ease forwards;
+      box-shadow:var(--shadow);
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      display:flex; flex-direction:column;
     }
-    @keyframes cardIn{to{opacity:1; transform: translateY(0)}}
-    @media (prefers-reduced-motion: reduce){ .card{ animation:none; opacity:1; transform:none } }
-
-    /* palette glow per rarità */
-    .card.r-comune      { --glow:#9aa3b2; }
-    .card.r-non-comune  { --glow:#34d399; }
-    .card.r-rara        { --glow:#60a5fa; }
-    .card.r-ultra-rara  { --glow:#fbbf24; }
-    .card.r-epica       { --glow:#a78bfa; }
-    .card.r-season      { --glow:#ef4444; }
-
-    .card:hover{
-      transform: translateY(-3px);
-      border-color: var(--glow);
-      box-shadow:
-        0 10px 30px rgba(0,0,0,.55),
-        0 0 0 1px var(--glow),
-        0 14px 40px color-mix(in oklab, var(--glow) 35%, transparent);
+    .card:hover{transform:translateY(-4px); box-shadow:0 14px 34px rgba(0,0,0,.45); border-color:rgba(255,255,255,.18)}
+    .thumbwrap{position:relative; aspect-ratio:4/5; overflow:hidden}
+    .thumbwrap img{
+      width:100%; height:100%; object-fit:cover; display:block;
+      loading:lazy
     }
-
-    .thumb{aspect-ratio: 3/4; width:100%; background:#0b0f19; object-fit:cover}
-    .content{padding:12px 14px}
-    .name{font-weight:600; font-size:16px}
-    .meta{font-size:13px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; margin-top:4px}
-    .stars{display:flex; gap:4px; align-items:center; margin-top:8px}
-    .stars .s{width:18px; height:18px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3))}
-
-    /* Badge rarità a destra + colori */
-    .badge{
-      position:absolute; top:10px; right:10px;
-      background: rgba(0,0,0,.5); backdrop-filter: blur(6px);
-      border:1px solid rgba(255,255,255,.15);
-      color:white; padding:6px 8px; border-radius:999px; font-size:12px; font-weight:600;
+    .badge-rarity{
+      position:absolute; top:10px; left:10px;
+      padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700;
+      background:linear-gradient(90deg,#ffda6b,#ffc148);
+      color:#503a00; border:1px solid rgba(0,0,0,.12);
+      box-shadow:0 6px 16px rgba(0,0,0,.35)
     }
-    .card.r-comune      .badge { background: rgba(154,163,178,0.8); }
-    .card.r-non-comune  .badge { background: rgba(52,211,153,0.8); }
-    .card.r-rara        .badge { background: rgba(96,165,250,0.8); }
-    .card.r-ultra-rara  .badge { background: rgba(251,191,36,0.85); color: #000; }
-    .card.r-epica       .badge { background: rgba(167,139,250,0.85); }
-    .card.r-season      .badge { background: rgba(239,68,68,0.85); }
-
-    .open{position:absolute; bottom:10px; right:10px}
-
-    .tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
-    .tag{
-      padding: 3px 8px; font-size: 11px; line-height: 1.2;
-      border-radius: 999px; border: 1px solid rgba(255,255,255,.12);
-      white-space: nowrap; margin-top: 4px;
+    .badge-rarity.silver{
+      background:linear-gradient(90deg,#e3edf7,#c9d9f0);
+      color:#2a3750
+    }
+    .badge-rarity.bronze{
+      background:linear-gradient(90deg,#f4ccb0,#eaa37d);
+      color:#4d2e18
+    }
+    .content{padding:12px 12px 14px; display:grid; gap:8px}
+    .name{
+      font-weight:700; font-size:16px; line-height:1.25; min-height:40px
+    }
+    .meta{font-size:12px; color:var(--muted)}
+    .row{display:flex; align-items:center; justify-content:space-between; gap:10px}
+    .actions{display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+    .iconbtn{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:36px; height:36px; border-radius:10px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12)
+    }
+    .iconbtn[aria-pressed="true"]{
+      background:rgba(108,192,255,.18);
+      border-color:rgba(108,192,255,.6)
+    }
+    .check-compare{
+      display:flex; align-items:center; gap:6px; font-size:12px; opacity:.9
+    }
+    .floating-compare{
+      position:fixed; left:50%; transform:translateX(-50%);
+      bottom:16px; z-index:60; display:flex; gap:10px; align-items:center
+    }
+    .counter{
+      background:var(--accent); color:#06223a; font-weight:800;
+      padding:6px 10px; border-radius:999px; border:1px solid rgba(0,0,0,.15)
     }
 
-    /* ===== Modal: mobile-first, full-screen, scorrevole ===== */
+    /* ===== Modal: dettaglio carta ===== */
     dialog{
-      inset: 0; margin: 0; padding: 0; border: none;
-      width: 100vw; max-width: none;
-      height: 100svh; /* viewport stabile su mobile */
-      height: 100dvh; /* fallback */
-      background: transparent;
+      padding:0; border:none; border-radius:14px; max-width:920px; width:92%;
+      background:var(--bg2); box-shadow:0 40px 120px rgba(0,0,0,.65); color:var(--text);
     }
-
-/* Forza il colore del nome della carta su bianco */
-#dlgName {
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* migliora leggibilità */
-}
-    
-    dialog::backdrop{ background: rgba(0,0,0,.65) }
+    dialog::backdrop{
+      background:rgba(5,8,20,.6); backdrop-filter:blur(4px)
+    }
     .modal{
-      display: grid; grid-template-columns: 1fr;
-      width: 100%; height: 100%;
-      background: var(--panel);
+      display:grid; grid-template-columns: 1fr; gap:0
     }
-    @media(min-width:900px){ .modal{ grid-template-columns: .95fr 1.05fr; height: auto; max-height: 90vh; border-radius: 18px; } }
-
-    .modal .left{ background: radial-gradient(500px 320px at 20% 0, rgba(110,231,255,.05), transparent), var(--card-2); padding:12px }
-    .modal .big{ width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.08); aspect-ratio:3/4; object-fit:cover }
-    .modal .close{ position:absolute; top:10px; right:10px; background: rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18); padding:8px 10px; border-radius:10px; color:white }
-
-    /* Colonna destra scrollabile, con actions sticky */
-    .modal .right{
-      display:flex; flex-direction:column; min-height:0;
-      padding:12px 12px calc(12px + var(--safe-bottom));
+    @media(min-width:860px){
+      .modal{grid-template-columns: 1fr 1fr}
     }
-    .scroll{
-      flex:1 1 auto; min-height:0; overflow:auto;
-      padding-right:2px;
+    .modal-media{position:relative; background:linear-gradient(180deg,#0d1432,#0a1029); padding:14px}
+    .modal-media img{width:100%; height:auto; border-radius:12px; display:block}
+    .nav-arrows{
+      position:absolute; inset:auto 0 10px 0; display:flex; justify-content:space-between; padding:0 6px;
+      pointer-events:none;
     }
-    .actions{
-      position: sticky; bottom: 0;
-      background: linear-gradient(180deg, rgba(15,21,38,.7), var(--panel));
-      border-top: 1px solid rgba(255,255,255,.08);
-      padding: 10px 0 calc(10px + var(--safe-bottom));
-      display:flex; gap:10px;
+    .nav-arrows button{
+      pointer-events:auto; width:42px; height:42px; border-radius:50%;
+      background:rgba(255,255,255,.08)
+    }
+    .modal-body{padding:18px 18px 22px}
+    #dlgName{color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.8); margin:0 0 6px}
+    #dlgMeta{color:var(--muted); font-size:13px; margin:0 0 12px}
+    .modal-actions{display:flex; gap:8px; flex-wrap:wrap}
+    .closebtn{
+      position:absolute; top:10px; right:10px; border-radius:10px; background:rgba(255,255,255,.08)
     }
 
-    .field{display:grid; gap:8px; margin: 8px 0}
-    textarea, input[type="text"]{background:#0d1325; border:1px solid rgba(255,255,255,.1); border-radius:10px; color:var(--text); padding:10px}
-
-    .comment{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)); border:1px solid rgba(255,255,255,.09); border-radius:12px; padding:10px; margin-top:10px}
-    .comment .author{font-weight:600; font-size:13px}
-    .comment .text{font-size:14px; color: #d9e1ff}
-
-    footer{position:sticky; bottom:0; background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6)); border-top:1px solid rgba(255,255,255,.06)}
-    .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
-    .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
-
-    /* Toolbar scorrevole su mobile */
-    @media (max-width: 500px) {
-      .wrap { padding: 10px; }
-      .toolbar { overflow-x: auto; display: flex; gap: 8px; padding-bottom: 6px; }
-      .toolbar > * { flex: 0 0 auto; }
-      .card .name { font-size: 14px; }
-      .card .meta { font-size: 12px; }
+    /* ===== Modal: confronto ===== */
+    .compare-wrap{padding:16px}
+    .compare-grid{
+      display:grid; gap:14px;
+      grid-template-columns: repeat(1, minmax(0,1fr));
     }
+    @media(min-width:740px){ .compare-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); } }
+    .compare-card{
+      background:linear-gradient(180deg,#0f1533,#0b112c);
+      border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:12px; box-shadow:var(--shadow-sm)
+    }
+    .compare-card img{width:100%; border-radius:10px}
+    .compare-name{font-weight:800; margin:10px 0 6px}
+    .empty-slot{
+      border:1px dashed rgba(255,255,255,.18); border-radius:12px;
+      display:grid; place-items:center; height:100%; color:var(--muted); padding:22px; text-align:center
+    }
+
+    footer{max-width:1200px; margin:24px auto; padding:0 16px 80px; color:var(--muted); font-size:13px}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   </style>
 </head>
 <body>
   <header>
     <div class="wrap">
-      <div class="title">
-        <div>
-          <h1>Le carte FUT del canale Fantaballa!</h1>
-          <div class="subtitle">Non hai ancora una carta? Segui le live su Tik Tok di Fantaballa!</div>
-        </div>
+      <div class="brand">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 2l2.39 4.84 5.34.78-3.86 3.76.91 5.32L12 14.77 6.22 16.7l.91-5.32-3.86-3.76 5.34-.78L12 2z" fill="url(#g)"/>
+          <defs><linearGradient id="g" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#6cc0ff"/><stop offset="1" stop-color="#9be2ff"/></linearGradient></defs>
+        </svg>
+        <h1>Fantaballa • Vetrina Carte</h1>
       </div>
-<a class="pill" href="open-pack.html">🎁 Apri un pacchetto</a>
 
-      <div class="toolbar" aria-label="Filtri e ricerca">
+      <div class="toolbar">
         <div class="search" role="search">
-          🔎 <input id="q" type="search" placeholder="Cerca per nome, serie o testo..." aria-label="Cerca" />
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L20 21.5 21.5 20l-6-6zM4 9.5C4 6.46 6.46 4 9.5 4S15 6.46 15 9.5 12.54 15 9.5 15 4 12.54 4 9.5z"/></svg>
+          <input id="q" type="search" placeholder="Cerca per nome, serie, tag…" aria-label="Cerca carte" />
         </div>
-        <select id="fGame" aria-label="Squadra/Gioco">
-          <option value="">Tutte le squadre</option>
-          <option>Fantaballa FC</option>
-          <option>Gotham City</option>
-          <option>Svincolato</option>
-        </select>
-        <select id="fRarity" aria-label="Rarità">
-          <option value="">Tutte le rarità</option>
-          <option>Comune</option>
-          <option>Non Comune</option>
-          <option>Rara</option>
-          <option>Ultra Rara</option>
-          <option>Epica</option>
-          <option>Season</option>
-        </select>
-        <select id="fRole" aria-label="Ruolo">
-          <option value="">Tutti i ruoli</option>
-          <option>POR</option><option>DC</option><option>DS</option><option>DD</option>
-          <option>MC</option><option>CC</option><option>TRQ</option>
-          <option>AS</option><option>AD</option><option>ATT</option>
-        </select>
-        <div class="range" title="Valutazione minima">
-          ⭐ Min: <input id="fRating" type="range" min="0" max="5" value="0" step="1" />
-          <span id="fRatingVal">0</span>
-        </div>
-        <select id="fSort" aria-label="Ordina per">
-          <option value="name">Ordina: Nome</option>
-          <option value="rating">Ordina: Valutazione</option>
-          <option value="role">Ordina: Ruolo</option>
-        </select>
+
+        <button id="btnClear" class="btn secondary" title="Azzera filtri">Azzera filtri</button>
+        <button id="btnFavs" class="btn" title="Mostra solo preferiti" aria-pressed="false">⭐ Preferiti: <span id="favCount">0</span></button>
+        <span id="resultCount" class="pill" aria-live="polite">0 risultati</span>
       </div>
     </div>
   </header>
 
-  <main class="wrap">
-    <div id="grid" class="grid" aria-live="polite"></div>
+  <main>
+    <section id="grid" class="grid" aria-live="polite"></section>
   </main>
 
-  <footer>
-    <div class="foot">
-      <span class="pill">ℹ️ Usa i filtri per cercare tra tutte le carte. All’avvio mostriamo 8 carte casuali.</span>
-    </div>
-  </footer>
+  <!-- Floating compare bar -->
+  <div class="floating-compare" id="compareBar" hidden>
+    <span class="counter" id="compareCounter">0 selezionate</span>
+    <button id="btnOpenCompare" class="btn">Confronta</button>
+    <button id="btnClearCompare" class="btn secondary">Svuota</button>
+  </div>
 
-  <!-- Modal Dettaglio -->
-  <dialog id="dlg">
-    <form method="dialog" class="modal">
-      <button class="close" aria-label="Chiudi">✕</button>
-      <div class="left">
-        <img id="dlgImg" alt="Immagine carta" class="big" />
-      </div>
-      <div class="right">
-        <div class="scroll">
-          <h2 id="dlgName" style="margin:0 0 8px"></h2>
-          <div id="dlgMeta" class="meta"></div>
-          <div class="stars" id="dlgStars" aria-label="Valuta questa carta"></div>
-          <div class="tags" id="dlgTags"></div>
-
-          <h3 style="margin:14px 0 6px">Commenti</h3>
-          <div id="comments"></div>
-
-          <div class="field">
-            <label for="author">Nome</label>
-            <input id="author" type="text" placeholder="Il tuo nome" autocomplete="name" />
-          </div>
-          <div class="field">
-            <label for="message">Commento</label>
-            <textarea id="message" rows="3" placeholder="Scrivi un commento..."></textarea>
-          </div>
-          <div class="field">
-            <label for="ratingSel">Voto (1-5)</label>
-            <select id="ratingSel">
-              <option value="5">5</option>
-              <option value="4">4</option>
-              <option value="3">3</option>
-              <option value="2">2</option>
-              <option value="1">1</option>
-            </select>
-          </div>
-        </div>
-        <div class="actions">
-          <button class="primary" id="saveC">💾 Pubblica commento</button>
-          <button id="clearC" type="button" title="Solo su questo dispositivo">🗑️ Svuota commenti</button>
-        </div>
-      </div>
+  <!-- Dialog: Dettaglio carta -->
+  <dialog id="dlg" aria-labelledby="dlgName" aria-describedby="dlgMeta">
+    <form method="dialog">
+      <button class="iconbtn closebtn" type="submit" aria-label="Chiudi">
+        ✕
+      </button>
     </form>
+    <div class="modal">
+      <div class="modal-media">
+        <img id="dlgImg" src="" alt="" />
+        <div class="nav-arrows">
+          <button id="prevBtn" class="iconbtn" aria-label="Carta precedente">‹</button>
+          <button id="nextBtn" class="iconbtn" aria-label="Carta successiva">›</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <h2 id="dlgName"></h2>
+        <p id="dlgMeta" class="meta"></p>
+        <div class="modal-actions">
+          <button id="dlgFav" class="btn" type="button" aria-pressed="false">⭐ Aggiungi ai preferiti</button>
+          <button id="dlgCompare" class="btn secondary" type="button">➕ Aggiungi al confronto</button>
+          <button id="dlgShare" class="btn ghost" type="button">Condividi</button>
+        </div>
+      </div>
+    </div>
   </dialog>
 
-  <!-- Template Card -->
-  <template id="tplCard">
-    <article class="card" role="article">
-      <div class="badge"></div>
-      <img class="thumb" alt="Immagine carta" />
-      <div class="content">
-        <div class="name"></div>
-        <div class="meta"></div>
-        <div class="stars" aria-label="Valutazione media"></div>
-        <div class="tags"></div>
-        <button class="primary open">Apri</button>
+  <!-- Dialog: Confronto -->
+  <dialog id="compareDlg" aria-labelledby="compareTitle">
+    <form method="dialog">
+      <button class="iconbtn closebtn" type="submit" aria-label="Chiudi">✕</button>
+    </form>
+    <div class="compare-wrap">
+      <h2 id="compareTitle" style="margin:0 0 10px">Confronto carte</h2>
+      <div id="compareGrid" class="compare-grid"></div>
+      <div style="display:flex; gap:8px; margin-top:12px">
+        <button id="exportCompare" class="btn secondary" type="button">Esporta confronto (PNG)</button>
+        <button id="clearCompareInDlg" class="btn" type="button">Svuota selezione</button>
       </div>
-    </article>
-  </template>
+    </div>
+  </dialog>
+
+  <footer class="wrap">
+    Suggerimenti: premi ⭐ per salvare nei preferiti, seleziona “Confronta” su max 3 carte e premi <strong>Confronta</strong>.
+  </footer>
 
   <script>
-    // ====== Util ======
+    // --------------------------
+    // Utilities & State
+    // --------------------------
     const $ = sel => document.querySelector(sel);
-    const esc = (s='') => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const STAR_OUT = 'M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.401 8.169L12 18.896l-7.335 3.87 1.401-8.169L.132 9.21l8.2-1.192z';
-    function starSVG(filled){ return `<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_OUT}" fill="${filled? 'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"/></svg>`; }
-    function avg(arr){return arr.length? (arr.reduce((a,b)=>a+b,0)/arr.length):0}
-    function keyFor(id, type){return `cardhub_${type}_${id}`}
-    function loadRatings(id){ const raw = localStorage.getItem(keyFor(id,'ratings')); return raw? JSON.parse(raw): []; }
-    function saveRating(id,val){ const list = loadRatings(id); list.push(val); localStorage.setItem(keyFor(id,'ratings'), JSON.stringify(list)); }
-    function loadComments(id){ const raw = localStorage.getItem(keyFor(id,'comments')); return raw? JSON.parse(raw): []; }
-    function addComment(id,c){ const list = loadComments(id); list.push(c); localStorage.setItem(keyFor(id,'comments'), JSON.stringify(list)); }
-    function clearComments(id){ localStorage.removeItem(keyFor(id,'comments')); }
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    const grid = $("#grid");
+    const q = $("#q");
+    const btnClear = $("#btnClear");
+    const btnFavs = $("#btnFavs");
+    const resultCount = $("#resultCount");
+    const favCountEl = $("#favCount");
+    const compareBar = $("#compareBar");
+    const compareCounter = $("#compareCounter");
+    const btnOpenCompare = $("#btnOpenCompare");
+    const btnClearCompare = $("#btnClearCompare");
 
-    // ====== Data Load ======
-    let CARDS = [];
+    const dlg = $("#dlg");
+    const dlgImg = $("#dlgImg");
+    const dlgName = $("#dlgName");
+    const dlgMeta = $("#dlgMeta");
+    const dlgFav = $("#dlgFav");
+    const dlgCompare = $("#dlgCompare");
+    const dlgShare = $("#dlgShare");
+    const prevBtn = $("#prevBtn");
+    const nextBtn = $("#nextBtn");
+
+    const compareDlg = $("#compareDlg");
+    const compareGrid = $("#compareGrid");
+    const clearCompareInDlg = $("#clearCompareInDlg");
+    const exportCompare = $("#exportCompare");
+
+    let ALL = [];
+    let FILTER = { q:"", onlyFavs:false };
+    let FAVS = new Set(JSON.parse(localStorage.getItem("favorites") || "[]"));
+    let COMPARE = new Set(); // up to 3 ids
+    let CURRENT_INDEX = 0;   // index in the filtered list for modal navigation
+
+    const esc = s => (s ?? "").toString()
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+
+    function saveFavs(){
+      localStorage.setItem("favorites", JSON.stringify([...FAVS]));
+      favCountEl.textContent = FAVS.size;
+      btnFavs.setAttribute("aria-pressed", FILTER.onlyFavs ? "true" : "false");
+    }
+    saveFavs();
+
+    // --------------------------
+    // Fetch cards
+    // --------------------------
     async function loadCards(){
       try{
-        const res = await fetch('cards.json', { cache: 'no-store' });
-        if(!res.ok) throw new Error('cards.json non trovato');
-        CARDS = await res.json();
+        const res = await fetch("cards.json",{cache:"no-store"});
+        if(!res.ok) throw new Error("HTTP "+res.status);
+        const data = await res.json();
+        ALL = Array.isArray(data) ? data : (data.cards || []);
       }catch(e){
-        console.error('[ERRORE CARICAMENTO CARTE]', e);
-        CARDS = [];
-      }finally{
-        applyFilters();
+        console.warn("cards.json non disponibile, uso mock", e);
+        // Mock minimale per demo
+        ALL = [
+          {id:"1", name:"Draco Ignis", series:"Serie A", rarity:"oro", img:"https://picsum.photos/seed/card1/600/800", rating:4.6, tags:["fuoco","drago"]},
+          {id:"2", name:"Aqua Marea", series:"Serie A", rarity:"argento", img:"https://picsum.photos/seed/card2/600/800", rating:4.1, tags:["acqua"]},
+          {id:"3", name:"Terra Golem", series:"Serie B", rarity:"bronzo", img:"https://picsum.photos/seed/card3/600/800", rating:3.8, tags:["terra","tank"]},
+          {id:"4", name:"Zephyr Rapax", series:"Serie B", rarity:"oro", img:"https://picsum.photos/seed/card4/600/800", rating:4.9, tags:["aria","rapido"]},
+          {id:"5", name:"Umbra Vox", series:"Serie C", rarity:"argento", img:"https://picsum.photos/seed/card5/600/800", rating:4.3, tags:["ombra"]},
+          {id:"6", name:"Lux Aeterna", series:"Serie C", rarity:"oro", img:"https://picsum.photos/seed/card6/600/800", rating:4.7, tags:["luce","support"]},
+          {id:"7", name:"Frost Lynx", series:"Serie D", rarity:"argento", img:"https://picsum.photos/seed/card7/600/800", rating:4.0, tags:["ghiaccio"]},
+          {id:"8", name:"Boulder King", series:"Serie D", rarity:"bronzo", img:"https://picsum.photos/seed/card8/600/800", rating:3.6, tags:["terra"]}
+        ];
       }
+      applyFilters();
     }
 
-    // ====== Stars ======
-    function renderStars(container, value, onRate){
-      container.innerHTML='';
-      const full = Math.round(value);
-      for(let i=1;i<=5;i++){
-        const btn = document.createElement(onRate? 'button':'div');
-        btn.innerHTML = starSVG(i<=full);
-        if(onRate) btn.addEventListener('click', ()=> onRate(i));
-        container.appendChild(btn);
-      }
-      const label = document.createElement('span');
-      label.textContent = value? ` ${value.toFixed(1)}/5` : ' Nessuna valutazione';
-      container.appendChild(label);
+    // --------------------------
+    // Render
+    // --------------------------
+    function rarityBadge(r){
+      const v = (r||"").toLowerCase();
+      if(v.includes("oro")) return '<span class="badge-rarity">ORO</span>';
+      if(v.includes("argento") || v.includes("silver")) return '<span class="badge-rarity silver">ARGENTO</span>';
+      return '<span class="badge-rarity bronze">BRONZO</span>';
     }
 
-    // ====== Filters ======
-    function noFiltersActive(){
-      return (
-        !$('#q').value &&
-        !$('#fGame').value &&
-        !$('#fRarity').value &&
-        !$('#fRole').value &&
-        String($('#fRating').value) === "0"
-      );
+    function render(list){
+      grid.innerHTML = list.map((c, idx) => {
+        const fav = FAVS.has(c.id);
+        const inCompare = COMPARE.has(c.id);
+        return `
+          <article class="card" data-id="${esc(c.id)}" data-idx="${idx}">
+            <div class="thumbwrap">
+              <img src="${esc(c.img)}" alt="Carta ${esc(c.name)}" width="600" height="750" />
+              ${rarityBadge(c.rarity)}
+            </div>
+            <div class="content">
+              <div class="name">${esc(c.name)}</div>
+              <div class="meta">${esc(c.series)} • ⭐ ${Number(c.rating||0).toFixed(1)} · ${esc((c.tags||[]).join(", "))}</div>
+              <div class="row">
+                <div class="actions">
+                  <button class="iconbtn btn-open" title="Apri dettaglio carta">🔍</button>
+                  <button class="iconbtn btn-fav" title="${fav ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}" aria-pressed="${fav}">⭐</button>
+                </div>
+                <label class="check-compare">
+                  <input class="chk-compare" type="checkbox" ${inCompare ? "checked":""} />
+                  Confronta
+                </label>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      resultCount.textContent = `${list.length} ${list.length===1?"risultato":"risultati"}`;
+
+      // Bind events per card
+      $$("#grid .btn-open").forEach(btn=>{
+        btn.addEventListener("click", e=>{
+          const cardEl = e.currentTarget.closest(".card");
+          const id = cardEl.dataset.id;
+          const idx = Number(cardEl.dataset.idx);
+          openModal(id, idx);
+        });
+      });
+      $$("#grid .btn-fav").forEach(btn=>{
+        btn.addEventListener("click", e=>{
+          const cardEl = e.currentTarget.closest(".card");
+          toggleFav(cardEl.dataset.id, e.currentTarget);
+        });
+      });
+      $$("#grid .chk-compare").forEach(chk=>{
+        chk.addEventListener("change", e=>{
+          const cardEl = e.currentTarget.closest(".card");
+          toggleCompare(cardEl.dataset.id, e.currentTarget.checked);
+        });
+      });
     }
 
     function applyFilters(){
-      const q = $('#q').value.trim().toLowerCase();
-      const game = $('#fGame').value;
-      const rarity = $('#fRarity').value;
-      const role = $('#fRole').value;
-      const minR = +$('#fRating').value;
-      const sort = $('#fSort').value;
-
-      let items = CARDS.map(c=>({ ...c, rating: avg(loadRatings(c.id)) }));
-      if(q){ items = items.filter(c=> (c.name+" "+c.series+" "+c.text).toLowerCase().includes(q)); }
-      if(game){ items = items.filter(c=> c.game===game); }
-      if(rarity){ items = items.filter(c=> c.rarity===rarity); }
-      if(role){ items = items.filter(c=> c.role===role); }
-      if(minR>0){ items = items.filter(c=> Math.round(c.rating) >= minR); }
-
-      items.sort((a,b)=>{
-        if(sort==='rating') return (b.rating||0) - (a.rating||0);
-        if(sort==='role') return (a.role||'').localeCompare(b.role||'');
-        return a.name.localeCompare(b.name);
+      const qv = FILTER.q.trim().toLowerCase();
+      let list = ALL.filter(c=>{
+        const text = `${c.name} ${c.series} ${(c.tags||[]).join(" ")}`.toLowerCase();
+        const match = !qv || text.includes(qv);
+        const favOk = !FILTER.onlyFavs || FAVS.has(c.id);
+        return match && favOk;
       });
-
-      // Nessun filtro attivo → 8 carte casuali
-      if (noFiltersActive()) {
-        items = items.slice().sort(() => Math.random() - 0.5).slice(0, 8);
-      }
-
-      renderGrid(items);
+      render(list);
     }
 
-    // ====== Grid ======
-    const grid = $('#grid');
-    function renderGrid(items){
-      grid.innerHTML='';
-      if(!items.length){ grid.innerHTML = '<p style="color:var(--muted)">Nessuna carta trovata. Prova a cambiare i filtri.</p>'; return }
-      const tpl = document.getElementById('tplCard');
-      for(const c of items){
-        const node = tpl.content.firstElementChild.cloneNode(true);
-
-        // classe rarità -> glow + badge colorato
-        const rarSlug = (c.rarity || '').toLowerCase().replace(/\s+/g,'-');
-        if (rarSlug) node.classList.add('r-' + rarSlug);
-
-        node.querySelector('.badge').textContent = c.rarity;
-        const img = node.querySelector('.thumb');
-        img.src = c.img; img.loading='lazy'; img.alt = `Carta ${c.name}`;
-        node.querySelector('.name').textContent = c.name;
-        node.querySelector('.meta').textContent = `${c.game} • ${c.series} • ${c.role || '—'}`;
-        renderStars(node.querySelector('.stars'), c.rating||0, null);
-        const tags = node.querySelector('.tags');
-        (c.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s);});
-        node.querySelector('.open').addEventListener('click', ()=> openModal(c));
-        grid.appendChild(node);
+    // --------------------------
+    // Favorites
+    // --------------------------
+    function toggleFav(id, btnEl){
+      if(FAVS.has(id)) FAVS.delete(id); else FAVS.add(id);
+      saveFavs();
+      if(btnEl){
+        const pressed = FAVS.has(id);
+        btnEl.setAttribute("aria-pressed", pressed ? "true":"false");
+        btnEl.title = pressed ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti";
       }
+      if(FILTER.onlyFavs) applyFilters();
     }
 
-    // ====== Modal ======
-    const dlg = document.getElementById('dlg');
-    const dlgImg = document.getElementById('dlgImg');
-    const dlgName = document.getElementById('dlgName');
-    const dlgMeta = document.getElementById('dlgMeta');
-    const dlgStars = document.getElementById('dlgStars');
-    const dlgTags = document.getElementById('dlgTags');
-    const commentsBox = document.getElementById('comments');
-    let current = null;
+    btnFavs.addEventListener("click", ()=>{
+      FILTER.onlyFavs = !FILTER.onlyFavs;
+      btnFavs.setAttribute("aria-pressed", FILTER.onlyFavs ? "true":"false");
+      applyFilters();
+    });
 
-    function openModal(card){
-      current = card;
+    // --------------------------
+    // Compare
+    // --------------------------
+    function updateCompareBar(){
+      const n = COMPARE.size;
+      compareCounter.textContent = `${n} selezionate`;
+      compareBar.hidden = n===0;
+    }
+    function toggleCompare(id, add){
+      if(add){
+        if(COMPARE.has(id)) return updateCompareBar();
+        if(COMPARE.size>=3){
+          alert("Puoi confrontare al massimo 3 carte.");
+          // rollback checkbox
+          const card = grid.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
+          if(card) card.querySelector(".chk-compare").checked = false;
+          return;
+        }
+        COMPARE.add(id);
+      }else{
+        COMPARE.delete(id);
+      }
+      updateCompareBar();
+    }
+
+    btnOpenCompare.addEventListener("click", ()=>{
+      renderCompare();
+      compareDlg.showModal();
+    });
+    btnClearCompare.addEventListener("click", ()=>{
+      COMPARE.clear();
+      $$("#grid .chk-compare").forEach(chk=> chk.checked = false);
+      updateCompareBar();
+    });
+    clearCompareInDlg.addEventListener("click", ()=>{
+      COMPARE.clear(); updateCompareBar(); compareDlg.close();
+      $$("#grid .chk-compare").forEach(chk=> chk.checked = false);
+    });
+
+    function renderCompare(){
+      const list = ALL.filter(c=>COMPARE.has(c.id));
+      const slots = 3;
+      const cols = [];
+      for(let i=0;i<slots;i++){
+        const c = list[i];
+        if(c){
+          cols.push(`
+            <div class="compare-card">
+              <img src="${esc(c.img)}" alt="Carta ${esc(c.name)}" />
+              <div class="compare-name">${esc(c.name)}</div>
+              <div class="meta">Serie: ${esc(c.series)}</div>
+              <div class="meta">Rarità: ${esc(c.rarity)}</div>
+              <div class="meta">Valutazione: ⭐ ${Number(c.rating||0).toFixed(1)}</div>
+              <div class="meta">Tag: ${esc((c.tags||[]).join(", "))}</div>
+              <div style="display:flex; gap:6px; margin-top:10px">
+                <button type="button" class="btn secondary" onclick="removeFromCompare('${esc(c.id)}')">Rimuovi</button>
+                <button type="button" class="btn" onclick="openFromCompare('${esc(c.id)}')">Apri</button>
+              </div>
+            </div>
+          `);
+        }else{
+          cols.push(`<div class="empty-slot">Slot vuoto<br/><small>Seleziona una carta con “Confronta”</small></div>`);
+        }
+      }
+      compareGrid.innerHTML = cols.join("");
+    }
+
+    window.removeFromCompare = (id)=>{
+      COMPARE.delete(id);
+      const chk = grid.querySelector(`.card[data-id="${CSS.escape(id)}"] .chk-compare`);
+      if(chk) chk.checked = false;
+      renderCompare(); updateCompareBar();
+    }
+    window.openFromCompare = (id)=>{
+      const idx = currentFiltered().findIndex(c=>c.id===id);
+      if(idx>=0) openModal(id, idx);
+    }
+
+    // --------------------------
+    // Search & Clear
+    // --------------------------
+    let debounceT;
+    q.addEventListener("input", ()=>{
+      clearTimeout(debounceT);
+      debounceT = setTimeout(()=>{
+        FILTER.q = q.value;
+        applyFilters();
+      }, 200);
+    });
+    btnClear.addEventListener("click", ()=>{
+      q.value=""; FILTER.q=""; FILTER.onlyFavs=false; btnFavs.setAttribute("aria-pressed","false");
+      applyFilters();
+    });
+
+    // --------------------------
+    // Modal Detail + Swipe
+    // --------------------------
+    function currentFiltered(){
+      const qv = FILTER.q.trim().toLowerCase();
+      return ALL.filter(c=>{
+        const text = `${c.name} ${c.series} ${(c.tags||[]).join(" ")}`.toLowerCase();
+        const match = !qv || text.includes(qv);
+        const favOk = !FILTER.onlyFavs || FAVS.has(c.id);
+        return match && favOk;
+      });
+    }
+
+    function openModal(id, idxInFiltered){
+      const list = currentFiltered();
+      CURRENT_INDEX = idxInFiltered;
+      const card = list[CURRENT_INDEX];
+      if(!card) return;
+
       dlgImg.src = card.img;
+      dlgImg.alt = `Carta ${card.name}`;
       dlgName.textContent = card.name;
-      dlgMeta.textContent = `${card.game} • ${card.series} • ${card.role || '—'}`;
-      dlgTags.innerHTML=''; (card.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; dlgTags.appendChild(s)});
-      const rating = avg(loadRatings(card.id));
-      renderStars(dlgStars, rating, (v)=>{ saveRating(card.id, v); applyFilters(); openModal(card) });
-      renderComments(card.id);
-      document.body.classList.add('modal-open');
+      dlgMeta.textContent = `${card.series} • Rarità: ${card.rarity} • ⭐ ${Number(card.rating||0).toFixed(1)} • ${(card.tags||[]).join(", ")}`;
+
+      dlgFav.setAttribute("aria-pressed", FAVS.has(card.id) ? "true":"false");
+      dlgFav.textContent = FAVS.has(card.id) ? "⭐ Nei preferiti" : "⭐ Aggiungi ai preferiti";
+      dlgCompare.textContent = COMPARE.has(card.id) ? "➖ Rimuovi dal confronto" : "➕ Aggiungi al confronto";
       dlg.showModal();
 
-      // Focus su commento e spostalo in vista (mobile)
-      setTimeout(()=>{
-        const msg = document.getElementById('message');
-        if(msg){ msg.focus({preventScroll:true}); msg.scrollIntoView({block:'center'}); }
-      }, 120);
+      // Gestione swipe touch su immagine
+      setupSwipe(dlgImg, ()=>{
+        prevCard();
+      }, ()=>{
+        nextCard();
+      });
     }
 
-    dlg.addEventListener('close', ()=>{
-      current=null;
-      document.body.classList.remove('modal-open');
-    });
+    function prevCard(){
+      const list = currentFiltered();
+      if(list.length===0) return;
+      CURRENT_INDEX = (CURRENT_INDEX - 1 + list.length) % list.length;
+      openModal(list[CURRENT_INDEX].id, CURRENT_INDEX);
+    }
+    function nextCard(){
+      const list = currentFiltered();
+      if(list.length===0) return;
+      CURRENT_INDEX = (CURRENT_INDEX + 1) % list.length;
+      openModal(list[CURRENT_INDEX].id, CURRENT_INDEX);
+    }
+    prevBtn.addEventListener("click", prevCard);
+    nextBtn.addEventListener("click", nextCard);
 
-    function renderComments(id){
-      commentsBox.innerHTML='';
-      const list = loadComments(id);
-      if(!list.length){ commentsBox.innerHTML = '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>'; return }
-      for(const c of list.slice().reverse()){
-        const div = document.createElement('div');
-        div.className='comment';
-        div.innerHTML = `<div class="author">${esc(c.author||'Anonimo')}</div><div class="text">${esc(c.text||'')}</div><div class="meta" style="margin-top:6px">Voto: ${'★'.repeat(c.rating)}${'☆'.repeat(5-c.rating)} • ${new Date(c.ts).toLocaleString()}</div>`;
-        commentsBox.appendChild(div);
+    function setupSwipe(el, onSwipeRight, onSwipeLeft){
+      let x0=null, y0=null, t0=0;
+      const thresh = 40; const timeMax=600;
+      function start(e){
+        const t = e.changedTouches ? e.changedTouches[0] : e;
+        x0 = t.clientX; y0=t.clientY; t0 = Date.now();
       }
+      function end(e){
+        if(x0===null) return;
+        const t = e.changedTouches ? e.changedTouches[0] : e;
+        const dx = t.clientX - x0; const dy = Math.abs(t.clientY - y0);
+        const dt = Date.now() - t0;
+        if(dt < timeMax && Math.abs(dx) > thresh && dy < 80){
+          if(dx>0) onSwipeRight?.(); else onSwipeLeft?.();
+        }
+        x0=null; y0=null;
+      }
+      el.addEventListener("touchstart", start, {passive:true});
+      el.addEventListener("touchend", end);
+      // mouse drag opzionale
+      let mx=null; el.addEventListener("mousedown", e=>{mx=e.clientX});
+      window.addEventListener("mouseup", e=>{
+        if(mx===null) return;
+        const dx = e.clientX - mx;
+        if(Math.abs(dx)>80) { if(dx>0) onSwipeRight?.(); else onSwipeLeft?.(); }
+        mx=null;
+      });
     }
 
-    document.getElementById('saveC').addEventListener('click', (e)=>{
-      e.preventDefault();
-      if(!current) return;
-      const author = document.getElementById('author').value.trim() || 'Anonimo';
-      const text = document.getElementById('message').value.trim();
-      const rating = parseInt(document.getElementById('ratingSel').value,10);
-      if(!text){ alert('Scrivi un commento!'); return }
-      addComment(current.id, {author, text, rating, ts: Date.now()});
-      saveRating(current.id, rating);
-      document.getElementById('message').value='';
-      renderComments(current.id);
-      applyFilters();
+    dlgFav.addEventListener("click", ()=>{
+      const list = currentFiltered();
+      const card = list[CURRENT_INDEX];
+      toggleFav(card.id);
+      dlgFav.setAttribute("aria-pressed", FAVS.has(card.id) ? "true":"false");
+      dlgFav.textContent = FAVS.has(card.id) ? "⭐ Nei preferiti" : "⭐ Aggiungi ai preferiti";
     });
 
-    document.getElementById('clearC').addEventListener('click', ()=>{
-      if(!current) return;
-      if(confirm('Sicuro di voler cancellare tutti i commenti per questa carta?')){
-        clearComments(current.id);
-        renderComments(current.id);
+    dlgCompare.addEventListener("click", ()=>{
+      const list = currentFiltered();
+      const card = list[CURRENT_INDEX];
+      const willAdd = !COMPARE.has(card.id);
+      toggleCompare(card.id, willAdd);
+      dlgCompare.textContent = COMPARE.has(card.id) ? "➖ Rimuovi dal confronto" : "➕ Aggiungi al confronto";
+      // riflette lo stato anche sulla card in grid
+      const cardEl = grid.querySelector(`.card[data-id="${CSS.escape(card.id)}"] .chk-compare`);
+      if(cardEl) cardEl.checked = COMPARE.has(card.id);
+    });
+
+    dlgShare.addEventListener("click", async ()=>{
+      const list = currentFiltered(); const c = list[CURRENT_INDEX];
+      const url = new URL(location.href);
+      url.searchParams.set("q", FILTER.q||"");
+      url.searchParams.set("id", c.id);
+      try{
+        if(navigator.share){
+          await navigator.share({title:c.name, text:`Guarda questa carta: ${c.name}`, url:String(url)});
+        }else{
+          await navigator.clipboard.writeText(String(url));
+          alert("Link copiato!");
+        }
+      }catch(e){/* no-op */}
+    });
+
+    // Chiudere con ESC: dialog lo fa nativamente
+
+    // --------------------------
+    // Export Confronto (PNG) – semplice via html2canvas se presente
+    // --------------------------
+    exportCompare.addEventListener("click", async ()=>{
+      if(!window.html2canvas){
+        alert("Per esportare come immagine, includi html2canvas oppure fai uno screenshot 😉");
+        return;
       }
+      const canvas = await html2canvas(compareGrid);
+      const a = document.createElement("a");
+      a.download = "confronto.png";
+      a.href = canvas.toDataURL("image/png");
+      a.click();
     });
 
-    // ====== Events ======
-    ['q','fGame','fRarity','fRole','fSort'].forEach(id=> document.getElementById(id).addEventListener('input', applyFilters));
-    document.getElementById('fRating').addEventListener('input', ()=>{
-      document.getElementById('fRatingVal').textContent=document.getElementById('fRating').value;
-      applyFilters();
-    });
+    // --------------------------
+    // Restore state from URL
+    // --------------------------
+    function restoreFromURL(){
+      const sp = new URLSearchParams(location.search);
+      const qs = sp.get("q"); if(qs){ q.value=qs; FILTER.q=qs; }
+    }
 
-    // ====== Init ======
+    // Init
+    restoreFromURL();
     loadCards();
   </script>
+
+  <!-- Facoltativo: html2canvas per export confronto
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+  -->
 </body>
 </html>
