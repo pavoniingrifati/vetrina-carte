@@ -69,6 +69,40 @@
     .card.r-epica       { --glow:#a78bfa }
     .card.r-season      { --glow:#ef4444 }
     .card.r-leggendaria { --glow: #ff4d94; } 
+/* Cornice animata per carte Leggendarie */
+.card.r-leggendaria {
+  position: relative;
+  z-index: 0;
+}
+
+.card.r-leggendaria::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 2px; /* spessore cornice */
+  border-radius: var(--radius);
+  background: linear-gradient(
+    130deg,
+    #ff4d94,
+    #ff9d00,
+    #ffd700,
+    #ff4d94
+  );
+  background-size: 300% 300%;
+  animation: legendaryBorder 4s linear infinite;
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+          mask-composite: exclude;
+  z-index: -1;
+}
+
+@keyframes legendaryBorder {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
 
     .card:hover{ transform: translateY(-3px); border-color: var(--glow); box-shadow: 0 10px 30px rgba(0,0,0,.55), 0 0 0 1px var(--glow), 0 14px 40px color-mix(in oklab, var(--glow) 35%, transparent) }
