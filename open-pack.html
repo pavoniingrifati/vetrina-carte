@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Fantaballa – Open Pack</title>
-  <meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e screenshot. Include anteprime pacchetti e prezzi. Usa cards.json (series=Wonderkid/Tots)." />
+  <meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e condivisione social. Include anteprime pacchetti e prezzi. Usa cards.json (series=Wonderkid/Tots)." />
 
   <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,9 +15,6 @@
   <link rel="preload" as="image" href="Deck%20back%20ORO.png" />
   <link rel="preload" as="image" href="Deck%20back%20Tots.png" />
   <link rel="preload" as="image" href="Deck%20back%20wonderkid.png" />
-
-  <!-- Screenshot DOM -> PNG (opzionale) -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
 
   <style>
     :root{ --bg:#0b0f19; --panel:#0f1526; --card:#121a2e; --card-2:#0d1325; --text:#ecf0ff; --muted:#a7b0d3; --accent:#6ee7ff; --radius:18px; --g-comune:rgba(154,163,178,.30); --g-non-comune:rgba(52,211,153,.35); --g-rara:rgba(96,165,250,.45); --g-epica:rgba(167,139,250,.55); --g-ultra-rara:rgba(251,191,36,.65); --g-season:rgba(239,68,68,.7) }
@@ -146,9 +143,8 @@
         </div>
         <span class="pill" id="pricePill">💰 Costo: 1000</span>
         <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
+        <button id="shareBtn" class="btn" disabled>🔗 Condividi pacchetto</button>
         <a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Torna alla Home</a>
-
-        <button id="shotBtn" class="btn" disabled>📸 Screenshot pacchetto</button>
       </div>
 
       <div class="toolbar">
@@ -250,7 +246,7 @@ const PACKS = {
         this.ALL=[]; this.used=new Set();
         this.currentPackKey = DEFAULT_PACK_KEY;
 
-        this.$openBtn=$('#openBtn'); this.$shotBtn=$('#shotBtn');
+        this.$openBtn=$('#openBtn'); this.$shareBtn=$('#shareBtn');
         this.$packArea=$('#packArea'); this.$pack=$('#pack');
         this.$flashLine=$('#flashLine'); this.$flashScreen=$('#flashScreen');
         this.$stageWrap=$('#stageWrap'); this.$stage=$('#stage'); this.$log=$('#log');
@@ -263,7 +259,7 @@ const PACKS = {
       bind(){
         this.$openBtn.addEventListener('click',()=>this.doOpen());
         this.$pack.addEventListener('click',()=>this.$openBtn.click(),{passive:true});
-        this.$shotBtn.addEventListener('click',()=>this.doShot());
+        this.$shareBtn.addEventListener('click',()=>this.doShare());
         ['click','keydown','touchstart'].forEach(e=>window.addEventListener(e,()=>{ensureAudio()}, {once:true}));
       }
       prewarm(){
@@ -292,7 +288,7 @@ const PACKS = {
             cleaned.push({id,name,rarity,img,series});
           }
           if(!cleaned.length) throw new Error('Nessuna carta valida in cards.json');
-          this.ALL=cleaned; this.$log.textContent=`Caricate ${this.ALL.length} carte.`;
+          this.ALL=cleaned; this.$log.textContent=`Caricate ${this.ALL.length) } carte.`;
         }catch(err){
           console.warn('cards.json non caricato, uso fallback:', err?.message||err);
           this.ALL = FALLBACK_CARDS;
@@ -403,18 +399,18 @@ const PACKS = {
         const last=cards.length-1; const frag=document.createDocumentFragment();
         cards.forEach((c,i)=>{ const el=this.makeCardEl(c,i===last); frag.appendChild(el); this.setDropIn(el,i) });
         stage.appendChild(frag);
-        this.$shotBtn.disabled=false;
+        this.$shareBtn.disabled=false;
         this.$log.textContent='Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.';
       }
 
       async doOpen(){
-        const BTN=this.$openBtn, SHOT=this.$shotBtn; BTN.disabled=true; SHOT.disabled=true;
+        const BTN=this.$openBtn, SHARE=this.$shareBtn; BTN.disabled=true; SHARE.disabled=true;
         this.$log.textContent='Preparazione pacchetto…';
         await this.loadData(); if(!this.ALL.length){ this.$log.textContent='Nessuna carta disponibile'; BTN.disabled=false; return }
 
         const pack = PACKS[this.currentPackKey];
         const pool = this.ALL.filter(pack.filter);
-        if(!pool.length){ this.$log.textContent='⚠️ Nessuna carta compatibile con questo pacchetto (controlla "series").'; BTN.disabled=false; SHOT.disabled=true; return }
+        if(!pool.length){ this.$log.textContent='⚠️ Nessuna carta compatibile con questo pacchetto (controlla "series").'; BTN.disabled=false; SHARE.disabled=true; return }
 
         this.$pack.classList.add('shake'); await delay(360); this.$pack.classList.remove('shake');
         this.$flashLine.classList.add('active'); this.$flashScreen.classList.add('active'); this.$pack.classList.add('opening');
@@ -432,24 +428,32 @@ const PACKS = {
         this.showStage(chosen);
 
         setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active') },400);
-        BTN.textContent=`🔁 Nuovo pacchetto ${pack.label}`; BTN.disabled=false; SHOT.disabled=false;
+        BTN.textContent=`🔁 Nuovo pacchetto ${pack.label}`; BTN.disabled=false; SHARE.disabled=false;
         BTN.onclick=async()=>{
-          BTN.disabled=true; SHOT.disabled=true;
+          BTN.disabled=true; SHARE.disabled=true;
           this.$stageWrap.classList.remove('show'); this.$stage.innerHTML=''; this.$packArea.style.display='flex'; this.$pack.classList.remove('opening');
           BTN.textContent='🎁 Apri pacchetto'; this.$log.textContent='';
           await delay(100); BTN.disabled=false; BTN.onclick=()=>this.doOpen();
         };
       }
 
-      async doShot(){
-        const area=this.$stageWrap;
-        try{
-          if(!window.html2canvas){ alert('html2canvas non ancora caricato, riprova tra un secondo.'); return }
-          const canvas=await html2canvas(area,{backgroundColor:null,useCORS:true,scale:2});
-          const a=document.createElement('a'); a.download=`fantaballa-pack-${Date.now()}.png`; a.href=canvas.toDataURL('image/png'); a.click()
-        }catch(e){
-          console.error(e);
-          alert('Impossibile salvare il PNG. Per evitare CORS, ospita le immagini nel repo e usa percorsi relativi.')
+      async doShare(){
+        const shareData = {
+          title: 'Fantaballa – Il mio pacchetto',
+          text: 'Guarda il pacchetto che ho aperto su Fantaballa!',
+          url: window.location.href
+        };
+
+        if (navigator.share) {
+          try {
+            await navigator.share(shareData);
+            console.log('Pacchetto condiviso con successo');
+          } catch (err) {
+            console.warn('Condivisione annullata o fallita', err);
+          }
+        } else {
+          // Fallback semplice: copia/mostra il link
+          alert('Condivisione non supportata sul tuo browser. Copia il link: ' + shareData.url);
         }
       }
     }
