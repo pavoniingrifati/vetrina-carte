@@ -4,17 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Fantaballa – Open Pack</title>
-  <meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e condivisione social. Include anteprime pacchetti e prezzi. Usa cards.json (series=Wonderkid/Tots)." />
+  <meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e screenshot. Include anteprime pacchetti e prezzi. Usa cards.json (series=Wonderkid/Tots)." />
 
   <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Preload retro per evitare flicker -->
-  <link rel="preload" as="image" href="Deck%20back%20ORO.png" />
-  <link rel="preload" as="image" href="Deck%20back%20Tots.png" />
-  <link rel="preload" as="image" href="Deck%20back%20wonderkid.png" />
+  <!-- (RIMOSSO: html2canvas non più necessario per lo screenshot) -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script> -->
 
   <style>
     :root{ --bg:#0b0f19; --panel:#0f1526; --card:#121a2e; --card-2:#0d1325; --text:#ecf0ff; --muted:#a7b0d3; --accent:#6ee7ff; --radius:18px; --g-comune:rgba(154,163,178,.30); --g-non-comune:rgba(52,211,153,.35); --g-rara:rgba(96,165,250,.45); --g-epica:rgba(167,139,250,.55); --g-ultra-rara:rgba(251,191,36,.65); --g-season:rgba(239,68,68,.7) }
@@ -128,6 +126,16 @@
     .pillFoot{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
 
     @media(max-width:600px){.wrap{padding:12px} .stage{grid-template-columns:1fr}}
+
+    /* Share modal (fallback desktop) */
+    .shareModal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:50; background:rgba(0,0,0,.45)}
+    .shareModal.show{display:flex}
+    .shareCard{background:var(--panel); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:16px; width:min(520px,92vw); box-shadow:0 12px 40px rgba(0,0,0,.5)}
+    .shareHeader{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px}
+    .shareRow{display:flex; gap:8px; flex-wrap:wrap}
+    .shareItem{display:inline-flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); border-radius:12px}
+    .shareActions{display:flex; gap:8px; margin-top:12px; justify-content:flex-end}
+    .inputLike{width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03); color:var(--text)}
   </style>
 </head>
 <body>
@@ -191,6 +199,29 @@
       <div class="spark"></div>
     </article>
   </template>
+
+  <!-- Share Fallback Modal -->
+  <div class="shareModal" id="shareModal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="shareCard">
+      <div class="shareHeader">
+        <strong>Condividi pacchetto</strong>
+        <button type="button" class="btn" id="closeShare">✖️ Chiudi</button>
+      </div>
+      <div class="shareRow" style="margin-bottom:10px">
+        <a class="shareItem" id="waShare" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="shareItem" id="xShare" target="_blank" rel="noopener">X (Twitter)</a>
+        <a class="shareItem" id="fbShare" target="_blank" rel="noopener">Facebook</a>
+        <a class="shareItem" id="tgShare" target="_blank" rel="noopener">Telegram</a>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center">
+        <input class="inputLike" id="shareLink" readonly />
+        <button type="button" class="btn" id="copyLink">📋 Copia</button>
+      </div>
+      <div class="shareActions">
+        <button type="button" class="btn" id="shareOk">OK</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
    // Utility per match STRETTO sul campo "series"
@@ -288,7 +319,7 @@ const PACKS = {
             cleaned.push({id,name,rarity,img,series});
           }
           if(!cleaned.length) throw new Error('Nessuna carta valida in cards.json');
-          this.ALL=cleaned; this.$log.textContent=`Caricate ${this.ALL.length) } carte.`;
+          this.ALL=cleaned; this.$log.textContent=`Caricate ${this.ALL.length} carte.`;
         }catch(err){
           console.warn('cards.json non caricato, uso fallback:', err?.message||err);
           this.ALL = FALLBACK_CARDS;
@@ -437,6 +468,7 @@ const PACKS = {
         };
       }
 
+      // === NUOVO: Condivisione pacchetto
       async doShare(){
         const shareData = {
           title: 'Fantaballa – Il mio pacchetto',
@@ -448,13 +480,48 @@ const PACKS = {
           try {
             await navigator.share(shareData);
             console.log('Pacchetto condiviso con successo');
+            return;
           } catch (err) {
             console.warn('Condivisione annullata o fallita', err);
           }
-        } else {
-          // Fallback semplice: copia/mostra il link
-          alert('Condivisione non supportata sul tuo browser. Copia il link: ' + shareData.url);
         }
+        // Fallback: apri modale con link + social
+        this.openShareFallback(shareData);
+      }
+
+      openShareFallback(shareData){
+        const modal = $('#shareModal');
+        const linkInput = $('#shareLink');
+        const closeBtn = $('#closeShare');
+        const okBtn = $('#shareOk');
+        const copyBtn = $('#copyLink');
+        const wa = $('#waShare'), x = $('#xShare'), fb = $('#fbShare'), tg = $('#tgShare');
+
+        const url = encodeURIComponent(shareData.url);
+        const text = encodeURIComponent(shareData.text);
+
+        wa.href = `https://api.whatsapp.com/send?text=${text}%20${url}`;
+        x.href  = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+        fb.href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+        tg.href = `https://t.me/share/url?url=${url}&text=${text}`;
+
+        linkInput.value = shareData.url;
+
+        const close = ()=>{ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true') };
+        closeBtn.onclick = close; okBtn.onclick = close;
+
+        copyBtn.onclick = async ()=>{
+          try{
+            await navigator.clipboard.writeText(shareData.url);
+            copyBtn.textContent = '✅ Copiato';
+            setTimeout(()=>copyBtn.textContent='📋 Copia',1200);
+          }catch{
+            copyBtn.textContent = '❌ Errore';
+            setTimeout(()=>copyBtn.textContent='📋 Copia',1200);
+          }
+        };
+
+        modal.classList.add('show'); modal.setAttribute('aria-hidden','false');
       }
     }
 
