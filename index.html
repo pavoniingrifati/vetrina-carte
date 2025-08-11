@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Fantaballa – FUT Tik Tok</title>
-  <meta name="description" content="Vetrina di carte collezionabili con filtri, valutazioni e commenti (dati locali)." />
+  <meta name="description" content="Vetrina di carte collezionabili con filtri, valutazioni, commenti e preferiti (dati locali)." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -24,169 +24,105 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{
-      margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg);
-      color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-    }
+    body{ margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg); color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial }
     body.modal-open{ overflow:hidden; touch-action:none; }
 
-    header{
-      position:sticky; top:0; z-index:100; backdrop-filter: blur(10px);
-      background: linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6));
-      border-bottom:1px solid rgba(255,255,255,.06);
-    }
+    header{ position:sticky; top:0; z-index:100; backdrop-filter: blur(10px); background: linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6)); border-bottom:1px solid rgba(255,255,255,.06); }
     .wrap{max-width:1280px; margin:0 auto; padding: 20px;}
     .title{display:flex; gap:16px; align-items:center; justify-content:space-between;}
     h1{font-size: clamp(20px, 3.6vw, 34px); margin:0}
     .subtitle{color:var(--muted); margin-top:6px}
 
-    .toolbar{display:grid; grid-template-columns: 1fr; gap:12px; margin-top:16px;}
-    @media (min-width: 900px){
-      .toolbar{grid-template-columns: 1.2fr .8fr .8fr .8fr .8fr}
-    }
+    /* Tabs All / Favorites */
+    .tabs{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap }
+    .tab-btn{ border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text); padding:8px 12px; border-radius:999px; cursor:pointer }
+    .tab-btn[aria-selected="true"]{ background:rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15) }
 
-    .search, select, .range, button, .tag{
-      background: linear-gradient(180deg, #121a2e, #0d1325);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:12px; color: var(--text);
-      padding:12px 14px; outline:none;
-    }
+    .toolbar{display:grid; grid-template-columns: 1fr; gap:12px; margin-top:14px;}
+    @media (min-width: 900px){ .toolbar{grid-template-columns: 1.2fr .8fr .8fr .8fr .8fr} }
+
+    .search, select, .range, button, .tag{ background: linear-gradient(180deg, #121a2e, #0d1325); border:1px solid rgba(255,255,255,.08); border-radius:12px; color: var(--text); padding:12px 14px; outline:none }
     .search{display:flex; gap:10px; align-items:center}
     .search input{flex:1; background:transparent; border:none; color:var(--text)}
     .search input::placeholder{color:#98a3c7}
-    select{
-      appearance:none;
-      background-image: linear-gradient(180deg, transparent, transparent), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>');
-      background-repeat:no-repeat; background-position:right 10px center; padding-right:38px
-    }
+    select{ appearance:none; background-image: linear-gradient(180deg, transparent, transparent), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat:no-repeat; background-position:right 10px center; padding-right:38px }
     select, select option { color: var(--text); background-color: var(--card); }
-    select option { padding: 8px; }
-
     .range{display:flex; gap:10px; align-items:center}
     .range input{width:100%}
 
-    /* Grid adattiva: spacing leggermente più ampio */
-    .grid{display:grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap:20px; margin:22px 0 88px}
-    @media (min-width:600px){.grid{grid-template-columns: repeat(2, minmax(0,1fr)); gap:22px}}
-    @media (min-width:900px){.grid{grid-template-columns: repeat(3, minmax(0,1fr)); gap:24px}}
-    @media (min-width:1200px){.grid{grid-template-columns: repeat(4, minmax(0,1fr)); gap:24px}}
+    /* Grid adattiva con spacing leggermente più ampio */
+    .grid{display:grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap:22px; margin:22px 0 88px}
+    @media (min-width:600px){.grid{grid-template-columns: repeat(2, minmax(0,1fr)); gap:24px}}
+    @media (min-width:900px){.grid{grid-template-columns: repeat(3, minmax(0,1fr)); gap:26px}}
+    @media (min-width:1200px){.grid{grid-template-columns: repeat(4, minmax(0,1fr)); gap:26px}}
 
-    /* Carte con glow + ombre */
-    .card{
-      background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius: var(--radius);
-      overflow:hidden; position:relative;
-      box-shadow: 0 6px 18px rgba(0,0,0,.35);
-      transition: transform .16s ease, box-shadow .25s ease, border-color .25s ease, filter .25s ease;
-      --glow: #6ee7ff; /* default */
-      opacity:0; transform: translateY(6px);
-      animation: cardIn .35s ease forwards;
-    }
+    /* Carte */
+    .card{ background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card); border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); overflow:hidden; position:relative; box-shadow: 0 6px 18px rgba(0,0,0,.35); transition: transform .16s ease, box-shadow .25s ease, border-color .25s ease, filter .25s ease; --glow: #6ee7ff; opacity:0; transform: translateY(6px); animation: cardIn .35s ease forwards }
     @keyframes cardIn{to{opacity:1; transform: translateY(0)}}
     @media (prefers-reduced-motion: reduce){ .card{ animation:none; opacity:1; transform:none } }
 
     /* palette glow per rarità */
-    .card.r-comune      { --glow:#9aa3b2; }
-    .card.r-non-comune  { --glow:#34d399; }
-    .card.r-rara        { --glow:#60a5fa; }
-    .card.r-ultra-rara  { --glow:#fbbf24; }
-    .card.r-epica       { --glow:#a78bfa; }
-    .card.r-season      { --glow:#ef4444; }
+    .card.r-comune      { --glow:#9aa3b2 }
+    .card.r-non-comune  { --glow:#34d399 }
+    .card.r-rara        { --glow:#60a5fa }
+    .card.r-ultra-rara  { --glow:#fbbf24 }
+    .card.r-epica       { --glow:#a78bfa }
+    .card.r-season      { --glow:#ef4444 }
 
-    .card:hover{
-      transform: translateY(-3px);
-      border-color: var(--glow);
-      box-shadow:
-        0 10px 30px rgba(0,0,0,.55),
-        0 0 0 1px var(--glow),
-        0 14px 40px color-mix(in oklab, var(--glow) 35%, transparent);
-    }
+    .card:hover{ transform: translateY(-3px); border-color: var(--glow); box-shadow: 0 10px 30px rgba(0,0,0,.55), 0 0 0 1px var(--glow), 0 14px 40px color-mix(in oklab, var(--glow) 35%, transparent) }
 
-    .thumb{aspect-ratio: 3/4; width:100%; background:#0b0f19; object-fit:cover}
+    .thumb{aspect-ratio: 3/4; width:100%; background:#0b0f19; object-fit:cover; cursor:pointer }
     .content{padding:12px 14px}
     .name{font-weight:600; font-size:16px}
     .meta{font-size:13px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; margin-top:4px}
     .stars{display:flex; gap:4px; align-items:center; margin-top:8px}
     .stars .s{width:18px; height:18px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3))}
 
-    /* Badge rarità a destra + colori */
-    .badge{
-      position:absolute; top:10px; right:10px;
-      background: rgba(0,0,0,.5); backdrop-filter: blur(6px);
-      border:1px solid rgba(255,255,255,.15);
-      color:white; padding:6px 8px; border-radius:999px; font-size:12px; font-weight:600;
-    }
-    .card.r-comune      .badge { background: rgba(154,163,178,0.8); }
-    .card.r-non-comune  .badge { background: rgba(52,211,153,0.8); }
-    .card.r-rara        .badge { background: rgba(96,165,250,0.8); }
-    .card.r-ultra-rara  .badge { background: rgba(251,191,36,0.85); color: #000; }
-    .card.r-epica       .badge { background: rgba(167,139,250,0.85); }
-    .card.r-season      .badge { background: rgba(239,68,68,0.85); }
+    /* Badge rarità */
+    .badge{ position:absolute; top:10px; right:10px; background: rgba(0,0,0,.5); backdrop-filter: blur(6px); border:1px solid rgba(255,255,255,.15); color:white; padding:6px 8px; border-radius:999px; font-size:12px; font-weight:600 }
+    .card.r-comune      .badge { background: rgba(154,163,178,0.8) }
+    .card.r-non-comune  .badge { background: rgba(52,211,153,0.8) }
+    .card.r-rara        .badge { background: rgba(96,165,250,0.8) }
+    .card.r-ultra-rara  .badge { background: rgba(251,191,36,0.85); color: #000 }
+    .card.r-epica       .badge { background: rgba(167,139,250,0.85) }
+    .card.r-season      .badge { background: rgba(239,68,68,0.85) }
 
     .open{position:absolute; bottom:10px; right:10px}
 
     .tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
-    .tag{
-      padding: 3px 8px; font-size: 11px; line-height: 1.2;
-      border-radius: 999px; border: 1px solid rgba(255,255,255,.12);
-      white-space: nowrap; margin-top: 4px;
-    }
+    .tag{ padding: 3px 8px; font-size: 11px; line-height: 1.2; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); white-space: nowrap; margin-top: 4px }
 
-    /* ===== Wishlist / Preferiti ===== */
-    .fav{
-      position:absolute; top:10px; left:10px; z-index:2;
-      display:inline-flex; align-items:center; justify-content:center;
-      width:36px; height:36px; border-radius:999px;
-      background: rgba(0,0,0,.45);
-      border:1px solid rgba(255,255,255,.18);
-      cursor:pointer; user-select:none;
-      transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
-    }
-    .fav:active{ transform: scale(.96); }
-    .fav svg{ width:20px; height:20px; }
-    .fav .outline{ display: block; }
-    .fav .filled{ display: none; }
-    .fav.active{ background: color-mix(in oklab, var(--fav) 25%, rgba(0,0,0,.45)); box-shadow: 0 0 0 1px color-mix(in oklab, var(--fav) 60%, transparent) inset; }
-    .fav.active .outline{ display: none; }
-    .fav.active .filled{ display: block; color: var(--fav); }
+    /* ===== Wishlist / Preferiti (cuore più grande) ===== */
+    .fav{ position:absolute; top:10px; left:10px; z-index:2; display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:999px; background: rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18); cursor:pointer; user-select:none; transition: transform .15s ease, background .2s ease, box-shadow .2s ease }
+    .fav:active{ transform: scale(.96) }
+    .fav svg{ width:24px; height:24px }
+    .fav .outline{ display: block }
+    .fav .filled{ display: none }
+    .fav.active{ background: color-mix(in oklab, var(--fav) 25%, rgba(0,0,0,.45)); box-shadow: 0 0 0 1px color-mix(in oklab, var(--fav) 60%, transparent) inset }
+    .fav.active .outline{ display: none }
+    .fav.active .filled{ display: block; color: var(--fav) }
 
-    /* ===== Modal: mobile-first, full-screen, scorrevole ===== */
-    dialog{
-      inset: 0; margin: 0; padding: 0; border: none;
-      width: 100vw; max-width: none;
-      height: 100svh; /* viewport stabile su mobile */
-      height: 100dvh; /* fallback */
-      background: transparent;
-    }
+    /* ===== Modal ===== */
+    dialog{ inset: 0; margin: 0; padding: 0; border: none; width: 100vw; max-width: none; height: 100svh; height: 100dvh; background: transparent }
     dialog::backdrop{ background: rgba(0,0,0,.65) }
-    .modal{
-      display: grid; grid-template-columns: 1fr;
-      width: 100%; height: 100%;
-      background: var(--panel);
-    }
-    @media(min-width:900px){ .modal{ grid-template-columns: .95fr 1.05fr; height: auto; max-height: 90vh; border-radius: 18px; } }
+    .modal{ display: grid; grid-template-columns: 1fr; width: 100%; height: 100%; background: var(--panel) }
+    @media(min-width:900px){ .modal{ grid-template-columns: .95fr 1.05fr; height: auto; max-height: 90vh; border-radius: 18px } }
 
-    .modal .left{ background: radial-gradient(500px 320px at 20% 0, rgba(110,231,255,.05), transparent), var(--card-2); padding:12px }
+    .modal .left{ position:relative; background: radial-gradient(500px 320px at 20% 0, rgba(110,231,255,.05), transparent), var(--card-2); padding:12px }
     .modal .big{ width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.08); aspect-ratio:3/4; object-fit:cover }
     .modal .close{ position:absolute; top:10px; right:10px; background: rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18); padding:8px 10px; border-radius:10px; color:white }
 
-    /* Colonna destra scrollabile, con actions sticky */
-    .modal .right{
-      display:flex; flex-direction:column; min-height:0;
-      padding:12px 12px calc(12px + var(--safe-bottom));
-    }
-    .scroll{
-      flex:1 1 auto; min-height:0; overflow:auto;
-      padding-right:2px;
-    }
-    .actions{
-      position: sticky; bottom: 0;
-      background: linear-gradient(180deg, rgba(15,21,38,.7), var(--panel));
-      border-top: 1px solid rgba(255,255,255,.08);
-      padding: 10px 0 calc(10px + var(--safe-bottom));
-      display:flex; gap:10px;
-    }
+    /* Indicatori mobile per suggerire swipe (chevrons) */
+    .hint{ position:absolute; top:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.42); border:1px solid rgba(255,255,255,.18); border-radius:999px; color:white; transform: translateY(-50%); opacity:.9; animation: fadeHints 4s ease forwards }
+    .hint.left{ left:8px }
+    .hint.right{ right:8px }
+    @keyframes fadeHints{ 0%{opacity:.9} 70%{opacity:.9} 100%{opacity:0} }
+    @media(min-width:900px){ .hint{ display:none } }
+
+    /* Colonna destra scrollabile */
+    .modal .right{ display:flex; flex-direction:column; min-height:0; padding:12px 12px calc(12px + var(--safe-bottom)) }
+    .scroll{ flex:1 1 auto; min-height:0; overflow:auto; padding-right:2px }
+    .actions{ position: sticky; bottom: 0; background: linear-gradient(180deg, rgba(15,21,38,.7), var(--panel)); border-top: 1px solid rgba(255,255,255,.08); padding: 10px 0 calc(10px + var(--safe-bottom)); display:flex; gap:10px }
 
     .field{display:grid; gap:8px; margin: 8px 0}
     textarea, input[type="text"]{background:#0d1325; border:1px solid rgba(255,255,255,.1); border-radius:10px; color:var(--text); padding:10px}
@@ -209,9 +145,9 @@
     }
 
     /* Titolo modale ben leggibile sullo sfondo scuro */
-    #dlgName{ color:#fff; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+    #dlgName{ color:#fff; text-shadow: 0 1px 3px rgba(0,0,0,.8) }
 
-    /* Navigazione modale (indicatori opzionali su desktop) */
+    /* Navigazione modale (bottoni desktop) */
     .navBtn{ position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.2); color:#fff; padding:8px 10px; border-radius:10px; cursor:pointer }
     .navPrev{ left:10px } .navNext{ right:50px }
     @media(max-width:900px){ .navBtn{ display:none } }
@@ -228,10 +164,14 @@
       </div>
       <a class="pill" href="open-pack.html">🎁 Apri un pacchetto</a>
 
+      <!-- Tabs: Tutte / Preferite -->
+      <div class="tabs" role="tablist" aria-label="Sezioni">
+        <button class="tab-btn" id="tabAll" role="tab" aria-selected="true">Tutte</button>
+        <button class="tab-btn" id="tabFavs" role="tab" aria-selected="false">Preferite ❤️ <span id="favCount" aria-hidden="true"></span></button>
+      </div>
+
       <div class="toolbar" aria-label="Filtri e ricerca">
-        <div class="search" role="search">
-          🔎 <input id="q" type="search" placeholder="Cerca per nome, serie o testo." aria-label="Cerca" />
-        </div>
+        <div class="search" role="search">🔎 <input id="q" type="search" placeholder="Cerca per nome, serie o testo." aria-label="Cerca" /></div>
         <select id="fGame" aria-label="Squadra/Gioco">
           <option value="">Tutte le squadre</option>
           <option>Fantaballa FC</option>
@@ -253,10 +193,7 @@
           <option>MC</option><option>CC</option><option>TRQ</option>
           <option>AS</option><option>AD</option><option>ATT</option>
         </select>
-        <div class="range" title="Valutazione minima">
-          ⭐ Min: <input id="fRating" type="range" min="0" max="5" value="0" step="1" />
-          <span id="fRatingVal">0</span>
-        </div>
+        <div class="range" title="Valutazione minima">⭐ Min: <input id="fRating" type="range" min="0" max="5" value="0" step="1" /> <span id="fRatingVal">0</span></div>
         <select id="fSort" aria-label="Ordina per">
           <option value="name">Ordina: Nome</option>
           <option value="rating">Ordina: Valutazione</option>
@@ -267,6 +204,7 @@
   </header>
 
   <main class="wrap">
+    <h2 id="sectionTitle" style="margin:8px 0 0; font-size:18px; color:var(--muted); font-weight:600">Tutte le carte</h2>
     <div id="grid" class="grid" aria-live="polite"></div>
   </main>
 
@@ -282,7 +220,9 @@
       <button class="close" type="button" aria-label="Chiudi">✕</button>
       <div class="left">
         <button class="navBtn navPrev" type="button" title="Precedente" aria-label="Carta precedente">◀</button>
+        <div class="hint left" aria-hidden="true">‹</div>
         <img id="dlgImg" alt="Immagine carta" class="big" />
+        <div class="hint right" aria-hidden="true">›</div>
         <button class="navBtn navNext" type="button" title="Successiva" aria-label="Carta successiva">▶</button>
       </div>
       <div class="right">
@@ -295,23 +235,10 @@
           <h3 style="margin:14px 0 6px">Commenti</h3>
           <div id="comments"></div>
 
-          <div class="field">
-            <label for="author">Nome</label>
-            <input id="author" type="text" placeholder="Il tuo nome" autocomplete="name" />
-          </div>
-          <div class="field">
-            <label for="message">Commento</label>
-            <textarea id="message" rows="3" placeholder="Scrivi un commento."></textarea>
-          </div>
-          <div class="field">
-            <label for="ratingSel">Voto (1-5)</label>
-            <select id="ratingSel">
-              <option value="5">5</option>
-              <option value="4">4</option>
-              <option value="3">3</option>
-              <option value="2">2</option>
-              <option value="1">1</option>
-            </select>
+          <div class="field"><label for="author">Nome</label><input id="author" type="text" placeholder="Il tuo nome" autocomplete="name" /></div>
+          <div class="field"><label for="message">Commento</label><textarea id="message" rows="3" placeholder="Scrivi un commento."></textarea></div>
+          <div class="field"><label for="ratingSel">Voto (1-5)</label>
+            <select id="ratingSel"><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select>
           </div>
         </div>
         <div class="actions">
@@ -346,34 +273,31 @@
     const $ = sel => document.querySelector(sel);
     const esc = (s='') => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
     const STAR_OUT = 'M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.401 8.169L12 18.896l-7.335 3.87 1.401-8.169L.132 9.21l8.2-1.192z';
-    function starSVG(filled){ return `<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_OUT}" fill="${filled? 'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"/></svg>`; }
-    function avg(arr){return arr.length? (arr.reduce((a,b)=>a+b,0)/arr.length):0}
-    function keyFor(id, type){return `cardhub_${type}_${id}`}
-    function loadRatings(id){ const raw = localStorage.getItem(keyFor(id,'ratings')); return raw? JSON.parse(raw): []; }
-    function saveRating(id,val){ const list = loadRatings(id); list.push(val); localStorage.setItem(keyFor(id,'ratings'), JSON.stringify(list)); }
-    function loadComments(id){ const raw = localStorage.getItem(keyFor(id,'comments')); return raw? JSON.parse(raw): []; }
-    function addComment(id,c){ const list = loadComments(id); list.push(c); localStorage.setItem(keyFor(id,'comments'), JSON.stringify(list)); }
-    function clearComments(id){ localStorage.removeItem(keyFor(id,'comments')); }
+    const starSVG = (filled)=>`<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_OUT}" fill="${filled? 'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"/></svg>`;
+    const avg = arr => arr.length? (arr.reduce((a,b)=>a+b,0)/arr.length):0;
+    const keyFor = (id, type) => `cardhub_${type}_${id}`;
+    const loadRatings = id => { const raw = localStorage.getItem(keyFor(id,'ratings')); return raw? JSON.parse(raw): [] };
+    const saveRating = (id,val) => { const list = loadRatings(id); list.push(val); localStorage.setItem(keyFor(id,'ratings'), JSON.stringify(list)); };
+    const loadComments = id => { const raw = localStorage.getItem(keyFor(id,'comments')); return raw? JSON.parse(raw): [] };
+    const addComment = (id,c) => { const list = loadComments(id); list.push(c); localStorage.setItem(keyFor(id,'comments'), JSON.stringify(list)); };
+    const clearComments = id => localStorage.removeItem(keyFor(id,'comments'));
 
     // ====== Preferiti (Wishlist) ======
-    function loadFavs(){ try{ return JSON.parse(localStorage.getItem('cardhub_favs')||'[]'); }catch{ return []; } }
-    function saveFavs(list){ localStorage.setItem('cardhub_favs', JSON.stringify(list)); }
-    function isFav(id){ return loadFavs().includes(id); }
-    function toggleFav(id){ const list = new Set(loadFavs()); list.has(id)? list.delete(id): list.add(id); saveFavs([...list]); }
+    const loadFavs = ()=>{ try{ return JSON.parse(localStorage.getItem('cardhub_favs')||'[]'); }catch{ return []; } };
+    const saveFavs = list => localStorage.setItem('cardhub_favs', JSON.stringify(list));
+    const isFav = id => loadFavs().includes(id);
+    const toggleFav = id => { const s=new Set(loadFavs()); s.has(id)? s.delete(id): s.add(id); saveFavs([...s]); updateFavCount(); };
+    function updateFavCount(){ const n = loadFavs().length; const el=$('#favCount'); if(el) el.textContent = n? `(${n})` : ''; }
 
-    // ====== Data Load ======
+    // ====== Data ======
     let CARDS = [];
     async function loadCards(){
       try{
         const res = await fetch('cards.json', { cache: 'no-store' });
         if(!res.ok) throw new Error('cards.json non trovato');
         CARDS = await res.json();
-      }catch(e){
-        console.error('[ERRORE CARICAMENTO CARTE]', e);
-        CARDS = [];
-      }finally{
-        applyFilters();
-      }
+      }catch(e){ console.error('[ERRORE CARICAMENTO CARTE]', e); CARDS = []; }
+      finally{ applyFilters(); }
     }
 
     // ====== Stars ======
@@ -391,27 +315,33 @@
       container.appendChild(label);
     }
 
+    // ====== Tabs (Sezione Preferite) ======
+    let CURRENT_TAB = 'all';
+    function setTab(tab){
+      CURRENT_TAB = tab;
+      $('#tabAll').setAttribute('aria-selected', tab==='all');
+      $('#tabFavs').setAttribute('aria-selected', tab==='favs');
+      $('#sectionTitle').textContent = tab==='favs' ? 'Le tue carte preferite' : 'Tutte le carte';
+      applyFilters();
+    }
+    $('#tabAll').addEventListener('click', ()=> setTab('all'));
+    $('#tabFavs').addEventListener('click', ()=> setTab('favs'));
+
     // ====== Filters ======
     function noFiltersActive(){
-      return (
-        !$('#q').value &&
-        !$('#fGame').value &&
-        !$('#fRarity').value &&
-        !$('#fRole').value &&
-        String($('#fRating').value) === "0"
-      );
+      return (!$('#q').value && !$('#fGame').value && !$('#fRarity').value && !$('#fRole').value && String($('#fRating').value) === '0');
     }
 
     let LAST_ITEMS = [];
     function applyFilters(){
       const q = $('#q').value.trim().toLowerCase();
-      const game = $('#fGame').value;
-      const rarity = $('#fRarity').value;
-      const role = $('#fRole').value;
-      const minR = +$('#fRating').value;
-      const sort = $('#fSort').value;
+      const game = $('#fGame').value; const rarity=$('#fRarity').value; const role=$('#fRole').value; const minR= +$('#fRating').value; const sort=$('#fSort').value;
 
       let items = CARDS.map(c=>({ ...c, rating: avg(loadRatings(c.id)) }));
+      if(CURRENT_TAB==='favs'){
+        const favSet = new Set(loadFavs());
+        items = items.filter(c=> favSet.has(c.id));
+      }
       if(q){ items = items.filter(c=> (c.name+" "+c.series+" "+c.text).toLowerCase().includes(q)); }
       if(game){ items = items.filter(c=> c.game===game); }
       if(rarity){ items = items.filter(c=> c.rarity===rarity); }
@@ -424,7 +354,7 @@
         return a.name.localeCompare(b.name);
       });
 
-      if (noFiltersActive()) {
+      if (CURRENT_TAB==='all' && noFiltersActive()) {
         items = items.slice().sort(() => Math.random() - 0.5).slice(0, 8);
       }
 
@@ -436,26 +366,27 @@
     const grid = $('#grid');
     function renderGrid(items){
       grid.innerHTML='';
-      if(!items.length){ grid.innerHTML = '<p style="color:var(--muted)">Nessuna carta trovata. Prova a cambiare i filtri.</p>'; return }
+      if(!items.length){
+        const msg = CURRENT_TAB==='favs' ? 'Nessuna carta nei preferiti. Tocca il cuore su una carta per aggiungerla.' : 'Nessuna carta trovata. Prova a cambiare i filtri.';
+        grid.innerHTML = `<p style="color:var(--muted)">${msg}</p>`; return;
+      }
       const tpl = document.getElementById('tplCard');
       const favSet = new Set(loadFavs());
       for(const c of items){
         const node = tpl.content.firstElementChild.cloneNode(true);
-
-        // classe rarità -> glow + badge colorato
         const rarSlug = (c.rarity || '').toLowerCase().replace(/\s+/g,'-');
         if (rarSlug) node.classList.add('r-' + rarSlug);
-
         node.querySelector('.badge').textContent = c.rarity;
         const img = node.querySelector('.thumb');
         img.src = c.img; img.loading='lazy'; img.alt = `Carta ${c.name}`;
+        img.addEventListener('click', ()=> openModal(c)); // NOVITÀ: apri anche cliccando sull'immagine
         node.querySelector('.name').textContent = c.name;
         node.querySelector('.meta').textContent = `${c.game} • ${c.series} • ${c.role || '—'}`;
         renderStars(node.querySelector('.stars'), c.rating||0, null);
         const tags = node.querySelector('.tags');
         (c.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s);});
 
-        // Preferiti (cuore a sinistra)
+        // Preferiti (cuore)
         const favBtn = node.querySelector('.fav');
         const favActive = favSet.has(c.id);
         favBtn.classList.toggle('active', favActive);
@@ -466,6 +397,11 @@
           const on = isFav(c.id);
           favBtn.classList.toggle('active', on);
           favBtn.setAttribute('aria-pressed', String(on));
+          if(CURRENT_TAB==='favs' && !on){ // se sei nella tab preferiti e rimuovi, togli subito dalla griglia
+            favBtn.closest('.card').remove();
+            LAST_ITEMS = LAST_ITEMS.filter(x=> x.id!==c.id);
+            if(!grid.children.length){ grid.innerHTML = '<p style="color:var(--muted)">Nessuna carta nei preferiti.</p>'; }
+          }
         });
 
         node.querySelector('.open').addEventListener('click', ()=> openModal(c));
@@ -483,42 +419,24 @@
     const commentsBox = document.getElementById('comments');
     const navPrev = document.querySelector('.navPrev');
     const navNext = document.querySelector('.navNext');
-    let current = null;
-    let currentIndex = -1;
+    let current = null; let currentIndex = -1;
 
-    function openByIndex(i){
-      if(!LAST_ITEMS.length) return;
-      if(i<0) i = LAST_ITEMS.length-1;
-      if(i>=LAST_ITEMS.length) i = 0;
-      openModal(LAST_ITEMS[i]);
-    }
+    function openByIndex(i){ if(!LAST_ITEMS.length) return; if(i<0) i = LAST_ITEMS.length-1; if(i>=LAST_ITEMS.length) i = 0; openModal(LAST_ITEMS[i]); }
 
     function openModal(card){
-      current = card;
-      currentIndex = LAST_ITEMS.findIndex(x=> x.id===card.id);
-      dlgImg.src = card.img;
-      dlgName.textContent = card.name;
-      dlgMeta.textContent = `${card.game} • ${card.series} • ${card.role || '—'}`;
+      current = card; currentIndex = LAST_ITEMS.findIndex(x=> x.id===card.id);
+      dlgImg.src = card.img; dlgName.textContent = card.name; dlgMeta.textContent = `${card.game} • ${card.series} • ${card.role || '—'}`;
       dlgTags.innerHTML=''; (card.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; dlgTags.appendChild(s)});
       const rating = avg(loadRatings(card.id));
       renderStars(dlgStars, rating, (v)=>{ saveRating(card.id, v); applyFilters(); openModal(card) });
       renderComments(card.id);
       document.body.classList.add('modal-open');
       dlg.showModal();
-
-      // Focus su commento e spostalo in vista (mobile)
-      setTimeout(()=>{
-        const msg = document.getElementById('message');
-        if(msg){ msg.focus({preventScroll:true}); msg.scrollIntoView({block:'center'}); }
-      }, 120);
     }
 
-    dlg.addEventListener('close', ()=>{
-      current=null; currentIndex=-1;
-      document.body.classList.remove('modal-open');
-    });
+    dlg.addEventListener('close', ()=>{ current=null; currentIndex=-1; document.body.classList.remove('modal-open'); });
 
-    // Pulsanti prev/next (desktop)
+    // Bottoni desktop
     navPrev.addEventListener('click', ()=> openByIndex(currentIndex-1));
     navNext.addEventListener('click', ()=> openByIndex(currentIndex+1));
 
@@ -533,22 +451,15 @@
     // Swipe su mobile per cambiare carta
     (function enableSwipe(){
       let startX=0, startY=0, t=0;
-      const el = dlg; // ascolta lo swipe sull'intero dialog
+      const el = dlg; // swipe sull'intero dialog
       el.addEventListener('touchstart', (e)=>{
         if(!e.touches || !e.touches[0]) return;
         startX = e.touches[0].clientX; startY = e.touches[0].clientY; t=Date.now();
       }, {passive:true});
       el.addEventListener('touchend', (e)=>{
-        const dt = Date.now()-t;
-        const touch = e.changedTouches && e.changedTouches[0];
-        if(!touch) return;
-        const dx = touch.clientX - startX;
-        const dy = touch.clientY - startY;
-        const absX = Math.abs(dx), absY = Math.abs(dy);
-        if(absX > 60 && absX > absY && dt < 600){
-          // swipe orizzontale
-          if(dx < 0) openByIndex(currentIndex+1); else openByIndex(currentIndex-1);
-        }
+        const dt = Date.now()-t; const touch = e.changedTouches && e.changedTouches[0]; if(!touch) return;
+        const dx = touch.clientX - startX; const dy = touch.clientY - startY; const absX = Math.abs(dx), absY = Math.abs(dy);
+        if(absX > 60 && absX > absY && dt < 600){ if(dx < 0) openByIndex(currentIndex+1); else openByIndex(currentIndex-1); }
       }, {passive:true});
     })();
 
@@ -565,8 +476,7 @@
     }
 
     document.getElementById('saveC').addEventListener('click', (e)=>{
-      e.preventDefault();
-      if(!current) return;
+      e.preventDefault(); if(!current) return;
       const author = document.getElementById('author').value.trim() || 'Anonimo';
       const text = document.getElementById('message').value.trim();
       const rating = parseInt(document.getElementById('ratingSel').value,10);
@@ -574,29 +484,20 @@
       addComment(current.id, {author, text, rating, ts: Date.now()});
       saveRating(current.id, rating);
       document.getElementById('message').value='';
-      renderComments(current.id);
-      applyFilters();
+      renderComments(current.id); applyFilters();
     });
 
     document.getElementById('clearC').addEventListener('click', ()=>{
-      if(!current) return;
-      if(confirm('Sicuro di voler cancellare tutti i commenti per questa carta?')){
-        clearComments(current.id);
-        renderComments(current.id);
-      }
+      if(!current) return; if(confirm('Sicuro di voler cancellare tutti i commenti per questa carta?')){ clearComments(current.id); renderComments(current.id); }
     });
 
     // ====== Events ======
     ['q','fGame','fRarity','fRole','fSort'].forEach(id=> document.getElementById(id).addEventListener('input', applyFilters));
-    document.getElementById('fRating').addEventListener('input', ()=>{
-      document.getElementById('fRatingVal').textContent=document.getElementById('fRating').value;
-      applyFilters();
-    });
-
-    // Chiudi modale (pulsante X)
+    document.getElementById('fRating').addEventListener('input', ()=>{ document.getElementById('fRatingVal').textContent=document.getElementById('fRating').value; applyFilters(); });
     document.querySelector('.close').addEventListener('click', ()=> dlg.close());
 
     // ====== Init ======
+    updateFavCount();
     loadCards();
   </script>
 </body>
