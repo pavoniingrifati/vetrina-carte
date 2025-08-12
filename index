@@ -637,12 +637,13 @@ dlg.addEventListener('close', ()=>{
 
   <!-- ===== Firebase: voti & commenti condivisi ===== -->
   <script type="module" id="firebase-setup">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import {
-      getFirestore, collection, doc, getDocs, addDoc, setDoc, deleteDoc,
-      serverTimestamp, onSnapshot, query, orderBy
-    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, collection, doc, getDocs, addDoc, setDoc, deleteDoc,
+  serverTimestamp, onSnapshot, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 
     const firebaseConfig = {
       apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
@@ -667,15 +668,16 @@ dlg.addEventListener('close', ()=>{
 window._setMyRating = async function(cardId, value){
   const uid = auth.currentUser?.uid;
   if(!uid){ console.warn('Anon auth non attiva'); return; }
-  // forza INT 1..5 per rispettare le Rules
+  // forza INT 1..5 (così rispetta le Rules)
   const v = Math.max(1, Math.min(5, Math.round(Number(value) || 0)));
   await setDoc(
     doc(db, 'cards', cardId, 'ratings', uid),
     { value: v, updatedAt: serverTimestamp() },
     { merge: true }
   );
-  console.log('[rating saved remote]', cardId, v, 'uid=', uid);
+  console.log('[rating saved remote]', cardId, v);
 };
+
 
       };
       window._fetchComments = async function(cardId){
