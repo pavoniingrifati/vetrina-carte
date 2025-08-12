@@ -634,14 +634,12 @@
   </script>
 
   <!-- ===== Firebase: voti & commenti condivisi ===== -->
-  <script type="module" id="firebase-setup">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import {
-      getFirestore, collection, doc, getDocs, addDoc, setDoc, deleteDoc,
-      serverTimestamp, onSnapshot, query, orderBy
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
+  <!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script id="firebase-setup">
+  (async ()=>{
     const firebaseConfig = {
       apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
       authDomain: "fantaball-9e19c.firebaseapp.com",
@@ -652,80 +650,89 @@
       measurementId: "G-C8Q8K5B52C"
     };
 
-    (async () => {
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-      await signInAnonymously(auth);
-      console.log('[firebase] loaded & signed in', auth.currentUser?.uid);
+    // Inizializza + login anonimo
+    firebase.initializeApp(firebaseConfig);
+    await firebase.auth().signInAnonymously();
 
-      window._fetchRatings = async function(cardId){
-        const snap = await getDocs(collection(db, 'cards', cardId, 'ratings'));
-        return snap.docs.map(d => d.data().value);
-      };
-      window._setMyRating = async function(cardId, value){
-        const uid = auth.currentUser?.uid;
-        if(!uid){ console.warn('Anon auth non attiva'); return; }
-        const v = Math.max(1, Math.min(5, Math.round(Number(value) || 0))); // forza INT 1..5
-        await setDoc(
-          doc(db, 'cards', cardId, 'ratings', uid),
-          { value: v, updatedAt: serverTimestamp() },
-          { merge: true }
-        );
-        console.log('[rating saved remote]', cardId, v, 'uid=', uid);
-      };
-      window._fetchComments = async function(cardId){
-        const qy = query(collection(db, 'cards', cardId, 'comments'), orderBy('createdAt','desc'));
-        const snap = await getDocs(qy);
-        return snap.docs.map(d => {
-          const x = d.data();
-          return { id:d.id, author:x.author, text:x.text, ts:x.createdAt?.toMillis?.() || Date.now(), uid:x.uid };
-        });
-      };
-      window._addCommentRemote = async function(cardId, {author, text}){
-        const uid = auth.currentUser?.uid;
-        await addDoc(collection(db, 'cards', cardId, 'comments'), { author, text, uid, createdAt: serverTimestamp() });
-      };
-      window._deleteMyComments = async function(cardId){
-        const uid = auth.currentUser?.uid;
-        const snap = await getDocs(collection(db, 'cards', cardId, 'comments'));
-        const jobs = snap.docs.filter(d=> d.data().uid===uid).map(d=> deleteDoc(d.ref));
-        await Promise.all(jobs);
-      };
-      window._subscribeModalRating = function(cardId, onAvg){
-        const unsub = onSnapshot(collection(db, 'cards', cardId, 'ratings'), (snap)=>{
+    const db = firebase.firestore();
+
+    // ====== BRIDGE FUNZIONI GLOBALI (non tocchiamo il resto del sito) ======
+    window._fetchRatings = async function(cardId){
+      const snap = await db.collection('cards').doc(cardId).collection('ratings').get();
+      return snap.docs.map(d => d.data().value);
+    };
+
+    window._setMyRating = async function(cardId, value){
+      const uid = firebase.auth().currentUser?.uid;
+      if(!uid) return;
+      const v = Math.max(1, Math.min(5, Math.round(Number(value) || 0))); // INT 1..5
+      await db.collection('cards').doc(cardId).collection('ratings').doc(uid).set({
+        value: v,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge:true });
+    };
+
+    window._fetchComments = async function(cardId){
+      const snap = await db.collection('cards').doc(cardId).collection('comments')
+        .orderBy('createdAt','desc').get();
+      return snap.docs.map(d => {
+        const x = d.data();
+        return { id:d.id, author:x.author, text:x.text, ts:x.createdAt?.toMillis?.() || Date.now(), uid:x.uid };
+      });
+    };
+
+    window._addCommentRemote = async function(cardId, {author, text}){
+      const uid = firebase.auth().currentUser?.uid;
+      await db.collection('cards').doc(cardId).collection('comments').add({
+        author, text, uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    };
+
+    window._deleteMyComments = async function(cardId){
+      const uid = firebase.auth().currentUser?.uid;
+      const snap = await db.collection('cards').doc(cardId).collection('comments').get();
+      const batch = db.batch();
+      snap.docs.filter(d=> d.data().uid===uid).forEach(d=> batch.delete(d.ref));
+      await batch.commit();
+    };
+
+    window._subscribeModalRating = function(cardId, onAvg){
+      return db.collection('cards').doc(cardId).collection('ratings')
+        .onSnapshot(snap=>{
           const vals = snap.docs.map(d=> d.data().value);
           const avg = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
           onAvg(avg);
         });
-        return unsub;
-      };
-      // NEW: realtime commenti
-      window._subscribeComments = function(cardId, onList){
-        const qy = query(collection(db, 'cards', cardId, 'comments'), orderBy('createdAt','desc'));
-        return onSnapshot(qy, (snap)=>{
+    };
+
+    window._subscribeComments = function(cardId, onList){
+      return db.collection('cards').doc(cardId).collection('comments')
+        .orderBy('createdAt','desc')
+        .onSnapshot(snap=>{
           const list = snap.docs.map(d => {
             const x = d.data();
             return { id:d.id, author:x.author, text:x.text, ts:x.createdAt?.toMillis?.() || Date.now(), uid:x.uid };
           });
           onList(list);
         });
-      };
-      // Fallback una tantum (se serve)
-      window._loadCommentsRemoteIntoUI = async function(card){
-        const list = await window._fetchComments(card.id);
-        const box = document.getElementById('comments');
-        box.innerHTML = list.length
-          ? list.map(c => `
-              <div class="comment">
-                <div class="author">${(c.author||'Anonimo')}</div>
-                <div class="text">${(c.text||'')}</div>
-                <div class="meta" style="margin-top:6px">${new Date(c.ts).toLocaleString()}</div>
-              </div>
-            `).join('')
-          : '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>';
-      };
-    })();
-  </script>
+    };
+
+    // Fallback una tantum se serve ancora
+    window._loadCommentsRemoteIntoUI = async function(card){
+      const list = await window._fetchComments(card.id);
+      const box = document.getElementById('comments');
+      box.innerHTML = list.length
+        ? list.map(c => `
+            <div class="comment">
+              <div class="author">${(c.author||'Anonimo')}</div>
+              <div class="text">${(c.text||'')}</div>
+              <div class="meta" style="margin-top:6px">${new Date(c.ts).toLocaleString()}</div>
+            </div>
+          `).join('')
+        : '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>';
+    };
+  })();
+</script>
+
 </body>
 </html>
