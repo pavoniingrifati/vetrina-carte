@@ -531,13 +531,37 @@
       renderStars(dlgStars, rating, async (v)=>{ saveRating(card.id, v); if (window._setMyRating) { try{ await window._setMyRating(card.id, v); }catch(e){ console.error(e); } } applyFilters(); openModal(card) });
       if (window._modalUnsub) { window._modalUnsub(); window._modalUnsub = null; }
       if (window._subscribeModalRating) { window._modalUnsub = window._subscribeModalRating(card.id, (avgVal)=>{ renderStars(dlgStars, avgVal, async (v)=>{ saveRating(card.id, v); if (window._setMyRating) { try{ await window._setMyRating(card.id, v); }catch(e){} } applyFilters(); openModal(card); }); }); }
-      renderComments(card.id);
-      if (window._loadCommentsRemoteIntoUI) { window._loadCommentsRemoteIntoUI(card); }
+renderComments(card.id);
+
+// realtime commenti (sostituisce _loadCommentsRemoteIntoUI)
+if (window._commentsUnsub) { window._commentsUnsub(); window._commentsUnsub = null; }
+if (window._subscribeComments) {
+  window._commentsUnsub = window._subscribeComments(card.id, (list)=>{
+    const box = document.getElementById('comments');
+    box.innerHTML = list.length
+      ? list.map(c => `
+          <div class="comment">
+            <div class="author">${esc(c.author||'Anonimo')}</div>
+            <div class="text">${esc(c.text||'')}</div>
+            <div class="meta" style="margin-top:6px">${new Date(c.ts).toLocaleString()}</div>
+          </div>
+        `).join('')
+      : '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>';
+  });
+} else if (window._loadCommentsRemoteIntoUI) {
+  // fallback una tantum se il realtime non è disponibile
+  window._loadCommentsRemoteIntoUI(card);
+}
+
       document.body.classList.add('modal-open');
       dlg.showModal();
     }
 
-    dlg.addEventListener('close', ()=>{ current=null; currentIndex=-1; document.body.classList.remove('modal-open'); if (window._modalUnsub) { window._modalUnsub(); window._modalUnsub = null; } });
+dlg.addEventListener('close', ()=>{ 
+  current=null; currentIndex=-1; document.body.classList.remove('modal-open'); 
+  if (window._modalUnsub) { window._modalUnsub(); window._modalUnsub = null; }
+  if (window._commentsUnsub) { window._commentsUnsub(); window._commentsUnsub = null; }
+});
 
     // Bottoni desktop
     navPrev.addEventListener('click', ()=> openByIndex(currentIndex-1));
