@@ -30,7 +30,6 @@
     el.appendChild(div);
   };
 
-  // 🔧 Usa la tua config (è quella che mi avevi dato)
   const firebaseConfig = {
     apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
     authDomain: "fantaball-9e19c.firebaseapp.com",
@@ -46,46 +45,33 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // 1) Login anonimo
     await signInAnonymously(auth);
     log("Auth anonima: <b class='ok'>OK</b> — uid = <code>"+(auth.currentUser?.uid||"")+"</code>");
 
-    // 2) Scrittura di prova
     const uid = auth.currentUser?.uid || "anon";
     await setDoc(doc(db, "cards", "__PING__", "ratings", uid), {
-      value: 5,
-      updatedAt: serverTimestamp()
+      value: 5, updatedAt: serverTimestamp()
     }, { merge:true });
     log("Scrittura Firestore: <b class='ok'>OK</b> — path <code>cards/__PING__/ratings/"+uid+"</code>");
 
-    // 3) Lettura di prova
     const snap = await getDocs(collection(db, "cards", "__PING__", "ratings"));
     log("Lettura Firestore: <b class='ok'>OK</b> — docs letti: <code>"+snap.size+"</code>");
 
-    // 4) Realtime prova (commenti)
     const qy = query(collection(db, "cards", "__PING__", "comments"), orderBy("createdAt","desc"));
-    const unsub = onSnapshot(qy, (s)=>{
-      log("Realtime commenti: <b class='ok'>OK</b> — count: <code>"+s.size+"</code>");
-    });
-
-    // 5) Aggiungo un commento di test
+    onSnapshot(qy, (s)=>{ log("Realtime commenti: <b class='ok'>OK</b> — count: <code>"+s.size+"</code>"); });
     await addDoc(collection(db, "cards", "__PING__", "comments"), {
-      author: "Test",
-      text: "Ciao da firebase-test.html 🎉",
-      uid,
-      createdAt: serverTimestamp()
+      author: "Test", text: "Ciao da firebase-test.html 🎉", uid, createdAt: serverTimestamp()
     });
-    log("Create comment: <b class='ok'>OK</b> — controlla che il contatore realtime aumenti.");
+    log("Create comment: <b class='ok'>OK</b> — il contatore realtime aumenta.");
 
-    log("<hr/><span class='ok'>TUTTO OK</span>: la tua Firebase funziona da questo dominio. Se nel sito principale non vedi i dati, è solo un problema di integrazione JS/percorsi.");
-
+    log("<hr/><span class='ok'>TUTTO OK</span>: Firebase funziona da questo dominio.");
   }catch(e){
     const msg = (e && (e.message || e.code || String(e))) || "Errore sconosciuto";
     log("ERRORE: <b class='err'>"+msg+"</b>", "err");
     log("Suggerimenti: <ul>" +
       "<li>Authentication → Sign-in method → abilita Anonymous</li>" +
-      "<li>Google Cloud → API Key → referrer consenti <code>https://TUO-USERNAME.github.io/*</code></li>" +
-      "<li>Rules Firestore pubblicate (quelle con int/float)</li>" +
+      "<li>Google Cloud → API key: referrer <code>https://pavoniingrifati.github.io/*</code></li>" +
+      "<li>Firestore Rules pubblicate (accetta int/float)</li>" +
       "<li>APIs abilitate: Cloud Firestore, Identity Toolkit, Firebase Installations</li>" +
       "</ul>");
   }
