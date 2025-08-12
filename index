@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
     :root{
       --bg: #0b0f19;
@@ -33,7 +34,6 @@
     h1{font-size: clamp(20px, 3.6vw, 34px); margin:0}
     .subtitle{color:var(--muted); margin-top:6px}
 
-    /* Tabs All / Favorites */
     .tabs{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap }
     .tab-btn{ border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text); padding:8px 12px; border-radius:999px; cursor:pointer }
     .tab-btn[aria-selected="true"]{ background:rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15) }
@@ -50,18 +50,15 @@
     .range{display:flex; gap:10px; align-items:center}
     .range input{width:100%}
 
-    /* Grid */
     .grid{display:grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap:22px; margin:22px 0 88px}
     @media (min-width:600px){.grid{grid-template-columns: repeat(2, minmax(0,1fr)); gap:24px}}
     @media (min-width:900px){.grid{grid-template-columns: repeat(3, minmax(0,1fr)); gap:26px}}
     @media (min-width:1200px){.grid{grid-template-columns: repeat(4, minmax(0,1fr)); gap:26px}}
 
-    /* Cards */
     .card{ background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card); border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); overflow:hidden; position:relative; box-shadow: 0 6px 18px rgba(0,0,0,.35); transition: transform .16s ease, box-shadow .25s ease, border-color .25s ease, filter .25s ease; --glow: #6ee7ff; opacity:0; transform: translateY(6px); animation: cardIn .35s ease forwards }
     @keyframes cardIn{to{opacity:1; transform: translateY(0)}}
     @media (prefers-reduced-motion: reduce){ .card{ animation:none; opacity:1; transform:none } }
 
-    /* rarity glow */
     .card.r-comune      { --glow:#9aa3b2 }
     .card.r-non-comune  { --glow:#34d399 }
     .card.r-rara        { --glow:#60a5fa }
@@ -89,7 +86,6 @@
     .card.r-leggendaria .badge {background: rgba(255, 77, 148, 0.9); color: #fff }
     .card.r-oggetto .badge, .card.r-oggetti .badge { background: rgba(16,185,129,.85) }
 
-    /* Cornice animata per Leggendarie */
     .card.r-leggendaria { position: relative; z-index: 0 }
     .card.r-leggendaria::before {
       content: ""; position: absolute; inset: 0; padding: 2px; border-radius: var(--radius);
@@ -105,7 +101,6 @@
     .tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
     .tag{ padding: 3px 8px; font-size: 11px; line-height: 1.2; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); white-space: nowrap; margin-top: 4px }
 
-    /* Wishlist */
     .fav{ position:absolute; top:10px; left:10px; z-index:2; display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:999px; background: rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18); cursor:pointer; user-select:none; transition: transform .15s ease, background .2s ease, box-shadow .2s ease }
     .fav:active{ transform: scale(.96) }
     .fav svg{ width:24px; height:24px }
@@ -115,7 +110,6 @@
     .fav.active .outline{ display: none }
     .fav.active .filled{ display: block; color: var(--fav) }
 
-    /* Modal */
     dialog{ inset: 0; margin: 0; padding: 0; border: none; width: 100vw; max-width: none; height: 100svh; height: 100dvh; background: transparent }
     dialog::backdrop{ background: rgba(0,0,0,.65) }
     .modal{ display: grid; grid-template-columns: 1fr; width: 100%; height: 100%; background: var(--panel) }
@@ -166,6 +160,7 @@
     @media(max-width:900px){ .navBtn{ display:none } }
   </style>
 </head>
+
 <body>
   <header>
     <div class="wrap">
@@ -228,7 +223,6 @@
     </div>
   </footer>
 
-  <!-- Modal Dettaglio -->
   <dialog id="dlg" aria-labelledby="dlgName" aria-describedby="dlgMeta">
     <form method="dialog" class="modal">
       <button class="close" type="button" aria-label="Chiudi">✕</button>
@@ -261,7 +255,6 @@
     </form>
   </dialog>
 
-  <!-- Template Card -->
   <template id="tplCard">
     <article class="card" role="article">
       <button class="fav" type="button" title="Aggiungi ai preferiti" aria-label="Aggiungi ai preferiti" aria-pressed="false">
@@ -280,14 +273,13 @@
     </article>
   </template>
 
-  <!-- ====== App JS (UI + logica locale) ====== -->
   <script>
-    // ====== Util ======
     const $ = sel => document.querySelector(sel);
     const esc = (s='') => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
     const STAR_OUT = 'M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.401 8.169L12 18.896l-7.335 3.87 1.401-8.169L.132 9.21l8.2-1.192z';
     const starSVG = (filled)=>`<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_OUT}" fill="${filled? 'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"/></svg>`;
     const avg = arr => arr.length? (arr.reduce((a,b)=>a+b,0)/arr.length):0;
+
     const keyFor = (id, type) => `cardhub_${type}_${id}`;
     const loadRatings = id => { const raw = localStorage.getItem(keyFor(id,'ratings')); return raw? JSON.parse(raw): [] };
     const saveRating = (id,val) => { const list = loadRatings(id); list.push(val); localStorage.setItem(keyFor(id,'ratings'), JSON.stringify(list)); };
@@ -295,14 +287,12 @@
     const addCommentLocal = (id,c) => { const list = loadCommentsLocal(id); list.push(c); localStorage.setItem(keyFor(id,'comments'), JSON.stringify(list)); };
     const clearCommentsLocal = id => localStorage.removeItem(keyFor(id,'comments'));
 
-    // ====== Preferiti ======
     const loadFavs = ()=>{ try{ return JSON.parse(localStorage.getItem('cardhub_favs')||'[]'); }catch{ return []; } };
     const saveFavs = list => localStorage.setItem('cardhub_favs', JSON.stringify(list));
     const isFav = id => loadFavs().includes(id);
     const toggleFav = id => { const s=new Set(loadFavs()); s.has(id)? s.delete(id): s.add(id); saveFavs([...s]); updateFavCount(); };
     function updateFavCount(){ const n = loadFavs().length; const el=$('#favCount'); if(el) el.textContent = n? `(${n})` : ''; }
 
-    // ====== Data ======
     let CARDS = [];
     async function loadCards(){
       try{
@@ -313,7 +303,6 @@
       finally{ applyFilters(); }
     }
 
-    // ====== Stars ======
     function renderStars(container, value, onRate){
       container.innerHTML='';
       const full = Math.round(value);
@@ -328,7 +317,6 @@
       container.appendChild(label);
     }
 
-    // ====== Tabs ======
     let CURRENT_TAB = 'all';
     function setTab(tab){
       CURRENT_TAB = tab;
@@ -340,7 +328,6 @@
     $('#tabAll').addEventListener('click', ()=> setTab('all'));
     $('#tabFavs').addEventListener('click', ()=> setTab('favs'));
 
-    // ====== Helpers Oggetti ======
     function getQty(c){
       if (typeof c === 'object' && c){
         if (Number.isFinite(c.quantity)) return c.quantity;
@@ -395,7 +382,6 @@
       renderGrid(items);
     }
 
-    // ====== Grid ======
     const grid = $('#grid');
     function renderGrid(items){
       clearGridSubs();
@@ -435,7 +421,6 @@
         if (qty!=null){ const s=document.createElement('span'); s.className='tag'; s.textContent=`Quantità: ${qty}`; tags.appendChild(s); }
         (c.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s);});
 
-        // Preferiti
         const favBtn = node.querySelector('.fav');
         const favActive = favSet.has(c.id);
         favBtn.classList.toggle('active', favActive);
@@ -458,7 +443,6 @@
       }
     }
 
-    // ====== Modal + Navigazione ======
     const dlg = document.getElementById('dlg');
     const dlgImg = document.getElementById('dlgImg');
     const dlgName = document.getElementById('dlgName');
@@ -595,13 +579,12 @@
     });
   </script>
 
-  <!-- ===== Firebase: voti & commenti condivisi ===== -->
-  <!-- Carica SEMPRE PRIMA i moduli compat -->
+  <!-- Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-  <!-- Setup Firebase + bridge funzioni -->
+  <!-- Setup Firebase + bridge -->
   <script id="firebase-setup">
     (async ()=>{
       const firebaseConfig = {
@@ -614,17 +597,13 @@
         measurementId: "G-C8Q8K5B52C"
       };
 
-      // Inizializza + login anonimo
       firebase.initializeApp(firebaseConfig);
       try { await firebase.auth().signInAnonymously(); } catch(e){ console.error('[firebase auth]', e); }
 
       const db = firebase.firestore();
-      // Fallback realtime su reti "difficili" (opzionale ma utile)
       try { db.settings({ experimentalForceLongPolling: true }); } catch(e) {}
-      // Log verbose (se serve debug):
       // try { firebase.firestore.setLogLevel('debug'); } catch(e) {}
 
-      // ====== BRIDGE FUNZIONI GLOBALI ======
       window._fetchRatings = async function(cardId){
         try{
           const snap = await db.collection('cards').doc(cardId).collection('ratings').get();
@@ -647,7 +626,7 @@
       window._fetchComments = async function(cardId){
         try{
           const snap = await db.collection('cards').doc(cardId).collection('comments').orderBy('createdAt','desc').get();
-          return snap.docs.map(d => { const x = d.data(); return { id:d.id, author:x.author, text:x.text, ts:x.createdAt?.toMillis?.() || Date.now(), uid:x.uid }; });
+        return snap.docs.map(d => { const x = d.data(); return { id:d.id, author:x.author, text:x.text, ts:x.createdAt?.toMillis?.() || Date.now(), uid:x.uid }; });
         }catch(e){ console.error('[fetchComments]', e); return []; }
       };
 
@@ -708,7 +687,6 @@
           : '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>';
       };
 
-      // 🔔 Notifica che Firebase è pronto
       window.dispatchEvent(new CustomEvent('firebase-ready'));
     })();
   </script>
