@@ -641,9 +641,16 @@
         return snap.docs.map(d => d.data().value);
       };
       window._setMyRating = async function(cardId, value){
-        const uid = auth.currentUser?.uid;
-        if(!uid) return;
-        await setDoc(doc(db, 'cards', cardId, 'ratings', uid), { value, updatedAt: serverTimestamp() }, { merge:true });
+  const uid = auth.currentUser?.uid;
+  if(!uid){ console.warn('Anon auth non attiva'); return; }
+  const v = Math.max(1, Math.min(5, Math.round(Number(value) || 0))); // forza INT 1..5
+  await setDoc(
+    doc(db, 'cards', cardId, 'ratings', uid),
+    { value: v, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
+};
+
       };
       window._fetchComments = async function(cardId){
         const qy = query(collection(db, 'cards', cardId, 'comments'), orderBy('createdAt','desc'));
