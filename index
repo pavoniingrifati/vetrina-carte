@@ -652,7 +652,7 @@
 
     // Inizializza + login anonimo
     firebase.initializeApp(firebaseConfig);
-    await firebase.auth().signInAnonymously();
+    try { await firebase.auth().signInAnonymously(); } catch(e){ console.error('[firebase auth]', e); }
 
     const db = firebase.firestore();
 
@@ -709,10 +709,7 @@
       return db.collection('cards').doc(cardId).collection('comments')
         .orderBy('createdAt','desc')
         .onSnapshot(snap=>{
-          const list = snap.docs.map(d => {
-            const x = d.data();
-            return { id:d.id, author:x.author, text:x.text, ts:x.createdAt?.toMillis?.() || Date.now(), uid:x.uid };
-          });
+          const list = snap.docs.map(d => { const x = d.data(); return { id:d.id, author:x.author, text:x.text, ts:x.createdAt?.toMillis?.() || Date.now(), uid:x.uid }; });
           onList(list);
         });
     };
@@ -733,6 +730,5 @@
     };
   })();
 </script>
-
 </body>
 </html>
