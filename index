@@ -10,6 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+
+
     :root{
       --bg: #0b0f19;
       --panel: #0f1526; 
@@ -475,7 +477,7 @@
         node.querySelector('.badge').textContent = c.rarity;
         const img = node.querySelector('.thumb');
         img.src = c.img; img.loading='lazy'; img.alt = `Carta ${c.name}`;
-        img.addEventListener('click', ()=> openModal(c)); // NOVITÀ: apri anche cliccando sull'immagine
+        img.addEventListener('click', ()=> openModal(c)); // clic immagine apre modale
         node.querySelector('.name').textContent = c.name;
         node.querySelector('.meta').textContent = `${c.game} • ${c.series} • ${c.role || '—'}`;
         renderStars(node.querySelector('.stars'), c.rating||0, null);
@@ -531,37 +533,32 @@
       renderStars(dlgStars, rating, async (v)=>{ saveRating(card.id, v); if (window._setMyRating) { try{ await window._setMyRating(card.id, v); }catch(e){ console.error(e); } } applyFilters(); openModal(card) });
       if (window._modalUnsub) { window._modalUnsub(); window._modalUnsub = null; }
       if (window._subscribeModalRating) { window._modalUnsub = window._subscribeModalRating(card.id, (avgVal)=>{ renderStars(dlgStars, avgVal, async (v)=>{ saveRating(card.id, v); if (window._setMyRating) { try{ await window._setMyRating(card.id, v); }catch(e){} } applyFilters(); openModal(card); }); }); }
-renderComments(card.id);
 
-// realtime commenti (sostituisce _loadCommentsRemoteIntoUI)
-if (window._commentsUnsub) { window._commentsUnsub(); window._commentsUnsub = null; }
-if (window._subscribeComments) {
-  window._commentsUnsub = window._subscribeComments(card.id, (list)=>{
-    const box = document.getElementById('comments');
-    box.innerHTML = list.length
-      ? list.map(c => `
-          <div class="comment">
-            <div class="author">${esc(c.author||'Anonimo')}</div>
-            <div class="text">${esc(c.text||'')}</div>
-            <div class="meta" style="margin-top:6px">${new Date(c.ts).toLocaleString()}</div>
-          </div>
-        `).join('')
-      : '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>';
-  });
-} else if (window._loadCommentsRemoteIntoUI) {
-  // fallback una tantum se il realtime non è disponibile
-  window._loadCommentsRemoteIntoUI(card);
-}
+      // Commenti: locale + remoto realtime
+      renderComments(card.id);
+      if (window._commentsUnsub) { window._commentsUnsub(); window._commentsUnsub = null; }
+      if (window._subscribeComments) {
+        window._commentsUnsub = window._subscribeComments(card.id, (list)=>{
+          const box = document.getElementById('comments');
+          box.innerHTML = list.length
+            ? list.map(c => `
+                <div class="comment">
+                  <div class="author">${esc(c.author||'Anonimo')}</div>
+                  <div class="text">${esc(c.text||'')}</div>
+                  <div class="meta" style="margin-top:6px">${new Date(c.ts).toLocaleString()}</div>
+                </div>
+              `).join('')
+            : '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>';
+        });
+      } else if (window._loadCommentsRemoteIntoUI) {
+        window._loadCommentsRemoteIntoUI(card);
+      }
 
       document.body.classList.add('modal-open');
       dlg.showModal();
     }
 
-dlg.addEventListener('close', ()=>{ 
-  current=null; currentIndex=-1; document.body.classList.remove('modal-open'); 
-  if (window._modalUnsub) { window._modalUnsub(); window._modalUnsub = null; }
-  if (window._commentsUnsub) { window._commentsUnsub(); window._commentsUnsub = null; }
-});
+    dlg.addEventListener('close', ()=>{ current=null; currentIndex=-1; document.body.classList.remove('modal-open'); if (window._modalUnsub) { window._modalUnsub(); window._modalUnsub = null; } if (window._commentsUnsub) { window._commentsUnsub(); window._commentsUnsub = null; } });
 
     // Bottoni desktop
     navPrev.addEventListener('click', ()=> openByIndex(currentIndex-1));
@@ -597,7 +594,8 @@ dlg.addEventListener('close', ()=>{
       for(const c of list.slice().reverse()){
         const div = document.createElement('div');
         div.className='comment';
-        div.innerHTML = `<div class="author">${esc(c.author||'Anonimo')}</div><div class="text">${esc(c.text||'')}</div><div class="meta" style="margin-top:6px">Voto: ${'★'.repeat(c.rating)}${'☆'.repeat(5-c.rating)} • ${new Date(c.ts).toLocaleString()}</div>`;
+        // rimosso "Voto: ..." (non esiste più rating nel commento)
+        div.innerHTML = `<div class="author">${esc(c.author||'Anonimo')}</div><div class="text">${esc(c.text||'')}</div><div class="meta" style="margin-top:6px">${new Date(c.ts).toLocaleString()}</div>`;
         commentsBox.appendChild(div);
       }
     }
@@ -637,13 +635,12 @@ dlg.addEventListener('close', ()=>{
 
   <!-- ===== Firebase: voti & commenti condivisi ===== -->
   <script type="module" id="firebase-setup">
-   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  getFirestore, collection, doc, getDocs, addDoc, setDoc, deleteDoc,
-  serverTimestamp, onSnapshot, query, orderBy
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore, collection, doc, getDocs, addDoc, setDoc, deleteDoc,
+      serverTimestamp, onSnapshot, query, orderBy
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
@@ -660,25 +657,22 @@ import {
       const auth = getAuth(app);
       const db = getFirestore(app);
       await signInAnonymously(auth);
+      console.log('[firebase] loaded & signed in', auth.currentUser?.uid);
 
       window._fetchRatings = async function(cardId){
         const snap = await getDocs(collection(db, 'cards', cardId, 'ratings'));
         return snap.docs.map(d => d.data().value);
       };
-window._setMyRating = async function(cardId, value){
-  const uid = auth.currentUser?.uid;
-  if(!uid){ console.warn('Anon auth non attiva'); return; }
-  // forza INT 1..5 (così rispetta le Rules)
-  const v = Math.max(1, Math.min(5, Math.round(Number(value) || 0)));
-  await setDoc(
-    doc(db, 'cards', cardId, 'ratings', uid),
-    { value: v, updatedAt: serverTimestamp() },
-    { merge: true }
-  );
-  console.log('[rating saved remote]', cardId, v);
-};
-
-
+      window._setMyRating = async function(cardId, value){
+        const uid = auth.currentUser?.uid;
+        if(!uid){ console.warn('Anon auth non attiva'); return; }
+        const v = Math.max(1, Math.min(5, Math.round(Number(value) || 0))); // forza INT 1..5
+        await setDoc(
+          doc(db, 'cards', cardId, 'ratings', uid),
+          { value: v, updatedAt: serverTimestamp() },
+          { merge: true }
+        );
+        console.log('[rating saved remote]', cardId, v, 'uid=', uid);
       };
       window._fetchComments = async function(cardId){
         const qy = query(collection(db, 'cards', cardId, 'comments'), orderBy('createdAt','desc'));
@@ -706,6 +700,18 @@ window._setMyRating = async function(cardId, value){
         });
         return unsub;
       };
+      // NEW: realtime commenti
+      window._subscribeComments = function(cardId, onList){
+        const qy = query(collection(db, 'cards', cardId, 'comments'), orderBy('createdAt','desc'));
+        return onSnapshot(qy, (snap)=>{
+          const list = snap.docs.map(d => {
+            const x = d.data();
+            return { id:d.id, author:x.author, text:x.text, ts:x.createdAt?.toMillis?.() || Date.now(), uid:x.uid };
+          });
+          onList(list);
+        });
+      };
+      // Fallback una tantum (se serve)
       window._loadCommentsRemoteIntoUI = async function(card){
         const list = await window._fetchComments(card.id);
         const box = document.getElementById('comments');
