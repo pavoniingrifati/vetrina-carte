@@ -10,53 +10,40 @@
 </style>
 <div class="card"><h1>Firebase Connectivity Test (compat)</h1><div id="log" class="muted">Esecuzione test…</div></div>
 
-<!-- Compat SDK: registra i componenti in automatico -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-  const log = (m,c)=>{const el=document.getElementById('log');const d=document.createElement('div');if(c)d.className=c;d.innerHTML=m;el.appendChild(d);};
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
-    authDomain: "fantaball-9e19c.firebaseapp.com",
-    projectId: "fantaball-9e19c",
-    storageBucket: "fantaball-9e19c.appspot.com",
-    messagingSenderId: "683304379837",
-    appId: "1:683304379837:web:d2bbe7a814e2e40e075ed4",
-    measurementId: "G-C8Q8K5B52C"
-  };
+  const log=(m,c)=>{const el=document.getElementById('log');const d=document.createElement('div');if(c)d.className=c;d.innerHTML=m;el.appendChild(d);};
+  const firebaseConfig={apiKey:"AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",authDomain:"fantaball-9e19c.firebaseapp.com",projectId:"fantaball-9e19c",storageBucket:"fantaball-9e19c.appspot.com",messagingSenderId:"683304379837",appId:"1:683304379837:web:d2bbe7a814e2e40e075ed4",measurementId:"G-C8Q8K5B52C"};
 
   (async ()=>{
     try{
       firebase.initializeApp(firebaseConfig);
       await firebase.auth().signInAnonymously();
-      const uid = firebase.auth().currentUser?.uid || 'anon';
+      const uid=firebase.auth().currentUser?.uid||'anon';
       log("Auth anonima: <b class='ok'>OK</b> — uid=<code>"+uid+"</code>");
 
-      const db = firebase.firestore();
-      await db.collection('cards').doc('__PING__').collection('ratings').doc(uid).set({
-        value: 5, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-      log("Scrittura Firestore: <b class='ok'>OK</b> — <code>cards/__PING__/ratings/"+uid+"</code>");
+      const db=firebase.firestore();
+      const TEST_ID="PING_TEST";
 
-      const snap = await db.collection('cards').doc('__PING__').collection('ratings').get();
+      await db.collection('cards').doc(TEST_ID).collection('ratings').doc(uid).set({
+        value:5, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      },{merge:true});
+      log("Scrittura Firestore: <b class='ok'>OK</b> — <code>cards/"+TEST_ID+"/ratings/"+uid+"</code>");
+
+      const snap=await db.collection('cards').doc(TEST_ID).collection('ratings').get();
       log("Lettura Firestore: <b class='ok'>OK</b> — docs: <code>"+snap.size+"</code>");
 
-      db.collection('cards').doc('__PING__').collection('comments')
+      db.collection('cards').doc(TEST_ID).collection('comments')
         .orderBy('createdAt','desc')
         .onSnapshot(s=> log("Realtime commenti: <b class='ok'>OK</b> — count: <code>"+s.size+"</code>"));
-      await db.collection('cards').doc('__PING__').collection('comments').add({
+      await db.collection('cards').doc(TEST_ID).collection('comments').add({
         author:'Test', text:'Ciao 🎉', uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       log("<hr/><span class='ok'>TUTTO OK</span>: Firebase risponde da questo dominio.");
     }catch(e){
-      log("ERRORE: <b class='err'>"+(e.message||e.code||String(e))+"</b>", "err");
-      log("Suggerimenti: <ul>"+
-        "<li>Authentication → Sign-in method → abilita Anonymous</li>"+
-        "<li>API Key → HTTP referrers: <code>https://pavoniingrifati.github.io/*</code></li>"+
-        "<li>Abilita API: Firestore, Identity Toolkit, Firebase Installations</li>"+
-        "</ul>");
+      log("ERRORE: <b class='err'>"+(e.message||e.code||String(e))+"</b>","err");
     }
   })();
 </script>
