@@ -2,33 +2,20 @@
 <html lang="it">
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Firebase Connectivity Test</title>
+<title>Firebase Connectivity Test (compat)</title>
 <style>
   body{font:16px/1.4 system-ui,Arial; background:#0b0f19; color:#ecf0ff; padding:20px}
-  .card{background:#121a2e;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;max-width:800px}
-  .ok{color:#10b981}.err{color:#ff6b6b}.muted{color:#a7b0d3}
-  code{background:#0d1325; padding:2px 6px; border-radius:6px}
+  .card{background:#121a2e;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;max-width:820px}
+  .ok{color:#10b981}.err{color:#ff6b6b}.muted{color:#a7b0d3} code{background:#0d1325;padding:2px 6px;border-radius:6px}
 </style>
-<div class="card">
-  <h1>Firebase Connectivity Test</h1>
-  <div id="log" class="muted">Esecuzione test…</div>
-</div>
+<div class="card"><h1>Firebase Connectivity Test (compat)</h1><div id="log" class="muted">Esecuzione test…</div></div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js?v=2";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js?v=2";
-  import {
-    getFirestore, collection, doc, getDocs, addDoc, setDoc,
-    serverTimestamp, onSnapshot, query, orderBy
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js?v=2";
-
-  const log = (msg, cls="")=>{
-    const el=document.getElementById('log');
-    const div=document.createElement('div');
-    if(cls) div.className=cls;
-    div.innerHTML = msg;
-    el.appendChild(div);
-  };
+<!-- Compat SDK: registra i componenti in automatico -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+  const log = (m,c)=>{const el=document.getElementById('log');const d=document.createElement('div');if(c)d.className=c;d.innerHTML=m;el.appendChild(d);};
 
   const firebaseConfig = {
     apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
@@ -40,39 +27,36 @@
     measurementId: "G-C8Q8K5B52C"
   };
 
-  try{
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+  (async ()=>{
+    try{
+      firebase.initializeApp(firebaseConfig);
+      await firebase.auth().signInAnonymously();
+      const uid = firebase.auth().currentUser?.uid || 'anon';
+      log("Auth anonima: <b class='ok'>OK</b> — uid=<code>"+uid+"</code>");
 
-    await signInAnonymously(auth);
-    log("Auth anonima: <b class='ok'>OK</b> — uid = <code>"+(auth.currentUser?.uid||"")+"</code>");
+      const db = firebase.firestore();
+      await db.collection('cards').doc('__PING__').collection('ratings').doc(uid).set({
+        value: 5, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      log("Scrittura Firestore: <b class='ok'>OK</b> — <code>cards/__PING__/ratings/"+uid+"</code>");
 
-    const uid = auth.currentUser?.uid || "anon";
-    await setDoc(doc(db, "cards", "__PING__", "ratings", uid), {
-      value: 5, updatedAt: serverTimestamp()
-    }, { merge:true });
-    log("Scrittura Firestore: <b class='ok'>OK</b> — path <code>cards/__PING__/ratings/"+uid+"</code>");
+      const snap = await db.collection('cards').doc('__PING__').collection('ratings').get();
+      log("Lettura Firestore: <b class='ok'>OK</b> — docs: <code>"+snap.size+"</code>");
 
-    const snap = await getDocs(collection(db, "cards", "__PING__", "ratings"));
-    log("Lettura Firestore: <b class='ok'>OK</b> — docs letti: <code>"+snap.size+"</code>");
-
-    const qy = query(collection(db, "cards", "__PING__", "comments"), orderBy("createdAt","desc"));
-    onSnapshot(qy, (s)=>{ log("Realtime commenti: <b class='ok'>OK</b> — count: <code>"+s.size+"</code>"); });
-    await addDoc(collection(db, "cards", "__PING__", "comments"), {
-      author: "Test", text: "Ciao da firebase-test.html 🎉", uid, createdAt: serverTimestamp()
-    });
-    log("Create comment: <b class='ok'>OK</b> — il contatore realtime aumenta.");
-
-    log("<hr/><span class='ok'>TUTTO OK</span>: Firebase funziona da questo dominio.");
-  }catch(e){
-    const msg = (e && (e.message || e.code || String(e))) || "Errore sconosciuto";
-    log("ERRORE: <b class='err'>"+msg+"</b>", "err");
-    log("Suggerimenti: <ul>" +
-      "<li>Authentication → Sign-in method → abilita Anonymous</li>" +
-      "<li>Google Cloud → API key: referrer <code>https://pavoniingrifati.github.io/*</code></li>" +
-      "<li>Firestore Rules pubblicate (accetta int/float)</li>" +
-      "<li>APIs abilitate: Cloud Firestore, Identity Toolkit, Firebase Installations</li>" +
-      "</ul>");
-  }
+      db.collection('cards').doc('__PING__').collection('comments')
+        .orderBy('createdAt','desc')
+        .onSnapshot(s=> log("Realtime commenti: <b class='ok'>OK</b> — count: <code>"+s.size+"</code>"));
+      await db.collection('cards').doc('__PING__').collection('comments').add({
+        author:'Test', text:'Ciao 🎉', uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      log("<hr/><span class='ok'>TUTTO OK</span>: Firebase risponde da questo dominio.");
+    }catch(e){
+      log("ERRORE: <b class='err'>"+(e.message||e.code||String(e))+"</b>", "err");
+      log("Suggerimenti: <ul>"+
+        "<li>Authentication → Sign-in method → abilita Anonymous</li>"+
+        "<li>API Key → HTTP referrers: <code>https://pavoniingrifati.github.io/*</code></li>"+
+        "<li>Abilita API: Firestore, Identity Toolkit, Firebase Installations</li>"+
+        "</ul>");
+    }
+  })();
 </script>
