@@ -631,6 +631,15 @@
     // ====== Init ======
     updateFavCount();
     loadCards();
+
+    // Quando Firebase è pronto, rinfresca la UI e ri-aggancia il realtime
+    window.addEventListener('firebase-ready', () => {
+      applyFilters();
+      if (dlg.open && current) {
+        dlg.close();
+        openModal(current);
+      }
+    });
   </script>
 
   <!-- ===== Firebase: voti & commenti condivisi ===== -->
@@ -728,6 +737,9 @@
           `).join('')
         : '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>';
     };
+
+    // 🔔 Notifica al resto del sito che Firebase è pronto
+    window.dispatchEvent(new CustomEvent('firebase-ready'));
   })();
 </script>
 </body>
