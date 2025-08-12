@@ -600,6 +600,27 @@
       firebase.initializeApp(firebaseConfig);
       try { await firebase.auth().signInAnonymously(); } catch(e){ console.error('[firebase auth]', e); }
 
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+// Log Firestore dettagliati (opzionale)
+// self.firebase && firebase.firestore && firebase.firestore.setLogLevel && firebase.firestore.setLogLevel('debug');
+
+const auth = getAuth();
+onAuthStateChanged(auth, async (user) => {
+  console.log('AUTH UID:', user?.uid || 'NO-USER');
+  if (!user) return;
+
+  // SCRITTURA DI PROVA per capire se Firestore accetta
+  try {
+    await setDoc(doc(db, "_debugWrites", user.uid), { ts: serverTimestamp() });
+    console.log("DEBUG write OK");
+  } catch (e) {
+    console.error("DEBUG write ERROR:", e);
+  }
+});
+
+
       const db = firebase.firestore();
       try { db.settings({ experimentalForceLongPolling: true }); } catch(e) {}
       // try { firebase.firestore.setLogLevel('debug'); } catch(e) {}
