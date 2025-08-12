@@ -664,15 +664,17 @@ dlg.addEventListener('close', ()=>{
         const snap = await getDocs(collection(db, 'cards', cardId, 'ratings'));
         return snap.docs.map(d => d.data().value);
       };
-      window._setMyRating = async function(cardId, value){
+window._setMyRating = async function(cardId, value){
   const uid = auth.currentUser?.uid;
   if(!uid){ console.warn('Anon auth non attiva'); return; }
-  const v = Math.max(1, Math.min(5, Math.round(Number(value) || 0))); // forza INT 1..5
+  // forza INT 1..5 per rispettare le Rules
+  const v = Math.max(1, Math.min(5, Math.round(Number(value) || 0)));
   await setDoc(
     doc(db, 'cards', cardId, 'ratings', uid),
     { value: v, updatedAt: serverTimestamp() },
     { merge: true }
   );
+  console.log('[rating saved remote]', cardId, v, 'uid=', uid);
 };
 
       };
