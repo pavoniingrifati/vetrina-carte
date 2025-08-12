@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="it">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Firebase Connectivity Test</title>
+<style>
+  body{font:16px/1.4 system-ui,Arial; background:#0b0f19; color:#ecf0ff; padding:20px}
+  .card{background:#121a2e;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;max-width:800px}
+  .ok{color:#10b981}.err{color:#ff6b6b}.muted{color:#a7b0d3}
+  code{background:#0d1325; padding:2px 6px; border-radius:6px}
+</style>
+<div class="card">
+  <h1>Firebase Connectivity Test</h1>
+  <div id="log" class="muted">Esecuzione test…</div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js?v=2";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js?v=2";
+  import {
+    getFirestore, collection, doc, getDocs, addDoc, setDoc,
+    serverTimestamp, onSnapshot, query, orderBy
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js?v=2";
+
+  const log = (msg, cls="")=>{
+    const el=document.getElementById('log');
+    const div=document.createElement('div');
+    if(cls) div.className=cls;
+    div.innerHTML = msg;
+    el.appendChild(div);
+  };
+
+  // 🔧 Usa la tua config (è quella che mi avevi dato)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
+    authDomain: "fantaball-9e19c.firebaseapp.com",
+    projectId: "fantaball-9e19c",
+    storageBucket: "fantaball-9e19c.appspot.com",
+    messagingSenderId: "683304379837",
+    appId: "1:683304379837:web:d2bbe7a814e2e40e075ed4",
+    measurementId: "G-C8Q8K5B52C"
+  };
+
+  try{
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // 1) Login anonimo
+    await signInAnonymously(auth);
+    log("Auth anonima: <b class='ok'>OK</b> — uid = <code>"+(auth.currentUser?.uid||"")+"</code>");
+
+    // 2) Scrittura di prova
+    const uid = auth.currentUser?.uid || "anon";
+    await setDoc(doc(db, "cards", "__PING__", "ratings", uid), {
+      value: 5,
+      updatedAt: serverTimestamp()
+    }, { merge:true });
+    log("Scrittura Firestore: <b class='ok'>OK</b> — path <code>cards/__PING__/ratings/"+uid+"</code>");
+
+    // 3) Lettura di prova
+    const snap = await getDocs(collection(db, "cards", "__PING__", "ratings"));
+    log("Lettura Firestore: <b class='ok'>OK</b> — docs letti: <code>"+snap.size+"</code>");
+
+    // 4) Realtime prova (commenti)
+    const qy = query(collection(db, "cards", "__PING__", "comments"), orderBy("createdAt","desc"));
+    const unsub = onSnapshot(qy, (s)=>{
+      log("Realtime commenti: <b class='ok'>OK</b> — count: <code>"+s.size+"</code>");
+    });
+
+    // 5) Aggiungo un commento di test
+    await addDoc(collection(db, "cards", "__PING__", "comments"), {
+      author: "Test",
+      text: "Ciao da firebase-test.html 🎉",
+      uid,
+      createdAt: serverTimestamp()
+    });
+    log("Create comment: <b class='ok'>OK</b> — controlla che il contatore realtime aumenti.");
+
+    log("<hr/><span class='ok'>TUTTO OK</span>: la tua Firebase funziona da questo dominio. Se nel sito principale non vedi i dati, è solo un problema di integrazione JS/percorsi.");
+
+  }catch(e){
+    const msg = (e && (e.message || e.code || String(e))) || "Errore sconosciuto";
+    log("ERRORE: <b class='err'>"+msg+"</b>", "err");
+    log("Suggerimenti: <ul>" +
+      "<li>Authentication → Sign-in method → abilita Anonymous</li>" +
+      "<li>Google Cloud → API Key → referrer consenti <code>https://TUO-USERNAME.github.io/*</code></li>" +
+      "<li>Rules Firestore pubblicate (quelle con int/float)</li>" +
+      "<li>APIs abilitate: Cloud Firestore, Identity Toolkit, Firebase Installations</li>" +
+      "</ul>");
+  }
+</script>
