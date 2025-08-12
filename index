@@ -225,16 +225,7 @@
           <label for="message">Commento</label>
           <textarea id="message" rows="3" placeholder="Scrivi un commento..." ></textarea>
         </div>
-        <div class="field">
-          <label for="ratingSel">Voto (1-5)</label>
-          <select id="ratingSel">
-            <option value="5">5</option>
-            <option value="4">4</option>
-            <option value="3">3</option>
-            <option value="2">2</option>
-            <option value="1">1</option>
-          </select>
-        </div>
+    
         <div style="display:flex; gap:10px; margin:12px 0 6px">
           <button class="primary" id="saveC">💾 Pubblica commento</button>
           <button id="clearC" type="button" title="Solo su questo dispositivo">🗑️ Svuota commenti</button>
@@ -365,6 +356,12 @@
         node.querySelector('.name').textContent = c.name;
         node.querySelector('.meta').textContent = `${c.game} • ${c.series} • ${c.year}`;
         renderStars(node.querySelector('.stars'), c.rating||0, null);
+if (window._fetchRatings) {
+  window._fetchRatings(c.id).then(vals=>{
+    const avgVal = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
+    renderStars(node.querySelector('.stars'), avgVal, null);
+  }).catch(()=>{});
+}
         const tags = node.querySelector('.tags');
         c.tags.forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s);});
         node.querySelector('.open').addEventListener('click', ()=> openModal(c));
@@ -390,8 +387,27 @@
       document.getElementById('dlgMeta').textContent = `${card.game} • ${card.series} • ${card.year}`;
       dlgTags.innerHTML=''; card.tags.forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; dlgTags.appendChild(s)});
       const rating = avg(loadRatings(card.id));
-      renderStars(dlgStars, rating, (v)=>{ saveRating(card.id, v); applyFilters(); openModal(card) });
+renderStars(dlgStars, rating, async (v)=>{
+  saveRating(card.id, v);                    // locale (retrocompat)
+  if (window._setMyRating) {                 // remoto (Firebase)
+    try { await window._setMyRating(card.id, v); } catch(e){ console.error(e); }
+  }
+  applyFilters();
+  openModal(card);                            // rinfresca la modale
+});
       renderComments(card.id);
+
+if (window._modalUnsub) { window._modalUnsub(); }
+if (window._subscribeModalRating) {
+  window._modalUnsub = window._subscribeModalRating(card.id, (avgVal)=>{
+    renderStars(dlgStars, avgVal, async (v)=>{
+      saveRating(card.id, v);
+      if (window._setMyRating) { try { await window._setMyRating(card.id, v); } catch(e){} }
+      applyFilters();
+      openModal(card);
+    });
+  });
+}
       dlg.showModal();
     }
 
@@ -854,6 +870,8 @@
       const rating = avg(loadRatings(card.id));
       renderStars(dlgStars, rating, (v)=>{ saveRating(card.id, v); applyFilters(); openModal(card) });
       renderComments(card.id);
+if (window._loadCommentsRemoteIntoUI) { window._loadCommentsRemoteIntoUI(card); }
+
       dlg.showModal();
     }
 
@@ -871,19 +889,26 @@
       }
     }
 
-    document.getElementById('saveC').addEventListener('click', (e)=>{
-      e.preventDefault();
-      if(!current) return;
-      const author = document.getElementById('author').value.trim() || 'Anonimo';
-      const text = document.getElementById('message').value.trim();
-      const rating = parseInt(document.getElementById('ratingSel').value,10);
-      if(!text){ alert('Scrivi un commento!'); return }
-      addComment(current.id, {author, text, rating, ts: Date.now()});
-      saveRating(current.id, rating);
-      document.getElementById('message').value='';
-      renderComments(current.id);
-      applyFilters();
-    });
+document.getElementById('saveC').addEventListener('click', async (e)=>{
+  e.preventDefault(); if(!current) return;
+  const author = document.getElementById('author').value.trim() || 'Anonimo';
+  const text = document.getElementById('message').value.trim();
+  if(!text){ alert('Scrivi un commento!'); return }
+
+  // Locale (retrocompat)
+  addComment(current.id, {author, text, ts: Date.now()});
+
+  // Remoto (Firebase)
+  if (window._addCommentRemote) {
+    try { await window._addCommentRemote(current.id, {author, text}); } catch(e){ console.error(e); }
+  }
+
+  document.getElementById('message').value='';
+  renderComments(current.id);
+  if (window._loadCommentsRemoteIntoUI) { await window._loadCommentsRemoteIntoUI(current); }
+  applyFilters();
+});
+
 
     document.getElementById('clearC').addEventListener('click', ()=>{
       if(!current) return;
