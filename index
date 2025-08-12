@@ -544,8 +544,20 @@
       current = card; currentIndex = LAST_ITEMS.findIndex(x=> x.id===card.id);
       dlgImg.src = card.img; dlgName.textContent = card.name; dlgMeta.textContent = `${card.game} • ${card.series} • ${card.role || '—'}`;
       dlgTags.innerHTML=''; const _q=getQty(card); if(_q!=null){ const s=document.createElement('span'); s.className='tag'; s.textContent=`Quantità: ${_q}`; dlgTags.appendChild(s); } (card.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; dlgTags.appendChild(s)});
-      const rating = avg(loadRatings(card.id));
-      renderStars(dlgStars, rating, async (v)=>{ saveRating(card.id, v); if (window._setMyRating) { try{ await window._setMyRating(card.id, v); }catch(e){ console.error(e); } } applyFilters(); openModal(card) });
+      const onRate = async (v)=>{ 
+        saveRating(card.id, v); 
+        if (window._setMyRating) { try{ await window._setMyRating(card.id, v); }catch(e){ console.error(e); } } 
+        applyFilters(); 
+      };
+      // Remote-first: semina con 0 e poi aggiorna con la media remota
+      renderStars(dlgStars, 0, onRate);
+      if (window._fetchRatings) { 
+        try{ 
+          const vals = await window._fetchRatings(card.id); 
+          const avgVal = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0; 
+          renderStars(dlgStars, avgVal, onRate);
+        }catch(e){ /* ignore */ }
+      }
       if (window._modalUnsub) { window._modalUnsub(); window._modalUnsub = null; }
       if (window._subscribeModalRating) { window._modalUnsub = window._subscribeModalRating(card.id, (avgVal)=>{ renderStars(dlgStars, avgVal, async (v)=>{ saveRating(card.id, v); if (window._setMyRating) { try{ await window._setMyRating(card.id, v); }catch(e){} } applyFilters(); openModal(card); }); }); }
 
