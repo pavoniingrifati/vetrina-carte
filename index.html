@@ -117,6 +117,33 @@
 
     .modal .left{ position:relative; background: radial-gradient(500px 320px at 20% 0, rgba(110,231,255,.05), transparent), var(--card-2); padding:12px }
     .modal .big{ width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.08); aspect-ratio:3/4; object-fit:cover }
+
+    /* --- MOBILE UX --- */
+    @media (max-width: 600px){
+      .modal .big{ max-height: 58vh; height: auto; }
+
+      .quick-rate{
+        position: sticky;
+        bottom: 0;
+        background: linear-gradient(180deg, rgba(15,21,38,.85), rgba(15,21,38,.9));
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-top: 8px;
+        z-index: 2;
+      }
+
+      .quick-rate .stars { gap: 6px }
+      .quick-rate .stars .s { width: 28px; height: 28px }
+      .quick-rate .stars button{
+        background: transparent; border: none; padding: 10px; line-height: 0; border-radius: 10px;
+      }
+
+      input[type="text"], textarea { font-size: 16px }
+    }
+
+    .modal .big.compact{ max-height: 36vh !important }
+
     .modal .close{ position:absolute; top:10px; right:10px; background: rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18); padding:8px 10px; border-radius:10px; color:white }
 
     .hint{ position:absolute; top:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.42); border:1px solid rgba(255,255,255,.18); border-radius:999px; color:white; transform: translateY(-50%); opacity:.9; animation: fadeHints 4s ease forwards }
@@ -159,92 +186,9 @@
     .navPrev{ left:10px } .navNext{ right:50px }
     @media(max-width:900px){ .navBtn{ display:none } }
 
-/* Stelle con area di tocco più ampia */
-.stars button {
-  background: transparent;
-  border: none;
-  padding: 8px;
-  line-height: 0;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-@media (max-width: 500px) {
-  .stars { gap: 6px }
-  .stars .s { width: 28px; height: 28px }
-  .stars button { padding: 10px }
-}
-
-/* Etichetta delle stelle */
-.stars span {
-  display: inline-block;
-  margin-left: 6px;
-  font-size: 14px;
-}
-@media (max-width: 500px) {
-  .stars span {
-    display: block;
-    margin: 6px 0 0;
-  }
-}
-
-/* Evita zoom automatico iOS */
-@media (max-width: 500px){
-  input[type="text"], textarea { font-size: 16px }
-}
-
-/* Commenti più comodi */
-@media (max-width: 500px){
-  textarea { min-height: 120px }
-  .actions { gap: 8px }
-  .actions .primary {
-    flex: 1 1 auto;
-    width: 100%;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #3b82f6, #06b6d4);
-    color: #fff;
-    font-weight: 600;
-    border: none;
-  }
-}
-
-/* Evita scroll di sfondo e rimbalzi */
-body.modal-open { overscroll-behavior: contain }
-.modal .scroll { overscroll-behavior: contain }
-
-/* --- MOBILE UX --- */
-@media (max-width: 600px){
-  /* l’immagine non deve mangiarsi tutto lo schermo */
-  .modal .big{ max-height: 58vh; height: auto; }
-
-  /* barra "valuta" sempre visibile subito sotto l'immagine */
-  .quick-rate{
-    position: sticky;
-    bottom: 0;
-    background: linear-gradient(180deg, rgba(15,21,38,.85), rgba(15,21,38,.9));
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 12px;
-    padding: 10px 12px;
-    margin-top: 8px;
-    z-index: 2;
-  }
-
-  /* stelle grandi e facili da toccare */
-  .quick-rate .stars { gap: 6px }
-  .quick-rate .stars .s { width: 28px; height: 28px }
-  .quick-rate .stars button{
-    background: transparent; border: none; padding: 10px; line-height: 0; border-radius: 10px;
-  }
-
-  /* evita zoom automatico iOS quando scrivi */
-  input[type="text"], textarea { font-size: 16px }
-}
-
-/* modalità "compatta" dell'immagine (toggle) */
-.modal .big.compact{ max-height: 36vh !important }
-
-    
+    /* Evita rimbalzi quando la modale è aperta */
+    body.modal-open { overscroll-behavior: contain }
+    .modal .scroll { overscroll-behavior: contain }
   </style>
 </head>
 
@@ -253,10 +197,8 @@ body.modal-open { overscroll-behavior: contain }
     <div class="wrap">
       <div class="title">
         <div>
-          <h1>Le carte FUT del canale Fantaballa!</h1>
+          <h1>PROVA PROVA 123</h1>
           <div class="subtitle">Non hai ancora una carta? Segui le live su <a href="https://www.tiktok.com/@fantaballa">Tik Tok</a> di Fanataballa!</div>
-
-
         </div>
       </div>
       <a class="pill pack-btn" href="open-pack.html"><span class="gift">🎁</span> Apri un pacchetto</a>
@@ -308,7 +250,7 @@ body.modal-open { overscroll-behavior: contain }
 
   <footer>
     <div class="foot">
-      <span class="pill">ℹ️Stelle e commenti sono ora visibili da tutti!</span>
+      <span class="pill">ℹ️ Stelle e commenti sono ora visibili da tutti</span>
     </div>
   </footer>
 
@@ -318,12 +260,13 @@ body.modal-open { overscroll-behavior: contain }
       <div class="left">
         <button class="navBtn navPrev" type="button" title="Precedente" aria-label="Carta precedente">◀</button>
         <div class="hint left" aria-hidden="true">‹</div>
+
         <img id="dlgImg" alt="Immagine carta" class="big" />
-        
+
         <!-- Barra rapida per votare su mobile -->
-<div id="quickRate" class="quick-rate">
-  <div class="stars" id="dlgStarsQuick" aria-label="Valuta questa carta (barra rapida)"></div>
-</div>
+        <div id="quickRate" class="quick-rate">
+          <div class="stars" id="dlgStarsQuick" aria-label="Valuta questa carta (barra rapida)"></div>
+        </div>
 
         <div class="hint right" aria-hidden="true">›</div>
         <button class="navBtn navNext" type="button" title="Successiva" aria-label="Carta successiva">▶</button>
@@ -398,27 +341,21 @@ body.modal-open { overscroll-behavior: contain }
       finally{ applyFilters(); }
     }
 
-   function renderStars(container, value, onRate) {
-  container.innerHTML = '';
-  const full = Math.round(value);
-  for (let i = 1; i <= 5; i++) {
-    const btn = document.createElement(onRate ? 'button' : 'div');
-    if (onRate) btn.type = 'button'; // ✅ impedisce la chiusura del dialog
-    btn.innerHTML = starSVG(i <= full);
-    if (onRate) {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();          // ✅ blocca submit form
-        e.stopPropagation();         // ✅ blocca eventi verso l’alto
-        onRate(i);
-      });
+    /* ⭐⭐ stelle: tipo button + prevenzione submit, per non chiudere la modale; dimensioni gestite da CSS */
+    function renderStars(container, value, onRate){
+      container.innerHTML='';
+      const full = Math.round(value);
+      for(let i=1;i<=5;i++){
+        const btn = document.createElement(onRate? 'button':'div');
+        if (onRate) btn.type = 'button';
+        btn.innerHTML = starSVG(i<=full);
+        if(onRate) btn.addEventListener('click', (e)=> { e.preventDefault(); e.stopPropagation(); onRate(i); });
+        container.appendChild(btn);
+      }
+      const label = document.createElement('span');
+      label.textContent = value? ` ${value.toFixed(1)}/5` : ' Nessuna valutazione';
+      container.appendChild(label);
     }
-    container.appendChild(btn);
-  }
-  const label = document.createElement('span');
-  label.textContent = value ? ` ${value.toFixed(1)}/5` : ' Nessuna valutazione';
-  container.appendChild(label);
-}
-
 
     let CURRENT_TAB = 'all';
     function setTab(tab){
@@ -571,41 +508,26 @@ body.modal-open { overscroll-behavior: contain }
       };
       renderStars(dlgStars, 0, onRate);
 
-// ⭐ barra rapida sotto l'immagine (stesse stelle, stesso handler)
-const dlgStarsQuick = document.getElementById('dlgStarsQuick');
-renderStars(dlgStarsQuick, 0, onRate);
+      // ⭐ barra rapida sotto l’immagine
+      const dlgStarsQuick = document.getElementById('dlgStarsQuick');
+      renderStars(dlgStarsQuick, 0, onRate);
 
-// quando arrivano i voti remoti, aggiorna entrambe le viste
-if (window._fetchRatings) {
-  try{
-    const vals = await window._fetchRatings(card.id);
-    const avgVal = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
-    renderStars(dlgStars, avgVal, onRate);
-    renderStars(dlgStarsQuick, avgVal, onRate);
-  }catch(e){}
-}
-if (window._modalUnsub) { try{ window._modalUnsub(); }catch{} window._modalUnsub = null; }
-if (window._subscribeModalRating) {
-  window._modalUnsub = window._subscribeModalRating(card.id, (avgVal)=>{
-    renderStars(dlgStars, avgVal, onRate);
-    renderStars(dlgStarsQuick, avgVal, onRate);
-  });
-}
-
-// 👇 Tap sull’immagine per ridurre/espandere (utile su schermi piccoli)
-dlgImg.onclick = () => dlgImg.classList.toggle('compact');
-
-      
       if (window._fetchRatings) { 
         try{ 
           const vals = await window._fetchRatings(card.id); 
           const avgVal = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0; 
           renderStars(dlgStars, avgVal, onRate);
+          renderStars(dlgStarsQuick, avgVal, onRate);
         }catch(e){ /* ignore */ }
       }
 
       if (window._modalUnsub) { try{ window._modalUnsub(); }catch{} window._modalUnsub = null; }
-      if (window._subscribeModalRating) { window._modalUnsub = window._subscribeModalRating(card.id, (avgVal)=>{ renderStars(dlgStars, avgVal, onRate); }); }
+      if (window._subscribeModalRating) { 
+        window._modalUnsub = window._subscribeModalRating(card.id, (avgVal)=>{ 
+          renderStars(dlgStars, avgVal, onRate); 
+          renderStars(dlgStarsQuick, avgVal, onRate);
+        }); 
+      }
 
       renderCommentsLocal(card.id);
       if (window._commentsUnsub) { try{ window._commentsUnsub(); }catch{} window._commentsUnsub=null; }
@@ -628,6 +550,14 @@ dlgImg.onclick = () => dlgImg.classList.toggle('compact');
 
       document.body.classList.add('modal-open');
       dlg.showModal();
+
+      // Tap sull’immagine per ridurre/espandere (più spazio ai commenti su mobile)
+      dlgImg.onclick = () => dlgImg.classList.toggle('compact');
+
+      // Su mobile, porta subito in vista le stelle
+      if (window.matchMedia('(max-width: 500px)').matches) {
+        setTimeout(()=> dlgStarsQuick.scrollIntoView({behavior:'smooth', block:'center'}), 50);
+      }
     }
 
     function renderCommentsLocal(id){
@@ -755,7 +685,7 @@ dlgImg.onclick = () => dlgImg.classList.toggle('compact');
       window._fetchComments = async function(cardId){
         try{
           const snap = await db.collection('cards').doc(cardId).collection('comments').orderBy('createdAt','desc').get();
-        return snap.docs.map(d => { const x = d.data(); return { id:d.id, author:x.author, text:x.text, ts:x.createdAt?.toMillis?.() || Date.now(), uid:x.uid }; });
+          return snap.docs.map(d => { const x = d.data(); return { id:d.id, author:x.author, text:x.text, ts:x.createdAt?.toMillis?.() || Date.now(), uid:x.uid }; });
         }catch(e){ console.error('[fetchComments]', e); return []; }
       };
 
