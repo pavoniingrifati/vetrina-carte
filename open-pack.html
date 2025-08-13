@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Fantaballa – Open Pack</title>
-<meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e screenshot. Salvataggio automatico in My Cards per utenti Google.">
+<meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e screenshot. Include anteprime pacchetti e prezzi. Usa cards.json (series=Wonderkid/Tots)." />
 
 <!-- Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,10 +25,6 @@ h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
 .btn{background:linear-gradient(180deg,#1b2a4d,#152141); border:1px solid rgba(110,231,255,.35); border-radius:12px; color:#fff; padding:12px 16px; cursor:pointer}
 .btn:disabled{opacity:.6; cursor:not-allowed}
 
-.authBox{display:flex; align-items:center; gap:10px}
-.authBox img{width:28px; height:28px; border-radius:999px; display:none}
-.authBox .name{font-size:14px; opacity:.9; display:none}
-
 /* FLASH */
 .flash-line,.flash-screen{position:fixed; inset:0; pointer-events:none; z-index:40; opacity:0}
 .flash-line::before{content:""; position:absolute; top:0; bottom:0; width:32vw; background:linear-gradient(90deg,transparent,rgba(255,230,120,.55),rgba(255,201,44,.8),rgba(255,230,120,.55),transparent); filter:blur(8px); transform:translateX(-40vw) skewX(-12deg)}
@@ -40,7 +36,7 @@ h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
 .flash-screen.active{animation:flash .35s ease-out forwards}
 @keyframes flash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
 
-/* CHOICES */
+/* CHOICES (anteprime pacchetti) */
 .choices{ display:flex; gap:14px; margin-top:12px; flex-wrap:wrap }
 .choice{ display:flex; align-items:center; gap:10px; padding:8px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03); border-radius:14px; cursor:pointer; }
 .choice[aria-selected="true"]{ outline:2px solid rgba(110,231,255,.5); background:rgba(255,255,255,.06) }
@@ -91,8 +87,7 @@ h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
 .cCard.revealed::after{opacity:.9}
 .cCard.r-comune{--rarGlow:var(--g-comune)}
 .cCard.r-non-comune{--rarGlow:var(--g-non-comune)}
-.cCard.r-rara{--rarGlow:var(--g-rara); animation:bluePulse 2.3s ease-in-out infinite}
-@keyframes bluePulse{0%,100%{filter:none}50%{filter:drop-shadow(0 0 18px rgba(96,165,250,.45))}}
+.cCard.r-rara{--rarGlow:var(--g-rara)}
 .cCard.r-epica{--rarGlow:var(--g-epica)}
 .cCard.r-ultra-rara,.cCard.r-season{--rarGlow:var(--g-ultra-rara)}
 
@@ -130,19 +125,17 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
         <h1>Open Pack – Fantaballa</h1>
         <div class="subtitle">Scegli il pacchetto → flash dorato → carte in ordine di rarità (click to flip).</div>
       </div>
-      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
-        <span class="pill" id="pricePill">💰 Costo: 1000</span>
-        <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
-        <button id="shareBtn" class="btn" disabled>🔗 Condividi</button>
-        <a href="index.html" class="btn">🏠 Home</a>
-        <a href="my-cards.html" class="btn">🗂 Le mie carte</a>
-        <!-- 🔐 Auth box -->
-        <div id="authBox" class="authBox">
-          <img id="userPhoto" alt="" referrerpolicy="no-referrer">
-          <span id="userName" class="name"></span>
-          <button id="btnLoginOpenPack" class="btn" type="button" title="Accedi con Google">🔐 Accedi</button>
-          <button id="btnLogoutOpenPack" class="btn" type="button" title="Esci" style="display:none">⎋ Esci</button>
-        </div>
+      <span class="pill" id="pricePill">💰 Costo: 1000</span>
+      <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
+      <button id="shareBtn" class="btn" disabled>🔗 Condividi pacchetto</button>
+      <a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Torna alla Home</a>
+
+      <!-- 🔐 SOLO Google login -->
+      <div style="display:flex; gap:10px; align-items:center">
+        <img id="userPhoto" alt="" referrerpolicy="no-referrer" style="width:28px;height:28px;border-radius:999px;display:none">
+        <span id="userName" style="font-size:14px;opacity:.9;display:none"></span>
+        <button id="btnLogin"  class="btn" type="button">🔐 Accedi con Google</button>
+        <button id="btnLogout" class="btn" type="button" style="display:none">⎋ Esci</button>
       </div>
     </div>
 
@@ -170,7 +163,7 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 
 <footer>
   <div class="foot">
-    <span class="pillFoot">ℹ️ Metti “Deck back ORO.png”, “Deck back Tots.png”, “Deck back wonderkid.png” e le immagini delle carte accanto a questa pagina.</span>
+    <span class="pillFoot">ℹ️ Metti “Deck back ORO.png”, “Deck back Tots.png” e “Deck back wonderkid.png” accanto a questa pagina. Tieni le immagini carte in repo con percorsi relativi.</span>
   </div>
 </footer>
 
@@ -222,7 +215,7 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 
 <script type="module">
 /* =========================
-   Firebase init
+   Firebase init (uguale progetto)
    ========================= */
 const firebaseConfig = {
   apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
@@ -250,53 +243,33 @@ function showSaveInfo(msg, ok=true){
 }
 
 /* =========================
-   Auth setup + helpers
+   SOLO Google login
    ========================= */
-try {
-  await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-} catch(e) {
-  console.warn('[auth persistence]', e);
-}
-
-// attendo il primo stato auth per evitare race
-let _authReadyResolve;
-const authReady = new Promise(r => (_authReadyResolve = r));
-let _authReadyFired = false;
-
-auth.onAuthStateChanged(user => {
-  if (!_authReadyFired) { _authReadyFired = true; _authReadyResolve(user || null); }
-  updateAuthUI(user);
-});
+try { await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch {}
+let authReadyResolve; const authReady = new Promise(r=>authReadyResolve=r); let first=false;
+auth.onAuthStateChanged(u=>{ if(!first){first=true; authReadyResolve(u||null)} updateAuthUI(u); });
 
 function updateAuthUI(user){
-  const btnLogin  = document.getElementById('btnLoginOpenPack');
-  const btnLogout = document.getElementById('btnLogoutOpenPack');
+  const btnLogin  = document.getElementById('btnLogin');
+  const btnLogout = document.getElementById('btnLogout');
   const userName  = document.getElementById('userName');
   const userPhoto = document.getElementById('userPhoto');
-
   const logged = !!user && !user.isAnonymous;
-  if (btnLogin)  btnLogin.style.display  = logged ? 'none' : '';
-  if (btnLogout) btnLogout.style.display = logged ? '' : 'none';
 
-  if (userName){
-    userName.textContent = logged ? (user.displayName || user.email || 'Account') : '';
-    userName.style.display = logged ? '' : 'none';
-  }
-  if (userPhoto){
-    if (logged && user.photoURL){
-      userPhoto.src = user.photoURL;
-      userPhoto.style.display = '';
-    } else {
-      userPhoto.style.display = 'none';
-      userPhoto.removeAttribute('src');
-    }
-  }
+  btnLogin.style.display  = logged ? 'none' : '';
+  btnLogout.style.display = logged ? '' : 'none';
 
-  if (logged) showSaveInfo('Sei connesso: salverò automaticamente le carte ✅');
-  else        showSaveInfo('Accedi con Google per salvare automaticamente le carte.', false);
+  if (logged) {
+    if (userName){ userName.textContent = user.displayName || user.email || 'Account'; userName.style.display=''; }
+    if (userPhoto && user.photoURL){ userPhoto.src=user.photoURL; userPhoto.style.display=''; }
+    showSaveInfo('Sei connesso con Google ✅');
+  } else {
+    if (userName){ userName.style.display='none'; userName.textContent=''; }
+    if (userPhoto){ userPhoto.style.display='none'; userPhoto.removeAttribute('src'); }
+    showSaveInfo('Accedi con Google per salvare automaticamente le carte.', false);
+  }
 }
 
-// login sicuro
 async function safeGoogleSignIn(){
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
@@ -308,62 +281,54 @@ async function safeGoogleSignIn(){
     const { user } = await auth.signInWithPopup(provider);
     return user;
   }catch(e){
-    console.warn('[safeGoogleSignIn]', e.code, e.message);
-
+    // popup bloccato? redirect
     if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
-      await auth.signInWithRedirect(provider);
-      return;
+      await auth.signInWithRedirect(provider); return;
     }
+    // stessa credenziale già collegata ad altro account → entra con quella
     if (e.code === 'auth/credential-already-in-use' && e.credential) {
-      const { user } = await auth.signInWithCredential(e.credential);
-      return user;
+      const { user } = await auth.signInWithCredential(e.credential); return user;
     }
+    // email già usata con metodo diverso → se è google rientra, altrimenti avviso
     if (e.code === 'auth/account-exists-with-different-credential' && e.email) {
       const methods = await auth.fetchSignInMethodsForEmail(e.email);
       if (methods.includes('google.com') && e.credential) {
-        const { user } = await auth.signInWithCredential(e.credential);
-        return user;
+        const { user } = await auth.signInWithCredential(e.credential); return user;
       }
-      alert('Quest’email è già usata con: ' + methods.join(', ') + '. Accedi con quel metodo e poi collega Google dal profilo.');
+      alert('Quest’email è collegata a un metodo diverso. Su questo sito è permesso solo Google.');
+      return;
     }
+    console.warn('[Google Sign-In]', e.code, e.message);
     throw e;
   }
 }
 
-document.getElementById('btnLoginOpenPack')?.addEventListener('click', async ()=>{
+document.getElementById('btnLogin').addEventListener('click', async ()=>{
   try { await safeGoogleSignIn(); }
   catch { showSaveInfo('Login annullato o fallito.', false); }
 });
-
-document.getElementById('btnLogoutOpenPack')?.addEventListener('click', async ()=>{
+document.getElementById('btnLogout').addEventListener('click', async ()=>{
   try { await auth.signOut(); showSaveInfo('Sei uscito. Le nuove carte non verranno salvate.', false); }
-  catch (e) { console.error('[logout]', e); }
+  catch(e){ console.warn('[logout]', e); }
 });
-
-// completa eventuale redirect login
-try { await auth.getRedirectResult(); } catch(e) { /* ignore */ }
+try { await auth.getRedirectResult(); } catch {}
 
 /* ==============================
    Salvataggio inventory (batch + fallback)
    ============================== */
 async function saveInventoryIfLoggedIn(cards){
   const u = auth.currentUser;
-
   if (!u || u.isAnonymous) {
     showSaveInfo('Non hai effettuato l’accesso: carte NON salvate. Accedi con Google per salvare automaticamente.', false);
     return;
   }
-
   const byId = new Map();
   for (const c of cards){
     if (!c?.id) continue;
     if (!byId.has(c.id)) byId.set(c.id, { ...c, _count: 0 });
     byId.get(c.id)._count += 1;
   }
-  if (!byId.size){
-    showSaveInfo('Nessuna carta valida da salvare.', false);
-    return;
-  }
+  if (!byId.size){ showSaveInfo('Nessuna carta valida da salvare.', false); return; }
 
   try{
     const batch = db.batch();
@@ -386,7 +351,6 @@ async function saveInventoryIfLoggedIn(cards){
     showSaveInfo(`⚠️ Errore batch: ${e.code || 'unknown'} – ${e.message || e}`, false);
     if (e.code === 'permission-denied') return;
   }
-
   try{
     for (const [id, c] of byId.entries()){
       const ref = db.collection('users').doc(u.uid).collection('inventory').doc(id);
@@ -425,17 +389,13 @@ async function saveInventoryIfLoggedIn(cards){
 }
 
 /* ================
-   Open Pack logic
+   Open Pack (il tuo)
    ================ */
-
-/* Utility */
 const seriesIs = (c, v) => String(c.series ?? '').trim() === v;
 const $ = (s,el=document)=>el.querySelector(s);
 const delay = ms => new Promise(r=>setTimeout(r,ms));
 const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5};
-const norm = v => String(v||'').trim().toLowerCase();
 
-/* Audio opzionale */
 let audioCtx=null;
 function ensureAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)() }catch{} }
 function tone(f,d=.15,g=.08,t='sine'){ if(!audioCtx) return; const o=audioCtx.createOscillator(),A=audioCtx.createGain(); o.type=t; o.frequency.value=f; A.gain.value=g; o.connect(A).connect(audioCtx.destination); o.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d,.03); o.stop(audioCtx.currentTime+d+.08) }
@@ -447,7 +407,7 @@ const PACKS = {
   random:    { key:'random',    label:'Random',    cost:1000, back:'Deck%20back%20ORO.png',         filter: c => true },
   wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1800, back:'Deck%20back%20wonderkid.png',   filter: c => seriesIs(c, 'Wonderkid') },
   f1:        { key:'f1',        label:'F1',        cost:1400, back:'f1%20pack.png',                 filter: c => seriesIs(c, 'F1') },
-  dream:     { key:'dream',     label:'Dream',     cost:1500, back:'Deck%20back%20Dream.png',       filter: c => seriesIs(c, 'Dream') }
+  dream:     { key:'dream',     label:'Dream',     cost:1500, back:'Deck%20back%20Dream.png',       filter: c => String(c.series||'').trim()==='Dream' }
 };
 const DEFAULT_PACK_KEY = 'random';
 
@@ -476,7 +436,7 @@ const FALLBACK_CARDS = [
 const logEl = document.getElementById('log');
 function setLog(msg){ logEl.textContent = msg || '' }
 
-/* PackOpener */
+/* PackOpener (come tuo file originale) */
 class PackOpener{
   constructor(){
     this.ALL=[]; this.used=new Set();
@@ -583,15 +543,15 @@ class PackOpener{
   }
   ensureRarePlus(cards, pool, minCount = 2){
     const RARE_PLUS = rarityRank['Rara'];
-    let have = cards.filter(c => rarityRank[c.rarity] >= RARE_PLUS).length;
+    let have = cards.filter(c => (rarityRank[c.rarity] ?? 0) >= RARE_PLUS).length;
     if (have >= minCount) return cards;
-    const rarePool = pool.filter(c => rarityRank[c.rarity] >= RARE_PLUS);
+    const rarePool = pool.filter(c => (rarityRank[c.rarity] ?? 0) >= RARE_PLUS);
     if (!rarePool.length) return cards;
     const usedIds = new Set(cards.map(c => c.id));
     let need = Math.min(minCount - have, rarePool.length);
     for (let g = 0; g < need; g++) {
       const replaceable = cards.map((c, idx) => ({ c, idx }))
-        .filter(x => rarityRank[x.c.rarity] < RARE_PLUS)
+        .filter(x => (rarityRank[x.c.rarity] ?? 0) < RARE_PLUS)
         .map(x => x.idx);
       const idx = replaceable.length
         ? replaceable[Math.floor(Math.random() * replaceable.length)]
@@ -635,8 +595,7 @@ class PackOpener{
     const front=n.querySelector('.front img');
     if(front && !front.src) front.src=d.img||'';
     n.dataset.state='front'; n.classList.add('revealed');
-    const rank=rarityRank[d.rarity]??0;
-    this.addSparks(n,Math.min(6+rank*4,28));
+    this.addSparks(n,10);
     playByRarity(d.rarity);
   }
   setDropIn(el,i,extra=0){ el.classList.add('drop'); setTimeout(()=>el.classList.add('in'),120*i+extra) }
@@ -662,7 +621,9 @@ class PackOpener{
     if(!pool.length){ setLog('⚠️ Nessuna carta compatibile con questo pacchetto (controlla "series").'); BTN.disabled=false; SHARE.disabled=true; return }
 
     this.$pack.classList.add('shake'); await delay(360); this.$pack.classList.remove('shake');
-    this.$flashLine.classList.add('active'); this.$flashScreen.classList.add('active'); this.$pack.classList.add('opening');
+    document.getElementById('flashLine').classList.add('active');
+    document.getElementById('flashScreen').classList.add('active');
+    this.$pack.classList.add('opening');
     await delay(900); this.$packArea.style.display='none';
 
     this.used.clear(); let chosen=[];
@@ -673,15 +634,14 @@ class PackOpener{
       this.used.add(card.id); chosen.push(card);
     }
     chosen=this.ensureRarePlus(chosen,pool);
-    chosen.sort((a,b)=>rarityRank[a.rarity]-rarityRank[b.rarity]);
+    chosen.sort((a,b)=> (rarityRank[a.rarity]??0) - (rarityRank[b.rarity]??0));
     this.showStage(chosen);
 
-    // 👉 aspetta che lo stato auth sia pronto (importantissimo)
+    // 👉 aspetta che l’Auth sia pronta, poi salva se loggato
     await authReady;
-    // 👉 salva automaticamente nel tuo inventario (se loggato)
     saveInventoryIfLoggedIn(chosen);
 
-    setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active') },400);
+    setTimeout(()=>{ document.getElementById('flashLine').classList.remove('active'); document.getElementById('flashScreen').classList.remove('active') },400);
     BTN.textContent=`🔁 Nuovo pacchetto ${pack.label}`; BTN.disabled=false; SHARE.disabled=false;
     BTN.onclick=async()=>{
       BTN.disabled=true; SHARE.disabled=true;
