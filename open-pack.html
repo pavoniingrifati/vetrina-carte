@@ -1,694 +1,531 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Fantaballa – Open Pack</title>
-<meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e screenshot. Include anteprime pacchetti e prezzi. Usa cards.json (series=Wonderkid/Tots)." />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fantaballa – Open Pack</title>
+  <meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e screenshot. Include anteprime pacchetti e prezzi. Usa cards.json (series=Wonderkid/Tots)." />
 
-<!-- Font -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-<style>
-:root{ --bg:#0b0f19; --panel:#0f1526; --card:#121a2e; --card-2:#0d1325; --text:#ecf0ff; --muted:#a7b0d3; --accent:#6ee7ff; --radius:18px; --g-comune:rgba(154,163,178,.30); --g-non-comune:rgba(52,211,153,.35); --g-rara:rgba(96,165,250,.45); --g-epica:rgba(167,139,250,.55); --g-ultra-rara:rgba(251,191,36,.65); --g-season:rgba(239,68,68,.7) }
-*{box-sizing:border-box} html,body{height:100%}
-body{ margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; overflow-x:hidden }
-a{color:var(--accent); text-decoration:none}
-header{ position:sticky; top:0; z-index:20; backdrop-filter: blur(10px); background:linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6)); border-bottom:1px solid rgba(255,255,255,.06)}
-.wrap{max-width:1200px; margin:0 auto; padding:20px}
-.title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
-h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
-.toolbar{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap}
-.pill{display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text)}
-.btn{background:linear-gradient(180deg,#1b2a4d,#152141); border:1px solid rgba(110,231,255,.35); border-radius:12px; color:#fff; padding:12px 16px; cursor:pointer}
-.btn:disabled{opacity:.6; cursor:not-allowed}
+  <!-- (RIMOSSO: html2canvas non più necessario per lo screenshot) -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script> -->
 
-/* FLASH */
-.flash-line,.flash-screen{position:fixed; inset:0; pointer-events:none; z-index:40; opacity:0}
-.flash-line::before{content:""; position:absolute; top:0; bottom:0; width:32vw; background:linear-gradient(90deg,transparent,rgba(255,230,120,.55),rgba(255,201,44,.8),rgba(255,230,120,.55),transparent); filter:blur(8px); transform:translateX(-40vw) skewX(-12deg)}
-.flash-line.active{animation:sweep .75s ease-out forwards}
-@keyframes sweep{0%{opacity:0}10%{opacity:1}100%{opacity:1}}
-.flash-line.active::before{animation:sweepMove .75s ease-out forwards}
-@keyframes sweepMove{to{transform:translateX(120vw) skewX(-12deg)}}
-.flash-screen{background:radial-gradient(circle at 50% 50%, rgba(255,232,120,.45), transparent 55%)}
-.flash-screen.active{animation:flash .35s ease-out forwards}
-@keyframes flash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
+  <style>
+    :root{ --bg:#0b0f19; --panel:#0f1526; --card:#121a2e; --card-2:#0d1325; --text:#ecf0ff; --muted:#a7b0d3; --accent:#6ee7ff; --radius:18px; --g-comune:rgba(154,163,178,.30); --g-non-comune:rgba(52,211,153,.35); --g-rara:rgba(96,165,250,.45); --g-epica:rgba(167,139,250,.55); --g-ultra-rara:rgba(251,191,36,.65); --g-season:rgba(239,68,68,.7) }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{ margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; overflow-x:hidden }
+    a{color:var(--accent); text-decoration:none}
+    header{ position:sticky; top:0; z-index:20; backdrop-filter: blur(10px); background:linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6)); border-bottom:1px solid rgba(255,255,255,.06)}
+    .wrap{max-width:1200px; margin:0 auto; padding:20px}
+    .title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+    h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
+    .toolbar{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text)}
+    .btn{background:linear-gradient(180deg,#1b2a4d,#152141); border:1px solid rgba(110,231,255,.35); border-radius:12px; color:#fff; padding:12px 16px; cursor:pointer}
+    .btn:disabled{opacity:.6; cursor:not-allowed}
 
-/* CHOICES (anteprime pacchetti) */
-.choices{ display:flex; gap:14px; margin-top:12px; flex-wrap:wrap }
-.choice{ display:flex; align-items:center; gap:10px; padding:8px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03); border-radius:14px; cursor:pointer; }
-.choice[aria-selected="true"]{ outline:2px solid rgba(110,231,255,.5); background:rgba(255,255,255,.06) }
-.prev{ width:90px; aspect-ratio: 690/987; border-radius:12px; background-size:cover; background-position:center; box-shadow:0 6px 16px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08) }
-.meta{ display:flex; flex-direction:column; line-height:1.15 }
-.meta .name{ font-weight:700 }
-.meta .price{ color:var(--muted); font-size:12px }
+    /* FLASH */
+    .flash-line,.flash-screen{position:fixed; inset:0; pointer-events:none; z-index:40; opacity:0}
+    .flash-line::before{content:""; position:absolute; top:0; bottom:0; width:32vw; background:linear-gradient(90deg,transparent,rgba(255,230,120,.55),rgba(255,201,44,.8),rgba(255,230,120,.55),transparent); filter:blur(8px); transform:translateX(-40vw) skewX(-12deg)}
+    .flash-line.active{animation:sweep .75s ease-out forwards}
+    @keyframes sweep{0%{opacity:0}10%{opacity:1}100%{opacity:1}}
+    .flash-line.active::before{animation:sweepMove .75s ease-out forwards}
+    @keyframes sweepMove{to{transform:translateX(120vw) skewX(-12deg)}}
+    .flash-screen{background:radial-gradient(circle at 50% 50%, rgba(255,232,120,.45), transparent 55%)}
+    .flash-screen.active{animation:flash .35s ease-out forwards}
+    @keyframes flash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
 
-/* PACK */
-.packArea{display:flex; align-items:center; justify-content:center; min-height:min(76vh,900px); position:relative}
-.pack{ width:min(520px,86vw); aspect-ratio:690/987; background: center/cover no-repeat; border-radius:var(--radius); box-shadow:0 8px 24px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08); transition:transform .2s ease, box-shadow .2s ease, filter .2s ease; position:relative; isolation:isolate; will-change:transform,filter}
-.pack:hover{ transform:translateY(-2px); box-shadow:0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.12); filter:brightness(1.05)}
-.pack.shake{animation:shake .35s ease-in-out 1}
-@keyframes shake{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-6px) rotate(-1deg)}50%{transform:translateX(5px) rotate(1deg)}75%{transform:translateX(-3px) rotate(-.6deg)}}
-.pack.opening{animation:packOpen .9s cubic-bezier(.16,.84,.29,1) forwards}
-@keyframes packOpen{0%{transform:scale(1) translateY(0); opacity:1}55%{transform:scale(.92) translateY(6px); filter:brightness(1.08)}75%{transform:scale(1.02) translateY(-6px); filter:brightness(1.25)}100%{transform:scale(.88) translateY(-12px); opacity:0}}
+    /* CHOICES (anteprime pacchetti) */
+    .choices{ display:flex; gap:14px; margin-top:12px; flex-wrap:wrap }
+    .choice{ display:flex; align-items:center; gap:10px; padding:8px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03); border-radius:14px; cursor:pointer; }
+    .choice[aria-selected="true"]{ outline:2px solid rgba(110,231,255,.5); background:rgba(255,255,255,.06) }
+    .prev{
+      width:90px; aspect-ratio: 690/987; border-radius:12px;
+      background-size:cover; background-position:center;
+      box-shadow:0 6px 16px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08);
+    }
+    .meta{ display:flex; flex-direction:column; line-height:1.15 }
+    .meta .name{ font-weight:700 }
+    .meta .price{ color:var(--muted); font-size:12px }
 
-/* STAGE */
-.stageWrap{display:none}
-.stageWrap.show{display:block; animation:stageIn .5s ease .25s both}
-@keyframes stageIn{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
-.stage{margin:22px 0 40px; display:grid; gap:16px; grid-template-columns:repeat(1,minmax(0,1fr))}
-@media(min-width:720px){.stage{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(min-width:1100px){.stage{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    /* PACK */
+    .packArea{display:flex; align-items:center; justify-content:center; min-height:min(76vh,900px); position:relative}
+    .pack{
+      width:min(520px,86vw); aspect-ratio:690/987;
+      background: center/cover no-repeat;  /* impostata da JS */
+      border-radius:var(--radius); box-shadow:0 8px 24px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08);
+      transition:transform .2s ease, box-shadow .2s ease, filter .2s ease; position:relative; isolation:isolate; will-change:transform,filter
+    }
+    .pack:hover{ transform:translateY(-2px); box-shadow:0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.12); filter:brightness(1.05)}
+    .pack.shake{animation:shake .35s ease-in-out 1}
+    @keyframes shake{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-6px) rotate(-1deg)}50%{transform:translateX(5px) rotate(1deg)}75%{transform:translateX(-3px) rotate(-.6deg)}}
+    .pack.opening{animation:packOpen .9s cubic-bezier(.16,.84,.29,1) forwards}
+    @keyframes packOpen{0%{transform:scale(1) translateY(0); opacity:1}55%{transform:scale(.92) translateY(6px); filter:brightness(1.08)}75%{transform:scale(1.02) translateY(-6px); filter:brightness(1.25)}100%{transform:scale(.88) translateY(-12px); opacity:0}}
 
-.cCard{position:relative; width:100%; aspect-ratio:690/987; border-radius:var(--radius); transform-style:preserve-3d; perspective:1200px}
-.scene{position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d; transition:transform .7s cubic-bezier(.22,.75,.2,1); transform:rotateY(0deg); box-shadow:0 10px 28px rgba(0,0,0,.45); background:var(--card); will-change:transform}
-.face{position:absolute; inset:0; border-radius:inherit; overflow:hidden; backface-visibility:hidden; border:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center}
-.back img,.front img{width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:690/987}
-.front{transform:rotateY(180deg)}
+    /* STAGE */
+    .stageWrap{display:none}
+    .stageWrap.show{display:block; animation:stageIn .5s ease .25s both}
+    @keyframes stageIn{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
+    .stage{margin:22px 0 40px; display:grid; gap:16px; grid-template-columns:repeat(1,minmax(0,1fr))}
+    @media(min-width:720px){.stage{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(min-width:1100px){.stage{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
-.drop{opacity:0; transform:translateY(-40px) scale(.96)}
-.drop.in{animation:dropIn .5s cubic-bezier(.2,.8,.2,1) forwards}
-@keyframes dropIn{0%{opacity:0; transform:translateY(-50px) scale(.96)}70%{opacity:1; transform:translateY(6px) scale(1.02)}100%{opacity:1; transform:translateY(0) scale(1)}}
+    .cCard{position:relative; width:100%; aspect-ratio:690/987; border-radius:var(--radius); transform-style:preserve-3d; perspective:1200px}
+    .scene{position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d; transition:transform .7s cubic-bezier(.22,.75,.2,1); transform:rotateY(0deg); box-shadow:0 10px 28px rgba(0,0,0,.45); background:var(--card); will-change:transform}
+    .face{position:absolute; inset:0; border-radius:inherit; overflow:hidden; backface-visibility:hidden; border:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center}
+    .back img,.front img{width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:690/987}
+    .back img{filter:drop-shadow(0 10px 30px rgba(0,0,0,.45))}
+    .front{transform:rotateY(180deg)}
 
-.cCard[data-state="back"] .scene{transform:rotateY(0deg)}
-.cCard[data-state="front"] .scene{transform:rotateY(180deg)}
+    .drop{opacity:0; transform:translateY(-40px) scale(.96)}
+    .drop.in{animation:dropIn .5s cubic-bezier(.2,.8,.2,1) forwards}
+    @keyframes dropIn{0%{opacity:0; transform:translateY(-50px) scale(.96)}70%{opacity:1; transform:translateY(6px) scale(1.02)}100%{opacity:1; transform:translateY(0) scale(1)}}
 
-.badge{position:absolute; top:10px; right:10px; z-index:2; padding:6px 8px; border-radius:999px; font-size:12px; font-weight:700; color:#fff; border:1px solid rgba(255,255,255,.15)}
-.r-comune .badge{background:rgba(154,163,178,.85)}
-.r-non-comune .badge{background:rgba(52,211,153,.85)}
-.r-rara .badge{background:rgba(96,165,250,.9)}
-.r-epica .badge{background:rgba(167,139,250,.95)}
-.r-ultra-rara .badge{background:rgba(251,191,36,.95); color:#000}
-.r-season .badge{background:rgba(239,68,68,.95)}
+    .cCard[data-state="back"] .scene{transform:rotateY(0deg)}
+    .cCard[data-state="front"] .scene{transform:rotateY(180deg)}
 
-.cCard::after{content:""; position:absolute; inset:-2px; border-radius:inherit; pointer-events:none; opacity:0; background:radial-gradient(500px 600px at 50% -10%, var(--rarGlow, rgba(255,255,255,.18)), transparent 60%); filter:blur(12px); transition:opacity .5s ease}
-.cCard.revealed::after{opacity:.9}
-.cCard.r-comune{--rarGlow:var(--g-comune)}
-.cCard.r-non-comune{--rarGlow:var(--g-non-comune)}
-.cCard.r-rara{--rarGlow:var(--g-rara)}
-.cCard.r-epica{--rarGlow:var(--g-epica)}
-.cCard.r-ultra-rara,.cCard.r-season{--rarGlow:var(--g-ultra-rara)}
+    .badge{position:absolute; top:10px; right:10px; z-index:2; padding:6px 8px; border-radius:999px; font-size:12px; font-weight:700; color:#fff; border:1px solid rgba(255,255,255,.15)}
+    .r-comune .badge{background:rgba(154,163,178,.85)}
+    .r-non-comune .badge{background:rgba(52,211,153,.85)}
+    .r-rara .badge{background:rgba(96,165,250,.9)}
+    .r-epica .badge{background:rgba(167,139,250,.95)}
+    .r-ultra-rara .badge{background:rgba(251,191,36,.95); color:#000}
+    .r-season .badge{background:rgba(239,68,68,.95)}
 
-.rays{position:absolute; inset:-20px; border-radius:inherit; pointer-events:none; z-index:0; background:conic-gradient(from 0deg, rgba(255,220,120,.0), rgba(255,220,120,.35), rgba(255,220,120,.0) 30%); mix-blend-mode:screen; opacity:0; animation:rays 2.5s linear infinite; transform:rotate(0deg)}
-.cCard.r-ultra-rara .rays,.cCard.r-season .rays{opacity:.8}
-@keyframes rays{to{transform:rotate(360deg)}}
+    .cCard::after{content:""; position:absolute; inset:-2px; border-radius:inherit; pointer-events:none; opacity:0; background:radial-gradient(500px 600px at 50% -10%, var(--rarGlow, rgba(255,255,255,.18)), transparent 60%); filter:blur(12px); transition:opacity .5s ease}
+    .cCard.revealed::after{opacity:.9}
+    .cCard.r-comune{--rarGlow:var(--g-comune)}
+    .cCard.r-non-comune{--rarGlow:var(--g-non-comune)}
+    .cCard.r-rara{--rarGlow:var(--g-rara); animation:bluePulse 2.3s ease-in-out infinite}
+    @keyframes bluePulse{0%,100%{filter:none}50%{filter:drop-shadow(0 0 18px rgba(96,165,250,.45))}}
+    .cCard.r-epica{--rarGlow:var(--g-epica)}
+    .cCard.r-ultra-rara,.cCard.r-season{--rarGlow:var(--g-ultra-rara)}
 
-.spark{position:absolute; inset:0; pointer-events:none; overflow:hidden}
-.spark i{position:absolute; width:2px; height:10px; background:#fff; opacity:0; box-shadow:0 0 10px #fff, 0 0 16px var(--rarGlow); transform:translate(-50%,-50%) rotate(var(--rot,0deg)); animation:fall .9s ease-out forwards; will-change:transform,opacity}
-@keyframes fall{0%{transform:translate(var(--x,50%),-20%) rotate(var(--rot,0deg)); opacity:0}30%{opacity:1}100%{transform:translate(var(--xEnd,50%),120%) rotate(var(--rot,0deg)); opacity:0}}
+    .rays{position:absolute; inset:-20px; border-radius:inherit; pointer-events:none; z-index:0; background:conic-gradient(from 0deg, rgba(255,220,120,.0), rgba(255,220,120,.35), rgba(255,220,120,.0) 30%); mix-blend-mode:screen; opacity:0; animation:rays 2.5s linear infinite; transform:rotate(0deg)}
+    .cCard.r-ultra-rara .rays,.cCard.r-season .rays{opacity:.8}
+    @keyframes rays{to{transform:rotate(360deg)}}
 
-.cCard.final .scene{transition-duration:1s}
-.cCard.final.revealed{animation:epicIn 1s cubic-bezier(.2,.8,.2,1) forwards; opacity:1!important}
-@keyframes epicIn{0%{transform:translateY(8px) scale(.96)}60%{transform:translateY(-6px) scale(1.04)}100%{transform:translateY(0) scale(1)}}
-.cCard.final .veil{content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; background:linear-gradient(180deg, rgba(255,255,255,.25), transparent 30%, transparent 70%, rgba(255,255,255,.18)); opacity:0}
-.cCard.final.revealed .veil{animation:veilUp 1s ease-out forwards}
-@keyframes veilUp{0%{opacity:1; clip-path:inset(0 0 0 0 round 18px)}100%{opacity:0; clip-path:inset(100% 0 0 0 round 18px)}}
+    .spark{position:absolute; inset:0; pointer-events:none; overflow:hidden}
+    .spark i{position:absolute; width:2px; height:10px; background:#fff; opacity:0; box-shadow:0 0 10px #fff, 0 0 16px var(--rarGlow); transform:translate(-50%,-50%) rotate(var(--rot,0deg)); animation:fall .9s ease-out forwards; will-change:transform,opacity}
+    @keyframes fall{0%{transform:translate(var(--x,50%),-20%) rotate(var(--rot,0deg)); opacity:0}30%{opacity:1}100%{transform:translate(var(--xEnd,50%),120%) rotate(var(--rot,0deg)); opacity:0}}
 
-.log{margin-top:8px; font-size:13px; color:var(--muted)}
-footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6))}
-.foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
-.pillFoot{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
+    .cCard.final .scene{transition-duration:1s}
+    .cCard.final.revealed{animation:epicIn 1s cubic-bezier(.2,.8,.2,1) forwards; opacity:1!important}
+    @keyframes epicIn{0%{transform:translateY(8px) scale(.96)}60%{transform:translateY(-6px) scale(1.04)}100%{transform:translateY(0) scale(1)}}
+    .cCard.final .veil{content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; background:linear-gradient(180deg, rgba(255,255,255,.25), transparent 30%, transparent 70%, rgba(255,255,255,.18)); opacity:0}
+    .cCard.final.revealed .veil{animation:veilUp 1s ease-out forwards}
+    @keyframes veilUp{0%{opacity:1; clip-path:inset(0 0 0 0 round 18px)}100%{opacity:0; clip-path:inset(100% 0 0 0 round 18px)}}
 
-@media(max-width:600px){.wrap{padding:12px} .stage{grid-template-columns:1fr}}
-</style>
+    .log{margin-top:8px; font-size:13px; color:var(--muted)}
+    footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6))}
+    .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
+    .pillFoot{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
+
+    @media(max-width:600px){.wrap{padding:12px} .stage{grid-template-columns:1fr}}
+
+    /* Share modal (fallback desktop) */
+    .shareModal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:50; background:rgba(0,0,0,.45)}
+    .shareModal.show{display:flex}
+    .shareCard{background:var(--panel); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:16px; width:min(520px,92vw); box-shadow:0 12px 40px rgba(0,0,0,.5)}
+    .shareHeader{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px}
+    .shareRow{display:flex; gap:8px; flex-wrap:wrap}
+    .shareItem{display:inline-flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); border-radius:12px}
+    .shareActions{display:flex; gap:8px; margin-top:12px; justify-content:flex-end}
+    .inputLike{width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03); color:var(--text)}
+  </style>
 </head>
 <body>
-<div class="flash-line" id="flashLine" aria-hidden="true"></div>
-<div class="flash-screen" id="flashScreen" aria-hidden="true"></div>
+  <div class="flash-line" id="flashLine" aria-hidden="true"></div>
+  <div class="flash-screen" id="flashScreen" aria-hidden="true"></div>
 
-<header>
-  <div class="wrap">
-    <div class="title">
-      <div>
-        <h1>Open Pack – Fantaballa</h1>
-        <div class="subtitle">Scegli il pacchetto → flash dorato → carte in ordine di rarità (click to flip).</div>
+  <header>
+    <div class="wrap">
+      <div class="title">
+        <div>
+          <h1>Open Pack – Fantaballa</h1>
+          <div class="subtitle">Scegli il pacchetto → flash dorato → carte in ordine di rarità (click to flip).</div>
+        </div>
+        <span class="pill" id="pricePill">💰 Costo: 1000</span>
+        <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
+        <button id="shareBtn" class="btn" disabled>🔗 Condividi pacchetto</button>
+        <a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Torna alla Home</a>
       </div>
-      <span class="pill" id="pricePill">💰 Costo: 1000</span>
-      <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
-      <button id="shareBtn" class="btn" disabled>🔗 Condividi pacchetto</button>
-      <a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Torna alla Home</a>
 
-      <!-- 🔐 SOLO Google login -->
-      <div style="display:flex; gap:10px; align-items:center">
-        <img id="userPhoto" alt="" referrerpolicy="no-referrer" style="width:28px;height:28px;border-radius:999px;display:none">
-        <span id="userName" style="font-size:14px;opacity:.9;display:none"></span>
-        <button id="btnLogin"  class="btn" type="button">🔐 Accedi con Google</button>
-        <button id="btnLogout" class="btn" type="button" style="display:none">⎋ Esci</button>
+      <div class="toolbar">
+        <span class="pill" id="fairnessNote">🎲 Probabilità bilanciate • Garanzia Rara+ attiva</span>
       </div>
+
+      <!-- Anteprime pacchetti -->
+      <div class="choices" id="choices"></div>
+
+      <div class="log" id="log" role="status" aria-live="polite"></div>
     </div>
+  </header>
 
-    <div class="toolbar">
-      <span class="pill" id="fairnessNote">🎲 Probabilità bilanciate • Garanzia Rara+ attiva</span>
-      <span class="pill" id="saveStatus" aria-live="polite" style="display:none"></span>
+  <main class="wrap">
+    <section class="packArea" id="packArea">
+      <div class="pack" id="pack" title="Apri pacchetto"></div>
+    </section>
+
+    <section class="stageWrap" id="stageWrap">
+      <div id="stage" class="stage" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="foot">
+      <span class="pillFoot">ℹ️ Metti “Deck back ORO.png”, “Deck back Tots.png” e “Deck back wonderkid.png” accanto a questa pagina. Tieni le immagini carte in repo con percorsi relativi.</span>
     </div>
+  </footer>
 
-    <!-- Anteprime pacchetti -->
-    <div class="choices" id="choices"></div>
-
-    <div class="log" id="log" role="status" aria-live="polite"></div>
-  </div>
-</header>
-
-<main class="wrap">
-  <section class="packArea" id="packArea">
-    <div class="pack" id="pack" title="Apri pacchetto"></div>
-  </section>
-
-  <section class="stageWrap" id="stageWrap">
-    <div id="stage" class="stage" aria-live="polite"></div>
-  </section>
-</main>
-
-<footer>
-  <div class="foot">
-    <span class="pillFoot">ℹ️ Metti “Deck back ORO.png”, “Deck back Tots.png” e “Deck back wonderkid.png” accanto a questa pagina. Tieni le immagini carte in repo con percorsi relativi.</span>
-  </div>
-</footer>
-
-<!-- Template carta -->
-<template id="tplCard">
-  <article class="cCard drop" data-state="back">
-    <div class="rays"></div>
-    <div class="scene">
-      <div class="face back">
-        <img src="Deck%20back%20ORO.png" alt="Retro carta" loading="eager" decoding="async" />
+  <!-- Template carta -->
+  <template id="tplCard">
+    <article class="cCard drop" data-state="back">
+      <div class="rays"></div>
+      <div class="scene">
+        <div class="face back">
+          <img src="Deck%20back%20ORO.png" alt="Retro carta" loading="eager" decoding="async" />
+        </div>
+        <div class="face front">
+          <span class="badge"></span>
+          <img alt="" loading="lazy" decoding="async">
+        </div>
       </div>
-      <div class="face front">
-        <span class="badge"></span>
-        <img alt="" loading="lazy" decoding="async">
-      </div>
-    </div>
-    <div class="veil"></div>
-    <div class="spark"></div>
-  </article>
-</template>
+      <div class="veil"></div>
+      <div class="spark"></div>
+    </article>
+  </template>
 
-<!-- Share Fallback Modal -->
-<div class="shareModal" id="shareModal" aria-hidden="true" role="dialog" aria-modal="true" style="display:none">
-  <div class="shareCard">
-    <div class="shareHeader">
-      <strong>Condividi pacchetto</strong>
-      <button type="button" class="btn" id="closeShare">✖️ Chiudi</button>
-    </div>
-    <div class="shareRow" style="margin-bottom:10px">
-      <a class="shareItem" id="waShare" target="_blank" rel="noopener">WhatsApp</a>
-      <a class="shareItem" id="xShare" target="_blank" rel="noopener">X (Twitter)</a>
-      <a class="shareItem" id="fbShare" target="_blank" rel="noopener">Facebook</a>
-      <a class="shareItem" id="tgShare" target="_blank" rel="noopener">Telegram</a>
-    </div>
-    <div style="display:flex; gap:8px; align-items:center">
-      <input class="inputLike" id="shareLink" readonly />
-      <button type="button" class="btn" id="copyLink">📋 Copia</button>
-    </div>
-    <div class="shareActions">
-      <button type="button" class="btn" id="shareOk">OK</button>
+  <!-- Share Fallback Modal -->
+  <div class="shareModal" id="shareModal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="shareCard">
+      <div class="shareHeader">
+        <strong>Condividi pacchetto</strong>
+        <button type="button" class="btn" id="closeShare">✖️ Chiudi</button>
+      </div>
+      <div class="shareRow" style="margin-bottom:10px">
+        <a class="shareItem" id="waShare" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="shareItem" id="xShare" target="_blank" rel="noopener">X (Twitter)</a>
+        <a class="shareItem" id="fbShare" target="_blank" rel="noopener">Facebook</a>
+        <a class="shareItem" id="tgShare" target="_blank" rel="noopener">Telegram</a>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center">
+        <input class="inputLike" id="shareLink" readonly />
+        <button type="button" class="btn" id="copyLink">📋 Copia</button>
+      </div>
+      <div class="shareActions">
+        <button type="button" class="btn" id="shareOk">OK</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Firebase compat -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-<script type="module">
-/* =========================
-   Firebase init (uguale progetto)
-   ========================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
-  authDomain: "fantaball-9e19c.firebaseapp.com",
-  projectId: "fantaball-9e19c",
-  storageBucket: "fantaball-9e19c.appspot.com",
-  messagingSenderId: "683304379837",
-  appId: "1:683304379837:web:d2bbe7a814e2e40e075ed4",
-  measurementId: "G-C8Q8K5B52C"
-};
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
-try{ db.settings({ experimentalForceLongPolling:true }); }catch{}
-
-/* =========================
-   UI stato salvataggio
-   ========================= */
-const saveStatus = document.getElementById('saveStatus');
-function showSaveInfo(msg, ok=true){
-  if(!saveStatus) return;
-  saveStatus.style.display = '';
-  saveStatus.textContent = (ok ? '💾 ' : '⚠️ ') + msg;
-  if (ok) { setTimeout(()=>{ saveStatus.style.display='none' }, 3500); }
-}
-
-/* =========================
-   SOLO Google login
-   ========================= */
-try { await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch {}
-let authReadyResolve; const authReady = new Promise(r=>authReadyResolve=r); let first=false;
-auth.onAuthStateChanged(u=>{ if(!first){first=true; authReadyResolve(u||null)} updateAuthUI(u); });
-
-function updateAuthUI(user){
-  const btnLogin  = document.getElementById('btnLogin');
-  const btnLogout = document.getElementById('btnLogout');
-  const userName  = document.getElementById('userName');
-  const userPhoto = document.getElementById('userPhoto');
-  const logged = !!user && !user.isAnonymous;
-
-  btnLogin.style.display  = logged ? 'none' : '';
-  btnLogout.style.display = logged ? '' : 'none';
-
-  if (logged) {
-    if (userName){ userName.textContent = user.displayName || user.email || 'Account'; userName.style.display=''; }
-    if (userPhoto && user.photoURL){ userPhoto.src=user.photoURL; userPhoto.style.display=''; }
-    showSaveInfo('Sei connesso con Google ✅');
-  } else {
-    if (userName){ userName.style.display='none'; userName.textContent=''; }
-    if (userPhoto){ userPhoto.style.display='none'; userPhoto.removeAttribute('src'); }
-    showSaveInfo('Accedi con Google per salvare automaticamente le carte.', false);
-  }
-}
-
-async function safeGoogleSignIn(){
-  const provider = new firebase.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-  try{
-    if (auth.currentUser && auth.currentUser.isAnonymous) {
-      const { user } = await auth.currentUser.linkWithPopup(provider);
-      return user;
-    }
-    const { user } = await auth.signInWithPopup(provider);
-    return user;
-  }catch(e){
-    // popup bloccato? redirect
-    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
-      await auth.signInWithRedirect(provider); return;
-    }
-    // stessa credenziale già collegata ad altro account → entra con quella
-    if (e.code === 'auth/credential-already-in-use' && e.credential) {
-      const { user } = await auth.signInWithCredential(e.credential); return user;
-    }
-    // email già usata con metodo diverso → se è google rientra, altrimenti avviso
-    if (e.code === 'auth/account-exists-with-different-credential' && e.email) {
-      const methods = await auth.fetchSignInMethodsForEmail(e.email);
-      if (methods.includes('google.com') && e.credential) {
-        const { user } = await auth.signInWithCredential(e.credential); return user;
-      }
-      alert('Quest’email è collegata a un metodo diverso. Su questo sito è permesso solo Google.');
-      return;
-    }
-    console.warn('[Google Sign-In]', e.code, e.message);
-    throw e;
-  }
-}
-
-document.getElementById('btnLogin').addEventListener('click', async ()=>{
-  try { await safeGoogleSignIn(); }
-  catch { showSaveInfo('Login annullato o fallito.', false); }
-});
-document.getElementById('btnLogout').addEventListener('click', async ()=>{
-  try { await auth.signOut(); showSaveInfo('Sei uscito. Le nuove carte non verranno salvate.', false); }
-  catch(e){ console.warn('[logout]', e); }
-});
-try { await auth.getRedirectResult(); } catch {}
-
-/* ==============================
-   Salvataggio inventory (batch + fallback)
-   ============================== */
-async function saveInventoryIfLoggedIn(cards){
-  const u = auth.currentUser;
-  if (!u || u.isAnonymous) {
-    showSaveInfo('Non hai effettuato l’accesso: carte NON salvate. Accedi con Google per salvare automaticamente.', false);
-    return;
-  }
-  const byId = new Map();
-  for (const c of cards){
-    if (!c?.id) continue;
-    if (!byId.has(c.id)) byId.set(c.id, { ...c, _count: 0 });
-    byId.get(c.id)._count += 1;
-  }
-  if (!byId.size){ showSaveInfo('Nessuna carta valida da salvare.', false); return; }
-
-  try{
-    const batch = db.batch();
-    byId.forEach((c, id)=>{
-      const ref = db.collection('users').doc(u.uid).collection('inventory').doc(id);
-      batch.set(ref, {
-        name:   c.name   || '',
-        rarity: c.rarity || '',
-        img:    c.img    || '',
-        series: c.series || '',
-        count:  firebase.firestore.FieldValue.increment(c._count || 1),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-    });
-    await batch.commit();
-    showSaveInfo(`✅ Salvate ${cards.length} carte nel tuo inventario`);
-    return;
-  }catch(e){
-    console.error('[saveInventory/batch]', e);
-    showSaveInfo(`⚠️ Errore batch: ${e.code || 'unknown'} – ${e.message || e}`, false);
-    if (e.code === 'permission-denied') return;
-  }
-  try{
-    for (const [id, c] of byId.entries()){
-      const ref = db.collection('users').doc(u.uid).collection('inventory').doc(id);
-      try{
-        await ref.set({
-          name:   c.name   || '',
-          rarity: c.rarity || '',
-          img:    c.img    || '',
-          series: c.series || '',
-          count:  firebase.firestore.FieldValue.increment(c._count || 1),
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge:true });
-      }catch(eInc){
-        if (eInc.code === 'failed-precondition' || eInc.code === 'invalid-argument'){
-          const snap = await ref.get();
-          const prev = snap.exists ? snap.data() : {};
-          const prevCount = Number(prev?.count) || 0;
-          await ref.set({
-            name:   c.name   || prev?.name   || '',
-            rarity: c.rarity || prev?.rarity || '',
-            img:    c.img    || prev?.img    || '',
-            series: c.series || prev?.series || '',
-            count:  prevCount + (c._count || 1),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          }, { merge:true });
-        }else{
-          throw eInc;
-        }
-      }
-    }
-    showSaveInfo(`✅ Salvate ${cards.length} carte (fallback singolo)`);
-  }catch(e2){
-    console.error('[saveInventory/single]', e2);
-    showSaveInfo(`❌ Salvataggio fallito: ${e2.code || 'unknown'} – ${e2.message || e2}`, false);
-  }
-}
-
-/* ================
-   Open Pack (il tuo)
-   ================ */
+  <script type="module">
+   // Utility per match STRETTO sul campo "series"
 const seriesIs = (c, v) => String(c.series ?? '').trim() === v;
-const $ = (s,el=document)=>el.querySelector(s);
-const delay = ms => new Promise(r=>setTimeout(r,ms));
-const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5};
 
-let audioCtx=null;
-function ensureAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)() }catch{} }
-function tone(f,d=.15,g=.08,t='sine'){ if(!audioCtx) return; const o=audioCtx.createOscillator(),A=audioCtx.createGain(); o.type=t; o.frequency.value=f; A.gain.value=g; o.connect(A).connect(audioCtx.destination); o.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d,.03); o.stop(audioCtx.currentTime+d+.08) }
-function noiseBoom(d=.5,g=.15){ if(!audioCtx) return; const N=audioCtx.sampleRate*d, b=audioCtx.createBuffer(1,N,audioCtx.sampleRate), x=b.getChannelData(0); for(let i=0;i<N;i++) x[i]=(Math.random()*2-1)*Math.pow(1-i/N,2); const s=audioCtx.createBufferSource(); s.buffer=b; const A=audioCtx.createGain(); A.gain.value=g; const F=audioCtx.createBiquadFilter(); F.type='lowpass'; F.frequency.value=400; s.connect(F).connect(A).connect(audioCtx.destination); s.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d*.7,.2) }
-function playByRarity(r){ if(r==='Comune'||r==='Non Comune'){ tone(520,.07,.06,'triangle'); tone(660,.07,.05,'triangle') } else if(r==='Rara'){ tone(660,.12,.08,'sine'); tone(880,.16,.06,'sine') } else if(r==='Epica'){ tone(660,.18,.09,'sine'); tone(990,.22,.08,'sine'); tone(1320,.24,.06,'sine') } else if(r==='Ultra Rara'||r==='Season'){ noiseBoom(.7,.18); tone(880,.18,.1,'square'); tone(1320,.22,.08,'square') } }
-
-/* Pacchetti */
+// Definizione pacchetti (usa SOLO series: "Wonderkid" / "Tots")
 const PACKS = {
-  random:    { key:'random',    label:'Random',    cost:1000, back:'Deck%20back%20ORO.png',         filter: c => true },
-  wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1800, back:'Deck%20back%20wonderkid.png',   filter: c => seriesIs(c, 'Wonderkid') },
-  f1:        { key:'f1',        label:'F1',        cost:1400, back:'f1%20pack.png',                 filter: c => seriesIs(c, 'F1') },
-  dream:     { key:'dream',     label:'Dream',     cost:1500, back:'Deck%20back%20Dream.png',       filter: c => String(c.series||'').trim()==='Dream' }
+  random:    { key:'random',    label:'Random',    cost:1000, back:'Deck%20back%20ORO.png',
+               filter: c => true },
+  wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1800, back:'Deck%20back%20wonderkid.png',
+               filter: c => seriesIs(c, 'Wonderkid') },
+  tots:      { key:'tots',      label:'TOTS',      cost:1400, back:'Deck%20back%20Tots.png',
+               filter: c => seriesIs(c, 'Tots') }
 };
-const DEFAULT_PACK_KEY = 'random';
+    const DEFAULT_PACK_KEY = 'random';
 
-const CONFIG = {
-  CARDS_JSON:'cards.json',
-  COUNT:6,
-  WEIGHTS:{'Leggendaria':1,'Ultra Rara':6,'Season':8,'Epica':3,'Rara':1,'Non Comune':20,'Comune':40},
-  FETCH_TIMEOUT_MS:8000
-};
+    const CONFIG = {
+      CARDS_JSON:'cards.json',
+      COUNT:6,
+      WEIGHTS:{'Season':1,'Ultra Rara':3,'Epica':6,'Rara':10,'Non Comune':20,'Comune':60},
+      FETCH_TIMEOUT_MS:8000
+    };
 
-/* Fallback per test */
-const FALLBACK_CARDS = [
-  {id:'wk1', name:'Wonderkid A', rarity:'Comune',     img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
-  {id:'wk2', name:'Wonderkid B', rarity:'Rara',       img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
-  {id:'wk3', name:'Wonderkid C', rarity:'Epica',      img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
-  {id:'t1',  name:'F1 Alpha',    rarity:'Comune',     img:'f1%20pack.png',               series:'F1'},
-  {id:'t2',  name:'F1 Beta',     rarity:'Rara',       img:'f1%20pack.png',               series:'F1'},
-  {id:'t3',  name:'F1 Omega',    rarity:'Ultra Rara', img:'f1%20pack.png',               series:'F1'},
-  {id:'r1',  name:'Base 1',      rarity:'Comune',     img:'Deck%20back%20ORO.png'},
-  {id:'r2',  name:'Base 2',      rarity:'Non Comune', img:'Deck%20back%20ORO.png'},
-  {id:'r3',  name:'Base 3',      rarity:'Rara',       img:'Deck%20back%20ORO.png'},
-  {id:'r4',  name:'Base 4',      rarity:'Epica',      img:'Deck%20back%20ORO.png'},
-];
+    // Fallback carte per test locale (series incluse)
+    const FALLBACK_CARDS = [
+      {id:'wk1', name:'Wonderkid A', rarity:'Comune',     img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
+      {id:'wk2', name:'Wonderkid B', rarity:'Rara',       img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
+      {id:'wk3', name:'Wonderkid C', rarity:'Epica',      img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
+      {id:'t1',  name:'TOTS Alpha',  rarity:'Comune',     img:'Deck%20back%20Tots.png',      series:'Tots'},
+      {id:'t2',  name:'TOTS Beta',   rarity:'Rara',       img:'Deck%20back%20Tots.png',      series:'Tots'},
+      {id:'t3',  name:'TOTS Omega',  rarity:'Ultra Rara', img:'Deck%20back%20Tots.png',      series:'Tots'},
+      {id:'r1',  name:'Base 1',      rarity:'Comune',     img:'Deck%20back%20ORO.png'},
+      {id:'r2',  name:'Base 2',      rarity:'Non Comune', img:'Deck%20back%20ORO.png'},
+      {id:'r3',  name:'Base 3',      rarity:'Rara',       img:'Deck%20back%20ORO.png'},
+      {id:'r4',  name:'Base 4',      rarity:'Epica',      img:'Deck%20back%20ORO.png'},
+    ];
 
-/* UI helpers */
-const logEl = document.getElementById('log');
-function setLog(msg){ logEl.textContent = msg || '' }
+    // === Utilità
+    const $ = (s,el=document)=>el.querySelector(s);
+    const delay = ms => new Promise(r=>setTimeout(r,ms));
+    const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5};
+    const norm = v => String(v||'').trim().toLowerCase();
 
-/* PackOpener (come tuo file originale) */
-class PackOpener{
-  constructor(){
-    this.ALL=[]; this.used=new Set();
-    this.currentPackKey = DEFAULT_PACK_KEY;
+    // Audio opzionale
+    let audioCtx=null;
+    function ensureAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)() }catch{} }
+    function tone(f,d=.15,g=.08,t='sine'){ if(!audioCtx) return; const o=audioCtx.createOscillator(),A=audioCtx.createGain(); o.type=t; o.frequency.value=f; A.gain.value=g; o.connect(A).connect(audioCtx.destination); o.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d,.03); o.stop(audioCtx.currentTime+d+.08) }
+    function noiseBoom(d=.5,g=.15){ if(!audioCtx) return; const N=audioCtx.sampleRate*d, b=audioCtx.createBuffer(1,N,audioCtx.sampleRate), x=b.getChannelData(0); for(let i=0;i<N;i++) x[i]=(Math.random()*2-1)*Math.pow(1-i/N,2); const s=audioCtx.createBufferSource(); s.buffer=b; const A=audioCtx.createGain(); A.gain.value=g; const F=audioCtx.createBiquadFilter(); F.type='lowpass'; F.frequency.value=400; s.connect(F).connect(A).connect(audioCtx.destination); s.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d*.7,.2) }
+    function playByRarity(r){ if(r==='Comune'||r==='Non Comune'){ tone(520,.07,.06,'triangle'); tone(660,.07,.05,'triangle') } else if(r==='Rara'){ tone(660,.12,.08,'sine'); tone(880,.16,.06,'sine') } else if(r==='Epica'){ tone(660,.18,.09,'sine'); tone(990,.22,.08,'sine'); tone(1320,.24,.06,'sine') } else if(r==='Ultra Rara'||r==='Season'){ noiseBoom(.7,.18); tone(880,.18,.1,'square'); tone(1320,.22,.08,'square') } }
 
-    this.$openBtn=$('#openBtn'); this.$shareBtn=$('#shareBtn');
-    this.$packArea=$('#packArea'); this.$pack=$('#pack');
-    this.$flashLine=$('#flashLine'); this.$flashScreen=$('#flashScreen');
-    this.$stageWrap=$('#stageWrap'); this.$stage=$('#stage'); this.$log=$('#log');
-    this.$pricePill=$('#pricePill'); this.$choices=$('#choices');
+    class PackOpener{
+      constructor(){
+        this.ALL=[]; this.used=new Set();
+        this.currentPackKey = DEFAULT_PACK_KEY;
 
-    this.bind(); this.prewarm();
-    this.renderChoices();
-    this.applyPackVisual();
-  }
-  bind(){
-    this.$openBtn.addEventListener('click',()=>this.doOpen());
-    this.$pack.addEventListener('click',()=>this.$openBtn.click(),{passive:true});
-    this.$shareBtn.addEventListener('click',()=>this.doShare());
-    ['click','keydown','touchstart'].forEach(e=>window.addEventListener(e,()=>{ensureAudio()}, {once:true}));
-  }
-  prewarm(){
-    ['Deck%20back%20ORO.png','f1%20pack.png','Deck%20back%20wonderkid.png','Deck%20back%20Dream.png'].forEach(src=>{ const im=new Image(); im.decoding='async'; im.src=src; });
-    this.loadData().catch(()=>{});
-  }
-  async loadData(){
-    if(this.ALL.length) return;
-    const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),CONFIG.FETCH_TIMEOUT_MS);
-    try{
-      const res=await fetch(CONFIG.CARDS_JSON,{cache:'no-store',signal:ctrl.signal});
-      if(!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json=await res.json();
-      if(!Array.isArray(json)) throw new Error('Formato non valido (atteso array)');
-      const cleaned=[]; const ids=new Set();
-      for(const c of json){
-        if(!c||typeof c!=='object') continue;
-        const id=c.id??`${c.name||'card'}-${Math.random().toString(36).slice(2,8)}`;
-        const name=String(c.name||'');
-        const rarity=String(c.rarity||'');
-        const img=String(c.img||'');
-        const series=String(c.series||'');
-        if(!name||!rarity||!img) continue;
-        if(ids.has(id)) continue; ids.add(id);
-        cleaned.push({id,name,rarity,img,series});
-      }
-      if(!cleaned.length) throw new Error('Nessuna carta valida in cards.json');
-      this.ALL=cleaned; setLog(`Caricate ${this.ALL.length} carte.`);
-    }catch(err){
-      console.warn('cards.json non caricato, uso fallback:', err?.message||err);
-      this.ALL = FALLBACK_CARDS;
-      setLog('⚠️ Non trovo cards.json, uso carte di esempio.');
-    }finally{ clearTimeout(t) }
-  }
+        this.$openBtn=$('#openBtn'); this.$shareBtn=$('#shareBtn');
+        this.$packArea=$('#packArea'); this.$pack=$('#pack');
+        this.$flashLine=$('#flashLine'); this.$flashScreen=$('#flashScreen');
+        this.$stageWrap=$('#stageWrap'); this.$stage=$('#stage'); this.$log=$('#log');
+        this.$pricePill=$('#pricePill'); this.$choices=$('#choices');
 
-  renderChoices(){
-    const frag=document.createDocumentFragment();
-    Object.values(PACKS).forEach(p=>{
-      const btn=document.createElement('button');
-      btn.type='button';
-      btn.className='choice';
-      btn.setAttribute('data-pack',p.key);
-      btn.setAttribute('aria-selected', String(p.key===this.currentPackKey));
-      btn.innerHTML = `
-        <div class="prev" style="background-image:url('${p.back}')"></div>
-        <div class="meta">
-          <span class="name">${p.label}</span>
-          <span class="price">Costo: ${p.cost}</span>
-        </div>`;
-      btn.addEventListener('click', ()=>{
-        this.currentPackKey = p.key;
-        this.updatePrice();
+        this.bind(); this.prewarm();
+        this.renderChoices();
         this.applyPackVisual();
-        [...this.$choices.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
-        btn.setAttribute('aria-selected','true');
-      });
-      frag.appendChild(btn);
-    });
-    this.$choices.innerHTML='';
-    this.$choices.appendChild(frag);
-    this.updatePrice();
-  }
-  updatePrice(){
-    const pack=PACKS[this.currentPackKey];
-    this.$pricePill.textContent = `💰 Costo: ${pack.cost}`;
-  }
-  applyPackVisual(){
-    const pack=PACKS[this.currentPackKey];
-    this.$pack.style.backgroundImage = `url('${pack.back}')`;
-  }
+      }
+      bind(){
+        this.$openBtn.addEventListener('click',()=>this.doOpen());
+        this.$pack.addEventListener('click',()=>this.$openBtn.click(),{passive:true});
+        this.$shareBtn.addEventListener('click',()=>this.doShare());
+        ['click','keydown','touchstart'].forEach(e=>window.addEventListener(e,()=>{ensureAudio()}, {once:true}));
+      }
+      prewarm(){
+        // Precarica immagini retro
+        ['Deck%20back%20ORO.png','Deck%20back%20Tots.png','Deck%20back%20wonderkid.png'].forEach(src=>{ const im=new Image(); im.decoding='async'; im.src=src; });
+        this.loadData().catch(()=>{});
+      }
+      async loadData(){
+        if(this.ALL.length) return;
+        const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),CONFIG.FETCH_TIMEOUT_MS);
+        try{
+          const res=await fetch(CONFIG.CARDS_JSON,{cache:'no-store',signal:ctrl.signal});
+          if(!res.ok) throw new Error(`HTTP ${res.status}`);
+          const json=await res.json();
+          if(!Array.isArray(json)) throw new Error('Formato non valido (atteso array)');
+          const cleaned=[]; const ids=new Set();
+          for(const c of json){
+            if(!c||typeof c!=='object') continue;
+            const id=c.id??`${c.name||'card'}-${Math.random().toString(36).slice(2,8)}`;
+            const name=String(c.name||'');
+            const rarity=String(c.rarity||'');
+            const img=String(c.img||'');
+            const series=String(c.series||'');
+            if(!name||!rarity||!img) continue;
+            if(ids.has(id)) continue; ids.add(id);
+            cleaned.push({id,name,rarity,img,series});
+          }
+          if(!cleaned.length) throw new Error('Nessuna carta valida in cards.json');
+          this.ALL=cleaned; this.$log.textContent=`Caricate ${this.ALL.length} carte.`;
+        }catch(err){
+          console.warn('cards.json non caricato, uso fallback:', err?.message||err);
+          this.ALL = FALLBACK_CARDS;
+          this.$log.textContent='⚠️ Non trovo cards.json, uso carte di esempio.';
+        }finally{ clearTimeout(t) }
+      }
 
-  pickRarity(){
-    const E=Object.entries(CONFIG.WEIGHTS);
-    const tot=E.reduce((s,[,w])=>s+w,0);
-    let r=Math.random()*tot;
-    for(const [rar,w] of E){ if(r<w) return rar; r-=w }
-    return 'Comune';
-  }
-  pickCardByRarity(rarity, pool){
-    let candidates = pool.filter(c => c.rarity===rarity && !this.used.has(c.id));
-    if(!candidates.length) candidates = pool.filter(c => !this.used.has(c.id));
-    if(!candidates.length) candidates = pool;
-    if(!candidates.length) return null;
-    return candidates[Math.floor(Math.random()*candidates.length)];
-  }
-  ensureRarePlus(cards, pool, minCount = 2){
-    const RARE_PLUS = rarityRank['Rara'];
-    let have = cards.filter(c => (rarityRank[c.rarity] ?? 0) >= RARE_PLUS).length;
-    if (have >= minCount) return cards;
-    const rarePool = pool.filter(c => (rarityRank[c.rarity] ?? 0) >= RARE_PLUS);
-    if (!rarePool.length) return cards;
-    const usedIds = new Set(cards.map(c => c.id));
-    let need = Math.min(minCount - have, rarePool.length);
-    for (let g = 0; g < need; g++) {
-      const replaceable = cards.map((c, idx) => ({ c, idx }))
-        .filter(x => (rarityRank[x.c.rarity] ?? 0) < RARE_PLUS)
-        .map(x => x.idx);
-      const idx = replaceable.length
-        ? replaceable[Math.floor(Math.random() * replaceable.length)]
-        : Math.floor(Math.random() * cards.length);
-      let choices = rarePool.filter(c => !usedIds.has(c.id));
-      if (!choices.length) choices = rarePool;
-      const pick = choices[Math.floor(Math.random() * choices.length)];
-      cards[idx] = pick;
-      usedIds.add(pick.id);
+      // UI anteprime
+      renderChoices(){
+        const frag=document.createDocumentFragment();
+        Object.values(PACKS).forEach(p=>{
+          const btn=document.createElement('button');
+          btn.type='button';
+          btn.className='choice';
+          btn.setAttribute('data-pack',p.key);
+          btn.setAttribute('aria-selected', String(p.key===this.currentPackKey));
+          btn.innerHTML = `
+            <div class="prev" style="background-image:url('${p.back}')"></div>
+            <div class="meta">
+              <span class="name">${p.label}</span>
+              <span class="price">Costo: ${p.cost}</span>
+            </div>`;
+          btn.addEventListener('click', ()=>{
+            this.currentPackKey = p.key;
+            this.updatePrice();
+            this.applyPackVisual();
+            // aggiorna evidenziazione
+            [...this.$choices.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
+            btn.setAttribute('aria-selected','true');
+          });
+          frag.appendChild(btn);
+        });
+        this.$choices.innerHTML='';
+        this.$choices.appendChild(frag);
+        this.updatePrice();
+      }
+      updatePrice(){
+        const pack=PACKS[this.currentPackKey];
+        this.$pricePill.textContent = `💰 Costo: ${pack.cost}`;
+      }
+      applyPackVisual(){
+        const pack=PACKS[this.currentPackKey];
+        this.$pack.style.backgroundImage = `url('${pack.back}')`;
+      }
+
+      pickRarity(){
+        const E=Object.entries(CONFIG.WEIGHTS);
+        const tot=E.reduce((s,[,w])=>s+w,0);
+        let r=Math.random()*tot;
+        for(const [rar,w] of E){ if(r<w) return rar; r-=w }
+        return 'Comune'
+      }
+      pickCardByRarity(rarity, pool){
+        let candidates = pool.filter(c => c.rarity===rarity && !this.used.has(c.id));
+        if(!candidates.length) candidates = pool.filter(c => !this.used.has(c.id));
+        if(!candidates.length) candidates = pool; // permetti duplicati se serve
+        if(!candidates.length) return null;
+        return candidates[Math.floor(Math.random()*candidates.length)];
+      }
+      ensureRarePlus(cards, pool){
+        const ok=cards.some(c=>rarityRank[c.rarity] >= rarityRank['Rara']);
+        if(ok) return cards;
+        const rarePool = pool.filter(c=>rarityRank[c.rarity] >= rarityRank['Rara']);
+        if(!rarePool.length) return cards;
+        const i=Math.floor(Math.random()*cards.length);
+        cards[i] = rarePool[Math.floor(Math.random()*rarePool.length)];
+        return cards;
+      }
+
+      makeCardEl(d,isFinal){
+        const tpl=document.getElementById('tplCard');
+        const n=tpl.content.firstElementChild.cloneNode(true);
+        const rslug=String(d.rarity||'').toLowerCase().replace(/\s+/g,'-');
+        if(rslug) n.classList.add('r-'+rslug);
+        if(isFinal) n.classList.add('final');
+        const front=n.querySelector('.front img');
+        front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async';
+        n.querySelector('.badge').textContent=d.rarity||'';
+        n.dataset.state='back';
+        n.addEventListener('click',()=>{ if(n.dataset.state==='back'){ this.revealCard(n,d) } else { n.dataset.state='back'; n.classList.remove('revealed') } },{passive:true});
+        return n
+      }
+      addSparks(el,n=10){
+        let cont=el.querySelector('.spark');
+        if(!cont){ cont=document.createElement('div'); cont.className='spark'; el.appendChild(cont) }
+        cont.innerHTML=''; const frag=document.createDocumentFragment();
+        for(let i=0;i<n;i++){
+          const s=document.createElement('i');
+          const x=10+Math.random()*80, xEnd=x+(-8+Math.random()*16), rot=-15+Math.random()*30;
+          s.style.setProperty('--x',x+'%'); s.style.setProperty('--xEnd',xEnd+'%'); s.style.setProperty('--rot',rot+'deg');
+          s.style.left=x+'%'; s.style.top=(5+Math.random()*20)+'%';
+          frag.appendChild(s)
+        }
+        cont.appendChild(frag)
+      }
+      revealCard(n,d){
+        const front=n.querySelector('.front img');
+        if(front && !front.src) front.src=d.img||'';
+        n.dataset.state='front'; n.classList.add('revealed');
+        const rank=rarityRank[d.rarity]??0;
+        this.addSparks(n,Math.min(6+rank*4,28));
+        playByRarity(d.rarity)
+      }
+      setDropIn(el,i,extra=0){ el.classList.add('drop'); setTimeout(()=>el.classList.add('in'),120*i+extra) }
+      showStage(cards){
+        const wrap=this.$stageWrap, stage=this.$stage;
+        stage.innerHTML=''; wrap.classList.add('show');
+        const last=cards.length-1; const frag=document.createDocumentFragment();
+        cards.forEach((c,i)=>{ const el=this.makeCardEl(c,i===last); frag.appendChild(el); this.setDropIn(el,i) });
+        stage.appendChild(frag);
+        this.$shareBtn.disabled=false;
+        this.$log.textContent='Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.';
+      }
+
+      async doOpen(){
+        const BTN=this.$openBtn, SHARE=this.$shareBtn; BTN.disabled=true; SHARE.disabled=true;
+        this.$log.textContent='Preparazione pacchetto…';
+        await this.loadData(); if(!this.ALL.length){ this.$log.textContent='Nessuna carta disponibile'; BTN.disabled=false; return }
+
+        const pack = PACKS[this.currentPackKey];
+        const pool = this.ALL.filter(pack.filter);
+        if(!pool.length){ this.$log.textContent='⚠️ Nessuna carta compatibile con questo pacchetto (controlla "series").'; BTN.disabled=false; SHARE.disabled=true; return }
+
+        this.$pack.classList.add('shake'); await delay(360); this.$pack.classList.remove('shake');
+        this.$flashLine.classList.add('active'); this.$flashScreen.classList.add('active'); this.$pack.classList.add('opening');
+        await delay(900); this.$packArea.style.display='none';
+
+        this.used.clear(); let chosen=[];
+        for(let i=0;i<CONFIG.COUNT;i++){
+          const rar=this.pickRarity();
+          const card=this.pickCardByRarity(rar,pool);
+          if(!card) break;
+          this.used.add(card.id); chosen.push(card)
+        }
+        chosen=this.ensureRarePlus(chosen,pool);
+        chosen.sort((a,b)=>rarityRank[a.rarity]-rarityRank[b.rarity]);
+        this.showStage(chosen);
+
+        setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active') },400);
+        BTN.textContent=`🔁 Nuovo pacchetto ${pack.label}`; BTN.disabled=false; SHARE.disabled=false;
+        BTN.onclick=async()=>{
+          BTN.disabled=true; SHARE.disabled=true;
+          this.$stageWrap.classList.remove('show'); this.$stage.innerHTML=''; this.$packArea.style.display='flex'; this.$pack.classList.remove('opening');
+          BTN.textContent='🎁 Apri pacchetto'; this.$log.textContent='';
+          await delay(100); BTN.disabled=false; BTN.onclick=()=>this.doOpen();
+        };
+      }
+
+      // === NUOVO: Condivisione pacchetto
+      async doShare(){
+        const shareData = {
+          title: 'Fantaballa – Il mio pacchetto',
+          text: 'Guarda il pacchetto che ho aperto su Fantaballa!',
+          url: window.location.href
+        };
+
+        if (navigator.share) {
+          try {
+            await navigator.share(shareData);
+            console.log('Pacchetto condiviso con successo');
+            return;
+          } catch (err) {
+            console.warn('Condivisione annullata o fallita', err);
+          }
+        }
+        // Fallback: apri modale con link + social
+        this.openShareFallback(shareData);
+      }
+
+      openShareFallback(shareData){
+        const modal = $('#shareModal');
+        const linkInput = $('#shareLink');
+        const closeBtn = $('#closeShare');
+        const okBtn = $('#shareOk');
+        const copyBtn = $('#copyLink');
+        const wa = $('#waShare'), x = $('#xShare'), fb = $('#fbShare'), tg = $('#tgShare');
+
+        const url = encodeURIComponent(shareData.url);
+        const text = encodeURIComponent(shareData.text);
+
+        wa.href = `https://api.whatsapp.com/send?text=${text}%20${url}`;
+        x.href  = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+        fb.href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+        tg.href = `https://t.me/share/url?url=${url}&text=${text}`;
+
+        linkInput.value = shareData.url;
+
+        const close = ()=>{ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true') };
+        closeBtn.onclick = close; okBtn.onclick = close;
+
+        copyBtn.onclick = async ()=>{
+          try{
+            await navigator.clipboard.writeText(shareData.url);
+            copyBtn.textContent = '✅ Copiato';
+            setTimeout(()=>copyBtn.textContent='📋 Copia',1200);
+          }catch{
+            copyBtn.textContent = '❌ Errore';
+            setTimeout(()=>copyBtn.textContent='📋 Copia',1200);
+          }
+        };
+
+        modal.classList.add('show'); modal.setAttribute('aria-hidden','false');
+      }
     }
-    return cards;
-  }
 
-  makeCardEl(d,isFinal){
-    const tpl=document.getElementById('tplCard');
-    const n=tpl.content.firstElementChild.cloneNode(true);
-    const rslug=String(d.rarity||'').toLowerCase().replace(/\s+/g,'-');
-    if(rslug) n.classList.add('r-'+rslug);
-    if(isFinal) n.classList.add('final');
-    const front=n.querySelector('.front img');
-    front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async';
-    n.querySelector('.badge').textContent=d.rarity||'';
-    n.dataset.state='back';
-    n.addEventListener('click',()=>{ if(n.dataset.state==='back'){ this.revealCard(n,d) } else { n.dataset.state='back'; n.classList.remove('revealed') } },{passive:true});
-    return n;
-  }
-  addSparks(el,n=10){
-    let cont=el.querySelector('.spark');
-    if(!cont){ cont=document.createElement('div'); cont.className='spark'; el.appendChild(cont) }
-    cont.innerHTML=''; const frag=document.createDocumentFragment();
-    for(let i=0;i<n;i++){
-      const s=document.createElement('i');
-      const x=10+Math.random()*80, xEnd=x+(-8+Math.random()*16), rot=-15+Math.random()*30;
-      s.style.setProperty('--x',x+'%'); s.style.setProperty('--xEnd',xEnd+'%'); s.style.setProperty('--rot',rot+'deg');
-      s.style.left=x+'%'; s.style.top=(5+Math.random()*20)+'%';
-      frag.appendChild(s)
-    }
-    cont.appendChild(frag)
-  }
-  revealCard(n,d){
-    const front=n.querySelector('.front img');
-    if(front && !front.src) front.src=d.img||'';
-    n.dataset.state='front'; n.classList.add('revealed');
-    this.addSparks(n,10);
-    playByRarity(d.rarity);
-  }
-  setDropIn(el,i,extra=0){ el.classList.add('drop'); setTimeout(()=>el.classList.add('in'),120*i+extra) }
-  showStage(cards){
-    const wrap=this.$stageWrap, stage=this.$stage;
-    stage.innerHTML=''; wrap.classList.add('show');
-    const last=cards.length-1; const frag=document.createDocumentFragment();
-    cards.forEach((c,i)=>{ const el=this.makeCardEl(c,i===last);
-      el.querySelector('.back img').src = PACKS[this.currentPackKey].back;
-      frag.appendChild(el); this.setDropIn(el,i) });
-    stage.appendChild(frag);
-    this.$shareBtn.disabled=false;
-    setLog('Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.');
-  }
-
-  async doOpen(){
-    const BTN=this.$openBtn, SHARE=this.$shareBtn; BTN.disabled=true; SHARE.disabled=true;
-    setLog('Preparazione pacchetto…');
-    await this.loadData(); if(!this.ALL.length){ setLog('Nessuna carta disponibile'); BTN.disabled=false; return }
-
-    const pack = PACKS[this.currentPackKey];
-    const pool = this.ALL.filter(pack.filter);
-    if(!pool.length){ setLog('⚠️ Nessuna carta compatibile con questo pacchetto (controlla "series").'); BTN.disabled=false; SHARE.disabled=true; return }
-
-    this.$pack.classList.add('shake'); await delay(360); this.$pack.classList.remove('shake');
-    document.getElementById('flashLine').classList.add('active');
-    document.getElementById('flashScreen').classList.add('active');
-    this.$pack.classList.add('opening');
-    await delay(900); this.$packArea.style.display='none';
-
-    this.used.clear(); let chosen=[];
-    for(let i=0;i<CONFIG.COUNT;i++){
-      const rar=this.pickRarity();
-      const card=this.pickCardByRarity(rar,pool);
-      if(!card) break;
-      this.used.add(card.id); chosen.push(card);
-    }
-    chosen=this.ensureRarePlus(chosen,pool);
-    chosen.sort((a,b)=> (rarityRank[a.rarity]??0) - (rarityRank[b.rarity]??0));
-    this.showStage(chosen);
-
-    // 👉 aspetta che l’Auth sia pronta, poi salva se loggato
-    await authReady;
-    saveInventoryIfLoggedIn(chosen);
-
-    setTimeout(()=>{ document.getElementById('flashLine').classList.remove('active'); document.getElementById('flashScreen').classList.remove('active') },400);
-    BTN.textContent=`🔁 Nuovo pacchetto ${pack.label}`; BTN.disabled=false; SHARE.disabled=false;
-    BTN.onclick=async()=>{
-      BTN.disabled=true; SHARE.disabled=true;
-      this.$stageWrap.classList.remove('show'); this.$stage.innerHTML=''; this.$packArea.style.display='flex'; this.$pack.classList.remove('opening');
-      BTN.textContent='🎁 Apri pacchetto'; setLog('');
-      await delay(100); BTN.disabled=false; BTN.onclick=()=>this.doOpen();
-    };
-  }
-
-  async doShare(){
-    const shareData = {
-      title: 'Fantaballa – Il mio pacchetto',
-      text: 'Guarda il pacchetto che ho aperto su Fantaballa!',
-      url: window.location.href
-    };
-    if (navigator.share) {
-      try { await navigator.share(shareData); return; }
-      catch (err) { console.warn('Condivisione annullata o fallita', err); }
-    }
-    this.openShareFallback(shareData);
-  }
-  openShareFallback(shareData){
-    const modal = document.getElementById('shareModal');
-    modal.style.display='flex';
-    const linkInput = document.getElementById('shareLink');
-    const closeBtn = document.getElementById('closeShare');
-    const okBtn = document.getElementById('shareOk');
-    const copyBtn = document.getElementById('copyLink');
-    const wa = document.getElementById('waShare'), x = document.getElementById('xShare'), fb = document.getElementById('fbShare'), tg = document.getElementById('tgShare');
-    const url = encodeURIComponent(shareData.url);
-    const text = encodeURIComponent(shareData.text);
-    wa.href = `https://api.whatsapp.com/send?text=${text}%20${url}`;
-    x.href  = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
-    fb.href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-    tg.href = `https://t.me/share/url?url=${url}&text=${text}`;
-    linkInput.value = shareData.url;
-    const close = ()=>{ modal.style.display='none'; modal.setAttribute('aria-hidden','true') };
-    closeBtn.onclick = close; okBtn.onclick = close;
-    copyBtn.onclick = async ()=>{
-      try{ await navigator.clipboard.writeText(shareData.url); copyBtn.textContent = '✅ Copiato'; setTimeout(()=>copyBtn.textContent='📋 Copia',1200); }
-      catch{ copyBtn.textContent = '❌ Errore'; setTimeout(()=>copyBtn.textContent='📋 Copia',1200); }
-    };
-    modal.setAttribute('aria-hidden','false');
-  }
-}
-
-window.addEventListener('DOMContentLoaded',()=>{ new PackOpener() });
-</script>
+    window.addEventListener('DOMContentLoaded',()=>{ new PackOpener() })
+  </script>
 </body>
 </html>
