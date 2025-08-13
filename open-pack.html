@@ -303,35 +303,95 @@ function playByRarity(r){ if(r==='Comune'||r==='Non Comune'){ tone(520,.07,.06,'
  *  Incrementa count e aggiorna updatedAt. Aggrega eventuali duplicati. */
 async function saveInventoryIfLoggedIn(cards){
   const u = auth.currentUser;
+
+  // 0) Utente non loggato → messaggio chiaro e stop (non è un errore)
   if (!u || u.isAnonymous) {
-    showSaveInfo('Accedi con Google per salvare automaticamente le carte.', false);
+    showSaveInfo('Non hai effettuato l’accesso: carte NON salvate. Accedi con Google per salvare automaticamente.', false);
     return;
   }
+
+  // 1) Pre-aggrego i duplicati nello stesso pacchetto
+  const byId = new Map();
+  for (const c of cards){
+    if (!c?.id) continue;
+    if (!byId.has(c.id)) byId.set(c.id, { ...c, _count: 0 });
+    byId.get(c.id)._count += 1;
+  }
+  if (!byId.size){
+    showSaveInfo('Nessuna carta valida da salvare.', false);
+    return;
+  }
+
+  // 2) Prova #1: batch
   try{
-    const byId = new Map();
-    for (const c of cards){
-      if (!byId.has(c.id)) byId.set(c.id, {...c, _count:0});
-      byId.get(c.id)._count += 1;
-    }
     const batch = db.batch();
     byId.forEach((c, id)=>{
       const ref = db.collection('users').doc(u.uid).collection('inventory').doc(id);
       batch.set(ref, {
-        name: c.name || '',
+        name:   c.name   || '',
         rarity: c.rarity || '',
-        img: c.img || '',
+        img:    c.img    || '',
         series: c.series || '',
-        count: firebase.firestore.FieldValue.increment(c._count || 1),
+        // Increment numerico
+        count:  firebase.firestore.FieldValue.increment(c._count || 1),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
     });
     await batch.commit();
-    showSaveInfo(`Salvate ${cards.length} carte nel tuo inventario ✅`);
+    showSaveInfo(`✅ Salvate ${cards.length} carte nel tuo inventario`);
+    return;
   }catch(e){
-    console.error('[saveInventory]', e);
-    showSaveInfo('Errore nel salvataggio delle carte.', false);
+    console.error('[saveInventory/batch]', e);
+    showSaveInfo(`⚠️ Errore batch: ${e.code || 'unknown'} – ${e.message || e}`, false);
+
+    // Se regole bloccano (permission-denied), esco subito: serve sistemare le rules
+    if (e.code === 'permission-denied') {
+      // Indizio per te: vedi sezione "Regole Firestore" qui sotto
+      return;
+    }
+  }
+
+  // 3) Fallback: salva UNA ad UNA (utile se qualche doc ha count non numerico)
+  try{
+    for (const [id, c] of byId.entries()){
+      const ref = db.collection('users').doc(u.uid).collection('inventory').doc(id);
+
+      // Provo increment; se fallisce per tipo campo, faccio read-modify-write
+      try{
+        await ref.set({
+          name:   c.name   || '',
+          rarity: c.rarity || '',
+          img:    c.img    || '',
+          series: c.series || '',
+          count:  firebase.firestore.FieldValue.increment(c._count || 1),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge:true });
+      }catch(eInc){
+        // Possibile: esiste già un campo "count" non numerico → lo normalizzo
+        if (eInc.code === 'failed-precondition' || eInc.code === 'invalid-argument'){
+          const snap = await ref.get();
+          const prev = snap.exists ? snap.data() : {};
+          const prevCount = Number(prev?.count) || 0;
+          await ref.set({
+            name:   c.name   || prev?.name   || '',
+            rarity: c.rarity || prev?.rarity || '',
+            img:    c.img    || prev?.img    || '',
+            series: c.series || prev?.series || '',
+            count:  prevCount + (c._count || 1),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge:true });
+        }else{
+          throw eInc;
+        }
+      }
+    }
+    showSaveInfo(`✅ Salvate ${cards.length} carte (fallback singolo)`);
+  }catch(e2){
+    console.error('[saveInventory/single]', e2);
+    showSaveInfo(`❌ Salvataggio fallito: ${e2.code || 'unknown'} – ${e2.message || e2}`, false);
   }
 }
+
 
 /* ======================
    TUTTO IL TUO LOGICHE
