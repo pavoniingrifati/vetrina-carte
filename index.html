@@ -767,10 +767,53 @@ dlgImg.onclick = () => dlgImg.classList.toggle('compact');
       const userName  = $id('userName');
       const userPhoto = $id('userPhoto');
 
-      btnLogin?.addEventListener('click', async ()=>{
-        try{ await signInWithGoogle(); }
-        catch(e){ alert('Login annullato o fallito.'); }
-      });
+     <script>
+  async function safeGoogleSignIn() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const auth = firebase.auth();
+
+    try {
+      // Se per caso avessi ancora una sessione anonima, prova a "linkare"
+      if (auth.currentUser && auth.currentUser.isAnonymous) {
+        const { user } = await auth.currentUser.linkWithPopup(provider);
+        return user;
+      }
+      // normale login Google
+      const { user } = await auth.signInWithPopup(provider);
+      return user;
+
+    } catch (e) {
+      console.warn('[safeGoogleSignIn]', e.code, e.message);
+
+      // 1) La credenziale Google è già collegata a un altro account → entra con quella
+      if (e.code === 'auth/credential-already-in-use' && e.credential) {
+        const { user } = await auth.signInWithCredential(e.credential);
+        return user;
+      }
+
+      // 2) L’email esiste con un altro provider → chiedi login con quel provider e poi collega
+      if (e.code === 'auth/account-exists-with-different-credential' && e.email) {
+        const methods = await auth.fetchSignInMethodsForEmail(e.email);
+
+        // Se tra i metodi c'è già Google, rientra direttamente con Google
+        if (methods.includes('google.com') && e.credential) {
+          const { user } = await auth.signInWithCredential(e.credential);
+          return user;
+        }
+
+        alert(
+          'Quest’email è già usata con: ' + methods.join(', ') +
+          '. Accedi con quel metodo, poi potrai collegare Google dalle impostazioni del tuo profilo.'
+        );
+      }
+
+      // Altri errori (popup chiuso, blocco popup, ecc.)
+      throw e;
+    }
+  }
+</script>
+
 
       btnLogout?.addEventListener('click', async ()=>{
         try{ await auth.signOut(); }
