@@ -305,19 +305,27 @@
       finally{ applyFilters(); }
     }
 
-    function renderStars(container, value, onRate){
-      container.innerHTML='';
-      const full = Math.round(value);
-      for(let i=1;i<=5;i++){
-        const btn = document.createElement(onRate? 'button':'div');
-        btn.innerHTML = starSVG(i<=full);
-        if(onRate) btn.addEventListener('click', ()=> onRate(i));
-        container.appendChild(btn);
-      }
-      const label = document.createElement('span');
-      label.textContent = value? ` ${value.toFixed(1)}/5` : ' Nessuna valutazione';
-      container.appendChild(label);
+   function renderStars(container, value, onRate) {
+  container.innerHTML = '';
+  const full = Math.round(value);
+  for (let i = 1; i <= 5; i++) {
+    const btn = document.createElement(onRate ? 'button' : 'div');
+    if (onRate) btn.type = 'button'; // ✅ impedisce la chiusura del dialog
+    btn.innerHTML = starSVG(i <= full);
+    if (onRate) {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();          // ✅ blocca submit form
+        e.stopPropagation();         // ✅ blocca eventi verso l’alto
+        onRate(i);
+      });
     }
+    container.appendChild(btn);
+  }
+  const label = document.createElement('span');
+  label.textContent = value ? ` ${value.toFixed(1)}/5` : ' Nessuna valutazione';
+  container.appendChild(label);
+}
+
 
     let CURRENT_TAB = 'all';
     function setTab(tab){
