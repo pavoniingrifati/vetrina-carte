@@ -247,6 +247,13 @@
           <h1>VETRINA CARTE FANTABALLA FUT</h1>
           <div class="subtitle">Non hai ancora una carta? Segui le live su <a href="https://www.tiktok.com/@fantaballa">Tik Tok</a> di Fanataballa!</div>
         </div>
+        <!-- 🔐 Box login Google -->
+        <div id="authBox" style="display:flex; gap:10px; align-items:center">
+          <img id="userPhoto" alt="" referrerpolicy="no-referrer" style="width:28px; height:28px; border-radius:999px; display:none">
+          <span id="userName" style="font-size:14px; opacity:.9; display:none"></span>
+          <button id="btnLogin" class="pill" type="button" title="Accedi con Google">🔐 Accedi con Google</button>
+          <button id="btnLogout" class="pill" type="button" title="Esci" style="display:none">⎋ Esci</button>
+        </div>
       </div>
       <a class="pill pack-btn" href="open-pack.html"><span class="gift">🎁</span> Apri un pacchetto</a>
 
@@ -742,8 +749,57 @@ dlgImg.onclick = () => dlgImg.classList.toggle('compact');
       };
 
       firebase.initializeApp(firebaseConfig);
-      try { await firebase.auth().signInAnonymously(); } catch(e){ console.error('[firebase auth]', e); }
 
+      /* 🔐 Google Auth (niente login anonimo) */
+      const auth = firebase.auth();
+      try { await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch(e){ console.error('[persistence]', e); }
+
+      function signInWithGoogle(){
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        return auth.signInWithPopup(provider);
+      }
+
+      // UI login/logout
+      const $id = (x)=>document.getElementById(x);
+      const btnLogin  = $id('btnLogin');
+      const btnLogout = $id('btnLogout');
+      const userName  = $id('userName');
+      const userPhoto = $id('userPhoto');
+
+      btnLogin?.addEventListener('click', async ()=>{
+        try{ await signInWithGoogle(); }
+        catch(e){ alert('Login annullato o fallito.'); }
+      });
+
+      btnLogout?.addEventListener('click', async ()=>{
+        try{ await auth.signOut(); }
+        catch(e){ console.error('[logout]', e); }
+      });
+
+      auth.onAuthStateChanged((user)=>{
+        const logged = !!user;
+        if (btnLogin)  btnLogin.style.display  = logged ? 'none' : '';
+        if (btnLogout) btnLogout.style.display = logged ? '' : 'none';
+
+        if (userName){
+          userName.textContent = logged ? (user.displayName || user.email || 'Account') : '';
+          userName.style.display = logged ? '' : 'none';
+        }
+        if (userPhoto){
+          if (logged && user.photoURL){
+            userPhoto.src = user.photoURL;
+            userPhoto.style.display = '';
+          }else{
+            userPhoto.style.display = 'none';
+            userPhoto.removeAttribute('src');
+          }
+        }
+        // Notifica il resto dell’app (come prima)
+        window.dispatchEvent(new CustomEvent('firebase-ready'));
+      });
+
+      /* 🔗 Firestore (tutto come prima) */
       const db = firebase.firestore();
       try { db.settings({ experimentalForceLongPolling: true }); } catch(e) {}
       // try { firebase.firestore.setLogLevel('debug'); } catch(e) {}
@@ -831,7 +887,9 @@ dlgImg.onclick = () => dlgImg.classList.toggle('compact');
           : '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>';
       };
 
-      window.dispatchEvent(new CustomEvent('firebase-ready'));
+      // dispatch iniziale nel caso l'utente sia già loggato
+      // (onAuthStateChanged rilancia comunque l'evento)
+      // window.dispatchEvent(new CustomEvent('firebase-ready'));  // non necessario qui
     })();
   </script>
 </body>
