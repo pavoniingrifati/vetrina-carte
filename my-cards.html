@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Le mie carte – Fantaballa</title>
+
+<!-- Font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{ --bg:#0b0f19; --panel:#0f1526; --text:#ecf0ff; --muted:#a7b0d3; --accent:#6ee7ff; --radius:18px }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto}
+  header{position:sticky; top:0; z-index:10; background:linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6)); border-bottom:1px solid rgba(255,255,255,.06); backdrop-filter: blur(10px)}
+  .wrap{max-width:1200px; margin:0 auto; padding:16px}
+  h1{margin:0 0 8px}
+  a{color:var(--accent); text-decoration:none}
+  .tools{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:8px 0 12px}
+  .pill{padding:8px 12px; border:1px solid rgba(255,255,255,.12); border-radius:999px; color:var(--muted)}
+  .btn{background:linear-gradient(180deg,#1b2a4d,#152141); border:1px solid rgba(110,231,255,.35); border-radius:12px; color:#fff; padding:10px 14px; cursor:pointer}
+  .btn:disabled{opacity:.6; cursor:not-allowed}
+  select,input{background:#132040; color:#fff; border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:8px 10px}
+  .grid{display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+  .card{background:var(--panel); border:1px solid rgba(255,255,255,.08); border-radius:16px; overflow:hidden}
+  .thumb{aspect-ratio:690/987; background:#111; display:block; width:100%; object-fit:cover}
+  .meta{padding:10px; display:flex; justify-content:space-between; gap:8px; align-items:flex-start}
+  .name{font-weight:700; font-size:14px; line-height:1.15}
+  .sub{font-size:12px; color:var(--muted)}
+  .right{display:flex; flex-direction:column; align-items:flex-end; gap:6px}
+  .pillR{font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.18)}
+  .r-Comune{background:rgba(154,163,178,.20)}
+  .r-Non\ Comune{background:rgba(52,211,153,.20)}
+  .r-Rara{background:rgba(96,165,250,.25)}
+  .r-Epica{background:rgba(167,139,250,.28)}
+  .r-Ultra\ Rara{background:rgba(251,191,36,.30); color:#000}
+  .r-Season{background:rgba(239,68,68,.30)}
+  footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6)); margin-top:20px}
+  .empty{opacity:.8; color:var(--muted); margin:12px 0}
+  .authbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div style="display:flex; gap:12px; justify-content:space-between; align-items:flex-start; flex-wrap:wrap">
+      <div>
+        <h1>Le mie carte</h1>
+        <div class="pill" id="stats">—</div>
+      </div>
+      <div class="authbar">
+        <span id="whoami" class="pill">—</span>
+        <button id="btnLoginGoogle" class="btn" type="button">Accedi con Google</button>
+        <button id="btnLoginEmail" class="btn" type="button">Accedi con Email</button>
+        <button id="btnLogout" class="btn" type="button" style="display:none">Esci</button>
+        <a href="index.html" class="btn">🏠 Home</a>
+        <a href="open-pack.html" class="btn">🎁 Apri pacchetto</a>
+      </div>
+    </div>
+
+    <div class="tools">
+      <input id="q" type="text" placeholder="Cerca per nome..." />
+      <select id="fSeries"><option value="">Serie: tutte</option></select>
+      <select id="fRarity">
+        <option value="">Rarità: tutte</option>
+        <option>Season</option><option>Ultra Rara</option><option>Epica</option>
+        <option>Rara</option><option>Non Comune</option><option>Comune</option>
+      </select>
+      <select id="sort">
+        <option value="rarity-desc">Ordina: Rarità ↓</option>
+        <option value="rarity-asc">Ordina: Rarità ↑</option>
+        <option value="name-asc">Ordina: Nome A→Z</option>
+        <option value="name-desc">Ordina: Nome Z→A</option>
+        <option value="qty-desc">Ordina: Quantità ↓</option>
+        <option value="qty-asc">Ordina: Quantità ↑</option>
+        <option value="recent">Ordina: Recenti</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <p id="status" class="empty">Caricamento…</p>
+  <div id="grid" class="grid"></div>
+</main>
+
+<footer>
+  <div class="wrap" style="font-size:13px; color:var(--muted)">
+    ℹ️ Qui vedi le carte salvate automaticamente quando apri un pacchetto.
+  </div>
+</footer>
+
+<!-- Firebase compat -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+// === Config Firebase (uguale al tuo index) ===
+const firebaseConfig = {
+  apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
+  authDomain: "fantaball-9e19c.firebaseapp.com",
+  projectId: "fantaball-9e19c",
+  storageBucket: "fantaball-9e19c.appspot.com",
+  messagingSenderId: "683304379837",
+  appId: "1:683304379837:web:d2bbe7a814e2e40e075ed4",
+  measurementId: "G-C8Q8K5B52C"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// === UI helpers ===
+const $ = (s,el=document)=>el.querySelector(s);
+const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5};
+const who=$('#whoami'), bG=$('#btnLoginGoogle'), bE=$('#btnLoginEmail'), bOut=$('#btnLogout');
+const q=$('#q'), fSeries=$('#fSeries'), fRarity=$('#fRarity'), sortSel=$('#sort'), grid=$('#grid'), statusEl=$('#status'), stats=$('#stats');
+
+let ITEMS = []; // inventario corrente
+let SNAP_UNSUB = null;
+
+function render(){
+  const term = q.value.trim().toLowerCase();
+  const sr = fSeries.value;
+  const rr = fRarity.value;
+  let items = ITEMS.slice();
+
+  if (term) items = items.filter(x => (x.name||'').toLowerCase().includes(term));
+  if (sr) items = items.filter(x => (x.series||'') === sr);
+  if (rr) items = items.filter(x => (x.rarity||'') === rr);
+
+  const how = sortSel.value;
+  items.sort((a,b)=>{
+    if(how==='rarity-desc') return (rarityRank[b.rarity]||0)-(rarityRank[a.rarity]||0);
+    if(how==='rarity-asc')  return (rarityRank[a.rarity]||0)-(rarityRank[b.rarity]||0);
+    if(how==='name-asc')    return (a.name||'').localeCompare(b.name||'');
+    if(how==='name-desc')   return (b.name||'').localeCompare(a.name||'');
+    if(how==='qty-desc')    return (b.count||0)-(a.count||0);
+    if(how==='qty-asc')     return (a.count||0)-(b.count||0);
+    if(how==='recent')      return (b.updatedAt?.toMillis?.()||0)-(a.updatedAt?.toMillis?.()||0);
+    return 0;
+  });
+
+  grid.innerHTML = '';
+  if(!items.length){
+    statusEl.textContent = 'Nessuna carta trovata.';
+    return;
+  }
+  statusEl.textContent = '';
+  const frag = document.createDocumentFragment();
+  items.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='card';
+    const rClass = 'r-' + String(c.rarity||'').replace(' ','\\ ');
+    d.innerHTML = `
+      <img class="thumb" src="${c.img||''}" alt="${c.name||''}">
+      <div class="meta">
+        <div>
+          <div class="name">${c.name||''}</div>
+          <div class="sub">${c.series||''}</div>
+        </div>
+        <div class="right">
+          <span class="pillR ${rClass}">${c.rarity||''}</span>
+          <div class="sub">x${c.count||1}</div>
+        </div>
+      </div>`;
+    frag.appendChild(d);
+  });
+  grid.appendChild(frag);
+
+  // Stats
+  const totalUnique = items.length;
+  const totalQty = items.reduce((s,x)=>s+(x.count||0),0);
+  stats.textContent = `Carte uniche: ${totalUnique} • Totale copie: ${totalQty}`;
+}
+
+function fillSeriesFilter(items){
+  const set = new Set(items.map(x=>x.series).filter(Boolean));
+  const cur = fSeries.value;
+  fSeries.innerHTML = '<option value="">Serie: tutte</option>' + Array.from(set).sort().map(s=>`<option>${s}</option>`).join('');
+  if (set.has(cur)) fSeries.value = cur;
+}
+
+// === AUTH ===
+function updateAuthUI(u){
+  const label = !u ? 'Non autenticato' : (u.isAnonymous ? `Ospite (${u.uid.slice(0,6)}…)` : (u.displayName || u.email || u.uid));
+  who.textContent = `👤 ${label}`;
+  bOut.style.display = u && !u.isAnonymous ? '' : 'none';
+  bG.style.display = !u || u.isAnonymous ? '' : 'none';
+  bE.style.display = !u || u.isAnonymous ? '' : 'none';
+}
+firebase.auth().onAuthStateChanged(async u=>{
+  updateAuthUI(u);
+
+  // stop precedente listener
+  if (SNAP_UNSUB){ SNAP_UNSUB(); SNAP_UNSUB=null; }
+
+  if(!u){
+    // se manca user, proviamo anonimo così la pagina resta viva
+    try{ await firebase.auth().signInAnonymously(); }catch(e){}
+    statusEl.textContent = 'Accedi per vedere la tua collezione.';
+    grid.innerHTML='';
+    stats.textContent='—';
+    return;
+  }
+  if(u.isAnonymous){
+    statusEl.textContent = 'Accedi per vedere la tua collezione.';
+    grid.innerHTML='';
+    stats.textContent='—';
+    return;
+  }
+
+  statusEl.textContent = 'Carico il tuo inventario…';
+  // realtime listener sull’inventario
+  SNAP_UNSUB = db.collection('users').doc(u.uid).collection('inventory')
+    .onSnapshot(snap=>{
+      ITEMS = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      fillSeriesFilter(ITEMS);
+      render();
+      if(!ITEMS.length) statusEl.textContent='Non hai ancora carte salvate.';
+    }, err=>{
+      console.error(err);
+      statusEl.textContent='Errore nel caricamento. Riprova.';
+    });
+});
+
+// Google login / logout
+async function loginWithGoogle(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  const u = firebase.auth().currentUser;
+  try{
+    if (u && u.isAnonymous) await u.linkWithPopup(provider);
+    else await firebase.auth().signInWithPopup(provider);
+  }catch(e){
+    if (e.code === 'auth/popup-blocked'){
+      if (u && u.isAnonymous) await u.linkWithRedirect(provider);
+      else await firebase.auth().signInWithRedirect(provider);
+      return;
+    }
+    alert('Errore login Google: '+e.message);
+  }
+}
+async function logout(){ try{ await firebase.auth().signOut(); await firebase.auth().signInAnonymously(); }catch(e){} }
+
+// (Facoltativo) Email/password minimale via prompt
+async function loginEmailPrompt(){
+  const email = prompt('Email:');
+  if(!email) return;
+  const pass = prompt('Password:');
+  if(!pass) return;
+  const u = firebase.auth().currentUser;
+  try{
+    if (u && u.isAnonymous){
+      const cred = firebase.auth.EmailAuthProvider.credential(email, pass);
+      await u.linkWithCredential(cred);
+    }else{
+      await firebase.auth().signInWithEmailAndPassword(email, pass);
+    }
+  }catch(e){
+    if (e.code==='auth/user-not-found'){
+      if (confirm('Utente non trovato. Registrarlo?')){
+        const cred = firebase.auth.EmailAuthProvider.credential(email, pass);
+        if (u && u.isAnonymous) await u.linkWithCredential(cred);
+        else await firebase.auth().createUserWithEmailAndPassword(email, pass);
+      }
+    }else{
+      alert('Errore email: '+e.message);
+    }
+  }
+}
+
+// Bind UI
+bG.addEventListener('click', loginWithGoogle);
+bE.addEventListener('click', loginEmailPrompt);
+bOut.addEventListener('click', logout);
+
+// Filtri / sort
+[q, fSeries, fRarity, sortSel].forEach(el=>el.addEventListener('input', render));
+</script>
+</body>
+</html>
