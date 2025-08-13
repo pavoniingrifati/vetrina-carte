@@ -28,63 +28,61 @@
     body{ margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg); color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial }
     body.modal-open{ overflow:hidden; touch-action:none; }
 
-    header{ position:sticky; top:0; z-index:100; backdrop-filter: blur(10px); background: linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6)); border-bottom:1px solid rgba(255,255,255,.06); }
+    header{ position:sticky; top:0; z-index:100; backdrop-filter: blur(10px); background: linear-gradient(180deg, rgba(13,19,37,9), rgba(13,19,37,6)); border-bottom:1px solid rgba(255,255,255,06); }
     .wrap{max-width:1280px; margin:0 auto; padding: 20px;}
     .title{display:flex; gap:16px; align-items:center; justify-content:space-between;}
     h1{font-size: clamp(20px, 3.6vw, 34px); margin:0}
     .subtitle{color:var(--muted); margin-top:6px}
 
-    <div id="authBar" style="display:flex; gap:10px; align-items:center; margin-top:8px">
-  <span id="whoami" style="color:var(--muted); font-size:13px"></span>
-  <button id="btnLoginGoogle" class="tab-btn" type="button">Accedi con Google</button>
-  <button id="btnLoginEmail" class="tab-btn" type="button">Accedi con Email</button>
-  <button id="btnLogout" class="tab-btn" type="button" style="display:none">Esci</button>
-</div>
-
-
     .tabs{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap }
-    .tab-btn{ border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text); padding:8px 12px; border-radius:999px; cursor:pointer }
-    .tab-btn[aria-selected="true"]{ background:rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15) }
+    .tab-btn{ border:1px solid rgba(255,255,255,12); background:rgba(255,255,255,04); color:var(--text); padding:8px 12px; border-radius:999px; cursor:pointer }
+    .tab-btn[aria-selected="true"]{ background:rgba(255,255,255,12); box-shadow: inset 0 0 0 1px rgba(255,255,255,15) }
 
     .toolbar{display:grid; grid-template-columns: 1fr; gap:12px; margin-top:14px;}
     @media (min-width: 900px){ .toolbar{grid-template-columns: 1.2fr .8fr .8fr .8fr .8fr} }
 
-    .search, select, .range, button, .tag{ background: linear-gradient(180deg, #121a2e, #0d1325); border:1px solid rgba(255,255,255,.08); border-radius:12px; color: var(--text); padding:12px 14px; outline:none }
-    .search{display:flex; gap:10px; align-items:center}
-    .search input{flex:1; background:transparent; border:none; color:var(--text)}
-    .search input::placeholder{color:#98a3c7}
-    select{ appearance:none; background-image: linear-gradient(180deg, transparent, transparent), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat:no-repeat; background-position:right 10px center; padding-right:38px }
-    select, select option { color: var(--text); background-color: var(--card); }
-    .range{display:flex; gap:10px; align-items:center}
-    .range input{width:100%}
+    .search, select, .range, button, .tag{ background: linear-gradient(180deg, #121a2e, #0d1325); border:1px solid rgba(255,255,255,12); color:var(--text); border-radius:12px; padding:10px 12px }
+    .search{ display:flex; align-items:center; gap:8px }
+    .search input{ background:transparent; color:inherit; border:none; outline: none; width:100% }
+    select{ appearance:none; -webkit-appearance:none }
 
-    .grid{display:grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap:22px; margin:22px 0 88px}
-    @media (min-width:600px){.grid{grid-template-columns: repeat(2, minmax(0,1fr)); gap:24px}}
-    @media (min-width:900px){.grid{grid-template-columns: repeat(3, minmax(0,1fr)); gap:26px}}
-    @media (min-width:1200px){.grid{grid-template-columns: repeat(4, minmax(0,1fr)); gap:26px}}
+    .grid{ display:grid; grid-template-columns: repeat(12,1fr); gap: 12px; margin-top:14px }
+    @media(min-width:680px){ .grid{ gap:16px } }
+    .grid > *{ grid-column: span 12 }
+    @media(min-width:700px){ .grid > *{ grid-column: span 6 } }
+    @media(min-width:1100px){ .grid > *{ grid-column: span 4 } }
 
-    .card{ background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card); border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); overflow:hidden; position:relative; box-shadow: 0 6px 18px rgba(0,0,0,.35); transition: transform .16s ease, box-shadow .25s ease, border-color .25s ease, filter .25s ease; --glow: #6ee7ff; opacity:0; transform: translateY(6px); animation: cardIn .35s ease forwards }
-    @keyframes cardIn{to{opacity:1; transform: translateY(0)}}
-    @media (prefers-reduced-motion: reduce){ .card{ animation:none; opacity:1; transform:none } }
+    .card{ position:relative; background: var(--panel); border:1px solid rgba(255,255,255,12); border-radius: var(--radius); overflow: clip }
+    .card .primary{ margin-top:10px; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,12); background:rgba(255,255,255,06); color:#fff; cursor:pointer }
+    .card .primary:hover{ background:rgba(255,255,255,12) }
 
-    .card.r-comune      { --glow:#9aa3b2 }
-    .card.r-non-comune  { --glow:#34d399 }
-    .card.r-rara        { --glow:#60a5fa }
-    .card.r-ultra-rara  { --glow:#fbbf24 }
-    .card.r-epica       { --glow:#a78bfa }
-    .card.r-season      { --glow:#ef4444 }
-    .card.r-leggendaria { --glow: #ff4d94 }
-    .card.r-oggetto, .card.r-oggetti { --glow:#10b981 }
-    .card:hover{ transform: translateY(-3px); border-color: var(--glow); box-shadow: 0 10px 30px rgba(0,0,0,.55), 0 0 0 1px var(--glow), 0 14px 40px color-mix(in oklab, var(--glow) 35%, transparent) }
+    .gift{ filter: drop-shadow(0 2px 6px rgba(0,0,0,30)) } .pack-btn{ margin-top:12px; display:inline-flex; align-items:center; gap:8px; padding:12px 16px; border-radius:999px; border:1px solid rgba(255,255,255,12); background:rgba(255,255,255,04) }
+
+    .foot{ padding:12px 16px; border-top:1px solid rgba(255,255,255,06); color:var(--muted) }
+    .pill{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,12); background:rgba(255,255,255,04) }
+
+    .comment{ border:1px solid rgba(255,255,255,12); border-radius:12px; padding:8px 10px; margin-top:8px; background: rgba(0,0,0,25) }
+    .field{ display:flex; flex-direction:column; gap:6px; margin-top:8px }
+    textarea{ resize:vertical; min-height:72px }
+
+    /* badge rarità + glow */
+    .card{ --glow: rgba(255,255,255,.0) }
+    .card.r-comune      { --glow: rgba(154,163,178,.30) }
+    .card.r-non-comune  { --glow: rgba(52,211,153,.35) }
+    .card.r-rara        { --glow: rgba(96,165,250,.45) }
+    .card.r-epica       { --glow: rgba(167,139,250,.55) }
+    .card.r-ultra-rara  { --glow: rgba(251,191,36,.65) }
+    .card.r-season      { --glow: rgba(239,68,68,.70) }
+    .card::after{ content:''; position:absolute; inset:auto 0 0 0; height:3px; background: linear-gradient(90deg, transparent, var(--glow) 35%, transparent) }
 
     .thumb{aspect-ratio: 3/4; width:100%; background:#0b0f19; object-fit:cover; cursor:pointer }
     .content{padding:12px 14px}
     .name{font-weight:600; font-size:16px}
     .meta{font-size:13px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; margin-top:4px}
     .stars{display:flex; gap:4px; align-items:center; margin-top:8px}
-    .stars .s{width:18px; height:18px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3))}
+    .stars .s{width:18px; height:18px; filter: drop-shadow(0 1px 2px rgba(0,0,0,3))}
 
-    .badge{ position:absolute; top:10px; right:10px; background: rgba(0,0,0,.5); backdrop-filter: blur(6px); border:1px solid rgba(255,255,255,.15); color:white; padding:6px 8px; border-radius:999px; font-size:12px; font-weight:600 }
+    .badge{ position:absolute; top:10px; right:10px; background: rgba(0,0,0,5); backdrop-filter: blur(6px); border:1px solid rgba(255,255,255,15); color:white; padding:6px 8px; border-radius:999px; font-size:12px; font-weight:600 }
     .card.r-comune      .badge { background: rgba(154,163,178,0.8) }
     .card.r-non-comune  .badge { background: rgba(52,211,153,0.8) }
     .card.r-rara        .badge { background: rgba(96,165,250,0.8) }
@@ -92,7 +90,7 @@
     .card.r-epica       .badge { background: rgba(167,139,250,0.85) }
     .card.r-season      .badge { background: rgba(239,68,68,0.85) }
     .card.r-leggendaria .badge {background: rgba(255, 77, 148, 0.9); color: #fff }
-    .card.r-oggetto .badge, .card.r-oggetti .badge { background: rgba(16,185,129,.85) }
+    .card.r-oggetto .badge, .card.r-oggetti .badge { background: rgba(16,185,129,85) }
 
     .card.r-leggendaria { position: relative; z-index: 0 }
     .card.r-leggendaria::before {
@@ -107,57 +105,27 @@
     .open{position:absolute; bottom:10px; right:10px}
 
     .tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
-    .tag{ padding: 3px 8px; font-size: 11px; line-height: 1.2; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); white-space: nowrap; margin-top: 4px }
+    .tag{ padding: 3px 8px; font-size: 11px; line-height: 1.2; border-radius: 999px; border: 1px solid rgba(255,255,255,12); white-space: nowrap; margin-top: 4px }
 
-    .fav{ position:absolute; top:10px; left:10px; z-index:2; display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:999px; background: rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18); cursor:pointer; user-select:none; transition: transform .15s ease, background .2s ease, box-shadow .2s ease }
+    .fav{ position:absolute; top:10px; left:10px; z-index:2; display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:999px; background: rgba(0,0,0,45); border:1px solid rgba(255,255,255,18); cursor:pointer; user-select:none; transition: transform .15s ease, background .2s ease, box-shadow .2s ease }
     .fav:active{ transform: scale(.96) }
     .fav svg{ width:24px; height:24px }
     .fav .outline{ display: block }
     .fav .filled{ display: none }
-    .fav.active{ background: color-mix(in oklab, var(--fav) 25%, rgba(0,0,0,.45)); box-shadow: 0 0 0 1px color-mix(in oklab, var(--fav) 60%, transparent) inset }
+    .fav.active{ background: color-mix(in oklab, var(--fav) 25%, rgba(0,0,0,45)); box-shadow: 0 0 0 1px color-mix(in oklab, var(--fav) 60%, transparent) inset }
     .fav.active .outline{ display: none }
     .fav.active .filled{ display: block; color: var(--fav) }
 
     dialog{ inset: 0; margin: 0; padding: 0; border: none; width: 100vw; max-width: none; height: 100svh; height: 100dvh; background: transparent }
-    dialog::backdrop{ background: rgba(0,0,0,.65) }
+    dialog::backdrop{ background: rgba(0,0,0,65) }
     .modal{ display: grid; grid-template-columns: 1fr; width: 100%; height: 100%; background: var(--panel) }
     @media(min-width:900px){ .modal{ grid-template-columns: .95fr 1.05fr; height: auto; max-height: 90vh; border-radius: 18px } }
 
-    .modal .left{ position:relative; background: radial-gradient(500px 320px at 20% 0, rgba(110,231,255,.05), transparent), var(--card-2); padding:12px }
-    .modal .big{ width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.08); aspect-ratio:3/4; object-fit:cover }
+    .modal .left{ position:relative; background: radial-gradient(500px 320px at 20% 0, rgba(110,231,255,05), transparent), var(--card-2); padding:12px }
+    .modal .big{ width:100%; border-radius:14px; border:1px solid rgba(255,255,255,08); aspect-ratio:3/4; object-fit:cover }
+    .modal .close{ position:absolute; top:10px; right:10px; background: rgba(0,0,0,45); border:1px solid rgba(255,255,255,18); padding:8px 10px; border-radius:10px; color:white }
 
-    /* --- MOBILE UX --- */
-@media (max-width: 600px){
-  /* immagine più bassa di default: lascia spazio sotto */
-  .modal .big{ max-height: 42vh; height: auto; }
-
-  .quick-rate{
-    position: sticky;
-    bottom: 0;
-    background: linear-gradient(180deg, rgba(15,21,38,.85), rgba(15,21,38,.9));
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 12px;
-    padding: 10px 12px;
-    margin-top: 8px;
-    z-index: 2;
-  }
-
-  .quick-rate .stars { gap: 6px }
-  .quick-rate .stars .s { width: 28px; height: 28px }
-  .quick-rate .stars button{
-    background: transparent; border: none; padding: 10px; line-height: 0; border-radius: 10px;
-  }
-
-  /* evita zoom automatico iOS */
-  input[type="text"], textarea { font-size: 16px }
-}
-/* modalità compatta ancora più bassa */
-.modal .big.compact{ max-height: 30vh !important }
-
-
-    .modal .close{ position:absolute; top:10px; right:10px; background: rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18); padding:8px 10px; border-radius:10px; color:white }
-
-    .hint{ position:absolute; top:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.42); border:1px solid rgba(255,255,255,.18); border-radius:999px; color:white; transform: translateY(-50%); opacity:.9; animation: fadeHints 4s ease forwards }
+    .hint{ position:absolute; top:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,42); border:1px solid rgba(255,255,255,18); border-radius:999px; color:white; transform: translateY(-50%); opacity:.9; animation: fadeHints 4s ease forwards }
     .hint.left{ left:8px }
     .hint.right{ right:8px }
     @keyframes fadeHints{ 0%{opacity:.9} 70%{opacity:.9} 100%{opacity:0} }
@@ -165,85 +133,32 @@
 
     .modal .right{ display:flex; flex-direction:column; min-height:0; padding:12px 12px calc(12px + var(--safe-bottom)) }
     .scroll{ flex:1 1 auto; min-height:0; overflow:auto; padding-right:2px }
-    .actions{ position: sticky; bottom: 0; background: linear-gradient(180deg, rgba(15,21,38,.7), var(--panel)); border-top: 1px solid rgba(255,255,255,.08); padding: 10px 0 calc(10px + var(--safe-bottom)); display:flex; gap:10px }
+    .actions{ position: sticky; bottom: 0; background: linear-gradient(180deg, rgba(15,21,38,7), rgba(15,21,38,0)); padding-top:10px; margin-top:10px; display:flex; gap:8px; justify-content:flex-end }
+    .actions .primary{ background: linear-gradient(135deg, #3b82f6, #06b6d4); color: #fff; font-weight: 600; border: none; }
 
-    .field{display:grid; gap:8px; margin: 8px 0}
-    textarea, input[type="text"]{background:#0d1325; border:1px solid rgba(255,255,255,.1); border-radius:10px; color:var(--text); padding:10px}
-
-    .comment{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)); border:1px solid rgba(255,255,255,.09); border-radius:12px; padding:10px; margin-top:10px}
-    .comment .author{font-weight:600; font-size:13px}
-    .comment .text{font-size:14px; color: #d9e1ff}
-
-    footer{position:sticky; bottom:0; background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6)); border-top:1px solid rgba(255,255,255,.06)}
-    .foot{max-width:1280px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
-    .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
-
-    .pill.pack-btn { background: linear-gradient(135deg, #ff9d00, #ff4d4d); border: none; color: #fff; font-weight: 600; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 12px rgba(255,77,77,0.6); transition: transform 0.15s ease, box-shadow 0.25s ease; cursor: pointer; margin-top: 12px; margin-bottom: 14px }
-    .pill.pack-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.35), 0 0 18px rgba(255,77,77,0.8) }
-    .pill.pack-btn:active { transform: scale(0.97) }
-    .pill.pack-btn .gift { animation: bounceGift 1.8s infinite; display: inline-block }
-    @keyframes bounceGift { 0%, 100% { transform: translateY(0) } 30% { transform: translateY(-2px) } 50% { transform: translateY(1px) } }
-
-    @media (max-width: 500px) {
-      .wrap { padding: 10px }
-      .toolbar { overflow-x: auto; display: flex; gap: 8px; padding-bottom: 6px }
-      .toolbar > * { flex: 0 0 auto }
-      .card .name { font-size: 14px }
-      .card .meta { font-size: 12px }
-    }
-
-    #dlgName{ color:#fff; text-shadow: 0 1px 3px rgba(0,0,0,.8) }
-    .navBtn{ position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.2); color:#fff; padding:8px 10px; border-radius:10px; cursor:pointer }
-    .navPrev{ left:10px } .navNext{ right:50px }
-    @media(max-width:900px){ .navBtn{ display:none } }
-
-    /* Evita rimbalzi quando la modale è aperta */
+    /* Evita scroll di sfondo e rimbalzi */
     body.modal-open { overscroll-behavior: contain }
     .modal .scroll { overscroll-behavior: contain }
 
-@media (max-width: 600px){
-  /* le azioni non occupano spazio fisso in basso */
-  .actions{ position: static; padding: 10px 0 }
-  /* textarea più comoda */
-  textarea{ min-height: 160px }
-  /* pulsante "Pubblica" piena larghezza */
-  .actions .primary{ width:100%; padding:12px 14px }
-}
-
-    /* 🔥 Cornice infuocata per carte "On fire" */
-@keyframes fireGlow {
-  0%   { box-shadow: 0 0 0 1px rgba(255,100,0,.45), 0 0 12px 4px rgba(255,100,0,.35), 0 0 28px 10px rgba(255,50,0,.18) }
-  50%  { box-shadow: 0 0 0 1px rgba(255,160,0,.55), 0 0 18px 6px rgba(255,140,0,.45), 0 0 36px 14px rgba(255,80,0,.22) }
-  100% { box-shadow: 0 0 0 1px rgba(255,100,0,.45), 0 0 12px 4px rgba(255,100,0,.35), 0 0 28px 10px rgba(255,50,0,.18) }
-}
-
-/* Griglia */
-.card.on-fire {
-  position: relative;
-  border-color: rgba(255,140,0,.7);
-  /* Non sovrascrivere cardIn: esegui entrambe le animazioni */
-  animation: cardIn .35s ease forwards, fireGlow 1.8s ease-in-out infinite;
-  /* Cintura di sicurezza nel caso in cui l'animazione non parta */
-  opacity: 1;
-}
-
-
-/* Modale: bagliore attorno all'immagine grande */
-.modal .big.on-fire {
-  outline: 2px solid rgba(255,140,0,.7);
-  outline-offset: -2px;
-  animation: fireGlow 1.8s ease-in-out infinite;
-}
-
-/* Etichetta "On fire" nei tag */
-.tag.fire {
-  border-color: rgba(255,140,0,.6);
-  background: linear-gradient(180deg, rgba(255,140,0,.18), rgba(255,140,0,0));
-  color: #ffd7b3;
-  font-weight: 600;
-}
-
-    
+    /* --- MOBILE UX --- */
+    @media (max-width: 600px){
+      .modal .big{ max-height: 58vh; height: auto; }
+      .quick-rate{
+        position: sticky;
+        bottom: 0;
+        background: linear-gradient(180deg, rgba(15,21,38,85), rgba(15,21,38,9));
+        border: 1px solid rgba(255,255,255,08);
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-top: 8px;
+        z-index: 2;
+      }
+      .quick-rate .stars { gap: 6px }
+      .quick-rate .stars .s { width: 28px; height: 28px }
+      .quick-rate .stars button{ background: transparent; border: none; padding: 10px; line-height: 0; border-radius: 10px; }
+      input[type="text"], textarea { font-size: 16px }
+    }
+    .modal .big.compact{ max-height: 36vh !important }
   </style>
 </head>
 
@@ -252,24 +167,25 @@
     <div class="wrap">
       <div class="title">
         <div>
-          <h1>VETRINA CARTE FANTABALLA FUT</h1>
+          <h1>Le carte FUT del canale Fantaballa!</h1>
           <div class="subtitle">Non hai ancora una carta? Segui le live su <a href="https://www.tiktok.com/@fantaballa">Tik Tok</a> di Fanataballa!</div>
-          <!-- 🔐 Barra login -->
-<div id="authBar" style="display:flex; gap:10px; align-items:center; margin-top:8px; flex-wrap:wrap">
-  <span id="whoami" style="color:var(--muted); font-size:13px"></span>
-  <button id="btnLoginGoogle" class="tab-btn" type="button">Accedi con Google</button>
-  <button id="btnLoginEmail" class="tab-btn" type="button">Accedi con Email</button>
-  <button id="btnLogout" class="tab-btn" type="button" style="display:none">Esci</button>
-</div>
 
+          <!-- 🔐 BARRA LOGIN (nuova) -->
+          <div id="authBar" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:8px">
+            <span id="whoami" style="color:var(--muted); font-size:13px"></span>
+            <button id="btnLoginGoogle" class="tab-btn" type="button">Accedi con Google</button>
+            <button id="btnLoginEmail" class="tab-btn" type="button">Accedi con Email</button>
+            <button id="btnLogout" class="tab-btn" type="button" style="display:none">Esci</button>
+          </div>
+          <!-- fine barra login -->
         </div>
       </div>
+
       <a class="pill pack-btn" href="open-pack.html"><span class="gift">🎁</span> Apri un pacchetto</a>
 
       <div class="tabs" role="tablist" aria-label="Sezioni">
         <button class="tab-btn" id="tabAll" role="tab" aria-selected="true">Tutte</button>
         <button class="tab-btn" id="tabFavs" role="tab" aria-selected="false">Preferite ❤️ <span id="favCount" aria-hidden="true"></span></button>
-</span>
       </div>
 
       <div class="toolbar" aria-label="Filtri e ricerca">
@@ -297,7 +213,10 @@
           <option>MC</option><option>CC</option><option>TRQ</option>
           <option>AS</option><option>AD</option><option>ATT</option>
         </select>
-        <div class="range" title="Valutazione minima">⭐ Min: <input id="fRating" type="range" min="0" max="5" value="0" step="1" /> <span id="fRatingVal">0</span></div>
+        <div class="range" title="Valutazione minima">⭐ Min:
+          <input id="fRating" type="range" min="0" max="5" value="0" step="1" />
+          <span id="fRatingVal">0</span>
+        </div>
         <select id="fSort" aria-label="Ordina per">
           <option value="name">Ordina: Nome</option>
           <option value="rating">Ordina: Valutazione</option>
@@ -314,8 +233,7 @@
 
   <footer>
     <div class="foot">
-      <span id="cardsCount" style="margin-left: 1rem; font-size: 0.9em; opacity: 0.8;">
-  Carte disponibili: 0
+      <span class="pill">ℹ️Stelle e commenti sono ora visibili da tutti!</span>
     </div>
   </footer>
 
@@ -325,7 +243,6 @@
       <div class="left">
         <button class="navBtn navPrev" type="button" title="Precedente" aria-label="Carta precedente">◀</button>
         <div class="hint left" aria-hidden="true">‹</div>
-
         <img id="dlgImg" alt="Immagine carta" class="big" />
 
         <!-- Barra rapida per votare su mobile -->
@@ -358,6 +275,7 @@
     </form>
   </dialog>
 
+  <!-- Template card in griglia -->
   <template id="tplCard">
     <article class="card" role="article">
       <button class="fav" type="button" title="Aggiungi ai preferiti" aria-label="Aggiungi ai preferiti" aria-pressed="false">
@@ -394,41 +312,34 @@
     const saveFavs = list => localStorage.setItem('cardhub_favs', JSON.stringify(list));
     const isFav = id => loadFavs().includes(id);
     const toggleFav = id => { const s=new Set(loadFavs()); s.has(id)? s.delete(id): s.add(id); saveFavs([...s]); updateFavCount(); };
-    function updateFavCount(){ const n = loadFavs().length; const el=$('#favCount'); if(el) el.textContent = n? `(${n})` : ''; }
+    function updateFavCount(){ const n = loadFavs().length; const el=$('#favCount'); if(el) el.textContent = n?`(${n})` : ''; }
 
-  let CARDS = [];
-async function loadCards(){
-  try{
-    const res = await fetch('cards.json', { cache: 'no-store' });
-    if(!res.ok) throw new Error('cards.json non trovato');
-    CARDS = await res.json();
-  }catch(e){
-    console.error('[ERRORE CARICAMENTO CARTE]', e);
-    CARDS = [];
-  }
-  finally{
-    // 🔹 Aggiorna il numero di carte disponibili
-    document.getElementById('cardsCount').textContent =
-        "Carte disponibili: " + CARDS.length;
+    let CARDS = [];
+    async function loadCards(){
+      try{
+        const res = await fetch('cards.json', { cache: 'no-store' });
+        if(!res.ok) throw new Error('cards.json non trovato');
+        CARDS = await res.json();
+      }catch(e){ console.error('[ERRORE CARICAMENTO CARTE]', e); CARDS = []; }
+      finally{ applyFilters(); }
+    }
 
-    applyFilters();
-  }
-}
-
-
-    /* ⭐⭐ stelle: tipo button + prevenzione submit, per non chiudere la modale; dimensioni gestite da CSS */
-    function renderStars(container, value, onRate){
-      container.innerHTML='';
+    function renderStars(container, value, onRate) {
+      container.innerHTML = '';
       const full = Math.round(value);
-      for(let i=1;i<=5;i++){
-        const btn = document.createElement(onRate? 'button':'div');
+      for (let i = 1; i <= 5; i++) {
+        const btn = document.createElement(onRate ? 'button' : 'div');
         if (onRate) btn.type = 'button';
-        btn.innerHTML = starSVG(i<=full);
-        if(onRate) btn.addEventListener('click', (e)=> { e.preventDefault(); e.stopPropagation(); onRate(i); });
+        btn.innerHTML = starSVG(i <= full);
+        if (onRate) {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation(); onRate(i);
+          });
+        }
         container.appendChild(btn);
       }
       const label = document.createElement('span');
-      label.textContent = value? ` ${value.toFixed(1)}/5` : ' Nessuna valutazione';
+      label.textContent = value ? ` ${value.toFixed(1)}/5` : ' Nessuna valutazione';
       container.appendChild(label);
     }
 
@@ -472,80 +383,38 @@ async function loadCards(){
         const favSet = new Set(loadFavs());
         items = items.filter(c=> favSet.has(c.id));
       }
-      if(q){ items = items.filter(c=> (c.name+" "+c.series+" "+(c.text||'')).toLowerCase().includes(q)); }
-      if(game){ items = items.filter(c=> c.game===game); }
-      if(rarity){
-        items = items.filter(c=>{
-          if (rarity==='Oggetti') return isOggettoRarity(c.rarity);
-          return c.rarity===rarity;
-        });
-      }
-      if(role){ items = items.filter(c=> c.role===role); }
-      if(minR>0){ items = items.filter(c=> Math.round(c.rating) >= minR); }
+      if(q){ items = items.filter(c=> (c.name+" "+c.series+" "+(c.game||'')+" "+(c.role||'')+" "+(c.tags||[]).join(' ')).toLowerCase().includes(q)); }
+      if(game){ items = items.filter(c=> String(c.game||'')===game); }
+      if(rarity){ items = items.filter(c=> String(c.rarity||'')===rarity); }
+      if(role){ items = items.filter(c=> String(c.role||'')===role); }
+      if(minR>0){ items = items.filter(c=> avg(loadRatings(c.id)) >= minR); }
 
-      items.sort((a,b)=>{
-        if(sort==='rating') return (b.rating||0) - (a.rating||0);
-        if(sort==='role') return (a.role||'').localeCompare(b.role||'');
-        return a.name.localeCompare(b.name);
-      });
-
-      if (CURRENT_TAB==='all' && noFiltersActive()) {
-        items = items.slice().sort(() => Math.random() - 0.5).slice(0, 8);
-      }
+      if(sort==='name'){ items.sort((a,b)=> String(a.name).localeCompare(String(b.name))); }
+      if(sort==='rating'){ items.sort((a,b)=> (avg(loadRatings(b.id)) - avg(loadRatings(a.id))) || String(a.name).localeCompare(String(b.name))); }
+      if(sort==='role'){ items.sort((a,b)=> String(a.role||'').localeCompare(String(b.role||'')) || String(a.name).localeCompare(String(b.name))); }
 
       LAST_ITEMS = items.slice();
-      renderGrid(items);
-    }
 
-    const grid = $('#grid');
-    function renderGrid(items){
+      const grid = $('#grid');
+      grid.innerHTML = '';
       clearGridSubs();
-      grid.innerHTML='';
-      if(!items.length){
-        const msg = CURRENT_TAB==='favs' ? 'Nessuna carta nei preferiti. Tocca il cuore su una carta per aggiungerla.' : 'Nessuna carta trovata. Prova a cambiare i filtri.';
-        grid.innerHTML = `<p style="color:var(--muted)">${msg}</p>`; return;
-      }
-      const tpl = document.getElementById('tplCard');
+
       const favSet = new Set(loadFavs());
+
       for(const c of items){
+        const tpl = document.getElementById('tplCard');
         const node = tpl.content.firstElementChild.cloneNode(true);
-        // 🔥 cornice infuocata in griglia se onFire
-if (c.onFire) node.classList.add('on-fire');
 
-        const rarSlug = (c.rarity || '').toLowerCase().replace(/\s+/g,'-');
-        if (rarSlug) node.classList.add('r-' + rarSlug);
-        node.querySelector('.badge').textContent = c.rarity;
-        const img = node.querySelector('.thumb');
-        img.src = c.img; img.loading='lazy'; img.alt = `Carta ${c.name}`;
-        img.addEventListener('click', ()=> openModal(c));
+        node.querySelector('.thumb').src = c.img;
         node.querySelector('.name').textContent = c.name;
-        node.querySelector('.meta').textContent = `${c.game} • ${c.series} • ${c.role || '—'}`;
-        renderStars(node.querySelector('.stars'), c.rating||0, null);
+        node.querySelector('.meta').textContent  = `${c.game} • ${c.series} • ${c.role || '—'}`;
+        node.querySelector('.badge').textContent = c.rarity || '';
 
-        if (window._subscribeModalRating) {
-          const unsub = window._subscribeModalRating(c.id, (avgVal)=>{
-            renderStars(node.querySelector('.stars'), avgVal||0, null);
-          });
-          GRID_UNSUBS.push(unsub);
-        }
-        if (window._fetchRatings) {
-          window._fetchRatings(c.id).then(vals=>{
-            const avgVal = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
-            renderStars(node.querySelector('.stars'), avgVal, null);
-          }).catch(()=>{});
-        }
+        renderStars(node.querySelector('.stars'), avg(loadRatings(c.id)));
+
         const tags = node.querySelector('.tags');
-        const qty = getQty(c);
-        if (qty!=null){ const s=document.createElement('span'); s.className='tag'; s.textContent=`Quantità: ${qty}`; tags.appendChild(s); }
+        const _q = getQty(c); if(_q!=null){ const s=document.createElement('span'); s.className='tag'; s.textContent=`Quantità: ${_q}`; tags.appendChild(s); }
         (c.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s);});
-
-        if (c.onFire) {
-  const s = document.createElement('span');
-  s.className = 'tag fire';
-  s.textContent = '🔥 On fire';
-  tags.appendChild(s);
-}
-
 
         const favBtn = node.querySelector('.fav');
         const favActive = favSet.has(c.id);
@@ -585,19 +454,7 @@ if (c.onFire) node.classList.add('on-fire');
     async function openModal(card){
       current = card; currentIndex = LAST_ITEMS.findIndex(x=> x.id===card.id);
       dlgImg.src = card.img; dlgName.textContent = card.name; dlgMeta.textContent = `${card.game} • ${card.series} • ${card.role || '—'}`;
-
-// 🔥 cornice infuocata nella modale se onFire
-dlgImg.classList.toggle('on-fire', !!card.onFire);
-
-      
       dlgTags.innerHTML=''; const _q=getQty(card); if(_q!=null){ const s=document.createElement('span'); s.className='tag'; s.textContent=`Quantità: ${_q}`; dlgTags.appendChild(s); } (card.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; dlgTags.appendChild(s)});
-
-      if (card.onFire) {
-  const s = document.createElement('span');
-  s.className = 'tag fire';
-  s.textContent = '🔥 On fire';
-  dlgTags.appendChild(s);
-}
 
       const onRate = async (v)=>{ 
         saveRating(card.id, v); 
@@ -606,26 +463,29 @@ dlgImg.classList.toggle('on-fire', !!card.onFire);
       };
       renderStars(dlgStars, 0, onRate);
 
-      // ⭐ barra rapida sotto l’immagine
+      // ⭐ barra rapida sotto l’immagine (stesse stelle, stesso handler)
       const dlgStarsQuick = document.getElementById('dlgStarsQuick');
       renderStars(dlgStarsQuick, 0, onRate);
 
-      if (window._fetchRatings) { 
-        try{ 
-          const vals = await window._fetchRatings(card.id); 
-          const avgVal = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0; 
+      // quando arrivano i voti remoti, aggiorna entrambe le viste
+      if (window._fetchRatings) {
+        try{
+          const vals = await window._fetchRatings(card.id);
+          const avgVal = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
           renderStars(dlgStars, avgVal, onRate);
           renderStars(dlgStarsQuick, avgVal, onRate);
-        }catch(e){ /* ignore */ }
+        }catch(e){}
+      }
+      if (window._modalUnsub) { try{ window._modalUnsub(); }catch{} window._modalUnsub = null; }
+      if (window._subscribeModalRating) {
+        window._modalUnsub = window._subscribeModalRating(card.id, (avgVal)=>{
+          renderStars(dlgStars, avgVal, onRate);
+          renderStars(dlgStarsQuick, avgVal, onRate);
+        });
       }
 
-      if (window._modalUnsub) { try{ window._modalUnsub(); }catch{} window._modalUnsub = null; }
-      if (window._subscribeModalRating) { 
-        window._modalUnsub = window._subscribeModalRating(card.id, (avgVal)=>{ 
-          renderStars(dlgStars, avgVal, onRate); 
-          renderStars(dlgStarsQuick, avgVal, onRate);
-        }); 
-      }
+      // 👇 Tap sull’immagine per ridurre/espandere (utile su schermi piccoli)
+      dlgImg.onclick = () => dlgImg.classList.toggle('compact');
 
       renderCommentsLocal(card.id);
       if (window._commentsUnsub) { try{ window._commentsUnsub(); }catch{} window._commentsUnsub=null; }
@@ -646,19 +506,8 @@ dlgImg.classList.toggle('on-fire', !!card.onFire);
         window._loadCommentsRemoteIntoUI(card);
       }
 
-    document.body.classList.add('modal-open');
-dlg.showModal();
-
-// appena apro su mobile, parto in modalità compatta e porto le stelle in vista
-if (window.matchMedia('(max-width: 600px)').matches) {
-  dlgImg.classList.add('compact'); // 👈 più spazio ai commenti
-  setTimeout(()=> document.getElementById('dlgStarsQuick')
-    .scrollIntoView({behavior:'smooth', block:'center'}), 50);
-}
-
-// Tap sull’immagine per ridurre/espandere (toggle)
-dlgImg.onclick = () => dlgImg.classList.toggle('compact');
-
+      document.body.classList.add('modal-open');
+      dlg.showModal();
     }
 
     function renderCommentsLocal(id){
@@ -744,7 +593,7 @@ dlgImg.onclick = () => dlgImg.classList.toggle('compact');
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-  <!-- Setup Firebase + bridge -->
+  <!-- Setup Firebase + bridge + LOGIN -->
   <script id="firebase-setup">
     (async ()=>{
       const firebaseConfig = {
@@ -759,6 +608,103 @@ dlgImg.onclick = () => dlgImg.classList.toggle('compact');
 
       firebase.initializeApp(firebaseConfig);
       try { await firebase.auth().signInAnonymously(); } catch(e){ console.error('[firebase auth]', e); }
+
+      /* 🔐 LOGIN UI (nuovo) — vive nello stesso script del tuo bridge */
+      const who   = document.getElementById('whoami');
+      const bG    = document.getElementById('btnLoginGoogle');
+      const bE    = document.getElementById('btnLoginEmail');
+      const bOut  = document.getElementById('btnLogout');
+
+      const dlgAuth = document.getElementById('dlgAuth');
+      const authOpen = ()=> dlgAuth?.showModal();
+      const authClose= ()=> dlgAuth?.close();
+
+      firebase.auth().onAuthStateChanged(user => {
+        if (!who) return;
+        if (!user) {
+          who.textContent = 'Non autenticato';
+          if (bOut) bOut.style.display='none';
+          if (bG) bG.style.display='';
+          if (bE) bE.style.display='';
+          return;
+        }
+        const label = user.isAnonymous ? `Ospite (${user.uid.slice(0,6)}…)` : (user.displayName || user.email || user.uid);
+        who.textContent = `👤 ${label}`;
+        if (bOut) bOut.style.display = '';
+        if (bG) bG.style.display = user.isAnonymous ? '' : 'none';
+        if (bE) bE.style.display = user.isAnonymous ? '' : 'none';
+      });
+
+      async function loginWithGoogle(){
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const u = firebase.auth().currentUser;
+        try{
+          if (u && u.isAnonymous) { await u.linkWithPopup(provider); }
+          else { await firebase.auth().signInWithPopup(provider); }
+        }catch(e){ alert('Errore login Google: ' + e.message); console.error(e); }
+      }
+
+      async function loginEmail(email, pass){
+        const u = firebase.auth().currentUser;
+        try{
+          if (u && u.isAnonymous){
+            const cred = firebase.auth.EmailAuthProvider.credential(email, pass);
+            await u.linkWithCredential(cred);
+          }else{
+            await firebase.auth().signInWithEmailAndPassword(email, pass);
+          }
+        }catch(e){
+          if (e.code === 'auth/user-not-found') {
+            if (confirm('Utente non trovato. Vuoi registrarti?')) {
+              await signupEmail(email, pass);
+              return;
+            }
+          } else {
+            alert('Errore login email: '+e.message);
+          }
+          console.error(e);
+        }
+      }
+
+      async function signupEmail(email, pass){
+        const u = firebase.auth().currentUser;
+        try{
+          if (u && u.isAnonymous){
+            const cred = firebase.auth.EmailAuthProvider.credential(email, pass);
+            await u.linkWithCredential(cred);
+          }else{
+            await firebase.auth().createUserWithEmailAndPassword(email, pass);
+          }
+        }catch(e){ alert('Errore registrazione: '+e.message); console.error(e); }
+      }
+
+      async function logout(){
+        try{
+          await firebase.auth().signOut();
+          await firebase.auth().signInAnonymously(); // torni ospite
+        }catch(e){ console.error(e); }
+      }
+
+      bG?.addEventListener('click', loginWithGoogle);
+      bE?.addEventListener('click', authOpen);
+      bOut?.addEventListener('click', logout);
+
+      document.getElementById('authClose')?.addEventListener('click', authClose);
+      document.getElementById('authDoLogin')?.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const email = document.getElementById('authEmail').value.trim();
+        const pass  = document.getElementById('authPass').value;
+        if(!email || !pass) return alert('Inserisci email e password');
+        loginEmail(email, pass).then(authClose);
+      });
+      document.getElementById('authDoSignup')?.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const email = document.getElementById('authEmail').value.trim();
+        const pass  = document.getElementById('authPass').value;
+        if(!email || !pass) return alert('Inserisci email e password');
+        signupEmail(email, pass).then(authClose);
+      });
+      /* 🔐 fine login UI */
 
       const db = firebase.firestore();
       try { db.settings({ experimentalForceLongPolling: true }); } catch(e) {}
@@ -847,216 +793,24 @@ dlgImg.onclick = () => dlgImg.classList.toggle('compact');
           : '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>';
       };
 
-      // --- AUTH UI state ---
-const who   = document.getElementById('whoami');
-const bG    = document.getElementById('btnLoginGoogle');
-const bE    = document.getElementById('btnLoginEmail');
-const bOut  = document.getElementById('btnLogout');
-
-// Mostra lo stato utente
-firebase.auth().onAuthStateChanged(user => {
-  if (!who) return;
-  if (!user) { who.textContent = 'Non autenticato'; bOut.style.display='none'; bG.style.display=''; bE.style.display=''; return; }
-  const label = user.isAnonymous ? `Ospite (${user.uid.slice(0,6)}…)` : (user.displayName || user.email || user.uid);
-  who.textContent = `👤 ${label}`;
-  bOut.style.display = '';
-  bG.style.display = user.isAnonymous ? '' : 'none';
-  bE.style.display = user.isAnonymous ? '' : 'none';
-});
-
-// Login Google (linka se anonimo)
-async function loginWithGoogle(){
-  const provider = new firebase.auth.GoogleAuthProvider();
-  const u = firebase.auth().currentUser;
-  try{
-    if (u && u.isAnonymous) { await u.linkWithPopup(provider); }
-    else { await firebase.auth().signInWithPopup(provider); }
-  }catch(e){ alert('Errore login Google: ' + e.message); console.error(e); }
-}
-
-// Dialog Email
-const dlgAuth = document.getElementById('dlgAuth');
-const authOpen = ()=> dlgAuth?.showModal();
-const authClose= ()=> dlgAuth?.close();
-
-async function loginEmail(email, pass){
-  const u = firebase.auth().currentUser;
-  try{
-    if (u && u.isAnonymous){
-      const cred = firebase.auth.EmailAuthProvider.credential(email, pass);
-      await u.linkWithCredential(cred); // collega l'anonimo
-    }else{
-      await firebase.auth().signInWithEmailAndPassword(email, pass);
-    }
-  }catch(e){
-    // Se non esiste, proponi registrazione
-    if (e.code === 'auth/user-not-found') {
-      if (confirm('Utente non trovato. Vuoi registrarti?')) {
-        await signupEmail(email, pass);
-        return;
-      }
-    }else{
-      alert('Errore login email: '+e.message);
-    }
-    console.error(e);
-  }
-}
-
-async function signupEmail(email, pass){
-  const u = firebase.auth().currentUser;
-  try{
-    if (u && u.isAnonymous){
-      const cred = firebase.auth.EmailAuthProvider.credential(email, pass);
-      await u.linkWithCredential(cred);
-    }else{
-      await firebase.auth().createUserWithEmailAndPassword(email, pass);
-    }
-  }catch(e){ alert('Errore registrazione: '+e.message); console.error(e); }
-}
-
-async function logout(){
-  try{ await firebase.auth().signOut(); await firebase.auth().signInAnonymously(); } // torni ospite
-  catch(e){ console.error(e); }
-}
-
-// Bind pulsanti
-bG?.addEventListener('click', loginWithGoogle);
-bE?.addEventListener('click', authOpen);
-bOut?.addEventListener('click', logout);
-
-// Bind dialog email
-document.getElementById('authClose')?.addEventListener('click', authClose);
-document.getElementById('authDoLogin')?.addEventListener('click', (e)=>{
-  e.preventDefault();
-  const email = document.getElementById('authEmail').value.trim();
-  const pass  = document.getElementById('authPass').value;
-  if(!email || !pass) return alert('Inserisci email e password');
-  loginEmail(email, pass).then(authClose);
-});
-document.getElementById('authDoSignup')?.addEventListener('click', (e)=>{
-  e.preventDefault();
-  const email = document.getElementById('authEmail').value.trim();
-  const pass  = document.getElementById('authPass').value;
-  if(!email || !pass) return alert('Inserisci email e password');
-  signupEmail(email, pass).then(authClose);
-});
-
-// --- AUTH UI state ---
-const who   = document.getElementById('whoami');
-const bG    = document.getElementById('btnLoginGoogle');
-const bE    = document.getElementById('btnLoginEmail');
-const bOut  = document.getElementById('btnLogout');
-const dlgAuth = document.getElementById('dlgAuth');
-
-function authOpen(){ dlgAuth?.showModal(); }
-function authClose(){ dlgAuth?.close(); }
-
-firebase.auth().onAuthStateChanged(user => {
-  if (!who) return;
-  if (!user) {
-    who.textContent = 'Non autenticato';
-    if (bOut) bOut.style.display='none';
-    if (bG) bG.style.display='';
-    if (bE) bE.style.display='';
-    return;
-  }
-  const label = user.isAnonymous ? `Ospite (${user.uid.slice(0,6)}…)` : (user.displayName || user.email || user.uid);
-  who.textContent = `👤 ${label}`;
-  if (bOut) bOut.style.display = '';
-  if (bG) bG.style.display = user.isAnonymous ? '' : 'none';
-  if (bE) bE.style.display = user.isAnonymous ? '' : 'none';
-});
-
-async function loginWithGoogle(){
-  const provider = new firebase.auth.GoogleAuthProvider();
-  const u = firebase.auth().currentUser;
-  try{
-    if (u && u.isAnonymous) { await u.linkWithPopup(provider); }
-    else { await firebase.auth().signInWithPopup(provider); }
-  }catch(e){ alert('Errore login Google: ' + e.message); console.error(e); }
-}
-
-async function loginEmail(email, pass){
-  const u = firebase.auth().currentUser;
-  try{
-    if (u && u.isAnonymous){
-      const cred = firebase.auth.EmailAuthProvider.credential(email, pass);
-      await u.linkWithCredential(cred); // collega anonimo → email
-    }else{
-      await firebase.auth().signInWithEmailAndPassword(email, pass);
-    }
-  }catch(e){
-    if (e.code === 'auth/user-not-found') {
-      if (confirm('Utente non trovato. Vuoi registrarti?')) {
-        await signupEmail(email, pass);
-        return;
-      }
-    } else {
-      alert('Errore login email: '+e.message);
-    }
-    console.error(e);
-  }
-}
-
-async function signupEmail(email, pass){
-  const u = firebase.auth().currentUser;
-  try{
-    if (u && u.isAnonymous){
-      const cred = firebase.auth.EmailAuthProvider.credential(email, pass);
-      await u.linkWithCredential(cred);
-    }else{
-      await firebase.auth().createUserWithEmailAndPassword(email, pass);
-    }
-  }catch(e){ alert('Errore registrazione: '+e.message); console.error(e); }
-}
-
-async function logout(){
-  try{
-    await firebase.auth().signOut();
-    await firebase.auth().signInAnonymously(); // torni ospite per vedere tutto
-  }catch(e){ console.error(e); }
-}
-
-// Bind pulsanti
-bG?.addEventListener('click', loginWithGoogle);
-bE?.addEventListener('click', authOpen);
-bOut?.addEventListener('click', logout);
-
-// Bind dialog email
-document.getElementById('authClose')?.addEventListener('click', authClose);
-document.getElementById('authDoLogin')?.addEventListener('click', (e)=>{
-  e.preventDefault();
-  const email = document.getElementById('authEmail').value.trim();
-  const pass  = document.getElementById('authPass').value;
-  if(!email || !pass) return alert('Inserisci email e password');
-  loginEmail(email, pass).then(authClose);
-});
-document.getElementById('authDoSignup')?.addEventListener('click', (e)=>{
-  e.preventDefault();
-  const email = document.getElementById('authEmail').value.trim();
-  const pass  = document.getElementById('authPass').value;
-  if(!email || !pass) return alert('Inserisci email e password');
-  signupEmail(email, pass).then(authClose);
-});
-
       window.dispatchEvent(new CustomEvent('firebase-ready'));
     })();
   </script>
-<dialog id="dlgAuth">
-  <form method="dialog" class="modal" style="max-width:420px; margin:auto; border-radius:18px">
-    <div class="right">
-      <h3 style="margin:12px 0 0">Accedi con email</h3>
-      <div class="field"><label>Email</label><input id="authEmail" type="text" placeholder="tu@esempio.com" autocomplete="email"/></div>
-      <div class="field"><label>Password</label><input id="authPass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
-      <div class="actions" style="display:flex; gap:8px; margin-top:10px">
-        <button class="primary" id="authDoLogin">Accedi</button>
-        <button type="button" id="authDoSignup">Registrati</button>
-        <button type="button" id="authClose">Chiudi</button>
-      </div>
-    </div>
-  </form>
-</dialog>
 
-  
+  <!-- 🔐 Dialog Email/Password (nuovo, dopo tutto il contenuto così è già in DOM quando si binda) -->
+  <dialog id="dlgAuth">
+    <form method="dialog" class="modal" style="max-width:520px; margin:auto; border-radius:18px">
+      <div class="right" style="padding:16px">
+        <h3 style="margin:0 0 10px">Accedi con email</h3>
+        <div class="field"><label>Email</label><input id="authEmail" type="email" placeholder="tu@esempio.com" autocomplete="email"/></div>
+        <div class="field"><label>Password</label><input id="authPass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
+        <div class="actions" style="display:flex; gap:8px; margin-top:12px; justify-content:flex-end">
+          <button class="tab-btn" id="authDoLogin">Accedi</button>
+          <button class="tab-btn" type="button" id="authDoSignup">Registrati</button>
+          <button class="tab-btn" type="button" id="authClose">Chiudi</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
 </body>
 </html>
