@@ -242,7 +242,7 @@ const PACKS = {
     const CONFIG = {
       CARDS_JSON:'cards.json',
       COUNT:6,
-      WEIGHTS:{'Leggendaria':1,'Season':10,'Ultra Rara':6,'Epica':3,'Rara':10,'Non Comune':20,'Comune':40},
+      WEIGHTS:{'Leggendaria':1,'Season':8,'Ultra Rara':6,'Epica':3,'Rara':10,'Non Comune':20,'Comune':40},
       FETCH_TIMEOUT_MS:8000
     };
 
@@ -380,15 +380,44 @@ const PACKS = {
         if(!candidates.length) return null;
         return candidates[Math.floor(Math.random()*candidates.length)];
       }
-      ensureRarePlus(cards, pool){
-        const ok=cards.some(c=>rarityRank[c.rarity] >= rarityRank['Rara']);
-        if(ok) return cards;
-        const rarePool = pool.filter(c=>rarityRank[c.rarity] >= rarityRank['Rara']);
-        if(!rarePool.length) return cards;
-        const i=Math.floor(Math.random()*cards.length);
-        cards[i] = rarePool[Math.floor(Math.random()*rarePool.length)];
-        return cards;
-      }
+   // Garantisce almeno 2 carte Rara+ (default). Puoi cambiare minCount se serve.
+ensureRarePlus(cards, pool, minCount = 2){
+  const RARE_PLUS = rarityRank['Rara'];
+
+  // quante Rara+ hai già?
+  let have = cards.filter(c => rarityRank[c.rarity] >= RARE_PLUS).length;
+  if (have >= minCount) return cards;
+
+  // pool delle candidate Rara+
+  const rarePool = pool.filter(c => rarityRank[c.rarity] >= RARE_PLUS);
+  if (!rarePool.length) return cards; // niente da garantire se non esistono
+
+  // evita duplicati per id
+  const usedIds = new Set(cards.map(c => c.id));
+  let need = Math.min(minCount - have, rarePool.length);
+
+  for (let g = 0; g < need; g++) {
+    // scegli un indice da rimpiazzare: preferisci una non-Rara
+    const replaceable = cards
+      .map((c, idx) => ({ c, idx }))
+      .filter(x => rarityRank[x.c.rarity] < RARE_PLUS)
+      .map(x => x.idx);
+
+    const idx = replaceable.length
+      ? replaceable[Math.floor(Math.random() * replaceable.length)]
+      : Math.floor(Math.random() * cards.length);
+
+    // scegli una Rara+ non ancora usata (se possibile)
+    let choices = rarePool.filter(c => !usedIds.has(c.id));
+    if (!choices.length) choices = rarePool; // fallback se esaurite le uniche
+
+    const pick = choices[Math.floor(Math.random() * choices.length)];
+    cards[idx] = pick;
+    usedIds.add(pick.id);
+  }
+  return cards;
+}
+
 
       makeCardEl(d,isFinal){
         const tpl=document.getElementById('tplCard');
