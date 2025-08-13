@@ -429,11 +429,18 @@ const PACKS = {
         const wrap=this.$stageWrap, stage=this.$stage;
         stage.innerHTML=''; wrap.classList.add('show');
         const last=cards.length-1; const frag=document.createDocumentFragment();
-        cards.forEach((c,i)=>{ const el=this.makeCardEl(c,i===last); frag.appendChild(el); this.setDropIn(el,i) });
-        stage.appendChild(frag);
-        this.$shareBtn.disabled=false;
-        this.$log.textContent='Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.';
-      }
+       cards.forEach((c,i) => {
+  const el = this.makeCardEl(c, i === last);
+
+  // 👇 QUI: imposta il retro in base al pacchetto corrente
+  el.querySelector('.back img').src = PACKS[this.currentPackKey].back;
+
+  frag.appendChild(el);
+  this.setDropIn(el, i);
+});
+stage.appendChild(frag);
+this.$shareBtn.disabled = false;
+this.$log.textContent = 'Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.';
 
       async doOpen(){
         const BTN=this.$openBtn, SHARE=this.$shareBtn; BTN.disabled=true; SHARE.disabled=true;
