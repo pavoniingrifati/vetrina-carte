@@ -202,6 +202,35 @@
   .actions .primary{ width:100%; padding:12px 14px }
 }
 
+    /* 🔥 Cornice infuocata per carte "On fire" */
+@keyframes fireGlow {
+  0%   { box-shadow: 0 0 0 1px rgba(255,100,0,.45), 0 0 12px 4px rgba(255,100,0,.35), 0 0 28px 10px rgba(255,50,0,.18) }
+  50%  { box-shadow: 0 0 0 1px rgba(255,160,0,.55), 0 0 18px 6px rgba(255,140,0,.45), 0 0 36px 14px rgba(255,80,0,.22) }
+  100% { box-shadow: 0 0 0 1px rgba(255,100,0,.45), 0 0 12px 4px rgba(255,100,0,.35), 0 0 28px 10px rgba(255,50,0,.18) }
+}
+
+/* Griglia */
+.card.on-fire {
+  position: relative;
+  border-color: rgba(255,140,0,.7);
+  animation: fireGlow 1.8s ease-in-out infinite;
+}
+
+/* Modale: bagliore attorno all'immagine grande */
+.modal .big.on-fire {
+  outline: 2px solid rgba(255,140,0,.7);
+  outline-offset: -2px;
+  animation: fireGlow 1.8s ease-in-out infinite;
+}
+
+/* Etichetta "On fire" nei tag */
+.tag.fire {
+  border-color: rgba(255,140,0,.6);
+  background: linear-gradient(180deg, rgba(255,140,0,.18), rgba(255,140,0,0));
+  color: #ffd7b3;
+  font-weight: 600;
+}
+
     
   </style>
 </head>
@@ -448,6 +477,9 @@
       const favSet = new Set(loadFavs());
       for(const c of items){
         const node = tpl.content.firstElementChild.cloneNode(true);
+        // 🔥 cornice infuocata in griglia se onFire
+if (c.onFire) node.classList.add('on-fire');
+
         const rarSlug = (c.rarity || '').toLowerCase().replace(/\s+/g,'-');
         if (rarSlug) node.classList.add('r-' + rarSlug);
         node.querySelector('.badge').textContent = c.rarity;
@@ -474,6 +506,14 @@
         const qty = getQty(c);
         if (qty!=null){ const s=document.createElement('span'); s.className='tag'; s.textContent=`Quantità: ${qty}`; tags.appendChild(s); }
         (c.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s);});
+
+        if (c.onFire) {
+  const s = document.createElement('span');
+  s.className = 'tag fire';
+  s.textContent = '🔥 On fire';
+  tags.appendChild(s);
+}
+
 
         const favBtn = node.querySelector('.fav');
         const favActive = favSet.has(c.id);
@@ -513,7 +553,19 @@
     async function openModal(card){
       current = card; currentIndex = LAST_ITEMS.findIndex(x=> x.id===card.id);
       dlgImg.src = card.img; dlgName.textContent = card.name; dlgMeta.textContent = `${card.game} • ${card.series} • ${card.role || '—'}`;
+
+// 🔥 cornice infuocata nella modale se onFire
+dlgImg.classList.toggle('on-fire', !!card.onFire);
+
+      
       dlgTags.innerHTML=''; const _q=getQty(card); if(_q!=null){ const s=document.createElement('span'); s.className='tag'; s.textContent=`Quantità: ${_q}`; dlgTags.appendChild(s); } (card.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; dlgTags.appendChild(s)});
+
+      if (card.onFire) {
+  const s = document.createElement('span');
+  s.className = 'tag fire';
+  s.textContent = '🔥 On fire';
+  dlgTags.appendChild(s);
+}
 
       const onRate = async (v)=>{ 
         saveRating(card.id, v); 
