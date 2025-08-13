@@ -119,30 +119,33 @@
     .modal .big{ width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.08); aspect-ratio:3/4; object-fit:cover }
 
     /* --- MOBILE UX --- */
-    @media (max-width: 600px){
-      .modal .big{ max-height: 58vh; height: auto; }
+@media (max-width: 600px){
+  /* immagine più bassa di default: lascia spazio sotto */
+  .modal .big{ max-height: 42vh; height: auto; }
 
-      .quick-rate{
-        position: sticky;
-        bottom: 0;
-        background: linear-gradient(180deg, rgba(15,21,38,.85), rgba(15,21,38,.9));
-        border: 1px solid rgba(255,255,255,.08);
-        border-radius: 12px;
-        padding: 10px 12px;
-        margin-top: 8px;
-        z-index: 2;
-      }
+  .quick-rate{
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(15,21,38,.85), rgba(15,21,38,.9));
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    z-index: 2;
+  }
 
-      .quick-rate .stars { gap: 6px }
-      .quick-rate .stars .s { width: 28px; height: 28px }
-      .quick-rate .stars button{
-        background: transparent; border: none; padding: 10px; line-height: 0; border-radius: 10px;
-      }
+  .quick-rate .stars { gap: 6px }
+  .quick-rate .stars .s { width: 28px; height: 28px }
+  .quick-rate .stars button{
+    background: transparent; border: none; padding: 10px; line-height: 0; border-radius: 10px;
+  }
 
-      input[type="text"], textarea { font-size: 16px }
-    }
+  /* evita zoom automatico iOS */
+  input[type="text"], textarea { font-size: 16px }
+}
+/* modalità compatta ancora più bassa */
+.modal .big.compact{ max-height: 30vh !important }
 
-    .modal .big.compact{ max-height: 36vh !important }
 
     .modal .close{ position:absolute; top:10px; right:10px; background: rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18); padding:8px 10px; border-radius:10px; color:white }
 
@@ -189,6 +192,17 @@
     /* Evita rimbalzi quando la modale è aperta */
     body.modal-open { overscroll-behavior: contain }
     .modal .scroll { overscroll-behavior: contain }
+
+@media (max-width: 600px){
+  /* le azioni non occupano spazio fisso in basso */
+  .actions{ position: static; padding: 10px 0 }
+  /* textarea più comoda */
+  textarea{ min-height: 160px }
+  /* pulsante "Pubblica" piena larghezza */
+  .actions .primary{ width:100%; padding:12px 14px }
+}
+
+    
   </style>
 </head>
 
@@ -548,16 +562,19 @@
         window._loadCommentsRemoteIntoUI(card);
       }
 
-      document.body.classList.add('modal-open');
-      dlg.showModal();
+    document.body.classList.add('modal-open');
+dlg.showModal();
 
-      // Tap sull’immagine per ridurre/espandere (più spazio ai commenti su mobile)
-      dlgImg.onclick = () => dlgImg.classList.toggle('compact');
+// appena apro su mobile, parto in modalità compatta e porto le stelle in vista
+if (window.matchMedia('(max-width: 600px)').matches) {
+  dlgImg.classList.add('compact'); // 👈 più spazio ai commenti
+  setTimeout(()=> document.getElementById('dlgStarsQuick')
+    .scrollIntoView({behavior:'smooth', block:'center'}), 50);
+}
 
-      // Su mobile, porta subito in vista le stelle
-      if (window.matchMedia('(max-width: 500px)').matches) {
-        setTimeout(()=> dlgStarsQuick.scrollIntoView({behavior:'smooth', block:'center'}), 50);
-      }
+// Tap sull’immagine per ridurre/espandere (toggle)
+dlgImg.onclick = () => dlgImg.classList.toggle('compact');
+
     }
 
     function renderCommentsLocal(id){
