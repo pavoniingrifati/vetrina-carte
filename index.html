@@ -254,12 +254,12 @@ font-weight: 600;
 <div>
 <h1>VETRINA CARTE FANTABALLA FUT</h1>
 <div class="subtitle">Non hai ancora una carta? Segui le live su <a href="https://www.tiktok.com/@fantaballa">Tik Tok</a> di Fanataballa!</div>
-<!-- 🔐 Barra login -->
+          <!-- 🔐 Barra login -->
 <div id="authBar" style="display:flex; gap:10px; align-items:center; margin-top:8px; flex-wrap:wrap">
-<span id="whoami" style="color:var(--muted); font-size:13px"></span>
-<button id="btnLoginGoogle" class="tab-btn" type="button">Accedi con Google</button>
-<button id="btnLoginEmail" class="tab-btn" type="button">Accedi con Email</button>
-<button id="btnLogout" class="tab-btn" type="button" style="display:none">Esci</button>
+  <span id="whoami" style="color:var(--muted); font-size:13px"></span>
+  <button id="btnLoginGoogle" class="tab-btn" type="button">Accedi con Google</button>
+  <button id="btnLoginEmail" class="tab-btn" type="button">Accedi con Email</button>
+  <button id="btnLogout" class="tab-btn" type="button" style="display:none">Esci</button>
 </div>
 
 </div>
@@ -941,122 +941,25 @@ if(!email || !pass) return alert('Inserisci email e password');
 signupEmail(email, pass).then(authClose);
 });
 
-// --- AUTH UI state ---
-const who   = document.getElementById('whoami');
-const bG    = document.getElementById('btnLoginGoogle');
-const bE    = document.getElementById('btnLoginEmail');
-const bOut  = document.getElementById('btnLogout');
-const dlgAuth = document.getElementById('dlgAuth');
-
-function authOpen(){ dlgAuth?.showModal(); }
-function authClose(){ dlgAuth?.close(); }
-
-firebase.auth().onAuthStateChanged(user => {
-  if (!who) return;
-  if (!user) {
-    who.textContent = 'Non autenticato';
-    if (bOut) bOut.style.display='none';
-    if (bG) bG.style.display='';
-    if (bE) bE.style.display='';
-    return;
-  }
-  const label = user.isAnonymous ? `Ospite (${user.uid.slice(0,6)}…)` : (user.displayName || user.email || user.uid);
-  who.textContent = `👤 ${label}`;
-  if (bOut) bOut.style.display = '';
-  if (bG) bG.style.display = user.isAnonymous ? '' : 'none';
-  if (bE) bE.style.display = user.isAnonymous ? '' : 'none';
-});
-
-async function loginWithGoogle(){
-  const provider = new firebase.auth.GoogleAuthProvider();
-  const u = firebase.auth().currentUser;
-  try{
-    if (u && u.isAnonymous) { await u.linkWithPopup(provider); }
-    else { await firebase.auth().signInWithPopup(provider); }
-  }catch(e){ alert('Errore login Google: ' + e.message); console.error(e); }
-}
-
-async function loginEmail(email, pass){
-  const u = firebase.auth().currentUser;
-  try{
-    if (u && u.isAnonymous){
-      const cred = firebase.auth.EmailAuthProvider.credential(email, pass);
-      await u.linkWithCredential(cred); // collega anonimo → email
-    }else{
-      await firebase.auth().signInWithEmailAndPassword(email, pass);
-    }
-  }catch(e){
-    if (e.code === 'auth/user-not-found') {
-      if (confirm('Utente non trovato. Vuoi registrarti?')) {
-        await signupEmail(email, pass);
-        return;
-      }
-    } else {
-      alert('Errore login email: '+e.message);
-    }
-    console.error(e);
-  }
-}
-
-async function signupEmail(email, pass){
-  const u = firebase.auth().currentUser;
-  try{
-    if (u && u.isAnonymous){
-      const cred = firebase.auth.EmailAuthProvider.credential(email, pass);
-      await u.linkWithCredential(cred);
-    }else{
-      await firebase.auth().createUserWithEmailAndPassword(email, pass);
-    }
-  }catch(e){ alert('Errore registrazione: '+e.message); console.error(e); }
-}
-
-async function logout(){
-  try{
-    await firebase.auth().signOut();
-    await firebase.auth().signInAnonymously(); // torni ospite per vedere tutto
-  }catch(e){ console.error(e); }
-}
-
-// Bind pulsanti
-bG?.addEventListener('click', loginWithGoogle);
-bE?.addEventListener('click', authOpen);
-bOut?.addEventListener('click', logout);
-
-// Bind dialog email
-document.getElementById('authClose')?.addEventListener('click', authClose);
-document.getElementById('authDoLogin')?.addEventListener('click', (e)=>{
-  e.preventDefault();
-  const email = document.getElementById('authEmail').value.trim();
-  const pass  = document.getElementById('authPass').value;
-  if(!email || !pass) return alert('Inserisci email e password');
-  loginEmail(email, pass).then(authClose);
-});
-document.getElementById('authDoSignup')?.addEventListener('click', (e)=>{
-  e.preventDefault();
-  const email = document.getElementById('authEmail').value.trim();
-  const pass  = document.getElementById('authPass').value;
-  if(!email || !pass) return alert('Inserisci email e password');
-  signupEmail(email, pass).then(authClose);
-});
 
 window.dispatchEvent(new CustomEvent('firebase-ready'));
 })();
 </script>
 <dialog id="dlgAuth">
-<form method="dialog" class="modal" style="max-width:420px; margin:auto; border-radius:18px">
-<div class="right">
-<h3 style="margin:12px 0 0">Accedi con email</h3>
-<div class="field"><label>Email</label><input id="authEmail" type="text" placeholder="tu@esempio.com" autocomplete="email"/></div>
-<div class="field"><label>Password</label><input id="authPass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
-<div class="actions" style="display:flex; gap:8px; margin-top:10px">
-<button class="primary" id="authDoLogin">Accedi</button>
-<button type="button" id="authDoSignup">Registrati</button>
-<button type="button" id="authClose">Chiudi</button>
-</div>
-</div>
-</form>
+  <form method="dialog" class="modal" style="max-width:420px; margin:auto; border-radius:18px">
+    <div class="right">
+      <h3 style="margin:12px 0 0">Accedi con email</h3>
+      <div class="field"><label>Email</label><input id="authEmail" type="text" placeholder="tu@esempio.com" autocomplete="email"/></div>
+      <div class="field"><label>Password</label><input id="authPass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
+      <div class="actions" style="display:flex; gap:8px; margin-top:10px">
+        <button class="primary" id="authDoLogin">Accedi</button>
+        <button type="button" id="authDoSignup">Registrati</button>
+        <button type="button" id="authClose">Chiudi</button>
+      </div>
+    </div>
+  </form>
 </dialog>
 
-
+  
 </body>
 </html>
