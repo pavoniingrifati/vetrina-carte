@@ -34,6 +34,14 @@
     h1{font-size: clamp(20px, 3.6vw, 34px); margin:0}
     .subtitle{color:var(--muted); margin-top:6px}
 
+    <div id="authBar" style="display:flex; gap:10px; align-items:center; margin-top:8px">
+  <span id="whoami" style="color:var(--muted); font-size:13px"></span>
+  <button id="btnLoginGoogle" class="tab-btn" type="button">Accedi con Google</button>
+  <button id="btnLoginEmail" class="tab-btn" type="button">Accedi con Email</button>
+  <button id="btnLogout" class="tab-btn" type="button" style="display:none">Esci</button>
+</div>
+
+
     .tabs{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap }
     .tab-btn{ border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text); padding:8px 12px; border-radius:999px; cursor:pointer }
     .tab-btn[aria-selected="true"]{ background:rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15) }
@@ -830,6 +838,101 @@ dlgImg.onclick = () => dlgImg.classList.toggle('compact');
             `).join('')
           : '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>';
       };
+
+      // --- AUTH UI state ---
+const who   = document.getElementById('whoami');
+const bG    = document.getElementById('btnLoginGoogle');
+const bE    = document.getElementById('btnLoginEmail');
+const bOut  = document.getElementById('btnLogout');
+
+// Mostra lo stato utente
+firebase.auth().onAuthStateChanged(user => {
+  if (!who) return;
+  if (!user) { who.textContent = 'Non autenticato'; bOut.style.display='none'; bG.style.display=''; bE.style.display=''; return; }
+  const label = user.isAnonymous ? `Ospite (${user.uid.slice(0,6)}…)` : (user.displayName || user.email || user.uid);
+  who.textContent = `👤 ${label}`;
+  bOut.style.display = '';
+  bG.style.display = user.isAnonymous ? '' : 'none';
+  bE.style.display = user.isAnonymous ? '' : 'none';
+});
+
+// Login Google (linka se anonimo)
+async function loginWithGoogle(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  const u = firebase.auth().currentUser;
+  try{
+    if (u && u.isAnonymous) { await u.linkWithPopup(provider); }
+    else { await firebase.auth().signInWithPopup(provider); }
+  }catch(e){ alert('Errore login Google: ' + e.message); console.error(e); }
+}
+
+// Dialog Email
+const dlgAuth = document.getElementById('dlgAuth');
+const authOpen = ()=> dlgAuth?.showModal();
+const authClose= ()=> dlgAuth?.close();
+
+async function loginEmail(email, pass){
+  const u = firebase.auth().currentUser;
+  try{
+    if (u && u.isAnonymous){
+      const cred = firebase.auth.EmailAuthProvider.credential(email, pass);
+      await u.linkWithCredential(cred); // collega l'anonimo
+    }else{
+      await firebase.auth().signInWithEmailAndPassword(email, pass);
+    }
+  }catch(e){
+    // Se non esiste, proponi registrazione
+    if (e.code === 'auth/user-not-found') {
+      if (confirm('Utente non trovato. Vuoi registrarti?')) {
+        await signupEmail(email, pass);
+        return;
+      }
+    }else{
+      alert('Errore login email: '+e.message);
+    }
+    console.error(e);
+  }
+}
+
+async function signupEmail(email, pass){
+  const u = firebase.auth().currentUser;
+  try{
+    if (u && u.isAnonymous){
+      const cred = firebase.auth.EmailAuthProvider.credential(email, pass);
+      await u.linkWithCredential(cred);
+    }else{
+      await firebase.auth().createUserWithEmailAndPassword(email, pass);
+    }
+  }catch(e){ alert('Errore registrazione: '+e.message); console.error(e); }
+}
+
+async function logout(){
+  try{ await firebase.auth().signOut(); await firebase.auth().signInAnonymously(); } // torni ospite
+  catch(e){ console.error(e); }
+}
+
+// Bind pulsanti
+bG?.addEventListener('click', loginWithGoogle);
+bE?.addEventListener('click', authOpen);
+bOut?.addEventListener('click', logout);
+
+// Bind dialog email
+document.getElementById('authClose')?.addEventListener('click', authClose);
+document.getElementById('authDoLogin')?.addEventListener('click', (e)=>{
+  e.preventDefault();
+  const email = document.getElementById('authEmail').value.trim();
+  const pass  = document.getElementById('authPass').value;
+  if(!email || !pass) return alert('Inserisci email e password');
+  loginEmail(email, pass).then(authClose);
+});
+document.getElementById('authDoSignup')?.addEventListener('click', (e)=>{
+  e.preventDefault();
+  const email = document.getElementById('authEmail').value.trim();
+  const pass  = document.getElementById('authPass').value;
+  if(!email || !pass) return alert('Inserisci email e password');
+  signupEmail(email, pass).then(authClose);
+});
+
 
       window.dispatchEvent(new CustomEvent('firebase-ready'));
     })();
