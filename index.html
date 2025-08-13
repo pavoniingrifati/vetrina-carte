@@ -213,6 +213,36 @@
 body.modal-open { overscroll-behavior: contain }
 .modal .scroll { overscroll-behavior: contain }
 
+/* --- MOBILE UX --- */
+@media (max-width: 600px){
+  /* l’immagine non deve mangiarsi tutto lo schermo */
+  .modal .big{ max-height: 58vh; height: auto; }
+
+  /* barra "valuta" sempre visibile subito sotto l'immagine */
+  .quick-rate{
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(15,21,38,.85), rgba(15,21,38,.9));
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    z-index: 2;
+  }
+
+  /* stelle grandi e facili da toccare */
+  .quick-rate .stars { gap: 6px }
+  .quick-rate .stars .s { width: 28px; height: 28px }
+  .quick-rate .stars button{
+    background: transparent; border: none; padding: 10px; line-height: 0; border-radius: 10px;
+  }
+
+  /* evita zoom automatico iOS quando scrivi */
+  input[type="text"], textarea { font-size: 16px }
+}
+
+/* modalità "compatta" dell'immagine (toggle) */
+.modal .big.compact{ max-height: 36vh !important }
 
     
   </style>
@@ -289,6 +319,12 @@ body.modal-open { overscroll-behavior: contain }
         <button class="navBtn navPrev" type="button" title="Precedente" aria-label="Carta precedente">◀</button>
         <div class="hint left" aria-hidden="true">‹</div>
         <img id="dlgImg" alt="Immagine carta" class="big" />
+        
+        <!-- Barra rapida per votare su mobile -->
+<div id="quickRate" class="quick-rate">
+  <div class="stars" id="dlgStarsQuick" aria-label="Valuta questa carta (barra rapida)"></div>
+</div>
+
         <div class="hint right" aria-hidden="true">›</div>
         <button class="navBtn navNext" type="button" title="Successiva" aria-label="Carta successiva">▶</button>
       </div>
