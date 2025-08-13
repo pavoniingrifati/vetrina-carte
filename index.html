@@ -570,6 +570,32 @@ body.modal-open { overscroll-behavior: contain }
         applyFilters(); 
       };
       renderStars(dlgStars, 0, onRate);
+
+// ⭐ barra rapida sotto l'immagine (stesse stelle, stesso handler)
+const dlgStarsQuick = document.getElementById('dlgStarsQuick');
+renderStars(dlgStarsQuick, 0, onRate);
+
+// quando arrivano i voti remoti, aggiorna entrambe le viste
+if (window._fetchRatings) {
+  try{
+    const vals = await window._fetchRatings(card.id);
+    const avgVal = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
+    renderStars(dlgStars, avgVal, onRate);
+    renderStars(dlgStarsQuick, avgVal, onRate);
+  }catch(e){}
+}
+if (window._modalUnsub) { try{ window._modalUnsub(); }catch{} window._modalUnsub = null; }
+if (window._subscribeModalRating) {
+  window._modalUnsub = window._subscribeModalRating(card.id, (avgVal)=>{
+    renderStars(dlgStars, avgVal, onRate);
+    renderStars(dlgStarsQuick, avgVal, onRate);
+  });
+}
+
+// 👇 Tap sull’immagine per ridurre/espandere (utile su schermi piccoli)
+dlgImg.onclick = () => dlgImg.classList.toggle('compact');
+
+      
       if (window._fetchRatings) { 
         try{ 
           const vals = await window._fetchRatings(card.id); 
