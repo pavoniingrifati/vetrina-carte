@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Fantaballa – Open Pack</title>
-<meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e screenshot. Include anteprime pacchetti e prezzi. Usa cards.json (series=Wonderkid/Tots)." />
+<meta name="description" content="Pack opening con flash dorato, click-to-flip, glow per rarità, particelle, suoni e screenshot. Salvataggio automatico in My Cards per utenti Google.">
 
 <!-- Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,6 +25,10 @@ h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
 .btn{background:linear-gradient(180deg,#1b2a4d,#152141); border:1px solid rgba(110,231,255,.35); border-radius:12px; color:#fff; padding:12px 16px; cursor:pointer}
 .btn:disabled{opacity:.6; cursor:not-allowed}
 
+.authBox{display:flex; align-items:center; gap:10px}
+.authBox img{width:28px; height:28px; border-radius:999px; display:none}
+.authBox .name{font-size:14px; opacity:.9; display:none}
+
 /* FLASH */
 .flash-line,.flash-screen{position:fixed; inset:0; pointer-events:none; z-index:40; opacity:0}
 .flash-line::before{content:""; position:absolute; top:0; bottom:0; width:32vw; background:linear-gradient(90deg,transparent,rgba(255,230,120,.55),rgba(255,201,44,.8),rgba(255,230,120,.55),transparent); filter:blur(8px); transform:translateX(-40vw) skewX(-12deg)}
@@ -36,7 +40,7 @@ h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
 .flash-screen.active{animation:flash .35s ease-out forwards}
 @keyframes flash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
 
-/* CHOICES (anteprime pacchetti) */
+/* CHOICES */
 .choices{ display:flex; gap:14px; margin-top:12px; flex-wrap:wrap }
 .choice{ display:flex; align-items:center; gap:10px; padding:8px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03); border-radius:14px; cursor:pointer; }
 .choice[aria-selected="true"]{ outline:2px solid rgba(110,231,255,.5); background:rgba(255,255,255,.06) }
@@ -66,7 +70,6 @@ h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
 .scene{position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d; transition:transform .7s cubic-bezier(.22,.75,.2,1); transform:rotateY(0deg); box-shadow:0 10px 28px rgba(0,0,0,.45); background:var(--card); will-change:transform}
 .face{position:absolute; inset:0; border-radius:inherit; overflow:hidden; backface-visibility:hidden; border:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center}
 .back img,.front img{width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:690/987}
-.back img{filter:drop-shadow(0 10px 30px rgba(0,0,0,.45))}
 .front{transform:rotateY(180deg)}
 
 .drop{opacity:0; transform:translateY(-40px) scale(.96)}
@@ -114,16 +117,6 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 .pillFoot{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
 
 @media(max-width:600px){.wrap{padding:12px} .stage{grid-template-columns:1fr}}
-
-/* Share modal (fallback desktop) */
-.shareModal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:50; background:rgba(0,0,0,.45)}
-.shareModal.show{display:flex}
-.shareCard{background:var(--panel); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:16px; width:min(520px,92vw); box-shadow:0 12px 40px rgba(0,0,0,.5)}
-.shareHeader{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px}
-.shareRow{display:flex; gap:8px; flex-wrap:wrap}
-.shareItem{display:inline-flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); border-radius:12px}
-.shareActions{display:flex; gap:8px; margin-top:12px; justify-content:flex-end}
-.inputLike{width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03); color:var(--text)}
 </style>
 </head>
 <body>
@@ -137,20 +130,20 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
         <h1>Open Pack – Fantaballa</h1>
         <div class="subtitle">Scegli il pacchetto → flash dorato → carte in ordine di rarità (click to flip).</div>
       </div>
-      <span class="pill" id="pricePill">💰 Costo: 1000</span>
-      <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
-      <button id="shareBtn" class="btn" disabled>🔗 Condividi pacchetto</button>
-      <a href="index.html" class="btn">🏠 Home</a>
-      <a href="my-cards.html" class="btn">🗂 Le mie carte</a>
-      <!-- 🔐 Auth box -->
-<div id="authBox" style="display:flex; gap:10px; align-items:center">
-  <img id="userPhoto" alt="" referrerpolicy="no-referrer"
-       style="width:28px; height:28px; border-radius:999px; display:none">
-  <span id="userName" style="font-size:14px; opacity:.9; display:none"></span>
-  <button id="btnLoginOpenPack" class="btn" type="button" title="Accedi con Google">🔐 Accedi</button>
-  <button id="btnLogoutOpenPack" class="btn" type="button" title="Esci" style="display:none">⎋ Esci</button>
-</div>
-
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+        <span class="pill" id="pricePill">💰 Costo: 1000</span>
+        <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
+        <button id="shareBtn" class="btn" disabled>🔗 Condividi</button>
+        <a href="index.html" class="btn">🏠 Home</a>
+        <a href="my-cards.html" class="btn">🗂 Le mie carte</a>
+        <!-- 🔐 Auth box -->
+        <div id="authBox" class="authBox">
+          <img id="userPhoto" alt="" referrerpolicy="no-referrer">
+          <span id="userName" class="name"></span>
+          <button id="btnLoginOpenPack" class="btn" type="button" title="Accedi con Google">🔐 Accedi</button>
+          <button id="btnLogoutOpenPack" class="btn" type="button" title="Esci" style="display:none">⎋ Esci</button>
+        </div>
+      </div>
     </div>
 
     <div class="toolbar">
@@ -200,7 +193,7 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 </template>
 
 <!-- Share Fallback Modal -->
-<div class="shareModal" id="shareModal" aria-hidden="true" role="dialog" aria-modal="true">
+<div class="shareModal" id="shareModal" aria-hidden="true" role="dialog" aria-modal="true" style="display:none">
   <div class="shareCard">
     <div class="shareHeader">
       <strong>Condividi pacchetto</strong>
@@ -222,14 +215,14 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
   </div>
 </div>
 
-<!-- Firebase compat (stessa versione di my-cards) -->
+<!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
 <script type="module">
 /* =========================
-   Firebase init (come my-cards)
+   Firebase init
    ========================= */
 const firebaseConfig = {
   apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
@@ -245,7 +238,9 @@ const auth = firebase.auth();
 const db   = firebase.firestore();
 try{ db.settings({ experimentalForceLongPolling:true }); }catch{}
 
-/* Piccolo indicatore di stato salvataggio */
+/* =========================
+   UI stato salvataggio
+   ========================= */
 const saveStatus = document.getElementById('saveStatus');
 function showSaveInfo(msg, ok=true){
   if(!saveStatus) return;
@@ -254,72 +249,111 @@ function showSaveInfo(msg, ok=true){
   if (ok) { setTimeout(()=>{ saveStatus.style.display='none' }, 3500); }
 }
 
-/* ================
-   Open Pack (tuo)
-   ================ */
+/* =========================
+   Auth setup + helpers
+   ========================= */
+try {
+  await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+} catch(e) {
+  console.warn('[auth persistence]', e);
+}
 
-/* Utility per match STRETTO sul campo "series" */
-const seriesIs = (c, v) => String(c.series ?? '').trim() === v;
+// attendo il primo stato auth per evitare race
+let _authReadyResolve;
+const authReady = new Promise(r => (_authReadyResolve = r));
+let _authReadyFired = false;
 
-/* Definizione pacchetti (corretto refuso e aggiunto "Dream") */
-const PACKS = {
-  random:    { key:'random',    label:'Random',    cost:1000, back:'Deck%20back%20ORO.png',         filter: c => true },
-  wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1800, back:'Deck%20back%20wonderkid.png',   filter: c => seriesIs(c, 'Wonderkid') },
-  f1:        { key:'f1',        label:'F1',        cost:1400, back:'f1%20pack.png',                 filter: c => seriesIs(c, 'F1') },
-  dream:     { key:'dream',     label:'Dream',     cost:1500, back:'Deck%20back%20Dream.png',       filter: c => seriesIs(c, 'Dream') }
-};
+auth.onAuthStateChanged(user => {
+  if (!_authReadyFired) { _authReadyFired = true; _authReadyResolve(user || null); }
+  updateAuthUI(user);
+});
 
-const DEFAULT_PACK_KEY = 'random';
+function updateAuthUI(user){
+  const btnLogin  = document.getElementById('btnLoginOpenPack');
+  const btnLogout = document.getElementById('btnLogoutOpenPack');
+  const userName  = document.getElementById('userName');
+  const userPhoto = document.getElementById('userPhoto');
 
-const CONFIG = {
-  CARDS_JSON:'cards.json',
-  COUNT:6,
-  WEIGHTS:{'Leggendaria':1,'Ultra Rara':6,'Season':8,'Epica':3,'Rara':1,'Non Comune':20,'Comune':40},
-  FETCH_TIMEOUT_MS:8000
-};
+  const logged = !!user && !user.isAnonymous;
+  if (btnLogin)  btnLogin.style.display  = logged ? 'none' : '';
+  if (btnLogout) btnLogout.style.display = logged ? '' : 'none';
 
-/* Fallback carte per test locale (series incluse) */
-const FALLBACK_CARDS = [
-  {id:'wk1', name:'Wonderkid A', rarity:'Comune',     img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
-  {id:'wk2', name:'Wonderkid B', rarity:'Rara',       img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
-  {id:'wk3', name:'Wonderkid C', rarity:'Epica',      img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
-  {id:'t1',  name:'TOTS Alpha',  rarity:'Comune',     img:'f1%20pack.png',               series:'F1'},
-  {id:'t2',  name:'TOTS Beta',   rarity:'Rara',       img:'f1%20pack.png',               series:'F1'},
-  {id:'t3',  name:'TOTS Omega',  rarity:'Ultra Rara', img:'f1%20pack.png',               series:'F1'},
-  {id:'r1',  name:'Base 1',      rarity:'Comune',     img:'Deck%20back%20ORO.png'},
-  {id:'r2',  name:'Base 2',      rarity:'Non Comune', img:'Deck%20back%20ORO.png'},
-  {id:'r3',  name:'Base 3',      rarity:'Rara',       img:'Deck%20back%20ORO.png'},
-  {id:'r4',  name:'Base 4',      rarity:'Epica',      img:'Deck%20back%20ORO.png'},
-];
+  if (userName){
+    userName.textContent = logged ? (user.displayName || user.email || 'Account') : '';
+    userName.style.display = logged ? '' : 'none';
+  }
+  if (userPhoto){
+    if (logged && user.photoURL){
+      userPhoto.src = user.photoURL;
+      userPhoto.style.display = '';
+    } else {
+      userPhoto.style.display = 'none';
+      userPhoto.removeAttribute('src');
+    }
+  }
 
-/* === Utilità === */
-const $ = (s,el=document)=>el.querySelector(s);
-const delay = ms => new Promise(r=>setTimeout(r,ms));
-const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5};
-const norm = v => String(v||'').trim().toLowerCase();
+  if (logged) showSaveInfo('Sei connesso: salverò automaticamente le carte ✅');
+  else        showSaveInfo('Accedi con Google per salvare automaticamente le carte.', false);
+}
 
-/* Audio opzionale */
-let audioCtx=null;
-function ensureAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)() }catch{} }
-function tone(f,d=.15,g=.08,t='sine'){ if(!audioCtx) return; const o=audioCtx.createOscillator(),A=audioCtx.createGain(); o.type=t; o.frequency.value=f; A.gain.value=g; o.connect(A).connect(audioCtx.destination); o.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d,.03); o.stop(audioCtx.currentTime+d+.08) }
-function noiseBoom(d=.5,g=.15){ if(!audioCtx) return; const N=audioCtx.sampleRate*d, b=audioCtx.createBuffer(1,N,audioCtx.sampleRate), x=b.getChannelData(0); for(let i=0;i<N;i++) x[i]=(Math.random()*2-1)*Math.pow(1-i/N,2); const s=audioCtx.createBufferSource(); s.buffer=b; const A=audioCtx.createGain(); A.gain.value=g; const F=audioCtx.createBiquadFilter(); F.type='lowpass'; F.frequency.value=400; s.connect(F).connect(A).connect(audioCtx.destination); s.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d*.7,.2) }
-function playByRarity(r){ if(r==='Comune'||r==='Non Comune'){ tone(520,.07,.06,'triangle'); tone(660,.07,.05,'triangle') } else if(r==='Rara'){ tone(660,.12,.08,'sine'); tone(880,.16,.06,'sine') } else if(r==='Epica'){ tone(660,.18,.09,'sine'); tone(990,.22,.08,'sine'); tone(1320,.24,.06,'sine') } else if(r==='Ultra Rara'||r==='Season'){ noiseBoom(.7,.18); tone(880,.18,.1,'square'); tone(1320,.22,.08,'square') } }
+// login sicuro
+async function safeGoogleSignIn(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  try{
+    if (auth.currentUser && auth.currentUser.isAnonymous) {
+      const { user } = await auth.currentUser.linkWithPopup(provider);
+      return user;
+    }
+    const { user } = await auth.signInWithPopup(provider);
+    return user;
+  }catch(e){
+    console.warn('[safeGoogleSignIn]', e.code, e.message);
+
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
+      await auth.signInWithRedirect(provider);
+      return;
+    }
+    if (e.code === 'auth/credential-already-in-use' && e.credential) {
+      const { user } = await auth.signInWithCredential(e.credential);
+      return user;
+    }
+    if (e.code === 'auth/account-exists-with-different-credential' && e.email) {
+      const methods = await auth.fetchSignInMethodsForEmail(e.email);
+      if (methods.includes('google.com') && e.credential) {
+        const { user } = await auth.signInWithCredential(e.credential);
+        return user;
+      }
+      alert('Quest’email è già usata con: ' + methods.join(', ') + '. Accedi con quel metodo e poi collega Google dal profilo.');
+    }
+    throw e;
+  }
+}
+
+document.getElementById('btnLoginOpenPack')?.addEventListener('click', async ()=>{
+  try { await safeGoogleSignIn(); }
+  catch { showSaveInfo('Login annullato o fallito.', false); }
+});
+
+document.getElementById('btnLogoutOpenPack')?.addEventListener('click', async ()=>{
+  try { await auth.signOut(); showSaveInfo('Sei uscito. Le nuove carte non verranno salvate.', false); }
+  catch (e) { console.error('[logout]', e); }
+});
+
+// completa eventuale redirect login
+try { await auth.getRedirectResult(); } catch(e) { /* ignore */ }
 
 /* ==============================
-   NUOVO: salvataggio inventory
+   Salvataggio inventory (batch + fallback)
    ============================== */
-/** Salva un array di carte nel percorso users/{uid}/inventory/{cardId}
- *  Incrementa count e aggiorna updatedAt. Aggrega eventuali duplicati. */
 async function saveInventoryIfLoggedIn(cards){
   const u = auth.currentUser;
 
-  // 0) Utente non loggato → messaggio chiaro e stop (non è un errore)
   if (!u || u.isAnonymous) {
     showSaveInfo('Non hai effettuato l’accesso: carte NON salvate. Accedi con Google per salvare automaticamente.', false);
     return;
   }
 
-  // 1) Pre-aggrego i duplicati nello stesso pacchetto
   const byId = new Map();
   for (const c of cards){
     if (!c?.id) continue;
@@ -331,7 +365,6 @@ async function saveInventoryIfLoggedIn(cards){
     return;
   }
 
-  // 2) Prova #1: batch
   try{
     const batch = db.batch();
     byId.forEach((c, id)=>{
@@ -341,7 +374,6 @@ async function saveInventoryIfLoggedIn(cards){
         rarity: c.rarity || '',
         img:    c.img    || '',
         series: c.series || '',
-        // Increment numerico
         count:  firebase.firestore.FieldValue.increment(c._count || 1),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
@@ -352,20 +384,12 @@ async function saveInventoryIfLoggedIn(cards){
   }catch(e){
     console.error('[saveInventory/batch]', e);
     showSaveInfo(`⚠️ Errore batch: ${e.code || 'unknown'} – ${e.message || e}`, false);
-
-    // Se regole bloccano (permission-denied), esco subito: serve sistemare le rules
-    if (e.code === 'permission-denied') {
-      // Indizio per te: vedi sezione "Regole Firestore" qui sotto
-      return;
-    }
+    if (e.code === 'permission-denied') return;
   }
 
-  // 3) Fallback: salva UNA ad UNA (utile se qualche doc ha count non numerico)
   try{
     for (const [id, c] of byId.entries()){
       const ref = db.collection('users').doc(u.uid).collection('inventory').doc(id);
-
-      // Provo increment; se fallisce per tipo campo, faccio read-modify-write
       try{
         await ref.set({
           name:   c.name   || '',
@@ -376,7 +400,6 @@ async function saveInventoryIfLoggedIn(cards){
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge:true });
       }catch(eInc){
-        // Possibile: esiste già un campo "count" non numerico → lo normalizzo
         if (eInc.code === 'failed-precondition' || eInc.code === 'invalid-argument'){
           const snap = await ref.get();
           const prev = snap.exists ? snap.data() : {};
@@ -401,10 +424,59 @@ async function saveInventoryIfLoggedIn(cards){
   }
 }
 
+/* ================
+   Open Pack logic
+   ================ */
 
-/* ======================
-   TUTTO IL TUO LOGICHE
-   ====================== */
+/* Utility */
+const seriesIs = (c, v) => String(c.series ?? '').trim() === v;
+const $ = (s,el=document)=>el.querySelector(s);
+const delay = ms => new Promise(r=>setTimeout(r,ms));
+const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5};
+const norm = v => String(v||'').trim().toLowerCase();
+
+/* Audio opzionale */
+let audioCtx=null;
+function ensureAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)() }catch{} }
+function tone(f,d=.15,g=.08,t='sine'){ if(!audioCtx) return; const o=audioCtx.createOscillator(),A=audioCtx.createGain(); o.type=t; o.frequency.value=f; A.gain.value=g; o.connect(A).connect(audioCtx.destination); o.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d,.03); o.stop(audioCtx.currentTime+d+.08) }
+function noiseBoom(d=.5,g=.15){ if(!audioCtx) return; const N=audioCtx.sampleRate*d, b=audioCtx.createBuffer(1,N,audioCtx.sampleRate), x=b.getChannelData(0); for(let i=0;i<N;i++) x[i]=(Math.random()*2-1)*Math.pow(1-i/N,2); const s=audioCtx.createBufferSource(); s.buffer=b; const A=audioCtx.createGain(); A.gain.value=g; const F=audioCtx.createBiquadFilter(); F.type='lowpass'; F.frequency.value=400; s.connect(F).connect(A).connect(audioCtx.destination); s.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d*.7,.2) }
+function playByRarity(r){ if(r==='Comune'||r==='Non Comune'){ tone(520,.07,.06,'triangle'); tone(660,.07,.05,'triangle') } else if(r==='Rara'){ tone(660,.12,.08,'sine'); tone(880,.16,.06,'sine') } else if(r==='Epica'){ tone(660,.18,.09,'sine'); tone(990,.22,.08,'sine'); tone(1320,.24,.06,'sine') } else if(r==='Ultra Rara'||r==='Season'){ noiseBoom(.7,.18); tone(880,.18,.1,'square'); tone(1320,.22,.08,'square') } }
+
+/* Pacchetti */
+const PACKS = {
+  random:    { key:'random',    label:'Random',    cost:1000, back:'Deck%20back%20ORO.png',         filter: c => true },
+  wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1800, back:'Deck%20back%20wonderkid.png',   filter: c => seriesIs(c, 'Wonderkid') },
+  f1:        { key:'f1',        label:'F1',        cost:1400, back:'f1%20pack.png',                 filter: c => seriesIs(c, 'F1') },
+  dream:     { key:'dream',     label:'Dream',     cost:1500, back:'Deck%20back%20Dream.png',       filter: c => seriesIs(c, 'Dream') }
+};
+const DEFAULT_PACK_KEY = 'random';
+
+const CONFIG = {
+  CARDS_JSON:'cards.json',
+  COUNT:6,
+  WEIGHTS:{'Leggendaria':1,'Ultra Rara':6,'Season':8,'Epica':3,'Rara':1,'Non Comune':20,'Comune':40},
+  FETCH_TIMEOUT_MS:8000
+};
+
+/* Fallback per test */
+const FALLBACK_CARDS = [
+  {id:'wk1', name:'Wonderkid A', rarity:'Comune',     img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
+  {id:'wk2', name:'Wonderkid B', rarity:'Rara',       img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
+  {id:'wk3', name:'Wonderkid C', rarity:'Epica',      img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
+  {id:'t1',  name:'F1 Alpha',    rarity:'Comune',     img:'f1%20pack.png',               series:'F1'},
+  {id:'t2',  name:'F1 Beta',     rarity:'Rara',       img:'f1%20pack.png',               series:'F1'},
+  {id:'t3',  name:'F1 Omega',    rarity:'Ultra Rara', img:'f1%20pack.png',               series:'F1'},
+  {id:'r1',  name:'Base 1',      rarity:'Comune',     img:'Deck%20back%20ORO.png'},
+  {id:'r2',  name:'Base 2',      rarity:'Non Comune', img:'Deck%20back%20ORO.png'},
+  {id:'r3',  name:'Base 3',      rarity:'Rara',       img:'Deck%20back%20ORO.png'},
+  {id:'r4',  name:'Base 4',      rarity:'Epica',      img:'Deck%20back%20ORO.png'},
+];
+
+/* UI helpers */
+const logEl = document.getElementById('log');
+function setLog(msg){ logEl.textContent = msg || '' }
+
+/* PackOpener */
 class PackOpener{
   constructor(){
     this.ALL=[]; this.used=new Set();
@@ -427,7 +499,6 @@ class PackOpener{
     ['click','keydown','touchstart'].forEach(e=>window.addEventListener(e,()=>{ensureAudio()}, {once:true}));
   }
   prewarm(){
-    // Precarica immagini retro
     ['Deck%20back%20ORO.png','f1%20pack.png','Deck%20back%20wonderkid.png','Deck%20back%20Dream.png'].forEach(src=>{ const im=new Image(); im.decoding='async'; im.src=src; });
     this.loadData().catch(()=>{});
   }
@@ -452,15 +523,14 @@ class PackOpener{
         cleaned.push({id,name,rarity,img,series});
       }
       if(!cleaned.length) throw new Error('Nessuna carta valida in cards.json');
-      this.ALL=cleaned; this.$log.textContent=`Caricate ${this.ALL.length} carte.`;
+      this.ALL=cleaned; setLog(`Caricate ${this.ALL.length} carte.`);
     }catch(err){
       console.warn('cards.json non caricato, uso fallback:', err?.message||err);
       this.ALL = FALLBACK_CARDS;
-      this.$log.textContent='⚠️ Non trovo cards.json, uso carte di esempio.';
+      setLog('⚠️ Non trovo cards.json, uso carte di esempio.');
     }finally{ clearTimeout(t) }
   }
 
-  // UI anteprime
   renderChoices(){
     const frag=document.createDocumentFragment();
     Object.values(PACKS).forEach(p=>{
@@ -479,7 +549,6 @@ class PackOpener{
         this.currentPackKey = p.key;
         this.updatePrice();
         this.applyPackVisual();
-        // evidenziazione
         [...this.$choices.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
         btn.setAttribute('aria-selected','true');
       });
@@ -508,11 +577,10 @@ class PackOpener{
   pickCardByRarity(rarity, pool){
     let candidates = pool.filter(c => c.rarity===rarity && !this.used.has(c.id));
     if(!candidates.length) candidates = pool.filter(c => !this.used.has(c.id));
-    if(!candidates.length) candidates = pool; // permetti duplicati se serve
+    if(!candidates.length) candidates = pool;
     if(!candidates.length) return null;
     return candidates[Math.floor(Math.random()*candidates.length)];
   }
-  // Garantisce almeno 2 carte Rara+
   ensureRarePlus(cards, pool, minCount = 2){
     const RARE_PLUS = rarityRank['Rara'];
     let have = cards.filter(c => rarityRank[c.rarity] >= RARE_PLUS).length;
@@ -581,17 +649,17 @@ class PackOpener{
       frag.appendChild(el); this.setDropIn(el,i) });
     stage.appendChild(frag);
     this.$shareBtn.disabled=false;
-    this.$log.textContent='Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.';
+    setLog('Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.');
   }
 
   async doOpen(){
     const BTN=this.$openBtn, SHARE=this.$shareBtn; BTN.disabled=true; SHARE.disabled=true;
-    this.$log.textContent='Preparazione pacchetto…';
-    await this.loadData(); if(!this.ALL.length){ this.$log.textContent='Nessuna carta disponibile'; BTN.disabled=false; return }
+    setLog('Preparazione pacchetto…');
+    await this.loadData(); if(!this.ALL.length){ setLog('Nessuna carta disponibile'); BTN.disabled=false; return }
 
     const pack = PACKS[this.currentPackKey];
     const pool = this.ALL.filter(pack.filter);
-    if(!pool.length){ this.$log.textContent='⚠️ Nessuna carta compatibile con questo pacchetto (controlla "series").'; BTN.disabled=false; SHARE.disabled=true; return }
+    if(!pool.length){ setLog('⚠️ Nessuna carta compatibile con questo pacchetto (controlla "series").'); BTN.disabled=false; SHARE.disabled=true; return }
 
     this.$pack.classList.add('shake'); await delay(360); this.$pack.classList.remove('shake');
     this.$flashLine.classList.add('active'); this.$flashScreen.classList.add('active'); this.$pack.classList.add('opening');
@@ -608,7 +676,9 @@ class PackOpener{
     chosen.sort((a,b)=>rarityRank[a.rarity]-rarityRank[b.rarity]);
     this.showStage(chosen);
 
-    // 👉 NUOVO: salva automaticamente su Firestore se loggato
+    // 👉 aspetta che lo stato auth sia pronto (importantissimo)
+    await authReady;
+    // 👉 salva automaticamente nel tuo inventario (se loggato)
     saveInventoryIfLoggedIn(chosen);
 
     setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active') },400);
@@ -616,12 +686,11 @@ class PackOpener{
     BTN.onclick=async()=>{
       BTN.disabled=true; SHARE.disabled=true;
       this.$stageWrap.classList.remove('show'); this.$stage.innerHTML=''; this.$packArea.style.display='flex'; this.$pack.classList.remove('opening');
-      BTN.textContent='🎁 Apri pacchetto'; this.$log.textContent='';
+      BTN.textContent='🎁 Apri pacchetto'; setLog('');
       await delay(100); BTN.disabled=false; BTN.onclick=()=>this.doOpen();
     };
   }
 
-  // === Condivisione pacchetto (com’era) ===
   async doShare(){
     const shareData = {
       title: 'Fantaballa – Il mio pacchetto',
@@ -635,12 +704,13 @@ class PackOpener{
     this.openShareFallback(shareData);
   }
   openShareFallback(shareData){
-    const modal = $('#shareModal');
-    const linkInput = $('#shareLink');
-    const closeBtn = $('#closeShare');
-    const okBtn = $('#shareOk');
-    const copyBtn = $('#copyLink');
-    const wa = $('#waShare'), x = $('#xShare'), fb = $('#fbShare'), tg = $('#tgShare');
+    const modal = document.getElementById('shareModal');
+    modal.style.display='flex';
+    const linkInput = document.getElementById('shareLink');
+    const closeBtn = document.getElementById('closeShare');
+    const okBtn = document.getElementById('shareOk');
+    const copyBtn = document.getElementById('copyLink');
+    const wa = document.getElementById('waShare'), x = document.getElementById('xShare'), fb = document.getElementById('fbShare'), tg = document.getElementById('tgShare');
     const url = encodeURIComponent(shareData.url);
     const text = encodeURIComponent(shareData.text);
     wa.href = `https://api.whatsapp.com/send?text=${text}%20${url}`;
@@ -648,13 +718,13 @@ class PackOpener{
     fb.href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
     tg.href = `https://t.me/share/url?url=${url}&text=${text}`;
     linkInput.value = shareData.url;
-    const close = ()=>{ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true') };
+    const close = ()=>{ modal.style.display='none'; modal.setAttribute('aria-hidden','true') };
     closeBtn.onclick = close; okBtn.onclick = close;
     copyBtn.onclick = async ()=>{
       try{ await navigator.clipboard.writeText(shareData.url); copyBtn.textContent = '✅ Copiato'; setTimeout(()=>copyBtn.textContent='📋 Copia',1200); }
       catch{ copyBtn.textContent = '❌ Errore'; setTimeout(()=>copyBtn.textContent='📋 Copia',1200); }
     };
-    modal.classList.add('show'); modal.setAttribute('aria-hidden','false');
+    modal.setAttribute('aria-hidden','false');
   }
 }
 
