@@ -253,6 +253,9 @@
       <div class="tabs" role="tablist" aria-label="Sezioni">
         <button class="tab-btn" id="tabAll" role="tab" aria-selected="true">Tutte</button>
         <button class="tab-btn" id="tabFavs" role="tab" aria-selected="false">Preferite ❤️ <span id="favCount" aria-hidden="true"></span></button>
+        <span id="cardsCount" style="margin-left: 1rem; font-size: 0.9em; opacity: 0.8;">
+  Carte disponibili: 0
+</span>
       </div>
 
       <div class="toolbar" aria-label="Filtri e ricerca">
@@ -378,15 +381,25 @@
     const toggleFav = id => { const s=new Set(loadFavs()); s.has(id)? s.delete(id): s.add(id); saveFavs([...s]); updateFavCount(); };
     function updateFavCount(){ const n = loadFavs().length; const el=$('#favCount'); if(el) el.textContent = n? `(${n})` : ''; }
 
-    let CARDS = [];
-    async function loadCards(){
-      try{
-        const res = await fetch('cards.json', { cache: 'no-store' });
-        if(!res.ok) throw new Error('cards.json non trovato');
-        CARDS = await res.json();
-      }catch(e){ console.error('[ERRORE CARICAMENTO CARTE]', e); CARDS = []; }
-      finally{ applyFilters(); }
-    }
+  let CARDS = [];
+async function loadCards(){
+  try{
+    const res = await fetch('cards.json', { cache: 'no-store' });
+    if(!res.ok) throw new Error('cards.json non trovato');
+    CARDS = await res.json();
+  }catch(e){
+    console.error('[ERRORE CARICAMENTO CARTE]', e);
+    CARDS = [];
+  }
+  finally{
+    // 🔹 Aggiorna il numero di carte disponibili
+    document.getElementById('cardsCount').textContent =
+        "Carte disponibili: " + CARDS.length;
+
+    applyFilters();
+  }
+}
+
 
     /* ⭐⭐ stelle: tipo button + prevenzione submit, per non chiudere la modale; dimensioni gestite da CSS */
     function renderStars(container, value, onRate){
