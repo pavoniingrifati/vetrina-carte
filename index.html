@@ -827,6 +827,19 @@ async function safeGoogleSignIn() {
             userPhoto.removeAttribute('src');
           }
         }
+// dentro auth.onAuthStateChanged((user)=>{ ... })
+if (user && !user.isAnonymous) {
+  const db = firebase.firestore();
+  const ref = db.collection('users').doc(user.uid);
+  db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) {
+      const now = firebase.firestore.FieldValue.serverTimestamp();
+      tx.set(ref, { points: 10, createdAt: now, updatedAt: now });
+    }
+  }).catch(console.error);
+}
+              
         // Notifica il resto dell’app (come prima)
         window.dispatchEvent(new CustomEvent('firebase-ready'));
       });
