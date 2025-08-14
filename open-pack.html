@@ -358,13 +358,31 @@ await ensureWallet10();
 
 const ref = db.collection('users').doc(user.uid);
 if (unsubPoints) unsubPoints();
-unsubPoints = ref.onSnapshot((snap) => {
-const pts = snap.exists ? (snap.data().points || 0) : 0;
-pointsBadge.textContent = `Punti: ${pts}`;
-openBtn.disabled = pts <= 0;
-if (bonusBtn) bonusBtn.style.display = (pts <= 0) ? '' : 'none'; // 👈 AGGIUNTA
 
+// ⬇️ SOSTITUISCI DA QUI (compresa questa riga)
+unsubPoints = ref.onSnapshot((snap) => {
+  const data = snap.exists ? snap.data() : {};
+  const pts = Number(data.points || 0);
+
+  // ⏱️ idoneità bonus: mai preso o passate >= 24h da lastDailyAt
+  const last = data.lastDailyAt;
+  const lastMs =
+    last && typeof last.toMillis === 'function'
+      ? last.toMillis()
+      : (typeof last === 'number' ? last : 0);
+
+  const canClaim = !lastMs || (Date.now() - lastMs) >= 24 * 60 * 60 * 1000;
+
+  // UI punti + bottone "Apri pacchetto"
+  pointsBadge.textContent = `Punti: ${pts}`;
+  openBtn.disabled = pts <= 0;
+
+  // 🎁 Mostra il bonus se idoneo, indipendentemente dai punti
+  if (bonusBtn) bonusBtn.style.display = canClaim ? '' : 'none';
 });
+// ⬆️ …FINO A QUI (inclusa questa riga)
+
+
 } catch (e) {
 if (e.message === 'redirecting') return;
 console.error('[initPointsUI]', e);
