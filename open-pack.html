@@ -447,16 +447,59 @@ const PACKS = {
         this.$flashLine.classList.add('active'); this.$flashScreen.classList.add('active'); this.$pack.classList.add('opening');
         await delay(900); this.$packArea.style.display='none';
 
-        this.used.clear(); let chosen=[];
-        for(let i=0;i<CONFIG.COUNT;i++){
-          const rar=this.pickRarity();
-          const card=this.pickCardByRarity(rar,pool);
-          if(!card) break;
-          this.used.add(card.id); chosen.push(card)
-        }
-        chosen=this.ensureRarePlus(chosen,pool);
-        chosen.sort((a,b)=>rarityRank[a.rarity]-rarityRank[b.rarity]);
-        this.showStage(chosen);
+       // helper: comodo per riconoscere la series "Oggetto"
+const isOggetto = c => String(c?.series || '').trim().toLowerCase() === 'oggetto';
+
+this.used.clear();
+let chosen = [];
+let hasOggetto = false;
+
+for (let i = 0; i < CONFIG.COUNT; i++) {
+  let card = null;
+  let safety = 0;
+
+  // riprova a pescare finché non troviamo una carta valida (evita 2° Oggetto)
+  while (safety++ < 50) {
+    const rar = this.pickRarity();
+    const c = this.pickCardByRarity(rar, pool);
+    if (!c) break;
+
+    // salta le Oggetto oltre la prima
+    if (isOggetto(c) && hasOggetto) continue;
+
+    card = c;
+    break;
+  }
+
+  if (!card) break;
+
+  if (isOggetto(card)) hasOggetto = true;
+  this.used.add(card.id);
+  chosen.push(card);
+}
+
+// mantiene la tua garanzia Rara+ come prima
+chosen = this.ensureRarePlus(chosen, pool);
+
+// Cintura e bretelle: se ensureRarePlus avesse inserito una 2ª Oggetto, la rimpiazziamo.
+(() => {
+  const oggIdx = chosen.map((c, i) => [i, c]).filter(([, c]) => isOggetto(c)).map(([i]) => i);
+  if (oggIdx.length > 1) {
+    // teniamo la prima e sostituiamo le altre con alternative NON-Oggetto (stessa rarità se possibile)
+    for (let k = 1; k < oggIdx.length; k++) {
+      const i = oggIdx[k];
+      const targetRar = chosen[i].rarity;
+      let repl = pool.find(c => !isOggetto(c) && c.rarity === targetRar && !this.used.has(c.id));
+      if (!repl) repl = pool.find(c => !isOggetto(c) && !this.used.has(c.id));
+      if (repl) { this.used.add(repl.id); chosen[i] = repl; }
+    }
+  }
+})();
+
+// ordina e mostra come fai già ora
+chosen.sort((a, b) => rarityRank[a.rarity] - rarityRank[b.rarity]);
+this.showStage(chosen);
+
 
         setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active') },400);
         BTN.textContent=`🔁 Nuovo pacchetto ${pack.label}`; BTN.disabled=false; SHARE.disabled=false;
