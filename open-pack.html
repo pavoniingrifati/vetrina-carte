@@ -243,58 +243,140 @@
 </script>
 
   
-  <script type="module">
-// === Auth helpers (open-pack) ===
-const db = firebase.firestore();
+<script type="module">
+  // 1) db prima di tutto
+  const db = firebase.firestore();
 
-async function ensureGoogleUser() {
-  const auth = firebase.auth();
-  const u = auth.currentUser;
+  // === Auth helpers (open-pack) ===
+  async function ensureGoogleUser() {
+    const auth = firebase.auth();
+    const u = auth.currentUser;
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
 
-  const provider = new firebase.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-
-  // Se NON c'è user -> login con Google
-  if (!u) {
-    const res = await auth.signInWithPopup(provider);
-    return res.user;
+    try {
+      if (!u) {
+        const { user } = await auth.signInWithPopup(provider);
+        await user.getIdToken(true);   // 2) token fresco
+        return user;
+      }
+      if (u.isAnonymous) {
+        const { user } = await u.linkWithPopup(provider);
+        await user.getIdToken(true);   // 2) token fresco
+        return user;
+      }
+      // già loggato “vero”
+      await u.getIdToken(true);        // 2) token fresco
+      return u;
+    } catch (e) {
+      // fallback utile su Safari / popup bloccati
+      if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') {
+        if (!u) return firebase.auth().signInWithRedirect(provider);
+        if (u.isAnonymous) return u.linkWithRedirect(provider);
+      }
+      throw e;
+    }
   }
 
-  // Se è anonimo -> collega a Google così mantiene eventuali dati futuri
-  if (u.isAnonymous) {
-    const res = await u.linkWithPopup(provider);
-    return res.user;
-  }
-
-  // Se è già Google / non anonimo
-  return u;
+ // === Wallet (open-pack) ===
+async function ensureWallet10() {
+  const uid = firebase.auth().currentUser.uid;
+  const ref = db.collection('users').doc(uid);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) {
+      const now = firebase.firestore.FieldValue.serverTimestamp();
+      tx.set(ref, { points: 10, createdAt: now, updatedAt: now });
+    }
+  });
 }
 
-// Salva le carte estratte nell’inventario dell’utente
-async function saveInventario(cards) {
-  const u = firebase.auth().currentUser;
-  if (!u || u.isAnonymous) {
-    throw new Error('login-required');
-  }
-
-  const batch = db.batch();
-  const now = firebase.firestore.FieldValue.serverTimestamp();
-
-  for (const c of cards) {
-    const ref = db.collection('users').doc(u.uid).collection('inventory').doc(c.id);
-    // incrementa count e aggiorna metadati base
-    batch.set(ref, {
-      name: c.name,
-      rarity: c.rarity,
-      series: c.series || '',
-      img: c.img || '',
-      count: firebase.firestore.FieldValue.increment(1),
-      updatedAt: now
-    }, { merge: true });
-  }
-
-  await batch.commit();
+async function getPoints() {
+  const uid = firebase.auth().currentUser.uid;
+  const snap = await db.collection('users').doc(uid).get();
+  return snap.exists ? (snap.data().points || 0) : 0;
 }
+
+async function debitOnePointOrThrow() {
+  const uid = firebase.auth().currentUser.uid;
+  const ref = db.collection('users').doc(uid);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const pts = snap.exists ? (snap.data().points || 0) : 0;
+    if (pts <= 0) throw new Error('no-points');
+    const now = firebase.firestore.FieldValue.serverTimestamp();
+    tx.update(ref, { points: pts - 1, updatedAt: now });
+  });
+} // 👈 mancava questa graffa
+
+// === Badge punti (near "Apri pacchetto") ===
+const pointsBadge = document.getElementById('pointsBadge');
+const openBtn = document.getElementById('openBtn');
+let unsubPoints = null;
+
+async function initPointsUI() {
+  try {
+    const user = await ensureGoogleUser(); // forza login Google per i punti
+
+    if (user.isAnonymous) {
+      pointsBadge.textContent = 'Accedi con Google';
+      openBtn.disabled = true;
+      return;
+    }
+
+    await ensureWallet10(); // crea doc users/{uid} se manca
+
+    const ref = db.collection('users').doc(user.uid);
+    if (unsubPoints) unsubPoints();
+    unsubPoints = ref.onSnapshot((snap) => {
+      const pts = snap.exists ? (snap.data().points || 0) : 0;
+      pointsBadge.textContent = `Punti: ${pts}`;
+      openBtn.disabled = pts <= 0;
+    });
+  } catch (e) {
+    // se ensureGoogleUser ha fatto redirect, puoi semplicemente uscire
+    if (e.message === 'redirecting') return;
+    console.error('[initPointsUI]', e);
+    if (pointsBadge) pointsBadge.textContent = 'Punti: —';
+    if (openBtn) openBtn.disabled = true;
+  }
+}
+
+initPointsUI();
+
+    
+  }
+
+  // helper per ID documento sicuro
+  const safeDocId = (id) =>
+    String(id || Math.random().toString(36).slice(2))
+      .replace(/[\/#?\[\]]/g, '_')
+      .slice(0, 120);
+
+  // Salva le carte estratte nell’inventario dell’utente
+  async function saveInventario(cards) {
+    const u = firebase.auth().currentUser;
+    if (!u || u.isAnonymous) throw new Error('login-required');
+
+    const batch = db.batch();
+    const now = firebase.firestore.FieldValue.serverTimestamp();
+
+    for (const c of cards) {
+      const ref = db.collection('users').doc(u.uid).collection('inventory').doc(safeDocId(c.id));
+      batch.set(ref, {
+        name: c.name,
+        rarity: c.rarity,
+        series: c.series || '',
+        img: c.img || '',
+        count: firebase.firestore.FieldValue.increment(1),
+        updatedAt: now
+      }, { merge: true });
+    }
+
+    await batch.commit();
+  }
+</script>
+
 
     
    // Utility per match STRETTO sul campo "series"
@@ -587,6 +669,7 @@ chosen = this.ensureRarePlus(chosen, pool);
   }
 })();
 
+      
 // ordina e mostra come fai già ora
 chosen.sort((a, b) => rarityRank[a.rarity] - rarityRank[b.rarity]);
 this.showStage(chosen);
