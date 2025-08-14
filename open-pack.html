@@ -29,7 +29,7 @@
     .btn:disabled{opacity:.6; cursor:not-allowed}
 
     /* FLASH */
-    .flash-line,.flash-screen{position:fixed; inset:0; pointer-events:none; z-index:40; opacity:0}
+    .flash-line,.flash-screen{position:fixed; inset:0; pointer-events:none; z-index:40; opacity:0} /* FIX: aggiunto il punto davanti a flash-screen */
     .flash-line::before{content:""; position:absolute; top:0; bottom:0; width:32vw; background:linear-gradient(90deg,transparent,rgba(255,230,120,.55),rgba(255,201,44,.8),rgba(255,230,120,.55),transparent); filter:blur(8px); transform:translateX(-40vw) skewX(-12deg)}
     .flash-line.active{animation:sweep .75s ease-out forwards}
     @keyframes sweep{0%{opacity:0}10%{opacity:1}100%{opacity:1}}
@@ -78,48 +78,28 @@
     .scene{position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d; transition:transform .7s cubic-bezier(.22,.75,.2,1); transform:rotateY(0deg); box-shadow:0 10px 28px rgba(0,0,0,.45); background:var(--card); will-change:transform}
     .face{position:absolute; inset:0; border-radius:inherit; overflow:hidden; backface-visibility:hidden; border:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center}
     .back img, .front img { width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:690/987; }
-    .back img{filter:drop-shadow(0 10px 30px rgba(0,0,0,.45))}
-    .front{transform:rotateY(180deg)}
+    .front{ transform:rotateY(180deg) }
+    .cCard.revealed .scene{ transform:rotateY(180deg) }
 
-    .drop{opacity:0; transform:translateY(-40px) scale(.96)}
-    .drop.in { animation: dropIn .5s cubic-bezier(.2,.8,.2,1) forwards; }
-    .drop.in { opacity: 1; }
-    @keyframes dropIn{0%{opacity:0; transform:translateY(-50px) scale(.96)}70%{opacity:1; transform:translateY(6px) scale(1.02)}100%{opacity:1; transform:translateY(0) scale(1)}}
+    .veil{ position:absolute; inset:0; pointer-events:none; opacity:0; background:radial-gradient(120% 120% at 50% -20%, rgba(255,255,255,.12), transparent 55%) }
+    .cCard.revealed .veil{ animation:veil .6s ease both } @keyframes veil{from{opacity:0}to{opacity:1}}
+    .spark{ position:absolute; inset:-14% -14%; pointer-events:none; opacity:0; background:conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.22), transparent 40%, rgba(255,255,255,.22) 80%, transparent) }
+    .cCard.revealed .spark{ animation:spark 1.1s ease .05s both } @keyframes spark{0%{opacity:0; transform:scale(.9) rotate(0)}100%{opacity:1; transform:scale(1) rotate(1turn)}}
 
-    .cCard[data-state="back"] .scene{transform:rotateY(0deg)}
-    .cCard[data-state="front"] .scene{transform:rotateY(180deg)}
+    .badge{ position:absolute; top:10px; left:10px; padding:6px 10px; border-radius:999px; font-size:12px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06) }
+    .front .badge{ right:10px; left:auto }
+    .front .badge[data-rarity="Comune"]{ background:var(--g-comune) }
+    .front .badge[data-rarity="Non Comune"]{ background:var(--g-non-comune) }
+    .front .badge[data-rarity="Rara"]{ background:var(--g-rara) }
+    .front .badge[data-rarity="Epica"]{ background:var(--g-epica) }
+    .front .badge[data-rarity="Ultra Rara"]{ background:var(--g-ultra-rara) }
+    .front .badge[data-rarity="Season"]{ background:var(--g-season) }
 
-    .badge{position:absolute; top:10px; right:10px; z-index:2; padding:6px 8px; border-radius:999px; font-size:12px; font-weight:700; color:#fff; border:1px solid rgba(255,255,255,.15)}
-    .r-comune .badge{background:rgba(154,163,178,.85)}
-    .r-non-comune .badge{background:rgba(52,211,153,.85)}
-    .r-rara .badge{background:rgba(96,165,250,.9)}
-    .r-epica .badge{background:rgba(167,139,250,.95)}
-    .r-ultra-rara .badge{background:rgba(251,191,36,.95); color:#000}
-    .r-season .badge{background:rgba(239,68,68,.95)}
+    .rays{ position:absolute; inset:-18%; pointer-events:none; opacity:0; background: conic-gradient(from 0deg at 50% 50%, rgba(255,230,120,.12), transparent 40%, rgba(255,230,120,.12) 80%, transparent) }
+    .cCard.is-final .rays{ animation:rays 1.2s ease .15s both } @keyframes rays{0%{opacity:0; transform:scale(.8) rotate(0)}100%{opacity:1; transform:scale(1) rotate(1turn)}}
 
-    .cCard::after{content:""; position:absolute; inset:-2px; border-radius:inherit; pointer-events:none; opacity:0; background:radial-gradient(500px 600px at 50% -10%, var(--rarGlow, rgba(255,255,255,.18)), transparent 60%); filter:blur(12px); transition:opacity .5s ease}
-    .cCard.revealed::after{opacity:.9}
-    .cCard.r-comune{--rarGlow:var(--g-comune)}
-    .cCard.r-non-comune{--rarGlow:var(--g-non-comune)}
-    .cCard.r-rara{--rarGlow:var(--g-rara); animation:bluePulse 2.3s ease-in-out infinite}
-    @keyframes bluePulse{0%,100%{filter:none}50%{filter:drop-shadow(0 0 18px rgba(96,165,250,.45))}}
-    .cCard.r-epica{--rarGlow:var(--g-epica)}
-    .cCard.r-ultra-rara,.cCard.r-season{--rarGlow:var(--g-ultra-rara)}
-
-    .rays{position:absolute; inset:-20px; border-radius:inherit; pointer-events:none; z-index:0; background:conic-gradient(from 0deg, rgba(255,220,120,.0), rgba(255,220,120,.35), rgba(255,220,120,.0) 30%); mix-blend-mode:screen; opacity:0; animation:rays 2.5s linear infinite; transform:rotate(0deg)}
-    .cCard.r-ultra-rara .rays,.cCard.r-season .rays{opacity:.8}
-    @keyframes rays{to{transform:rotate(360deg)}}
-
-    .spark{position:absolute; inset:0; pointer-events:none; overflow:hidden}
-    .spark i{position:absolute; width:2px; height:10px; background:#fff; opacity:0; box-shadow:0 0 10px #fff, 0 0 16px var(--rarGlow); transform:translate(-50%,-50%) rotate(var(--rot,0deg)); animation:fall .9s ease-out forwards; will-change:transform,opacity}
-    @keyframes fall{0%{transform:translate(var(--x,50%),-20%) rotate(var(--rot,0deg)); opacity:0}30%{opacity:1}100%{transform:translate(var(--xEnd,50%),120%) rotate(var(--rot,0deg)); opacity:0}}
-
-    .cCard.final .scene{transition-duration:1s}
-    .cCard.final.revealed{animation:epicIn 1s cubic-bezier(.2,.8,.2,1) forwards; opacity:1!important}
-    @keyframes epicIn{0%{transform:translateY(8px) scale(.96)}60%{transform:translateY(-6px) scale(1.04)}100%{transform:translateY(0) scale(1)}}
-    .cCard.final .veil{content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; background:linear-gradient(180deg, rgba(255,255,255,.25), transparent 30%, transparent 70%, rgba(255,255,255,.18)); opacity:0}
-    .cCard.final.revealed .veil{animation:veilUp 1s ease-out forwards}
-    @keyframes veilUp{0%{opacity:1; clip-path:inset(0 0 0 0 round 18px)}100%{opacity:0; clip-path:inset(100% 0 0 0 round 18px)}}
+    .drop{ transform:translateY(10px); opacity:0 }
+    .drop.in{ animation:drop .5s ease both } @keyframes drop{to{transform:none; opacity:1}}
 
     .log{margin-top:8px; font-size:13px; color:var(--muted)}
     footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6))}
@@ -131,7 +111,7 @@
     /* Share modal (fallback desktop) */
     .shareModal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:50; background:rgba(0,0,0,.45)}
     .shareModal.show{display:flex}
-    .shareCard{background:var(--panel); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:16px; width:min(520px,92vw); box-shadow:0 12px 40px rgba(0,0,0,.5)}
+    .shareCard{background:var(--panel); border:1px solid rgba(255,255,255,1); border-radius:16px; padding:16px; width:min(520px,92vw); box-shadow:0 12px 40px rgba(0,0,0,.5)}
     .shareHeader{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px}
     .shareRow{display:flex; gap:8px; flex-wrap:wrap}
     .shareItem{display:inline-flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); border-radius:12px}
@@ -151,6 +131,7 @@
           <div class="subtitle">Scegli il pacchetto → flash dorato → carte in ordine di rarità (click to flip).</div>
         </div>
         <span class="pill" id="pricePill">💰 Costo: 1000</span>
+        <span class="pill" id="pointsBadge">Punti: —</span> <!-- FIX: aggiunto badge -->
         <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
         <button id="shareBtn" class="btn" disabled>🔗 Condividi pacchetto</button>
         <a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Torna alla Home</a>
@@ -214,206 +195,199 @@
         <a class="shareItem" id="fbShare" target="_blank" rel="noopener">Facebook</a>
         <a class="shareItem" id="tgShare" target="_blank" rel="noopener">Telegram</a>
       </div>
-      <div style="display:flex; gap:8px; align-items:center">
-        <input class="inputLike" id="shareLink" readonly />
-        <button type="button" class="btn" id="copyLink">📋 Copia</button>
-      </div>
+      <input class="inputLike" id="shareLink" readonly />
       <div class="shareActions">
+        <button type="button" class="btn" id="copyLink">📋 Copia</button>
         <button type="button" class="btn" id="shareOk">OK</button>
       </div>
     </div>
   </div>
 
-<!-- subito prima del tuo <script type="module"> -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <!-- Firebase (v8) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
-    authDomain: "fantaball-9e19c.firebaseapp.com",
-    projectId: "fantaball-9e19c",
-    storageBucket: "fantaball-9e19c.appspot.com",
-    messagingSenderId: "683304379837",
-    appId: "1:683304379837:web:d2bbe7a814e2e40e075ed4",
-    measurementId: "G-C8Q8K5B52C"
-  };
-  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-</script>
+  <script>
+    // Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
+      authDomain: "fantaball-9e19c.firebaseapp.com",
+      projectId: "fantaball-9e19c",
+      storageBucket: "fantaball-9e19c.appspot.com",
+      messagingSenderId: "683304379837",
+      appId: "1:683304379837:web:d2bbe7a814e2e40e075ed4",
+      measurementId: "G-C8Q8K5B52C"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  </script>
 
-  
-<script type="module">
-  // 1) db prima di tutto
-  const db = firebase.firestore();
+  <script type="module">
+    // 1) db prima di tutto
+    const db = firebase.firestore();
 
-  // === Auth helpers (open-pack) ===
-  async function ensureGoogleUser() {
-    const auth = firebase.auth();
-    const u = auth.currentUser;
-    const provider = new firebase.auth.GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
+    // === Auth helpers (open-pack) ===
+    async function ensureGoogleUser() {
+      const auth = firebase.auth();
+      const u = auth.currentUser;
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
 
-    try {
-      if (!u) {
-        const { user } = await auth.signInWithPopup(provider);
-        await user.getIdToken(true);   // 2) token fresco
-        return user;
+      try {
+        if (!u) {
+          const { user } = await auth.signInWithPopup(provider);
+          await user.getIdToken(true);
+          return user;
+        }
+        if (u.isAnonymous) {
+          const { user } = await u.linkWithPopup(provider);
+          await user.getIdToken(true);
+          return user;
+        }
+        await u.getIdToken(true);
+        return u;
+      } catch (e) {
+        // Fallback Safari / popup bloccati
+        if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') {
+          if (!u) { await firebase.auth().signInWithRedirect(provider); throw new Error('redirecting'); } // FIX
+          if (u.isAnonymous) { await u.linkWithRedirect(provider); throw new Error('redirecting'); }       // FIX
+        }
+        throw e;
       }
-      if (u.isAnonymous) {
-        const { user } = await u.linkWithPopup(provider);
-        await user.getIdToken(true);   // 2) token fresco
-        return user;
-      }
-      // già loggato “vero”
-      await u.getIdToken(true);        // 2) token fresco
-      return u;
-    } catch (e) {
-      // fallback utile su Safari / popup bloccati
-      if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') {
-        if (!u) return firebase.auth().signInWithRedirect(provider);
-        if (u.isAnonymous) return u.linkWithRedirect(provider);
-      }
-      throw e;
     }
-  }
 
- // === Wallet (open-pack) ===
-async function ensureWallet10() {
-  const uid = firebase.auth().currentUser.uid;
-  const ref = db.collection('users').doc(uid);
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    if (!snap.exists) {
+    // === Wallet (open-pack) ===
+    async function ensureWallet10() {
+      const uid = firebase.auth().currentUser.uid;
+      const ref = db.collection('users').doc(uid);
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists) {
+          const now = firebase.firestore.FieldValue.serverTimestamp();
+          tx.set(ref, { points: 10, createdAt: now, updatedAt: now });
+        }
+      });
+    }
+
+    async function getPoints() {
+      const uid = firebase.auth().currentUser.uid;
+      const snap = await db.collection('users').doc(uid).get();
+      return snap.exists ? (snap.data().points || 0) : 0;
+    }
+
+    async function debitOnePointOrThrow() {
+      const uid = firebase.auth().currentUser.uid;
+      const ref = db.collection('users').doc(uid);
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        const pts = snap.exists ? (snap.data().points || 0) : 0;
+        if (pts <= 0) throw new Error('no-points');
+        const now = firebase.firestore.FieldValue.serverTimestamp();
+        tx.update(ref, { points: pts - 1, updatedAt: now });
+      });
+    }
+
+    // === Badge punti (near "Apri pacchetto") ===
+    const pointsBadge = document.getElementById('pointsBadge');
+    const openBtn = document.getElementById('openBtn');
+    let unsubPoints = null;
+
+    async function initPointsUI() {
+      try {
+        const user = await ensureGoogleUser();
+        if (user.isAnonymous) {
+          pointsBadge.textContent = 'Accedi con Google';
+          openBtn.disabled = true;
+          return;
+        }
+        await ensureWallet10();
+        const ref = db.collection('users').doc(user.uid);
+        if (unsubPoints) unsubPoints();
+        unsubPoints = ref.onSnapshot((snap) => {
+          const pts = snap.exists ? (snap.data().points || 0) : 0;
+          pointsBadge.textContent = `Punti: ${pts}`;
+          openBtn.disabled = pts <= 0;
+        });
+      } catch (e) {
+        if (e.message === 'redirecting') return;
+        console.error('[initPointsUI]', e);
+        if (pointsBadge) pointsBadge.textContent = 'Punti: —';
+        if (openBtn) openBtn.disabled = true;
+      }
+    }
+    initPointsUI(); /* una sola volta all’avvio */  /* :contentReference[oaicite:6]{index=6} */
+
+    // helper per ID documento sicuro
+    const safeDocId = (id) =>
+      String(id || Math.random().toString(36).slice(2))
+        .replace(/[\/#?\[\]]/g, '_')
+        .slice(0, 120);
+
+    // Salva le carte estratte nell’inventario dell’utente
+    async function saveInventario(cards) {
+      const u = firebase.auth().currentUser;
+      if (!u || u.isAnonymous) throw new Error('login-required');
+
+      const batch = db.batch();
       const now = firebase.firestore.FieldValue.serverTimestamp();
-      tx.set(ref, { points: 10, createdAt: now, updatedAt: now });
-    }
-  });
-}
 
-async function getPoints() {
-  const uid = firebase.auth().currentUser.uid;
-  const snap = await db.collection('users').doc(uid).get();
-  return snap.exists ? (snap.data().points || 0) : 0;
-}
+      for (const c of cards) {
+        const ref = db.collection('users').doc(u.uid).collection('inventory').doc(safeDocId(c.id));
+        batch.set(ref, {
+          name: c.name,
+          rarity: c.rarity,
+          series: c.series || '',
+          img: c.img || '',
+          count: firebase.firestore.FieldValue.increment(1),
+          updatedAt: now
+        }, { merge: true });
+      }
 
-async function debitOnePointOrThrow() {
-  const uid = firebase.auth().currentUser.uid;
-  const ref = db.collection('users').doc(uid);
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const pts = snap.exists ? (snap.data().points || 0) : 0;
-    if (pts <= 0) throw new Error('no-points');
-    const now = firebase.firestore.FieldValue.serverTimestamp();
-    tx.update(ref, { points: pts - 1, updatedAt: now });
-  });
-} // 👈 mancava questa graffa
-
-// === Badge punti (near "Apri pacchetto") ===
-const pointsBadge = document.getElementById('pointsBadge');
-const openBtn = document.getElementById('openBtn');
-let unsubPoints = null;
-
-async function initPointsUI() {
-  try {
-    const user = await ensureGoogleUser(); // forza login Google per i punti
-
-    if (user.isAnonymous) {
-      pointsBadge.textContent = 'Accedi con Google';
-      openBtn.disabled = true;
-      return;
+      await batch.commit();
     }
 
-    await ensureWallet10(); // crea doc users/{uid} se manca
-
-    const ref = db.collection('users').doc(user.uid);
-    if (unsubPoints) unsubPoints();
-    unsubPoints = ref.onSnapshot((snap) => {
-      const pts = snap.exists ? (snap.data().points || 0) : 0;
-      pointsBadge.textContent = `Punti: ${pts}`;
-      openBtn.disabled = pts <= 0;
-    });
-  } catch (e) {
-    // se ensureGoogleUser ha fatto redirect, puoi semplicemente uscire
-    if (e.message === 'redirecting') return;
-    console.error('[initPointsUI]', e);
-    if (pointsBadge) pointsBadge.textContent = 'Punti: —';
-    if (openBtn) openBtn.disabled = true;
-  }
-}
-
-initPointsUI();
-
-    
-  }
-
-  // helper per ID documento sicuro
-  const safeDocId = (id) =>
-    String(id || Math.random().toString(36).slice(2))
-      .replace(/[\/#?\[\]]/g, '_')
-      .slice(0, 120);
-
-  // Salva le carte estratte nell’inventario dell’utente
-  async function saveInventario(cards) {
-    const u = firebase.auth().currentUser;
-    if (!u || u.isAnonymous) throw new Error('login-required');
-
-    const batch = db.batch();
-    const now = firebase.firestore.FieldValue.serverTimestamp();
-
-    for (const c of cards) {
-      const ref = db.collection('users').doc(u.uid).collection('inventory').doc(safeDocId(c.id));
-      batch.set(ref, {
-        name: c.name,
-        rarity: c.rarity,
-        series: c.series || '',
-        img: c.img || '',
-        count: firebase.firestore.FieldValue.increment(1),
-        updatedAt: now
-      }, { merge: true });
-    }
-
-    await batch.commit();
-  }
-</script>
-
-
-    
-   // Utility per match STRETTO sul campo "series"
-const seriesIs = (c, v) => String(c.series ?? '').trim() === v;
-
-// Definizione pacchetti (usa SOLO series: "Wonderkid" / "Tots")
-const PACKS = {
-  random:    { key:'random',    label:'Random',    cost:1000, back:'Deck%20back%20ORO.png',
-               filter: c => true },
-  wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1800, back:'Deck%20back%20wonderkid.png',
-               filter: c => seriesIs(c, 'Wonderkid') },
-  tots:      { key:'tots',      label:'Tots',      cost:1400, back:'Deck%20back%20Tots.png',
-               filter: c => seriesIs(c, 'Tots') },
-   f1:      { key:'f1',      label:'F1',      cost:1600, back:'f1%20pack.png',
-               filter: c => seriesIs(c, 'F1') }
-};
-    const DEFAULT_PACK_KEY = 'random';
-
+    /* =======================
+       Config / Dati / Utilità
+       ======================= */
     const CONFIG = {
-      CARDS_JSON:'cards.json',
-      COUNT:6,
-      WEIGHTS:{'Leggendaria':1,'Season':8,'Ultra Rara':3,'Epica':6,'Rara':10,'Non Comune':20,'Oggetto':30,'Comune':40},
-      FETCH_TIMEOUT_MS:8000
+      COUNT: 5,
+      FAIR_RARE_PLUS: true,
+      CARDS_JSON: 'cards.json',
+      FETCH_TIMEOUT_MS: 4500
     };
 
-    // Fallback carte per test locale (series incluse)
+    const DEFAULT_PACK_KEY = 'wonderkid';
+    const PACKS = {
+      wonderkid: {
+        key: 'wonderkid',
+        label: 'Wonderkid Pack',
+        cost: 1000,
+        back: 'Deck%20back%20wonderkid.png',
+        filter: c => String(c.series||'').trim().toLowerCase()==='wonderkid'
+      },
+      tots: {
+        key: 'tots',
+        label: 'TOTS Pack',
+        cost: 1000,
+        back: 'Deck%20back%20Tots.png',
+        filter: c => String(c.series||'').trim().toLowerCase()==='tots'
+      },
+      gold: {
+        key: 'gold',
+        label: 'Gold Pack',
+        cost: 1000,
+        back: 'Deck%20back%20ORO.png',
+        filter: _ => true
+      }
+    };
+
     const FALLBACK_CARDS = [
-      {id:'wk1', name:'Wonderkid A', rarity:'Comune',     img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
-      {id:'wk2', name:'Wonderkid B', rarity:'Rara',       img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
-      {id:'wk3', name:'Wonderkid C', rarity:'Epica',      img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
-      {id:'t1',  name:'Tots Alpha',  rarity:'Comune',     img:'Deck%20back%20Tots.png',      series:'Tots'},
-      {id:'t2',  name:'Tots Beta',   rarity:'Rara',       img:'Deck%20back%20Tots.png',      series:'Tots'},
-      {id:'t3',  name:'Tots Omega',  rarity:'Ultra Rara', img:'Deck%20back%20Tots.png',      series:'Tots'},
-      {id:'r1',  name:'Base 1',      rarity:'Comune',     img:'Deck%20back%20ORO.png'},
-      {id:'r2',  name:'Base 2',      rarity:'Non Comune', img:'Deck%20back%20ORO.png'},
+      {id:'c1',  name:'Base 1',      rarity:'Comune',     img:'Deck%20back%20ORO.png'},
+      {id:'c2',  name:'Base 2',      rarity:'Non Comune', img:'Deck%20back%20ORO.png'},
       {id:'r3',  name:'Base 3',      rarity:'Rara',       img:'Deck%20back%20ORO.png'},
       {id:'r4',  name:'Base 4',      rarity:'Epica',      img:'Deck%20back%20ORO.png'},
+      {id:'u5',  name:'Base 5',      rarity:'Ultra Rara', img:'Deck%20back%20ORO.png'},
+      {id:'s6',  name:'Base 6',      rarity:'Season',     img:'Deck%20back%20ORO.png'},
     ];
 
     // === Utilità
@@ -425,9 +399,9 @@ const PACKS = {
     // Audio opzionale
     let audioCtx=null;
     function ensureAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)() }catch{} }
-    function tone(f,d=.15,g=.08,t='sine'){ if(!audioCtx) return; const o=audioCtx.createOscillator(),A=audioCtx.createGain(); o.type=t; o.frequency.value=f; A.gain.value=g; o.connect(A).connect(audioCtx.destination); o.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d,.03); o.stop(audioCtx.currentTime+d+.08) }
-    function noiseBoom(d=.5,g=.15){ if(!audioCtx) return; const N=audioCtx.sampleRate*d, b=audioCtx.createBuffer(1,N,audioCtx.sampleRate), x=b.getChannelData(0); for(let i=0;i<N;i++) x[i]=(Math.random()*2-1)*Math.pow(1-i/N,2); const s=audioCtx.createBufferSource(); s.buffer=b; const A=audioCtx.createGain(); A.gain.value=g; const F=audioCtx.createBiquadFilter(); F.type='lowpass'; F.frequency.value=400; s.connect(F).connect(A).connect(audioCtx.destination); s.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d*.7,.2) }
-    function playByRarity(r){ if(r==='Comune'||r==='Non Comune'){ tone(520,.07,.06,'triangle'); tone(660,.07,.05,'triangle') } else if(r==='Rara'){ tone(660,.12,.08,'sine'); tone(880,.16,.06,'sine') } else if(r==='Epica'){ tone(660,.18,.09,'sine'); tone(990,.22,.08,'sine'); tone(1320,.24,.06,'sine') } else if(r==='Ultra Rara'||r==='Season'){ noiseBoom(.7,.18); tone(880,.18,.1,'square'); tone(1320,.22,.08,'square') } }
+    function tone(f,d=.15,g=.08,t='sine'){ if(!audioCtx) return; const o=audioCtx.createOscillator(),A=audioCtx.createGain(); o.type=t; o.frequency.value=f; A.gain.value=g; o.connect(A).connect(audioCtx.destination); o.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d,.3); o.stop(audioCtx.currentTime+d+.08) }
+    function noiseBoom(d=.5,g=.15){ if(!audioCtx) return; const N=audioCtx.sampleRate*d, b=audioCtx.createBuffer(1,N,audioCtx.sampleRate), x=b.getChannelData(0); for(let i=0;i<N;i++) x[i]=(Math.random()*2-1)*Math.pow(1-i/N,2); const s=audioCtx.createBufferSource(); s.buffer=b; const A=audioCtx.createGain(); A.gain.value=g; const F=audioCtx.createBiquadFilter(); F.type='lowpass'; F.frequency.value=400; s.connect(F).connect(A).connect(audioCtx.destination); s.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d*.7,2) }
+    function playByRarity(r){ if(r==='Comune'||r==='Non Comune'){ tone(520,.07,.06,'triangle'); tone(660,.07,.05,'triangle') } else if(r==='Rara'){ tone(660,.12,.08,'sine'); tone(880,.16,.06,'sine') } else if(r==='Epica'){ tone(660,.18,.09,'sine'); tone(990,.22,.08,'sine'); tone(1320,.24,.06,'sine') } else if(r==='Ultra Rara'||r==='Season'){ noiseBoom(.7,.18); tone(880,.18,1,'square'); tone(1320,.22,.08,'square') } }
 
     class PackOpener{
       constructor(){
@@ -504,7 +478,7 @@ const PACKS = {
             this.updatePrice();
             this.applyPackVisual();
             // aggiorna evidenziazione
-            [...this.$choices.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
+            [...this.$choices.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false')); /* FIX: spread corretto */
             btn.setAttribute('aria-selected','true');
           });
           frag.appendChild(btn);
@@ -523,7 +497,7 @@ const PACKS = {
       }
 
       pickRarity(){
-        const E=Object.entries(CONFIG.WEIGHTS);
+        const E=Object.entries(CONFIG.WEIGHTS||{'Comune':40,'Non Comune':30,'Rara':18,'Epica':8,'Ultra Rara':3,'Season':1});
         const tot=E.reduce((s,[,w])=>s+w,0);
         let r=Math.random()*tot;
         for(const [rar,w] of E){ if(r<w) return rar; r-=w }
@@ -547,38 +521,18 @@ const PACKS = {
       }
 
       makeCardEl(d,isFinal){
-  const tpl=document.getElementById('tplCard');
-  const n=tpl.content.firstElementChild.cloneNode(true);
-
-  // NEW: retro dal pack corrente
-  const backImg = n.querySelector('.back img');
-  if (backImg) {
-    backImg.src = PACKS[this.currentPackKey].back;
-    backImg.alt = `Retro carta – ${PACKS[this.currentPackKey].label}`;
-  }
-
-  const rslug=String(d.rarity||'').toLowerCase().replace(/\s+/g,'-');
-  if(rslug) n.classList.add('r-'+rslug);
-  if(isFinal) n.classList.add('final');
-
-  // front
-  const front=n.querySelector('.front img');
-  front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async';
-
-  n.querySelector('.badge').textContent=d.rarity||'';
-  n.dataset.state='back';
-  n.addEventListener('click',()=>{ 
-    if(n.dataset.state==='back'){ this.revealCard(n,d) } 
-    else { n.dataset.state='back'; n.classList.remove('revealed') } 
-  },{passive:true});
-
-  return n
-}
-
-      addSparks(el,n=10){
-        let cont=el.querySelector('.spark');
-        if(!cont){ cont=document.createElement('div'); cont.className='spark'; el.appendChild(cont) }
-        cont.innerHTML=''; const frag=document.createDocumentFragment();
+        const tpl=document.getElementById('tplCard');
+        const n=tpl.content.firstElementChild.cloneNode(true);
+        const back=n.querySelector('.back img'); const front=n.querySelector('.front img'); const badge=n.querySelector('.badge');
+        front.alt=d.name||''; back.alt='Retro carta';
+        badge.dataset.rarity=d.rarity; badge.textContent=d.rarity;
+        front.src=d.img||''; // verrà rivelata su flip
+        if(isFinal) n.classList.add('is-final');
+        n.addEventListener('click',()=>{ if(n.dataset.state!=='front'){ this.revealCard(n,d) } }, {passive:true});
+        return n;
+      }
+      addSparks(cont,n=12){
+        const frag=document.createDocumentFragment();
         for(let i=0;i<n;i++){
           const s=document.createElement('i');
           const x=10+Math.random()*80, xEnd=x+(-8+Math.random()*16), rot=-15+Math.random()*30;
@@ -616,93 +570,85 @@ const PACKS = {
         const pool = this.ALL.filter(pack.filter);
         if(!pool.length){ this.$log.textContent='⚠️ Nessuna carta compatibile con questo pacchetto (controlla "series").'; BTN.disabled=false; SHARE.disabled=true; return }
 
+        // === FIX: Gate Login + Punti (prima dell’animazione)
+        try {
+          const user = await ensureGoogleUser();
+          await user.getIdToken(true);
+          await ensureWallet10();
+          await debitOnePointOrThrow();
+        } catch (e) {
+          if (e.message === 'redirecting') return;
+          if (e.message === 'no-points') {
+            const pts = await getPoints().catch(()=>0);
+            this.$log.textContent = `⛔ Punti insufficienti (hai ${pts}).`;
+          } else {
+            this.$log.textContent = `⚠️ Errore: ${e.code || e.message}`;
+            console.error(e);
+          }
+          BTN.disabled=false; SHARE.disabled=true; return;
+        }
+        // === Fine gate
+
         this.$pack.classList.add('shake'); await delay(360); this.$pack.classList.remove('shake');
         this.$flashLine.classList.add('active'); this.$flashScreen.classList.add('active'); this.$pack.classList.add('opening');
         await delay(900); this.$packArea.style.display='none';
 
-       // helper: comodo per riconoscere la series "Oggetto"
-const isOggetto = c => String(c?.series || '').trim().toLowerCase() === 'oggetto';
+        // helper: comodo per riconoscere la series "Oggetto"
+        const isOggetto = c => String(c?.series || '').trim().toLowerCase() === 'oggetto';
 
-this.used.clear();
-let chosen = [];
-let hasOggetto = false;
+        this.used.clear();
+        let chosen = [];
+        let hasOggetto = false;
 
-for (let i = 0; i < CONFIG.COUNT; i++) {
-  let card = null;
-  let safety = 0;
+        for (let i = 0; i < (CONFIG.COUNT||5); i++) {
+          let card = null;
+          let safety = 0;
 
-  // riprova a pescare finché non troviamo una carta valida (evita 2° Oggetto)
-  while (safety++ < 50) {
-    const rar = this.pickRarity();
-    const c = this.pickCardByRarity(rar, pool);
-    if (!c) break;
+          while (safety++ < 50) {
+            const rar = this.pickRarity();
+            const c = this.pickCardByRarity(rar, pool);
+            if (!c) break;
+            if (isOggetto(c) && hasOggetto) continue;
+            card = c; break;
+          }
 
-    // salta le Oggetto oltre la prima
-    if (isOggetto(c) && hasOggetto) continue;
+          if (!card) break;
+          if (isOggetto(card)) hasOggetto = true;
+          this.used.add(card.id);
+          chosen.push(card);
+        }
 
-    card = c;
-    break;
-  }
+        if (CONFIG.FAIR_RARE_PLUS) chosen = this.ensureRarePlus(chosen, pool);
 
-  if (!card) break;
+        // Cintura e bretelle: se ensureRarePlus avesse inserito una 2ª Oggetto, rimpiazza.
+        (()=>{
+          const oggIdx = chosen.map((c,i)=>[i,c]).filter(([,c])=>isOggetto(c)).map(([i])=>i);
+          if (oggIdx.length>1){
+            for (let k=1;k<oggIdx.length;k++){
+              const i=oggIdx[k];
+              const targetRar = chosen[i].rarity;
+              let repl = pool.find(c=>!isOggetto(c) && c.rarity===targetRar && !this.used.has(c.id));
+              if (!repl) repl = pool.find(c=>!isOggetto(c) && !this.used.has(c.id));
+              if (repl){ this.used.add(repl.id); chosen[i]=repl; }
+            }
+          }
+        })();
 
-  if (isOggetto(card)) hasOggetto = true;
-  this.used.add(card.id);
-  chosen.push(card);
-}
+        chosen.sort((a,b)=>rarityRank[a.rarity]-rarityRank[b.rarity]);
+        this.showStage(chosen); /* FIX: rimossa la doppia chiamata */
 
-// mantiene la tua garanzia Rara+ come prima
-chosen = this.ensureRarePlus(chosen, pool);
-
-// Cintura e bretelle: se ensureRarePlus avesse inserito una 2ª Oggetto, la rimpiazziamo.
-(() => {
-  const oggIdx = chosen.map((c, i) => [i, c]).filter(([, c]) => isOggetto(c)).map(([i]) => i);
-  if (oggIdx.length > 1) {
-    // teniamo la prima e sostituiamo le altre con alternative NON-Oggetto (stessa rarità se possibile)
-    for (let k = 1; k < oggIdx.length; k++) {
-      const i = oggIdx[k];
-      const targetRar = chosen[i].rarity;
-      let repl = pool.find(c => !isOggetto(c) && c.rarity === targetRar && !this.used.has(c.id));
-      if (!repl) repl = pool.find(c => !isOggetto(c) && !this.used.has(c.id));
-      if (repl) { this.used.add(repl.id); chosen[i] = repl; }
-    }
-  }
-})();
-
-      
-// ordina e mostra come fai già ora
-chosen.sort((a, b) => rarityRank[a.rarity] - rarityRank[b.rarity]);
-this.showStage(chosen);
-this.showStage(chosen);
-
-// 👇 AGGIUNGI QUESTO
-try {
-  // Obbliga login Google per salvare
-  await ensureGoogleUser();
-  await saveInventario(chosen);
-  this.$log.textContent = '✅ Pacchetto salvato nelle tue carte.';
-} catch (e) {
-  if (e.message === 'login-required') {
-    this.$log.textContent = '🔒 Accedi con Google per salvare le carte in "Le mie carte".';
-    // opzionale: mostrare un bottone/CTA qui per avviare ensureGoogleUser()
-  } else {
-    this.$log.textContent = '⚠️ Errore nel salvataggio. Riprova.';
-    console.error(e);
-  }
-}
-
-
-        setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active') },400);
-        BTN.textContent=`🔁 Nuovo pacchetto ${pack.label}`; BTN.disabled=false; SHARE.disabled=false;
-        BTN.onclick=async()=>{
-          BTN.disabled=true; SHARE.disabled=true;
-          this.$stageWrap.classList.remove('show'); this.$stage.innerHTML=''; this.$packArea.style.display='flex'; this.$pack.classList.remove('opening');
-          BTN.textContent='🎁 Apri pacchetto'; this.$log.textContent='';
-          await delay(100); BTN.disabled=false; BTN.onclick=()=>this.doOpen();
-        };
+        // Salvataggio inventario
+        try {
+          await saveInventario(chosen);
+          const pts = await getPoints();
+          this.$log.innerHTML = `✅ Pacchetto salvato. Punti rimasti: <b>${pts}</b>. <a href="my-cards.html">Vai alle mie carte →</a>`;
+        } catch (e) {
+          this.$log.textContent = `⚠️ Errore nel salvataggio: ${e.code || e.message}`;
+          console.error(e);
+        }
       }
 
-      // === NUOVO: Condivisione pacchetto
+      // === Condivisione
       async doShare(){
         const shareData = {
           title: 'Fantaballa – Il mio pacchetto',
@@ -713,13 +659,11 @@ try {
         if (navigator.share) {
           try {
             await navigator.share(shareData);
-            console.log('Pacchetto condiviso con successo');
             return;
           } catch (err) {
             console.warn('Condivisione annullata o fallita', err);
           }
         }
-        // Fallback: apri modale con link + social
         this.openShareFallback(shareData);
       }
 
