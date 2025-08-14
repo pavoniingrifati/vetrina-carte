@@ -293,17 +293,19 @@
       const snap = await db.collection('users').doc(uid).get();
       return snap.exists ? (snap.data().points || 0) : 0;
     }
-    async function debitOnePointOrThrow() {
-      const uid = firebase.auth().currentUser.uid;
-      const ref = db.collection('users').doc(uid);
-      await db.runTransaction(async (tx) => {
-        const snap = await tx.get(ref);
-        const pts = snap.exists ? (snap.data().points || 0) : 0;
-        if (pts <= 0) throw new Error('no-points');
-        const now = firebase.firestore.FieldValue.serverTimestamp();
-        tx.update(ref, { points: pts - 1, updatedAt: now });
-      });
-    }
+ async function debitOnePointOrThrow() {
+  const uid = firebase.auth().currentUser.uid;
+  const ref = db.collection('users').doc(uid);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const pts = snap.exists ? (snap.data().points || 0) : 0;
+    if (pts <= 0) throw new Error('no-points');
+    const now = firebase.firestore.FieldValue.serverTimestamp();
+    tx.update(ref, { points: pts - 1, updatedAt: now });
+    return pts - 1; // 👈 ritorna il nuovo valore
+  });
+}
+
 
     // === Badge punti (near "Apri pacchetto") ===
     const pointsBadge = document.getElementById('pointsBadge');
