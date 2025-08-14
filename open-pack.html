@@ -315,14 +315,15 @@ const user = firebase.auth().currentUser;  // ✅ non forza il login qui
 if (!user || user.isAnonymous) {
   pointsBadge.innerHTML = '🔐 Accedi con Google';
   pointsBadge.style.cursor = 'pointer';
-  // pulizia e click handler per avviare il login
   pointsBadge.onclick = null;
   pointsBadge.onclick = async () => {
     try {
-      const u = await ensureGoogleUser();   // popup o redirect
-      if (!u) return;                       // in caso di redirect, interrompi
+      const u = await ensureGoogleUser();   // apre popup o redirect
+      if (!u) return;                       // se redirect, esci
       await ensureWallet10();               // crea doc punti se manca
-      // onAuthStateChanged aggiornerà badge e bottone
+
+      // 🔁 aggiorna UI subito dopo login riuscito
+      setTimeout(initPointsUI, 0);
     } catch (e) {
       if (e.message !== 'redirecting') console.error(e);
     }
@@ -331,6 +332,7 @@ if (!user || user.isAnonymous) {
   openBtn.disabled = true;
   return;
 }
+
 
 await ensureWallet10();
 
