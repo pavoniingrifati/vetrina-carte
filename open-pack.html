@@ -311,13 +311,14 @@
     let unsubPoints = null;
     async function initPointsUI() {
       try {
-const user = firebase.auth().currentUser; // non forzare login qui
-        if (user.isAnonymous) {
-          pointsBadge.textContent = 'Accedi con Google';
-          openBtn.disabled = true;
-          return;
-        }
-        await ensureWallet10();
+const user = firebase.auth().currentUser;  // ✅ non forza il login qui
+if (!user || user.isAnonymous) {
+  pointsBadge.textContent = 'Accedi con Google';
+  openBtn.disabled = true;
+  return;
+}
+await ensureWallet10();
+
         const ref = db.collection('users').doc(user.uid);
         if (unsubPoints) unsubPoints();
         unsubPoints = ref.onSnapshot((snap) => {
