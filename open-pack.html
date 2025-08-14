@@ -614,7 +614,34 @@ await ensureWallet10();
       }
 
       async doOpen(){
-        const BTN=this.$openBtn, SHARE=this.$shareBtn; BTN.disabled=true; SHARE.disabled=true;
+  const BTN=this.$openBtn, SHARE=this.$shareBtn; 
+  BTN.disabled=true; 
+  SHARE.disabled=true;
+
+  // 🔐 Login + 💳 wallet + ➖ 1 punto
+  let newPts;
+  try {
+    const u = firebase.auth().currentUser;
+    if (!u || u.isAnonymous) {
+      await ensureGoogleUser();          // popup / redirect se serve
+    }
+    await ensureWallet10();              // crea doc punti se manca
+    newPts = await debitOnePointOrThrow(); // ← SCALA 1 punto qui
+    this.$log.textContent = `✅ Punto scalato. Punti rimasti: ${newPts}`;
+  } catch (e) {
+    if (e.message === 'redirecting') return; // il redirect riprenderà dopo
+    if (e.message === 'login-required') {
+      this.$log.textContent = '🔐 Accedi con Google per aprire un pacchetto.';
+    } else if (e.message === 'no-points') {
+      this.$log.textContent = '😕 Punti esauriti.';
+    } else {
+      this.$log.textContent = '⚠️ Errore durante la scalatura punti.';
+      console.error(e);
+    }
+    BTN.disabled = false; 
+    SHARE.disabled = true; 
+    return;
+  }
         this.$log.textContent='Preparazione pacchetto…';
         await this.loadData(); if(!this.ALL.length){ this.$log.textContent='Nessuna carta disponibile'; BTN.disabled=false; return }
 
@@ -666,18 +693,17 @@ await ensureWallet10();
         chosen.sort((a,b)=>rarityRank[a.rarity]-rarityRank[b.rarity]);
         this.showStage(chosen);
 
-        try {
-          await ensureGoogleUser();
-          await saveInventario(chosen);
-this.$log.innerHTML = `✅ Pacchetto salvato. Punti rimasti: <b>${newPts}</b>. <a href="my-cards.html">Vai alle mie carte →</a>`;
-        } catch (e) {
-          if (e.message === 'login-required') {
-            this.$log.textContent = '🔒 Accedi con Google per salvare le carte in "Le mie carte".';
-          } else {
-            this.$log.textContent = '⚠️ Errore non sta scalando. Riprova.';
-            console.error(e);
-          }
-        }
+    try {
+  await saveInventario(chosen); // sei già loggato sopra
+  this.$log.innerHTML = `✅ Pacchetto salvato. Punti rimasti: <b>${newPts}</b>. <a href="my-cards.html">Vai alle mie carte →</a>`;
+} catch (e) {
+  if (e.message === 'login-required') {
+    this.$log.textContent = '🔒 Accedi con Google per salvare le carte in "Le mie carte".';
+  } else {
+    this.$log.textContent = '⚠️ Errore nel salvataggio. Riprova.';
+    console.error(e);
+  }
+}
 
         setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active') },400);
         BTN.textContent=`🔁 Nuovo pacchetto ${pack.label}`; BTN.disabled=false; SHARE.disabled=false;
