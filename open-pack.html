@@ -224,7 +224,79 @@
     </div>
   </div>
 
+<!-- subito prima del tuo <script type="module"> -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
+    authDomain: "fantaball-9e19c.firebaseapp.com",
+    projectId: "fantaball-9e19c",
+    storageBucket: "fantaball-9e19c.appspot.com",
+    messagingSenderId: "683304379837",
+    appId: "1:683304379837:web:d2bbe7a814e2e40e075ed4",
+    measurementId: "G-C8Q8K5B52C"
+  };
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+</script>
+
+  
   <script type="module">
+// === Auth helpers (open-pack) ===
+const db = firebase.firestore();
+
+async function ensureGoogleUser() {
+  const auth = firebase.auth();
+  const u = auth.currentUser;
+
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+
+  // Se NON c'è user -> login con Google
+  if (!u) {
+    const res = await auth.signInWithPopup(provider);
+    return res.user;
+  }
+
+  // Se è anonimo -> collega a Google così mantiene eventuali dati futuri
+  if (u.isAnonymous) {
+    const res = await u.linkWithPopup(provider);
+    return res.user;
+  }
+
+  // Se è già Google / non anonimo
+  return u;
+}
+
+// Salva le carte estratte nell’inventario dell’utente
+async function saveInventario(cards) {
+  const u = firebase.auth().currentUser;
+  if (!u || u.isAnonymous) {
+    throw new Error('login-required');
+  }
+
+  const batch = db.batch();
+  const now = firebase.firestore.FieldValue.serverTimestamp();
+
+  for (const c of cards) {
+    const ref = db.collection('users').doc(u.uid).collection('inventory').doc(c.id);
+    // incrementa count e aggiorna metadati base
+    batch.set(ref, {
+      name: c.name,
+      rarity: c.rarity,
+      series: c.series || '',
+      img: c.img || '',
+      count: firebase.firestore.FieldValue.increment(1),
+      updatedAt: now
+    }, { merge: true });
+  }
+
+  await batch.commit();
+}
+
+    
    // Utility per match STRETTO sul campo "series"
 const seriesIs = (c, v) => String(c.series ?? '').trim() === v;
 
@@ -518,6 +590,23 @@ chosen = this.ensureRarePlus(chosen, pool);
 // ordina e mostra come fai già ora
 chosen.sort((a, b) => rarityRank[a.rarity] - rarityRank[b.rarity]);
 this.showStage(chosen);
+this.showStage(chosen);
+
+// 👇 AGGIUNGI QUESTO
+try {
+  // Obbliga login Google per salvare
+  await ensureGoogleUser();
+  await saveInventario(chosen);
+  this.$log.textContent = '✅ Pacchetto salvato nelle tue carte.';
+} catch (e) {
+  if (e.message === 'login-required') {
+    this.$log.textContent = '🔒 Accedi con Google per salvare le carte in "Le mie carte".';
+    // opzionale: mostrare un bottone/CTA qui per avviare ensureGoogleUser()
+  } else {
+    this.$log.textContent = '⚠️ Errore nel salvataggio. Riprova.';
+    console.error(e);
+  }
+}
 
 
         setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active') },400);
