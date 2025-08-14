@@ -390,18 +390,34 @@ const PACKS = {
       }
 
       makeCardEl(d,isFinal){
-        const tpl=document.getElementById('tplCard');
-        const n=tpl.content.firstElementChild.cloneNode(true);
-        const rslug=String(d.rarity||'').toLowerCase().replace(/\s+/g,'-');
-        if(rslug) n.classList.add('r-'+rslug);
-        if(isFinal) n.classList.add('final');
-        const front=n.querySelector('.front img');
-        front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async';
-        n.querySelector('.badge').textContent=d.rarity||'';
-        n.dataset.state='back';
-        n.addEventListener('click',()=>{ if(n.dataset.state==='back'){ this.revealCard(n,d) } else { n.dataset.state='back'; n.classList.remove('revealed') } },{passive:true});
-        return n
-      }
+  const tpl=document.getElementById('tplCard');
+  const n=tpl.content.firstElementChild.cloneNode(true);
+
+  // NEW: retro dal pack corrente
+  const backImg = n.querySelector('.back img');
+  if (backImg) {
+    backImg.src = PACKS[this.currentPackKey].back;
+    backImg.alt = `Retro carta – ${PACKS[this.currentPackKey].label}`;
+  }
+
+  const rslug=String(d.rarity||'').toLowerCase().replace(/\s+/g,'-');
+  if(rslug) n.classList.add('r-'+rslug);
+  if(isFinal) n.classList.add('final');
+
+  // front
+  const front=n.querySelector('.front img');
+  front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async';
+
+  n.querySelector('.badge').textContent=d.rarity||'';
+  n.dataset.state='back';
+  n.addEventListener('click',()=>{ 
+    if(n.dataset.state==='back'){ this.revealCard(n,d) } 
+    else { n.dataset.state='back'; n.classList.remove('revealed') } 
+  },{passive:true});
+
+  return n
+}
+
       addSparks(el,n=10){
         let cont=el.querySelector('.spark');
         if(!cont){ cont=document.createElement('div'); cont.className='spark'; el.appendChild(cont) }
