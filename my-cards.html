@@ -184,12 +184,15 @@ function fillSeriesFilter(items){
 
 // === AUTH ===
 function updateAuthUI(u){
-  const label = !u ? 'Non autenticato' : (u.isAnonymous ? `Ospite (${u.uid.slice(0,6)}…)` : (u.displayName || u.email || u.uid));
+  const label = !u ? 'Non autenticato'
+                   : (u.isAnonymous ? `Ospite (${u.uid.slice(0,6)}…)`
+                                    : (u.displayName || u.email || u.uid));
   who.textContent = `👤 ${label}`;
-  bOut.style.display = u && !u.isAnonymous ? '' : 'none';
+  bOut.style.display = u ? '' : 'none'; // 👈 cambiata qui
   bG.style.display = !u || u.isAnonymous ? '' : 'none';
   bE.style.display = !u || u.isAnonymous ? '' : 'none';
 }
+
 firebase.auth().onAuthStateChanged(async u=>{
   updateAuthUI(u);
 
