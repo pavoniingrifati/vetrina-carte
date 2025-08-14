@@ -293,19 +293,28 @@
       const snap = await db.collection('users').doc(uid).get();
       return snap.exists ? (snap.data().points || 0) : 0;
     }
- async function debitOnePointOrThrow() {
-  const uid = firebase.auth().currentUser.uid;
+// === Wallet (open-pack) ===
+// Scala 1 punto e restituisce i punti aggiornati
+async function debitOnePointOrThrow() {
+  const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
+  if (!uid) throw new Error('login-required');
   const ref = db.collection('users').doc(uid);
+
   return db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
-    const pts = snap.exists ? (snap.data().points || 0) : 0;
+    if (!snap.exists) throw new Error('wallet-missing'); // non dovrebbe accadere se chiami ensureWallet10()
+
+    const pts = Number(snap.data().points || 0);
     if (pts <= 0) throw new Error('no-points');
+
     const now = firebase.firestore.FieldValue.serverTimestamp();
-    tx.update(ref, { points: pts - 1, updatedAt: now });
-    return pts - 1; // 👈 ritorna il nuovo valore
+    tx.update(ref, { points: pts - 1, updatedAt: now });  // ← decremento esplicito (compatibile con le regole)
+    return pts - 1;
+  }).catch((e) => {
+    console.error('[debitOnePointOrThrow]', e && (e.code || e.message), e);
+    throw e;
   });
 }
-
 
     // === Badge punti (near "Apri pacchetto") ===
     const pointsBadge = document.getElementById('pointsBadge');
@@ -665,7 +674,7 @@ this.$log.innerHTML = `✅ Pacchetto salvato. Punti rimasti: <b>${newPts}</b>. <
           if (e.message === 'login-required') {
             this.$log.textContent = '🔒 Accedi con Google per salvare le carte in "Le mie carte".';
           } else {
-            this.$log.textContent = '⚠️ Errore nel salvataggio. Riprova.';
+            this.$log.textContent = '⚠️ Errore non sta scalando. Riprova.';
             console.error(e);
           }
         }
