@@ -153,7 +153,7 @@
         <span class="pill" id="pricePill">💰 Costo: 1000</span>
         <span class="pill" id="pointsBadge">Punti: —</span>
         <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
-        <button id="shareBtn" class="btn" disabled>🔗 Condividi pacchetto</button>
+        <button id="bonusBtn" class="btn" style="display:none">🎁 Ottieni 1 punto</button>
         <a href="https://pavoniingrifati.github.io/vetrina-carte/my-cards" class="btn" id="myCardsBtn">🗂️ Le mie carte</a>
         <a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Torna alla Home</a>
       </div>
@@ -320,6 +320,7 @@ async function debitOnePointOrThrow() {
     // === Badge punti (near "Apri pacchetto") ===
     const pointsBadge = document.getElementById('pointsBadge');
     const openBtn = document.getElementById('openBtn');
+    const bonusBtn = document.getElementById('bonusBtn'); // 👈 AGGIUNTA
     let unsubPoints = null;
     async function initPointsUI() {
       try {
@@ -342,6 +343,8 @@ if (!user || user.isAnonymous) {
   };
 
   openBtn.disabled = true;
+    if (bonusBtn) bonusBtn.style.display = 'none'; // 👈 AGGIUNTA
+
   return;
 }
 
@@ -354,6 +357,8 @@ await ensureWallet10();
           const pts = snap.exists ? (snap.data().points || 0) : 0;
           pointsBadge.textContent = `Punti: ${pts}`;
           openBtn.disabled = pts <= 0;
+            if (bonusBtn) bonusBtn.style.display = (pts <= 0) ? '' : 'none'; // 👈 AGGIUNTA
+
         });
       } catch (e) {
         if (e.message === 'redirecting') return;
@@ -363,6 +368,43 @@ await ensureWallet10();
       }
     }
     initPointsUI();
+
+    // Deve stare dopo initPointsUI();
+if (bonusBtn) {
+  bonusBtn.addEventListener('click', async () => {
+    const log = document.getElementById('log');
+    try {
+      // Assicura login e wallet
+      let u = firebase.auth().currentUser;
+      if (!u || u.isAnonymous) u = await ensureGoogleUser();
+      await ensureWallet10();
+
+      const ref = db.collection('users').doc(u.uid);
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists) throw new Error('wallet-missing');
+        const pts = Number(snap.data().points || 0);
+        const now = firebase.firestore.FieldValue.serverTimestamp();
+
+        // 🚀 +1 punto (il blocco delle 24h lo fanno le REGOLE Firestore)
+        tx.update(ref, { points: pts + 1, lastDailyAt: now, updatedAt: now });
+      });
+
+      log.textContent = '🎉 Bonus ottenuto! (max 1 ogni 24h)';
+      bonusBtn.disabled = true;
+    } catch (e) {
+      // Se le regole bloccano (<24h), Firestore risponde "permission-denied"
+      if ((e && e.code) === 'permission-denied') {
+        log.textContent = '⏱️ Bonus già usato nelle ultime 24 ore.';
+      } else {
+        log.textContent = '⚠️ Impossibile ottenere il bonus ora.';
+        console.error(e);
+      }
+    } finally {
+      setTimeout(()=>{ bonusBtn.disabled = false; }, 800);
+    }
+  });
+}
 
     // helper per ID documento sicuro
     const safeDocId = (id) =>
