@@ -324,6 +324,24 @@ const pointsBadge = document.getElementById('pointsBadge');
 const openBtn = document.getElementById('openBtn');
 const bonusBtn = document.getElementById('bonusBtn'); // 👈 AGGIUNTA
 let unsubPoints = null;
+// Stato: ultimo bonus visto dal client
+let lastDailyAtMs = 0;
+
+// Aggiorna testo/abilitazione del bottone bonus
+function updateBonusUI(){
+  if (!bonusBtn) return;
+  const now = Date.now();
+  const canClaim = !lastDailyAtMs || (now - lastDailyAtMs) >= 24*60*60*1000;
+
+  bonusBtn.textContent = canClaim ? '🎁 Ottieni 1 punto' : '⏱️ Attendere 24 ore';
+  bonusBtn.disabled = !canClaim;
+  bonusBtn.style.display = ''; // visibile quando loggato
+}
+
+// Ricontrolla ogni minuto (così riappare da solo allo scadere)
+setInterval(updateBonusUI, 60*1000);
+
+        
 async function initPointsUI() {
 try {
 const user = firebase.auth().currentUser;  // ✅ non forza il login qui
