@@ -153,9 +153,12 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 <span class="pill" id="pricePill">💰 Costo: 1000</span>
 <span class="pill" id="pointsBadge">Punti: —</span>
 <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
-        <a href="https://pavoniingrifati.github.io/vetrina-carte/my-cards" class="btn" id="myCardsBtn">🗂️ Le mie carte</a>
+<button id="bonusBtn" class="btn" style="display:none">🎁 Ottieni 1 punto</button>
+<a href="https://pavoniingrifati.github.io/vetrina-carte/my-cards" class="btn" id="myCardsBtn">🗂️ Le mie carte</a>
+<a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Torna alla Home</a>
 <button id="shareBtn" class="btn" disabled>🔗 Condividi pacchetto</button>
 <button id="bonusBtn" class="btn" style="display:none">🎁 Ottieni 1 punto</button>
+<a href="https://pavoniingrifati.github.io/vetrina-carte/my-cards" class="btn" id="myCardsBtn">🗂️ Le mie carte</a>
 <a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Torna alla Home</a>
 
 </div>
@@ -324,24 +327,6 @@ const pointsBadge = document.getElementById('pointsBadge');
 const openBtn = document.getElementById('openBtn');
 const bonusBtn = document.getElementById('bonusBtn'); // 👈 AGGIUNTA
 let unsubPoints = null;
-// Stato: ultimo bonus visto dal client
-let lastDailyAtMs = 0;
-
-// Aggiorna testo/abilitazione del bottone bonus
-function updateBonusUI(){
-  if (!bonusBtn) return;
-  const now = Date.now();
-  const canClaim = !lastDailyAtMs || (now - lastDailyAtMs) >= 24*60*60*1000;
-
-  bonusBtn.textContent = canClaim ? '🎁 Ottieni 1 punto' : '⏱️ Attendere 24 ore';
-  bonusBtn.disabled = !canClaim;
-  bonusBtn.style.display = ''; // visibile quando loggato
-}
-
-// Ricontrolla ogni minuto (così riappare da solo allo scadere)
-setInterval(updateBonusUI, 60*1000);
-
-        
 async function initPointsUI() {
 try {
 const user = firebase.auth().currentUser;  // ✅ non forza il login qui
@@ -376,6 +361,10 @@ if (unsubPoints) unsubPoints();
 
 // ⬇️ SOSTITUISCI DA QUI (compresa questa riga)
 unsubPoints = ref.onSnapshot((snap) => {
+const pts = snap.exists ? (snap.data().points || 0) : 0;
+pointsBadge.textContent = `Punti: ${pts}`;
+openBtn.disabled = pts <= 0;
+if (bonusBtn) bonusBtn.style.display = (pts <= 0) ? '' : 'none'; // 👈 AGGIUNTA
   const data = snap.exists ? snap.data() : {};
   const pts = Number(data.points || 0);
 
@@ -583,11 +572,11 @@ btn.className='choice';
 btn.setAttribute('data-pack',p.key);
 btn.setAttribute('aria-selected', String(p.key===this.currentPackKey));
 btn.innerHTML = `
-           <div class="prev" style="background-image:url('${p.back}')"></div>
-           <div class="meta">
-             <span class="name">${p.label}</span>
-             <span class="price">Costo: ${p.cost}</span>
-           </div>`;
+          <div class="prev" style="background-image:url('${p.back}')"></div>
+          <div class="meta">
+            <span class="name">${p.label}</span>
+            <span class="price">Costo: ${p.cost}</span>
+          </div>`;
 btn.addEventListener('click', ()=>{
 this.currentPackKey = p.key;
 this.updatePrice();
