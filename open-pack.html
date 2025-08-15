@@ -327,17 +327,32 @@ let unsubPoints = null;
 // Stato: ultimo bonus visto dal client
 let lastDailyAtMs = 0;
 
+  function formatHhMm(ms){
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
 // Aggiorna testo/abilitazione del bottone bonus
 function updateBonusUI(){
   if (!bonusBtn) return;
+  const DAY_MS = 24*60*60*1000;
   const now = Date.now();
-  const canClaim = !lastDailyAtMs || (now - lastDailyAtMs) >= 24*60*60*1000;
+  const elapsed = lastDailyAtMs ? (now - lastDailyAtMs) : Infinity;
+  const canClaim = elapsed >= DAY_MS;
 
-  bonusBtn.textContent = canClaim ? '🎁 Apri' : '⏱️ Attendi 24 ore';
-  bonusBtn.disabled = false;      // 👉 sempre cliccabile
-  bonusBtn.style.display = '';    // 👉 sempre visibile
+  if (canClaim) {
+    bonusBtn.textContent = '🎁 Apri';
+  } else {
+    const remainingMs = DAY_MS - elapsed;
+    bonusBtn.textContent = `⏱️ Attendi ${formatHhMm(remainingMs)}`;
+  }
+
+  bonusBtn.disabled = false;   // sempre cliccabile
+  bonusBtn.style.display = ''; // sempre visibile
 }
-updateBonusUI();
+
 
 
 // Ricontrolla ogni minuto (così riappare da solo allo scadere)
@@ -425,6 +440,9 @@ const now = firebase.firestore.FieldValue.serverTimestamp();
 // 🚀 +1 punto (il blocco delle 24h lo fanno le REGOLE Firestore)
 tx.update(ref, { points: pts + 1, lastDailyAt: now, updatedAt: now });
 });
+
+   lastDailyAtMs = Date.now();
+      updateBonusUI();
 
 log.textContent = '🎉 Bonus ottenuto! (max 1 ogni 24h)';
   lastDailyAtMs = Date.now();
