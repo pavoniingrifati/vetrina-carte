@@ -326,16 +326,31 @@ const bonusBtn = document.getElementById('bonusBtn'); // 👈 AGGIUNTA
 let unsubPoints = null;
 // Stato: ultimo bonus visto dal client
 let lastDailyAtMs = 0;
+  
+function formatHhMm(ms){
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
 
 // Aggiorna testo/abilitazione del bottone bonus
 function updateBonusUI(){
   if (!bonusBtn) return;
   const now = Date.now();
-  const canClaim = !lastDailyAtMs || (now - lastDailyAtMs) >= 24*60*60*1000;
+  const elapsed = lastDailyAtMs ? (now - lastDailyAtMs) : Infinity;
+  const canClaim = elapsed >= 24*60*60*1000;
 
-  bonusBtn.textContent = canClaim ? '🎁 Apri' : '⏱️ Attendi 24 ore';
-  bonusBtn.disabled = false;      // 👉 sempre cliccabile
-  bonusBtn.style.display = '';    // 👉 sempre visibile
+  if (canClaim) {
+    bonusBtn.textContent = '🎁 Apri';
+  } else {
+    const remainingMs = 24*60*60*1000 - elapsed;
+    bonusBtn.textContent = `⏱️ Attendi ${formatHhMm(remainingMs)}`;
+  }
+
+  bonusBtn.disabled = false;    // sempre cliccabile
+  bonusBtn.style.display = '';  // sempre visibile
 }
 
 
@@ -379,24 +394,22 @@ unsubPoints = ref.onSnapshot((snap) => {
   const data = snap.exists ? snap.data() : {};
   const pts = Number(data.points || 0);
 
+  // ultimo bonus registrato su Firestore
   const last = data.lastDailyAt;
   const lastMs =
     last && typeof last.toMillis === 'function'
       ? last.toMillis()
       : (typeof last === 'number' ? last : 0);
 
-  // Aggiorna il badge dei punti e il bottone Apri pacchetto
+  // UI punti + stato pulsante "Apri pacchetto"
   pointsBadge.textContent = `Punti: ${pts}`;
   openBtn.disabled = pts <= 0;
 
-  // 🔹 Qui aggiorniamo la variabile usata da updateBonusUI()
-  lastDailyAtMs = lastMs;
-
-  // 🔹 Richiamiamo updateBonusUI() per cambiare etichetta e stato
+  // 👉 aggiorna il valore usato per il countdown/etichetta del bonus
+  lastDailyAtMs = lastMs || 0;
   updateBonusUI();
 });
-
-// ⬆️ …FINO A QUI (inclusa questa riga)
+a)
 
 
 } catch (e) {
