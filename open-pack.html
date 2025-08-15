@@ -403,7 +403,7 @@ unsubPoints = ref.onSnapshot((snap) => {
 
   pointsBadge.textContent = `Punti: ${pts}`;
   openBtn.disabled = pts <= 0;
-
+openBtn.disabled = (openBtn.dataset.pack === 'test') ? false : (pts <= 0);
   // aggiorna countdown/etichetta del bottone bonus e rendilo visibile
   lastDailyAtMs = lastMs || 0;
   updateBonusUI();
@@ -416,6 +416,7 @@ if (e.message === 'redirecting') return;
 console.error('[initPointsUI]', e);
 if (pointsBadge) pointsBadge.textContent = 'Punti: —';
 if (openBtn) openBtn.disabled = true;
+openBtn.disabled = (openBtn.dataset.pack === 'test') ? false : true;
 }
 }
 initPointsUI();
@@ -493,15 +494,20 @@ const seriesIs = (c, v) => String(c.series ?? '').trim() === v;
 
 // Definizione pacchetti (usa SOLO series: "Wonderkid" / "Tots")
 const PACKS = {
-random:    { key:'random',    label:'Random',    cost:1, back:'Deck%20back%20ORO.png',
-filter: c => true },
-wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1, back:'Deck%20back%20wonderkid.png',
-filter: c => seriesIs(c, 'Wonderkid') },
-tots:      { key:'tots',      label:'Tots',      cost:1, back:'Deck%20back%20Tots.png',
-filter: c => seriesIs(c, 'Tots') },
-f1:        { key:'f1',        label:'F1',        cost:1, back:'f1%20pack.png',
-filter: c => seriesIs(c, 'F1') }
+  random:    { key:'random',    label:'Random',    cost:1000, back:'Deck%20back%20ORO.png',
+    filter: c => true },
+  wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1800, back:'Deck%20back%20wonderkid.png',
+    filter: c => seriesIs(c, 'Wonderkid') },
+  tots:      { key:'tots',      label:'Tots',      cost:1400, back:'Deck%20back%20Tots.png',
+    filter: c => seriesIs(c, 'Tots') },
+  f1:        { key:'f1',        label:'F1',        cost:1600, back:'f1%20pack.png',
+    filter: c => seriesIs(c, 'F1') },
+
+  // 👇 NUOVO: pacchetto sempre apribile e senza salvataggio
+  test:      { key:'test',      label:'Test Gratuito', cost:0, back:'Deck%20back%20ORO.png',
+    filter: c => true, test:true }
 };
+
 const DEFAULT_PACK_KEY = 'random';
 
 const CONFIG = {
@@ -610,6 +616,8 @@ btn.addEventListener('click', ()=>{
 this.currentPackKey = p.key;
 this.updatePrice();
 this.applyPackVisual();
+openBtn.dataset.pack = p.key; 
+if (p.key === 'test') openBtn.disabled = false; // il test è sempre apribile
 [...this.$choices.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
 btn.setAttribute('aria-selected','true');
 });
@@ -618,6 +626,7 @@ frag.appendChild(btn);
 this.$choices.innerHTML='';
 this.$choices.appendChild(frag);
 this.updatePrice();
+openBtn.dataset.pack = this.currentPackKey;
 }
 updatePrice(){
 const pack=PACKS[this.currentPackKey];
@@ -713,34 +722,43 @@ this.$log.textContent='Pacchetto pronto (ordine per rarità). Tocca le carte per
 }
 
 async doOpen(){
-const BTN=this.$openBtn, SHARE=this.$shareBtn; 
-BTN.disabled=true; 
-SHARE.disabled=true;
+const BTN = this.$openBtn, SHARE = this.$shareBtn;
+BTN.disabled = true;
+SHARE.disabled = true;
 
-// 🔐 Login + 💳 wallet + ➖ 1 punto
+// 👇 NUOVO: modalità test?
+const isTest = !!(PACKS[this.currentPackKey] && PACKS[this.currentPackKey].test);
+
+// 🔐 Login + 💳 wallet + ➖ 1 punto (solo se NON è test)
 let newPts;
-try {
-const u = firebase.auth().currentUser;
-if (!u || u.isAnonymous) {
-await ensureGoogleUser();          // popup / redirect se serve
-}
-await ensureWallet10();              // crea doc punti se manca
-newPts = await debitOnePointOrThrow(); // ← SCALA 1 punto qui
-this.$log.textContent = `✅ Punto scalato. Punti rimasti: ${newPts}`;
-} catch (e) {
-if (e.message === 'redirecting') return; // il redirect riprenderà dopo
-if (e.message === 'login-required') {
-this.$log.textContent = '🔐 Accedi con Google per aprire un pacchetto.';
-} else if (e.message === 'no-points') {
-this.$log.textContent = '😕 Punti esauriti.';
+if (!isTest) {
+  try {
+    const u = firebase.auth().currentUser;
+    if (!u || u.isAnonymous) {
+      await ensureGoogleUser();          // popup / redirect se serve
+    }
+    await ensureWallet10();              // crea doc punti se manca
+    newPts = await debitOnePointOrThrow(); // ← SCALA 1 punto qui
+    this.$log.textContent = `✅ Punto scalato. Punti rimasti: ${newPts}`;
+  } catch (e) {
+    if (e.message === 'redirecting') return; // il redirect riprenderà dopo
+    if (e.message === 'login-required') {
+      this.$log.textContent = '🔐 Accedi con Google per aprire un pacchetto.';
+    } else if (e.message === 'no-points') {
+      this.$log.textContent = '😕 Punti esauriti.';
+    } else {
+      this.$log.textContent = '⚠️ Errore durante la scalatura punti.';
+      console.error(e);
+    }
+    BTN.disabled = false;
+    SHARE.disabled = true;
+    return;
+  }
 } else {
-this.$log.textContent = '⚠️ Errore durante la scalatura punti.';
-console.error(e);
+  // 🧪 Modalità test: nessun login, nessun addebito
+  this.$log.textContent = '🧪 Modalità test: nessun punto scalato e nessun salvataggio.';
 }
-BTN.disabled = false; 
-SHARE.disabled = true; 
-return;
-}
+
 this.$log.textContent='Preparazione pacchetto…';
 await this.loadData(); if(!this.ALL.length){ this.$log.textContent='Nessuna carta disponibile'; BTN.disabled=false; return }
 
@@ -792,17 +810,22 @@ if (repl){ this.used.add(repl.id); chosen[i]=repl; }
 chosen.sort((a,b)=>rarityRank[a.rarity]-rarityRank[b.rarity]);
 this.showStage(chosen);
 
-try {
-await saveInventario(chosen); // sei già loggato sopra
-this.$log.innerHTML = `✅ Pacchetto salvato. Punti rimasti: <b>${newPts}</b>. <a href="my-cards.html">Vai alle mie carte →</a>`;
-} catch (e) {
-if (e.message === 'login-required') {
-this.$log.textContent = '🔒 Accedi con Google per salvare le carte in "Le mie carte".';
+if (!isTest) {
+  try {
+    await saveInventario(chosen);
+    this.$log.innerHTML = `✅ Pacchetto salvato. Punti rimasti: <b>${newPts}</b>. <a href="my-cards.html">Vai alle mie carte →</a>`;
+  } catch (e) {
+    if (e.message === 'login-required') {
+      this.$log.textContent = '🔒 Accedi con Google per salvare le carte in "Le mie carte".';
+    } else {
+      this.$log.textContent = '⚠️ Errore nel salvataggio. Riprova.';
+      console.error(e);
+    }
+  }
 } else {
-this.$log.textContent = '⚠️ Errore nel salvataggio. Riprova.';
-console.error(e);
+  this.$log.textContent = '🧪 Pacchetto di test: carte NON aggiunte alla tua collezione.';
 }
-}
+
 
 setTimeout(()=>{ this.$flashLine.classList.remove('active'); this.$flashScreen.classList.remove('active') },400);
 BTN.textContent=`🔁 Nuovo pacchetto ${pack.label}`; BTN.disabled=false; SHARE.disabled=false;
