@@ -155,7 +155,7 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
 <a href="https://pavoniingrifati.github.io/vetrina-carte/my-cards" class="btn" id="myCardsBtn">🗂️ Le mie carte</a>
 <button id="shareBtn" class="btn" disabled>🔗 Condividi pacchetto</button>
-<button id="bonusBtn" class="btn" style="display:none">🎁 Ottieni 1 punto</button>
+<button id="bonusBtn" class="btn">🎁 Ottieni 1 punto</button>
 <a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Torna alla Home</a>
 
 </div>
@@ -337,6 +337,7 @@ function updateBonusUI(){
   bonusBtn.disabled = false;      // 👉 sempre cliccabile
   bonusBtn.style.display = '';    // 👉 sempre visibile
 }
+updateBonusUI();
 
 
 // Ricontrolla ogni minuto (così riappare da solo allo scadere)
@@ -364,6 +365,7 @@ if (e.message !== 'redirecting') console.error(e);
 };
 
 openBtn.disabled = true;
+updateBonusUI();
 
 return;
 }
@@ -374,27 +376,24 @@ await ensureWallet10();
 const ref = db.collection('users').doc(user.uid);
 if (unsubPoints) unsubPoints();
 
-// ⬇️ SOSTITUISCI DA QUI (compresa questa riga)
 unsubPoints = ref.onSnapshot((snap) => {
-const data = snap.exists ? snap.data() : {};
-const pts = Number(data.points || 0);
+  const data = snap.exists ? snap.data() : {};
+  const pts = Number(data.points || 0);
 
-// ⏱️ idoneità bonus: mai preso o passate >= 24h da lastDailyAt
-const last = data.lastDailyAt;
-const lastMs =
-last && typeof last.toMillis === 'function'
-? last.toMillis()
-: (typeof last === 'number' ? last : 0);
+  const last = data.lastDailyAt;
+  const lastMs =
+    last && typeof last.toMillis === 'function'
+      ? last.toMillis()
+      : (typeof last === 'number' ? last : 0);
 
-const canClaim = !lastMs || (Date.now() - lastMs) >= 24 * 60 * 60 * 1000;
+  pointsBadge.textContent = `Punti: ${pts}`;
+  openBtn.disabled = pts <= 0;
 
-// UI punti + bottone "Apri pacchetto"
-pointsBadge.textContent = `Punti: ${pts}`;
-openBtn.disabled = pts <= 0;
-
-// 🎁 Mostra il bonus se idoneo, indipendentemente dai punti
+  // aggiorna countdown/etichetta del bottone bonus e rendilo visibile
+  lastDailyAtMs = lastMs || 0;
+  updateBonusUI();
 });
-// ⬆️ …FINO A QUI (inclusa questa riga)
+
 
 
 } catch (e) {
@@ -428,6 +427,8 @@ tx.update(ref, { points: pts + 1, lastDailyAt: now, updatedAt: now });
 });
 
 log.textContent = '🎉 Bonus ottenuto! (max 1 ogni 24h)';
+  lastDailyAtMs = Date.now();
+updateBonusUI();
 bonusBtn.disabled = true;
 } catch (e) {
 // Se le regole bloccano (<24h), Firestore risponde "permission-denied"
