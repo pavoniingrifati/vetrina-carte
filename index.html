@@ -251,6 +251,40 @@ body.modal-open { overscroll-behavior: contain }
   color: #ffd7b3;
   font-weight: 600;
 }
+/* Header più compatto su mobile */
+@media (max-width: 600px){
+  header .wrap{ padding: 8px 12px; }
+  .title{ gap: 6px; }
+  h1{ font-size: 18px; line-height: 1.15; }
+  .subtitle{ display:none; } /* nasconde il sottotitolo su schermi piccoli */
+  .tabs{ margin-top: 8px; }
+}
+
+/* Righe azioni: login + apri pacchetto affiancati */
+.actions-row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:nowrap;
+}
+.actions-row .pill{
+  padding:10px 12px;              /* più compatto */
+  border-radius: 999px;
+  line-height:1;
+}
+
+/* Rende i due pulsanti più “stretti” su mobile */
+@media (max-width: 600px){
+  #authBox{ gap:8px; }
+  .actions-row .pill{ padding:9px 10px; font-size: 14px; }
+  .pill.pack-btn{ margin:0; box-shadow:none; } /* niente extra-margin/shadow in header */
+}
+
+/* Evita sovrapposizione con le carte (header sticky + extra margine sotto) */
+header{ position: sticky; top: 0; }
+main.wrap{ margin-top: 8px; }
+
+  
 </style>
 </head>
 
@@ -263,14 +297,18 @@ body.modal-open { overscroll-behavior: contain }
         <div class="subtitle">Non hai ancora una carta? Segui le live su <a href="https://www.tiktok.com/@fantaballa">Tik Tok</a> di Fanataballa!</div>
       </div>
       <!-- 🔐 Box login Google -->
-      <div id="authBox" style="display:flex; gap:10px; align-items:center">
-        <img id="userPhoto" alt="" referrerpolicy="no-referrer" style="width:28px; height:28px; border-radius:999px; display:none">
-        <span id="userName" style="font-size:14px; opacity:.9; display:none"></span>
-        <button id="btnLogin" class="pill" type="button" title="Accedi con Google">🔐 Accedi con Google</button>
-        <button id="btnLogout" class="pill" type="button" title="Esci" style="display:none">⎋ Esci</button>
-      </div>
-    </div>
+    <div id="authBox" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+  <img id="userPhoto" ...>
+  <span id="userName" ...></span>
+
+  <div class="actions-row">
+    <button id="btnLogin" class="pill" type="button" title="Accedi con Google">🔐 Accedi con Google</button>
     <a class="pill pack-btn" href="open-pack.html"><span class="gift">🎁</span> Apri un pacchetto</a>
+  </div>
+
+  <button id="btnLogout" class="pill" type="button" title="Esci" style="display:none">⎋ Esci</button>
+</div>
+
 
     <div class="tabs" role="tablist" aria-label="Sezioni">
       <button class="tab-btn" id="tabAll" role="tab" aria-selected="true">Tutte</button>
