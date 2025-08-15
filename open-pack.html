@@ -329,23 +329,19 @@ let lastDailyAtMs = 0;
 
 // Aggiorna testo/abilitazione del bottone bonus
 function updateBonusUI(){
-if (!bonusBtn) return;
-const now = Date.now();
-const canClaim = !lastDailyAtMs || (now - lastDailyAtMs) >= 24*60*60*1000;
+  if (!bonusBtn) return;
+  const now = Date.now();
+  const canClaim = !lastDailyAtMs || (now - lastDailyAtMs) >= 24*60*60*1000;
 
   bonusBtn.textContent = canClaim ? '🎁 Ottieni 1 punto' : '⏱️ Attendere 24 ore';
   bonusBtn.disabled = !canClaim;
   bonusBtn.style.display = ''; // visibile quando loggato
-  bonusBtn.textContent = canClaim ? '🎁 Apri' : '⏱️ Attendi 24 ore';
-  bonusBtn.disabled = false;      // 👉 sempre cliccabile
-  bonusBtn.style.display = '';    // 👉 sempre visibile
 }
-
 
 // Ricontrolla ogni minuto (così riappare da solo allo scadere)
 setInterval(updateBonusUI, 60*1000);
 
-
+        
 async function initPointsUI() {
 try {
 const user = firebase.auth().currentUser;  // ✅ non forza il login qui
@@ -379,12 +375,9 @@ const ref = db.collection('users').doc(user.uid);
 if (unsubPoints) unsubPoints();
 
 // ⬇️ SOSTITUISCI DA QUI (compresa questa riga)
-
 unsubPoints = ref.onSnapshot((snap) => {
 const data = snap.exists ? snap.data() : {};
 const pts = Number(data.points || 0);
-  const data = snap.exists ? snap.data() : {};
-  const pts = Number(data.points || 0);
 
 // ⏱️ idoneità bonus: mai preso o passate >= 24h da lastDailyAt
 const last = data.lastDailyAt;
@@ -392,29 +385,16 @@ const lastMs =
 last && typeof last.toMillis === 'function'
 ? last.toMillis()
 : (typeof last === 'number' ? last : 0);
-  const last = data.lastDailyAt;
-  const lastMs =
-    last && typeof last.toMillis === 'function'
-      ? last.toMillis()
-      : (typeof last === 'number' ? last : 0);
 
 const canClaim = !lastMs || (Date.now() - lastMs) >= 24 * 60 * 60 * 1000;
-  // Aggiorna il badge dei punti e il bottone Apri pacchetto
-  pointsBadge.textContent = `Punti: ${pts}`;
-  openBtn.disabled = pts <= 0;
 
 // UI punti + bottone "Apri pacchetto"
 pointsBadge.textContent = `Punti: ${pts}`;
 openBtn.disabled = pts <= 0;
-  // 🔹 Qui aggiorniamo la variabile usata da updateBonusUI()
-  lastDailyAtMs = lastMs;
 
 // 🎁 Mostra il bonus se idoneo, indipendentemente dai punti
 if (bonusBtn) bonusBtn.style.display = canClaim ? '' : 'none';
-  // 🔹 Richiamiamo updateBonusUI() per cambiare etichetta e stato
-  updateBonusUI();
 });
-
 // ⬆️ …FINO A QUI (inclusa questa riga)
 
 
@@ -603,11 +583,11 @@ btn.className='choice';
 btn.setAttribute('data-pack',p.key);
 btn.setAttribute('aria-selected', String(p.key===this.currentPackKey));
 btn.innerHTML = `
-         <div class="prev" style="background-image:url('${p.back}')"></div>
-         <div class="meta">
-           <span class="name">${p.label}</span>
-           <span class="price">Costo: ${p.cost}</span>
-         </div>`;
+          <div class="prev" style="background-image:url('${p.back}')"></div>
+          <div class="meta">
+            <span class="name">${p.label}</span>
+            <span class="price">Costo: ${p.cost}</span>
+          </div>`;
 btn.addEventListener('click', ()=>{
 this.currentPackKey = p.key;
 this.updatePrice();
