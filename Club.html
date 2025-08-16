@@ -224,16 +224,17 @@
   </div>
 
   <!-- Contenuti testuali in primo piano -->
-  <div class="hero__content container">
-    <span class="chip">Nuovo progetto</span>
-    <h2>Scopri il mondo FUT, ma con la tua carta!</h2>
-    <p>Anteprime del sito e accesso diretto alla vetrina.</p>
-    <div class="cta-wrap">
-      <a class="btn" href="https://pavoniingrifati.github.io/vetrina-carte/" target="_blank" rel="noopener">
-        Vai nel mondo delle carte!
-      </a>
-    </div>
+<div class="hero__content container">
+  <span id="heroChip" class="chip">Nuovo progetto</span>
+  <h2 id="heroTitle">Scopri il mondo FUT, ma con la tua carta!</h2>
+  <p id="heroText">Anteprime del sito e accesso diretto alla vetrina.</p>
+  <div class="cta-wrap">
+    <a id="heroBtn" class="btn" href="https://pavoniingrifati.github.io/vetrina-carte/" target="_blank" rel="noopener">
+      Vai nel mondo delle carte!
+    </a>
   </div>
+</div>
+
 
   <!-- Frecce -->
   <button class="heroNav prev" aria-label="Slide precedente">◀</button>
@@ -653,6 +654,112 @@
     start();
   })();
 </script>
+
+<!-- Slider logic: immagini + testi per slide -->
+<script>
+  (function(){
+    const root = document.querySelector('.hero--slider');
+    if(!root) return;
+
+    const slidesEl = document.getElementById('heroSlides');
+    const dotsEl   = document.getElementById('heroDots');
+    const prevBtn  = root.querySelector('.heroNav.prev');
+    const nextBtn  = root.querySelector('.heroNav.next');
+
+    // 👇 QUI gestisci TUTTO per ogni slide (immagine + testi + bottone)
+    const SLIDES = [
+      {
+        img: 'https://raw.githubusercontent.com/pavoniingrifati/vetrina-carte/main/Screenshot%202025-08-16%20133159.png?v=3',
+        chip: 'Vetrina Carte',
+        title: 'Scopri la Vetrina Carte',
+        text: 'Trova la tua carta, spacchetta e collezionale tutte!',
+        ctaText: 'Vai alla Vetrina',
+        ctaHref: 'https://pavoniingrifati.github.io/vetrina-carte/'
+      },
+      {
+        img: 'https://images.unsplash.com/photo-1493397212122-2b85dda8106b?q=80&w=1600&auto=format&fit=crop',
+        chip: 'Community',
+        title: 'Unisciti alla community',
+        text: 'Condividi le tue carte e partecipa alle live.',
+        ctaText: 'Segui su TikTok',
+        ctaHref: '#'
+      },
+      {
+        img: 'https://images.unsplash.com/photo-1526232761682-d26e04babcbe?q=80&w=1600&auto=format&fit=crop',
+        chip: 'Partite',
+        title: 'Calendario e risultati',
+        text: 'Tutto sul campionato di Fantaballa.',
+        ctaText: 'Vedi le partite',
+        ctaHref: '#partite'
+      }
+    ];
+
+    // Costruzione immagini slide
+    const slides = SLIDES.map((s,i)=>{
+      const el  = document.createElement('div');
+      el.className = 'slide' + (i===0 ? ' active' : '');
+      const img = document.createElement('img');
+      img.src = s.img; img.alt = s.title || ('Slide ' + (i+1));
+      el.appendChild(img);
+      slidesEl.appendChild(el);
+      return el;
+    });
+
+    // Pallini
+    const dots = SLIDES.map((_,i)=>{
+      const b = document.createElement('button');
+      if(i===0) b.classList.add('active');
+      b.addEventListener('click', ()=>go(i));
+      dotsEl.appendChild(b);
+      return b;
+    });
+
+    // Riferimenti ai testi
+    const chipEl  = document.getElementById('heroChip');
+    const titleEl = document.getElementById('heroTitle');
+    const textEl  = document.getElementById('heroText');
+    const btnEl   = document.getElementById('heroBtn');
+
+    function setContent(n){
+      const s = SLIDES[n];
+      if(chipEl)  chipEl.textContent  = s.chip   || '';
+      if(titleEl) titleEl.textContent = s.title  || '';
+      if(textEl)  textEl.textContent  = s.text   || '';
+      if(btnEl){
+        btnEl.textContent = s.ctaText || 'Scopri di più';
+        if(s.ctaHref) btnEl.href = s.ctaHref;
+      }
+    }
+
+    let i=0, timer=null, hover=false;
+    function go(n){
+      slides[i].classList.remove('active'); dots[i].classList.remove('active');
+      i = (n + slides.length) % slides.length;
+      slides[i].classList.add('active'); dots[i].classList.add('active');
+      setContent(i);
+    }
+    function next(){ go(i+1) }
+    function prev(){ go(i-1) }
+
+    function start(){ stop(); timer = setInterval(()=>{ if(!hover) next(); }, 5000) }
+    function stop(){ if(timer) clearInterval(timer); timer=null }
+
+    nextBtn.addEventListener('click', next);
+    prevBtn.addEventListener('click', prev);
+    root.addEventListener('mouseenter', ()=>{ hover=true });
+    root.addEventListener('mouseleave', ()=>{ hover=false });
+    document.addEventListener('keydown', (e)=>{
+      if(!root.matches(':hover')) return;
+      if(e.key==='ArrowRight') next();
+      if(e.key==='ArrowLeft')  prev();
+    });
+
+    // Inizializza
+    setContent(0);
+    start();
+  })();
+</script>
+
 
   
   <!--
