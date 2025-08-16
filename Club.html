@@ -595,65 +595,7 @@
   </script>
 
 <!-- Slider logic -->
-<script>
-  (function(){
-    const root = document.querySelector('.hero--slider');
-    if(!root) return;
-    const slidesEl = document.getElementById('heroSlides');
-    const dotsEl = document.getElementById('heroDots');
-    const prevBtn = root.querySelector('.heroNav.prev');
-    const nextBtn = root.querySelector('.heroNav.next');
 
-    // 👉 QUI metti le immagini della slide
-    const IMGS = [
-      'https://raw.githubusercontent.com/pavoniingrifati/vetrina-carte/main/Screenshot%202025-08-16%20133159.png?v=3',
-      'https://images.unsplash.com/photo-1493397212122-2b85dda8106b?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1526232761682-d26e04babcbe?q=80&w=1600&auto=format&fit=crop'
-    ];
-
-    // Costruzione DOM
-    const slides = IMGS.map((src,i)=>{
-      const s = document.createElement('div');
-      s.className = 'slide' + (i===0 ? ' active' : '');
-      const img = document.createElement('img');
-      img.src = src; img.alt = 'Slide ' + (i+1);
-      s.appendChild(img);
-      slidesEl.appendChild(s);
-      return s;
-    });
-
-    const dots = IMGS.map((_,i)=>{
-      const b = document.createElement('button');
-      if(i===0) b.classList.add('active');
-      b.addEventListener('click',()=> go(i));
-      dotsEl.appendChild(b);
-      return b;
-    });
-
-    let i = 0, timer = null, hover = false;
-    function go(n){
-      slides[i].classList.remove('active'); dots[i].classList.remove('active');
-      i = (n + slides.length) % slides.length;
-      slides[i].classList.add('active'); dots[i].classList.add('active');
-    }
-    function next(){ go(i+1) }
-    function prev(){ go(i-1) }
-    function start(){ stop(); timer = setInterval(()=>{ if(!hover) next(); }, 5000) }
-    function stop(){ if(timer) clearInterval(timer); timer=null }
-
-    nextBtn.addEventListener('click', next);
-    prevBtn.addEventListener('click', prev);
-    root.addEventListener('mouseenter', ()=>{ hover=true });
-    root.addEventListener('mouseleave', ()=>{ hover=false });
-    document.addEventListener('keydown', (e)=>{
-      if(!root.matches(':hover')) return;
-      if(e.key==='ArrowRight') next();
-      if(e.key==='ArrowLeft') prev();
-    });
-
-    start();
-  })();
-</script>
 
 <!-- Slider logic: immagini + testi per slide -->
 <script>
