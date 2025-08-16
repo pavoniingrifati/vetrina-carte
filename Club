@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Template completo per sito di calcio: news, calendario partite, risultati, classifica, rosa, galleria e contatti." />
+  <title>Calcio Club • Sito Sportivo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* =====================
+       PALETTE & TOKENS (Blu chiaro, Blu scuro, Bianco)
+    ====================== */
+    :root{
+      --blue:#2D7FF9;        /* blu chiaro */
+      --navy:#0B1A3A;        /* blu scuro */
+      --white:#ffffff;       /* bianco */
+      --accent:#CFE2FF;      /* azzurro molto chiaro per highlights */
+      --text:#0f1420;        /* testo principale */
+      --muted:#6b7280;       /* testo secondario */
+      --bg:#f6f8fb;          /* sfondo pagina */
+      --card:#ffffff;        /* sfondo card */
+      --radius:18px;
+      --shadow:0 10px 30px rgba(0,0,0,.08);
+      --ring:0 0 0 3px rgba(45,127,249,.25);
+    }
+
+    /* RESET DI BASE */
+    *,*::before,*::after{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{font-family:"Poppins", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); line-height:1.5}
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+    .container{width:min(1200px, 92%); margin-inline:auto}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+    /* COMPONENTI GENERICI */
+    .btn{display:inline-flex; align-items:center; gap:.55rem; padding:.85rem 1.15rem; border-radius:999px; background:var(--blue); color:#fff; font-weight:700; border:2px solid transparent; transition:.25s ease}
+    .btn:hover{transform:translateY(-1px); box-shadow:var(--shadow); background:#206fe4}
+    .btn--ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.6); border:2px solid rgba(255,255,255,.6)}
+    .chip{display:inline-block;font-size:.75rem;padding:.3rem .6rem;border-radius:999px;background:var(--accent);color:#0b3b9e;font-weight:700}
+
+    /* ============ HEADER / NAV ============ */
+    header{position:sticky;top:0;z-index:50;background:rgba(11,26,58,.8);backdrop-filter:saturate(120%) blur(10px); border-bottom:1px solid rgba(255,255,255,.12)}
+    .topbar{display:flex;align-items:center;justify-content:space-between; gap:1rem; padding:.7rem 0}
+    .brand{display:flex; align-items:center; gap:.75rem}
+    .crest{width:40px;height:40px;border-radius:12px; background:linear-gradient(135deg,var(--blue),#0d49c0); box-shadow:inset 0 0 0 2px rgba(255,255,255,.18)}
+    .brand h1{font-size:1.05rem; color:#fff; letter-spacing:.4px; margin:0}
+    nav ul{display:flex;list-style:none;gap:1rem;margin:0;padding:0}
+    nav a{color:#eaf0f4; font-weight:600; font-size:.95rem; opacity:.9}
+    nav a:hover{opacity:1; text-decoration:underline}
+    .cta{display:flex; align-items:center; gap:.75rem}
+    .hamb{display:none; width:44px; height:44px; align-items:center; justify-content:center; border-radius:12px; border:1px solid rgba(255,255,255,.18)}
+    .hamb span{width:20px; height:2px; background:#fff; position:relative}
+    .hamb span::before,.hamb span::after{content:""; position:absolute; left:0; width:20px;height:2px; background:#fff}
+    .hamb span::before{top:-6px}.hamb span::after{top:6px}
+
+    /* ============ HERO ============ */
+    .hero{position:relative; min-height:70vh; display:grid; place-items:center; color:#fff;}
+    .hero::before{content:""; position:absolute; inset:0; background:url("https://images.unsplash.com/photo-1518091043644-c1d4457512c6?q=80&w=1600&auto=format&fit=crop") center/cover no-repeat; filter:brightness(.55)}
+    .hero::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(11,26,58,.45) 0%, rgba(11,26,58,.85) 75%)}
+    .hero__content{position:relative; z-index:2; text-align:center; padding:4rem 0}
+    .hero h2{font-size:clamp(1.9rem, 3.6vw, 3.4rem); margin:.25rem 0 .6rem}
+    .hero p{max-width:780px; margin:0 auto 1.2rem; opacity:.98}
+    .hero .cta-wrap{display:flex; gap:.75rem; justify-content:center; flex-wrap:wrap}
+
+    /* ============ SEZIONI ============ */
+    section{padding:3.2rem 0}
+    .section-title{display:flex; align-items:end; justify-content:space-between; gap:1rem; margin-bottom:1.6rem}
+    .section-title h3{margin:0;font-size:1.35rem}
+    .section-title a{color:var(--blue); font-weight:700}
+
+    /* ============ NEWS ============ */
+    .news{display:grid; grid-template-columns:repeat(12, 1fr); gap:1rem}
+    .card{grid-column:span 4; background:var(--card); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); display:flex; flex-direction:column; border:1px solid #e9eefc}
+    .card__image{aspect-ratio:16/9; background:#e5e7eb}
+    .card__body{padding:1rem 1rem 1.1rem}
+    .card h4{margin:.35rem 0 .45rem; font-size:1.05rem}
+    .card p{margin:0; color:#374151; font-size:.95rem}
+    .meta{display:flex; align-items:center; justify-content:space-between; margin-top:.85rem; color:var(--muted); font-size:.85rem}
+    .card:hover{transform:translateY(-3px); transition:.22s ease; box-shadow:0 12px 36px rgba(13,73,192,.18)}
+
+    /* ============ PARTITE / RISULTATI ============ */
+    .matches{display:grid; grid-template-columns:repeat(12, 1fr); gap:1rem}
+    .next-match{grid-column:span 5; background:var(--navy); color:#fff; border-radius:var(--radius); padding:1.2rem; position:relative; overflow:hidden}
+    .next-match::before{content:""; position:absolute; inset:0; background:url("https://images.unsplash.com/photo-1486286701208-1d58e9338013?q=80&w=1200&auto=format&fit=crop") center/cover no-repeat; filter:brightness(.35) saturate(1.1); opacity:.35}
+    .next-match > *{position:relative; z-index:2}
+    .match-head{display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.75rem}
+    .teams{display:flex; align-items:center; gap:1rem}
+    .badge{width:52px;height:52px;border-radius:12px;background:#fff;display:grid;place-items:center;font-weight:800;color:var(--navy); box-shadow:inset 0 0 0 2px var(--accent)}
+    .vs{font-weight:800;opacity:.95}
+    .match-meta{color:#e5e7eb; font-size:.95rem}
+    .results{grid-column:span 7; background:var(--card); border-radius:var(--radius); padding:1rem; box-shadow:var(--shadow); border:1px solid #e9eefc}
+    .result-item{display:grid; grid-template-columns:120px 1fr 60px; align-items:center; gap:.75rem; padding:.6rem .3rem; border-bottom:1px dashed #e5e7eb}
+    .result-item:last-child{border-bottom:0}
+    .result-teams{display:flex; align-items:center; gap:.6rem}
+    .result-teams .small{width:36px;height:36px;border-radius:9px;background:#f3f6ff;display:grid;place-items:center;font-weight:800;color:var(--navy); border:1px solid #e0e7ff}
+    .score{font-weight:900; text-align:right}
+
+    /* ============ CLASSIFICA ============ */
+    .table-wrap{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; border:1px solid #e9eefc}
+    table{width:100%; border-collapse:collapse}
+    th,td{padding:.85rem .95rem; text-align:left}
+    thead th{background:var(--navy); color:#fff; font-size:.9rem}
+    tbody tr:nth-child(odd){background:#f8fbff}
+    tbody tr:hover{background:#f2f6ff}
+    .pos{font-weight:800; color:#0b3b9e}
+
+    /* ============ SQUADRA ============ */
+    .squad{display:grid; grid-template-columns:repeat(12, 1fr); gap:1rem}
+    .player{grid-column:span 3; background:var(--card); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); border:1px solid #e9eefc}
+    .player__image{aspect-ratio:3/4; background:#e5e7eb; object-fit:cover}
+    .player__body{padding:.9rem}
+    .player__name{margin:0; font-size:1.05rem}
+    .player__role{margin:.25rem 0 0; color:var(--muted); font-size:.9rem}
+
+    /* ============ GALLERIA ============ */
+    .gallery{display:grid; grid-template-columns:repeat(12, 1fr); gap:.8rem}
+    .gallery img{grid-column:span 4; border-radius:14px; box-shadow:var(--shadow)}
+
+    /* ============ NEWSLETTER ============ */
+    .newsletter{background:linear-gradient(135deg, var(--blue) 0%, var(--navy) 70%); color:#fff; border-radius:24px; padding:2rem 1.2rem; display:grid; grid-template-columns:1.2fr .8fr; align-items:center; gap:1rem}
+    .newsletter input{width:100%; padding:.9rem 1rem; border-radius:999px; border:2px solid transparent; outline:0}
+    .newsletter input:focus{box-shadow:var(--ring); border-color:#9cc3ff}
+    .newsletter .btn{justify-self:start}
+
+    /* ============ FOOTER ============ */
+    footer{background:var(--navy);color:#d1d5db; margin-top:3rem}
+    .footer-grid{display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:1.5rem; padding:2rem 0}
+    .footer-grid h5{margin:.4rem 0 1rem; color:#fff}
+    .social{display:flex; gap:.6rem}
+    .social a{width:40px;height:40px;border-radius:999px;background:var(--blue);display:grid;place-items:center;border:1px solid rgba(255,255,255,.2)}
+    .legal{padding:1rem 0; border-top:1px solid rgba(255,255,255,.15); font-size:.9rem; color:#e5e7eb}
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 1024px){
+      nav ul{display:none; position:absolute; left:0; right:0; top:64px; padding:1rem; background:var(--navy); border-bottom:1px solid rgba(255,255,255,.12)}
+      nav ul.open{display:flex; flex-direction:column}
+      .hamb{display:flex}
+      .next-match{grid-column:span 12}
+      .results{grid-column:span 12}
+      .player{grid-column:span 4}
+      .card{grid-column:span 6}
+      .newsletter{grid-template-columns:1fr}
+      .footer-grid{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width: 640px){
+      .card,.player{grid-column:span 12}
+      .gallery img{grid-column:span 6}
+      .result-item{grid-template-columns:96px 1fr 48px}
+    }
+  </style>
+</head>
+<body>
+  <!-- ===================== HEADER ===================== -->
+  <header>
+    <div class="container topbar">
+      <div class="brand">
+        <div class="crest" aria-hidden="true"></div>
+        <h1>Calcio Club</h1>
+      </div>
+      <nav aria-label="Navigazione principale">
+        <button class="hamb" aria-label="Apri menu" id="hamb"><span></span></button>
+        <ul id="menu">
+          <li><a href="#news">News</a></li>
+          <li><a href="#partite">Partite</a></li>
+          <li><a href="#classifica">Classifica</a></li>
+          <li><a href="#squadra">Squadra</a></li>
+          <li><a href="#galleria">Galleria</a></li>
+          <li><a href="#contatti">Contatti</a></li>
+        </ul>
+      </nav>
+      <div class="cta">
+        <a href="#biglietti" class="btn">Biglietti</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero">
+    <div class="hero__content container">
+      <span class="chip">Stagione 2025/26</span>
+      <h2>Passione in Blu. Unione in Bianco.</h2>
+      <p>Il portale ufficiale (template) del tuo club: ultime notizie, risultati live, foto esclusive e accesso rapido ai biglietti. Tutto in blu chiaro, blu scuro e bianco.</p>
+      <div class="cta-wrap">
+        <a class="btn" href="#news">Leggi le ultime</a>
+        <a class="btn btn--ghost" href="#partite">Prossime partite</a>
+      </div>
+    </div>
+  </section>
+
+  <main class="container">
+    <!-- ===================== NEWS ===================== -->
+    <section id="news">
+      <div class="section-title">
+        <h3>Ultime News</h3>
+        <a href="#">Vedi tutte →</a>
+      </div>
+      <div class="news">
+        <!-- Card 1 -->
+        <article class="card">
+          <img class="card__image" src="https://images.unsplash.com/photo-1593349481030-9cd5b0b58d5a?q=80&w=1200&auto=format&fit=crop" alt="Conferenza stampa allenatore"/>
+          <div class="card__body">
+            <span class="chip">Club</span>
+            <h4>Nuovo allenatore: presentazione ufficiale</h4>
+            <p>Il club annuncia il nuovo tecnico per la stagione: filosofia offensiva e focus sui giovani.</p>
+            <div class="meta"><span>16 Ago 2025</span><a href="#">Leggi</a></div>
+          </div>
+        </article>
+        <!-- Card 2 -->
+        <article class="card">
+          <img class="card__image" src="https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=1200&auto=format&fit=crop" alt="Allenamento della squadra"/>
+          <div class="card__body">
+            <span class="chip">Allenamenti</span>
+            <h4>Ritiro pre-campionato: intensità e pressing alto</h4>
+            <p>Sessioni doppie e analisi video: lo staff prepara la squadra alle prime sfide.</p>
+            <div class="meta"><span>14 Ago 2025</span><a href="#">Leggi</a></div>
+          </div>
+        </article>
+        <!-- Card 3 -->
+        <article class="card">
+          <img class="card__image" src="https://images.unsplash.com/photo-1521417531039-94aee3dd8e49?q=80&w=1200&auto=format&fit=crop" alt="Nuovo acquisto con sciarpa del club"/>
+          <div class="card__body">
+            <span class="chip">Mercato</span>
+            <h4>Ufficiale: colpo a centrocampo</h4>
+            <p>Accordo raggiunto per un mezzala box-to-box: contratto fino al 2028.</p>
+            <div class="meta"><span>12 Ago 2025</span><a href="#">Leggi</a></div>
+          </div>
+        </article>
+        <!-- Card 4 -->
+        <article class="card">
+          <img class="card__image" src="https://images.unsplash.com/photo-1493397212122-2b85dda8106b?q=80&w=1200&auto=format&fit=crop" alt="Stadio gremito"/>
+          <div class="card__body">
+            <span class="chip">Biglietteria</span>
+            <h4>Abbonamenti: aperta la campagna 25/26</h4>
+            <p>Sconti per famiglie e studenti, posti limitati in Tribuna Centrale.</p>
+            <div class="meta"><span>10 Ago 2025</span><a href="#">Leggi</a></div>
+          </div>
+        </article>
+        <!-- Card 5 -->
+        <article class="card">
+          <img class="card__image" src="https://images.unsplash.com/photo-1526232761682-d26e04babcbe?q=80&w=1200&auto=format&fit=crop" alt="Esultanza dopo un gol"/>
+          <div class="card__body">
+            <span class="chip">Primavera</span>
+            <h4>Under 19 in finale del torneo estivo</h4>
+            <p>Giovani in evidenza: 3 vittorie su 3 e porta inviolata.</p>
+            <div class="meta"><span>08 Ago 2025</span><a href="#">Leggi</a></div>
+          </div>
+        </article>
+        <!-- Card 6 -->
+        <article class="card">
+          <img class="card__image" src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=1200&auto=format&fit=crop" alt="Parata del portiere"/>
+          <div class="card__body">
+            <span class="chip">Interviste</span>
+            <h4>Il capitano: "Obiettivo Europa"</h4>
+            <p>Leadership in campo e nello spogliatoio: mentalità vincente per alzare l'asticella.</p>
+            <div class="meta"><span>05 Ago 2025</span><a href="#">Leggi</a></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ===================== PARTITE & RISULTATI ===================== -->
+    <section id="partite">
+      <div class="section-title">
+        <h3>Partite</h3>
+        <a href="#">Calendario completo →</a>
+      </div>
+      <div class="matches">
+        <div class="next-match">
+          <div class="match-head">
+            <strong>Prossima</strong>
+            <span class="match-meta">Sab 23 Ago • 20:45 • Stadio Comunale</span>
+          </div>
+          <div class="teams">
+            <div class="badge" aria-label="Calcio Club">CC</div>
+            <div class="vs">vs</div>
+            <div class="badge" aria-label="Avversari">AV</div>
+          </div>
+          <p style="margin:.9rem 0 1.1rem; color:#e8eefc">Big match di apertura: atmosfera da brividi e coreografia curva già esaurita.</p>
+          <a href="#biglietti" class="btn">Acquista biglietti</a>
+        </div>
+        <div class="results">
+          <h4 style="margin:.2rem 0 1rem">Ultimi risultati</h4>
+          <div class="result-item">
+            <span class="muted">12 Ago</span>
+            <div class="result-teams">
+              <span class="small">CC</span>
+              <strong>Calcio Club</strong>
+              <span>–</span>
+              <strong>Riviera</strong>
+            </div>
+            <div class="score">2 – 1</div>
+          </div>
+          <div class="result-item">
+            <span class="muted">05 Ago</span>
+            <div class="result-teams">
+              <span class="small">AL</span>
+              <strong>Alpina</strong>
+              <span>–</span>
+              <strong>Calcio Club</strong>
+            </div>
+            <div class="score">0 – 0</div>
+          </div>
+          <div class="result-item">
+            <span class="muted">28 Lug</span>
+            <div class="result-teams">
+              <span class="small">CC</span>
+              <strong>Calcio Club</strong>
+              <span>–</span>
+              <strong>Trastevere</strong>
+            </div>
+            <div class="score">3 – 2</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CLASSIFICA ===================== -->
+    <section id="classifica">
+      <div class="section-title">
+        <h3>Classifica</h3>
+        <a href="#">Dettaglio →</a>
+      </div>
+      <div class="table-wrap">
+        <table aria-label="Classifica del campionato">
+          <thead>
+            <tr><th>#</th><th>Squadra</th><th>G</th><th>V</th><th>N</th><th>P</th><th>GF</th><th>GS</th><th>Pts</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="pos">1</td><td>Calcio Club</td><td>3</td><td>2</td><td>1</td><td>0</td><td>5</td><td>3</td><td><strong>7</strong></td></tr>
+            <tr><td class="pos">2</td><td>Riviera</td><td>3</td><td>2</td><td>0</td><td>1</td><td>6</td><td>3</td><td><strong>6</strong></td></tr>
+            <tr><td class="pos">3</td><td>Trastevere</td><td>3</td><td>2</td><td>0</td><td>1</td><td>4</td><td>3</td><td><strong>6</strong></td></tr>
+            <tr><td class="pos">4</td><td>Alpina</td><td>3</td><td>1</td><td>2</td><td>0</td><td>2</td><td>1</td><td><strong>5</strong></td></tr>
+            <tr><td class="pos">5</td><td>Virtus</td><td>3</td><td>1</td><td>1</td><td>1</td><td>3</td><td>3</td><td><strong>4</strong></td></tr>
+            <tr><td class="pos">6</td><td>Monti</td><td>3</td><td>1</td><td>0</td><td>2</td><td>2</td><td>4</td><td><strong>3</strong></td></tr>
+            <tr><td class="pos">7</td><td>Marina</td><td>3</td><td>0</td><td>2</td><td>1</td><td>1</td><td>2</td><td><strong>2</strong></td></tr>
+            <tr><td class="pos">8</td><td>Colline</td><td>3</td><td>0</td><td>1</td><td>2</td><td>1</td><td>3</td><td><strong>1</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================== SQUADRA ===================== -->
+    <section id="squadra">
+      <div class="section-title">
+        <h3>La Squadra</h3>
+        <a href="#">Rosa completa →</a>
+      </div>
+      <div class="squad">
+        <article class="player">
+          <img class="player__image" src="https://images.unsplash.com/photo-1540593461966-8a16f3173d47?q=80&w=900&auto=format&fit=crop" alt="Ritratto calciatore"/>
+          <div class="player__body">
+            <h4 class="player__name">Luca Rossi</h4>
+            <p class="player__role">Portiere • #1</p>
+          </div>
+        </article>
+        <article class="player">
+          <img class="player__image" src="https://images.unsplash.com/photo-1543326727-cf6c39b80c8b?q=80&w=900&auto=format&fit=crop" alt="Ritratto calciatore"/>
+          <div class="player__body">
+            <h4 class="player__name">Marco Bianchi</h4>
+            <p class="player__role">Difensore • #4</p>
+          </div>
+        </article>
+        <article class="player">
+          <img class="player__image" src="https://images.unsplash.com/photo-1518607692857-bff9a43f4493?q=80&w=900&auto=format&fit=crop" alt="Ritratto calciatore"/>
+          <div class="player__body">
+            <h4 class="player__name">Andrea Conti</h4>
+            <p class="player__role">Centrocampista • #8</p>
+          </div>
+        </article>
+        <article class="player">
+          <img class="player__image" src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?q=80&w=900&auto=format&fit=crop" alt="Ritratto calciatore"/>
+          <div class="player__body">
+            <h4 class="player__name">Davide Bruno</h4>
+            <p class="player__role">Attaccante • #9</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ===================== GALLERIA ===================== -->
+    <section id="galleria">
+      <div class="section-title">
+        <h3>Galleria</h3>
+        <a href="#">Vedi tutto →</a>
+      </div>
+      <div class="gallery">
+        <img src="https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?q=80&w=900&auto=format&fit=crop" alt="Tifosi in curva"/>
+        <img src="https://images.unsplash.com/photo-1486286701208-1d58e9338013?q=80&w=900&auto=format&fit=crop" alt="Calcio al volo"/>
+        <img src="https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=900&auto=format&fit=crop" alt="Lavagna tattica"/>
+        <img src="https://images.unsplash.com/photo-1526232761682-d26e04babcbe?q=80&w=900&auto=format&fit=crop" alt="Esultanza squadra"/>
+        <img src="https://images.unsplash.com/photo-1493397212122-2b85dda8106b?q=80&w=900&auto=format&fit=crop" alt="Stadio di notte"/>
+        <img src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=900&auto=format&fit=crop" alt="Allenamento"/>
+      </div>
+    </section>
+
+    <!-- ===================== NEWSLETTER / CONTATTI ===================== -->
+    <section id="contatti">
+      <div class="newsletter">
+        <div>
+          <h3 style="margin:0 0 .4rem">Iscriviti alla newsletter</h3>
+          <p style="margin:0; opacity:.95">Risultati, news e promo biglietti direttamente nella tua casella email.</p>
+        </div>
+        <form onsubmit="event.preventDefault(); alert('Grazie! Ti abbiamo iscritto alla newsletter (demo).');">
+          <label class="sr-only" for="email">Email</label>
+          <input id="email" type="email" placeholder="tua@email.com" required />
+          <button class="btn" type="submit" style="margin-top:.7rem">Iscrivimi</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer>
+    <div class="container footer-grid">
+      <div>
+        <div class="brand" style="margin:.25rem 0 1rem">
+          <div class="crest"></div>
+          <h1>Calcio Club</h1>
+        </div>
+        <p>Template open: sostituisci testi, immagini e colori per adattarlo al tuo club.</p>
+        <div class="social" aria-label="Social media">
+          <a href="#" aria-label="Instagram" title="Instagram">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Z" stroke="#e5e7eb" stroke-width="1.5"/><circle cx="12" cy="12" r="3.5" stroke="#e5e7eb" stroke-width="1.5"/><circle cx="17.5" cy="6.5" r="1" fill="#e5e7eb"/></svg>
+          </a>
+          <a href="#" aria-label="Twitter" title="Twitter/X">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l16 16M20 4L4 20" stroke="#e5e7eb" stroke-width="1.5"/></svg>
+          </a>
+          <a href="#" aria-label="YouTube" title="YouTube">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="6" width="18" height="12" rx="3" stroke="#e5e7eb" stroke-width="1.5"/><path d="M10 9l5 3-5 3V9Z" fill="#e5e7eb"/></svg>
+          </a>
+        </div>
+      </div>
+      <div>
+        <h5>Club</h5>
+        <ul style="list-style:none; padding:0; margin:0; display:grid; gap:.5rem">
+          <li><a href="#">Storia</a></li>
+          <li><a href="#">Stadio</a></li>
+          <li><a href="#">Settore giovanile</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Biglietti</h5>
+        <ul style="list-style:none; padding:0; margin:0; display:grid; gap:.5rem">
+          <li><a href="#">Abbonamenti</a></li>
+          <li><a href="#">Singola partita</a></li>
+          <li><a href="#">Hospitality</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Contatti</h5>
+        <ul style="list-style:none; padding:0; margin:0; display:grid; gap:.5rem">
+          <li><a href="mailto:info@calcioclub.it">info@calcioclub.it</a></li>
+          <li><a href="#">Ufficio stampa</a></li>
+          <li><a href="#">Lavora con noi</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container legal">
+      <small>© 2025 Calcio Club — Template dimostrativo. Le immagini sono di riferimento e provenienti da Unsplash (crediti: fotograﬁ* vari). Sostituiscile con assets del tuo club prima della pubblicazione.</small>
+    </div>
+  </footer>
+
+  <script>
+    // Menu mobile
+    const hamb = document.getElementById('hamb');
+    const menu = document.getElementById('menu');
+    hamb?.addEventListener('click',()=> menu.classList.toggle('open'));
+
+    // Rotazione immagini hero (riferimento)
+    const hero = document.querySelector('.hero');
+    const heroImages = [
+      'https://images.unsplash.com/photo-1518091043644-c1d4457512c6?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1483721310020-03333e577078?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=1600&auto=format&fit=crop'
+    ];
+    let idx = 0;
+    setInterval(()=>{
+      idx = (idx+1) % heroImages.length;
+      hero.style.backgroundImage = `url('${heroImages[idx]}')`;
+      hero.style.backgroundSize = 'cover';
+      hero.style.backgroundPosition = 'center';
+    }, 6000);
+  </script>
+
+  <!--
+    ▸ ISTRUZIONI RAPIDE PERSONALIZZAZIONE ◂
+    1) Colori brand: variano in :root (--blue, --navy, --white, --accent).
+    2) Logo/crest: sostituisci i div .crest con <img src="..." alt="Logo">.
+    3) Immagini: gli URL sono di riferimento (Unsplash). Sostituiscili con i tuoi.
+    4) Sezioni: duplica .card (news) e .result-item (risultati) per aggiungere contenuti.
+    5) SEO: aggiorna <title>, meta description e metadati social.
+  -->
+</body>
+</html>
