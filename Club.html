@@ -173,6 +173,23 @@
 }
 .hero--preview .hero__content { position: relative; z-index: 2; }
 
+/* HERO – slider con immagini + overlay */
+.hero--slider{ position:relative; min-height:70vh; display:grid; place-items:center; color:#fff; background:#0e1116; overflow:hidden }
+.hero--slider::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.7) 70%) }
+.hero__slider{ position:absolute; inset:0 }
+.slides{ position:relative; width:100%; height:100% }
+.slide{ position:absolute; inset:0; opacity:0; transition:opacity .6s ease; }
+.slide.active{ opacity:1 }
+.slide img{ width:100%; height:100%; object-fit:cover; object-position:center }
+.heroNav{ position:absolute; top:50%; transform:translateY(-50%); z-index:3; background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.2); color:#fff; padding:10px 14px; border-radius:12px; cursor:pointer }
+.heroNav.prev{ left:14px } .heroNav.next{ right:14px }
+.dots{ position:absolute; left:50%; bottom:14px; transform:translateX(-50%); z-index:3; display:flex; gap:8px }
+.dots button{ width:10px; height:10px; border-radius:999px; border:1px solid rgba(255,255,255,.7); background:transparent; padding:0; cursor:pointer; opacity:.8 }
+.dots button.active{ background:#fff; opacity:1 }
+.hero--slider .hero__content{ position:relative; z-index:4; text-align:center; padding:4rem 0 }
+
+    
+
   </style>
 </head>
 <body>
@@ -199,18 +216,31 @@
     </div>
   </header>
 
-<!-- ===================== HERO ===================== -->
-<section class="hero hero--preview">
+<!-- ===================== HERO (slider) ===================== -->
+<section class="hero--slider">
+  <!-- Track delle slide -->
+  <div class="hero__slider">
+    <div id="heroSlides" class="slides"></div>
+  </div>
+
+  <!-- Contenuti testuali in primo piano -->
   <div class="hero__content container">
     <span class="chip">Nuovo progetto</span>
     <h2>Scopri il mondo FUT, ma con la tua carta!</h2>
-    <p>Trova la tua carta, spacchetta e collezzionale tutte!</p>
+    <p>Anteprime del sito e accesso diretto alla vetrina.</p>
     <div class="cta-wrap">
       <a class="btn" href="https://pavoniingrifati.github.io/vetrina-carte/" target="_blank" rel="noopener">
         Vai nel mondo delle carte!
       </a>
     </div>
   </div>
+
+  <!-- Frecce -->
+  <button class="heroNav prev" aria-label="Slide precedente">◀</button>
+  <button class="heroNav next" aria-label="Slide successiva">▶</button>
+
+  <!-- Pallini -->
+  <div id="heroDots" class="dots" aria-label="Navigazione slide"></div>
 </section>
 
 
@@ -564,6 +594,68 @@
     })();
   </script>
 
+<!-- Slider logic -->
+<script>
+  (function(){
+    const root = document.querySelector('.hero--slider');
+    if(!root) return;
+    const slidesEl = document.getElementById('heroSlides');
+    const dotsEl = document.getElementById('heroDots');
+    const prevBtn = root.querySelector('.heroNav.prev');
+    const nextBtn = root.querySelector('.heroNav.next');
+
+    // 👉 QUI metti le immagini della slide
+    const IMGS = [
+      'https://raw.githubusercontent.com/pavoniingrifati/vetrina-carte/main/Screenshot%202025-08-16%20133159.png?v=3',
+      'https://images.unsplash.com/photo-1493397212122-2b85dda8106b?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1526232761682-d26e04babcbe?q=80&w=1600&auto=format&fit=crop'
+    ];
+
+    // Costruzione DOM
+    const slides = IMGS.map((src,i)=>{
+      const s = document.createElement('div');
+      s.className = 'slide' + (i===0 ? ' active' : '');
+      const img = document.createElement('img');
+      img.src = src; img.alt = 'Slide ' + (i+1);
+      s.appendChild(img);
+      slidesEl.appendChild(s);
+      return s;
+    });
+
+    const dots = IMGS.map((_,i)=>{
+      const b = document.createElement('button');
+      if(i===0) b.classList.add('active');
+      b.addEventListener('click',()=> go(i));
+      dotsEl.appendChild(b);
+      return b;
+    });
+
+    let i = 0, timer = null, hover = false;
+    function go(n){
+      slides[i].classList.remove('active'); dots[i].classList.remove('active');
+      i = (n + slides.length) % slides.length;
+      slides[i].classList.add('active'); dots[i].classList.add('active');
+    }
+    function next(){ go(i+1) }
+    function prev(){ go(i-1) }
+    function start(){ stop(); timer = setInterval(()=>{ if(!hover) next(); }, 5000) }
+    function stop(){ if(timer) clearInterval(timer); timer=null }
+
+    nextBtn.addEventListener('click', next);
+    prevBtn.addEventListener('click', prev);
+    root.addEventListener('mouseenter', ()=>{ hover=true });
+    root.addEventListener('mouseleave', ()=>{ hover=false });
+    document.addEventListener('keydown', (e)=>{
+      if(!root.matches(':hover')) return;
+      if(e.key==='ArrowRight') next();
+      if(e.key==='ArrowLeft') prev();
+    });
+
+    start();
+  })();
+</script>
+
+  
   <!--
     ▸ ISTRUZIONI RAPIDE PERSONALIZZAZIONE ◂
     1) Colori brand: variano in :root (--blue, --navy, --white, --accent).
