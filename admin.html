@@ -123,23 +123,38 @@ url: document.getElementById('url').value.trim()
 };
 if(!payload.title){ statusEl.innerHTML = '<span class="err">Titolo obbligatorio</span>'; return; }
 
-try{
-const res = await fetch(WEB_APP_URL, {
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body: JSON.stringify(payload)
-});
-const json = await res.json();
-if(json.ok){
-statusEl.innerHTML = '<span class="ok">Pubblicato! Aggiorna la homepage per vedere la notizia.</span>';
-f.reset(); updPreview();
-}else{
-statusEl.innerHTML = '<span class="err">Errore: '+(json.error||'imprevisto')+'</span>';
-}
-}catch(err){
-statusEl.innerHTML = '<span class="err">Connessione fallita</span>';
-}
-});
+<script>
+  // ...lascia invariato tutto sopra (WEB_APP_URL, SHARED_KEY, payload, ecc.)
+
+  async function publish(payload){
+    const statusEl = document.getElementById('status'); // o il tuo elemento messaggi
+
+    try{
+      // NIENTE preflight: text/plain + mode:no-cors
+      await fetch(WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify(payload)
+      });
+
+      // Non possiamo leggere la risposta (opaque), quindi mostriamo OK
+      statusEl.innerHTML = '<span class="ok">Inviato! Aggiorna la homepage (o attendi 2–3s) per vedere la notizia.</span>';
+
+      // (Opzionale) prova a verificare leggendo il foglio via GViz
+      try{
+        const GVIZ = 'https://docs.google.com/spreadsheets/d/1CDWSrcwrntK-Zvzy5gJCqqwhZjA5MDXkksuC9P1icz8/gviz/tq?tqx=out:json';
+        const txt  = await fetch(GVIZ, { cache:'no-store' }).then(r=>r.text());
+        const json = JSON.parse(txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1));
+        if(json?.table?.rows?.length){ /* se vuoi, mostra un messaggio extra */ }
+      }catch(_){ /* opzionale, ignora eventuali errori di verifica */ }
+
+    }catch(err){
+      console.error(err);
+      statusEl.innerHTML = '<span class="err">Connessione fallita: ' + err.message + '</span>';
+    }
+  }
 </script>
+
 </body>
 </html>
