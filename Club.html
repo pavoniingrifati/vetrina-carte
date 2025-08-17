@@ -536,31 +536,35 @@
 
  <script>
 // ===================== NEWS: Google Sheet + fallback JSON =====================
+<script>
 (function(){
   const grid = document.getElementById('newsGrid');
   if(!grid) return;
 
-  // Tuo Google Sheet
+  // 👇 Metti qui l'ID del tuo foglio e (se serve) il gid della scheda "News Fantaballa"
   const GOOGLE_SHEET_ID = '1CDWSrcwrntK-Zvzy5gJCqqwhZjA5MDXkksuC9P1icz8';
-  // Se vuoi puntare a una scheda specifica, puoi aggiungere &gid=XXXXXX
-  const GVIZ = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json`;
+  const GID = ''; // es. '123456789' se la scheda non è la prima
+  const GVIZ = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json${GID ? `&gid=${GID}` : ''}`;
 
-  // Ordine sorgenti: Sheet → news.json (locale) → news.json (GitHub raw)
+  // Ordine sorgenti: prima Google Sheet, poi i fallback JSON
   const SOURCES = [
-    { url: GVIZ, type: 'gviz' },
-    { url: './news.json', type: 'json' },
-    { url: 'https://raw.githubusercontent.com/pavoniingrifati/vetrina-carte/main/news.json', type: 'json' }
+    { type:'gviz', url: GVIZ },
+    { type:'json', url:'./news.json' },
+    { type:'json', url:'https://raw.githubusercontent.com/pavoniingrifati/vetrina-carte/main/news.json' }
   ];
 
   function fmtDate(iso){
-    try{ const d = new Date(iso); return d.toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' }); }
-    catch{ return iso||''; }
+    try{
+      const d = new Date(iso);
+      return isNaN(d) ? iso : d.toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' });
+    }catch{ return iso || ''; }
   }
 
   function render(items){
     grid.innerHTML = '';
-    const list = (items||[]).slice().sort((a,b)=> new Date(b.date||0) - new Date(a.date||0));
-    if(list.length===0){ grid.innerHTML = '<p>Nessuna notizia al momento.</p>'; return; }
+    const list = items.slice().sort((a,b)=> new Date(b.date||0) - new Date(a.date||0));
+    if(!list.length){ grid.innerHTML = '<p>Nessuna notizia al momento.</p>'; return; }
+
     for(const art of list){
       const img = art.image || art.img || 'https://images.unsplash.com/photo-1493397212122-2b85dda8106b?q=80&w=1200&auto=format&fit=crop';
       const cat = art.category || art.tag || 'News';
@@ -584,48 +588,47 @@
     }
   }
 
-  function parseGviz(text){
-    // Rimuove il wrapper google.visualization.Query.setResponse(...)
-    const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}')+1));
+  async function fetchGViz(url){
+    const txt = await fetch(url, { cache:'no-store' }).then(r=>r.text());
+    // GViz → "google.visualization.Query.setResponse(...)"
+    const json = JSON.parse(txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1));
     const rows = json?.table?.rows || [];
-    return rows.map(r => {
-      // prova ad usare formattato (.f), altrimenti valore (.v)
-      const dcell = r.c[2];
-      const date  = dcell?.f || dcell?.v || '';
+    // Ordine colonne dall'Apps Script: [title, category, date, image, excerpt, url, timestamp]
+    return rows.map(r=>{
+      const c = r.c || [];
       return {
-        title:    r.c[0]?.v || '',
-        category: r.c[1]?.v || 'News',
-        date,
-        image:    r.c[3]?.v || '',
-        excerpt:  r.c[4]?.v || '',
-        url:      r.c[5]?.v || '#'
+        title:   c[0]?.v || '',
+        category:c[1]?.v || 'News',
+        date:    c[2]?.v || '',
+        image:   c[3]?.v || '',
+        excerpt: c[4]?.v || '',
+        url:     c[5]?.v || '#'
       };
-    });
+    }).filter(x=>x.title);
   }
 
-  async function fetchSource(src){
-    try{
-      const res = await fetch(src.url, { cache:'no-store' });
-      if(!res.ok) return null;
-      if(src.type==='gviz'){
-        const text = await res.text();
-        return parseGviz(text);
-      }else{
-        const json = await res.json();
-        return Array.isArray(json) ? json : null;
-      }
-    }catch(e){ return null; }
-  }
-
-  (async ()=>{
-    for(const s of SOURCES){
-      const data = await fetchSource(s);
-      if(data && data.length){ render(data); return; }
+  async function load(){
+    for(const src of SOURCES){
+      try{
+        if(src.type==='gviz'){
+          const data = await fetchGViz(src.url);
+          if(data.length){ console.info('News source: Google Sheets'); render(data); return; }
+        }else{
+          const res = await fetch(src.url, { cache:'no-store' });
+          if(res.ok){
+            const data = await res.json();
+            if(Array.isArray(data) && data.length){ console.info('News source:', src.url); render(data); return; }
+          }
+        }
+      }catch(e){ /* passa al prossimo */ }
     }
-    render([]);
-  })();
+    grid.innerHTML = '<p>Nessuna notizia al momento.</p>';
+  }
+
+  load();
 })();
 </script>
+
 
 
 <!-- Slider logic -->
