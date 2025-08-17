@@ -1,94 +1,49 @@
-<script>
-(function(){
-  const grid = document.getElementById('newsGrid');
-  if(!grid) return;
+[
+{
+"title": "Maks, con la X o con la K",
+"category": "Gotham",
+"date": "2025-08-16",
+"image": "https://images4.alphacoders.com/794/794048.jpg",
+"excerpt": "Il mistero di Maks, prima era chiamato Maxx, ma poi il nome è cambiato.",
+"url": "#"
+},
+{
+"title": "Lunedi ricomincia FUT!",
+"category": "Live",
+"date": "2025-08-14",
+"image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT89t8RTeYtzW-aD-a0ePzJnkFwhLlfKb_R-Q&s",
+"excerpt": "Finalmente si ricomincia! Tante le novità e le sorprese!",
+"url": "#"
+},
+{
+"title": "La Premier è alle porte e Fork si mostra carico",
+"category": "Gotham",
+"date": "2025-08-16",
+"image": "https://chatgpt.com/backend-api/public_content/enc/eyJpZCI6Im1fNjhhMGE3NjQ5Yzg4ODE5MWI2N2IxNjYwOWRkYmZiYzI6ZmlsZV8wMDAwMDAwMGQ5NzA2MWY0YWQ2ZDU2NDA4Yjg0Zjg4MCIsInRzIjoiNDg3NTk5IiwicCI6InB5aSIsInNpZyI6IjhlZTQwYmIzYTIwMjNlMTcwYTdmZGJhODZhZWI1N2IyZjhjNGE4NTk3M2UwZjRlYmEyNTJkNjlkNGJlNGIzMWQiLCJ2IjoiMCIsImdpem1vX2lkIjpudWxsfQ==",
+"excerpt": "Conferenza stampa l’ala del Gotham mostra una grande tenacia per il ritorno del campionato, promette ai tifosi di farli divertire.",
+"url": "#"
+},
 
-  // 🔧 METTI QUI IL TUO ID FOGLIO e (facoltativo) il GID della scheda "News Fantaballa"
-  const GOOGLE_SHEET_ID = '1CDWSrcwrntK-Zvzy5gJCqqwhZjA5MDXkksuC9P1icz8';
-  const GID = ''; // es. '123456789' se la scheda non è la prima
-  const GVIZ = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json${GID ? `&gid=${GID}` : ''}`;
-
-  // Ordine: prima il foglio, poi i fallback JSON
-  const SOURCES = [
-    { type:'gviz', url: GVIZ },
-    { type:'json', url:'./news.json' },
-    { type:'json', url:'https://raw.githubusercontent.com/pavoniingrifati/vetrina-carte/main/news.json' }
-  ];
-
-  function fmtDate(iso){
-    try{
-      const d = new Date(iso);
-      return isNaN(d) ? iso : d.toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' });
-    }catch{ return iso || ''; }
-  }
-
-  function render(items){
-    grid.innerHTML = '';
-    const list = items.slice().sort((a,b)=> new Date(b.date||0) - new Date(a.date||0));
-    if(!list.length){ grid.innerHTML = '<p>Nessuna notizia al momento.</p>'; return; }
-
-    for(const art of list){
-      const img = art.image || art.img || 'https://images.unsplash.com/photo-1493397212122-2b85dda8106b?q=80&w=1200&auto=format&fit=crop';
-      const cat = art.category || art.tag || 'News';
-      const title = art.title || 'Senza titolo';
-      const excerpt = art.excerpt || art.summary || '';
-      const date = art.date ? fmtDate(art.date) : '';
-      const url = art.url || art.link || '#';
-
-      const card = document.createElement('article');
-      card.className = 'card';
-      card.innerHTML = `
-        <img class="card__image" src="${img}" alt="${title}" loading="lazy"/>
-        <div class="card__body">
-          <span class="chip">${cat}</span>
-          <h4>${title}</h4>
-          <p>${excerpt}</p>
-          <div class="meta"><span>${date}</span><a href="${url}" target="_blank" rel="noopener">Leggi</a></div>
-        </div>
-      `;
-      grid.appendChild(card);
-    }
-  }
-
-  async function fetchGViz(url){
-    const txt = await fetch(url, { cache:'no-store' }).then(r=>r.text());
-    // GViz risponde con "google.visualization.Query.setResponse(...)"
-    const json = JSON.parse(txt.substring(txt.indexOf('{'), txt.lastIndexOf('}')+1));
-    const rows = json?.table?.rows || [];
-    // L'ordine delle colonne è quello che scrive il tuo Apps Script: [title, category, date, image, excerpt, url, timestamp]
-    return rows.map(r=>{
-      const c = r.c || [];
-      return {
-        title:   c[0]?.v || '',
-        category:c[1]?.v || 'News',
-        date:    c[2]?.v || '',
-        image:   c[3]?.v || '',
-        excerpt: c[4]?.v || '',
-        url:     c[5]?.v || '#'
-      };
-    }).filter(x=>x.title);
-  }
-
-  async function load(){
-    for(const src of SOURCES){
-      try{
-        if(src.type==='gviz'){
-          const data = await fetchGViz(src.url);
-          if(data.length){ console.info('News source: Google Sheets'); render(data); return; }
-        }else{
-          const res = await fetch(src.url, { cache:'no-store' });
-          if(res.ok){
-            const data = await res.json();
-            if(Array.isArray(data) && data.length){ console.info('News source:', src.url); render(data); return; }
-          }
-        }
-      }catch(e){
-        // passa al prossimo
-      }
-    }
-    grid.innerHTML = '<p>Nessuna notizia al momento.</p>';
-  }
-
-  load();
-})();
-</script>
+{
+    "title": "Il ritorno di TommasoM"
+"category": "Gotham",
+"date": "2025-08-16",
+"image": "https://chatgpt.com/backend-api/public_content/enc/eyJpZCI6Im1fNjhhMGIzMzViMGEwODE5MTkxMDRlNzc4MmY0OTI5MTU6ZmlsZV8wMDAwMDAwMGExZjQ2MWY0YmRhYTQ1ZmRkMThkNjYyYyIsInRzIjoiNDg3NjAwIiwicCI6InB5aSIsInNpZyI6ImM3YjVkYmUxNGE5NjJlZmI2NTU1Y2Q1MzVmMDY5MmU2NTI5YTBhZGI2MTJmZDcwMDNmMDcxOTllYmFiMWY3NmIiLCJ2IjoiMCIsImdpem1vX2lkIjpudWxsfQ==",
+"excerpt": "Dopo 5 stagioni TommasoM si preso una pausa di 2 stagioni adesso è pronto a riprendere il suo posto da titolare e incantare i tifosi del gotham con isuoi goal.",
+    "title": "Il ritorno di TommasoM",
+    "category": "Gotham",
+    "date": "2025-08-16",
+    "image": "https://chatgpt.com/backend-api/public_content/enc/eyJpZCI6Im1fNjhhMGIzMzViMGEwODE5MTkxMDRlNzc4MmY0OTI5MTU6ZmlsZV8wMDAwMDAwMGExZjQ2MWY0YmRhYTQ1ZmRkMThkNjYyYyIsInRzIjoiNDg3NjAwIiwicCI6InB5aSIsInNpZyI6ImM3YjVkYmUxNGE5NjJlZmI2NTU1Y2Q1MzVmMDY5MmU2NTI5YTBhZGI2MTJmZDcwMDNmMDcxOTllYmFiMWY3NmIiLCJ2IjoiMCIsImdpem1vX2lkIjpudWxsfQ==",
+    "excerpt": "Dopo 5 stagioni TommasoM si è preso una pausa di 2 stagioni, adesso è pronto a riprendere il suo posto da titolare e incantare i tifosi del Gotham con i suoi goal.",
+"url": "#"
+},
+  
+{
+"title": "L'amore di Maks",
+"category": "Gotham",
+"date": "2025-08-16",
+"image": "https://dimages2.gazzettaobjects.it/files/image_528_298/files/fp/uploads/2023/11/05/65480dd2f3f54.r_d.1348-149-1760.jpeg",
+"excerpt": "È ritenuto sapere che il più grande idolo di Maks, terzino destro titolare del Gotham, sia Fabio Miretti, chiamato da lui anche come Fabio El Futbol Miretti.",
+"url": "#"
+}
+]
