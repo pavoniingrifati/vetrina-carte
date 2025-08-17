@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard News</title>
+<style>
+  body{font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#f6f8fb; color:#0f1420; margin:0}
+  .wrap{width:min(900px,92%); margin:24px auto}
+  h1{margin:0 0 14px}
+  form{background:#fff; padding:16px; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.06); border:1px solid #e9eefc}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .grid-1{display:grid; grid-template-columns:1fr; gap:12px}
+  label{font-weight:600; font-size:.95rem}
+  input,textarea{width:100%; padding:10px 12px; border:1px solid #dbe4ff; border-radius:10px; font:inherit}
+  textarea{min-height:120px; resize:vertical}
+  .row{display:grid; gap:6px}
+  .btn{display:inline-flex; align-items:center; gap:.5rem; padding:.75rem 1rem; border-radius:999px; border:0; background:#2D7FF9; color:#fff; font-weight:700; cursor:pointer}
+  .note{color:#6b7280; font-size:.9rem}
+  .ok{color:#047857; font-weight:600}
+  .err{color:#b91c1c; font-weight:600}
+  .preview{margin-top:14px; padding:12px; border-radius:12px; background:#fff; border:1px dashed #dbe4ff}
+  .card{display:flex; gap:12px; align-items:flex-start}
+  .card img{width:160px; height:90px; object-fit:cover; border-radius:10px; background:#e5e7eb}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Dashboard News</h1>
+    <p class="note">Compila i campi e clicca <strong>Pubblica</strong>. L’articolo apparirà sul sito appena ricarichi la pagina.</p>
+
+    <form id="newsForm">
+      <div class="grid">
+        <div class="row">
+          <label for="title">Titolo *</label>
+          <input id="title" required placeholder="Es. Ufficiale: nuovo allenatore">
+        </div>
+        <div class="row">
+          <label for="category">Categoria</label>
+          <input id="category" placeholder="Es. Club">
+        </div>
+        <div class="row">
+          <label for="date">Data (YYYY-MM-DD)</label>
+          <input id="date" placeholder="Es. 2025-08-17">
+        </div>
+        <div class="row">
+          <label for="image">URL immagine</label>
+          <input id="image" placeholder="https://...">
+        </div>
+      </div>
+
+      <div class="grid-1" style="margin-top:12px">
+        <div class="row">
+          <label for="excerpt">Testo breve</label>
+          <textarea id="excerpt" placeholder="Anteprima della notizia..."></textarea>
+        </div>
+        <div class="row">
+          <label for="url">Link (Leggi)</label>
+          <input id="url" placeholder="https://... oppure #">
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:center; margin-top:16px">
+        <button class="btn" type="submit">Pubblica</button>
+        <span id="status" class="note"></span>
+      </div>
+
+      <div class="preview" id="preview">
+        <div class="card">
+          <img id="pimg" src="" alt="">
+          <div>
+            <div class="note" id="pcat">Categoria</div>
+            <div style="font-weight:700" id="ptitle">Titolo anteprima</div>
+            <div class="note" id="ptext">Testo breve…</div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+<script>
+// ===== CONFIG =====
+const WEB_APP_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+const SHARED_KEY  = 'metti-una-chiave-semplice-qui'; // uguale a Apps Script
+
+const f = document.getElementById('newsForm');
+const statusEl = document.getElementById('status');
+
+// Preview live
+const refs = {
+  title:  document.getElementById('title'),
+  category:document.getElementById('category'),
+  image:  document.getElementById('image'),
+  excerpt:document.getElementById('excerpt'),
+  pimg:   document.getElementById('pimg'),
+  pcat:   document.getElementById('pcat'),
+  ptitle: document.getElementById('ptitle'),
+  ptext:  document.getElementById('ptext'),
+};
+function updPreview(){
+  refs.pimg.src = refs.image.value || '';
+  refs.pcat.textContent = refs.category.value || 'News';
+  refs.ptitle.textContent = refs.title.value || 'Titolo anteprima';
+  refs.ptext.textContent = refs.excerpt.value || 'Testo breve…';
+}
+['input','change','keyup'].forEach(ev=>{
+  ['title','category','image','excerpt'].forEach(id=> refs[id].addEventListener(ev, updPreview));
+});
+updPreview();
+
+f.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  statusEl.textContent = 'Invio in corso…';
+
+  const payload = {
+    key: SHARED_KEY,
+    title: refs.title.value.trim(),
+    category: refs.category.value.trim(),
+    date: document.getElementById('date').value.trim(),
+    image: refs.image.value.trim(),
+    excerpt: refs.excerpt.value.trim(),
+    url: document.getElementById('url').value.trim()
+  };
+  if(!payload.title){ statusEl.innerHTML = '<span class="err">Titolo obbligatorio</span>'; return; }
+
+  try{
+    const res = await fetch(WEB_APP_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    if(json.ok){
+      statusEl.innerHTML = '<span class="ok">Pubblicato! Aggiorna la homepage per vedere la notizia.</span>';
+      f.reset(); updPreview();
+    }else{
+      statusEl.innerHTML = '<span class="err">Errore: '+(json.error||'imprevisto')+'</span>';
+    }
+  }catch(err){
+    statusEl.innerHTML = '<span class="err">Connessione fallita</span>';
+  }
+});
+</script>
+</body>
+</html>
