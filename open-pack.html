@@ -319,7 +319,7 @@ throw e;
 });
 }
 
-  // === Profilo utente (email, nome, ecc.) ===
+// === Profilo utente (email, displayName, ecc.) ===
 async function upsertUserProfile() {
   const u = firebase.auth().currentUser;
   if (!u) return;
@@ -334,6 +334,7 @@ async function upsertUserProfile() {
   }, { merge: true });
 }
 
+
 // === Badge punti (near "Apri pacchetto") ===
 const pointsBadge = document.getElementById('pointsBadge');
 const openBtn = document.getElementById('openBtn');
@@ -342,7 +343,7 @@ let unsubPoints = null;
 // Stato: ultimo bonus visto dal client
 let lastDailyAtMs = 0;
 
-  function formatHhMm(ms){
+function formatHhMm(ms){
   const s = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
@@ -373,7 +374,7 @@ function updateBonusUI(){
 // Ricontrolla ogni minuto (così riappare da solo allo scadere)
 setInterval(updateBonusUI, 60*1000);
 
-        
+
 async function initPointsUI() {
 try {
 const user = firebase.auth().currentUser;  // ✅ non forza il login qui
@@ -386,6 +387,7 @@ try {
 const u = await ensureGoogleUser();   // apre popup o redirect
 if (!u) return;                       // se redirect, esci
 await ensureWallet10();               // crea doc punti se manca
+await upsertUserProfile();            // ← AGGIUNTA: scrive metadati utente
 
 // 🔁 aggiorna UI subito dopo login riuscito
 setTimeout(initPointsUI, 0);
@@ -400,8 +402,8 @@ updateBonusUI();
 return;
 }
 
-
 await ensureWallet10();
+await upsertUserProfile();            // ← AGGIUNTA: anche per utenti già loggati
 
 const ref = db.collection('users').doc(user.uid);
 if (unsubPoints) unsubPoints();
@@ -418,13 +420,11 @@ unsubPoints = ref.onSnapshot((snap) => {
 
   pointsBadge.textContent = `Punti: ${pts}`;
   openBtn.disabled = pts <= 0;
-openBtn.disabled = (openBtn.dataset.pack === 'test') ? false : (pts <= 0);
+  openBtn.disabled = (openBtn.dataset.pack === 'test') ? false : (pts <= 0);
   // aggiorna countdown/etichetta del bottone bonus e rendilo visibile
   lastDailyAtMs = lastMs || 0;
   updateBonusUI();
 });
-
-
 
 } catch (e) {
 if (e.message === 'redirecting') return;
@@ -445,8 +445,7 @@ try {
 let u = firebase.auth().currentUser;
 if (!u || u.isAnonymous) u = await ensureGoogleUser();
 await ensureWallet10();
-await upsertUserProfile();   // 👈 aggiungi questa riga
-
+await upsertUserProfile();   // già presente
 
 const ref = db.collection('users').doc(u.uid);
 await db.runTransaction(async (tx) => {
@@ -459,11 +458,11 @@ const now = firebase.firestore.FieldValue.serverTimestamp();
 tx.update(ref, { points: pts + 1, lastDailyAt: now, updatedAt: now });
 });
 
-   lastDailyAtMs = Date.now();
-      updateBonusUI();
+lastDailyAtMs = Date.now();
+updateBonusUI();
 
 log.textContent = '🎉 Bonus ottenuto! (max 1 ogni 24h)';
-  lastDailyAtMs = Date.now();
+lastDailyAtMs = Date.now();
 updateBonusUI();
 bonusBtn.disabled = true;
 } catch (e) {
@@ -755,6 +754,7 @@ if (!isTest) {
       await ensureGoogleUser();          // popup / redirect se serve
     }
     await ensureWallet10();              // crea doc punti se manca
+    await upsertUserProfile();           // ← AGGIUNTA: scrive metadati utente
     newPts = await debitOnePointOrThrow(); // ← SCALA 1 punto qui
     this.$log.textContent = `✅ Punto scalato. Punti rimasti: ${newPts}`;
   } catch (e) {
