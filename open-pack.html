@@ -39,15 +39,11 @@ h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
 .flash-screen.active{animation:flash .35s ease-out forwards}
 @keyframes flash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
 
-/* CHOICES */
 /* CHOICES (anteprime pacchetti) */
 .choices{ display:flex; gap:14px; margin-top:12px; flex-wrap:wrap }
 .choice{ display:flex; align-items:center; gap:10px; padding:8px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03); border-radius:14px; cursor:pointer; }
 .choice[aria-selected="true"]{ outline:2px solid rgba(110,231,255,.5); background:rgba(255,255,255,.06) }
 .prev{
-  width:90px; aspect-ratio: 690/987; border-radius:12px;
-  background-size:cover; background-position:center;
-  box-shadow:0 6px 16px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08);
 width:90px; aspect-ratio: 690/987; border-radius:12px;
 background-size:cover; background-position:center;
 box-shadow:0 6px 16px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08);
@@ -59,10 +55,6 @@ box-shadow:0 6px 16px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08);
 /* PACK */
 .packArea{display:flex; align-items:center; justify-content:center; min-height:min(76vh,900px); position:relative}
 .pack{
-  width:min(520px,86vw); aspect-ratio:690/987;
-  background: center/cover no-repeat;
-  border-radius:var(--radius); box-shadow:0 8px 24px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08);
-  transition:transform .2s ease, box-shadow .2s ease, filter .2s ease; position:relative; isolation:isolate;
 width:min(520px,86vw); aspect-ratio:690/987;
 background: center/cover no-repeat;  /* impostata da JS */
 border-radius:var(--radius); box-shadow:0 8px 24px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08);
@@ -83,7 +75,6 @@ transition:transform .2s ease, box-shadow .2s ease, filter .2s ease; position:re
 @media(min-width:1100px){.stage{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
 .cCard{position:relative; width:100%; aspect-ratio:690/987; border-radius:var(--radius); transform-style:preserve-3d; perspective:1200px}
-.scene{position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d; transition:transform .7s cubic-bezier(.22,.75,.2,1); transform:rotateY(0deg); box-shadow:0 10px 28px rgba(0,0,0,.45); background:var(--card)}
 .scene{position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d; transition:transform .7s cubic-bezier(.22,.75,.2,1); transform:rotateY(0deg); box-shadow:0 10px 28px rgba(0,0,0,.45); background:var(--card); will-change:transform}
 .face{position:absolute; inset:0; border-radius:inherit; overflow:hidden; backface-visibility:hidden; border:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center}
 .back img, .front img { width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:690/987; }
@@ -110,7 +101,6 @@ transition:transform .2s ease, box-shadow .2s ease, filter .2s ease; position:re
 .cCard.revealed::after{opacity:.9}
 .cCard.r-comune{--rarGlow:var(--g-comune)}
 .cCard.r-non-comune{--rarGlow:var(--g-non-comune)}
-.cCard.r-rara{--rarGlow:var(--g-rara)}
 .cCard.r-rara{--rarGlow:var(--g-rara); animation:bluePulse 2.3s ease-in-out infinite}
 @keyframes bluePulse{0%,100%{filter:none}50%{filter:drop-shadow(0 0 18px rgba(96,165,250,.45))}}
 .cCard.r-epica{--rarGlow:var(--g-epica)}
@@ -121,7 +111,6 @@ transition:transform .2s ease, box-shadow .2s ease, filter .2s ease; position:re
 @keyframes rays{to{transform:rotate(360deg)}}
 
 .spark{position:absolute; inset:0; pointer-events:none; overflow:hidden}
-.spark i{position:absolute; width:2px; height:10px; background:#fff; opacity:0; box-shadow:0 0 10px #fff, 0 0 16px var(--rarGlow); transform:translate(-50%,-50%) rotate(var(--rot,0deg)); animation:fall .9s ease-out forwards}
 .spark i{position:absolute; width:2px; height:10px; background:#fff; opacity:0; box-shadow:0 0 10px #fff, 0 0 16px var(--rarGlow); transform:translate(-50%,-50%) rotate(var(--rot,0deg)); animation:fall .9s ease-out forwards; will-change:transform,opacity}
 @keyframes fall{0%{transform:translate(var(--x,50%),-20%) rotate(var(--rot,0deg)); opacity:0}30%{opacity:1}100%{transform:translate(var(--xEnd,50%),120%) rotate(var(--rot,0deg)); opacity:0}}
 
@@ -155,30 +144,6 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 <div class="flash-screen" id="flashScreen" aria-hidden="true"></div>
 
 <header>
-  <div class="wrap">
-    <div class="title">
-      <div>
-        <h1>Open Pack – Fantaballa</h1>
-        <div class="subtitle">Scegli il pacchetto → flash dorato → carte in ordine di rarità (click to flip).</div>
-      </div>
-      <span class="pill" id="pricePill">💰 Costo: 1</span>
-      <span class="pill" id="pointsBadge">Punti: —</span>
-      <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
-      <a href="https://pavoniingrifati.github.io/vetrina-carte/my-cards" class="btn" id="myCardsBtn">🗂️ Le mie carte</a>
-      <input id="codeInput" class="inputLike" placeholder="🎟️ Inserisci codice" style="max-width:220px">
-      <button id="redeemBtn" class="btn">✅ Riscatta</button>
-      <button id="shareBtn" class="btn" disabled>🔗 Condividi pacchetto</button>
-      <button id="bonusBtn" class="btn">🎁 Ottieni 1 punto</button>
-      <a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Torna alla Home</a>
-    </div>
-
-    <div class="toolbar">
-      <span class="pill" id="fairnessNote">🎲 Probabilità bilanciate • Garanzia Rara+ attiva</span>
-    </div>
-
-    <div class="choices" id="choices"></div>
-    <div class="log" id="log" role="status" aria-live="polite"></div>
-  </div>
 <div class="wrap">
 <div class="title">
 <div>
@@ -207,23 +172,16 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 </header>
 
 <main class="wrap">
-  <section class="packArea" id="packArea">
-    <div class="pack" id="pack" title="Apri pacchetto"></div>
-  </section>
 <section class="packArea" id="packArea">
 <div class="pack" id="pack" title="Apri pacchetto"></div>
 </section>
 
-  <section class="stageWrap" id="stageWrap">
-    <div id="stage" class="stage" aria-live="polite"></div>
-  </section>
 <section class="stageWrap" id="stageWrap">
 <div id="stage" class="stage" aria-live="polite"></div>
 </section>
 </main>
 
 <footer>
-  <div class="foot"><span class="pillFoot">ℹ️Prossimo aggiornamento: Collezione carte.</span></div>
 <div class="foot">
 <span class="pillFoot">ℹ️Prossimo aggiornamento: Collezione carte.</span>
 </div>
@@ -231,20 +189,6 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 
 <!-- Template carta -->
 <template id="tplCard">
-  <article class="cCard drop" data-state="back">
-    <div class="rays"></div>
-    <div class="scene">
-      <div class="face back">
-        <img src="Deck%20back%20ORO.png" alt="Retro carta" loading="eager" decoding="async" />
-      </div>
-      <div class="face front">
-        <span class="badge"></span>
-        <img alt="" loading="lazy" decoding="async">
-      </div>
-    </div>
-    <div class="veil"></div>
-    <div class="spark"></div>
-  </article>
 <article class="cCard drop" data-state="back">
 <div class="rays"></div>
 <div class="scene">
@@ -263,25 +207,6 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 
 <!-- Share Fallback Modal -->
 <div class="shareModal" id="shareModal" aria-hidden="true" role="dialog" aria-modal="true">
-  <div class="shareCard">
-    <div class="shareHeader">
-      <strong>Condividi pacchetto</strong>
-      <button type="button" class="btn" id="closeShare">✖️ Chiudi</button>
-    </div>
-    <div class="shareRow" style="margin-bottom:10px">
-      <a class="shareItem" id="waShare" target="_blank" rel="noopener">WhatsApp</a>
-      <a class="shareItem" id="xShare" target="_blank" rel="noopener">X (Twitter)</a>
-      <a class="shareItem" id="fbShare" target="_blank" rel="noopener">Facebook</a>
-      <a class="shareItem" id="tgShare" target="_blank" rel="noopener">Telegram</a>
-    </div>
-    <div style="display:flex; gap:8px; align-items:center">
-      <input class="inputLike" id="shareLink" readonly />
-      <button type="button" class="btn" id="copyLink">📋 Copia</button>
-    </div>
-    <div class="shareActions">
-      <button type="button" class="btn" id="shareOk">OK</button>
-    </div>
-  </div>
 <div class="shareCard">
 <div class="shareHeader">
 <strong>Condividi pacchetto</strong>
@@ -303,7 +228,6 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 </div>
 </div>
 
-<!-- Firebase v8 -->
 <!-- Firebase (v8) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -311,13 +235,6 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
-  authDomain: "fantaball-9e19c.firebaseapp.com",
-  projectId: "fantaball-9e19c",
-  storageBucket: "fantaball-9e19c.appspot.com",
-  messagingSenderId: "683304379837",
-  appId: "1:683304379837:web:d2bbe7a814e2e40e075ed4",
-  measurementId: "G-C8Q8K5B52C"
 apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
 authDomain: "fantaball-9e19c.firebaseapp.com",
 projectId: "fantaball-9e19c",
@@ -333,47 +250,8 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 // Firestore
 const db = firebase.firestore();
 
-/* ========== AUTH helpers ========== */
 // === Auth helpers (open-pack) ===
 async function ensureGoogleUser() {
-  const auth = firebase.auth();
-  const u = auth.currentUser;
-  const provider = new firebase.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-
-  try {
-    if (!u) {
-      const { user } = await auth.signInWithPopup(provider);
-      await user.getIdToken(true);
-      return user;
-    }
-    if (u.isAnonymous) {
-      const { user } = await u.linkWithPopup(provider);
-      await user.getIdToken(true);
-      return user;
-    }
-    await u.getIdToken(true);
-    return u;
-  } catch (e) {
-    if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') {
-      if (!u) { await firebase.auth().signInWithRedirect(provider); throw new Error('redirecting'); }
-      if (u.isAnonymous) { await u.linkWithRedirect(provider); throw new Error('redirecting'); }
-    }
-    throw e;
-  }
-}
-
-/* ========== Wallet helpers ========== */
-async function ensureWallet10() {
-  const uid = firebase.auth().currentUser.uid;
-  const ref = db.collection('users').doc(uid);
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    if (!snap.exists) {
-      const now = firebase.firestore.FieldValue.serverTimestamp();
-      tx.set(ref, { points: 10, createdAt: now, updatedAt: now });
-    }
-  });
 const auth = firebase.auth();
 const u = auth.currentUser;
 const provider = new firebase.auth.GoogleAuthProvider();
@@ -421,20 +299,6 @@ return snap.exists ? (snap.data().points || 0) : 0;
 // === Wallet (open-pack) ===
 // Scala 1 punto e restituisce i punti aggiornati
 async function debitOnePointOrThrow() {
-  const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
-  if (!uid) throw new Error('login-required');
-  const ref = db.collection('users').doc(uid);
-  return db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    if (!snap.exists) throw new Error('wallet-missing');
-    const pts = Number(snap.data().points || 0);
-    if (pts <= 0) throw new Error('no-points');
-    tx.update(ref, { points: pts - 1, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-    return pts - 1;
-  });
-}
-
-/* ========== UI Stato punti & bonus ========== */
 const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
 if (!uid) throw new Error('login-required');
 const ref = db.collection('users').doc(uid);
@@ -458,13 +322,11 @@ throw e;
 // === Badge punti (near "Apri pacchetto") ===
 const pointsBadge = document.getElementById('pointsBadge');
 const openBtn = document.getElementById('openBtn');
-const bonusBtn = document.getElementById('bonusBtn');
 const bonusBtn = document.getElementById('bonusBtn'); // 👈 AGGIUNTA
 let unsubPoints = null;
 // Stato: ultimo bonus visto dal client
 let lastDailyAtMs = 0;
 
-function formatHhMm(ms){ const s=Math.max(0,Math.floor(ms/1000)); const h=Math.floor(s/3600); const m=Math.floor((s%3600)/60); return h>0?`${h}h ${m}m`:`${m}m`; }
 function formatHhMm(ms){
 const s = Math.max(0, Math.floor(ms / 1000));
 const h = Math.floor(s / 3600);
@@ -474,14 +336,6 @@ return h > 0 ? `${h}h ${m}m` : `${m}m`;
 
 // Aggiorna testo/abilitazione del bottone bonus
 function updateBonusUI(){
-  if (!bonusBtn) return;
-  const DAY_MS=24*60*60*1000;
-  const now=Date.now();
-  const elapsed=lastDailyAtMs ? (now-lastDailyAtMs) : Infinity;
-  const canClaim=elapsed>=DAY_MS;
-  bonusBtn.textContent = canClaim ? '🎁 Apri' : `⏱️ Attendi ${formatHhMm(DAY_MS-elapsed)}`;
-  bonusBtn.disabled=false;
-  bonusBtn.style.display='';
 if (!bonusBtn) return;
 const DAY_MS = 24*60*60*1000;
 const now = Date.now();
@@ -506,43 +360,6 @@ setInterval(updateBonusUI, 60*1000);
 
 
 async function initPointsUI() {
-  try{
-    const user = firebase.auth().currentUser;
-    if (!user || user.isAnonymous) {
-      pointsBadge.innerHTML='🔐 Accedi con Google';
-      pointsBadge.style.cursor='pointer';
-      pointsBadge.onclick = async ()=>{
-        try{
-          const u = await ensureGoogleUser();
-          if (!u) return;
-          await ensureWallet10();
-          setTimeout(initPointsUI,0);
-        }catch(e){ if(e.message!=='redirecting') console.error(e); }
-      };
-      openBtn.disabled = true;
-      updateBonusUI();
-      return;
-    }
-
-    await ensureWallet10();
-    const ref = db.collection('users').doc(user.uid);
-    if (unsubPoints) unsubPoints();
-    unsubPoints = ref.onSnapshot((snap)=>{
-      const data = snap.exists ? snap.data() : {};
-      const pts = Number(data.points || 0);
-      const last = data.lastDailyAt;
-      const lastMs = last && typeof last.toMillis==='function' ? last.toMillis() : (typeof last==='number'? last:0);
-      pointsBadge.textContent = `Punti: ${pts}`;
-      openBtn.disabled = (openBtn.dataset.pack === 'test') ? false : (pts <= 0);
-      lastDailyAtMs = lastMs || 0;
-      updateBonusUI();
-    });
-  }catch(e){
-    if (e.message==='redirecting') return;
-    console.error('[initPointsUI]',e);
-    pointsBadge.textContent='Punti: —';
-    openBtn.disabled = (openBtn.dataset.pack === 'test') ? false : true;
-  }
 try {
 const user = firebase.auth().currentUser;  // ✅ non forza il login qui
 if (!user || user.isAnonymous) {
@@ -604,137 +421,8 @@ openBtn.disabled = (openBtn.dataset.pack === 'test') ? false : true;
 }
 initPointsUI();
 
-/* ===== RISCATTO CODICI (listener globale, NON dentro il bonus) ===== */
-const codeInput = document.getElementById('codeInput');
-const redeemBtn = document.getElementById('redeemBtn');
-if (redeemBtn) {
-  redeemBtn.addEventListener('click', async () => {
-    const log = document.getElementById('log');
-    try {
-      let u = firebase.auth().currentUser;
-      if (!u || u.isAnonymous) u = await ensureGoogleUser();
-      await ensureWallet10();
-
-      const raw = (codeInput?.value || '').trim();
-      if (!raw) { log.textContent = 'ℹ️ Inserisci un codice.'; return; }
-      const codeId = raw.toUpperCase();
-
-      const codeRef = db.collection('codes').doc(codeId);
-      const userRef = db.collection('users').doc(u.uid);
-      const redemptionRef = userRef.collection('redemptions').doc(codeId);
-
-      redeemBtn.disabled = true;
-
-      const resultPoints = await db.runTransaction(async (tx) => {
-        const [codeSnap, userSnap, redSnap] = await Promise.all([
-          tx.get(codeRef),
-          tx.get(userRef),
-          tx.get(redemptionRef)
-        ]);
-
-        if (!codeSnap.exists) throw new Error('invalid-code');
-        const c = codeSnap.data();
-
-        if (!c.active) throw new Error('inactive-code');
-        const now = firebase.firestore.Timestamp.now();
-        if (c.expiresAt && c.expiresAt.toMillis && c.expiresAt.toMillis() < now.toMillis()) {
-          throw new Error('expired-code');
-        }
-
-        const usesLeft = Number(c.usesLeft ?? 0);
-        if (usesLeft <= 0) throw new Error('no-uses-left');
-
-        const perUserLimit = Number(c.perUserLimit ?? 1);
-        const already = redSnap.exists ? Number(redSnap.data().count || 0) : 0;
-        if (already >= perUserLimit) throw new Error('user-limit');
-
-        const pts = Number(c.points ?? 0);
-        if (pts <= 0) throw new Error('no-points');
-
-        // utente: +pts
-        const currentPts = userSnap.exists ? Number(userSnap.data().points || 0) : 0;
-        tx.update(userRef, {
-          points: currentPts + pts,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        // redemption per utente
-       tx.set(
-  redemptionRef,
-  {
-    count: already + 1,
-    redeemedAt: firebase.firestore.FieldValue.serverTimestamp(),
-  },
-  { merge: true }
-);
-
-        // codice: -1 usesLeft
-        tx.update(codeRef, {
-          usesLeft: usesLeft - 1,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        return pts;
-      });
-
-      log.textContent = `🎉 Codice valido! Hai ricevuto +${resultPoints} punti.`;
-      if (codeInput) codeInput.value = '';
-    } catch (e) {
-      console.error('[redeem]', e);
-      const map = {
-        'invalid-code': '❌ Codice non valido.',
-        'inactive-code': '⏸️ Codice non attivo.',
-        'expired-code': '⏰ Codice scaduto.',
-        'no-uses-left': '🚫 Codice esaurito.',
-        'user-limit': '🙅‍♂️ Hai già usato questo codice.',
-        'no-points': '⚠️ Codice senza punti.',
-        'permission-denied': '🔒 Permessi insufficienti (controlla le regole).'
-      };
-      const msg = map[e?.message] || '⚠️ Problema nel riscatto.';
-      document.getElementById('log').textContent = msg;
-    } finally {
-      redeemBtn.disabled = false;
-    }
-  });
-}
-
-/* ===== BONUS giornaliero ===== */
 // Deve stare dopo initPointsUI();
 if (bonusBtn) {
-  bonusBtn.addEventListener('click', async () => {
-    const log = document.getElementById('log');
-    try {
-      let u = firebase.auth().currentUser;
-      if (!u || u.isAnonymous) u = await ensureGoogleUser();
-      await ensureWallet10();
-      const ref = db.collection('users').doc(u.uid);
-
-      await db.runTransaction(async (tx) => {
-        const snap = await tx.get(ref);
-        if (!snap.exists) throw new Error('wallet-missing');
-        const pts = Number(snap.data().points || 0);
-        tx.update(ref, { points: pts + 1, lastDailyAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-      });
-
-      lastDailyAtMs = Date.now();
-      updateBonusUI();
-      log.textContent = '🎉 Bonus ottenuto! (max 1 ogni 24h)';
-      bonusBtn.disabled = true;
-    } catch (e) {
-      if ((e && e.code) === 'permission-denied') {
-        document.getElementById('log').textContent = '⏱️ Bonus già usato nelle ultime 24 ore.';
-      } else {
-        document.getElementById('log').textContent = '⚠️ Impossibile ottenere il bonus ora.';
-        console.error(e);
-      }
-    } finally {
-      setTimeout(()=>{ bonusBtn.disabled = false; }, 800);
-    }
-  });
-}
-
-/* ===== Inventario ===== */
-const safeDocId = (id) => String(id || Math.random().toString(36).slice(2)).replace(/[\/#?\[\]]/g, '_').slice(0,120);
 bonusBtn.addEventListener('click', async () => {
 const log = document.getElementById('log');
 try {
@@ -783,28 +471,6 @@ String(id || Math.random().toString(36).slice(2))
 
 // Salva le carte estratte nell’inventario dell’utente
 async function saveInventario(cards) {
-  const u = firebase.auth().currentUser;
-  if (!u || u.isAnonymous) throw new Error('login-required');
-  const batch = db.batch();
-  const now = firebase.firestore.FieldValue.serverTimestamp();
-  for (const c of cards) {
-    const ref = db.collection('users').doc(u.uid).collection('inventory').doc(safeDocId(c.id));
-    batch.set(ref, {
-      name: c.name,
-      rarity: c.rarity,
-      series: c.series || '',
-      img: c.img || '',
-      count: firebase.firestore.FieldValue.increment(1),
-      updatedAt: now
-    }, { merge: true });
-  }
-  await batch.commit();
-}
-
-/* ===== Pack logic ===== */
-const $ = (s,el=document)=>el.querySelector(s);
-const delay = ms => new Promise(r=>setTimeout(r,ms));
-const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5};
 const u = firebase.auth().currentUser;
 if (!u || u.isAnonymous) throw new Error('login-required');
 const batch = db.batch();
@@ -828,36 +494,24 @@ const seriesIs = (c, v) => String(c.series ?? '').trim() === v;
 
 // Definizione pacchetti (usa SOLO series: "Wonderkid" / "Tots")
 const PACKS = {
-  random:    { key:'random',    label:'Random',    cost:1, back:'random%20pack.png',           filter: c => true },
-  wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1, back:'Deck%20back%20wonderkid.png', filter: c => seriesIs(c, 'Wonderkid') },
-  tots:      { key:'tots',      label:'Tots',      cost:1, back:'Deck%20back%20Tots.png',      filter: c => seriesIs(c, 'Tots') },
-  f1:        { key:'f1',        label:'F1',        cost:1, back:'f1%20pack.png',               filter: c => seriesIs(c, 'F1') },
-  test:      { key:'test',      label:'Test Gratuito', cost:0, back:'Deck%20back%20BATMAN.png', filter: c => true, test:true }
-  random:    { key:'random',    label:'Random',    cost:1000, back:'random%20pack.png',
-  random:    { key:'random',    label:'Random',    cost:1, back:'random%20pack.png',
+random:    { key:'random',    label:'Random',    cost:1000, back:'Deck%20back%20ORO.png',
 filter: c => true },
-  wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1800, back:'Deck%20back%20wonderkid.png',
-  wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1, back:'Deck%20back%20wonderkid.png',
+wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1800, back:'Deck%20back%20wonderkid.png',
 filter: c => seriesIs(c, 'Wonderkid') },
-  tots:      { key:'tots',      label:'Tots',      cost:1400, back:'Deck%20back%20Tots.png',
-  tots:      { key:'tots',      label:'Tots',      cost:1, back:'Deck%20back%20Tots.png',
+tots:      { key:'tots',      label:'Tots',      cost:1400, back:'Deck%20back%20Tots.png',
 filter: c => seriesIs(c, 'Tots') },
-  f1:        { key:'f1',        label:'F1',        cost:1600, back:'f1%20pack.png',
-  f1:        { key:'f1',        label:'F1',        cost:1, back:'f1%20pack.png',
+f1:        { key:'f1',        label:'F1',        cost:1600, back:'f1%20pack.png',
 filter: c => seriesIs(c, 'F1') },
 
 // 👇 NUOVO: pacchetto sempre apribile e senza salvataggio
-test:      { key:'test',      label:'Test Gratuito', cost:0, back:'Deck%20back%20BATMAN.png',
+  test:      { key:'test',      label:'Test Gratuito', cost:0, back:'Deck%20back%20ORO.png',
+  test:      { key:'test',      label:'Test Gratuito', cost:0, back:'Deck%20back%20BATMAN.png',
 filter: c => true, test:true }
 };
 
 const DEFAULT_PACK_KEY = 'random';
 
 const CONFIG = {
-  CARDS_JSON:'cards.json',
-  COUNT:6,
-  WEIGHTS:{'Leggendaria':1,'Season':8,'Ultra Rara':3,'Epica':6,'Rara':10,'Non Comune':20,'Oggetto':30,'Comune':40},
-  FETCH_TIMEOUT_MS:8000
 CARDS_JSON:'cards.json',
 COUNT:6,
 WEIGHTS:{'Leggendaria':1,'Season':8,'Ultra Rara':3,'Epica':6,'Rara':10,'Non Comune':20,'Oggetto':30,'Comune':40},
@@ -866,16 +520,6 @@ FETCH_TIMEOUT_MS:8000
 
 // Fallback carte per test locale (series incluse)
 const FALLBACK_CARDS = [
-  {id:'wk1', name:'Wonderkid A', rarity:'Comune',     img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
-  {id:'wk2', name:'Wonderkid B', rarity:'Rara',       img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
-  {id:'wk3', name:'Wonderkid C', rarity:'Epica',      img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
-  {id:'t1',  name:'Tots Alpha',  rarity:'Comune',     img:'Deck%20back%20Tots.png',      series:'Tots'},
-  {id:'t2',  name:'Tots Beta',   rarity:'Rara',       img:'Deck%20back%20Tots.png',      series:'Tots'},
-  {id:'t3',  name:'Tots Omega',  rarity:'Ultra Rara', img:'Deck%20back%20Tots.png',      series:'Tots'},
-  {id:'r1',  name:'Base 1',      rarity:'Comune',     img:'Deck%20back%20ORO.png'},
-  {id:'r2',  name:'Base 2',      rarity:'Non Comune', img:'Deck%20back%20ORO.png'},
-  {id:'r3',  name:'Base 3',      rarity:'Rara',       img:'Deck%20back%20ORO.png'},
-  {id:'r4',  name:'Base 4',      rarity:'Epica',      img:'Deck%20back%20ORO.png'},
 {id:'wk1', name:'Wonderkid A', rarity:'Comune',     img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
 {id:'wk2', name:'Wonderkid B', rarity:'Rara',       img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
 {id:'wk3', name:'Wonderkid C', rarity:'Epica',      img:'Deck%20back%20wonderkid.png', series:'Wonderkid'},
@@ -902,325 +546,6 @@ function noiseBoom(d=.5,g=.15){ if(!audioCtx) return; const N=audioCtx.sampleRat
 function playByRarity(r){ if(r==='Comune'||r==='Non Comune'){ tone(520,.07,.06,'triangle'); tone(660,.07,.05,'triangle') } else if(r==='Rara'){ tone(660,.12,.08,'sine'); tone(880,.16,.06,'sine') } else if(r==='Epica'){ tone(660,.18,.09,'sine'); tone(990,.22,.08,'sine'); tone(1320,.24,.06,'sine') } else if(r==='Ultra Rara'||r==='Season'){ noiseBoom(.7,.18); tone(880,.18,.1,'square'); tone(1320,.22,.08,'square') } }
 
 class PackOpener{
-  constructor(){
-    this.ALL=[]; this.used=new Set();
-    this.currentPackKey = DEFAULT_PACK_KEY;
-
-    this.$openBtn=$('#openBtn'); this.$shareBtn=$('#shareBtn');
-    this.$packArea=$('#packArea'); this.$pack=$('#pack');
-    this.$flashLine=$('#flashLine'); this.$flashScreen=$('#flashScreen');
-    this.$stageWrap=$('#stageWrap'); this.$stage=$('#stage'); this.$log=$('#log');
-    this.$pricePill=$('#pricePill'); this.$choices=$('#choices');
-
-    this.bind(); this.prewarm();
-    this.renderChoices();
-    this.applyPackVisual();
-  }
-
-  bind(){
-    this.$openBtn.addEventListener('click',()=>this.doOpen());
-    this.$pack.addEventListener('click',()=>this.$openBtn.click(),{passive:true});
-    this.$shareBtn.addEventListener('click',()=>this.doShare());
-    ['click','keydown','touchstart'].forEach(e=>window.addEventListener(e,()=>{ensureAudio()}, {once:true}));
-  }
-
-  prewarm(){
-    ['Deck%20back%20ORO.png','Deck%20back%20Tots.png','Deck%20back%20wonderkid.png'].forEach(src=>{ const im=new Image(); im.decoding='async'; im.src=src; });
-    this.loadData().catch(()=>{});
-  }
-
-  async loadData(){
-    if(this.ALL.length) return;
-    const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),CONFIG.FETCH_TIMEOUT_MS);
-    try{
-      const res=await fetch(CONFIG.CARDS_JSON,{cache:'no-store',signal:ctrl.signal});
-      if(!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json=await res.json();
-      if(!Array.isArray(json)) throw new Error('Formato non valido (atteso array)');
-      const cleaned=[]; const ids=new Set();
-      for(const c of json){
-        if(!c||typeof c!=='object') continue;
-        const id=c.id??`${c.name||'card'}-${Math.random().toString(36).slice(2,8)}`;
-        const name=String(c.name||'');
-        const rarity=String(c.rarity||'');
-        const img=String(c.img||'');
-        const series=String(c.series||'');
-        if(!name||!rarity||!img) continue;
-        if(ids.has(id)) continue; ids.add(id);
-        cleaned.push({id,name,rarity,img,series});
-      }
-      if(!cleaned.length) throw new Error('Nessuna carta valida in cards.json');
-      this.ALL=cleaned; this.$log.textContent=`Caricate ${this.ALL.length} carte.`;
-    }catch(err){
-      console.warn('cards.json non caricato, uso fallback:', err?.message||err);
-      this.ALL = FALLBACK_CARDS;
-      this.$log.textContent='⚠️ Non trovo cards.json, uso carte di esempio.';
-    }finally{ clearTimeout(t) }
-  }
-
-  renderChoices(){
-    const frag=document.createDocumentFragment();
-    Object.values(PACKS).forEach(p=>{
-      const btn=document.createElement('button');
-      btn.type='button';
-      btn.className='choice';
-      btn.setAttribute('data-pack',p.key);
-      btn.setAttribute('aria-selected', String(p.key===this.currentPackKey));
-      btn.innerHTML = `
-        <div class="prev" style="background-image:url('${p.back}')"></div>
-        <div class="meta">
-          <span class="name">${p.label}</span>
-          <span class="price">Costo: ${p.cost}</span>
-        </div>`;
-      btn.addEventListener('click', ()=>{
-        this.currentPackKey = p.key;
-        this.updatePrice();
-        this.applyPackVisual();
-        openBtn.dataset.pack = p.key;
-        if (p.key === 'test') openBtn.disabled = false;
-        [...this.$choices.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
-        btn.setAttribute('aria-selected','true');
-      });
-      frag.appendChild(btn);
-    });
-    this.$choices.innerHTML='';
-    this.$choices.appendChild(frag);
-    this.updatePrice();
-    openBtn.dataset.pack = this.currentPackKey;
-  }
-
-  updatePrice(){
-    const pack=PACKS[this.currentPackKey];
-    this.$pricePill.textContent = `💰 Costo: ${pack.cost}`;
-  }
-  applyPackVisual(){
-    const pack=PACKS[this.currentPackKey];
-    this.$pack.style.backgroundImage = `url('${pack.back}')`;
-  }
-
-  pickRarity(){
-    const E=Object.entries(CONFIG.WEIGHTS);
-    const tot=E.reduce((s,[,w])=>s+w,0);
-    let r=Math.random()*tot;
-    for(const [rar,w] of E){ if(r<w) return rar; r-=w }
-    return 'Comune'
-  }
-
-  pickCardByRarity(rarity, pool){
-    let candidates = pool.filter(c => c.rarity===rarity && !this.used.has(c.id));
-    if(!candidates.length) candidates = pool.filter(c => !this.used.has(c.id));
-    if(!candidates.length) candidates = pool;
-    if(!candidates.length) return null;
-    return candidates[Math.floor(Math.random()*candidates.length)];
-  }
-
-  ensureRarePlus(cards, pool){
-    const ok=cards.some(c=>rarityRank[c.rarity] >= rarityRank['Rara']);
-    if(ok) return cards;
-    const rarePool = pool.filter(c=>rarityRank[c.rarity] >= rarityRank['Rara']);
-    if(!rarePool.length) return cards;
-    const i=Math.floor(Math.random()*cards.length);
-    cards[i] = rarePool[Math.floor(Math.random()*rarePool.length)];
-    return cards;
-  }
-
-  makeCardEl(d,isFinal){
-    const tpl=document.getElementById('tplCard');
-    const n=tpl.content.firstElementChild.cloneNode(true);
-    const backImg = n.querySelector('.back img');
-    if (backImg) {
-      backImg.src = PACKS[this.currentPackKey].back;
-      backImg.alt = `Retro carta – ${PACKS[this.currentPackKey].label}`;
-    }
-    const rslug=String(d.rarity||'').toLowerCase().replace(/\s+/g,'-');
-    if(rslug) n.classList.add('r-'+rslug);
-    if(isFinal) n.classList.add('final');
-
-    const front=n.querySelector('.front img');
-    front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async';
-
-    n.querySelector('.badge').textContent=d.rarity||'';
-    n.dataset.state='back';
-    n.addEventListener('click',()=>{ 
-      if(n.dataset.state==='back'){ this.revealCard(n,d) } 
-      else { n.dataset.state='back'; n.classList.remove('revealed') } 
-    },{passive:true});
-
-    return n
-  }
-
-  addSparks(el,n=10){
-    let cont=el.querySelector('.spark');
-    if(!cont){ cont=document.createElement('div'); cont.className='spark'; el.appendChild(cont) }
-    cont.innerHTML=''; const frag=document.createDocumentFragment();
-    for(let i=0;i<n;i++){
-      const s=document.createElement('i');
-      const x=10+Math.random()*80, xEnd=x+(-8+Math.random()*16), rot=-15+Math.random()*30;
-      s.style.setProperty('--x',x+'%'); s.style.setProperty('--xEnd',xEnd+'%'); s.style.setProperty('--rot',rot+'deg');
-      s.style.left=x+'%'; s.style.top=(5+Math.random()*20)+'%';
-      frag.appendChild(s)
-    }
-    cont.appendChild(frag)
-  }
-  revealCard(n,d){
-    const front=n.querySelector('.front img');
-    if(front && !front.src) front.src=d.img||'';
-    n.dataset.state='front'; n.classList.add('revealed');
-    const rank=rarityRank[d.rarity]??0;
-    this.addSparks(n,Math.min(6+rank*4,28));
-    playByRarity(d.rarity)
-  }
-  setDropIn(el,i,extra=0){ el.classList.add('drop'); setTimeout(()=>el.classList.add('in'),120*i+extra) }
-
-  showStage(cards){
-    const wrap=this.$stageWrap, stage=this.$stage;
-    stage.innerHTML=''; wrap.classList.add('show');
-    const last=cards.length-1; const frag=document.createDocumentFragment();
-    cards.forEach((c,i)=>{ const el=this.makeCardEl(c,i===last); frag.appendChild(el); this.setDropIn(el,i) });
-    stage.appendChild(frag);
-    this.$shareBtn.disabled=false;
-    this.$log.textContent='Pacchetto pronto (ordine per rarità). Tocca le carte per rivelarle.';
-  }
-
-  async doOpen(){
-    const BTN = this.$openBtn, SHARE = this.$shareBtn;
-    BTN.disabled = true; SHARE.disabled = true;
-
-    const isTest = !!(PACKS[this.currentPackKey] && PACKS[this.currentPackKey].test);
-
-    let newPts;
-    if (!isTest) {
-      try {
-        const u = firebase.auth().currentUser;
-        if (!u || u.isAnonymous) { await ensureGoogleUser(); }
-        await ensureWallet10();
-        newPts = await debitOnePointOrThrow();
-        this.$log.textContent = `✅ Punto scalato. Punti rimasti: ${newPts}`;
-      } catch (e) {
-        if (e.message === 'redirecting') return;
-        if (e.message === 'login-required') this.$log.textContent = '🔐 Accedi con Google per aprire un pacchetto.';
-        else if (e.message === 'no-points') this.$log.textContent = '😕 Punti esauriti.';
-        else { this.$log.textContent = '⚠️ Errore durante la scalatura punti.'; console.error(e); }
-        BTN.disabled = false; SHARE.disabled = true; return;
-      }
-    } else {
-      this.$log.textContent = '🧪 Modalità test: nessun punto scalato e nessun salvataggio.';
-    }
-
-    this.$log.textContent='Preparazione pacchetto…';
-    await this.loadData(); if(!this.ALL.length){ this.$log.textContent='Nessuna carta disponibile'; BTN.disabled=false; return }
-
-    const pack = PACKS[this.currentPackKey];
-    const pool = this.ALL.filter(pack.filter);
-    if(!pool.length){ this.$log.textContent='⚠️ Nessuna carta compatibile con questo pacchetto (controlla "series").'; BTN.disabled=false; SHARE.disabled=true; return }
-
-    this.$pack.classList.add('shake'); await delay(360); this.$pack.classList.remove('shake');
-    document.getElementById('flashLine').classList.add('active');
-    document.getElementById('flashScreen').classList.add('active');
-    this.$pack.classList.add('opening');
-    await delay(900); this.$packArea.style.display='none';
-
-    const isOggetto = c => String(c?.series || '').trim().toLowerCase() === 'oggetto';
-    this.used.clear();
-    let chosen = [];
-    let hasOggetto = false;
-
-    for (let i = 0; i < CONFIG.COUNT; i++) {
-      let card = null;
-      let safety = 0;
-      while (safety++ < 50) {
-        const rar = this.pickRarity();
-        const c = this.pickCardByRarity(rar, pool);
-        if (!c) break;
-        if (isOggetto(c) && hasOggetto) continue;
-        card = c; break;
-      }
-      if (!card) break;
-      if (isOggetto(card)) hasOggetto = true;
-      this.used.add(card.id);
-      chosen.push(card);
-    }
-
-    chosen = this.ensureRarePlus(chosen, pool);
-
-    (() => {
-      const oggIdx = chosen.map((c,i)=>[i,c]).filter(([,c])=>isOggetto(c)).map(([i])=>i);
-      if (oggIdx.length>1){
-        for (let k=1;k<oggIdx.length;k++){
-          const i=oggIdx[k];
-          const targetRar = chosen[i].rarity;
-          let repl = pool.find(c=>!isOggetto(c) && c.rarity===targetRar && !this.used.has(c.id));
-          if (!repl) repl = pool.find(c=>!isOggetto(c) && !this.used.has(c.id));
-          if (repl){ this.used.add(repl.id); chosen[i]=repl; }
-        }
-      }
-    })();
-
-    chosen.sort((a,b)=>rarityRank[a.rarity]-rarityRank[b.rarity]);
-    this.showStage(chosen);
-
-    if (!isTest) {
-      try {
-        await saveInventario(chosen);
-        this.$log.innerHTML = `✅ Pacchetto salvato. Punti rimasti: <b>${newPts}</b>. <a href="my-cards.html">Vai alle mie carte →</a>`;
-      } catch (e) {
-        if (e.message === 'login-required') this.$log.textContent = '🔒 Accedi con Google per salvare le carte in "Le mie carte".';
-        else { this.$log.textContent = '⚠️ Errore nel salvataggio. Riprova.'; console.error(e); }
-      }
-    } else {
-      this.$log.textContent = '🧪 Pacchetto di test: carte NON aggiunte alla tua collezione.';
-    }
-
-    setTimeout(()=>{ document.getElementById('flashLine').classList.remove('active'); document.getElementById('flashScreen').classList.remove('active') },400);
-    BTN.textContent=`🔁 Nuovo pacchetto ${pack.label}`; BTN.disabled=false; SHARE.disabled=false;
-    BTN.onclick=async()=>{
-      BTN.disabled=true; SHARE.disabled=true;
-      this.$stageWrap.classList.remove('show'); this.$stage.innerHTML=''; this.$packArea.style.display='flex'; this.$pack.classList.remove('opening');
-      BTN.textContent='🎁 Apri pacchetto'; this.$log.textContent='';
-      await delay(100); BTN.disabled=false; BTN.onclick=()=>this.doOpen();
-    };
-  }
-
-  async doShare(){
-    const shareData = { title: 'Fantaballa – Il mio pacchetto', text: 'Guarda il pacchetto che ho aperto su Fantaballa!', url: window.location.href };
-    if (navigator.share) { try { await navigator.share(shareData); return; } catch (err) { console.warn('Condivisione annullata o fallita', err); } }
-    this.openShareFallback(shareData);
-  }
-
-  openShareFallback(shareData){
-    const modal = $('#shareModal');
-    const linkInput = $('#shareLink');
-    const closeBtn = $('#closeShare');
-    const okBtn = $('#shareOk');
-    const copyBtn = $('#copyLink');
-    const wa = $('#waShare'), x = $('#xShare'), fb = $('#fbShare'), tg = $('#tgShare');
-
-    const url = encodeURIComponent(shareData.url);
-    const text = encodeURIComponent(shareData.text);
-
-    wa.href = `https://api.whatsapp.com/send?text=${text}%20${url}`;
-    x.href  = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
-    fb.href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-    tg.href = `https://t.me/share/url?url=${url}&text=${text}`;
-
-    linkInput.value = shareData.url;
-
-    const close = ()=>{ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true') };
-    closeBtn.onclick = close; okBtn.onclick = close;
-
-    copyBtn.onclick = async ()=>{
-      try{
-        await navigator.clipboard.writeText(shareData.url);
-        copyBtn.textContent = '✅ Copiato';
-        setTimeout(()=>copyBtn.textContent='📋 Copia',1200);
-      }catch{
-        copyBtn.textContent = '❌ Errore';
-        setTimeout(()=>copyBtn.textContent='📋 Copia',1200);
-      }
-    };
-
-    modal.classList.add('show'); modal.setAttribute('aria-hidden','false');
-  }
 constructor(){
 this.ALL=[]; this.used=new Set();
 this.currentPackKey = DEFAULT_PACK_KEY;
