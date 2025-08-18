@@ -319,6 +319,21 @@ throw e;
 });
 }
 
+  // === Profilo utente (email, nome, ecc.) ===
+async function upsertUserProfile() {
+  const u = firebase.auth().currentUser;
+  if (!u) return;
+
+  const ref = db.collection('users').doc(u.uid);
+  await ref.set({
+    email: u.email || null,
+    displayName: u.displayName || '',
+    photoURL: u.photoURL || '',
+    provider: (u.providerData && u.providerData[0]?.providerId) || '',
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+}
+
 // === Badge punti (near "Apri pacchetto") ===
 const pointsBadge = document.getElementById('pointsBadge');
 const openBtn = document.getElementById('openBtn');
@@ -430,6 +445,8 @@ try {
 let u = firebase.auth().currentUser;
 if (!u || u.isAnonymous) u = await ensureGoogleUser();
 await ensureWallet10();
+await upsertUserProfile();   // 👈 aggiungi questa riga
+
 
 const ref = db.collection('users').doc(u.uid);
 await db.runTransaction(async (tx) => {
