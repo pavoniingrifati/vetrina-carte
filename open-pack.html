@@ -327,30 +327,30 @@ let unsubPoints = null;
 // Stato: ultimo bonus visto dal client
 let lastDailyAtMs = 0;
 
-function formatHhMm(ms){
-const s = Math.max(0, Math.floor(ms / 1000));
-const h = Math.floor(s / 3600);
-const m = Math.floor((s % 3600) / 60);
-return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  function formatHhMm(ms){
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
 // Aggiorna testo/abilitazione del bottone bonus
 function updateBonusUI(){
-if (!bonusBtn) return;
-const DAY_MS = 24*60*60*1000;
-const now = Date.now();
-const elapsed = lastDailyAtMs ? (now - lastDailyAtMs) : Infinity;
-const canClaim = elapsed >= DAY_MS;
+  if (!bonusBtn) return;
+  const DAY_MS = 24*60*60*1000;
+  const now = Date.now();
+  const elapsed = lastDailyAtMs ? (now - lastDailyAtMs) : Infinity;
+  const canClaim = elapsed >= DAY_MS;
 
-if (canClaim) {
-bonusBtn.textContent = '🎁 Apri';
-} else {
-const remainingMs = DAY_MS - elapsed;
-bonusBtn.textContent = `⏱️ Attendi ${formatHhMm(remainingMs)}`;
-}
+  if (canClaim) {
+    bonusBtn.textContent = '🎁 Apri';
+  } else {
+    const remainingMs = DAY_MS - elapsed;
+    bonusBtn.textContent = `⏱️ Attendi ${formatHhMm(remainingMs)}`;
+  }
 
-bonusBtn.disabled = false;   // sempre cliccabile
-bonusBtn.style.display = ''; // sempre visibile
+  bonusBtn.disabled = false;   // sempre cliccabile
+  bonusBtn.style.display = ''; // sempre visibile
 }
 
 
@@ -358,7 +358,7 @@ bonusBtn.style.display = ''; // sempre visibile
 // Ricontrolla ogni minuto (così riappare da solo allo scadere)
 setInterval(updateBonusUI, 60*1000);
 
-
+        
 async function initPointsUI() {
 try {
 const user = firebase.auth().currentUser;  // ✅ non forza il login qui
@@ -392,21 +392,21 @@ const ref = db.collection('users').doc(user.uid);
 if (unsubPoints) unsubPoints();
 
 unsubPoints = ref.onSnapshot((snap) => {
-const data = snap.exists ? snap.data() : {};
-const pts = Number(data.points || 0);
+  const data = snap.exists ? snap.data() : {};
+  const pts = Number(data.points || 0);
 
-const last = data.lastDailyAt;
-const lastMs =
-last && typeof last.toMillis === 'function'
-? last.toMillis()
-: (typeof last === 'number' ? last : 0);
+  const last = data.lastDailyAt;
+  const lastMs =
+    last && typeof last.toMillis === 'function'
+      ? last.toMillis()
+      : (typeof last === 'number' ? last : 0);
 
-pointsBadge.textContent = `Punti: ${pts}`;
-openBtn.disabled = pts <= 0;
+  pointsBadge.textContent = `Punti: ${pts}`;
+  openBtn.disabled = pts <= 0;
 openBtn.disabled = (openBtn.dataset.pack === 'test') ? false : (pts <= 0);
-// aggiorna countdown/etichetta del bottone bonus e rendilo visibile
-lastDailyAtMs = lastMs || 0;
-updateBonusUI();
+  // aggiorna countdown/etichetta del bottone bonus e rendilo visibile
+  lastDailyAtMs = lastMs || 0;
+  updateBonusUI();
 });
 
 
@@ -442,11 +442,11 @@ const now = firebase.firestore.FieldValue.serverTimestamp();
 tx.update(ref, { points: pts + 1, lastDailyAt: now, updatedAt: now });
 });
 
-lastDailyAtMs = Date.now();
-updateBonusUI();
+   lastDailyAtMs = Date.now();
+      updateBonusUI();
 
 log.textContent = '🎉 Bonus ottenuto! (max 1 ogni 24h)';
-lastDailyAtMs = Date.now();
+  lastDailyAtMs = Date.now();
 updateBonusUI();
 bonusBtn.disabled = true;
 } catch (e) {
@@ -494,19 +494,18 @@ const seriesIs = (c, v) => String(c.series ?? '').trim() === v;
 
 // Definizione pacchetti (usa SOLO series: "Wonderkid" / "Tots")
 const PACKS = {
-random:    { key:'random',    label:'Random',    cost:1000, back:'Deck%20back%20ORO.png',
-filter: c => true },
-wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1800, back:'Deck%20back%20wonderkid.png',
-filter: c => seriesIs(c, 'Wonderkid') },
-tots:      { key:'tots',      label:'Tots',      cost:1400, back:'Deck%20back%20Tots.png',
-filter: c => seriesIs(c, 'Tots') },
-f1:        { key:'f1',        label:'F1',        cost:1600, back:'f1%20pack.png',
-filter: c => seriesIs(c, 'F1') },
+  random:    { key:'random',    label:'Random',    cost:1, back:'random%20pack.png',
+    filter: c => true },
+  wonderkid: { key:'wonderkid', label:'Wonderkid', cost:1, back:'Deck%20back%20wonderkid.png',
+    filter: c => seriesIs(c, 'Wonderkid') },
+  tots:      { key:'tots',      label:'Tots',      cost:1, back:'Deck%20back%20Tots.png',
+    filter: c => seriesIs(c, 'Tots') },
+  f1:        { key:'f1',        label:'F1',        cost:1, back:'f1%20pack.png',
+    filter: c => seriesIs(c, 'F1') },
 
-// 👇 NUOVO: pacchetto sempre apribile e senza salvataggio
-  test:      { key:'test',      label:'Test Gratuito', cost:0, back:'Deck%20back%20ORO.png',
+  // 👇 NUOVO: pacchetto sempre apribile e senza salvataggio
   test:      { key:'test',      label:'Test Gratuito', cost:0, back:'Deck%20back%20BATMAN.png',
-filter: c => true, test:true }
+    filter: c => true, test:true }
 };
 
 const DEFAULT_PACK_KEY = 'random';
@@ -608,11 +607,11 @@ btn.className='choice';
 btn.setAttribute('data-pack',p.key);
 btn.setAttribute('aria-selected', String(p.key===this.currentPackKey));
 btn.innerHTML = `
-         <div class="prev" style="background-image:url('${p.back}')"></div>
-         <div class="meta">
-           <span class="name">${p.label}</span>
-           <span class="price">Costo: ${p.cost}</span>
-         </div>`;
+          <div class="prev" style="background-image:url('${p.back}')"></div>
+          <div class="meta">
+            <span class="name">${p.label}</span>
+            <span class="price">Costo: ${p.cost}</span>
+          </div>`;
 btn.addEventListener('click', ()=>{
 this.currentPackKey = p.key;
 this.updatePrice();
@@ -733,31 +732,31 @@ const isTest = !!(PACKS[this.currentPackKey] && PACKS[this.currentPackKey].test)
 // 🔐 Login + 💳 wallet + ➖ 1 punto (solo se NON è test)
 let newPts;
 if (!isTest) {
-try {
-const u = firebase.auth().currentUser;
-if (!u || u.isAnonymous) {
-await ensureGoogleUser();          // popup / redirect se serve
-}
-await ensureWallet10();              // crea doc punti se manca
-newPts = await debitOnePointOrThrow(); // ← SCALA 1 punto qui
-this.$log.textContent = `✅ Punto scalato. Punti rimasti: ${newPts}`;
-} catch (e) {
-if (e.message === 'redirecting') return; // il redirect riprenderà dopo
-if (e.message === 'login-required') {
-this.$log.textContent = '🔐 Accedi con Google per aprire un pacchetto.';
-} else if (e.message === 'no-points') {
-this.$log.textContent = '😕 Punti esauriti.';
+  try {
+    const u = firebase.auth().currentUser;
+    if (!u || u.isAnonymous) {
+      await ensureGoogleUser();          // popup / redirect se serve
+    }
+    await ensureWallet10();              // crea doc punti se manca
+    newPts = await debitOnePointOrThrow(); // ← SCALA 1 punto qui
+    this.$log.textContent = `✅ Punto scalato. Punti rimasti: ${newPts}`;
+  } catch (e) {
+    if (e.message === 'redirecting') return; // il redirect riprenderà dopo
+    if (e.message === 'login-required') {
+      this.$log.textContent = '🔐 Accedi con Google per aprire un pacchetto.';
+    } else if (e.message === 'no-points') {
+      this.$log.textContent = '😕 Punti esauriti.';
+    } else {
+      this.$log.textContent = '⚠️ Errore durante la scalatura punti.';
+      console.error(e);
+    }
+    BTN.disabled = false;
+    SHARE.disabled = true;
+    return;
+  }
 } else {
-this.$log.textContent = '⚠️ Errore durante la scalatura punti.';
-console.error(e);
-}
-BTN.disabled = false;
-SHARE.disabled = true;
-return;
-}
-} else {
-// 🧪 Modalità test: nessun login, nessun addebito
-this.$log.textContent = '🧪 Modalità test: nessun punto scalato e nessun salvataggio.';
+  // 🧪 Modalità test: nessun login, nessun addebito
+  this.$log.textContent = '🧪 Modalità test: nessun punto scalato e nessun salvataggio.';
 }
 
 this.$log.textContent='Preparazione pacchetto…';
@@ -812,19 +811,19 @@ chosen.sort((a,b)=>rarityRank[a.rarity]-rarityRank[b.rarity]);
 this.showStage(chosen);
 
 if (!isTest) {
-try {
-await saveInventario(chosen);
-this.$log.innerHTML = `✅ Pacchetto salvato. Punti rimasti: <b>${newPts}</b>. <a href="my-cards.html">Vai alle mie carte →</a>`;
-} catch (e) {
-if (e.message === 'login-required') {
-this.$log.textContent = '🔒 Accedi con Google per salvare le carte in "Le mie carte".';
+  try {
+    await saveInventario(chosen);
+    this.$log.innerHTML = `✅ Pacchetto salvato. Punti rimasti: <b>${newPts}</b>. <a href="my-cards.html">Vai alle mie carte →</a>`;
+  } catch (e) {
+    if (e.message === 'login-required') {
+      this.$log.textContent = '🔒 Accedi con Google per salvare le carte in "Le mie carte".';
+    } else {
+      this.$log.textContent = '⚠️ Errore nel salvataggio. Riprova.';
+      console.error(e);
+    }
+  }
 } else {
-this.$log.textContent = '⚠️ Errore nel salvataggio. Riprova.';
-console.error(e);
-}
-}
-} else {
-this.$log.textContent = '🧪 Pacchetto di test: carte NON aggiunte alla tua collezione.';
+  this.$log.textContent = '🧪 Pacchetto di test: carte NON aggiunte alla tua collezione.';
 }
 
 
