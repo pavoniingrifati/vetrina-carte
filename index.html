@@ -340,7 +340,11 @@ main.wrap{ margin-top: 8px; }
         <option>MC</option><option>CC</option><option>TRQ</option>
         <option>AS</option><option>AD</option><option>ATT</option>
       </select>
-      <div class="range" title="Valutazione minima">⭐ Min: <input id="fRating" type="range" min="0" max="5" value="0" step="1" /> <span id="fRatingVal">0</span></div>
+     <select id="fSeries" aria-label="Serie">
+  <option value="">Tutte le serie</option>
+  <!-- le opzioni verranno aggiunte via JS in base al cards.json -->
+</select>
+
     </div>
   </div>
 </header>
@@ -454,6 +458,24 @@ async function loadCards(){
     applyFilters();
   }
 }
+function populateSeriesOptions(){
+  const sel = document.getElementById('fSeries');
+  if(!sel || !Array.isArray(CARDS)) return;
+
+  const seriesSet = new Set(
+    CARDS.map(c => c && c.series).filter(Boolean)
+  );
+  const list = Array.from(seriesSet).sort((a,b)=> a.localeCompare(b));
+
+  // ricrea le option (mantiene "Tutte le serie" come prima opzione)
+  const first = sel.querySelector('option[value=""]')?.outerHTML || '<option value="">Tutte le serie</option>';
+  sel.innerHTML = first + list.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+finally{
+  document.getElementById('cardsCount').textContent = "Carte disponibili: " + CARDS.length;
+  populateSeriesOptions();   // << aggiunto
+  applyFilters();
+}
 
 /* ⭐⭐ stelle: tipo button + prevenzione submit */
 function renderStars(container, value, onRate){
@@ -502,6 +524,48 @@ function clearGridSubs(){
   GRID_UNSUBS = [];
 }
 
+function applyFilters(){
+  const q      = $('#q').value.trim().toLowerCase();
+  const game   = $('#fGame').value;
+  const rarity = $('#fRarity').value;
+  const role   = $('#fRole').value;
+  const series = $('#fSeries').value;     // << nuovo
+
+  let items = CARDS.map(c => ({ ...c, rating: avg(loadRatings(c.id)) }));
+
+  if (CURRENT_TAB === 'favs') {
+    const favSet = new Set(loadFavs());
+    items = items.filter(c => favSet.has(c.id));
+  }
+  if (q)      items = items.filter(c => (c.name + " " + c.series + " " + (c.text||'')).toLowerCase().includes(q));
+  if (game)   items = items.filter(c => c.game === game);
+  if (rarity) items = items.filter(c => {
+                if (rarity === 'Oggetti') return isOggettoRarity(c.rarity);
+                return c.rarity === rarity;
+              });
+  if (role)   items = items.filter(c => c.role === role);
+  if (series) items = items.filter(c => c.series === series);  // << nuovo
+
+  // Ordine fisso per nome (abbiamo rimosso "Ordina")
+  items.sort((a,b) => a.name.localeCompare(b.name));
+
+  // Griglia iniziale casuale se nessun filtro è attivo
+  if (CURRENT_TAB === 'all' && noFiltersActive()) {
+    items = items.slice().sort(() => Math.random() - 0.5).slice(0, 8);
+  }
+
+  LAST_ITEMS = items.slice();
+  renderGrid(items);
+}
+function noFiltersActive(){
+  return (
+    !$('#q').value &&
+    !$('#fGame').value &&
+    !$('#fRarity').value &&
+    !$('#fRole').value &&
+    !$('#fSeries').value         // << nuovo
+  );
+}
 
 
   let items = CARDS.map(c=>({ ...c, rating: avg(loadRatings(c.id)) }));
@@ -518,7 +582,7 @@ function clearGridSubs(){
     });
   }
   if(role){ items = items.filter(c=> c.role===role); }
-  if(minR>0){ items = items.filter(c=> Math.round(c.rating) >= minR); }
+
 
   items.sort((a,b)=>{
     if(sort==='rating') return (b.rating||0) - (a.rating||0);
