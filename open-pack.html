@@ -154,6 +154,8 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 <span class="pill" id="pointsBadge">Punti: —</span>
 <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
 <a href="https://pavoniingrifati.github.io/vetrina-carte/my-cards" class="btn" id="myCardsBtn">🗂️ Le mie carte</a>
+<input id="codeInput" class="inputLike" placeholder="🎟️ Inserisci codice" style="max-width:220px">
+<button id="redeemBtn" class="btn">✅ Riscatta</button>
 <button id="shareBtn" class="btn" disabled>🔗 Condividi pacchetto</button>
 <button id="bonusBtn" class="btn">🎁 Ottieni 1 punto</button>
 <a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Torna alla Home</a>
@@ -441,6 +443,100 @@ const now = firebase.firestore.FieldValue.serverTimestamp();
 // 🚀 +1 punto (il blocco delle 24h lo fanno le REGOLE Firestore)
 tx.update(ref, { points: pts + 1, lastDailyAt: now, updatedAt: now });
 });
+
+
+  // 👉 RISCATTO CODICI (metti questo subito dopo il blocco bonusBtn)
+const codeInput = document.getElementById('codeInput');
+const redeemBtn = document.getElementById('redeemBtn');
+
+if (redeemBtn) {
+  redeemBtn.addEventListener('click', async () => {
+    const log = document.getElementById('log');
+    try {
+      // login + wallet
+      let u = firebase.auth().currentUser;
+      if (!u || u.isAnonymous) u = await ensureGoogleUser();
+      await ensureWallet10();
+
+      const raw = (codeInput?.value || '').trim();
+      if (!raw) { log.textContent = 'ℹ️ Inserisci un codice.'; return; }
+      const codeId = raw.toUpperCase();
+
+      const codeRef = db.collection('codes').doc(codeId);
+      const userRef = db.collection('users').doc(u.uid);
+      const redemptionRef = userRef.collection('redemptions').doc(codeId);
+
+      redeemBtn.disabled = true;
+
+      const resultPoints = await db.runTransaction(async (tx) => {
+        const [codeSnap, userSnap, redSnap] = await Promise.all([
+          tx.get(codeRef),
+          tx.get(userRef),
+          tx.get(redemptionRef)
+        ]);
+
+        if (!codeSnap.exists) throw new Error('invalid-code');
+        const c = codeSnap.data();
+
+        if (!c.active) throw new Error('inactive-code');
+        const now = firebase.firestore.Timestamp.now();
+        if (c.expiresAt && c.expiresAt.toMillis && c.expiresAt.toMillis() < now.toMillis()) {
+          throw new Error('expired-code');
+        }
+
+        const usesLeft = Number(c.usesLeft ?? 0);
+        if (usesLeft <= 0) throw new Error('no-uses-left');
+
+        const perUserLimit = Number(c.perUserLimit ?? 1);
+        const already = redSnap.exists ? Number(redSnap.data().count || 0) : 0;
+        if (already >= perUserLimit) throw new Error('user-limit');
+
+        const pts = Number(c.points ?? 0);
+        if (pts <= 0) throw new Error('no-points');
+
+        // aggiorna utente
+        const currentPts = userSnap.exists ? Number(userSnap.data().points || 0) : 0;
+        tx.update(userRef, {
+          points: currentPts + pts,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // marca redemption per questo utente
+        tx.set(redemptionRef, {
+          count: already + 1,
+          redeemedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        // decrementa usesLeft globale
+        tx.update(codeRef, {
+          usesLeft: usesLeft - 1,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        return pts;
+      });
+
+      log.textContent = `🎉 Codice valido! Hai ricevuto +${resultPoints} punti.`;
+      if (codeInput) codeInput.value = '';
+    } catch (e) {
+      console.error('[redeem]', e);
+      const map = {
+        'invalid-code': '❌ Codice non valido.',
+        'inactive-code': '⏸️ Codice non attivo.',
+        'expired-code': '⏰ Codice scaduto.',
+        'no-uses-left': '🚫 Codice esaurito.',
+        'user-limit': '🙅‍♂️ Hai già usato questo codice.',
+        'no-points': '⚠️ Codice senza punti.',
+        'permission-denied': '🔒 Operazione non permessa.'
+      };
+      const msg = map[e?.message] || '⚠️ Problema nel riscatto.';
+      log.textContent = msg;
+    } finally {
+      redeemBtn.disabled = false;
+    }
+  });
+}
+
 
    lastDailyAtMs = Date.now();
       updateBonusUI();
