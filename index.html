@@ -268,7 +268,7 @@ body.modal-open { overscroll-behavior: contain }
   flex-wrap:nowrap;
 }
 .actions-row .pill{
-  padding:10px 12px;              /* più compatto */
+  padding:10px 12px;
   border-radius: 999px;
   line-height:1;
 }
@@ -277,14 +277,13 @@ body.modal-open { overscroll-behavior: contain }
 @media (max-width: 600px){
   #authBox{ gap:8px; }
   .actions-row .pill{ padding:9px 10px; font-size: 14px; }
-  .pill.pack-btn{ margin:0; box-shadow:none; } /* niente extra-margin/shadow in header */
+  .pill.pack-btn{ margin:0; box-shadow:none; }
 }
 
 /* Evita sovrapposizione con le carte (header sticky + extra margine sotto) */
 header{ position: sticky; top: 0; }
 main.wrap{ margin-top: 8px; }
 
-  
 </style>
 </head>
 
@@ -340,11 +339,10 @@ main.wrap{ margin-top: 8px; }
         <option>MC</option><option>CC</option><option>TRQ</option>
         <option>AS</option><option>AD</option><option>ATT</option>
       </select>
-     <select id="fSeries" aria-label="Serie">
-  <option value="">Tutte le serie</option>
-  <!-- le opzioni verranno aggiunte via JS in base al cards.json -->
-</select>
-
+      <select id="fSeries" aria-label="Serie">
+        <option value="">Tutte le serie</option>
+        <!-- le opzioni verranno aggiunte via JS in base al cards.json -->
+      </select>
     </div>
   </div>
 </header>
@@ -419,7 +417,7 @@ main.wrap{ margin-top: 8px; }
   </article>
 </template>
 
-<!-- ====== SCRIPT (identico, solo fix minori per mobile) ====== -->
+<!-- ====== SCRIPT ====== -->
 <script>
 const $ = sel => document.querySelector(sel);
 const esc = (s='') => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -449,15 +447,16 @@ async function loadCards(){
   }catch(e){
     console.error('[ERRORE CARICAMENTO CARTE]', e);
     CARDS = [];
-  }
-  finally{
+  } finally {
     // 🔹 Aggiorna il numero di carte disponibili
-    document.getElementById('cardsCount').textContent =
-      "Carte disponibili: " + CARDS.length;
-
+    document.getElementById('cardsCount').textContent = "Carte disponibili: " + CARDS.length;
+    // 🔹 Popola il filtro "Series" in base a cards.json
+    populateSeriesOptions();
+    // 🔹 Applica i filtri
     applyFilters();
   }
 }
+
 function populateSeriesOptions(){
   const sel = document.getElementById('fSeries');
   if(!sel || !Array.isArray(CARDS)) return;
@@ -470,11 +469,6 @@ function populateSeriesOptions(){
   // ricrea le option (mantiene "Tutte le serie" come prima opzione)
   const first = sel.querySelector('option[value=""]')?.outerHTML || '<option value="">Tutte le serie</option>';
   sel.innerHTML = first + list.map(s => `<option value="${s}">${s}</option>`).join('');
-}
-finally{
-  document.getElementById('cardsCount').textContent = "Carte disponibili: " + CARDS.length;
-  populateSeriesOptions();   // << aggiunto
-  applyFilters();
 }
 
 /* ⭐⭐ stelle: tipo button + prevenzione submit */
@@ -514,7 +508,13 @@ function getQty(c){
 }
 function isOggettoRarity(r){ return r === 'Oggetto' || r === 'Oggetti'; }
 function noFiltersActive(){
-  return (!$('#q').value && !$('#fGame').value && !$('#fRarity').value && !$('#fRole').value && String($('#fRating').value) === '0');
+  return (
+    !$('#q').value &&
+    !$('#fGame').value &&
+    !$('#fRarity').value &&
+    !$('#fRole').value &&
+    !$('#fSeries').value
+  );
 }
 
 let LAST_ITEMS = [];
@@ -529,7 +529,7 @@ function applyFilters(){
   const game   = $('#fGame').value;
   const rarity = $('#fRarity').value;
   const role   = $('#fRole').value;
-  const series = $('#fSeries').value;     // << nuovo
+  const series = $('#fSeries').value;
 
   let items = CARDS.map(c => ({ ...c, rating: avg(loadRatings(c.id)) }));
 
@@ -544,53 +544,13 @@ function applyFilters(){
                 return c.rarity === rarity;
               });
   if (role)   items = items.filter(c => c.role === role);
-  if (series) items = items.filter(c => c.series === series);  // << nuovo
+  if (series) items = items.filter(c => c.series === series);
 
   // Ordine fisso per nome (abbiamo rimosso "Ordina")
   items.sort((a,b) => a.name.localeCompare(b.name));
 
   // Griglia iniziale casuale se nessun filtro è attivo
   if (CURRENT_TAB === 'all' && noFiltersActive()) {
-    items = items.slice().sort(() => Math.random() - 0.5).slice(0, 8);
-  }
-
-  LAST_ITEMS = items.slice();
-  renderGrid(items);
-}
-function noFiltersActive(){
-  return (
-    !$('#q').value &&
-    !$('#fGame').value &&
-    !$('#fRarity').value &&
-    !$('#fRole').value &&
-    !$('#fSeries').value         // << nuovo
-  );
-}
-
-
-  let items = CARDS.map(c=>({ ...c, rating: avg(loadRatings(c.id)) }));
-  if(CURRENT_TAB==='favs'){
-    const favSet = new Set(loadFavs());
-    items = items.filter(c=> favSet.has(c.id));
-  }
-  if(q){ items = items.filter(c=> (c.name+" "+c.series+" "+(c.text||'')).toLowerCase().includes(q)); }
-  if(game){ items = items.filter(c=> c.game===game); }
-  if(rarity){
-    items = items.filter(c=>{
-      if (rarity==='Oggetti') return isOggettoRarity(c.rarity);
-      return c.rarity===rarity;
-    });
-  }
-  if(role){ items = items.filter(c=> c.role===role); }
-
-
-  items.sort((a,b)=>{
-    if(sort==='rating') return (b.rating||0) - (a.rating||0);
-    if(sort==='role') return (a.role||'').localeCompare(b.role||'');
-    return a.name.localeCompare(b.name);
-  });
-
-  if (CURRENT_TAB==='all' && noFiltersActive()) {
     items = items.slice().sort(() => Math.random() - 0.5).slice(0, 8);
   }
 
@@ -689,7 +649,10 @@ async function openModal(card){
   // 🔥 cornice infuocata nella modale se onFire
   dlgImg.classList.toggle('on-fire', !!card.onFire);
 
-  dlgTags.innerHTML=''; const _q=getQty(card); if(_q!=null){ const s=document.createElement('span'); s.className='tag'; s.textContent=`Quantità: ${_q}`; dlgTags.appendChild(s); } (card.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; dlgTags.appendChild(s)});
+  dlgTags.innerHTML='';
+  const _q=getQty(card);
+  if(_q!=null){ const s=document.createElement('span'); s.className='tag'; s.textContent=`Quantità: ${_q}`; dlgTags.appendChild(s); }
+  (card.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; dlgTags.appendChild(s)});
 
   if (card.onFire) {
     const s = document.createElement('span');
@@ -827,6 +790,9 @@ commentsClearBtn.addEventListener('click', async ()=>{
   }
 });
 
+// 🔁 Event listeners per i filtri (inclusa "Series")
+['q','fGame','fRarity','fRole','fSeries']
+  .forEach(id => document.getElementById(id).addEventListener('input', applyFilters));
 
 updateFavCount();
 loadCards();
@@ -1008,7 +974,7 @@ window._subscribeModalRating = function(cardId, onAvg){
         const avg = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
         onAvg(avg);
       },
-      err=>{ console.error('[ratings onSnapshot]', err); }
+      err=>{ console.error('[comments onSnapshot]', err); }
     );
 };
 
