@@ -285,22 +285,38 @@
       return snap.exists ? (snap.data().points || 0) : 0;
     }
     async function debitPackCostOrThrow() {
+      // Effettua l'addebito di PACK_COST punti in modo resiliente.
+      // - Se il wallet non esiste, lo crea con 10 punti.
+      // - Ritorna i punti rimanenti.
+
       const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
       if (!uid) throw new Error('login-required');
       const ref = db.collection('users').doc(uid);
 
-      return db.runTransaction(async (tx) => {
-        const snap = await tx.get(ref);
-        if (!snap.exists) throw new Error('wallet-missing');
-        const pts = Number(snap.data().points || 0);
-        if (pts < PACK_COST) throw new Error('no-points');
-        const now = firebase.firestore.FieldValue.serverTimestamp();
-        tx.update(ref, { points: pts - PACK_COST, updatedAt: now });
-        return pts - PACK_COST;
-      }).catch((e) => {
+      try {
+        const left = await db.runTransaction(async (tx) => {
+          const snap = await tx.get(ref);
+          let data = snap.exists ? (snap.data() || {}) : null;
+          if (!data) {
+            // crea wallet base
+            data = { points: 10, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+            tx.set(ref, data, { merge: true });
+          }
+          const pts = Number(data.points || 0);
+          if (pts < PACK_COST) {
+            const err = new Error('no-points'); err.code = 'no-points'; throw err;
+          }
+          const now = firebase.firestore.FieldValue.serverTimestamp();
+          tx.set(ref, { points: pts - PACK_COST, updatedAt: now }, { merge: true });
+          return pts - PACK_COST;
+        });
+        return left;
+      } catch (e) {
         console.error('[debitPackCostOrThrow]', e && (e.code || e.message), e);
+        // Rilancia con un code specifico per la UI
+        if (!e.code) e.code = 'unknown';
         throw e;
-      });
+      }
     }
 
     // === Badge punti ===
@@ -641,14 +657,16 @@
         document.getElementById('log').textContent = `✅ ${PACK_COST} punti scalati. Punti rimasti: ${newPts}`;
       } catch (e) {
         if (e.message === 'redirecting') return;
-        if (e.message === 'login-required') {
-          document.getElementById('log').textContent = '🔐 Accedi con Google per aprire un pacchetto.';
-        } else if (e.message === 'no-points') {
-          document.getElementById('log').textContent = '😕 Punti insufficienti.';
-        } else {
-          document.getElementById('log').textContent = '⚠️ Errore durante la scalatura punti.';
-          console.error(e);
-        }
+        const code = e.code || e.message || 'unknown';
+        let msg = '⚠️ Errore durante la scalatura punti.';
+        if (code === 'login-required') msg = '🔐 Accedi con Google per aprire un pacchetto.';
+        else if (code === 'no-points') msg = '😕 Punti insufficienti (costo: ' + PACK_COST + ').';
+        else if (code === 'permission-denied') msg = '⛔ Permessi Firestore insufficienti per scrivere sul wallet.';
+        else if (code === 'unavailable') msg = '📡 Sei offline o Firestore non è raggiungibile.';
+        else if (code === 'cancelled' || code === 'aborted') msg = '⏳ Transazione annullata. Riprova tra poco.';
+        else if (code === 'failed-precondition') msg = '⚙️ Versione offline non attiva. Ricarica la pagina.';
+        document.getElementById('log').textContent = msg + ' (' + code + ')';
+        console.error('[OPEN BTN ERROR]', code, e);
         BTN.disabled = false; SHARE.disabled = true;
         return;
       }
