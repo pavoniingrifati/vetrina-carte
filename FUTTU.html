@@ -138,14 +138,13 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
         <a href="https://pavoniingrifati.github.io/vetrina-carte/my-cards" class="btn" id="myCardsBtn">🗂️ Le mie carte</a>
         <button id="shareBtn" class="btn" disabled>🔗 Condividi pacchetto</button>
         <button id="bonusBtn" class="btn">🎁 Ottieni 1 punto</button>
+        <button id="resetPacksBtn" class="btn">♻️ Reset pacchetti</button>
         <a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Torna alla Home</a>
       </div>
     </div>
 
     <div class="toolbar">
-      <span class="pill" id="fairnessNote">📦 Wonderkid (3x) / Gotham Free (1x)</span>
-       <button id="resetPacksBtn" class="btn">♻️ Reset pacchetti</button>
-
+      <span class="pill" id="fairnessNote">📦 Pacchetti finiti • Wonderkid (3x) / Gotham Free (1x) • per game: Gotham City</span>
     </div>
 
     <!-- Game picker -->
@@ -237,21 +236,18 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid','Gotham Free','Tots'];
+const VALID_GAMES = ['Wonderkid','Gotham Free'];
 const PACK_BACK_BY_GAME = {
   'Wonderkid': 'Deck%20back%20wonderkid.png',
   'Gotham Free': 'Deck%20back%20BATMAN.png'
-  'Gotham Free': 'Deck%20back%20Tots.png'
 };
 const PACK_COST_PER_GAME = {
   'Wonderkid': 1800,
   'Gotham Free': 0
-  'Tots': 0
 };
 const PACK_SIZE_PER_GAME = {
   'Wonderkid': 3,
   'Gotham Free': 1
-  'Tots':3
 };
 const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
 
@@ -460,9 +456,9 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Wonderkid',
-  pools:    { 'Wonderkid': [], 'Gotham Free': [], 'Tots': [] },
-  packs:    { 'Wonderkid': [], 'Gotham Free': [], 'Tots': [] },
-  cursor:   { 'Wonderkid': 0,   'Gotham Free': 0,   'Tots': 0 }
+  pools:    { 'Wonderkid': [], 'Gotham Free': [] },
+  packs:    { 'Wonderkid': [], 'Gotham Free': [] },
+  cursor:   { 'Wonderkid': 0,   'Gotham Free': 0 }
 };
 
 function shuffleInPlace(a){
@@ -503,12 +499,10 @@ async function loadCards(){
     // Pool per game
     GAME_STATE.pools['Wonderkid'] = cleaned.filter(c => norm(c.game)==='gotham city' && norm(c.series)==='wonderkid');
     GAME_STATE.pools['Gotham Free'] = cleaned.filter(c => norm(c.game)==='gotham city'); // tutte le Gotham City
-    GAME_STATE.pools['Tots'] = cleaned.filter(c => norm(c.game)==='gotham city' && norm(c.series)==='tots');
 
     // Pacchetti
     GAME_STATE.packs['Wonderkid']  = buildFinitePacks(GAME_STATE.pools['Wonderkid'],  PACK_SIZE_PER_GAME['Wonderkid']);
     GAME_STATE.packs['Gotham Free'] = buildFinitePacks(GAME_STATE.pools['Gotham Free'], PACK_SIZE_PER_GAME['Gotham Free']);
-    GAME_STATE.packs['Tots']  = buildFinitePacks(GAME_STATE.pools['Tots'],  PACK_SIZE_PER_GAME['Wonderkid']);
 
     // Ripristina cursori
     try{
@@ -524,7 +518,7 @@ async function loadCards(){
     applyPackVisual();
     updateOpenBtnEnabled();
     document.getElementById('log').textContent =
-      `Caricate ${GAME_STATE.pools['Wonderkid'].length} (Wonderkid) e ${GAME_STATE.pools['Gotham Free'].length} (Gotham Free) e ${GAME_STATE.pools['Tots'].length} (Tots) carte.`;
+      `Caricate ${GAME_STATE.pools['Wonderkid'].length} (Wonderkid) e ${GAME_STATE.pools['Gotham Free'].length} (Gotham Free) carte.`;
 
   }catch(err){
     console.error('Errore cards.json:', err?.message||err);
