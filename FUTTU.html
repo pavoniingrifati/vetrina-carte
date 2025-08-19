@@ -128,8 +128,8 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 <div class="title">
 <div>
 <h1>FUTTU – Pack Unico</h1>
-<div class="subtitle">Pack unico → scegli il <b>game</b> → 3 carte (tutte diverse) → salvataggio su "Le mie carte".</div>
-</div>
+<div class="subtitle">Pacchetto Wonderkid (Gotham City) → 3 carte (tutte diverse) → salvataggio su "Le mie carte".</div>
+
 <span class="pill" id="pricePill">💰 Costo: 100</span>
 <span class="pill" id="pointsBadge">Punti: —</span>
 <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
@@ -284,48 +284,42 @@ const snap = await db.collection('users').doc(uid).get();
 return snap.exists ? (snap.data().points || 0) : 0;
 }
 async function debitPackCostOrThrow() {
-      // Effettua l'addebito di PACK_COST punti in modo resiliente.
-      // - Se il wallet non esiste, lo crea con 10 punti.
-      // - Ritorna i punti rimanenti.
+  const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
+  if (!uid) throw new Error('login-required');
+  const ref = db.collection('users').doc(uid);
 
-const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
-if (!uid) throw new Error('login-required');
-const ref = db.collection('users').doc(uid);
-
-      return db.runTransaction(async (tx) => {
+  try {
+    // Prova ad addebitare direttamente
+    return await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw new Error('wallet-missing');
+      const pts = Number(snap.data().points || 0);
+      if (pts < PACK_COST) { const e = new Error('no-points'); e.code = 'no-points'; throw e; }
+      const now = firebase.firestore.FieldValue.serverTimestamp();
+      tx.update(ref, { points: pts - PACK_COST, updatedAt: now });
+      return pts - PACK_COST;
+    });
+  } catch (e) {
+    // Se il wallet manca, crealo e riprova una volta
+    if ((e && (e.code || e.message)) === 'wallet-missing') {
+      await db.runTransaction(async (tx) => {
         const snap = await tx.get(ref);
-        if (!snap.exists) throw new Error('wallet-missing');
-        const pts = Number(snap.data().points || 0);
-        if (pts < PACK_COST) throw new Error('no-points');
+        if (!snap.exists) {
+          tx.set(ref, { points: 10, createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        }
+      });
+      return await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        const pts = Number((snap.data() || {}).points || 0);
+        if (pts < PACK_COST) { const e2 = new Error('no-points'); e2.code = 'no-points'; throw e2; }
         const now = firebase.firestore.FieldValue.serverTimestamp();
         tx.update(ref, { points: pts - PACK_COST, updatedAt: now });
         return pts - PACK_COST;
-      }).catch((e) => {
-      try {
-        const left = await db.runTransaction(async (tx) => {
-          const snap = await tx.get(ref);
-          let data = snap.exists ? (snap.data() || {}) : null;
-          if (!data) {
-            // crea wallet base
-            data = { points: 10, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
-            tx.set(ref, data, { merge: true });
-          }
-          const pts = Number(data.points || 0);
-          if (pts < PACK_COST) {
-            const err = new Error('no-points'); err.code = 'no-points'; throw err;
-          }
-          const now = firebase.firestore.FieldValue.serverTimestamp();
-          tx.set(ref, { points: pts - PACK_COST, updatedAt: now }, { merge: true });
-          return pts - PACK_COST;
-        });
-        return left;
-      } catch (e) {
-console.error('[debitPackCostOrThrow]', e && (e.code || e.message), e);
-        // Rilancia con un code specifico per la UI
-        if (!e.code) e.code = 'unknown';
-throw e;
       });
-      }
+    }
+    if (!e.code) e.code = e.message || 'unknown';
+    throw e;
+  }
 }
 
 // === Badge punti ===
@@ -506,7 +500,7 @@ const name=String(c.name||''); const rarity=String(c.rarity||''); const img=Stri
 const series=String(c.series||''); const game=String(c.game||'');
 if(!name||!rarity||!img) continue;
 if(ids.has(id)) continue; ids.add(id);
-if(!VALID_GAMES.includes(game)) continue; // solo Fantaballa FC / Gotham City
+if (!(game === 'Gotham City' && series === 'Wonderkid')) continue;
 cleaned.push({id,name,rarity,img,series,game});
 }
 if(!cleaned.length) throw new Error('Nessuna carta valida in cards.json');
@@ -519,8 +513,8 @@ GAME_STATE.packs['Wonderkid'] = buildFinitePacks(GAME_STATE.pools['Wonderkid']);
 try{
 const saved = JSON.parse(localStorage.getItem('futtu_cursors')||'{}');
 if (saved && typeof saved==='object'){
-GAME_STATE.cursor['Fantaballa FC'] = Number(saved['Fantaballa FC']||0);
-GAME_STATE.cursor['Gotham City']   = Number(saved['Gotham City']||0);
+GAME_STATE.cursor['Wonderkid'] = Number(saved['Wonderkid'] || 0);
+
 }
 }catch{}
 renderGamePicker();
@@ -688,8 +682,8 @@ return;
 }
 
 // Carica carte (se non già)
-if (!GAME_STATE.packs['Fantaballa FC'].length && !GAME_STATE.packs['Gotham City'].length){
-await loadCards();
+if (!GAME_STATE.packs['Wonderkid'].length){
+  await loadCards();
 }
 
 // Verifica disponibilità
