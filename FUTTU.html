@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>FUT Live Tik Tok</title>
-<meta name="description" content="Pack unico diviso per 'game' (Gotham City). Pacchetti finiti: Wonderkid (3 carte), Gotham Free (1 carta), Gotham TOTS Free (3 carte). Login e salvataggio inventario invariati." />
+<meta name="description" content="Pack unico diviso per 'game' (Gotham City). Pacchetti finiti: Wonderkid (3 carte), Gotham Free (1 carta), Gotham Tots (3 carte). Login e salvataggio inventario invariati." />
 
 <!-- Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -144,7 +144,7 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
       <div>
         <h1>FUTTU – Pack Unico</h1>
         <div class="subtitle">
-          Wonderkid (3 carte, 1800 pt), Gotham Free (1 carta, gratis), Gotham TOTS Free (3 carte, gratis), Legend (3 carte, gratis, 1/20 con Leggendaria) – tutte <b>Gotham City</b>.
+          Pacchetti <b>Fantaballa FC</b> e <b>Gotham City</b> .
         </div>
 
         <span class="pill" id="pricePill">💰 Costo: —</span>
@@ -158,7 +158,7 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
     </div>
 
     <div class="toolbar">
-      <span class="pill" id="fairnessNote">📦 Pacchetti finiti • Wonderkid (3x) / Gotham Free (1x) / Gotham TOTS Free (3x) / Legend (3x)</span>
+      <span class="pill" id="fairnessNote">📦 Pacchetti disponibili:</span>
       <button id="resetPacksBtn" class="btn">♻️ Reset pacchetti</button>
     </div>
 
@@ -251,23 +251,23 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid','Gotham Free','Gotham TOTS Free', 'Legend'];
+const VALID_GAMES = ['Wonderkid','Gotham Free','Gotham Tots', 'Legend'];
 const PACK_BACK_BY_GAME = {
   'Wonderkid': 'Deck%20back%20wonderkid.png',
   'Gotham Free': 'patatrine.png',
-  'Gotham TOTS Free': 'Deck%20back%20Tots.png',
+  'Gotham Tots': 'Deck%20back%20Tots.png',
   'Legend': 'Back%20legend.png'
 };
 const PACK_COST_PER_GAME = {
   'Wonderkid': 1800,
   'Gotham Free': 0,
-  'Gotham TOTS Free': 0,
+  'Gotham Tots': 0,
   'Legend': 0
 };
 const PACK_SIZE_PER_GAME = {
   'Wonderkid': 3,
   'Gotham Free': 1,
-  'Gotham TOTS Free': 3,
+  'Gotham Tots': 3,
   'Legend': 3
 };
 const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
@@ -477,9 +477,9 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Wonderkid',
-  pools:    { 'Wonderkid': [], 'Gotham Free': [], 'Gotham TOTS Free': [], 'Legend': [] },
-  packs:    { 'Wonderkid': [], 'Gotham Free': [], 'Gotham TOTS Free': [], 'Legend': [] },
-  cursor:   { 'Wonderkid': 0,   'Gotham Free': 0,   'Gotham TOTS Free': 0,   'Legend': 0 }
+  pools:    { 'Wonderkid': [], 'Gotham Free': [], 'Gotham Tots': [], 'Legend': [] },
+  packs:    { 'Wonderkid': [], 'Gotham Free': [], 'Gotham Tots': [], 'Legend': [] },
+  cursor:   { 'Wonderkid': 0,   'Gotham Free': 0,   'Gotham Tots': 0,   'Legend': 0 }
 };
 
 function shuffleInPlace(a){
@@ -521,7 +521,7 @@ async function loadCards(){
     const isGotham = (x)=> norm(x)==='gotham city';
     GAME_STATE.pools['Wonderkid']      = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='wonderkid');
     GAME_STATE.pools['Gotham Free']    = cleaned.filter(c => isGotham(c.game)); // tutte le Gotham City
-    GAME_STATE.pools['Gotham TOTS Free']= cleaned.filter(c => isGotham(c.game) && norm(c.series)==='tots');
+    GAME_STATE.pools['Gotham Tots']= cleaned.filter(c => isGotham(c.game) && norm(c.series)==='tots');
 
     // Legend: Gotham City con rarità Rara/Epica/Ultra Rara/Leggendaria
     const legendPoolAll = cleaned.filter(c => (norm(c.game)==='gotham city') && ['rara','epica','ultra rara','leggendaria'].includes(norm(c.rarity)));
@@ -532,7 +532,7 @@ async function loadCards(){
     // Pacchetti
     GAME_STATE.packs['Wonderkid']       = buildFinitePacks(GAME_STATE.pools['Wonderkid'],       PACK_SIZE_PER_GAME['Wonderkid']);
     GAME_STATE.packs['Gotham Free']     = buildFinitePacks(GAME_STATE.pools['Gotham Free'],     PACK_SIZE_PER_GAME['Gotham Free']);
-    GAME_STATE.packs['Gotham TOTS Free']= buildFinitePacks(GAME_STATE.pools['Gotham TOTS Free'],PACK_SIZE_PER_GAME['Gotham TOTS Free']);
+    GAME_STATE.packs['Gotham Tots']= buildFinitePacks(GAME_STATE.pools['Gotham Tots'],PACK_SIZE_PER_GAME['Gotham Tots']);
 
     // Costruisci pacchetti Legend (base da non-leggendarie) e in ~1/20 inserisci una leggendaria
     const baseLegendPacks = buildFinitePacks(legendNonLegend, PACK_SIZE_PER_GAME['Legend']).map(p => p.slice(0, PACK_SIZE_PER_GAME['Legend']));
@@ -558,7 +558,7 @@ async function loadCards(){
     renderGamePicker();
     applyPackVisual();
     updateOpenBtnEnabled();
-    document.getElementById('log').textContent = `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length}, Gotham Free ${GAME_STATE.pools['Gotham Free'].length}, TOTS ${GAME_STATE.pools['Gotham TOTS Free'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}.`;
+    document.getElementById('log').textContent = `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length}, Gotham Free ${GAME_STATE.pools['Gotham Free'].length}, TOTS ${GAME_STATE.pools['Gotham Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}.`;
 
   }catch(err){
     console.error('Errore cards.json:', err?.message||err);
@@ -733,7 +733,7 @@ openBtn.addEventListener('click', async () => {
   }
 
   // Carica carte (se non già)
-  if (!GAME_STATE.packs['Wonderkid'].length && !GAME_STATE.packs['Gotham Free'].length && !GAME_STATE.packs['Gotham TOTS Free'].length){
+  if (!GAME_STATE.packs['Wonderkid'].length && !GAME_STATE.packs['Gotham Free'].length && !GAME_STATE.packs['Gotham Tots'].length){
     await loadCards();
   }
 
