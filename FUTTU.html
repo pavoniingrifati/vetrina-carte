@@ -174,7 +174,7 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 <div class="rays"></div>
 <div class="scene">
 <div class="face back">
-<img src=Deck%20back%20BATMAN.png" alt="Retro carta" loading="eager" decoding="async" />
+<img src="Deck%20back%20BATMAN.png" alt="Retro carta" loading="eager" decoding="async" />
 </div>
 <div class="face front">
 <span class="badge"></span>
@@ -502,13 +502,15 @@ const name=String(c.name||''); const rarity=String(c.rarity||''); const img=Stri
 const series=String(c.series||''); const game=String(c.game||'');
 if(!name||!rarity||!img) continue;
 if(ids.has(id)) continue; ids.add(id);
-if (!(game === 'Gotham City' && series === 'Wonderkid')) continue;
+if (!(norm(game) === 'gotham city' && norm(series) === 'wonderkid')) continue;
 cleaned.push({id,name,rarity,img,series,game});
 }
 if(!cleaned.length) throw new Error('Nessuna carta valida in cards.json');
 // Popola pool per game
 GAME_STATE.pools['Wonderkid'] = cleaned.filter(c =>
-  c.game === 'Gotham City' && c.series === 'Wonderkid'
+  norm(c.game) === 'gotham city' && norm(c.series) === 'wonderkid'
+);
+
 );
 GAME_STATE.packs['Wonderkid'] = buildFinitePacks(GAME_STATE.pools['Wonderkid']);
 // Ripristina cursori da localStorage
@@ -705,6 +707,12 @@ await delay(900); packArea.style.display='none';
 
 // Estrai il prossimo pacchetto finito
 let chosen = list[idx].slice();
+  if (!chosen || !chosen.length) {
+  document.getElementById('log').textContent = '⚠️ Nessuna carta nel pacchetto selezionato. Controlla il filtro Wonderkid/Gotham City in cards.json.';
+  BTN.disabled = false; SHARE.disabled = true;
+  return;
+}
+
 // Ordina per rarità (coerente con open pack originale)
 chosen.sort((a,b)=> (rarityRank[a.rarity]||0) - (rarityRank[b.rarity]||0) );
 
