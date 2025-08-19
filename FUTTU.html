@@ -508,6 +508,13 @@ async function loadCards(){
     GAME_STATE.pools['Gotham Free']    = cleaned.filter(c => isGotham(c.game)); // tutte le Gotham City
     GAME_STATE.pools['Gotham TOTS Free']= cleaned.filter(c => isGotham(c.game) && norm(c.series)==='tots');
 
+    // Legend: Gotham City con rarità Rara/Epica/Ultra Rara/Leggendaria
+    const legendPoolAll = cleaned.filter(c => (norm(c.game)==='gotham city') && ['rara','epica','ultra rara','leggendaria'].includes(norm(c.rarity)));
+    const legendNonLegend = legendPoolAll.filter(c => norm(c.rarity) !== 'leggendaria');
+    const legendOnlyLegend = legendPoolAll.filter(c => norm(c.rarity) === 'leggendaria');
+    GAME_STATE.pools['Legend'] = legendPoolAll;
+
+
     // Pacchetti
     GAME_STATE.packs['Wonderkid']       = buildFinitePacks(GAME_STATE.pools['Wonderkid'],       PACK_SIZE_PER_GAME['Wonderkid']);
     GAME_STATE.packs['Gotham Free']     = buildFinitePacks(GAME_STATE.pools['Gotham Free'],     PACK_SIZE_PER_GAME['Gotham Free']);
