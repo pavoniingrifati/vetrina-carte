@@ -1000,53 +1000,6 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
   </div>
 </div>
 
-// ——— RESET PACCHETTI (DEV/TEST) ———
-const resetBtn = document.getElementById('resetPacksBtn');
-if (resetBtn) {
-  resetBtn.addEventListener('click', async () => {
-    const game = GAME_STATE.selected || 'Wonderkid';
-
-    try {
-      if (!GAME_STATE.pools[game] || GAME_STATE.pools[game].length === 0) {
-        await loadCards();
-      }
-
-      // Ricrea i pacchetti completi e azzera il cursore
-      GAME_STATE.packs[game] = buildFinitePacks(GAME_STATE.pools[game], PACK_SIZE);
-      GAME_STATE.cursor[game] = 0;
-
-      // Salva su localStorage
-      try {
-        const saved = JSON.parse(localStorage.getItem('futtu_cursors') || '{}');
-        saved[game] = 0;
-        localStorage.setItem('futtu_cursors', JSON.stringify(saved));
-      } catch {}
-
-      // Ripristina interfaccia
-      const packArea = document.getElementById('packArea');
-      const stageWrap = document.getElementById('stageWrap');
-      const stage = document.getElementById('stage');
-      const shareBtn = document.getElementById('shareBtn');
-
-      if (packArea) packArea.style.display = '';
-      if (stageWrap) stageWrap.classList.remove('show');
-      if (stage) stage.innerHTML = '';
-      if (shareBtn) shareBtn.disabled = true;
-
-      renderGamePicker();
-      updateOpenBtnEnabled();
-
-      const totalPacks = (GAME_STATE.packs[game] || []).length;
-      document.getElementById('log').textContent =
-        `♻️ Reset riuscito: ${totalPacks}/${totalPacks} pacchetti disponibili.`;
-
-    } catch (e) {
-      console.error('[RESET PACKS]', e);
-      document.getElementById('log').textContent = '⚠️ Reset pacchetti non riuscito.';
-    }
-  });
-}
-
   
 <!-- Firebase (v8) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -1618,6 +1571,55 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   await loadCards();
   document.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !openBtn.disabled) openBtn.click() });
   document.getElementById('pack').addEventListener('click', ()=>{ if(!openBtn.disabled) openBtn.click() }, {passive:true});
+
+// ——— RESET PACCHETTI (DEV/TEST) ———
+const resetBtn = document.getElementById('resetPacksBtn');
+if (resetBtn) {
+  resetBtn.addEventListener('click', async () => {
+    const game = GAME_STATE.selected || 'Wonderkid';
+
+    try {
+      if (!GAME_STATE.pools[game] || GAME_STATE.pools[game].length === 0) {
+        await loadCards();
+      }
+
+      // Ricrea i pacchetti completi e azzera il cursore
+      GAME_STATE.packs[game] = buildFinitePacks(GAME_STATE.pools[game], PACK_SIZE);
+      GAME_STATE.cursor[game] = 0;
+
+      // Salva su localStorage
+      try {
+        const saved = JSON.parse(localStorage.getItem('futtu_cursors') || '{}');
+        saved[game] = 0;
+        localStorage.setItem('futtu_cursors', JSON.stringify(saved));
+      } catch {}
+
+      // Ripristina interfaccia
+      const packArea = document.getElementById('packArea');
+      const stageWrap = document.getElementById('stageWrap');
+      const stage = document.getElementById('stage');
+      const shareBtn = document.getElementById('shareBtn');
+
+      if (packArea) packArea.style.display = '';
+      if (stageWrap) stageWrap.classList.remove('show');
+      if (stage) stage.innerHTML = '';
+      if (shareBtn) shareBtn.disabled = true;
+
+      renderGamePicker();
+      updateOpenBtnEnabled();
+
+      const totalPacks = (GAME_STATE.packs[game] || []).length;
+      document.getElementById('log').textContent =
+        `♻️ Reset riuscito: ${totalPacks}/${totalPacks} pacchetti disponibili.`;
+
+    } catch (e) {
+      console.error('[RESET PACKS]', e);
+      document.getElementById('log').textContent = '⚠️ Reset pacchetti non riuscito.';
+    }
+  });
+}
+
+  
 });
 </script>
 </body>
