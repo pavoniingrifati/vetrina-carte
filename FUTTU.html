@@ -118,6 +118,21 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 
 @media(max-width:600px){.wrap{padding:12px} .stage{grid-template-columns:1fr}}
 </style>
+<style>
+/* ===== Legendary FX ===== */
+.legend-fx{position:fixed;inset:0;pointer-events:none;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.legend-fx .halo{position:absolute;width:40vmin;height:40vmin;border-radius:50%;box-shadow:0 0 30px 10px rgba(255,215,0,.6), 0 0 120px 40px rgba(255,140,0,.35), inset 0 0 60px rgba(255,255,255,.4);animation:legendHalo 1800ms ease-out forwards}
+.legend-fx .rays{position:absolute;width:70vmin;height:70vmin;background:conic-gradient(from 0deg, rgba(255,215,0,.0), rgba(255,215,0,.9), rgba(255,215,0,.0) 25%);mix-blend-mode:screen;filter:blur(2px);animation:legendRays 2200ms linear forwards}
+.legend-fx .burst{position:absolute;width:14vmin;height:14vmin;border-radius:50%;background:radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,215,0,.9) 45%, rgba(255,140,0,.0) 70%);animation:legendBurst 900ms cubic-bezier(.2,.8,.2,1) forwards}
+.legend-fx .title{position:relative;font-family:inherit;font-weight:900;letter-spacing:.2em;padding:.6em 1em;border-radius:1em;text-transform:uppercase;background:linear-gradient(90deg,#fff,#ffd700,#ffa500,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 12px rgba(255,215,0,.6);animation:legendTitle 1600ms ease-out forwards}
+.legend-fx .confetti{position:absolute;width:.8vmin;height:2.2vmin;opacity:0;will-change:transform,opacity;mix-blend-mode:screen}
+.legend-body-glow{box-shadow:inset 0 0 120vmax rgba(255,215,0,.05);}
+.card.legendaryPulse .front{box-shadow:0 0 12px rgba(255,215,0,.9), 0 0 28px rgba(255,140,0,.7)}
+@keyframes legendHalo{0%{transform:scale(.2);opacity:0}60%{opacity:1}100%{transform:scale(1.35);opacity:.0}}
+@keyframes legendRays{0%{transform:rotate(0deg) scale(.7);opacity:.0}40%{opacity:1}100%{transform:rotate(220deg) scale(1.15);opacity:0}}
+@keyframes legendBurst{0%{transform:scale(.2);opacity:0}70%{opacity:1}100%{transform:scale(2.6);opacity:0}}
+@keyframes legendTitle{0%{transform:translateY(20px);filter:blur(8px);opacity:0}60%{opacity:1;filter:blur(0)}100%{transform:translateY(0)}}
+</style>
 </head>
 <body>
 <div class="flash-line" id="flashLine" aria-hidden="true"></div>
@@ -663,6 +678,7 @@ function revealCard(n,d){
   const rank=rarityRank[d.rarity] ?? 0;
   addSparks(n,Math.min(6+rank*4,28));
   playByRarity(d.rarity);
+  if ((String(d.rarity||'').toLowerCase()==='leggendaria')) { n.classList.add('legendaryPulse'); }
 }
 function setDropIn(el,i,extra=0){ el.classList.add('drop'); setTimeout(()=>el.classList.add('in'),120*i+extra) }
 function showStage(cards){
@@ -744,6 +760,7 @@ openBtn.addEventListener('click', async () => {
 
   // Ordina per rarità (se 1 carta non cambia)
   chosen.sort((a,b)=> (rarityRank[a.rarity]||0) - (rarityRank[b.rarity]||0) );
+  if (chosen.some(c => (String(c.rarity||'').toLowerCase()==='leggendaria'))) { try{ triggerLegendFX(); }catch{} }
   showStage(chosen);
 
   // Avanza cursore e salva su localStorage
@@ -830,6 +847,17 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   document.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !openBtn.disabled) openBtn.click() });
   document.getElementById('pack').addEventListener('click', ()=>{ if(!openBtn.disabled) openBtn.click() }, {passive:true});
 });
+</script>
+<script>
+function triggerLegendFX(){
+  try{
+    const fx=document.createElement('div'); fx.className='legend-fx';
+    fx.innerHTML=`<div class="halo"></div><div class="rays"></div><div class="burst"></div><div class="title">LEGEND!</div>`;
+    document.body.appendChild(fx); document.body.classList.add('legend-body-glow');
+    const N=80; for(let i=0;i<N;i++){ const s=document.createElement('div'); s.className='confetti'; s.style.left=(Math.random()*100)+'vw'; s.style.top='-4vh'; s.style.background=`hsl(${Math.floor(40+Math.random()*40)} 100% 60%)`; s.style.opacity='0.9'; fx.appendChild(s); const dx=(-40+Math.random()*80); const dur=1200+Math.random()*1200; setTimeout(()=>{ s.animate([{transform:`translate(${dx*.2}vw, 0vh) rotate(0deg)`, opacity:.95},{transform:`translate(${dx}vw, 110vh) rotate(${180+Math.random()*360}deg)`, opacity: 0.2}],{duration:dur, easing:'cubic-bezier(.2,.8,.2,1)', fill:'forwards'}); }, Math.random()*200); }
+    setTimeout(()=>{ fx.remove(); document.body.classList.remove('legend-body-glow'); }, 2500);
+  }catch(e){ console.warn('legend fx failed', e); }
+}
 </script>
 </body>
 </html>
