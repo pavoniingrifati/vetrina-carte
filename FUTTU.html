@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fantaballa – FUTTU Pack</title>
+  <meta name="description" content="Pack opening (FUTTU) aggiornato: pacchetti da 3 carte, divisi per game (Fantaballa FC / Gotham City), carte sempre diverse, costo 1800. Login Google, salvataggio My Cards invariati." />
+
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{ --bg:#0b0f19; --panel:#0f1526; --card:#121a2e; --card-2:#0d1325; --text:#ecf0ff; --muted:#a7b0d3; --accent:#6ee7ff; --radius:18px; --g-comune:rgba(154,163,178,.30); --g-non-comune:rgba(52,211,153,.35); --g-rara:rgba(96,165,250,.45); --g-epica:rgba(167,139,250,.55); --g-ultra-rara:rgba(251,191,36,.65); --g-season:rgba(239,68,68,.7) }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{ margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; overflow-x:hidden }
+    a{color:var(--accent); text-decoration:none}
+    header{ position:sticky; top:0; z-index:20; backdrop-filter: blur(10px); background:linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6)); border-bottom:1px solid rgba(255,255,255,.06)}
+    .wrap{max-width:1200px; margin:0 auto; padding:20px}
+    .title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+    h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
+    .toolbar{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text)}
+    .btn{background:linear-gradient(180deg,#1b2a4d,#152141); border:1px solid rgba(110,231,255,.35); border-radius:12px; color:#fff; padding:12px 16px; cursor:pointer}
+    .btn:disabled{opacity:.6; cursor:not-allowed}
+
+    /* Anteprime pacchetti */
+    .choices{ display:flex; gap:14px; margin-top:12px; flex-wrap:wrap }
+    .choice{ display:flex; align-items:center; gap:10px; padding:8px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03); border-radius:14px; cursor:pointer; }
+    .choice[aria-selected="true"]{ outline:2px solid rgba(110,231,255,.5); background:rgba(255,255,255,.06) }
+    .prev{ width:90px; aspect-ratio: 690/987; border-radius:12px; background-size:cover; background-position:center; box-shadow:0 6px 16px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08); }
+    .meta{ display:flex; flex-direction:column; line-height:1.15 }
+    .meta .name{ font-weight:700 }
+    .meta .price{ color:var(--muted); font-size:12px }
+
+    /* Pack area */
+    .packArea{display:flex; align-items:center; justify-content:center; min-height:min(68vh,860px); position:relative}
+    .pack{ width:min(520px,86vw); aspect-ratio:690/987; background: center/cover no-repeat; border-radius:var(--radius); box-shadow:0 8px 24px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08); transition:transform .2s ease, box-shadow .2s ease, filter .2s ease; position:relative; isolation:isolate; will-change:transform,filter }
+    .pack:hover{ transform:translateY(-2px); box-shadow:0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.12); filter:brightness(1.05)}
+
+    /* Stage */
+    .stageWrap{display:none}
+    .stageWrap.show{display:block; animation:stageIn .5s ease .25s both}
+    @keyframes stageIn{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
+    .stage{margin:22px 0 40px; display:grid; gap:16px; grid-template-columns:repeat(1,minmax(0,1fr))}
+    @media(min-width:720px){.stage{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(min-width:1100px){.stage{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+    .cCard{position:relative; width:100%; aspect-ratio:690/987; border-radius:var(--radius); transform-style:preserve-3d; perspective:1200px}
+    .scene{position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d; transition:transform .7s cubic-bezier(.22,.75,.2,1); transform:rotateY(0deg); box-shadow:0 10px 28px rgba(0,0,0,.45); background:var(--card); will-change:transform}
+    .face{position:absolute; inset:0; border-radius:inherit; overflow:hidden; backface-visibility:hidden; border:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center}
+    .back img, .front img { width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:690/987; }
+    .front{transform:rotateY(180deg)}
+
+    .drop{opacity:0; transform:translateY(-40px) scale(.96)}
+    .drop.in { animation: dropIn .5s cubic-bezier(.2,.8,.2,1) forwards; }
+    @keyframes dropIn{0%{opacity:0; transform:translateY(-50px) scale(.96)}70%{opacity:1; transform:translateY(6px) scale(1.02)}100%{opacity:1; transform:translateY(0) scale(1)}}
+
+    .badge{position:absolute; top:10px; right:10px; z-index:2; padding:6px 8px; border-radius:999px; font-size:12px; font-weight:700; color:#fff; border:1px solid rgba(255,255,255,.15)}
+    .r-comune .badge{background:rgba(154,163,178,.85)}
+    .r-non-comune .badge{background:rgba(52,211,153,.85)}
+    .r-rara .badge{background:rgba(96,165,250,.9)}
+    .r-epica .badge{background:rgba(167,139,250,.95)}
+    .r-ultra-rara .badge{background:rgba(251,191,36,.95); color:#000}
+    .r-season .badge{background:rgba(239,68,68,.95)}
+
+    .log{margin-top:8px; font-size:13px; color:var(--muted)}
+    footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6))}
+    .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
+    .pillFoot{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
+
+    @media(max-width:600px){.wrap{padding:12px} .stage{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="title">
+        <div>
+          <h1>FUTTU – Open Pack</h1>
+          <div class="subtitle">Pacchetti da 3 carte • divisi per <b>game</b> • carte sempre diverse.</div>
+        </div>
+        <span class="pill" id="pricePill">💰 Costo: 1800</span>
+        <span class="pill" id="pointsBadge">Punti: —</span>
+        <button id="openBtn" class="btn" disabled>🎁 Apri pacchetto</button>
+        <a href="https://pavoniingrifati.github.io/vetrina-carte/my-cards" class="btn" id="myCardsBtn">🗂️ Le mie carte</a>
+        <a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Home</a>
+      </div>
+
+      <div class="toolbar">
+        <span class="pill" id="fairnessNote">🎲 Pacchetti finiti (no infinito). Ogni pacchetto contiene carte uniche.</span>
+      </div>
+
+      <!-- Anteprime pacchetti -->
+      <div class="choices" id="choices"></div>
+
+      <div class="log" id="log" role="status" aria-live="polite"></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="packArea" id="packArea">
+      <div class="pack" id="pack" title="Apri pacchetto" style="background-image:url('Deck%20back%20ORO.png')"></div>
+    </section>
+
+    <section class="stageWrap" id="stageWrap">
+      <div id="stage" class="stage" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="foot">
+      <span class="pillFoot">ℹ️ Login Google, salvataggio My Cards e UI restano invariati.</span>
+    </div>
+  </footer>
+
+  <!-- Template carta -->
+  <template id="tplCard">
+    <article class="cCard drop" data-state="back">
+      <div class="scene">
+        <div class="face back">
+          <img src="Deck%20back%20ORO.png" alt="Retro carta" loading="eager" decoding="async" />
+        </div>
+        <div class="face front">
+          <span class="badge"></span>
+          <img alt="" loading="lazy" decoding="async">
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <!-- Firebase (v8) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
+      authDomain: "fantaball-9e19c.firebaseapp.com",
+      projectId: "fantaball-9e19c",
+      storageBucket: "fantaball-9e19c.appspot.com",
+      messagingSenderId: "683304379837",
+      appId: "1:683304379837:web:d2bbe7a814e2e40e075ed4",
+      measurementId: "G-C8Q8K5B52C"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <script type="module">
+    const PRICE = 1800; // 👈 costo pacchetto
+
+    // === Firestore refs ===
+    const db = firebase.firestore();
+
+    // === Auth helpers (stesso comportamento dell'open-pack) ===
+    async function ensureGoogleUser() {
+      const auth = firebase.auth();
+      const u = auth.currentUser;
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+
+      try {
+        if (!u) {
+          const { user } = await auth.signInWithPopup(provider);
+          await user.getIdToken(true);
+          return user;
+        }
+        if (u.isAnonymous) {
+          const { user } = await u.linkWithPopup(provider);
+          await user.getIdToken(true);
+          return user;
+        }
+        await u.getIdToken(true);
+        return u;
+      } catch (e) {
+        if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') {
+          if (!u) { await firebase.auth().signInWithRedirect(provider); throw new Error('redirecting'); }
+          if (u.isAnonymous) { await u.linkWithRedirect(provider); throw new Error('redirecting'); }
+        }
+        throw e;
+      }
+    }
+
+    // === Wallet ===
+    async function ensureWallet10() {
+      const uid = firebase.auth().currentUser.uid;
+      const ref = db.collection('users').doc(uid);
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists) {
+          const now = firebase.firestore.FieldValue.serverTimestamp();
+          tx.set(ref, { points: 10, createdAt: now, updatedAt: now });
+        }
+      });
+    }
+    async function getPoints() {
+      const uid = firebase.auth().currentUser.uid;
+      const snap = await db.collection('users').doc(uid).get();
+      return snap.exists ? (snap.data().points || 0) : 0;
+    }
+    async function debitPriceOrThrow() {
+      const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
+      if (!uid) throw new Error('login-required');
+      const ref = db.collection('users').doc(uid);
+      return db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists) throw new Error('wallet-missing');
+        const pts = Number(snap.data().points || 0);
+        if (pts < PRICE) throw new Error('no-points');
+        const now = firebase.firestore.FieldValue.serverTimestamp();
+        tx.update(ref, { points: pts - PRICE, updatedAt: now });
+        return pts - PRICE;
+      });
+    }
+
+    // === My Cards (stesso path) ===
+    async function addToMyCards(card) {
+      const uid = firebase.auth().currentUser.uid;
+      const ref = db.collection('users').doc(uid).collection('cards').doc(card.id);
+      const now = firebase.firestore.FieldValue.serverTimestamp();
+      await ref.set({ ...card, obtainedAt: now }, { merge: true });
+    }
+
+    // === UI refs ===
+    const log = document.getElementById('log');
+    const pricePill = document.getElementById('pricePill');
+    const pointsBadge = document.getElementById('pointsBadge');
+    const openBtn = document.getElementById('openBtn');
+    const stageWrap = document.getElementById('stageWrap');
+    const stage = document.getElementById('stage');
+    const choices = document.getElementById('choices');
+    const pack = document.getElementById('pack');
+
+    pricePill.textContent = `💰 Costo: ${PRICE}`;
+
+    // === Stato pacchetti ===
+    let ALL_CARDS = [];
+    let PACK_LIST = []; // [{key, game, series, idx, cards:[...] }]
+    let currentPackKey = null; // chiave del pacchetto selezionato
+    const openedPacks = new Set(); // sessione corrente (client side)
+
+    // === Init Auth + Punti ===
+    async function initPointsUI() {
+      try {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+          pointsBadge.innerHTML = '🔐 Accedi con Google';
+          pointsBadge.style.cursor = 'pointer';
+          pointsBadge.onclick = async () => {
+            try {
+              const u = await ensureGoogleUser();
+              if (!u) return;
+              await ensureWallet10();
+              setTimeout(initPointsUI, 0);
+            } catch (e) { if (e.message !== 'redirecting') console.error(e); }
+          };
+          openBtn.disabled = true;
+          return;
+        }
+        await ensureWallet10();
+        const pts = await getPoints();
+        pointsBadge.textContent = `Punti: ${pts}`;
+        openBtn.disabled = !currentPackKey || pts < PRICE;
+      } catch (e){ console.error(e); }
+    }
+
+    firebase.auth().onAuthStateChanged(() => { initPointsUI(); });
+
+    // === Carica cards.json ===
+    async function loadCards() {
+      const res = await fetch('cards.json', { cache: 'no-store' });
+      ALL_CARDS = await res.json();
+    }
+
+    // Rarity -> class per glow/badge
+    function rarityClass(r) {
+      const key = (r || '').toLowerCase();
+      if (key.includes('ultra')) return 'r-ultra-rara';
+      if (key.includes('epic')) return 'r-epica';
+      if (key.includes('rara')) return 'r-rara';
+      if (key.includes('non')) return 'r-non-comune';
+      return 'r-comune';
+    }
+
+    // === Partizionamento pacchetti ===
+    // Crea pacchetti FINITI da 3 carte (tutte diverse) per ogni coppia (game, series)
+    function buildFinitePacks(cards) {
+      // Filtra solo Fantaballa FC e Gotham City
+      const allowedGames = new Set(['Fantaballa FC', 'Gotham City']);
+      const filtered = cards.filter(c => allowedGames.has(c.game));
+
+      // Raggruppa per (game, series)
+      const groups = new Map();
+      for (const c of filtered) {
+        const key = `${c.game}__${c.series || 'Serie'}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(c);
+      }
+
+      const packs = [];
+      for (const [key, arr] of groups) {
+        // Ordina per id per determinismo
+        arr.sort((a,b) => (a.id||'').localeCompare(b.id||''));
+        const [game, series] = key.split('__');
+        // Chunk di 3 (ultimo può avere 1-2)
+        for (let i=0, idx=1; i < arr.length; i+=3, idx++) {
+          const chunk = arr.slice(i, i+3);
+          const pKey = `${game}__${series}__${idx}`;
+          packs.push({ key: pKey, game, series, idx, cards: chunk });
+        }
+      }
+      return packs;
+    }
+
+    // === Render scelte pacchetti ===
+    function renderChoices(list){
+      choices.innerHTML = '';
+      // Ordina per game poi series poi idx
+      const ordered = [...list].sort((a,b)=> (a.game.localeCompare(b.game)) || (a.series.localeCompare(b.series)) || (a.idx-b.idx));
+      for (const p of ordered) {
+        const el = document.createElement('button');
+        el.className = 'choice';
+        el.setAttribute('data-key', p.key);
+        el.innerHTML = `
+          <i class="prev" style="background-image:url('${(p.cards[0]&&p.cards[0].img)||'Deck%20back%20ORO.png'}')"></i>
+          <span class="meta">
+            <span class="name">${p.series} • ${p.game}</span>
+            <span class="price">Pacchetto ${p.idx} · ${p.cards.length} carte</span>
+          </span>
+        `;
+        el.onclick = () => selectPack(p.key);
+        choices.appendChild(el);
+      }
+    }
+
+    function selectPack(key){
+      if (openedPacks.has(key)) return; // già aperto
+      currentPackKey = key;
+      for (const c of choices.querySelectorAll('.choice')){
+        c.setAttribute('aria-selected', c.getAttribute('data-key')===key);
+      }
+      // Aggiorna bottone Apri
+      initPointsUI();
+      // Aggiorna cover del pacchetto con la prima carta come anteprima
+      const p = PACK_LIST.find(x=>x.key===key);
+      if (p && p.cards[0]) pack.style.backgroundImage = `url('${p.cards[0].img}')`;
+    }
+
+    // === Open pack ===
+    async function openSelectedPack(){
+      if (!currentPackKey) return;
+      const packData = PACK_LIST.find(p=>p.key===currentPackKey);
+      if (!packData) return;
+      try {
+        await ensureGoogleUser();
+        await ensureWallet10();
+        const left = await debitPriceOrThrow();
+        pointsBadge.textContent = `Punti: ${left}`;
+      } catch (e){
+        if (e.message==='redirecting') return;
+        if (e.code==='no-points' || e.message==='no-points'){
+          log.textContent = '❌ Punti insufficienti per aprire (richiesti 1800).';
+          return;
+        }
+        if (e.message==='login-required'){
+          log.textContent = '🔐 Accedi con Google per aprire il pacchetto.';
+          return;
+        }
+        console.error(e);
+        log.textContent = 'Si è verificato un errore. Riprova.';
+        return;
+      }
+
+      // Mostra le carte (max 3) e salvale in My Cards
+      stageWrap.classList.add('show');
+      stage.innerHTML = '';
+      for (const card of packData.cards){
+        const node = document.getElementById('tplCard').content.firstElementChild.cloneNode(true);
+        node.classList.add('drop','in', rarityClass(card.rarity));
+        const badge = node.querySelector('.badge');
+        badge.textContent = card.rarity || '';
+        const img = node.querySelector('.front img');
+        img.src = card.img;
+        img.alt = card.name;
+        node.onclick = () => {
+          node.dataset.state = (node.dataset.state==='front') ? 'back' : 'front';
+        };
+        stage.appendChild(node);
+        try { await addToMyCards(card); } catch(e){ console.warn('save card', e); }
+      }
+
+      openedPacks.add(currentPackKey);
+      // Disabilita scelta aperta
+      const btn = choices.querySelector(`[data-key="${currentPackKey}"]`);
+      if (btn){ btn.disabled = true; btn.style.opacity = .6; btn.removeAttribute('aria-selected'); }
+      currentPackKey = null;
+      openBtn.disabled = true;
+      pack.style.backgroundImage = "url('Deck%20back%20ORO.png')";
+      log.textContent = '✅ Pacchetto aperto! Le carte sono state aggiunte a My Cards.';
+    }
+
+    openBtn.addEventListener('click', openSelectedPack);
+
+    // === Boot ===
+    (async function boot(){
+      try{
+        await loadCards();
+        PACK_LIST = buildFinitePacks(ALL_CARDS);
+        renderChoices(PACK_LIST);
+        log.textContent = 'Seleziona un pacchetto (divisi per game e serie).';
+        initPointsUI();
+      } catch (e){
+        console.error(e);
+        log.textContent = 'Impossibile caricare le carte.';
+      }
+    })();
+  </script>
+</body>
+</html>
