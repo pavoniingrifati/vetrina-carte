@@ -174,7 +174,8 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 <div class="rays"></div>
 <div class="scene">
 <div class="face back">
-<img src="Deck%20back%20BATMAN.png" alt="Retro carta" loading="eager" decoding="async" />
+<img src=Deck%20back%20wonderkid.png" alt="Retro carta" loading="eager" decoding="async" />
+<img src=Deck%20back%20BATMAN.png" alt="Retro carta" loading="eager" decoding="async" />
 </div>
 <div class="face front">
 <span class="badge"></span>
@@ -236,9 +237,10 @@ const PACK_COST = 100;
 const PACK_SIZE = 3;
 const VALID_GAMES = ['Wonderkid'];  
 const PACK_BACK_BY_GAME = {
+  'Wonderkid': 'Deck%20back%20wonderkid.png'
   'Wonderkid': 'Deck%20back%20BATMAN.png'
 };
-  
+
 // === Helpers Auth (immutati) ===
 async function ensureGoogleUser() {
 const auth = firebase.auth();
@@ -286,42 +288,42 @@ const snap = await db.collection('users').doc(uid).get();
 return snap.exists ? (snap.data().points || 0) : 0;
 }
 async function debitPackCostOrThrow() {
-  const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
-  if (!uid) throw new Error('login-required');
-  const ref = db.collection('users').doc(uid);
+const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
+if (!uid) throw new Error('login-required');
+const ref = db.collection('users').doc(uid);
 
-  try {
-    // Prova ad addebitare direttamente
-    return await db.runTransaction(async (tx) => {
-      const snap = await tx.get(ref);
-      if (!snap.exists) throw new Error('wallet-missing');
-      const pts = Number(snap.data().points || 0);
-      if (pts < PACK_COST) { const e = new Error('no-points'); e.code = 'no-points'; throw e; }
-      const now = firebase.firestore.FieldValue.serverTimestamp();
-      tx.update(ref, { points: pts - PACK_COST, updatedAt: now });
-      return pts - PACK_COST;
-    });
-  } catch (e) {
-    // Se il wallet manca, crealo e riprova una volta
-    if ((e && (e.code || e.message)) === 'wallet-missing') {
-      await db.runTransaction(async (tx) => {
-        const snap = await tx.get(ref);
-        if (!snap.exists) {
-          tx.set(ref, { points: 10, createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-        }
-      });
-      return await db.runTransaction(async (tx) => {
-        const snap = await tx.get(ref);
-        const pts = Number((snap.data() || {}).points || 0);
-        if (pts < PACK_COST) { const e2 = new Error('no-points'); e2.code = 'no-points'; throw e2; }
-        const now = firebase.firestore.FieldValue.serverTimestamp();
-        tx.update(ref, { points: pts - PACK_COST, updatedAt: now });
-        return pts - PACK_COST;
-      });
-    }
-    if (!e.code) e.code = e.message || 'unknown';
-    throw e;
-  }
+try {
+// Prova ad addebitare direttamente
+return await db.runTransaction(async (tx) => {
+const snap = await tx.get(ref);
+if (!snap.exists) throw new Error('wallet-missing');
+const pts = Number(snap.data().points || 0);
+if (pts < PACK_COST) { const e = new Error('no-points'); e.code = 'no-points'; throw e; }
+const now = firebase.firestore.FieldValue.serverTimestamp();
+tx.update(ref, { points: pts - PACK_COST, updatedAt: now });
+return pts - PACK_COST;
+});
+} catch (e) {
+// Se il wallet manca, crealo e riprova una volta
+if ((e && (e.code || e.message)) === 'wallet-missing') {
+await db.runTransaction(async (tx) => {
+const snap = await tx.get(ref);
+if (!snap.exists) {
+tx.set(ref, { points: 10, createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+}
+});
+return await db.runTransaction(async (tx) => {
+const snap = await tx.get(ref);
+const pts = Number((snap.data() || {}).points || 0);
+if (pts < PACK_COST) { const e2 = new Error('no-points'); e2.code = 'no-points'; throw e2; }
+const now = firebase.firestore.FieldValue.serverTimestamp();
+tx.update(ref, { points: pts - PACK_COST, updatedAt: now });
+return pts - PACK_COST;
+});
+}
+if (!e.code) e.code = e.message || 'unknown';
+throw e;
+}
 }
 
 // === Badge punti ===
@@ -461,10 +463,10 @@ FETCH_TIMEOUT_MS: 8000
 };
 
 const GAME_STATE = {
-  selected: 'Wonderkid',
-  pools: { 'Wonderkid': [] },
-  packs: { 'Wonderkid': [] },
-  cursor: { 'Wonderkid': 0 }
+selected: 'Wonderkid',
+pools: { 'Wonderkid': [] },
+packs: { 'Wonderkid': [] },
+cursor: { 'Wonderkid': 0 }
 };
 
 function shuffleInPlace(a){
@@ -502,15 +504,13 @@ const name=String(c.name||''); const rarity=String(c.rarity||''); const img=Stri
 const series=String(c.series||''); const game=String(c.game||'');
 if(!name||!rarity||!img) continue;
 if(ids.has(id)) continue; ids.add(id);
-if (!(norm(game) === 'gotham city' && norm(series) === 'wonderkid')) continue;
+if (!(game === 'Gotham City' && series === 'Wonderkid')) continue;
 cleaned.push({id,name,rarity,img,series,game});
 }
 if(!cleaned.length) throw new Error('Nessuna carta valida in cards.json');
 // Popola pool per game
 GAME_STATE.pools['Wonderkid'] = cleaned.filter(c =>
-  norm(c.game) === 'gotham city' && norm(c.series) === 'wonderkid'
-);
-
+c.game === 'Gotham City' && c.series === 'Wonderkid'
 );
 GAME_STATE.packs['Wonderkid'] = buildFinitePacks(GAME_STATE.pools['Wonderkid']);
 // Ripristina cursori da localStorage
@@ -525,7 +525,7 @@ renderGamePicker();
 applyPackVisual();
 updateOpenBtnEnabled();
 document.getElementById('log').textContent =
-  `Caricate ${GAME_STATE.pools['Wonderkid'].length} carte (Wonderkid – Gotham City).`;
+`Caricate ${GAME_STATE.pools['Wonderkid'].length} carte (Wonderkid – Gotham City).`;
 
 }catch(err){
 console.error('Errore cards.json:', err?.message||err);
@@ -551,13 +551,14 @@ const btn=document.createElement('button');
 btn.type='button'; btn.className='choice';
 btn.setAttribute('data-game',game);
 btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
+const back = PACK_BACK_BY_GAME[game] || 'Deck%20back%20ORO.png';
 const back = PACK_BACK_BY_GAME[game] || 'Deck%20back%20BATMAN.png';
 btn.innerHTML = `
-         <div class="prev" style="background-image:url('${back}')"></div>
-         <div class="meta">
-           <span class="name">${game}</span>
-           <span class="price">${left}/${totalPacks} pacchetti • ${totalCards} carte</span>
-         </div>`;
+        <div class="prev" style="background-image:url('${back}')"></div>
+        <div class="meta">
+          <span class="name">${game}</span>
+          <span class="price">${left}/${totalPacks} pacchetti • ${totalCards} carte</span>
+        </div>`;
 btn.addEventListener('click', ()=>{
 GAME_STATE.selected = game;
 applyPackVisual();
@@ -663,31 +664,31 @@ newPts = await debitPackCostOrThrow();
 document.getElementById('log').textContent = `✅ ${PACK_COST} punti scalati. Punti rimasti: ${newPts}`;
 } catch (e) {
 if (e.message === 'redirecting') return;
-        if (e.message === 'login-required') {
-          document.getElementById('log').textContent = '🔐 Accedi con Google per aprire un pacchetto.';
-        } else if (e.message === 'no-points') {
-          document.getElementById('log').textContent = '😕 Punti insufficienti.';
-        } else {
-          document.getElementById('log').textContent = '⚠️ Errore durante la scalatura punti.';
-          console.error(e);
-        }
-        const code = e.code || e.message || 'unknown';
-        let msg = '⚠️ Errore durante la scalatura punti.';
-        if (code === 'login-required') msg = '🔐 Accedi con Google per aprire un pacchetto.';
-        else if (code === 'no-points') msg = '😕 Punti insufficienti (costo: ' + PACK_COST + ').';
-        else if (code === 'permission-denied') msg = '⛔ Permessi Firestore insufficienti per scrivere sul wallet.';
-        else if (code === 'unavailable') msg = '📡 Sei offline o Firestore non è raggiungibile.';
-        else if (code === 'cancelled' || code === 'aborted') msg = '⏳ Transazione annullata. Riprova tra poco.';
-        else if (code === 'failed-precondition') msg = '⚙️ Versione offline non attiva. Ricarica la pagina.';
-        document.getElementById('log').textContent = msg + ' (' + code + ')';
-        console.error('[OPEN BTN ERROR]', code, e);
+if (e.message === 'login-required') {
+document.getElementById('log').textContent = '🔐 Accedi con Google per aprire un pacchetto.';
+} else if (e.message === 'no-points') {
+document.getElementById('log').textContent = '😕 Punti insufficienti.';
+} else {
+document.getElementById('log').textContent = '⚠️ Errore durante la scalatura punti.';
+console.error(e);
+}
+const code = e.code || e.message || 'unknown';
+let msg = '⚠️ Errore durante la scalatura punti.';
+if (code === 'login-required') msg = '🔐 Accedi con Google per aprire un pacchetto.';
+else if (code === 'no-points') msg = '😕 Punti insufficienti (costo: ' + PACK_COST + ').';
+else if (code === 'permission-denied') msg = '⛔ Permessi Firestore insufficienti per scrivere sul wallet.';
+else if (code === 'unavailable') msg = '📡 Sei offline o Firestore non è raggiungibile.';
+else if (code === 'cancelled' || code === 'aborted') msg = '⏳ Transazione annullata. Riprova tra poco.';
+else if (code === 'failed-precondition') msg = '⚙️ Versione offline non attiva. Ricarica la pagina.';
+document.getElementById('log').textContent = msg + ' (' + code + ')';
+console.error('[OPEN BTN ERROR]', code, e);
 BTN.disabled = false; SHARE.disabled = true;
 return;
 }
 
 // Carica carte (se non già)
 if (!GAME_STATE.packs['Wonderkid'].length){
-  await loadCards();
+await loadCards();
 }
 
 // Verifica disponibilità
@@ -707,12 +708,6 @@ await delay(900); packArea.style.display='none';
 
 // Estrai il prossimo pacchetto finito
 let chosen = list[idx].slice();
-  if (!chosen || !chosen.length) {
-  document.getElementById('log').textContent = '⚠️ Nessuna carta nel pacchetto selezionato. Controlla il filtro Wonderkid/Gotham City in cards.json.';
-  BTN.disabled = false; SHARE.disabled = true;
-  return;
-}
-
 // Ordina per rarità (coerente con open pack originale)
 chosen.sort((a,b)=> (rarityRank[a.rarity]||0) - (rarityRank[b.rarity]||0) );
 
