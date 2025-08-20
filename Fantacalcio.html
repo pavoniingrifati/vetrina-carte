@@ -417,23 +417,55 @@ Dark Souls\tMaks\tATT\t150\tGotham`;
     }
 
     function parseTable(){
-      const lines = RAW_TABLE.trim().split(/\n+/);
-      const data = [];
-      for(let i=1;i<lines.length;i++){
-        const raw = lines[i].trim();
-        if(!raw) continue;
-        const parts = raw.split(/\s+/); // campi a destra: pos, overall, club
-        if(parts.length < 5) continue;
-        const club   = parts[parts.length-1];
-        const overall= parseInt(parts[parts.length-2],10);
-        const pos    = parts[parts.length-3];
-        const name   = parts.slice(0, parts.length-3).join(' ');
-        const group  = roleGroup(pos);
-        const price  = Math.round(overall*0.6*(group==='A'?1.15:group==='D'?0.95:group==='POR'?0.8:1));
-        data.push({id:`${name}_${pos}_${overall}_${club}`, name, pos, group, overall, price, club, img:defaultImg(name)});
-      }
-      return data;
+  const lines = RAW_TABLE.trim().split(/\n+/);
+  const data = [];
+  for(let i=1;i<lines.length;i++){
+    const raw = lines[i].trim();
+    if(!raw) continue;
+
+    // Prova prima lo split su TAB (formato della tua tabella)
+    let c=null, n=null, pos=null, overall=null, club=null;
+    const t = raw.split('\t');
+    if(t.length === 5){
+      c = t[0].trim();        // Cognome (es. "Dark Souls")
+      n = t[1].trim();        // Nome (es. "Lele")
+      pos = t[2].trim();
+      overall = parseInt(t[3],10);
+      club = t[4].trim();
+    } else {
+      // Fallback robusto se una riga non ha i TAB
+      const parts = raw.split(/\s+/);
+      club   = parts[parts.length-1];
+      overall= parseInt(parts[parts.length-2],10);
+      pos    = parts[parts.length-3];
+      const rest= parts.slice(0, parts.length-3).join(' ');
+      const firstSpace = rest.indexOf(' ');
+      c = firstSpace>-1 ? rest.slice(0, firstSpace) : rest;
+      n = firstSpace>-1 ? rest.slice(firstSpace+1) : '';
     }
+
+    const group  = (pos==='POR')?'POR':(['DD','DS','DC'].includes(pos)?'D':(pos==='CC'?'C':(['ATT','AD','AS'].includes(pos)?'A':'C')));
+    const price  = Math.round(overall*0.6*(group==='A'?1.15:group==='D'?0.95:group==='POR'?0.8:1));
+
+    // >>> nome corto da mostrare sul CAMPO: "iniziale cognome + nome"
+    // es. c="Dark Souls", n="Lele"  ->  "D. Lele"
+    const initialSurname = c.trim().charAt(0).toUpperCase();
+    const shortField = (initialSurname ? (initialSurname + '. ') : '') + n;
+
+    const fullName = `${c} ${n}`.trim(); // usato per ricerca e lista
+    data.push({
+      id:`${fullName}_${pos}_${overall}_${club}`,
+      name: fullName,          // lista/ricerca
+      surname: c,              // Cognome
+      given: n,                // Nome
+      shortField,              // <-- "D. Lele"
+      pos, group, overall, price, club,
+      img: defaultImg(fullName)
+    });
+  }
+  return data;
+}
+
     const players = parseTable();
 
     // Popola filtro club
@@ -556,26 +588,27 @@ Dark Souls\tMaks\tATT\t150\tGotham`;
     }
 
     function slotChip(slot, player){
-      const wrap=document.createElement('div'); 
-      wrap.className='chip';
+  const wrap=document.createElement('div'); wrap.className='chip';
 
-      const plate=document.createElement('div'); 
-      plate.className='nameplate'; 
-      plate.textContent=player.pos;
+  const plate=document.createElement('div'); 
+  plate.className='nameplate'; 
+  plate.textContent=player.pos;
 
-      const name=document.createElement('div');
-      name.className='playername';
-      name.textContent=player.name;
+  const name=document.createElement('div'); 
+  name.className='playername';
+- name.textContent=player.name;        // prima mostrava "Cognome Nome" intero
++ name.textContent=player.shortField;   // ora "D. Lele"
++ name.title = player.name;             // tooltip con il nome completo
 
-      const btn=document.createElement('button'); 
-      btn.textContent='Rimuovi'; 
-      btn.onclick=function(){ const g=slot.dataset.slot; const i=+slot.dataset.idx; removeFromTeam(g,i); };
+  const btn=document.createElement('button'); 
+  btn.textContent='Rimuovi';
+  btn.addEventListener('click',()=>{ const g=slot.dataset.slot; const i=+slot.dataset.idx; removeFromTeam(g,i); });
 
-      wrap.appendChild(plate); 
-      wrap.appendChild(name);
-      wrap.appendChild(btn); 
-      return wrap;
-    }
+  wrap.appendChild(plate); 
+  wrap.appendChild(name); 
+  wrap.appendChild(btn); 
+  return wrap;
+}
 
     function renderPitch(){
       buildSlots();
