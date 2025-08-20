@@ -11,7 +11,6 @@
     --pitch:#0a8d4f; --pitch-dark:#06703e; --line:#d8f7e7;
     --plate:#ffffff; --plate-text:#0b1220;
     --danger:#ef4444; --ok:#22c55e; --warn:#f59e0b;
-    --gap:12px; --radius:16px;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
@@ -43,12 +42,12 @@
   .pane.active{display:block}
 
   /* Card */
-  .card{background:linear-gradient(180deg,#0e1526,#0b1120);border:1px solid #1b2a52;border-radius:var(--radius);padding:12px;box-shadow:0 10px 22px #0004}
+  .card{background:linear-gradient(180deg,#0e1526,#0b1120);border:1px solid #1b2a52;border-radius:16px;padding:12px;box-shadow:0 10px 22px #0004}
 
   /* Pitch */
   .pitch{
     position:relative;width:100%;
-    height: min(74vh, 680px);           /* altezza ottimizzata mobile/desktop */
+    height: min(74vh, 680px);
     border-radius:18px;overflow:hidden;
     background:repeating-linear-gradient(0deg,var(--pitch) 0,var(--pitch) 64px,var(--pitch-dark) 64px,var(--pitch-dark) 128px);
     border:2px solid #094c2d
@@ -69,21 +68,36 @@
 
   .slots{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:18px;padding-top:84px;padding-bottom:120px}
   .row{display:flex;justify-content:center;gap:10px}
+
+  /* SLOT + nome: responsive e anti-sovrapposizione */
   .slot{
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
-    width:clamp(70px, 18vw, 110px); min-height:84px;background:transparent;border:none
+    width:clamp(70px, 18vw, 110px);
+    min-height:96px;
+    background:transparent;border:none;text-align:center;
   }
-  .chip{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .chip{
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    width:100%;                  /* fissa la larghezza interna */
+  }
   .nameplate{background:var(--plate);color:var(--plate-text);border-radius:10px;padding:6px 12px;font-weight:800;border:1px solid #d8deea;box-shadow:0 2px 0 #c2cadd}
-  .playername{font-size:12px;font-weight:700;color:#e5e7eb;text-align:center;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .playername{
+    display:block;width:100%;max-width:100%;
+    font-size:12px;font-weight:700;color:#e5e7eb;text-align:center;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis; /* 1 riga default */
+  }
   .slot[data-empty="true"] .placeholder{opacity:.8;color:#d1fae5;background:#0b122099;border:1px dashed #9de8c0;padding:6px 8px;border-radius:10px;font-size:12px}
   .slot button{font-size:12px;padding:6px 8px}
 
-  /* Filter bar (mobile collapsible) */
-  .filters-toggle{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px}
-  .filters{display:none;margin-top:8px}
-  .filters.open{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .filters .row-full{grid-column:1 / -1}
+  /* Mobile molto stretto: 2 righe clampate */
+  @media (max-width:420px){
+    .playername{
+      white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+      line-height:1.1; max-height:2.2em; word-break:break-word; hyphens:auto;
+    }
+    .slot{min-height:110px}
+    .row{gap:8px}
+  }
 
   /* Player list */
   .player-list{display:grid;grid-template-columns:1fr;gap:10px;max-height:calc(100vh - 260px);overflow:auto;padding-right:6px}
@@ -92,9 +106,8 @@
   .player h3{margin:0;font-size:14px}
   .badge{font-size:11px;padding:3px 8px;border-radius:999px;background:#0d2446;border:1px solid #1e3567;margin-right:6px}
   .price{font-weight:900}
-  .player .cta button{width:100%;}
 
-  /* Budget dock (mobile fixed bottom) */
+  /* Budget dock */
   .budget-dock{
     position:fixed;left:0;right:0;bottom:0;z-index:30;
     padding:8px 12px calc(8px + env(safe-area-inset-bottom));
@@ -102,15 +115,14 @@
   }
   .budget-grid{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px}
   .budget-stats{display:flex;gap:10px;flex-wrap:wrap;font-weight:800}
-  .budget-stats .spent{color:#e5e7eb}
   .budget-stats .left{color:var(--ok)}
   .budget-stats.low .left{color:var(--warn)}
   .budget-stats.zero .left{color:var(--danger)}
   .progress{height:8px;background:#0d223f;border:1px solid #1e3a70;border-radius:999px;overflow:hidden}
   .progress .fill{height:100%;width:0;background:#1f76ff}
 
-  /* Desktop: mostra campo e lista affiancati, tabs nascosti, budget dock nascosto */
-  @media (min-width: 900px){
+  /* Desktop */
+  @media (min-width:900px){
     .tabs{display:none}
     main{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     .pane{display:block}
@@ -130,7 +142,6 @@
 
     <div class="title">Schiera formazione</div>
 
-    <!-- Selettore modulo -->
     <div>
       <label for="formationSelect" class="badge">Modulo</label>
       <select id="formationSelect" aria-label="Seleziona modulo">
@@ -141,20 +152,17 @@
       </select>
     </div>
 
-    <!-- Menu azioni compatto -->
     <div class="actions">
       <button id="menuBtn" class="icon" aria-expanded="false" aria-controls="menuPanel">⋮</button>
     </div>
   </div>
 
-  <!-- Tabs mobile -->
   <div class="tabs" role="tablist" aria-label="Navigazione">
     <button class="tab" role="tab" id="tabCampo" aria-controls="paneCampo" aria-selected="true">⚽ Campo</button>
     <button class="tab" role="tab" id="tabLista" aria-controls="paneLista" aria-selected="false">🧍‍♂️ Giocatori</button>
   </div>
 </header>
 
-<!-- Pannello menu azioni -->
 <div id="menuPanel" class="card hidden" style="position:fixed;right:12px;top:56px;z-index:40;min-width:220px">
   <div style="display:flex;flex-direction:column;gap:8px">
     <button id="saveBtn">💾 Salva</button>
@@ -165,7 +173,6 @@
 </div>
 
 <main>
-  <!-- Campo -->
   <section id="paneCampo" class="pane active" role="tabpanel" aria-labelledby="tabCampo">
     <div class="card pitch" id="pitch">
       <div class="line"></div>
@@ -181,7 +188,6 @@
     </div>
   </section>
 
-  <!-- Lista giocatori -->
   <aside id="paneLista" class="pane" role="tabpanel" aria-labelledby="tabLista">
     <div class="card">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
@@ -189,30 +195,13 @@
         <button id="filtersBtn" class="icon" aria-expanded="false" aria-controls="filters">Filtri ⏷</button>
       </div>
 
-      <div id="filters" class="filters" aria-hidden="true">
-        <select id="filterRole" aria-label="Filtro ruolo">
-          <option value="ALL">Tutti i ruoli</option>
-          <option value="POR">Portieri</option>
-          <option value="D">Difensori</option>
-          <option value="C">Centrocampisti</option>
-          <option value="A">Attaccanti</option>
-        </select>
-        <select id="filterClub" aria-label="Filtro club">
-          <option value="ALL">Tutti i club</option>
-        </select>
-        <select id="sortBy" class="row-full" aria-label="Ordinamento">
-          <option value="DEFAULT">Ordina: predefinito</option>
-          <option value="PRICE_ASC">Prezzo ↑</option>
-          <option value="PRICE_DESC">Prezzo ↓</option>
-        </select>
-      </div>
+      <div id="filters" class="filters" aria-hidden="true" style="display:none;margin-top:8px"></div>
 
       <div class="player-list" id="playerList" aria-live="polite"></div>
     </div>
   </aside>
 </main>
 
-<!-- Budget dock (mobile) -->
 <div class="budget-dock" role="status" aria-live="polite">
   <div class="budget-grid">
     <div class="budget-stats" id="budgetStats">
@@ -363,44 +352,89 @@ const FORMATIONS = {'4-3-3':{D:4,C:3,A:3},'4-4-2':{D:4,C:4,A:2},'3-5-2':{D:3,C:5
 let currentFormation='4-3-3';
 const BUDGET_MAX=1000;
 
-function defaultImg(name){
-  const n=(name.split('').reduce((a,c)=>a+c.charCodeAt(0),0)%99)+1;
-  return `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><rect x='0' y='0' width='160' height='160' fill='%23091020'/><path d='M40 30 L60 18 L80 30 L100 18 L120 30 L126 70 L126 130 L34 130 L34 70 Z' fill='%231f76ff' stroke='%23fff' stroke-width='3'/><text x='80' y='92' text-anchor='middle' font-size='42' fill='%23fff' font-weight='800'>${n}</text></svg>`;
-}
-
+/* Parse tab-delimited to preservare Cognome/Nome */
 function parseTable(){
   const lines = RAW_TABLE.trim().split(/\n+/);
   const data = [];
   for(let i=1;i<lines.length;i++){
-    const raw = lines[i].trim(); if(!raw) continue;
-    const parts = raw.split(/\s+/);
-    if(parts.length < 5) continue;
-    const club   = parts[parts.length-1];
-    const overall= parseInt(parts[parts.length-2],10);
-    const pos    = parts[parts.length-3];
-    const name   = parts.slice(0, parts.length-3).join(' ');
+    const raw = lines[i].trim();
+    if(!raw) continue;
+
+    let cognome, nome, pos, overallStr, club;
+    const cols = raw.split('\t');
+    if(cols.length === 5){
+      [cognome, nome, pos, overallStr, club] = cols;
+    }else{
+      // fallback robusto (nel caso non arrivino tab): usa heuristic
+      const parts = raw.split(/\s+/);
+      club = parts[parts.length-1];
+      overallStr = parts[parts.length-2];
+      pos = parts[parts.length-3];
+      const nm = parts.slice(0, parts.length-3).join(' ');
+      const chunks = nm.split(' ');
+      nome = chunks.pop();          // ultima parola come nome
+      cognome = chunks.join(' ')||nm;
+    }
+
+    const overall = parseInt(overallStr,10);
     const group  = roleGroup(pos);
     const price  = Math.round(overall*0.6*(group==='A'?1.15:group==='D'?0.95:group==='POR'?0.8:1));
-    data.push({id:`${name}_${pos}_${overall}_${club}`, name, pos, group, overall, price, club, img:defaultImg(name)});
+
+    // Nome completo e versione corta "N. Cognome"
+    const fullName = `${cognome} ${nome}`.trim();
+    const initial  = (nome && nome[0]) ? (nome[0].toUpperCase()+'.') : '';
+    const short    = `${initial} ${cognome}`.trim();
+
+    data.push({
+      id:`${fullName}_${pos}_${overall}_${club}`,
+      name:fullName, short, cognome, nome, pos, group, overall, price, club,
+      img: defaultImg(fullName)
+    });
   }
   return data;
 }
 const players = parseTable();
 
-/* === UI refs === */
+/* ——— Filtri UI (costruiti qui per compatibilità mobile) ——— */
+const filtersWrap = document.getElementById('filters');
+filtersWrap.innerHTML = `
+  <select id="filterRole" aria-label="Filtro ruolo">
+    <option value="ALL">Tutti i ruoli</option>
+    <option value="POR">Portieri</option>
+    <option value="D">Difensori</option>
+    <option value="C">Centrocampisti</option>
+    <option value="A">Attaccanti</option>
+  </select>
+  <select id="filterClub" aria-label="Filtro club">
+    <option value="ALL">Tutti i club</option>
+  </select>
+  <select id="sortBy" class="row-full" aria-label="Ordinamento">
+    <option value="DEFAULT">Ordina: predefinito</option>
+    <option value="PRICE_ASC">Prezzo ↑</option>
+    <option value="PRICE_DESC">Prezzo ↓</option>
+  </select>
+`;
+filtersWrap.style.display = "grid";
+filtersWrap.classList.remove("open");
+
 const clubSelect = document.getElementById('filterClub');
+[...new Set(players.map(p=>p.club))].sort().forEach(c=>{
+  const opt=document.createElement('option'); opt.value=c; opt.textContent=c; clubSelect.appendChild(opt);
+});
+
+/* === Riferimenti UI === */
 const listEl = document.getElementById('playerList');
 const filterRole = document.getElementById('filterRole');
 const sortBy = document.getElementById('sortBy');
 const searchEl = document.getElementById('search');
 const filtersBtn = document.getElementById('filtersBtn');
-const filtersWrap = document.getElementById('filters');
 const formationSelect = document.getElementById('formationSelect');
 const budgetFill = document.getElementById('budgetFill');
 const spentVal = document.getElementById('spentVal');
 const leftVal = document.getElementById('leftVal');
 const countsVal = document.getElementById('countsVal');
 const budgetCopy = document.getElementById('budgetCopy');
+budgetCopy.textContent = BUDGET_MAX;
 
 /* === Tabs mobile === */
 const tabCampo = document.getElementById('tabCampo');
@@ -431,8 +465,9 @@ document.addEventListener('click', (e)=>{
   }
 });
 
-/* === Stato squadra === */
+/* === Stato squadra e budget === */
 const picked={POR:[null],D:[],C:[],A:[]};
+
 function initFormationArrays(mod){
   const need = FORMATIONS[mod];
   picked.D = new Array(need.D).fill(null);
@@ -470,10 +505,7 @@ function canAdd(player,targetIdx){
   return {ok:true,idx};
 }
 
-/* === Lista / filtri === */
-[...new Set(players.map(p=>p.club))].sort().forEach(c=>{
-  const opt=document.createElement('option'); opt.value=c; opt.textContent=c; clubSelect.appendChild(opt);
-});
+/* === Lista === */
 let searchTimer=null;
 function renderList(){
   const q=searchEl.value.trim().toLowerCase();
@@ -511,29 +543,25 @@ function renderList(){
   });
 }
 searchEl.addEventListener('input', ()=>{clearTimeout(searchTimer); searchTimer=setTimeout(renderList, 120);});
-filterRole.addEventListener('change', renderList);
-clubSelect.addEventListener('change', renderList);
-sortBy.addEventListener('change', renderList);
 filtersBtn.addEventListener('click', ()=>{
   const open = filtersWrap.classList.toggle('open');
   filtersWrap.setAttribute('aria-hidden', open?'false':'true');
   filtersBtn.setAttribute('aria-expanded', open?'true':'false');
+});
+document.addEventListener('change', (e)=>{
+  if(e.target.id==='filterRole' || e.target.id==='filterClub' || e.target.id==='sortBy'){ renderList(); }
 });
 
 /* === Campo dinamico === */
 function buildSlots(){
   const slots = document.getElementById('slots');
   slots.innerHTML='';
-  // GK
   const rowGK=document.createElement('div'); rowGK.className='row';
   rowGK.appendChild(makeSlot('POR',0)); slots.appendChild(rowGK);
-  // DEF
   const rowD=document.createElement('div'); rowD.className='row';
   for(let i=0;i<picked.D.length;i++) rowD.appendChild(makeSlot('D',i)); slots.appendChild(rowD);
-  // MID
   const rowC=document.createElement('div'); rowC.className='row';
   for(let i=0;i<picked.C.length;i++) rowC.appendChild(makeSlot('C',i)); slots.appendChild(rowC);
-  // ATT
   const rowA=document.createElement('div'); rowA.className='row';
   for(let i=0;i<picked.A.length;i++) rowA.appendChild(makeSlot('A',i)); slots.appendChild(rowA);
 }
@@ -547,7 +575,7 @@ function makeSlot(group, idx){
 function slotChip(slot, player){
   const wrap=document.createElement('div'); wrap.className='chip';
   const plate=document.createElement('div'); plate.className='nameplate'; plate.textContent=player.pos;
-  const name=document.createElement('div'); name.className='playername'; name.textContent=player.name;
+  const name=document.createElement('div'); name.className='playername'; name.textContent=player.short; name.title = player.name;
   const btn=document.createElement('button'); btn.textContent='Rimuovi';
   btn.addEventListener('click',()=>{ const g=slot.dataset.slot; const i=+slot.dataset.idx; removeFromTeam(g,i); });
   wrap.appendChild(plate); wrap.appendChild(name); wrap.appendChild(btn);
@@ -574,12 +602,8 @@ function removeFromTeam(group,idx){ picked[group][idx]=null; renderPitch(); }
 /* === Moduli === */
 function adjustArray(arr, len){
   let removed = [];
-  if(arr.length>len){
-    removed = arr.slice(len).filter(Boolean).map(p=>p.name);
-    arr.splice(len);
-  } else {
-    while(arr.length<len) arr.push(null);
-  }
+  if(arr.length>len){ removed = arr.slice(len).filter(Boolean).map(p=>p.name); arr.splice(len);
+  } else { while(arr.length<len) arr.push(null); }
   return removed;
 }
 function setFormation(mod){
@@ -635,9 +659,8 @@ document.getElementById('downloadBtn').addEventListener('click', ()=>{
 
 /* === Init === */
 (function init(){
-  budgetCopy.textContent = BUDGET_MAX;
   initFormationArrays(currentFormation);
-  // Popola club già fatto sopra
+  // costruisci controlli filtro già iniettati sopra
   renderPitch();
   renderList();
 })();
