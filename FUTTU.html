@@ -665,12 +665,18 @@ function updateOpenBtnEnabled(){
 }
 
 // Reset cursori → 0 per tutti i game (Oggetti non usa i pacchetti, ma lasciamo uguale)
-resetPacksBtn.addEventListener('click', ()=>{
-  for (const g of VALID_GAMES) GAME_STATE.cursor[g] = 0;
-  try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
-  renderGamePicker();
-  updateOpenBtnEnabled();
-  document.getElementById('log').textContent = '🔄 Pacchetti resettati (tutti i game).';
+resetPacksBtn.addEventListener('click', async ()=>{
+  try{
+    document.getElementById('log').textContent = '♻️ Mischio i pacchetti...';
+    // Azzera cursori e pacchetti (Oggetti non usa pacchetti, ma azzerarlo non fa male)
+    for (const g of VALID_GAMES){ GAME_STATE.cursor[g]=0; GAME_STATE.packs[g]=[]; }
+    try{ localStorage.removeItem('futtu_cursors'); }catch{}
+    await loadCards(); // ricarica + rimescola tutto
+    document.getElementById('log').textContent = '✅ Pacchetti rimescolati.';
+    renderGamePicker(); updateOpenBtnEnabled(); applyPackVisual();
+  }catch(e){
+    console.warn('reset failed', e); document.getElementById('log').textContent = '⚠️ Reset non riuscito.';
+  }
 });
 
 /** =========================
