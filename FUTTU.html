@@ -506,6 +506,7 @@ async function loadCards(){
     const json=await res.json();
     if(!Array.isArray(json)) throw new Error('Formato non valido (atteso array)');
 
+    // Pulizia
     const cleaned=[]; const ids=new Set();
     for(const c of json){
       if(!c||typeof c!=='object') continue;
@@ -517,26 +518,41 @@ async function loadCards(){
       cleaned.push({id,name,rarity,img,series,game});
     }
 
-    // Pool per game
     const isGotham = (x)=> norm(x)==='gotham city';
-    GAME_STATE.pools['Wonderkid']      = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='wonderkid');
-    GAME_STATE.pools['Patatine']    = cleaned.filter(c => isGotham(c.game)); // tutte le Gotham City
-    GAME_STATE.pools['Gotham Tots']= cleaned.filter(c => isGotham(c.game) && norm(c.series)==='tots');
 
-    // Legend: Gotham City con rarità Rara/Epica/Ultra Rara/Leggendaria
-    const legendPoolAll = cleaned.filter(c => (norm(c.game)==='gotham city') && ['rara','epica','ultra rara','leggendaria'].includes(norm(c.rarity)));
+    // Wonderkid (invariato)
+    GAME_STATE.pools['Wonderkid'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='wonderkid');
+
+    // Patatine — escludi Season/Leggendaria e pesa le rarità
+    const basePatatine = cleaned.filter(c =>
+      isGotham(c.game) &&
+      !['season','leggendaria'].includes(norm(c.rarity))
+    );
+    const weightByRarity = { 'comune':4, 'non comune':3, 'rara':2, 'ultra rara':1 };
+    GAME_STATE.pools['Patatine'] = basePatatine.flatMap(c => {
+      const w = weightByRarity[norm(c.rarity)] || 1;
+      return Array(w).fill(c);
+    });
+
+    // Gotham Tots (invariato)
+    GAME_STATE.pools['Gotham Tots'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='tots');
+
+    // Legend (invariato)
+    const legendPoolAll = cleaned.filter(c =>
+      isGotham(c.game) && ['rara','epica','ultra rara','leggendaria'].includes(norm(c.rarity))
+    );
     const legendNonLegend = legendPoolAll.filter(c => norm(c.rarity) !== 'leggendaria');
     const legendOnlyLegend = legendPoolAll.filter(c => norm(c.rarity) === 'leggendaria');
     GAME_STATE.pools['Legend'] = legendPoolAll;
 
-    // Pacchetti
-    GAME_STATE.packs['Wonderkid']       = buildFinitePacks(GAME_STATE.pools['Wonderkid'],       PACK_SIZE_PER_GAME['Wonderkid']);
-    GAME_STATE.packs['Patatine']     = buildFinitePacks(GAME_STATE.pools['Patatine'],     PACK_SIZE_PER_GAME['Patatine']);
-    GAME_STATE.packs['Gotham Tots']= buildFinitePacks(GAME_STATE.pools['Gotham Tots'],PACK_SIZE_PER_GAME['Gotham Tots']);
+    // Pacchetti finiti
+    GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
+    GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']); // size=1
+    GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
 
-    // Costruisci pacchetti Legend (base da non-leggendarie) e in ~1/10 inserisci una leggendaria
+    // Injection leggendaria ~10% sui Legend (invariato)
     const baseLegendPacks = buildFinitePacks(legendNonLegend, PACK_SIZE_PER_GAME['Legend']).map(p => p.slice(0, PACK_SIZE_PER_GAME['Legend']));
-    const legendsBag = shuffleInPlace(legendOnlyLegend.slice()); // finite
+    const legendsBag = shuffleInPlace(legendOnlyLegend.slice());
     for (const p of baseLegendPacks) {
       if (Math.random() < 0.1 && legendsBag.length > 0) {
         const idx = Math.floor(Math.random() * p.length);
@@ -545,7 +561,7 @@ async function loadCards(){
     }
     GAME_STATE.packs['Legend'] = baseLegendPacks;
 
-    // Ripristina cursori
+    // Ripristino cursori + UI (invariato)
     try{
       const saved = JSON.parse(localStorage.getItem('futtu_cursors')||'{}');
       if (saved && typeof saved==='object'){
@@ -554,17 +570,19 @@ async function loadCards(){
         }
       }
     }catch{}
-
     renderGamePicker();
     applyPackVisual();
     updateOpenBtnEnabled();
-    document.getElementById('log').textContent = `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, TOTS ${GAME_STATE.pools['Gotham Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}.`;
+    document.getElementById('log').textContent =
+      `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, `+
+      `TOTS ${GAME_STATE.pools['Gotham Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}.`;
 
   }catch(err){
     console.error('Errore cards.json:', err?.message||err);
     document.getElementById('log').textContent = '⚠️ Errore nel caricamento delle carte.';
   }finally{ clearTimeout(t) }
 }
+
 
 /** =========================
  *  UI
