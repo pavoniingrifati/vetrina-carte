@@ -48,7 +48,7 @@
   /* Pitch */
   .pitch{
     position:relative;width:100%;
-    height: min(74vh, 680px);           /* altezza ottimizzata mobile/desktop */
+    height: min(74vh, 680px);
     border-radius:18px;overflow:hidden;
     background:repeating-linear-gradient(0deg,var(--pitch) 0,var(--pitch) 64px,var(--pitch-dark) 64px,var(--pitch-dark) 128px);
     border:2px solid #094c2d
@@ -73,9 +73,9 @@
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
     width:clamp(70px, 18vw, 110px); min-height:84px;background:transparent;border:none
   }
-  .chip{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .chip{display:flex;flex-direction:column;align-items:center;gap:6px; width:100%}
   .nameplate{background:var(--plate);color:var(--plate-text);border-radius:10px;padding:6px 12px;font-weight:800;border:1px solid #d8deea;box-shadow:0 2px 0 #c2cadd}
-  .playername{font-size:12px;font-weight:700;color:#e5e7eb;text-align:center;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .playername{font-size:12px;font-weight:700;color:#e5e7eb;text-align:center;width:100%;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .slot[data-empty="true"] .placeholder{opacity:.8;color:#d1fae5;background:#0b122099;border:1px dashed #9de8c0;padding:6px 8px;border-radius:10px;font-size:12px}
   .slot button{font-size:12px;padding:6px 8px}
 
@@ -109,7 +109,7 @@
   .progress{height:8px;background:#0d223f;border:1px solid #1e3a70;border-radius:999px;overflow:hidden}
   .progress .fill{height:100%;width:0;background:#1f76ff}
 
-  /* Desktop: mostra campo e lista affiancati, tabs nascosti, budget dock nascosto */
+  /* Desktop */
   @media (min-width: 900px){
     .tabs{display:none}
     main{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -117,6 +117,16 @@
     .budget-dock{display:none}
     .topbar .title{order:3;margin-left:0}
     .topbar .actions{order:4}
+  }
+
+  /* Micro-clamp su telefoni molto stretti */
+  @media (max-width:420px){
+    .playername{
+      white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+      line-height:1.1;max-height:2.2em;word-break:break-word;hyphens:auto;
+    }
+    .row{gap:8px}
+    .slot{min-height:96px}
   }
 </style>
 </head>
@@ -368,20 +378,51 @@ function defaultImg(name){
   return `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><rect x='0' y='0' width='160' height='160' fill='%23091020'/><path d='M40 30 L60 18 L80 30 L100 18 L120 30 L126 70 L126 130 L34 130 L34 70 Z' fill='%231f76ff' stroke='%23fff' stroke-width='3'/><text x='80' y='92' text-anchor='middle' font-size='42' fill='%23fff' font-weight='800'>${n}</text></svg>`;
 }
 
+/* === parseTable con shortField "D. Lele" === */
 function parseTable(){
   const lines = RAW_TABLE.trim().split(/\n+/);
   const data = [];
   for(let i=1;i<lines.length;i++){
-    const raw = lines[i].trim(); if(!raw) continue;
-    const parts = raw.split(/\s+/);
-    if(parts.length < 5) continue;
-    const club   = parts[parts.length-1];
-    const overall= parseInt(parts[parts.length-2],10);
-    const pos    = parts[parts.length-3];
-    const name   = parts.slice(0, parts.length-3).join(' ');
+    const raw = lines[i].trim();
+    if(!raw) continue;
+
+    let c=null, n=null, pos=null, overall=null, club=null;
+    const t = raw.split('\t');
+    if(t.length === 5){
+      c = t[0].trim();               // Cognome (può avere spazi)
+      n = t[1].trim();               // Nome (può avere spazi)
+      pos = t[2].trim();
+      overall = parseInt(t[3],10);
+      club = t[4].trim();
+    } else {
+      // Fallback robusto se una riga non ha TAB
+      const parts = raw.split(/\s+/);
+      club   = parts[parts.length-1];
+      overall= parseInt(parts[parts.length-2],10);
+      pos    = parts[parts.length-3];
+      const rest= parts.slice(0, parts.length-3).join(' ');
+      const firstSpace = rest.indexOf(' ');
+      c = firstSpace>-1 ? rest.slice(0, firstSpace) : rest;
+      n = firstSpace>-1 ? rest.slice(firstSpace+1) : '';
+    }
+
     const group  = roleGroup(pos);
     const price  = Math.round(overall*0.6*(group==='A'?1.15:group==='D'?0.95:group==='POR'?0.8:1));
-    data.push({id:`${name}_${pos}_${overall}_${club}`, name, pos, group, overall, price, club, img:defaultImg(name)});
+
+    // Iniziale cognome + nome: "D. Lele"
+    const initialSurname = c.trim().charAt(0).toUpperCase();
+    const shortField = (initialSurname ? (initialSurname + '. ') : '') + n;
+
+    const fullName = `${c} ${n}`.trim();
+    data.push({
+      id:`${fullName}_${pos}_${overall}_${club}`,
+      name: fullName,          // usato nella lista/ricerca
+      surname: c,
+      given: n,
+      shortField,              // mostrato sul campo
+      pos, group, overall, price, club,
+      img: defaultImg(fullName)
+    });
   }
   return data;
 }
@@ -435,11 +476,8 @@ document.addEventListener('click', (e)=>{
 const picked={POR:[null],D:[],C:[],A:[]};
 function initFormationArrays(mod){
   const need = FORMATIONS[mod];
-  picked.D = new Array(need.D).fill(null);
-  picked.C = new Array(need.C).fill(null);
-  picked.A = new Array(need.A).fill(null);
+  picked.D = new Array(NaN); // placeholder (verrà sostituito sotto)
 }
-
 function teamCost(){return Object.values(picked).flat().reduce((s,p)=>s+(p&&p.price||0),0)}
 function countsText(){
   const needD=picked.D.length, needC=picked.C.length, needA=picked.A.length;
@@ -547,7 +585,9 @@ function makeSlot(group, idx){
 function slotChip(slot, player){
   const wrap=document.createElement('div'); wrap.className='chip';
   const plate=document.createElement('div'); plate.className='nameplate'; plate.textContent=player.pos;
-  const name=document.createElement('div'); name.className='playername'; name.textContent=player.name;
+  const name=document.createElement('div'); name.className='playername'; 
+  name.textContent=player.shortField;   // <-- "D. Lele" sul campo
+  name.title = player.name;             // tooltip con nome completo
   const btn=document.createElement('button'); btn.textContent='Rimuovi';
   btn.addEventListener('click',()=>{ const g=slot.dataset.slot; const i=+slot.dataset.idx; removeFromTeam(g,i); });
   wrap.appendChild(plate); wrap.appendChild(name); wrap.appendChild(btn);
@@ -626,7 +666,13 @@ document.getElementById('loadBtn').addEventListener('click', ()=>{
 });
 document.getElementById('resetBtn').addEventListener('click', ()=>{
   if(!confirm('Svuotare la rosa?')) return;
-  initFormationArrays(currentFormation); picked.POR=[null]; renderPitch();
+  // Reinizializza gli array in base al modulo corrente
+  const need = FORMATIONS[currentFormation];
+  picked.POR=[null];
+  picked.D = new Array(need.D).fill(null);
+  picked.C = new Array(need.C).fill(null);
+  picked.A = new Array(need.A).fill(null);
+  renderPitch();
 });
 document.getElementById('downloadBtn').addEventListener('click', ()=>{
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(serializePicked(), null, 2));
@@ -636,8 +682,10 @@ document.getElementById('downloadBtn').addEventListener('click', ()=>{
 /* === Init === */
 (function init(){
   budgetCopy.textContent = BUDGET_MAX;
-  initFormationArrays(currentFormation);
-  // Popola club già fatto sopra
+  const need = FORMATIONS[currentFormation];
+  picked.D = new Array(need.D).fill(null);
+  picked.C = new Array(need.C).fill(null);
+  picked.A = new Array(need.A).fill(null);
   renderPitch();
   renderList();
 })();
