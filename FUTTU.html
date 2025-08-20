@@ -653,13 +653,19 @@ function applyPackVisual(){
 }
 
 function updateOpenBtnEnabled(){
-  const left = packsLeft(GAME_STATE.selected);
-  const cost = PACK_COST_PER_GAME[GAME_STATE.selected] || 0;
+  const game = GAME_STATE.selected;
+  let left = packsLeft(game);
+  const cost = PACK_COST_PER_GAME[game] || 0;
   const badgeText = pointsBadge.textContent || 'Punti: 0';
   const pts = Number((badgeText.split(':')[1]||'0').trim()) || 0;
-  openBtn.disabled = (left <= 0) || (cost > 0 && pts < cost);
+
+  // Per "Oggetti" non c'è limite di pacchetti
+  const noLimit = (game === 'Oggetti');
+
+  openBtn.disabled = (!noLimit && left <= 0) || (cost > 0 && pts < cost);
   renderGamePicker();
 }
+
 
 // Reset cursori → 0 per tutti i game
 document.getElementById('resetPacksBtn').addEventListener('click', ()=>{
@@ -771,17 +777,11 @@ openBtn.addEventListener('click', async () => {
   }
 
   // Carica carte (se non già)
-  if (!GAME_STATE.packs['Wonderkid'].length && !GAME_STATE.packs['Patatine'].length && !GAME_STATE.packs['Gotham Tots'].length){
+  if (!GAME_STATE.packs['Wonderkid'].length && 
+      !GAME_STATE.packs['Patatine'].length && 
+      !GAME_STATE.packs['Gotham Tots'].length &&
+      !GAME_STATE.pools['Oggetti']?.length) {
     await loadCards();
-  }
-
-  // Verifica disponibilità
-  const list = GAME_STATE.packs[game] || [];
-  const idx = GAME_STATE.cursor[game] || 0;
-  if (idx >= list.length){
-    document.getElementById('log').textContent = '❌ Pacchetti esauriti per questo game.';
-    BTN.disabled = false; SHARE.disabled = true;
-    return;
   }
 
   // Animazioni apertura
@@ -789,22 +789,42 @@ openBtn.addEventListener('click', async () => {
   flashLine.classList.add('active'); flashScreen.classList.add('active'); packBox.classList.add('opening');
   await delay(900); packArea.style.display='none';
 
-  // Estrai il prossimo pacchetto finito
-  let chosen = list[idx].slice();
-  if (!chosen || !chosen.length) {
-    document.getElementById('log').textContent = '⚠️ Nessuna carta nel pacchetto selezionato.';
-    BTN.disabled = false; SHARE.disabled = true;
-    return;
+  // Scelta carte
+  let chosen;
+  if (game === 'Oggetti') {
+    // Pacchetto infinito: 3 carte random dalla serie "Oggetto", anche doppioni
+    const pool = GAME_STATE.pools['Oggetti'] || [];
+    const size = PACK_SIZE_PER_GAME['Oggetti'] || 3;
+    if (!pool.length) {
+      document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nella serie Oggetto.';
+      BTN.disabled = false; SHARE.disabled = true;
+      return;
+    }
+    chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
+  } else {
+    // Estrai il prossimo pacchetto finito (comportamento standard)
+    const list = GAME_STATE.packs[game] || [];
+    const idx = GAME_STATE.cursor[game] || 0;
+    if (idx >= list.length){
+      document.getElementById('log').textContent = '❌ Pacchetti esauriti per questo game.';
+      BTN.disabled = false; SHARE.disabled = true;
+      return;
+    }
+    chosen = list[idx].slice();
+
+    // Avanza cursore e salva su localStorage (solo per game finiti)
+    GAME_STATE.cursor[game] = idx + 1;
+    try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
   }
 
-  // Ordina per rarità (se 1 carta non cambia)
+  // Ordinamento per rarità + FX
   chosen.sort((a,b)=> (rarityRank[a.rarity]||0) - (rarityRank[b.rarity]||0) );
   if (chosen.some(c => (String(c.rarity||'').toLowerCase()==='leggendaria'))) { try{ triggerLegendFX(); }catch{} }
+
+  // Mostra in scena
   showStage(chosen);
 
-  // Avanza cursore e salva su localStorage
-  GAME_STATE.cursor[game] = idx + 1;
-  try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
+  // Aggiorna UI
   renderGamePicker();
   updateOpenBtnEnabled();
 
