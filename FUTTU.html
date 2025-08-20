@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>FUT Live Tik Tok</title>
-<meta name="description" content="Pack unico diviso per 'game' (Gotham City). Pacchetti finiti: Wonderkid (3 carte), Patatine (1 carta), Gotham Tots (3 carte). Login e salvataggio inventario invariati." />
+<meta name="description" content="Pack unico diviso per 'game' (Gotham City). Pacchetti finiti: Wonderkid (3 carte), Patatine (1 carta, pesato), Gotham Tots (3 carte), Legend (3 carte). Nuovo: Oggetti (3 carte, infinito). Login e salvataggio inventario invariati." />
 
 <!-- Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -126,7 +126,7 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 .legend-fx .burst{position:absolute;width:14vmin;height:14vmin;border-radius:50%;background:radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,215,0,.9) 45%, rgba(255,140,0,.0) 70%);animation:legendBurst 900ms cubic-bezier(.2,.8,.2,1) forwards}
 .legend-fx .title{position:relative;font-family:inherit;font-weight:900;letter-spacing:.2em;padding:.6em 1em;border-radius:1em;text-transform:uppercase;background:linear-gradient(90deg,#fff,#ffd700,#ffa500,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 12px rgba(255,215,0,.6);animation:legendTitle 1600ms ease-out forwards}
 .legend-fx .confetti{position:absolute;width:.8vmin;height:2.2vmin;opacity:0;will-change:transform,opacity;mix-blend-mode:screen}
-.legend-body-glow{box-shadow:inset 0 0 120vmax rgba(255,215,0,.05);}
+.legend-body-glow{box-shadow:inset 0 0 120vmax rgba(255,215,0,.05);} 
 .card.legendaryPulse .front{box-shadow:0 0 12px rgba(255,215,0,.9), 0 0 28px rgba(255,140,0,.7)}
 @keyframes legendHalo{0%{transform:scale(.2);opacity:0}60%{opacity:1}100%{transform:scale(1.35);opacity:.0}}
 @keyframes legendRays{0%{transform:rotate(0deg) scale(.7);opacity:.0}40%{opacity:1}100%{transform:rotate(220deg) scale(1.15);opacity:0}}
@@ -251,14 +251,13 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots', 'Legend', 'Oggetti'];
+const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti'];
 const PACK_BACK_BY_GAME = {
   'Wonderkid': 'Deck%20back%20wonderkid.png',
   'Patatine': 'patatrine.png',
   'Gotham Tots': 'Deck%20back%20Tots.png',
   'Legend': 'Back%20legend.png',
   'Oggetti': 'Deck%20back%20tactcs.png'
-
 };
 const PACK_COST_PER_GAME = {
   'Wonderkid': 1800,
@@ -266,7 +265,6 @@ const PACK_COST_PER_GAME = {
   'Gotham Tots': 0,
   'Legend': 0,
   'Oggetti': 0
-
 };
 const PACK_SIZE_PER_GAME = {
   'Wonderkid': 3,
@@ -274,7 +272,6 @@ const PACK_SIZE_PER_GAME = {
   'Gotham Tots': 3,
   'Legend': 3,
   'Oggetti': 3
-
 };
 const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
 
@@ -450,14 +447,14 @@ if (bonusBtn) {
  *  ========================= */
 const $ = (s,el=document)=>el.querySelector(s);
 const delay = ms => new Promise(r=>setTimeout(r,ms));
-const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5};
+const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5,'Leggendaria':6};
 const norm = (v)=>String(v||'').trim().toLowerCase();
 
 let audioCtx=null;
 function ensureAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)() }catch{} }
 function tone(f,d=.15,g=.08,t='sine'){ if(!audioCtx) return; const o=audioCtx.createOscillator(),A=audioCtx.createGain(); o.type=t; o.frequency.value=f; A.gain.value=g; o.connect(A).connect(audioCtx.destination); o.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d,.3); o.stop(audioCtx.currentTime+d+.08) }
 function noiseBoom(d=.5,g=.15){ if(!audioCtx) return; const N=audioCtx.sampleRate*d, b=audioCtx.createBuffer(1,N,audioCtx.sampleRate), x=b.getChannelData(0); for(let i=0;i<N;i++) x[i]=(Math.random()*2-1)*Math.pow(1-i/N,2); const s=audioCtx.createBufferSource(); s.buffer=b; const A=audioCtx.createGain(); A.gain.value=g; const F=audioCtx.createBiquadFilter(); F.type='lowpass'; F.frequency.value=400; s.connect(F).connect(A).connect(audioCtx.destination); s.start(); A.gain.setTargetAtTime(0,audioCtx.currentTime+d*.7,2) }
-function playByRarity(r){ if(r==='Comune'||r==='Non Comune'){ tone(520,.07,.06,'triangle'); tone(660,.07,.05,'triangle') } else if(r==='Rara'){ tone(660,.12,.08,'sine'); tone(880,.16,.06,'sine') } else if(r==='Epica'){ tone(660,.18,.09,'sine'); tone(990,.22,.08,'sine'); tone(1320,.24,.06,'sine') } else if(r==='Ultra Rara'||r==='Season'){ noiseBoom(.7,.18); tone(880,.18,1,'square'); tone(1320,.22,.08,'square') } }
+function playByRarity(r){ if(r==='Comune'||r==='Non Comune'){ tone(520,.07,.06,'triangle'); tone(660,.07,.05,'triangle') } else if(r==='Rara'){ tone(660,.12,.08,'sine'); tone(880,.16,.06,'sine') } else if(r==='Epica'){ tone(660,.18,.09,'sine'); tone(990,.22,.08,'sine'); tone(1320,.24,.06,'sine') } else if(r==='Ultra Rara'||r==='Season'){ noiseBoom(.7,.18); tone(880,.18,1,'square'); tone(1320,.22,.08,'square') } else if (r==='Leggendaria'){ noiseBoom(.9,.22); tone(1320,.22,.9,'square'); tone(1760,.26,.09,'square') } }
 
 /** =========================
  *  INVENTARIO
@@ -574,8 +571,8 @@ async function loadCards(){
     }
     GAME_STATE.packs['Legend'] = baseLegendPacks;
 
-    // Oggetti — NEW: pacchetti da 3 carte
-    GAME_STATE.packs['Oggetti'] = buildFinitePacks(GAME_STATE.pools['Oggetti'], PACK_SIZE_PER_GAME['Oggetti']);
+    // Oggetti — INFINITO: niente buildFinitePacks, lasciamo packs vuoto
+    GAME_STATE.packs['Oggetti'] = [];
 
     // ====== Ripristino cursori ======
     try{
@@ -602,8 +599,6 @@ async function loadCards(){
   }finally{ clearTimeout(t) }
 }
 
-
-
 /** =========================
  *  UI
  *  ========================= */
@@ -625,11 +620,16 @@ function renderGamePicker(){
     btn.setAttribute('data-game',game);
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
+
+    const subtitle = (game === 'Oggetti')
+      ? `∞ pacchetti • ${totalCards} carte`
+      : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
+
     btn.innerHTML = `
       <div class="prev" style="background-image:url('${back}')"></div>
       <div class="meta">
         <span class="name">${game}</span>
-        <span class="price">${left}/${totalPacks} pacchetti • ${totalCards} carte</span>
+        <span class="price">${subtitle}</span>
       </div>`;
     btn.addEventListener('click', ()=>{
       GAME_STATE.selected = game;
@@ -658,17 +658,14 @@ function updateOpenBtnEnabled(){
   const cost = PACK_COST_PER_GAME[game] || 0;
   const badgeText = pointsBadge.textContent || 'Punti: 0';
   const pts = Number((badgeText.split(':')[1]||'0').trim()) || 0;
-
-  // Per "Oggetti" non c'è limite di pacchetti
   const noLimit = (game === 'Oggetti');
 
   openBtn.disabled = (!noLimit && left <= 0) || (cost > 0 && pts < cost);
   renderGamePicker();
 }
 
-
-// Reset cursori → 0 per tutti i game
-document.getElementById('resetPacksBtn').addEventListener('click', ()=>{
+// Reset cursori → 0 per tutti i game (Oggetti non usa i pacchetti, ma lasciamo uguale)
+resetPacksBtn.addEventListener('click', ()=>{
   for (const g of VALID_GAMES) GAME_STATE.cursor[g] = 0;
   try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
   renderGamePicker();
@@ -735,7 +732,7 @@ function showStage(cards){
 }
 
 /** =========================
- *  OPEN PACK
+ *  OPEN PACK (con caso speciale Oggetti infinito)
  *  ========================= */
 const flashLine = document.getElementById('flashLine');
 const flashScreen = document.getElementById('flashScreen');
@@ -843,22 +840,6 @@ openBtn.addEventListener('click', async () => {
     }
   }
 });
-
-// Reset: rimescola i pacchetti e azzera i cursori
-resetPacksBtn.addEventListener('click', async ()=>{
-  try{
-    document.getElementById('log').textContent = '♻️ Mischio i pacchetti...';
-    // Azzera cursori e pacchetti
-    for (const g of VALID_GAMES){ GAME_STATE.cursor[g]=0; GAME_STATE.packs[g]=[]; }
-    try{ localStorage.removeItem('futtu_cursors'); }catch{}
-    await loadCards(); // ricostruisce con nuovo shuffle + injection 1/20
-    document.getElementById('log').textContent = '✅ Pacchetti rimescolati.';
-    renderGamePicker(); updateOpenBtnEnabled(); applyPackVisual();
-  }catch(e){
-    console.warn('reset failed', e); document.getElementById('log').textContent = '⚠️ Reset non riuscito.';
-  }
-});
-
 
 /** =========================
  *  SHARE
