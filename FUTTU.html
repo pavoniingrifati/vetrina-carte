@@ -569,7 +569,7 @@ async function loadCards(){
     GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
-    GAME_STATE.packs['Gold'] = buildFinitePacks(  GAME_STATE.pools['Gold'],  PACK_SIZE_PER_GAME['Gold'] // 9);
+    GAME_STATE.packs['Gold'] = buildFinitePacks(GAME_STATE.pools['Gold'], PACK_SIZE_PER_GAME['Gold']);
 
     // Legend: base senza leggendarie, con ~10% di injection leggendaria
     const baseLegendPacks = buildFinitePacks(legendNonLegend, PACK_SIZE_PER_GAME['Legend']).map(p => p.slice(0, PACK_SIZE_PER_GAME['Legend']));
@@ -792,12 +792,14 @@ openBtn.addEventListener('click', async () => {
   }
 
   // Carica carte (se non già)
-  if (!GAME_STATE.packs['Wonderkid'].length && 
-      !GAME_STATE.packs['Patatine'].length && 
-      !GAME_STATE.packs['Gotham Tots'].length &&
-      !GAME_STATE.pools['Oggetti']?.length) {
-    await loadCards();
-  }
+if (!GAME_STATE.packs['Wonderkid'].length && 
+    !GAME_STATE.packs['Patatine'].length && 
+    !GAME_STATE.packs['Gotham Tots'].length &&
+    !GAME_STATE.packs['Gold'].length &&
+    !GAME_STATE.pools['Oggetti']?.length) {
+  await loadCards();
+}
+
 
   // Animazioni apertura
   packBox.classList.add('shake'); await delay(360); packBox.classList.remove('shake');
