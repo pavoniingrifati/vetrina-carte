@@ -561,15 +561,43 @@ async function loadCards(){
     // Oggetti — NEW: prende qualsiasi card con series = "Oggetto" (game: qualunque)
     GAME_STATE.pools['Oggetti'] = cleaned.filter(c => norm(c.series)==='oggetto');
 
-    // Gold — decise da me
-   const GOLD_IDS = ['Angelo-gold','Arthur-gold','Giga-gold','God-gold','Fantaballa-gold','Flavio-gold','Oggetto-Tactics','Maglia-Tactics','Fisioterapista-Tactics']; // <-- personalizza
-   GAME_STATE.pools['Gold'] = cleaned.filter(c => GOLD_IDS.includes(c.id));
+    // Gold — pacchetti manuali (ognuno è un pack finito con carte scelte da me)
+const BY_ID = Object.fromEntries(cleaned.map(c => [c.id, c]));
+
+/**
+ * Ogni elemento dell’array è UN PACCHETTO GOLD.
+ * Metti esattamente 9 ID per pacco (o meno: verranno presi quelli trovati).
+ */
+const PACKS_GOLD = [
+  // Pack 1 (esempio: il tuo attuale)
+  ['Marcoesmarco-Gold','Arthur-gold','Giga-gold','God-gold','Fantaballa-gold','Flavio-gold','Oggetto-Tactics','Maglia-Tactics','Fisioterapista-Tactics'],
+
+  // Pack 2 (esempio: sostituisci con i tuoi ID)
+  ['Arthur-gold','Giga-gold','Maglia-Tactics','Fisioterapista-Tactics','God-gold','Fantaballa-gold','Flavio-gold','Oggetto-Tactics','Marcoesmarco-Gold'],
+
+  // Pack 3 (aggiungi quanti ne vuoi)
+  // ['id1','id2','id3','id4','id5','id6','id7','id8','id9'],
+];
+
+/* Validazione + mapping ID -> carte */
+const packsGoldCards = PACKS_GOLD.map((ids, i) => {
+  const cards = ids.map(id => BY_ID[id]).filter(Boolean);
+  if (cards.length !== ids.length) {
+    const missing = ids.filter(id => !BY_ID[id]);
+    console.warn('[Gold] Pack', i+1, 'ID mancanti:', missing);
+  }
+  // Rispetta comunque la size configurata (9)
+  return cards.slice(0, PACK_SIZE_PER_GAME['Gold'] || 9);
+}).filter(p => p.length > 0);
+
+/* Pool: somma delle carte usate (giusto per i contatori UI) */
+GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards.flat()));
 
     // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
-    GAME_STATE.packs['Gold'] = buildFinitePacks(GAME_STATE.pools['Gold'], PACK_SIZE_PER_GAME['Gold']);
+    GAME_STATE.packs['Gold'] = packsGoldCards;
 
     // Legend: base senza leggendarie, con ~10% di injection leggendaria
     const baseLegendPacks = buildFinitePacks(legendNonLegend, PACK_SIZE_PER_GAME['Legend']).map(p => p.slice(0, PACK_SIZE_PER_GAME['Legend']));
