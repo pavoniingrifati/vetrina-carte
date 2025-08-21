@@ -9,35 +9,151 @@
 <!-- Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 
 <style>
+/* ===============================
+   THEME — Stadium Night (UI only)
+   =============================== */
 :root{
-  --bg:#0b0f19; --panel:#0f1526; --card:#121a2e; --card-2:#0d1325; --text:#ecf0ff; --muted:#a7b0d3; --accent:#6ee7ff; --radius:18px;
-  --g-comune:rgba(154,163,178,.30); --g-non-comune:rgba(52,211,153,.35); --g-rara:rgba(96,165,250,.45);
-  --g-epica:rgba(167,139,250,.55); --g-ultra-rara:rgba(251,191,36,.65); --g-season:rgba(239,68,68,.7);
+  /* colori base */
+  --bg:#070a12;
+  --bg-2:#0b0f19;
+  --panel:#0e1424;
+  --panel-2:#0f162a;
+  --card:#0e1324;
+  --card-2:#111a31;
+  --text:#f4f7ff;
+  --muted:#a9b4d6;
+  --accent:#6ee7ff;
+  --accent-2:#7dd3fc;
+  --success:#34d399;
+  --warning:#fbbf24;
+  --danger:#ef4444;
+  --radius:18px;
+
+  /* rarità glow */
+  --g-comune:rgba(154,163,178,.28);
+  --g-non-comune:rgba(52,211,153,.36);
+  --g-rara:rgba(96,165,250,.42);
+  --g-epica:rgba(167,139,250,.52);
+  --g-ultra-rara:rgba(251,191,36,.62);
+  --g-season:rgba(239,68,68,.68);
+
+  /* decorazioni */
+  --hairline:rgba(255,255,255,.08);
+  --hairline-2:rgba(255,255,255,.12);
+  --glass:rgba(255,255,255,.05);
+  --glass-2:rgba(255,255,255,.04);
+  --shadow:0 12px 40px rgba(0,0,0,.55);
+  --shadow-soft:0 6px 18px rgba(0,0,0,.35);
+  --ring:0 0 0 2px rgba(110,231,255,.35), 0 0 0 6px rgba(110,231,255,.12);
 }
-*{box-sizing:border-box} html,body{height:100%}
-body{ margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg);
-  color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; overflow-x:hidden }
-a{color:var(--accent); text-decoration:none}
-header{ position:sticky; top:0; z-index:20; backdrop-filter: blur(10px);
-  background:linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6)); border-bottom:1px solid rgba(255,255,255,.06)}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; color:var(--text);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  background:
+    radial-gradient(1200px 800px at 10% -10%, #132040 0%, transparent 60%),
+    radial-gradient(900px 700px at 120% 10%, #1b2a52 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+
+/* ---------------- Header */
+header{
+  position:sticky; top:0; z-index:50;
+  backdrop-filter:saturate(1.1) blur(10px);
+  background:linear-gradient(180deg, rgba(10,14,26,.9), rgba(10,14,26,.65));
+  border-bottom:1px solid var(--hairline);
+}
 .wrap{max-width:1200px; margin:0 auto; padding:20px}
-.title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
-h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
-.toolbar{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; align-items:center}
-.pill{display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px;
-  border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text)}
-.btn{background:linear-gradient(180deg,#1b2a4d,#152141); border:1px solid rgba(110,231,255,.35);
-  border-radius:12px; color:#fff; padding:12px 16px; cursor:pointer}
+.title{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap}
+h1{margin:0; letter-spacing:.2px; font-weight:900; font-size:clamp(22px,3.4vw,36px)}
+.subtitle{color:var(--muted); margin-top:6px}
+
+/* ---------------- UI atoms */
+.pill{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 14px; border-radius:999px;
+  border:1px solid var(--hairline-2);
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+  color:var(--text); box-shadow:inset 0 -1px 0 rgba(255,255,255,.06);
+}
+.btn{
+  appearance:none; border:0; cursor:pointer;
+  background:
+    linear-gradient(180deg,#1a2650,#141e3f);
+  border:1px solid rgba(110,231,255,.35);
+  border-radius:12px; color:#fff; padding:12px 16px; font-weight:600;
+  box-shadow:0 6px 16px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12);
+  transition:transform .15s ease, box-shadow .15s ease, filter .2s ease, background .25s ease;
+}
+.btn:hover{ transform:translateY(-1px); box-shadow:0 10px 24px rgba(0,0,0,.45); filter:brightness(1.05) }
+.btn:active{ transform:translateY(0); box-shadow:0 6px 16px rgba(0,0,0,.35) }
+.btn:focus-visible{ outline:none; box-shadow: var(--ring) }
 .btn:disabled{opacity:.6; cursor:not-allowed}
 
-/* FLASH */
+.toolbar{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; align-items:center}
+
+/* ---------------- Game picker */
+.choices{ display:flex; gap:14px; margin-top:12px; flex-wrap:wrap }
+.choice{
+  display:flex; align-items:center; gap:12px; padding:10px;
+  border:1px solid var(--hairline-2); background:var(--glass); border-radius:14px; cursor:pointer;
+  box-shadow:var(--shadow-soft); transition:transform .12s ease, box-shadow .12s ease, background .25s ease, border-color .25s ease;
+}
+.choice:hover{ transform:translateY(-2px); box-shadow:0 10px 26px rgba(0,0,0,.45) }
+.choice[aria-selected="true"]{
+  outline:2px solid rgba(110,231,255,.5); background:rgba(110,231,255,.08);
+  border-color:rgba(110,231,255,.4);
+}
+.prev{
+  width:92px; aspect-ratio: 690/987; border-radius:12px;
+  background-size:cover; background-position:center;
+  box-shadow:0 6px 16px rgba(0,0,0,.45), 0 0 0 1px var(--hairline);
+}
+.meta{ display:flex; flex-direction:column; line-height:1.15 }
+.meta .name{ font-weight:800; letter-spacing:.2px }
+.meta .price{ color:var(--muted); font-size:12px }
+
+/* ---------------- Pack (cover) */
+.packArea{display:flex; align-items:center; justify-content:center; min-height:min(76vh,900px); position:relative}
+.pack{
+  width:min(520px,86vw); aspect-ratio:690/987; border-radius:var(--radius);
+  background:center/cover no-repeat; position:relative; isolation:isolate;
+  box-shadow: 0 8px 24px rgba(0,0,0,.6), 0 0 0 1px var(--hairline);
+  transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
+  will-change:transform,filter;
+}
+.pack::after{
+  /* sheen */
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:
+    linear-gradient(120deg, rgba(255,255,255,.0) 10%, rgba(255,255,255,.12) 18%, rgba(255,255,255,.0) 28%),
+    radial-gradient(80% 100% at 10% 0%, rgba(125,211,252,.12), transparent 60%);
+  mix-blend-mode:screen; transform:translateX(-30%); filter:blur(.2px);
+  opacity:.6; transition:transform .6s ease;
+}
+.pack:hover{ transform:translateY(-3px) rotateX(1.2deg); box-shadow:0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.12); filter:brightness(1.05)}
+.pack:hover::after{ transform:translateX(30%) }
+
+/* shake & opening (kept from logic) */
+.pack.shake{animation:shake .35s ease-in-out 1}
+@keyframes shake{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-6px) rotate(-1deg)}50%{transform:translateX(5px) rotate(1deg)}75%{transform:translateX(-3px) rotate(-.6deg)}}
+.pack.opening{animation:packOpen .9s cubic-bezier(.16,.84,.29,1) forwards}
+@keyframes packOpen{0%{transform:scale(1) translateY(0); opacity:1}55%{transform:scale(.92) translateY(6px); filter:brightness(1.08)}75%{transform:scale(1.02) translateY(-6px); filter:brightness(1.25)}100%{transform:scale(.88) translateY(-12px); opacity:0}}
+
+/* flash FX (kept ids) */
 .flash-line,.flash-screen{position:fixed; inset:0; pointer-events:none; z-index:40; opacity:0}
-.flash-line::before{content:""; position:absolute; top:0; bottom:0; width:32vw;
+.flash-line::before{
+  content:""; position:absolute; top:0; bottom:0; width:32vw;
   background:linear-gradient(90deg,transparent,rgba(255,230,120,.55),rgba(255,201,44,.8),rgba(255,230,120,.55),transparent);
-  filter:blur(8px); transform:translateX(-40vw) skewX(-12deg)}
+  filter:blur(8px); transform:translateX(-40vw) skewX(-12deg)
+}
 .flash-line.active{animation:sweep .75s ease-out forwards}
 @keyframes sweep{0%{opacity:0}10%{opacity:1}100%{opacity:1}}
 .flash-line.active::before{animation:sweepMove .75s ease-out forwards}
@@ -46,54 +162,58 @@ h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
 .flash-screen.active{animation:flash .35s ease-out forwards}
 @keyframes flash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
 
-/* GAME PICKER */
-.choices{ display:flex; gap:14px; margin-top:12px; flex-wrap:wrap }
-.choice{ display:flex; align-items:center; gap:10px; padding:8px; border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.03); border-radius:14px; cursor:pointer; }
-.choice[aria-selected="true"]{ outline:2px solid rgba(110,231,255,.5); background:rgba(255,255,255,.06) }
-.prev{ width:90px; aspect-ratio: 690/987; border-radius:12px; background-size:cover; background-position:center;
-  box-shadow:0 6px 16px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08) }
-.meta{ display:flex; flex-direction:column; line-height:1.15 }
-.meta .name{ font-weight:700 }
-.meta .price{ color:var(--muted); font-size:12px }
-
-/* PACK */
-.packArea{display:flex; align-items:center; justify-content:center; min-height:min(76vh,900px); position:relative}
-.pack{ width:min(520px,86vw); aspect-ratio:690/987; background: center/cover no-repeat;
-  border-radius:var(--radius); box-shadow:0 8px 24px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08);
-  transition:transform .2s ease, box-shadow .2s ease, filter .2s ease; position:relative; isolation:isolate; will-change:transform,filter }
-.pack:hover{ transform:translateY(-2px); box-shadow:0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.12); filter:brightness(1.05)}
-.pack.shake{animation:shake .35s ease-in-out 1}
-@keyframes shake{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-6px) rotate(-1deg)}50%{transform:translateX(5px) rotate(1deg)}75%{transform:translateX(-3px) rotate(-.6deg)}}
-.pack.opening{animation:packOpen .9s cubic-bezier(.16,.84,.29,1) forwards}
-@keyframes packOpen{0%{transform:scale(1) translateY(0); opacity:1}55%{transform:scale(.92) translateY(6px); filter:brightness(1.08)}75%{transform:scale(1.02) translateY(-6px); filter:brightness(1.25)}100%{transform:scale(.88) translateY(-12px); opacity:0}}
-
-/* STAGE */
+/* ---------------- Stage (cards area) */
 .stageWrap{display:none}
-.stageWrap.show{display:block; animation:stageIn .5s ease .25s both}
+.stageWrap.show{display:block; animation:stageIn .45s ease .2s both}
 @keyframes stageIn{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
-.stage{margin:22px 0 40px; display:grid; gap:16px; grid-template-columns:repeat(1,minmax(0,1fr))}
+
+.stage{margin:22px 0 40px; display:grid; gap:18px; grid-template-columns:repeat(1,minmax(0,1fr))}
 @media(min-width:720px){.stage{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(min-width:1100px){.stage{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
-.cCard{position:relative; width:100%; aspect-ratio:690/987; border-radius:var(--radius); transform-style:preserve-3d; perspective:1200px}
-.scene{position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d; transition:transform .7s cubic-bezier(.22,.75,.2,1);
-  transform:rotateY(0deg); box-shadow:0 10px 28px rgba(0,0,0,.45); background:var(--card); will-change:transform}
-.face{position:absolute; inset:0; border-radius:inherit; overflow:hidden; backface-visibility:hidden; border:1px solid rgba(255,255,255,.08);
-  display:flex; align-items:center; justify-content:center}
+.cCard{
+  position:relative; width:100%; aspect-ratio:690/987; border-radius:var(--radius);
+  transform-style:preserve-3d; perspective:1200px; overflow:visible;
+}
+.scene{
+  position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d;
+  transition:transform .7s cubic-bezier(.22,.75,.2,1);
+  transform:rotateY(0deg);
+  box-shadow:0 16px 40px rgba(0,0,0,.5), 0 0 0 1px var(--hairline);
+  background:var(--card);
+  will-change:transform;
+}
+.face{
+  position:absolute; inset:0; border-radius:inherit; overflow:hidden; backface-visibility:hidden;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--hairline);
+}
 .back img, .front img { width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:690/987; }
 .back img{filter:drop-shadow(0 10px 30px rgba(0,0,0,.45))}
 .front{transform:rotateY(180deg)}
 
+/* foil sheen on front */
+.front::after{
+  content:""; position:absolute; inset:-2px; border-radius:inherit; pointer-events:none;
+  background:
+    conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.0), rgba(255,255,255,.25), rgba(255,255,255,0) 30%),
+    linear-gradient(120deg, rgba(111,197,255,.0) 30%, rgba(111,197,255,.25) 38%, rgba(111,197,255,.0) 46%);
+  mix-blend-mode:screen; opacity:.35; filter:blur(.4px);
+  animation:foil 6s linear infinite;
+}
+@keyframes foil{ to{ transform:rotate(360deg) } }
+
+/* Drop-in reveal */
 .drop{opacity:0; transform:translateY(-40px) scale(.96)}
 .drop.in { animation: dropIn .5s cubic-bezier(.2,.8,.2,1) forwards; opacity: 1; }
 @keyframes dropIn{0%{opacity:0; transform:translateY(-50px) scale(.96)}70%{opacity:1; transform:translateY(6px) scale(1.02)}100%{opacity:1; transform:translateY(0) scale(1)}}
 
+/* flip states from JS */
 .cCard[data-state="back"] .scene{transform:rotateY(0deg)}
 .cCard[data-state="front"] .scene{transform:rotateY(180deg)}
 
 /* Raggi + scintille */
-.rays{position:absolute; inset:-10%; background:conic-gradient(from 0deg at 50% 50%, transparent, rgba(255,255,255,.05), transparent);
+.rays{position:absolute; inset:-10%; background:conic-gradient(from 0deg at 50% 50%, transparent, rgba(255,255,255,.06), transparent);
   filter:blur(16px); opacity:.7; mix-blend-mode:overlay; pointer-events:none}
 .spark{position:absolute; inset:0; pointer-events:none}
 .spark i{position:absolute; width:6px; height:6px; border-radius:999px; background:rgba(255,255,255,.9);
@@ -101,30 +221,87 @@ h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
 @keyframes spark{ 0%{opacity:0; transform:translate(-50%,-50%) rotate(var(--rot))}
   6%{opacity:1} 100%{opacity:0; transform:translate(calc(-50% + var(--xEnd)), calc(-50% - 120px)) rotate(var(--rot))} }
 
-/* Rarità (glow) */
-.cCard.r-comune .scene{box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 0 18px var(--g-comune)}
-.cCard.r-non-comune .scene{box-shadow:0 0 0 1px rgba(255,255,255,.08), 0 0 22px var(--g-non-comune)}
-.cCard.r-rara .scene{box-shadow:0 0 0 1px rgba(255,255,255,.08), 0 0 26px var(--g-rara)}
-.cCard.r-epica .scene{box-shadow:0 0 0 1px rgba(255,255,255,.08), 0 0 30px var(--g-epica)}
-.cCard.r-ultra-rara .scene{box-shadow:0 0 0 1px rgba(255,255,255,.08), 0 0 36px var(--g-ultra-rara)}
-.cCard.r-season .scene{box-shadow:0 0 0 1px rgba(255,255,255,.08), 0 0 42px var(--g-season)}
+/* Rarity — multilayer glow + subtle border gradient */
+.cCard.r-comune   .scene{box-shadow:0 0 0 1px var(--hairline), 0 0 18px var(--g-comune)}
+.cCard.r-non-comune .scene{box-shadow:0 0 0 1px var(--hairline), 0 0 22px var(--g-non-comune)}
+.cCard.r-rara     .scene{box-shadow:0 0 0 1px var(--hairline), 0 0 26px var(--g-rara)}
+.cCard.r-epica    .scene{box-shadow:0 0 0 1px var(--hairline), 0 0 30px var(--g-epica)}
+.cCard.r-ultra-rara .scene{box-shadow:0 0 0 1px var(--hairline), 0 0 36px var(--g-ultra-rara)}
+.cCard.r-season   .scene{box-shadow:0 0 0 1px var(--hairline), 0 0 42px var(--g-season)}
 
-.badge{position:absolute; top:10px; left:10px; padding:6px 8px; border-radius:10px; background:rgba(0,0,0,.35); font-size:12px}
+/* Badge rarità */
+.badge{
+  position:absolute; top:10px; left:10px;
+  padding:6px 9px; border-radius:10px; background:rgba(0,0,0,.45); font-size:12px;
+  border:1px solid var(--hairline);
+  box-shadow:inset 0 0 12px rgba(255,255,255,.06);
+}
 
-.log{margin-top:8px; font-size:13px; color:var(--muted)}
-footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6))}
+/* Footer */
+footer{
+  border-top:1px solid var(--hairline);
+  background:linear-gradient(0deg, rgba(10,14,26,.85), rgba(10,14,26,.6));
+}
 .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
-.pillFoot{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
+.pillFoot{
+  display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
+  border:1px solid var(--hairline); background:var(--glass-2)
+}
 
-@media(max-width:600px){.wrap{padding:12px} .stage{grid-template-columns:1fr}}
-</style>
-<style>
-/* ===== Legendary FX ===== */
+/* ---------------- Share modal — full redesign (same IDs/classes) */
+.shareModal{
+  position:fixed; inset:0; z-index:70; display:none;
+  align-items:center; justify-content:center; padding:24px;
+  background:rgba(5,8,16,.6); backdrop-filter:blur(8px);
+}
+.shareCard{
+  width:min(560px,92vw); border-radius:18px; background:linear-gradient(180deg, #0d152a, #0b1224);
+  border:1px solid var(--hairline-2); box-shadow:0 30px 80px rgba(0,0,0,.6);
+  padding:16px 16px 14px;
+}
+.shareHeader{display:flex; align-items:center; justify-content:space-between; gap:8px; padding-bottom:10px; border-bottom:1px solid var(--hairline)}
+.shareHeader strong{font-size:18px; letter-spacing:.2px}
+.shareRow{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:14px}
+.shareItem{
+  display:flex; align-items:center; justify-content:center; height:42px;
+  border-radius:12px; background:var(--glass); color:#fff; border:1px solid var(--hairline);
+  font-weight:600; text-decoration:none; transition:transform .12s ease, background .25s ease;
+}
+.shareItem:hover{ transform:translateY(-2px); background:rgba(255,255,255,.08) }
+.inputLike{
+  flex:1 1 auto; min-width:0; height:42px; padding:0 12px; border-radius:12px;
+  background:#0b1324; color:#dbe4ff; border:1px solid var(--hairline); outline:none;
+}
+.inputLike:focus{ box-shadow: var(--ring) }
+.shareActions{display:flex; justify-content:flex-end; margin-top:12px}
+
+/* ---------------- Misc */
+.log{margin-top:10px; font-size:13px; color:var(--muted)}
+
+a{color:var(--accent); text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Focus-visible for clickable items without default outline */
+.choice:focus-visible, .pack:focus-visible, .shareItem:focus-visible { outline:none; box-shadow: var(--ring) }
+
+/* Mobile tweaks */
+@media(max-width:600px){ .wrap{padding:12px} .stage{grid-template-columns:1fr} .shareRow{grid-template-columns:repeat(2,1fr)} }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *{animation:none !important; transition:none !important}
+}
+
+/* =========================
+   Legendary FX (kept, refined)
+   ========================= */
 .legend-fx{position:fixed;inset:0;pointer-events:none;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.legend-fx .halo{position:absolute;width:40vmin;height:40vmin;border-radius:50%;box-shadow:0 0 30px 10px rgba(255,215,0,.6), 0 0 120px 40px rgba(255,140,0,.35), inset 0 0 60px rgba(255,255,255,.4);animation:legendHalo 1800ms ease-out forwards}
+.legend-fx .halo{position:absolute;width:40vmin;height:40vmin;border-radius:50%;
+  box-shadow:0 0 30px 10px rgba(255,215,0,.6), 0 0 120px 40px rgba(255,140,0,.35), inset 0 0 60px rgba(255,255,255,.4);
+  animation:legendHalo 1800ms ease-out forwards}
 .legend-fx .rays{position:absolute;width:70vmin;height:70vmin;background:conic-gradient(from 0deg, rgba(255,215,0,.0), rgba(255,215,0,.9), rgba(255,215,0,.0) 25%);mix-blend-mode:screen;filter:blur(2px);animation:legendRays 2200ms linear forwards}
 .legend-fx .burst{position:absolute;width:14vmin;height:14vmin;border-radius:50%;background:radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,215,0,.9) 45%, rgba(255,140,0,.0) 70%);animation:legendBurst 900ms cubic-bezier(.2,.8,.2,1) forwards}
-.legend-fx .title{position:relative;font-family:inherit;font-weight:900;letter-spacing:.2em;padding:.6em 1em;border-radius:1em;text-transform:uppercase;background:linear-gradient(90deg,#fff,#ffd700,#ffa500,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 12px rgba(255,215,0,.6);animation:legendTitle 1600ms ease-out forwards}
+.legend-fx .title{position:relative;font-weight:900;letter-spacing:.2em;padding:.6em 1em;border-radius:1em;text-transform:uppercase;background:linear-gradient(90deg,#fff,#ffd700,#ffa500,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 12px rgba(255,215,0,.6);animation:legendTitle 1600ms ease-out forwards}
 .legend-fx .confetti{position:absolute;width:.8vmin;height:2.2vmin;opacity:0;will-change:transform,opacity;mix-blend-mode:screen}
 .legend-body-glow{box-shadow:inset 0 0 120vmax rgba(255,215,0,.05);} 
 .card.legendaryPulse .front{box-shadow:0 0 12px rgba(255,215,0,.9), 0 0 28px rgba(255,140,0,.7)}
@@ -171,7 +348,7 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 
 <main class="wrap">
   <section class="packArea" id="packArea">
-    <div class="pack" id="pack" title="Apri pacchetto"></div>
+    <div class="pack" id="pack" title="Apri pacchetto" tabindex="0"></div>
   </section>
 
   <section class="stageWrap" id="stageWrap">
@@ -185,7 +362,7 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
   </div>
 </footer>
 
-<!-- Template carta -->
+<!-- Template carta (stesse classi/ID usate dal JS) -->
 <template id="tplCard">
   <article class="cCard drop" data-state="back">
     <div class="rays"></div>
@@ -203,7 +380,7 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
   </article>
 </template>
 
-<!-- Share Fallback Modal -->
+<!-- Share Fallback Modal (stesse classi/ID) -->
 <div class="shareModal" id="shareModal" aria-hidden="true" role="dialog" aria-modal="true" style="display:none">
   <div class="shareCard">
     <div class="shareHeader">
@@ -226,12 +403,13 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
   </div>
 </div>
 
-<!-- Firebase (v8) -->
+<!-- Firebase (v8) — INVARIATO -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
 <script>
+/* === INVARIATO (config e init) === */
 const firebaseConfig = {
   apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
   authDomain: "fantaball-9e19c.firebaseapp.com",
@@ -245,7 +423,9 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 </script>
 
 <script type="module">
-// Firestore
+/* === TUTTO IL CODICE JS SOTTO È INVARIATO === */
+
+/** Firestore */
 const db = firebase.firestore();
 
 /** =========================
@@ -978,6 +1158,7 @@ window.addEventListener('DOMContentLoaded', async ()=>{
 });
 </script>
 <script>
+/* === FX Leggendaria — INVARIATO === */
 function triggerLegendFX(){
   try{
     const fx=document.createElement('div'); fx.className='legend-fx';
