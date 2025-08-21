@@ -12,32 +12,90 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
+/* THEME VARIABLES */
 :root{
-  --bg:#0b0f19; --panel:#0f1526; --card:#121a2e; --card-2:#0d1325; --text:#ecf0ff; --muted:#a7b0d3; --accent:#6ee7ff; --radius:18px;
-  --g-comune:rgba(154,163,178,.30); --g-non-comune:rgba(52,211,153,.35); --g-rara:rgba(96,165,250,.45);
-  --g-epica:rgba(167,139,250,.55); --g-ultra-rara:rgba(251,191,36,.65); --g-season:rgba(239,68,68,.7);
+  /* Base palette */
+  --bg:#0a0f1a; 
+  --panel:#0e1526; 
+  --card:#121a2e; 
+  --card-2:#0d1325; 
+  --text:#ecf2ff; 
+  --muted:#9eabd3; 
+  --accent:#7be3ff; 
+  --radius:18px;
+
+  /* Rarity glows */
+  --g-comune:rgba(154,163,178,.28);
+  --g-non-comune:rgba(52,211,153,.34);
+  --g-rara:rgba(96,165,250,.44);
+  --g-epica:rgba(167,139,250,.54);
+  --g-ultra-rara:rgba(251,191,36,.62);
+  --g-season:rgba(239,68,68,.68);
+
+  /* Gold theme */
+  --gold-1:#fff6d6;
+  --gold-2:#ffd36e;
+  --gold-3:#ffb72b;
+  --gold-4:#7a5300;
+  --ring: rgba(123,227,255,.45);
 }
-*{box-sizing:border-box} html,body{height:100%}
-body{ margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg);
-  color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; overflow-x:hidden }
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:
+    radial-gradient(1000px 700px at 10% -10%, #132040 0%, transparent 70%),
+    radial-gradient(900px 600px at 110% 0%, #18223e 0%, transparent 65%),
+    linear-gradient(180deg, #0a0f1a 0%, #0a0f1a 100%);
+  color:var(--text);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  overflow-x:hidden;
+}
+
+/* Links */
 a{color:var(--accent); text-decoration:none}
-header{ position:sticky; top:0; z-index:20; backdrop-filter: blur(10px);
-  background:linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6)); border-bottom:1px solid rgba(255,255,255,.06)}
+a:hover{filter:brightness(1.08)}
+
+/* Top bar */
+header{
+  position:sticky; top:0; z-index:20;
+  backdrop-filter: blur(10px) saturate(1.1);
+  background:
+    linear-gradient(180deg, rgba(13,19,37,.88), rgba(13,19,37,.58));
+  border-bottom:1px solid rgba(255,255,255,.06)
+}
 .wrap{max-width:1200px; margin:0 auto; padding:20px}
 .title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
-h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
+h1{margin:0; font-size:clamp(20px,3.6vw,34px)}
+.subtitle{color:var(--muted)}
 .toolbar{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; align-items:center}
-.pill{display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px;
-  border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text)}
-.btn{background:linear-gradient(180deg,#1b2a4d,#152141); border:1px solid rgba(110,231,255,.35);
-  border-radius:12px; color:#fff; padding:12px 16px; cursor:pointer}
-.btn:disabled{opacity:.6; cursor:not-allowed}
+
+/* Pills & Buttons */
+.pill{
+  display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.04); color:var(--text)
+}
+.btn{
+  --grad1:#1b2a4d; --grad2:#152141;
+  background:linear-gradient(180deg,var(--grad1),var(--grad2));
+  border:1px solid var(--ring);
+  border-radius:14px;
+  color:#fff; padding:12px 16px; cursor:pointer;
+  box-shadow: 0 6px 16px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.06);
+  transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
+}
+.btn:hover{ transform:translateY(-1px); filter:brightness(1.05); box-shadow: 0 12px 28px rgba(0,0,0,.35) }
+.btn:active{ transform:translateY(0); filter:brightness(0.98) }
+.btn:disabled{opacity:.65; cursor:not-allowed}
 
 /* FLASH */
 .flash-line,.flash-screen{position:fixed; inset:0; pointer-events:none; z-index:40; opacity:0}
-.flash-line::before{content:""; position:absolute; top:0; bottom:0; width:32vw;
-  background:linear-gradient(90deg,transparent,rgba(255,230,120,.55),rgba(255,201,44,.8),rgba(255,230,120,.55),transparent);
-  filter:blur(8px); transform:translateX(-40vw) skewX(-12deg)}
+.flash-line::before{
+  content:""; position:absolute; top:0; bottom:0; width:32vw;
+  background:linear-gradient(90deg,transparent,rgba(255,230,120,.5),rgba(255,201,44,.8),rgba(255,230,120,.5),transparent);
+  filter:blur(8px); transform:translateX(-40vw) skewX(-12deg)
+}
 .flash-line.active{animation:sweep .75s ease-out forwards}
 @keyframes sweep{0%{opacity:0}10%{opacity:1}100%{opacity:1}}
 .flash-line.active::before{animation:sweepMove .75s ease-out forwards}
@@ -48,47 +106,102 @@ h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
 
 /* GAME PICKER */
 .choices{ display:flex; gap:14px; margin-top:12px; flex-wrap:wrap }
-.choice{ display:flex; align-items:center; gap:10px; padding:8px; border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.03); border-radius:14px; cursor:pointer; }
-.choice[aria-selected="true"]{ outline:2px solid rgba(110,231,255,.5); background:rgba(255,255,255,.06) }
-.prev{ width:90px; aspect-ratio: 690/987; border-radius:12px; background-size:cover; background-position:center;
-  box-shadow:0 6px 16px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08) }
+.choice{
+  display:flex; align-items:center; gap:10px; padding:10px; border:1px solid rgba(255,255,255,.10);
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+  border-radius:16px; cursor:pointer;
+  transition: transform .12s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+}
+.choice:hover{ transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.35) }
+.choice[aria-selected="true"]{
+  outline:2px solid rgba(123,227,255,.45);
+  border-color: rgba(123,227,255,.45);
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+}
+.prev{
+  width:96px; aspect-ratio: 690/987; border-radius:12px; background-size:cover; background-position:center;
+  box-shadow:0 6px 16px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08)
+}
 .meta{ display:flex; flex-direction:column; line-height:1.15 }
 .meta .name{ font-weight:700 }
 .meta .price{ color:var(--muted); font-size:12px }
 
+/* GOLD highlight solo nel picker (quando selezionato Gold) */
+.choice[data-game="Gold"][aria-selected="true"]{
+  outline:2px solid rgba(255, 209, 92, .65);
+  border-color: rgba(255, 209, 92, .65);
+  box-shadow: 0 0 0 3px rgba(123,227,255,.06), 0 12px 30px rgba(255, 183, 43, .25);
+}
+
 /* PACK */
 .packArea{display:flex; align-items:center; justify-content:center; min-height:min(76vh,900px); position:relative}
-.pack{ width:min(520px,86vw); aspect-ratio:690/987; background: center/cover no-repeat;
-  border-radius:var(--radius); box-shadow:0 8px 24px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08);
-  transition:transform .2s ease, box-shadow .2s ease, filter .2s ease; position:relative; isolation:isolate; will-change:transform,filter }
-.pack:hover{ transform:translateY(-2px); box-shadow:0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.12); filter:brightness(1.05)}
+.pack{
+  width:min(520px,86vw); aspect-ratio:690/987; background:center/cover no-repeat;
+  border-radius:var(--radius);
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.5),
+    0 0 0 1px rgba(255,255,255,.08),
+    inset 0 0 0 1px rgba(255,255,255,.04);
+  position:relative; isolation:isolate; will-change:transform,filter;
+  transition:transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+.pack:hover{ transform:translateY(-2px); filter:brightness(1.05); box-shadow:0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.12) }
 .pack.shake{animation:shake .35s ease-in-out 1}
 @keyframes shake{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-6px) rotate(-1deg)}50%{transform:translateX(5px) rotate(1deg)}75%{transform:translateX(-3px) rotate(-.6deg)}}
 .pack.opening{animation:packOpen .9s cubic-bezier(.16,.84,.29,1) forwards}
 @keyframes packOpen{0%{transform:scale(1) translateY(0); opacity:1}55%{transform:scale(.92) translateY(6px); filter:brightness(1.08)}75%{transform:scale(1.02) translateY(-6px); filter:brightness(1.25)}100%{transform:scale(.88) translateY(-12px); opacity:0}}
 
-/* STAGE */
+/* Shine diagonale sul pack */
+.pack::after{
+  content:""; position:absolute; inset:-2px; border-radius:inherit; pointer-events:none;
+  background: linear-gradient(120deg, rgba(255,255,255,.10), rgba(255,255,255,0) 30%);
+  mix-blend-mode: overlay; filter: blur(2px);
+  opacity:.0; transition: opacity .2s ease;
+}
+.pack:hover::after{ opacity:.9 }
+
+/* GOLD glow sul pack (quando il back contiene ORO.png) */
+.pack[style*="ORO.png"]{
+  box-shadow:
+    0 14px 40px rgba(0,0,0,.55),
+    0 0 0 1px rgba(255,255,255,.12),
+    0 0 28px rgba(255,215,0,.20),
+    inset 0 0 0 1px rgba(255,255,255,.06);
+}
+
+/* STAGE (griglia delle carte) */
 .stageWrap{display:none}
 .stageWrap.show{display:block; animation:stageIn .5s ease .25s both}
 @keyframes stageIn{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
-.stage{margin:22px 0 40px; display:grid; gap:16px; grid-template-columns:repeat(1,minmax(0,1fr))}
-@media(min-width:720px){.stage{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(min-width:1100px){.stage{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.stage{
+  margin:22px 0 40px; display:grid; gap:16px; 
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+@media(min-width:720px){.stage{gap:18px}}
+@media(min-width:1100px){.stage{gap:20px}}
 
+/* CARD */
 .cCard{position:relative; width:100%; aspect-ratio:690/987; border-radius:var(--radius); transform-style:preserve-3d; perspective:1200px}
-.scene{position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d; transition:transform .7s cubic-bezier(.22,.75,.2,1);
-  transform:rotateY(0deg); box-shadow:0 10px 28px rgba(0,0,0,.45); background:var(--card); will-change:transform}
+.scene{
+  position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d; 
+  transition:transform .7s cubic-bezier(.22,.75,.2,1), box-shadow .25s ease, filter .25s ease;
+  transform:rotateY(0deg);
+  background:linear-gradient(180deg, var(--card), var(--card-2));
+  box-shadow: 0 12px 28px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.06);
+  will-change:transform, box-shadow, filter;
+}
 .face{position:absolute; inset:0; border-radius:inherit; overflow:hidden; backface-visibility:hidden; border:1px solid rgba(255,255,255,.08);
   display:flex; align-items:center; justify-content:center}
-.back img, .front img { width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:690/987; }
+.back img, .front img{ width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:690/987 }
 .back img{filter:drop-shadow(0 10px 30px rgba(0,0,0,.45))}
 .front{transform:rotateY(180deg)}
 
+/* Entrata */
 .drop{opacity:0; transform:translateY(-40px) scale(.96)}
-.drop.in { animation: dropIn .5s cubic-bezier(.2,.8,.2,1) forwards; opacity: 1; }
+.drop.in{ animation: dropIn .5s cubic-bezier(.2,.8,.2,1) forwards; opacity: 1; }
 @keyframes dropIn{0%{opacity:0; transform:translateY(-50px) scale(.96)}70%{opacity:1; transform:translateY(6px) scale(1.02)}100%{opacity:1; transform:translateY(0) scale(1)}}
 
+/* Flip */
 .cCard[data-state="back"] .scene{transform:rotateY(0deg)}
 .cCard[data-state="front"] .scene{transform:rotateY(180deg)}
 
@@ -101,38 +214,38 @@ h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
 @keyframes spark{ 0%{opacity:0; transform:translate(-50%,-50%) rotate(var(--rot))}
   6%{opacity:1} 100%{opacity:0; transform:translate(calc(-50% + var(--xEnd)), calc(-50% - 120px)) rotate(var(--rot))} }
 
-/* Rarità (glow) */
-.cCard.r-comune .scene{box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 0 18px var(--g-comune)}
-.cCard.r-non-comune .scene{box-shadow:0 0 0 1px rgba(255,255,255,.08), 0 0 22px var(--g-non-comune)}
-.cCard.r-rara .scene{box-shadow:0 0 0 1px rgba(255,255,255,.08), 0 0 26px var(--g-rara)}
-.cCard.r-epica .scene{box-shadow:0 0 0 1px rgba(255,255,255,.08), 0 0 30px var(--g-epica)}
-.cCard.r-ultra-rara .scene{box-shadow:0 0 0 1px rgba(255,255,255,.08), 0 0 36px var(--g-ultra-rara)}
-.cCard.r-season .scene{box-shadow:0 0 0 1px rgba(255,255,255,.08), 0 0 42px var(--g-season)}
+/* RARITY GLOW (più morbidi) */
+.cCard.r-comune .scene{box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 0 18px var(--g-comune)}
+.cCard.r-non-comune .scene{box-shadow:0 0 0 1px rgba(255,255,255,.06), 0 0 22px var(--g-non-comune)}
+.cCard.r-rara .scene{box-shadow:0 0 0 1px rgba(255,255,255,.06), 0 0 26px var(--g-rara)}
+.cCard.r-epica .scene{box-shadow:0 0 0 1px rgba(255,255,255,.06), 0 0 30px var(--g-epica)}
+.cCard.r-ultra-rara .scene{box-shadow:0 0 0 1px rgba(255,255,255,.06), 0 0 36px var(--g-ultra-rara)}
+.cCard.r-season .scene{box-shadow:0 0 0 1px rgba(255,255,255,.06), 0 0 42px var(--g-season)}
 
-.badge{position:absolute; top:10px; left:10px; padding:6px 8px; border-radius:10px; background:rgba(0,0,0,.35); font-size:12px}
+/* Badge */
+.badge{
+  position:absolute; top:10px; left:10px; padding:6px 8px; border-radius:10px;
+  background:rgba(0,0,0,.38); font-size:12px; border:1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(6px);
+}
 
-.log{margin-top:8px; font-size:13px; color:var(--muted)}
+/* Log + Footer */
+.log{margin-top:10px; font-size:13px; color:var(--muted)}
 footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6))}
 .foot{max-width:1200px; margin:0 auto; padding:12px 20px; font-size:13px; color:var(--muted)}
 .pillFoot{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
 
-@media(max-width:600px){.wrap{padding:12px} .stage{grid-template-columns:1fr}}
+/* Responsiveness */
+@media(max-width:600px){
+  .wrap{padding:12px}
+  .prev{width:84px}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important}
+}
 </style>
-<style>
-/* ===== Legendary FX ===== */
-.legend-fx{position:fixed;inset:0;pointer-events:none;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.legend-fx .halo{position:absolute;width:40vmin;height:40vmin;border-radius:50%;box-shadow:0 0 30px 10px rgba(255,215,0,.6), 0 0 120px 40px rgba(255,140,0,.35), inset 0 0 60px rgba(255,255,255,.4);animation:legendHalo 1800ms ease-out forwards}
-.legend-fx .rays{position:absolute;width:70vmin;height:70vmin;background:conic-gradient(from 0deg, rgba(255,215,0,.0), rgba(255,215,0,.9), rgba(255,215,0,.0) 25%);mix-blend-mode:screen;filter:blur(2px);animation:legendRays 2200ms linear forwards}
-.legend-fx .burst{position:absolute;width:14vmin;height:14vmin;border-radius:50%;background:radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,215,0,.9) 45%, rgba(255,140,0,.0) 70%);animation:legendBurst 900ms cubic-bezier(.2,.8,.2,1) forwards}
-.legend-fx .title{position:relative;font-family:inherit;font-weight:900;letter-spacing:.2em;padding:.6em 1em;border-radius:1em;text-transform:uppercase;background:linear-gradient(90deg,#fff,#ffd700,#ffa500,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 12px rgba(255,215,0,.6);animation:legendTitle 1600ms ease-out forwards}
-.legend-fx .confetti{position:absolute;width:.8vmin;height:2.2vmin;opacity:0;will-change:transform,opacity;mix-blend-mode:screen}
-.legend-body-glow{box-shadow:inset 0 0 120vmax rgba(255,215,0,.05);} 
-.card.legendaryPulse .front{box-shadow:0 0 12px rgba(255,215,0,.9), 0 0 28px rgba(255,140,0,.7)}
-@keyframes legendHalo{0%{transform:scale(.2);opacity:0}60%{opacity:1}100%{transform:scale(1.35);opacity:.0}}
-@keyframes legendRays{0%{transform:rotate(0deg) scale(.7);opacity:.0}40%{opacity:1}100%{transform:rotate(220deg) scale(1.15);opacity:0}}
-@keyframes legendBurst{0%{transform:scale(.2);opacity:0}70%{opacity:1}100%{transform:scale(2.6);opacity:0}}
-@keyframes legendTitle{0%{transform:translateY(20px);filter:blur(8px);opacity:0}60%{opacity:1;filter:blur(0)}100%{transform:translateY(0)}}
-</style>
+
+  
 </head>
 <body>
 <div class="flash-line" id="flashLine" aria-hidden="true"></div>
