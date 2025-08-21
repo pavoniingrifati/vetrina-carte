@@ -623,6 +623,30 @@ GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards.flat()));
       }
     }catch{}
 
+    // ====== Fingerprint dei pacchetti GOLD (reset automatico se cambi PACKS_GOLD) ======
+try {
+  // Usa la definizione che hai messo per "Soluzione 1"
+  // (PACKS_GOLD è l'array di array di ID che definisce i tuoi pacchetti manuali)
+  const GOLD_FP_KEY = 'futtu_gold_fp';
+  const newFp = JSON.stringify(PACKS_GOLD); // firma stabile del contenuto/ordine dei pacchi
+  const oldFp = localStorage.getItem(GOLD_FP_KEY);
+
+  if (oldFp !== newFp) {
+    // contenuto cambiato -> ricomincia da capo i pacchi Gold
+    GAME_STATE.cursor['Gold'] = 0;
+
+    // aggiorna subito il salvataggio cursori
+    const saved = JSON.parse(localStorage.getItem('futtu_cursors')||'{}');
+    saved['Gold'] = 0;
+    localStorage.setItem('futtu_cursors', JSON.stringify(saved));
+
+    // salva la nuova firma
+    localStorage.setItem(GOLD_FP_KEY, newFp);
+  }
+} catch (e) {
+  console.warn('Fingerprint Gold non applicato', e);
+}
+
     // ====== UI info ======
     renderGamePicker();
     applyPackVisual();
