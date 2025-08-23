@@ -35,7 +35,8 @@
 
     /* Teams grid */
     .grid{display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:var(--gap)} @media (max-width:720px){ .grid{ grid-template-columns: 1fr; } }
-    .team{display:flex; gap:14px; background:var(--panel-2); border:1px solid rgba(255,255,255,.07); border-radius:var(--radius-sm); padding:12px; align-items:center}
+    .team{display:flex; gap:14px; background:var(--panel-2); border:1px solid rgba(255,255,255,.07); border-radius:var(--radius-sm); padding:12px; align-items:center; position:relative; overflow:hidden}
+    .team::before{content:""; position:absolute; left:0; top:0; bottom:0; width:6px; background:var(--team, rgba(255,255,255,.12));}
     .team img.logo{width:58px; height:58px; border-radius:12px}
     .team .name{font-weight:700}
     .team .meta{font-size:12px; color:var(--muted)}
@@ -158,7 +159,7 @@
 
     const CALENDAR = {
       F1: [
-        "Gran Premio di Europa (Valencia)", "Gran Premio del Mediterraneo",
+        "Gran Premio di Europa (Valencia)", "Gran Premio del Mediterraneo (Siracusa)",
         "Gran Premio delle Alpi (Innsbruck)", "Gran Premio di Scandinavia (Stockholm)",
         "Gran Premio del Pacifico (Okayama)", "Gran Premio d'Africa (Marrakech)",
         "Gran Premio d'America (Austin)", "Gran Premio del Sahara (Merzouga)",
@@ -213,10 +214,13 @@
 
       // Teams grid
       teamsGrid.innerHTML = '';
-      [...data.entries()].forEach(([teamName, drivers]) => {
+      [...data.entries()].forEach(([teamName, team]) => {
+        const drivers = (team && team.piloti) ? team.piloti : [];
+        const color = team && team.colore ? team.colore : null;
         const teamPoints = (drivers || []).reduce((s,dr)=> s + (dr.punti||0), 0);
         const card = document.createElement('article');
         card.className = 'team';
+        if(color){ card.style.setProperty('--team', color); card.style.borderColor = color; }
         const logoUrl = `https://placehold.co/200x200/1a1f2e/ffffff?text=${encodeURIComponent(teamName)}`;
         card.innerHTML = `
           <img class="logo" src="${logoUrl}" alt="Logo ${teamName}" loading="lazy"/>
@@ -228,7 +232,7 @@
                 <span class="drv">
                   <img src="https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(dr.nome)}" alt="${dr.nome}" loading="lazy"/>
                   <span>${dr.nome}</span>
-                  <span class="tag" title="Abilità (60–95)">Skill: ${dr.skill}</span>
+                  <span class="tag" title="Abilità (60–95)">Skill: ${'${dr.skill}'}</span>
                 </span>
               `).join('')}
             </div>
@@ -257,7 +261,7 @@
 
       // Classifica piloti (per PUNTI)
       const driversRows = [];
-      [...data.entries()].forEach(([teamName, drivers]) => drivers.forEach(dr => driversRows.push({
+      [...data.entries()].forEach(([teamName, team]) => (team.piloti||[]).forEach(dr => driversRows.push({
         driver: dr.nome, team: teamName, pts: dr.punti || 0
       })));
       driversRows.sort((a,b)=> b.pts - a.pts || a.driver.localeCompare(b.driver));
@@ -265,7 +269,8 @@
 
       // Classifica scuderie (per punti totali scuderia)
       const teamRows = [...data.keys()].map(teamName => {
-        const drivers = data.get(teamName) || [];
+        const team = data.get(teamName) || { piloti: [] };
+        const drivers = team.piloti || [];
         const pts = drivers.reduce((s,d)=> s + (d.punti||0), 0);
         return { team: teamName, pts };
       });
@@ -276,7 +281,7 @@
     function html(str){ const t = document.createElement('template'); t.innerHTML = str.trim(); return t.content.firstChild; }
 
     // Carica piloti.json e prepara state, poi render
-    fetch('piloti.json')
+    fetch('piloti.json', { cache: 'no-store' })
       .then(r => r.json())
       .then(list => {
         // list: array di { categoria, scuderia, piloti: [{nome, skill} ...] }
@@ -285,17 +290,17 @@
           if(!state.dataBySeries[series]) return; // ignora categorie sconosciute
           const map = state.dataBySeries[series];
           const teamName = entry.scuderia;
-          map.set(teamName, entry.piloti || []);
+          map.set(teamName, { colore: entry.colore || null, piloti: entry.piloti || [] });
         });
         render();
       })
       .catch(err => {
         console.error('Errore nel caricamento di piloti.json', err);
         // Fallback minimo per non rompere la pagina
-        state.dataBySeries.F1.set('Apex Racing', [ {nome:'Luca Bianchi', skill:85, punti:132}, {nome:'Max Duarte', skill:78, punti:98} ]);
-        state.dataBySeries.F1.set('Crimson Motorsport', [ {nome:'Kenji Mori', skill:88, punti:104}, {nome:'Diego Santos', skill:81, punti:88} ]);
-        state.dataBySeries.F2.set('Silverline', [ {nome:'Matteo Ricci', skill:80, punti:79}, {nome:'Arman Yilmaz', skill:74, punti:64} ]);
-        state.dataBySeries.F3.set('Green Arrow', [ {nome:'Paolo Serra', skill:73, punti:40}, {nome:'Anna Kovacs', skill:70, punti:36} ]);
+        state.dataBySeries.F1.set('Apex Racing', { colore:'#ff1a1a', piloti:[ {nome:'Luca Bianchi', skill:85, punti:132}, {nome:'Max Duarte', skill:78, punti:98} ] });
+        state.dataBySeries.F1.set('Crimson Motorsport', { colore:'#ff6b6b', piloti:[ {nome:'Kenji Mori', skill:88, punti:104}, {nome:'Diego Santos', skill:81, punti:88} ] });
+        state.dataBySeries.F2.set('Silverline', { colore:'#1dd1a1', piloti:[ {nome:'Matteo Ricci', skill:80, punti:79}, {nome:'Arman Yilmaz', skill:74, punti:64} ] });
+        state.dataBySeries.F3.set('Green Arrow', { colore:'#ffd166', piloti:[ {nome:'Paolo Serra', skill:73, punti:40}, {nome:'Anna Kovacs', skill:70, punti:36} ] });
         render();
       });
   </script>
