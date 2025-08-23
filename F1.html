@@ -44,6 +44,20 @@
     .drv{display:flex; align-items:center; gap:8px; background:#00000020; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.06)}
     .drv img{width:22px; height:22px; border-radius:999px}
 
+    /* ===== Track background & grid styling ===== */
+    .grid.track{position:relative; padding:18px; border-radius:var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.08)),
+                  repeating-linear-gradient(0deg, #141821 0 18px, #121620 18px 36px);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+    .grid.track::after{content:""; position:absolute; top:0; bottom:0; left:50%; width:2px;
+      background: repeating-linear-gradient(to bottom, rgba(255,255,255,.65) 0 10px, transparent 10px 20px);
+      opacity:.6; filter:blur(.2px);
+    }
+    .team.stagger:nth-child(even){ margin-top:24px }
+    @media (max-width:720px){ .team.stagger:nth-child(even){ margin-top:0 } }
+    .pos{ position:absolute; top:8px; right:8px; font-weight:800; font-size:12px; padding:4px 8px; border-radius:999px; background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.25) }
+
     /* Tables */
     table{width:100%; border-collapse: collapse}
     th, td{padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.06); text-align:left; font-size:14px}
@@ -98,7 +112,7 @@
         <div class="tag" id="seriesTag">F1</div>
       </div>
       <div class="bd">
-        <div id="teamsGrid" class="grid" aria-live="polite"></div>
+        <div id="teamsGrid" class="grid track" aria-live="polite"></div>
       </div>
     </section>
 
@@ -214,12 +228,17 @@
 
       // Teams grid
       teamsGrid.innerHTML = '';
-      [...data.entries()].forEach(([teamName, team]) => {
+      const list = [...data.entries()].map(([teamName, team]) => {
         const drivers = (team && team.piloti) ? team.piloti : [];
         const color = team && team.colore ? team.colore : null;
         const teamPoints = (drivers || []).reduce((s,dr)=> s + (dr.punti||0), 0);
+        return { teamName, team, drivers, color, teamPoints };
+      }).sort((a,b)=> b.teamPoints - a.teamPoints || a.teamName.localeCompare(b.teamName));
+
+      list.forEach((row, idx) => {
+        const { teamName, drivers, color, teamPoints } = row;
         const card = document.createElement('article');
-        card.className = 'team';
+        card.className = 'team stagger';
         if(color){ card.style.setProperty('--team', color); card.style.borderColor = color; }
         const logoUrl = `https://placehold.co/200x200/1a1f2e/ffffff?text=${encodeURIComponent(teamName)}`;
         card.innerHTML = `
@@ -232,11 +251,12 @@
                 <span class="drv">
                   <img src="https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(dr.nome)}" alt="${dr.nome}" loading="lazy"/>
                   <span>${dr.nome}</span>
-                  <span class="tag" title="Abilità (60–95)">Skill: ${'${dr.skill}'}</span>
+                  <span class="tag" title="Abilità (60–95)">Skill: ${dr.skill}</span>
                 </span>
               `).join('')}
             </div>
           </div>`;
+        card.insertAdjacentHTML('afterbegin', `<span class="pos">P${idx+1}</span>`);
         teamsGrid.appendChild(card);
       });
 
