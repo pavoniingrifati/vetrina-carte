@@ -88,8 +88,8 @@
       <div class="hero" role="banner">
         <div class="logo" aria-hidden="true"></div>
         <div>
-          <div class="title">Fantaballa Formula 1,2,3!</div>
-          <div class="subtitle">Partecipa live sul canale Tik Tok Fantaballa</div>
+          <div class="title">Il mio campionato: Formula 1 · Formula 2 · Formula 3</div>
+          <div class="subtitle">Demo pronta per GitHub Pages – dati caricati da <code>piloti.json</code></div>
         </div>
         <div style="margin-left:auto" class="toggle">
           <label for="dm" class="sr-only">Tema scuro</label>
@@ -204,6 +204,23 @@
     const rulesBox = el('#rulesBox');
     const seriesTag = el('#seriesTag');
 
+    // === Numeri robusti: accetta "80,5" oltre a 80.5 ===
+    function toNum(v){
+      if(typeof v === 'number') return v;
+      if(typeof v === 'string'){
+        const s = v.trim().replace(/\./g,'').replace(',', '.'); // rimuove separatori migliaia IT e converte virgola in punto
+        const n = Number(s);
+        return Number.isFinite(n) ? n : 0;
+      }
+      return 0;
+    }
+    function formatNumber(n){
+      const x = Number(n);
+      return Number.isFinite(x) && typeof Intl !== 'undefined'
+        ? x.toLocaleString('it-IT', { maximumFractionDigits: 2 })
+        : n;
+    }
+
     let current = 'F1';
     const tabs = [...document.querySelectorAll('.tab')];
     tabs.forEach(b => b.addEventListener('click', () => {
@@ -245,13 +262,13 @@
           <img class="logo" src="${logoUrl}" alt="Logo ${teamName}" loading="lazy"/>
           <div style="flex:1 1 auto">
             <div class="name">${teamName}</div>
-            <div class="meta">Totale scuderia: <strong>${teamPoints}</strong> pt</div>
+            <div class="meta">Totale scuderia: <strong>${formatNumber(teamPoints)}</strong> pt</div>
             <div class="drivers">
               ${drivers.map(dr => `
                 <span class="drv">
                   <img src="https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(dr.nome)}" alt="${dr.nome}" loading="lazy"/>
                   <span>${dr.nome}</span>
-                  <span class="tag" title="Abilità (60–95)">Skill: ${dr.skill}</span>
+                  <span class="tag" title="Abilità (60–95)">Skill: ${formatNumber(dr.skill)}</span>
                 </span>
               `).join('')}
             </div>
@@ -285,7 +302,7 @@
         driver: dr.nome, team: teamName, pts: dr.punti || 0
       })));
       driversRows.sort((a,b)=> b.pts - a.pts || a.driver.localeCompare(b.driver));
-      tblDrivers.innerHTML = driversRows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.driver}</td><td>${r.team}</td><td><strong>${r.pts}</strong></td></tr>`).join('');
+      tblDrivers.innerHTML = driversRows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.driver}</td><td>${r.team}</td><td><strong>${formatNumber(r.pts)}</strong></td></tr>`).join('');
 
       // Classifica scuderie (per punti totali scuderia)
       const teamRows = [...data.keys()].map(teamName => {
@@ -295,7 +312,7 @@
         return { team: teamName, pts };
       });
       teamRows.sort((a,b)=> b.pts - a.pts || a.team.localeCompare(b.team));
-      tblTeams.innerHTML = teamRows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.team}</td><td><strong>${r.pts}</strong></td></tr>`).join('');
+      tblTeams.innerHTML = teamRows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.team}</td><td><strong>${formatNumber(r.pts)}</strong></td></tr>`).join('');
     }
 
     function html(str){ const t = document.createElement('template'); t.innerHTML = str.trim(); return t.content.firstChild; }
@@ -310,7 +327,12 @@
           if(!state.dataBySeries[series]) return; // ignora categorie sconosciute
           const map = state.dataBySeries[series];
           const teamName = entry.scuderia;
-          map.set(teamName, { colore: entry.colore || null, piloti: entry.piloti || [] });
+          const piloti = (entry.piloti || []).map(p => ({
+          nome: p.nome,
+          skill: toNum(p.skill),
+          punti: toNum(p.punti)
+        }));
+        map.set(teamName, { colore: entry.colore || null, piloti });
         });
         render();
       })
