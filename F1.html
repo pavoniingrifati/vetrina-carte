@@ -110,10 +110,10 @@
 
       <!-- Standings drivers -->
       <section id="standingsDrivers" class="card" aria-labelledby="stand-d-h">
-        <div class="hd"><h2 id="stand-d-h">Classifica Piloti (per Skill)</h2></div>
+        <div class="hd"><h2 id="stand-d-h">Classifica Piloti</h2></div>
         <div class="bd">
           <table id="tblDrivers">
-            <thead><tr><th>#</th><th>Pilota</th><th>Scuderia</th><th>Skill</th></tr></thead>
+            <thead><tr><th>#</th><th>Pilota</th><th>Scuderia</th><th>Punti</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -177,12 +177,7 @@
     };
 
     // Punti totali scuderia (placeholder): modifica liberamente o collegalo a un file separato
-    const TEAM_POINTS = {
-      F1: { "Apex Racing":230, "Crimson Motorsport":192, "Vortex GP":160, "Nordic Arrow":123, "Aurora Works":91, "Tempest Dynamics":65 },
-      F2: { "Silverline":143, "Blue Horizon":110, "Falconette":90, "Desert Sun":67, "Iberia Speed":50, "Tundra Tech":33 },
-      F3: { "Green Arrow":76, "Nimbus":54, "Riviera":42, "Typhoon":34, "BalticWave":26, "Alpenstern":18 }
-    };
-
+    
     // Stato applicazione popolato da piloti.json
     const state = { dataBySeries: { F1: new Map(), F2: new Map(), F3: new Map() } };
 
@@ -219,7 +214,7 @@
       // Teams grid
       teamsGrid.innerHTML = '';
       [...data.entries()].forEach(([teamName, drivers]) => {
-        const teamPoints = (TEAM_POINTS[current] && TEAM_POINTS[current][teamName]) || 0;
+        const teamPoints = (drivers || []).reduce((s,dr)=> s + (dr.punti||0), 0);
         const card = document.createElement('article');
         card.className = 'team';
         const logoUrl = `https://placehold.co/200x200/1a1f2e/ffffff?text=${encodeURIComponent(teamName)}`;
@@ -260,19 +255,20 @@
         chips.appendChild(c);
       });
 
-      // Classifica piloti (ora per SKILL)
+      // Classifica piloti (per PUNTI)
       const driversRows = [];
       [...data.entries()].forEach(([teamName, drivers]) => drivers.forEach(dr => driversRows.push({
-        driver: dr.nome, team: teamName, skill: dr.skill
+        driver: dr.nome, team: teamName, pts: dr.punti || 0
       })));
-      driversRows.sort((a,b)=> b.skill - a.skill || a.driver.localeCompare(b.driver));
-      tblDrivers.innerHTML = driversRows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.driver}</td><td>${r.team}</td><td><strong>${r.skill}</strong></td></tr>`).join('');
+      driversRows.sort((a,b)=> b.pts - a.pts || a.driver.localeCompare(b.driver));
+      tblDrivers.innerHTML = driversRows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.driver}</td><td>${r.team}</td><td><strong>${r.pts}</strong></td></tr>`).join('');
 
       // Classifica scuderie (per punti totali scuderia)
-      const teamRows = [...data.keys()].map(teamName => ({
-        team: teamName,
-        pts: (TEAM_POINTS[current] && TEAM_POINTS[current][teamName]) || 0
-      }));
+      const teamRows = [...data.keys()].map(teamName => {
+        const drivers = data.get(teamName) || [];
+        const pts = drivers.reduce((s,d)=> s + (d.punti||0), 0);
+        return { team: teamName, pts };
+      });
       teamRows.sort((a,b)=> b.pts - a.pts || a.team.localeCompare(b.team));
       tblTeams.innerHTML = teamRows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.team}</td><td><strong>${r.pts}</strong></td></tr>`).join('');
     }
@@ -296,10 +292,10 @@
       .catch(err => {
         console.error('Errore nel caricamento di piloti.json', err);
         // Fallback minimo per non rompere la pagina
-        state.dataBySeries.F1.set('Apex Racing', [ {nome:'Luca Bianchi', skill:85}, {nome:'Max Duarte', skill:78} ]);
-        state.dataBySeries.F1.set('Crimson Motorsport', [ {nome:'Kenji Mori', skill:88}, {nome:'Diego Santos', skill:81} ]);
-        state.dataBySeries.F2.set('Silverline', [ {nome:'Matteo Ricci', skill:80}, {nome:'Arman Yilmaz', skill:74} ]);
-        state.dataBySeries.F3.set('Green Arrow', [ {nome:'Paolo Serra', skill:73}, {nome:'Anna Kovacs', skill:70} ]);
+        state.dataBySeries.F1.set('Apex Racing', [ {nome:'Luca Bianchi', skill:85, punti:132}, {nome:'Max Duarte', skill:78, punti:98} ]);
+        state.dataBySeries.F1.set('Crimson Motorsport', [ {nome:'Kenji Mori', skill:88, punti:104}, {nome:'Diego Santos', skill:81, punti:88} ]);
+        state.dataBySeries.F2.set('Silverline', [ {nome:'Matteo Ricci', skill:80, punti:79}, {nome:'Arman Yilmaz', skill:74, punti:64} ]);
+        state.dataBySeries.F3.set('Green Arrow', [ {nome:'Paolo Serra', skill:73, punti:40}, {nome:'Anna Kovacs', skill:70, punti:36} ]);
         render();
       });
   </script>
