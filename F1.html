@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Il mio campionato – F1, F2, F3 (demo)</title>
+  <meta name="description" content="Sito demo per campionato personale di Formula 1, Formula 2 e Formula 3. Squadre, piloti, classifiche, regole e calendario." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath fill='%23ff1a1a' d='M17 169c0-42 34-76 76-76h75c39 0 71 30 75 68c1 8-5 15-13 15H134c-9 0-16-7-16-16s7-16 16-16h86c-5-18-22-32-42-32H93c-25 0-46 21-46 46s21 46 46 46h127c9 0 16 7 16 16s-7 16-16 16H93c-42 0-76-34-76-76Z'/%3E%3C/svg%3E"/>
+  <style>
+    /* ======= Design System (CSS variables) ======= */
+    :root {
+      --bg: #0b0c0f;
+      --panel: #12141a;
+      --panel-2: #1a1d25;
+      --text: #e6e8f0;
+      --muted: #9aa2b1;
+      --brand: #ff1a1a;
+      --brand-2: #ff6b6b;
+      --ok: #1dd1a1;
+      --warn: #ffd166;
+      --shadow: 0 10px 30px rgba(0,0,0,.45);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --gap: 18px;
+      --gap-lg: 28px;
+      --maxw: 1200px;
+    }
+    @media (prefers-color-scheme: light){
+      :root{ --bg:#f7f8fb; --panel:#ffffff; --panel-2:#f1f3f7; --text:#0d0f14; --muted:#4c5463; }
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+      color:var(--text); background:linear-gradient(180deg, var(--bg), #0b0c0f 60%);
+    }
+    a{color:inherit}
+
+    /* ======= Layout ======= */
+    header{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter:saturate(140%) blur(8px);
+      background: linear-gradient(180deg, rgba(10,10,14,.9), rgba(10,10,14,.6));
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .wrap{max-width:var(--maxw); margin-inline:auto; padding: 16px 22px;}
+    .hero{display:flex; align-items:center; gap:16px}
+    .logo{width:36px; height:36px; border-radius:10px; background: radial-gradient(120% 120% at 20% 20%, var(--brand-2), var(--brand)); box-shadow: var(--shadow)}
+    .title{font-size: clamp(18px, 2.2vw, 26px); font-weight:800; letter-spacing:.3px;}
+    .subtitle{font-size:14px; color:var(--muted)}
+
+    /* Tabs */
+    .tabs{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+    .tab{padding:10px 14px; border:1px solid rgba(255,255,255,.08); border-radius:999px; background:var(--panel-2); cursor:pointer; user-select:none; transition:.2s transform}
+    .tab[aria-selected="true"]{outline:2px solid var(--brand); box-shadow:0 0 0 4px rgba(255,26,26,.18) inset}
+    .tab:active{transform:translateY(1px)}
+
+    main{max-width:var(--maxw); margin: 18px auto; padding: 0 22px; display:grid; grid-template-columns: 1.4fr .9fr; gap: var(--gap-lg)}
+    @media (max-width: 980px){ main{ grid-template-columns: 1fr; } }
+
+    .card{background:var(--panel); border:1px solid rgba(255,255,255,.06); border-radius:var(--radius); box-shadow:var(--shadow);}
+    .card h2{margin:0 0 10px; font-size: clamp(18px,2vw,22px)}
+    .card .hd{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:16px 18px; border-bottom:1px solid rgba(255,255,255,.06)}
+    .card .bd{padding:18px}
+
+    /* Teams grid */
+    .grid{display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:var(--gap)}
+    @media (max-width:720px){ .grid{ grid-template-columns: 1fr; } }
+
+    .team{display:flex; gap:14px; background:var(--panel-2); border:1px solid rgba(255,255,255,.07); border-radius:var(--radius-sm); padding:12px; align-items:center}
+    .team img.logo{width:58px; height:58px; border-radius:12px}
+    .team .name{font-weight:700}
+    .team .meta{font-size:12px; color:var(--muted)}
+    .drivers{display:flex; gap:10px; margin-top:6px; flex-wrap:wrap}
+    .drv{display:flex; align-items:center; gap:8px; background:#00000020; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.06)}
+    .drv img{width:22px; height:22px; border-radius:999px}
+
+    /* Tables */
+    table{width:100%; border-collapse: collapse}
+    th, td{padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.06); text-align:left; font-size:14px}
+    th{font-size:12px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted)}
+    tr:hover td{background:rgba(255,255,255,.03)}
+    .tag{font-size:12px; padding:4px 8px; border-radius:999px; background:#00000020; border:1px solid rgba(255,255,255,.06)}
+
+    /* Calendar pills */
+    .chips{display:flex; gap:8px; flex-wrap:wrap}
+    .chip{padding:8px 12px; border-radius:999px; background:var(--panel-2); border:1px solid rgba(255,255,255,.07); font-size:13px}
+
+    /* Footer */
+    footer{max-width:var(--maxw); margin: 0 auto 40px; padding: 0 22px}
+    .foot{display:flex; gap:10px; align-items:center; justify-content:space-between; color:var(--muted); font-size:13px}
+
+    /* Toggle */
+    .toggle{display:flex; align-items:center; gap:8px}
+    .switch{appearance:none; width:42px; height:26px; border-radius:999px; background:#111; position:relative; border:1px solid rgba(255,255,255,.2); cursor:pointer}
+    .switch::after{content:""; position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:var(--brand); transition:.2s}
+    .switch:checked::after{left:20px}
+
+    .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="hero" role="banner">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div class="title">Il mio campionato: Formula 1 · Formula 2 · Formula 3</div>
+          <div class="subtitle">Demo pronta per GitHub Pages – modifica i dati nel JSON in basso</div>
+        </div>
+        <div style="margin-left:auto" class="toggle">
+          <label for="dm" class="sr-only">Tema scuro</label>
+          <input id="dm" class="switch" type="checkbox" aria-label="Tema scuro" />
+        </div>
+      </div>
+      <nav class="tabs" role="tablist" aria-label="Seleziona categoria">
+        <button class="tab" role="tab" aria-selected="true" data-series="F1">Formula 1</button>
+        <button class="tab" role="tab" aria-selected="false" data-series="F2">Formula 2</button>
+        <button class="tab" role="tab" aria-selected="false" data-series="F3">Formula 3</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Teams -->
+    <section id="teams" class="card" aria-labelledby="teams-h">
+      <div class="hd">
+        <h2 id="teams-h">Scuderie e piloti</h2>
+        <div class="tag" id="seriesTag">F1</div>
+      </div>
+      <div class="bd">
+        <div id="teamsGrid" class="grid" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="side">
+      <!-- Rules -->
+      <section id="rules" class="card" aria-labelledby="rules-h">
+        <div class="hd"><h2 id="rules-h">Regole stagione</h2></div>
+        <div class="bd" id="rulesBox"></div>
+      </section>
+
+      <!-- Standings drivers -->
+      <section id="standingsDrivers" class="card" aria-labelledby="stand-d-h">
+        <div class="hd"><h2 id="stand-d-h">Classifica Piloti</h2></div>
+        <div class="bd">
+          <table id="tblDrivers">
+            <thead><tr><th>#</th><th>Pilota</th><th>Scuderia</th><th>Punti</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Standings teams -->
+      <section id="standingsTeams" class="card" aria-labelledby="stand-t-h">
+        <div class="hd"><h2 id="stand-t-h">Classifica Scuderie</h2></div>
+        <div class="bd">
+          <table id="tblTeams">
+            <thead><tr><th>#</th><th>Scuderia</th><th>Punti</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Calendar -->
+      <section id="calendar" class="card" aria-labelledby="cal-h">
+        <div class="hd"><h2 id="cal-h">Calendario</h2></div>
+        <div class="bd"><div id="chips" class="chips"></div></div>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <div class="foot">
+      <div>📁 <strong>GitHub Pages ready.</strong> Tutto in un file <code>index.html</code>.</div>
+      <div>🛠️ Dati fittizi e immagini placeholder (placehold.co, DiceBear). Sostituiscili quando vuoi.</div>
+    </div>
+  </footer>
+
+  <script>
+    /* =======================================================
+       DATI MODIFICABILI – cambia qui per personalizzare tutto
+       - Aggiungi/edita scuderie, piloti, punti, regole e calendario
+       - Le immagini sono placeholder: sostituisci url con loghi/foto reali
+       ======================================================= */
+    const championships = {
+      F1: {
+        rules: {
+          punti: [25,18,15,12,10,8,6,4,2,1],
+          puntoGiroVeloce: true,
+          numeroGare: 12,
+          ultimaGaraDoppioPunteggio: false,
+          note: "Sistema simile F1. 1 punto bonus per giro veloce se si è nei primi 10."
+        },
+        calendario: [
+          "Gran Premio di Europa (Valencia)", "Gran Premio del Mediterraneo (Siracusa)",
+          "Gran Premio delle Alpi (Innsbruck)", "Gran Premio di Scandinavia (Stockholm)",
+          "Gran Premio del Pacifico (Okayama)", "Gran Premio d'Africa (Marrakech)",
+          "Gran Premio d'America (Austin)", "Gran Premio del Sahara (Merzouga)",
+          "Gran Premio d'Oriente (Doha)", "Gran Premio d'Oceania (Auckland)",
+          "Gran Premio del Baltico (Riga)", "Gran Premio Mondiale (Dubai)"
+        ],
+        teams: [
+          t("Apex Racing", "apx",  
+            d("Luca Bianchi", 132), d("Max Duarte", 98)),
+          t("Crimson Motorsport", "crm",
+            d("Kenji Mori", 104), d("Diego Santos", 88)),
+          t("Vortex GP", "vrx",
+            d("Elena Rossi", 86), d("Noah Clarke", 74)),
+          t("Nordic Arrow", "nar",
+            d("Sven Larsson", 68), d("Petra Novak", 55)),
+          t("Aurora Works", "arw",
+            d("Sofia Petrov", 49), d("Marco Gentile", 42)),
+          t("Tempest Dynamics", "tdx",
+            d("Ibrahim Khaled", 38), d("Hugo Martin", 27))
+        ]
+      },
+      F2: {
+        rules: {
+          punti: [15,12,10,8,6,5,4,3,2,1],
+          puntoGiroVeloce: false,
+          numeroGare: 10,
+          ultimaGaraDoppioPunteggio: true,
+          note: "Ultima gara a punteggio doppio. Niente punto per giro veloce."
+        },
+        calendario: [
+          "GP Adriatico (Bari)", "GP Boemia (Praga)", "GP Danubio (Budapest)", "GP Tirreno (Cagliari)",
+          "GP Galizia (Vigo)", "GP Carinzia (Klagenfurt)", "GP Lusitania (Porto)", "GP Anatolia (Izmir)",
+          "GP Bretagna (Rennes)", "GP Egeo (Rodi)"
+        ],
+        teams: [
+          t("Silverline", "slv", d("Matteo Ricci", 79), d("Arman Yilmaz", 64)),
+          t("Blue Horizon", "blh", d("Jakub Nowak", 58), d("Felix Meyer", 52)),
+          t("Falconette", "flc", d("Nina Duarte", 51), d("Tom Becker", 39)),
+          t("Desert Sun", "dsn", d("Omar Nassar", 36), d("Rafael Costa", 31)),
+          t("Iberia Speed", "ibs", d("Luis Romero", 28), d("Carlos Vega", 22)),
+          t("Tundra Tech", "tdr", d("Mikko Heikkinen", 18), d("Olga Kuznetsova", 15))
+        ]
+      },
+      F3: {
+        rules: {
+          punti: [10,8,6,5,4,3,2,1],
+          puntoGiroVeloce: false,
+          numeroGare: 8,
+          ultimaGaraDoppioPunteggio: false,
+          note: "Griglia junior con punteggio ridotto."
+        },
+        calendario: [
+          "Cup Liguria (Imperia)", "Cup Carniola (Ljubljana)", "Cup Savoia (Annecy)", "Cup Bretagna (Quimper)",
+          "Cup Tracia (Plovdiv)", "Cup Pannonia (Gyor)", "Cup Dalmazia (Spalato)", "Cup Levante (Taranto)"
+        ],
+        teams: [
+          t("Green Arrow", "gar", d("Paolo Serra", 40), d("Anna Kovacs", 36)),
+          t("Nimbus", "nmb", d("Ethan Cole", 30), d("Sara Müller", 24)),
+          t("Riviera", "riv", d("Giacomo Vitale", 22), d("Iris Marin", 20)),
+          t("Typhoon", "typ", d("Leo Martins", 18), d("Mina Aoki", 16)),
+          t("BalticWave", "blt", d("Oskar Pettersson", 14), d("Marta Krawczyk", 12)),
+          t("Alpenstern", "alp", d("Jonas Gruber", 10), d("Elodie Marchand", 8))
+        ]
+      }
+    };
+
+    /* Helpers per creare oggetti team/driver con placeholder images */
+    function t(name, slug, d1, d2){
+      return {
+        name,
+        slug,
+        logo: `https://placehold.co/200x200/1a1f2e/ffffff?text=${encodeURIComponent(name)}`,
+        drivers: [d1, d2]
+      };
+    }
+    function d(name, points){
+      const seed = encodeURIComponent(name);
+      return {
+        name,
+        img: `https://api.dicebear.com/7.x/initials/svg?seed=${seed}`,
+        points
+      };
+    }
+
+    /* ============== App ============== */
+    const el = sel => document.querySelector(sel);
+    const teamsGrid = el('#teamsGrid');
+    const tblDrivers = el('#tblDrivers tbody');
+    const tblTeams = el('#tblTeams tbody');
+    const chips = el('#chips');
+    const rulesBox = el('#rulesBox');
+    const seriesTag = el('#seriesTag');
+
+    let current = 'F1';
+    const tabs = [...document.querySelectorAll('.tab')];
+    tabs.forEach(b => b.addEventListener('click', () => {
+      tabs.forEach(t => t.setAttribute('aria-selected', 'false'));
+      b.setAttribute('aria-selected', 'true');
+      current = b.dataset.series;
+      seriesTag.textContent = current;
+      render();
+    }));
+
+    // Tema scuro/chiaro
+    const themeSwitch = el('#dm');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    themeSwitch.checked = prefersDark;
+    themeSwitch.addEventListener('change', () => {
+      document.documentElement.style.filter = themeSwitch.checked ? 'none' : 'invert(0)';
+      document.body.classList.toggle('light', !themeSwitch.checked);
+    });
+
+    function render(){
+      const data = championships[current];
+
+      // Teams grid
+      teamsGrid.innerHTML = '';
+      data.teams.forEach(team => {
+        const teamPoints = team.drivers.reduce((s,dr)=>s+dr.points,0);
+        const card = document.createElement('article');
+        card.className = 'team';
+        card.innerHTML = `
+          <img class="logo" src="${team.logo}" alt="Logo ${team.name}" loading="lazy"/>
+          <div style="flex:1 1 auto">
+            <div class="name">${team.name}</div>
+            <div class="meta">Totale scuderia: <strong>${teamPoints}</strong> pt</div>
+            <div class="drivers">
+              ${team.drivers.map(dr => `
+                <span class="drv">
+                  <img src="${dr.img}" alt="${dr.name}" loading="lazy"/>
+                  <span>${dr.name}</span>
+                  <span class="tag" title="Punti">${dr.points}</span>
+                </span>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        teamsGrid.appendChild(card);
+      });
+
+      // Regole
+      rulesBox.innerHTML = '';
+      const r = data.rules;
+      rulesBox.appendChild(html(`<ul style="list-style:none; padding:0; margin:0; display:grid; gap:10px">
+        <li><strong>Distribuzione punti:</strong> ${r.punti.join('–')} ${r.puntoGiroVeloce ? '(+1 giro veloce)' : ''}</li>
+        <li><strong>Numero gare:</strong> ${r.numeroGare}</li>
+        <li><strong>Ultima gara a punteggio doppio:</strong> ${r.ultimaGaraDoppioPunteggio? 'Sì' : 'No'}</li>
+        <li><strong>Note:</strong> ${r.note ?? '—'}</li>
+      </ul>`));
+
+      // Calendario
+      chips.innerHTML = '';
+      data.calendario.forEach((g, i) => {
+        const c = document.createElement('span');
+        c.className = 'chip';
+        c.textContent = (i+1).toString().padStart(2,'0') + ' · ' + g;
+        chips.appendChild(c);
+      });
+
+      // Classifiche
+      fillDriverStandings(data);
+      fillTeamStandings(data);
+    }
+
+    function fillDriverStandings(data){
+      const rows = [];
+      data.teams.forEach(team => team.drivers.forEach(dr => rows.push({
+        driver: dr.name, team: team.name, pts: dr.points
+      })));
+      rows.sort((a,b)=> b.pts - a.pts || a.driver.localeCompare(b.driver));
+      tblDrivers.innerHTML = rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.driver}</td><td>${r.team}</td><td><strong>${r.pts}</strong></td></tr>`).join('');
+    }
+
+    function fillTeamStandings(data){
+      const rows = data.teams.map(team => ({ team: team.name, pts: team.drivers.reduce((s,d)=>s+d.points,0) }));
+      rows.sort((a,b)=> b.pts - a.pts || a.team.localeCompare(b.team));
+      tblTeams.innerHTML = rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.team}</td><td><strong>${r.pts}</strong></td></tr>`).join('');
+    }
+
+    function html(str){
+      const t = document.createElement('template');
+      t.innerHTML = str.trim();
+      return t.content.firstChild;
+    }
+
+    // Prima render
+    render();
+
+    /* =====================
+       ISTRUZIONI RAPIDE
+       - Carica questo file come index.html su GitHub Pages.
+       - Sostituisci i loghi (proprietà team.logo) con URL di immagini reali.
+       - Aggiorna nomi piloti e punti. Le classifiche si aggiornano in automatico.
+       - Modifica regole e calendario in championships.F1/F2/F3.rules e .calendario.
+       - Per aggiungere gare: aggiungi stringhe al relativo array calendario.
+       - Per aggiungere scuderie: aggiungi un oggetto t("Nome", "slug", d("Pilota A", 0), d("Pilota B", 0)).
+       - Le immagini placeholder usano placehold.co (loghi) e DiceBear Initials (avatar piloti).
+       ===================== */
+  </script>
+</body>
+</html>
