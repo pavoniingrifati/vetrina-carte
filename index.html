@@ -251,6 +251,31 @@ body.modal-open { overscroll-behavior: contain }
   color: #ffd7b3;
   font-weight: 600;
 }
+
+/* 🤢 Cornice "Bidone": verde vomito */
+@keyframes vomitGlow {
+  0%   { box-shadow: 0 0 0 1px rgba(120,255,0,.45), 0 0 12px 4px rgba(120,255,0,.35), 0 0 28px 10px rgba(60,255,0,.18) }
+  50%  { box-shadow: 0 0 0 1px rgba(160,255,60,.55), 0 0 18px 6px rgba(140,255,60,.45), 0 0 36px 14px rgba(80,255,40,.22) }
+  100% { box-shadow: 0 0 0 1px rgba(120,255,0,.45), 0 0 12px 4px rgba(120,255,0,.35), 0 0 28px 10px rgba(60,255,0,.18) }
+}
+.card.bidone {
+  position: relative;
+  border-color: rgba(120,255,0,.7);
+  animation: cardIn .35s ease forwards, vomitGlow 1.8s ease-in-out infinite;
+  opacity: 1;
+}
+.modal .big.bidone {
+  outline: 2px solid rgba(120,255,0,.7);
+  outline-offset: -2px;
+  animation: vomitGlow 1.8s ease-in-out infinite;
+}
+.tag.bidone {
+  border-color: rgba(120,255,0,.6);
+  background: linear-gradient(180deg, rgba(120,255,0,.18), rgba(120,255,0,0));
+  color: #e9ffd7;
+  font-weight: 700;
+}
+
 /* Header più compatto su mobile */
 @media (max-width: 600px){
   header .wrap{ padding: 8px 12px; }
@@ -284,36 +309,6 @@ body.modal-open { overscroll-behavior: contain }
 header{ position: sticky; top: 0; }
 main.wrap{ margin-top: 8px; }
 
-
-/* 🤢 Cornice "Bidone": verde vomito */
-@keyframes vomitGlow {
-  0%   { box-shadow: 0 0 0 1px rgba(120,255,0,.45), 0 0 12px 4px rgba(120,255,0,.35), 0 0 28px 10px rgba(60,255,0,.18) }
-  50%  { box-shadow: 0 0 0 1px rgba(160,255,60,.55), 0 0 18px 6px rgba(140,255,60,.45), 0 0 36px 14px rgba(80,255,40,.22) }
-  100% { box-shadow: 0 0 0 1px rgba(120,255,0,.45), 0 0 12px 4px rgba(120,255,0,.35), 0 0 28px 10px rgba(60,255,0,.18) }
-}
-
-/* Griglia */
-.card.bidone {
-  position: relative;
-  border-color: rgba(120,255,0,.7);
-  animation: cardIn .35s ease forwards, vomitGlow 1.8s ease-in-out infinite;
-  opacity: 1;
-}
-
-/* Modale: bordo sull’immagine grande */
-.modal .big.bidone {
-  outline: 2px solid rgba(120,255,0,.7);
-  outline-offset: -2px;
-  animation: vomitGlow 1.8s ease-in-out infinite;
-}
-
-/* Etichetta nei tag */
-.tag.bidone {
-  border-color: rgba(120,255,0,.6);
-  background: linear-gradient(180deg, rgba(120,255,0,.18), rgba(120,255,0,0));
-  color: #e9ffd7;
-  font-weight: 700;
-}
 </style>
 </head>
 
@@ -448,22 +443,19 @@ main.wrap{ margin-top: 8px; }
 </template>
 
 <!-- ====== SCRIPT ====== -->
-\1
-
-// Helper per gestire il flag "Bidone"
-function isBidone(c){
-  if (!c || typeof c !== 'object') return false;
-  if (c.Bidone === true || c.Bidone === 'true') return true;
-  if (Array.isArray(c.tags) && c.tags.some(t => String(t).toLowerCase() === 'bidone')) return true;
-  return false;
-}
-
+<script>
 const $ = sel => document.querySelector(sel);
 const esc = (s='') => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const STAR_OUT = 'M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.401 8.169L12 18.896l-7.335 3.87 1.401-8.169L.132 9.21l8.2-1.192z';
 const starSVG = (filled)=>`<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_OUT}" fill="${filled? 'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"/></svg>`;
 const avg = arr => arr.length? (arr.reduce((a,b)=>a+b,0)/arr.length):0;
 
+
+
+// Helper per "Bidone" (stessa logica di onFire)
+function isBidone(c){
+  return !!(c && (c.Bidone === true || c.Bidone === 'true'));
+}
 const keyFor = (id, type) => `cardhub_${type}_${id}`;
 const loadRatings = id => { const raw = localStorage.getItem(keyFor(id,'ratings')); return raw? JSON.parse(raw): [] };
 const saveRating = (id,val) => { const list = loadRatings(id); list.push(val); localStorage.setItem(keyFor(id,'ratings'), JSON.stringify(list)); };
@@ -610,11 +602,10 @@ function renderGrid(items){
   for(const c of items){
     const node = tpl.content.firstElementChild.cloneNode(true);
     // 🔥 cornice infuocata in griglia se onFire
-    if (c.onFire) \1
-            // 🤢 cornice \"Bidone\"
-            if (isBidone(c)) node.classList.add('bidone');
+    if (c.onFire) node.classList.add('on-fire');
 
-    const rarSlug = (c.rarity || '').toLowerCase().replace(/\s+/g,'-');
+    if (isBidone(c)) node.classList.add('bidone');
+            const rarSlug = (c.rarity || '').toLowerCase().replace(/\s+/g,'-');
     if (rarSlug) node.classList.add('r-' + rarSlug);
     node.querySelector('.badge').textContent = c.rarity;
     const img = node.querySelector('.thumb');
@@ -641,7 +632,12 @@ function renderGrid(items){
     if (qty!=null){ const s=document.createElement('span'); s.className='tag'; s.textContent=`Quantità: ${qty}`; tags.appendChild(s); }
     (c.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s);});
 
-    \1
+    if (c.onFire) {
+      const s = document.createElement('span');
+      s.className = 'tag fire';
+      s.textContent = '🔥 On fire';
+      tags.appendChild(s);
+    }
             if (isBidone(c)) {
               const s = document.createElement('span');
               s.className = 'tag bidone';
@@ -689,8 +685,7 @@ async function openModal(card){
   dlgImg.src = card.img; dlgName.textContent = card.name; dlgMeta.textContent = `${card.game} • ${card.series} • ${card.role || '—'}`;
 
   // 🔥 cornice infuocata nella modale se onFire
-  \1
-        // 🤢 cornice bidone nella modale
+  dlgImg.classList.toggle('on-fire', !!card.onFire);
         dlgImg.classList.toggle('bidone', isBidone(card));
 
   dlgTags.innerHTML='';
@@ -698,14 +693,22 @@ async function openModal(card){
   if(_q!=null){ const s=document.createElement('span'); s.className='tag'; s.textContent=`Quantità: ${_q}`; dlgTags.appendChild(s); }
   (card.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; dlgTags.appendChild(s)});
 
-  if (card.onFire) {
+  
+if (card.onFire) {
     const s = document.createElement('span');
     s.className = 'tag fire';
     s.textContent = '🔥 On fire';
     dlgTags.appendChild(s);
   }
 
-  const onRate = async (v)=>{ 
+  
+  if (isBidone(card)) {
+    const s = document.createElement('span');
+    s.className = 'tag bidone';
+    s.textContent = '🤢 Bidone';
+    dlgTags.appendChild(s);
+  }
+const onRate = async (v)=>{ 
     saveRating(card.id, v); 
     if (window._setMyRating) { try{ await window._setMyRating(card.id, v); }catch(e){ console.error(e); } } 
     applyFilters(); 
