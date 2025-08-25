@@ -38,6 +38,16 @@
     .team{display:flex; gap:14px; background:var(--panel-2); border:1px solid rgba(255,255,255,.07); border-radius:var(--radius-sm); padding:12px; align-items:center; position:relative; overflow:hidden}
     .team::before{content:""; position:absolute; left:0; top:0; bottom:0; width:6px; background:var(--team, rgba(255,255,255,.12));}
     .team img.logo{width:58px; height:58px; border-radius:12px}
+    
+  /* MINI F1 – stile più realistico */
+.car{ width:58px; height:58px; flex:0 0 auto; display:block }
+.car .body{ fill: var(--team, #1a1f2e) }                 /* scocca */
+.car .aero{ fill: rgba(0,0,0,.55) }                      /* ali/fondo */
+.car .carbon{ fill:#0e1116 }                             /* dettagli carbonio */
+.car .accent{ fill: rgba(255,255,255,.55) }              /* riflessi/halo */
+.car .tyre{ fill:#12141a }                               /* gomme */
+.car .rim{ fill:#cbd5e1 }                                /* cerchi */
+
     .team .name{display:inline-block; padding:6px 10px; border-radius:10px; font-weight:800; background: var(--team, #1a1f2e); color:#fff}
     .team .owner{margin-top:6px; font-size:12px; color:var(--muted)}
     .team .meta{font-size:12px; color:var(--muted)}
@@ -240,6 +250,45 @@
       document.documentElement.style.filter = themeSwitch.checked ? 'none' : 'invert(0)';
       document.body.classList.toggle('light', !themeSwitch.checked);
     });
+// SVG mini F1 (profilo laterale, più "vero")
+function carSVG(){
+  return `
+  <svg class="car" viewBox="0 0 220 110" aria-hidden="true" focusable="false" role="img">
+    <!-- PNEUMATICI -->
+    <ellipse class="tyre" cx="56" cy="86" rx="16" ry="14"/>
+    <ellipse class="rim"  cx="56" cy="86" rx="6"  ry="5"/>
+    <ellipse class="tyre" cx="176" cy="86" rx="16" ry="14"/>
+    <ellipse class="rim"  cx="176" cy="86" rx="6"  ry="5"/>
+
+    <!-- ALA POSTERIORE + FONDO -->
+    <rect   class="aero"  x="22"  y="46" width="14" height="28" rx="3"/>
+    <rect   class="aero"  x="44"  y="72" width="116" height="8" rx="3"/>
+
+    <!-- SCOCCA: muso + pance + cofano -->
+    <path class="body" d="
+      M206,74
+      c -2,-8 -12,-14 -32,-18
+      l -24,-5
+      c -6,-11 -15,-20 -30,-20
+      h -10
+      c -6,0 -10,6 -12,12
+      l -9,20 -28,8
+      c -7,2 -12,7 -14,11
+      h 131
+      c 17,0 29,-3 32,-8 z" />
+
+    <!-- HALO / COCKPIT -->
+    <path class="accent" d="M126,36c-9,0-15,7-15,15v4h35v-3c0-9-7-16-20-16z"/>
+
+    <!-- ALA ANTERIORE (multi-elemento) -->
+    <path class="aero" d="M208,74h-24c-3,0-6,2-6,5v6h28c6,0 9,-3 9,-6s-3,-5 -7,-5z"/>
+    <rect class="aero" x="183" y="85" width="28" height="3" rx="2"/>
+
+    <!-- SHARK FIN / DETTAGLI CARBONIO -->
+    <path class="carbon" d="M132,44l10,12 -24,-3z"/>
+  </svg>`;
+}
+
 
     function render(){
       const data = state.dataBySeries[current];
@@ -260,7 +309,7 @@
         if(color){ card.style.setProperty('--team', color); card.style.borderColor = color; }
         const logoUrl = `https://placehold.co/200x200/1a1f2e/ffffff?text=${encodeURIComponent(teamName)}`;
         card.innerHTML = `
-          <img class="logo" src="${logoUrl}" alt="Logo ${teamName}" loading="lazy"/>
+          ${carSVG()}
           <div style="flex:1 1 auto">
             <div class="name">${teamName}</div>
                         ${row.team && row.team.proprietario ? `<div class=\"owner\">Proprietario: <strong>${Array.isArray(row.team.proprietario) ? row.team.proprietario.join(', ') : row.team.proprietario}</strong></div>` : ``}
