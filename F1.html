@@ -39,14 +39,14 @@
     .team::before{content:""; position:absolute; left:0; top:0; bottom:0; width:6px; background:var(--team, rgba(255,255,255,.12));}
     .team img.logo{width:58px; height:58px; border-radius:12px}
     
-  /* MINI F1 – stile più realistico */
-.car{ width:58px; height:58px; flex:0 0 auto; display:block }
-.car .body{ fill: var(--team, #1a1f2e) }                 /* scocca */
-.car .aero{ fill: rgba(0,0,0,.55) }                      /* ali/fondo */
-.car .carbon{ fill:#0e1116 }                             /* dettagli carbonio */
-.car .accent{ fill: rgba(255,255,255,.55) }              /* riflessi/halo */
-.car .tyre{ fill:#12141a }                               /* gomme */
-.car .rim{ fill:#cbd5e1 }                                /* cerchi */
+/* MINI F1 top-down */
+.car{width:58px; height:58px; flex:0 0 auto; display:block}
+.car .body{ fill: var(--team, #1a1f2e) }       /* scocca */
+.car .aero{ fill: #0a0d12 }                    /* ali / fondo / sospensioni */
+.car .trim{ fill: color-mix(in srgb, var(--team, #1a1f2e) 65%, #ffffff 35%) } /* riflessi */
+.car .tyre{ fill:#1a1f2a }                     /* gomme */
+.car .rim{ fill:#cbd5e1 }                      /* cerchi */
+
 
     .team .name{display:inline-block; padding:6px 10px; border-radius:10px; font-weight:800; background: var(--team, #1a1f2e); color:#fff}
     .team .owner{margin-top:6px; font-size:12px; color:var(--muted)}
@@ -250,44 +250,62 @@
       document.documentElement.style.filter = themeSwitch.checked ? 'none' : 'invert(0)';
       document.body.classList.toggle('light', !themeSwitch.checked);
     });
-// SVG mini F1 (profilo laterale, più "vero")
+// SVG mini F1 (top-down, stile reale)
 function carSVG(){
   return `
-  <svg class="car" viewBox="0 0 220 110" aria-hidden="true" focusable="false" role="img">
-    <!-- PNEUMATICI -->
-    <ellipse class="tyre" cx="56" cy="86" rx="16" ry="14"/>
-    <ellipse class="rim"  cx="56" cy="86" rx="6"  ry="5"/>
-    <ellipse class="tyre" cx="176" cy="86" rx="16" ry="14"/>
-    <ellipse class="rim"  cx="176" cy="86" rx="6"  ry="5"/>
+  <svg class="car" viewBox="0 0 200 300" aria-hidden="true" focusable="false" role="img">
+    <!-- GOMME -->
+    <circle class="tyre" cx="40" cy="70" r="22"/><circle class="rim" cx="40" cy="70" r="8"/>
+    <circle class="tyre" cx="160" cy="70" r="22"/><circle class="rim" cx="160" cy="70" r="8"/>
+    <circle class="tyre" cx="40" cy="240" r="22"/><circle class="rim" cx="40" cy="240" r="8"/>
+    <circle class="tyre" cx="160" cy="240" r="22"/><circle class="rim" cx="160" cy="240" r="8"/>
 
-    <!-- ALA POSTERIORE + FONDO -->
-    <rect   class="aero"  x="22"  y="46" width="14" height="28" rx="3"/>
-    <rect   class="aero"  x="44"  y="72" width="116" height="8" rx="3"/>
+    <!-- SOSPENSIONI -->
+    <path class="aero" d="M60 80 L100 120 L90 130 L50 90 Z"/>
+    <path class="aero" d="M140 80 L100 120 L110 130 L150 90 Z"/>
+    <path class="aero" d="M60 230 L100 190 L90 180 L50 220 Z"/>
+    <path class="aero" d="M140 230 L100 190 L110 180 L150 220 Z"/>
 
-    <!-- SCOCCA: muso + pance + cofano -->
+    <!-- ALA POSTERIORE -->
+    <rect class="aero" x="35" y="10" width="130" height="30" rx="6"/>
+
+    <!-- FONDO PIATTO -->
+    <rect class="aero" x="70" y="60" width="60" height="180" rx="18"/>
+
+    <!-- SCOCCA PRINCIPALE -->
     <path class="body" d="
-      M206,74
-      c -2,-8 -12,-14 -32,-18
-      l -24,-5
-      c -6,-11 -15,-20 -30,-20
-      h -10
-      c -6,0 -10,6 -12,12
-      l -9,20 -28,8
-      c -7,2 -12,7 -14,11
-      h 131
-      c 17,0 29,-3 32,-8 z" />
+      M100 30
+      C 96 50, 92 95, 92 120
+      L 92 210
+      C 92 240, 96 260, 100 270
+      C 104 260, 108 240, 108 210
+      L 108 120
+      C 108 95, 104 50, 100 30 Z" />
 
-    <!-- HALO / COCKPIT -->
-    <path class="accent" d="M126,36c-9,0-15,7-15,15v4h35v-3c0-9-7-16-20-16z"/>
+    <!-- Naso affusolato -->
+    <path class="body" d="M100 30 C88 40, 84 56, 84 78 L84 120 L116 120 L116 78 C116 56, 112 40, 100 30 Z"/>
 
-    <!-- ALA ANTERIORE (multi-elemento) -->
-    <path class="aero" d="M208,74h-24c-3,0-6,2-6,5v6h28c6,0 9,-3 9,-6s-3,-5 -7,-5z"/>
-    <rect class="aero" x="183" y="85" width="28" height="3" rx="2"/>
+    <!-- Pance -->
+    <path class="body" d="M60 150 C 70 130, 85 120, 92 120 L92 200 C 80 198, 70 188, 64 176 C 60 168, 58 160, 60 150 Z"/>
+    <path class="body" d="M140 150 C 130 130, 115 120, 108 120 L108 200 C 120 198, 130 188, 136 176 C 140 168, 142 160, 140 150 Z"/>
 
-    <!-- SHARK FIN / DETTAGLI CARBONIO -->
-    <path class="carbon" d="M132,44l10,12 -24,-3z"/>
+    <!-- Halo / cockpit -->
+    <ellipse class="aero" cx="100" cy="135" rx="22" ry="18"/>
+    <rect class="aero" x="96" y="84" width="8" height="48" rx="4"/>
+
+    <!-- Airbox -->
+    <ellipse class="aero" cx="100" cy="110" rx="12" ry="10"/>
+
+    <!-- ALA ANTERIORE -->
+    <rect class="aero" x="30" y="260" width="140" height="24" rx="6"/>
+    <rect class="aero" x="36" y="250" width="128" height="6" rx="3"/>
+
+    <!-- Riflessi -->
+    <path class="trim" d="M97 50 C 94 90, 94 160, 97 210" />
+    <path class="trim" d="M103 50 C 106 90, 106 160, 103 210" />
   </svg>`;
 }
+
 
 
     function render(){
