@@ -311,8 +311,8 @@ main.wrap{ margin-top: 8px; }
 
 </style>
 
-<!-- 🎛️ Mobile Filters Toggle: CSS -->
-<style id="mobile-filters-toggle-css">
+<!-- 📱 Mobile Filters Toggle + Responsive Filters Panel -->
+<style id="mobile-filters-toggle-and-layout">
 :root{
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
@@ -320,43 +320,96 @@ main.wrap{ margin-top: 8px; }
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 @media (max-width: 600px){
-  /* Nascondi i filtri per default su mobile (senza rompere il layout originale) */
-  header .toolbar[hidden]{ display: none !important; }
+  /* Nascondi i filtri su mobile finché l'utente non li apre */
+  header .toolbar[hidden]{ display:none !important; }
 
-  /* Bottone visibile solo su mobile */
+  /* Bottone toggle: versione inline (affianco a "Preferite") */
   .filters-toggle{
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    position: sticky;
-    top: calc(8px + var(--safe-top));
-    z-index: 102;
-    margin: 8px 12px;
     padding: 10px 14px;
     min-height: 44px;
     border-radius: 999px;
     border: 1px solid rgba(0,0,0,.08);
-    background: rgba(255,255,255,.98);
-    box-shadow: 0 6px 22px rgba(0,0,0,.22);
+    background: rgba(255,255,255,.95);
+    box-shadow: 0 2px 10px rgba(0,0,0,.12);
     font-size: 16px;
     line-height: 1;
     -webkit-tap-highlight-color: transparent;
+    color: #111;
+    vertical-align: middle;
   }
-  .filters-toggle:active{ transform: translateY(1px) }
-  .filters-toggle .dot{
-    width: 8px; height: 8px; border-radius: 999px; background: currentColor;
-  }
+  .filters-toggle .dot{ width:8px; height:8px; border-radius:999px; background:currentColor }
   .filters-toggle[aria-expanded="true"] .lbl-open{ display:none }
   .filters-toggle[aria-expanded="false"] .lbl-close{ display:none }
-
-  /* Se l'header ha sfondi scuri, il bottone resta leggibile */
-  header:has(.toolbar) .filters-toggle{
-    color: #111;
+  /* Quando non riusciamo a metterlo accanto a preferite, rendilo sticky per comodità */
+  .filters-toggle.sticky{
+    position: sticky;
+    top: calc(8px + var(--safe-top));
+    z-index: 102;
+    margin: 8px 12px;
   }
+  .filters-toggle.next-to-fav{ margin-left: 8px }
+
+  /* ✅ Pannello filtri responsive e scorrevole */
+  header .toolbar{
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+    gap: 10px !important;
+    padding: 10px 12px !important;
+    margin: 8px 12px !important;
+    background: var(--toolbar-bg, rgba(255,255,255,0.98)) !important;
+    border-radius: 14px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.18);
+    max-height: calc(70vh - var(--safe-top)) !important;
+    overflow: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    z-index: 101;
+  }
+  /* Oggetti interni non strabordano */
+  header .toolbar > *{ min-width: 0 !important; }
+  /* Campi lunghi a tutta larghezza */
+  header .toolbar .search,
+  header .toolbar .range,
+  header .toolbar .long,
+  header .toolbar input[type="search"],
+  header .toolbar input[type="text"]{ grid-column: 1 / -1; }
+  /* Gruppi flessibili che vanno a capo */
+  header .toolbar .row,
+  header .toolbar .flex,
+  header .toolbar .filters,
+  header .toolbar .group{ display:flex; flex-wrap: wrap; gap:8px; min-width:0 }
+  /* Evita scorrimento orizzontale */
+  header .toolbar{ overflow-x: hidden !important; }
+  header .toolbar *{ word-break: break-word; }
+
+  /* Target tattili comodi */
+  .tab-btn, .pill, select, .range, .search, button{ min-height:44px; font-size:16px }
+
+  /* ✅ Modale: non tagliare testo a sinistra e usa safe-areas */
+  dialog[open]{ margin:0 }
+  dialog{ padding:0 }
+  .modal{ width:100vw !important; height:100dvh !important; }
+  .modal .left, .modal .right{
+    padding-left: calc(12px + var(--safe-left)) !important;
+    padding-right: calc(12px + var(--safe-right)) !important;
+  }
+  .modal .scroll{ overflow:auto; padding-right:2px }
+  #dlgName, .modal .meta, .modal .tags, .comment .text{ overflow-wrap:anywhere; word-break: break-word }
+  .modal .big{ max-height: 38vh !important; }
 }
 @media (min-width: 601px){
-  .filters-toggle{ display: none !important; }
-  header .toolbar[hidden]{ display: initial !important; } /* su desktop mai nascosti */
+  .filters-toggle{ display:none !important; }
+  header .toolbar[hidden]{ display: initial !important; }
+}
+@media (hover:none){
+  .card:hover{ transform:none; box-shadow: 0 4px 12px rgba(0,0,0,.35); }
+}
+@media (prefers-reduced-motion: reduce){
+  *{ animation: none !important; transition: none !important; }
 }
 </style>
 
@@ -1105,94 +1158,105 @@ window.dispatchEvent(new CustomEvent('firebase-ready'));
 })();
 </script>
 
-<!-- 🎛️ Mobile Filters Toggle: JS -->
-<script id="mobile-filters-toggle-js">
+<!-- 📱 Mobile Filters Toggle + Placement Next To "Preferite" -->
+<script id="mobile-filters-toggle-and-layout-js">
 (function(){
   const mq = window.matchMedia('(max-width: 600px)');
-  const ensureToolbarId = (el)=>{
+  const ensureId = (el, fallbackId)=>{
     if(!el) return null;
-    if(!el.id){
-      // genera un id stabile
-      el.id = 'toolbar-filters';
-    }
+    if(!el.id){ el.id = fallbackId; }
     return el.id;
   };
-  const createButton = (toolbar)=>{
-    if(!toolbar) return;
-    // non creare 2 volte
-    if(document.querySelector('.filters-toggle')) return;
+  const findFavEl = ()=>{
+    // Cerca un controllo "Preferite/Preferiti"/Favorites/heart nella header
+    const candidates = [
+      'header .fav',
+      'header .favorites',
+      'header .preferite',
+      'header .preferiti',
+      'header [aria-label*="Preferit" i]',
+      'header [title*="Preferit" i]',
+      'header [aria-label*="Favorite" i]',
+      'header [title*="Favorite" i]'
+    ];
+    for(const sel of candidates){
+      const el = document.querySelector(sel);
+      if(el) return el;
+    }
+    // Fallback per testo
+    const buttons = Array.from(document.querySelectorAll('header button, header a'));
+    const byText = buttons.find(el => /preferit|favorite/i.test((el.textContent||'').trim()));
+    return byText || null;
+  };
+
+  const createToggle = (toolbar)=>{
+    if(!toolbar) return null;
+    if(document.querySelector('.filters-toggle')) return document.querySelector('.filters-toggle');
 
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'filters-toggle';
-    btn.setAttribute('aria-pressed', 'false');
-    btn.setAttribute('aria-expanded', 'false');
-    const id = ensureToolbarId(toolbar);
-    if(id) btn.setAttribute('aria-controls', id);
+    btn.setAttribute('aria-pressed','false');
+    btn.setAttribute('aria-expanded','false');
+    const id = ensureId(toolbar, 'toolbar-filters');
+    btn.setAttribute('aria-controls', id);
     btn.innerHTML = '<span class="dot" aria-hidden="true"></span><span class="lbl-open">Mostra filtri</span><span class="lbl-close">Nascondi filtri</span>';
+    return btn;
+  };
 
-    // Inserisci dentro l'header se possibile (preferibile), altrimenti in body
-    let container = document.querySelector('header .wrap') || document.querySelector('header') || document.body;
-    container.insertBefore(btn, container.firstChild);
+  const placeToggle = (btn)=>{
+    const fav = findFavEl();
+    // inserisci affianco a preferite se presente; altrimenti sticky in header
+    const headerWrap = document.querySelector('header .wrap') || document.querySelector('header') || document.body;
+    if(fav && fav.parentElement){
+      fav.insertAdjacentElement('afterend', btn);
+      btn.classList.add('next-to-fav');
+    }else{
+      headerWrap.insertBefore(btn, headerWrap.firstChild);
+      btn.classList.add('sticky');
+    }
+  };
 
-    const setState = (open)=>{
-      if(!toolbar) return;
-      if(open){
-        toolbar.removeAttribute('hidden');
-        btn.setAttribute('aria-expanded', 'true');
-        btn.setAttribute('aria-pressed', 'true');
-      }else{
-        toolbar.setAttribute('hidden', '');
-        btn.setAttribute('aria-expanded', 'false');
-        btn.setAttribute('aria-pressed', 'false');
-      }
-    };
-
-    // Stato iniziale: chiuso su mobile
-    setState(false);
-
-    btn.addEventListener('click', ()=>{
-      const isOpen = btn.getAttribute('aria-expanded') === 'true';
-      setState(!isOpen);
-      // Se apriamo, scrolliamo la toolbar in vista
-      if(!isOpen){
-        setTimeout(()=>{
-          toolbar.scrollIntoView({block:'nearest'});
-        }, 0);
-      }
-    });
-
-    // Chiudi i filtri quando si apre una card/modale, se intercettabile
-    const closeOnModalOpen = ()=>{
-      const dlg = document.querySelector('dialog[open], .modal.show, .modal[open]');
-      if(dlg) setState(false);
-    };
-    // Esegui al cambio di hash o custom events comuni
-    window.addEventListener('hashchange', closeOnModalOpen, {passive:true});
-    document.addEventListener('open', closeOnModalOpen, {passive:true});
+  const setState = (toolbar, btn, open)=>{
+    if(!toolbar || !btn) return;
+    if(open){
+      toolbar.removeAttribute('hidden');
+      btn.setAttribute('aria-expanded','true');
+      btn.setAttribute('aria-pressed','true');
+    }else{
+      toolbar.setAttribute('hidden','');
+      btn.setAttribute('aria-expanded','false');
+      btn.setAttribute('aria-pressed','false');
+    }
   };
 
   const init = ()=>{
     const toolbar = document.querySelector('header .toolbar');
     if(!toolbar) return;
     if(mq.matches){
-      createButton(toolbar);
-      // Assicurati che resti nascosta su mobile se si torna da landscape/resize
-      toolbar.setAttribute('hidden','');
+      let btn = createToggle(toolbar);
+      placeToggle(btn);
+      // stato iniziale chiuso
+      setState(toolbar, btn, false);
+      btn.addEventListener('click', ()=>{
+        const open = btn.getAttribute('aria-expanded') === 'true';
+        setState(toolbar, btn, !open);
+        if(!open){
+          // porta la toolbar in vista
+          setTimeout(()=>toolbar.scrollIntoView({block:'nearest'}),0);
+        }
+      });
     }else{
-      // Desktop: mostra sempre
+      // desktop: filtri sempre visibili
       toolbar.removeAttribute('hidden');
     }
   };
 
-  // Inizializza
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', init, {once:true});
   }else{
     init();
   }
-
-  // Reagisci ai resize tra mobile/desktop
   mq.addEventListener ? mq.addEventListener('change', init) : mq.addListener(init);
 })();
 </script>
