@@ -310,6 +310,64 @@ header{ position: sticky; top: 0; }
 main.wrap{ margin-top: 8px; }
 
 </style>
+
+<!-- 🔧 MOBILE OVERRIDES: aggiunte non invasive per migliorare usabilità su schermi piccoli -->
+<style id="mobile-overrides">
+/* Disattiva effetto tap blu su iOS/Android */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* Migliora leggibilità generale su mobile */
+@media (max-width: 600px){
+  html, body{ font-size: 16px; line-height: 1.35; }
+
+  /* Header più arioso e con area di touch maggiore */
+  header .wrap{ padding: 10px 14px; }
+  .tab-btn{ padding: 12px 16px; font-size: 14px }
+
+  /* Toolbar: carosello migliore (snap + padding) */
+  .toolbar{ scroll-snap-type: x mandatory; padding: 6px 2px 10px; }
+  .toolbar > *{ scroll-snap-align: start; min-width: clamp(170px, 62vw, 260px) }
+  .toolbar::-webkit-scrollbar{ display:none }
+
+  /* Campi input: evitare zoom automatico su iOS */
+  input[type="text"], input[type="search"], select, textarea, button { font-size: 16px }
+
+  /* Aumenta l'area touch dei bottoni principali */
+  .pill, .primary, .fav{ min-height: 44px; }
+  .fav{ width: 48px; height: 48px }
+
+  /* Griglia più compatta e performante */
+  .grid{ gap: 14px; }
+  .card{ content-visibility: auto; contain: content; }
+
+  /* Testi card più leggibili */
+  .card .name{ font-size: 16px }
+  .card .meta{ font-size: 12.5px }
+
+  /* Dialog: pulsanti più comodi e immagine riducibile */
+  dialog .close{ padding: 10px 12px; }
+  .modal .right{ padding-bottom: calc(14px + var(--safe-bottom)) }
+  .modal .big{ max-height: 44vh; }
+  .modal .big.compact{ max-height: 32vh !important }
+
+  /* Barra azioni: stick senza coprire contenuti */
+  .actions{ position: sticky; bottom: 0; padding-bottom: calc(12px + var(--safe-bottom)); }
+
+  /* Navigazione a swipe: assicurati che lo scroll verticale non venga bloccato */
+  .modal, .scroll{ touch-action: pan-y; }
+}
+
+/* Evita hover pesanti sui device touch */
+@media (hover: none){
+  .card:hover{ transform:none; box-shadow: 0 4px 12px rgba(0,0,0,.35); }
+}
+
+/* Riduce animazioni per utenti con preferenze di movimento ridotto */
+@media (prefers-reduced-motion: reduce){
+  *{ animation: none !important; transition: none !important }
+}
+</style>
+
 </head>
 
 <body>
