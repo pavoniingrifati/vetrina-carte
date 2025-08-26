@@ -311,60 +311,70 @@ main.wrap{ margin-top: 8px; }
 
 </style>
 
-<!-- 🔧 MOBILE OVERRIDES: aggiunte non invasive per migliorare usabilità su schermi piccoli -->
-<style id="mobile-overrides">
-/* Disattiva effetto tap blu su iOS/Android */
-* { -webkit-tap-highlight-color: transparent; }
+<!-- 📱 MOBILE OVERRIDES v2: filtri ben visibili/cliccabili + testo modale non tagliato -->
+<style id="mobile-overrides-v2">
+:root{
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
 
-/* Migliora leggibilità generale su mobile */
 @media (max-width: 600px){
-  html, body{ font-size: 16px; line-height: 1.35; }
+  /* Safe area per notch e bordi curvi */
+  header{ padding-top: var(--safe-top) !important; }
+  header .wrap{
+    padding-left: calc(12px + var(--safe-left)) !important;
+    padding-right: calc(12px + var(--safe-right)) !important;
+  }
 
-  /* Header più arioso e con area di touch maggiore */
-  header .wrap{ padding: 10px 14px; }
-  .tab-btn{ padding: 12px 16px; font-size: 14px }
+  /* Portiamo tabs/toolbar sopra a tutto e miglioriamo contrasto */
+  .tabs, .toolbar{ position: relative; z-index: 101; }
+  header{ background: linear-gradient(180deg, rgba(13,19,37,.95), rgba(13,19,37,.80)) !important; }
 
-  /* Toolbar: carosello migliore (snap + padding) */
-  .toolbar{ scroll-snap-type: x mandatory; padding: 6px 2px 10px; }
-  .toolbar > *{ scroll-snap-align: start; min-width: clamp(170px, 62vw, 260px) }
-  .toolbar::-webkit-scrollbar{ display:none }
+  /* ✅ FILTRI: niente overflow orizzontale; layout a 2 colonne */
+  header .toolbar{
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    overflow: visible !important;
+    -webkit-overflow-scrolling: touch;
+    pointer-events: auto;
+  }
+  header .toolbar > *{ min-width: 0 !important; width: 100% !important; }
+  header .toolbar .search{ grid-column: 1 / -1; }
 
-  /* Campi input: evitare zoom automatico su iOS */
-  input[type="text"], input[type="search"], select, textarea, button { font-size: 16px }
+  /* Target tattili comodi e testo leggibile */
+  .tab-btn, .pill, select, .range, .search, button{ min-height: 44px; font-size: 16px }
 
-  /* Aumenta l'area touch dei bottoni principali */
-  .pill, .primary, .fav{ min-height: 44px; }
-  .fav{ width: 48px; height: 48px }
+  /* ✅ MODALE: niente testo tagliato a sinistra, padding con safe-areas */
+  dialog[open]{ margin: 0; }
+  dialog{ padding: 0; }
+  .modal{ width: 100vw !important; height: 100dvh !important; }
+  .modal .left,
+  .modal .right{
+    padding-left: calc(12px + var(--safe-left)) !important;
+    padding-right: calc(12px + var(--safe-right)) !important;
+  }
+  .modal .scroll{ overflow: auto; padding-right: 2px; }
+  #dlgName, .modal .meta, .modal .tags, .comment .text{ overflow-wrap: anywhere; word-break: break-word; }
 
-  /* Griglia più compatta e performante */
-  .grid{ gap: 14px; }
-  .card{ content-visibility: auto; contain: content; }
+  /* Immagine leggermente più bassa per liberare spazio al testo */
+  .modal .big{ max-height: 38vh !important; }
 
-  /* Testi card più leggibili */
-  .card .name{ font-size: 16px }
-  .card .meta{ font-size: 12.5px }
-
-  /* Dialog: pulsanti più comodi e immagine riducibile */
-  dialog .close{ padding: 10px 12px; }
-  .modal .right{ padding-bottom: calc(14px + var(--safe-bottom)) }
-  .modal .big{ max-height: 44vh; }
-  .modal .big.compact{ max-height: 32vh !important }
-
-  /* Barra azioni: stick senza coprire contenuti */
-  .actions{ position: sticky; bottom: 0; padding-bottom: calc(12px + var(--safe-bottom)); }
-
-  /* Navigazione a swipe: assicurati che lo scroll verticale non venga bloccato */
-  .modal, .scroll{ touch-action: pan-y; }
+  /* Evita sovrapposizioni che possano intercettare il tap o coprire il testo */
+  .hint{ display:none !important; }
+  .navBtn{ display:none !important; } /* già nascosti, qui forziamo */
 }
 
-/* Evita hover pesanti sui device touch */
-@media (hover: none){
-  .card:hover{ transform:none; box-shadow: 0 4px 12px rgba(0,0,0,.35); }
-}
-
-/* Riduce animazioni per utenti con preferenze di movimento ridotto */
-@media (prefers-reduced-motion: reduce){
-  *{ animation: none !important; transition: none !important }
+@supports (padding: max(0px)) {
+  @media (max-width: 600px){
+    .modal .left,
+    .modal .right{
+      padding-left: max(12px, var(--safe-left)) !important;
+      padding-right: max(12px, var(--safe-right)) !important;
+    }
+  }
 }
 </style>
 
