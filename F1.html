@@ -351,15 +351,16 @@ function carSVG(){
             <div class="name">${teamName}</div>
                         ${row.team && row.team.proprietario ? `<div class=\"owner\">Proprietario: <strong>${Array.isArray(row.team.proprietario) ? row.team.proprietario.join(', ') : row.team.proprietario}</strong></div>` : ``}
             <div class="meta">Totale scuderia: <strong>${formatNumber(teamPoints)}</strong> pt</div>
-            <div class="drivers">
-              ${drivers.map(dr => `
-                <span class="drv">
-                  <img src="https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(dr.nome)}" alt="${dr.nome}" loading="lazy"/>
-                  <span>${dr.nome}</span>
-                  <span class="tag" title="Abilità (60–95)">Skill: ${formatNumber(dr.skill)}</span>
-                </span>
-              `).join('')}
-            </div>
+         <div class="drivers">
+  ${[...drivers].sort((a,b)=>(b.punti||0)-(a.punti||0)).slice(0,2).map(dr => `
+    <span class="drv">
+      <img src="https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(dr.nome)}" alt="${dr.nome}" loading="lazy"/>
+      <span>${dr.nome}</span>
+      <span class="tag" title="Abilità (60–95)">Skill: ${formatNumber(dr.skill)}</span>
+    </span>
+  `).join('')}
+</div>
+
           </div>`;
         card.insertAdjacentHTML('afterbegin', `<span class="pos">P${idx+1}</span>`);
         teamsGrid.appendChild(card);
