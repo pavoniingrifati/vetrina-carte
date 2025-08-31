@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Achivement Tracker — Piloti</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #0b0d12;
+      --surface: #121622;
+      --card: #171C2B;
+      --text: #e8ecf1;
+      --muted: #a7b0c0;
+      --ring: #3a435a;
+      --shadow: 0 10px 30px rgba(0,0,0,.4);
+      --radius: 16px;
+      --accent: #e10600;
+    }
+    *{ box-sizing: border-box }
+    body{ margin:0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    .wrap{ max-width:1200px; margin:0 auto; padding:24px; }
+    header{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding: 8px 0 12px; flex-wrap:wrap }
+    .brand{ display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:.3px; }
+    .brand .logo{ width:42px; height:42px; display:grid; place-items:center; border-radius:12px; background: linear-gradient(135deg, #e10600, #8b0200); box-shadow: var(--shadow) }
+    .brand .logo svg{ width:26px; height:26px; fill:white }
+    .brand small{ display:block; color: var(--muted); font-weight:600 }
+
+    .toolbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+    .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; border:1px solid var(--ring); background: var(--card); color:var(--text); font-weight:700; cursor:pointer; box-shadow: var(--shadow) }
+    .btn:disabled{ opacity:.6; cursor:not-allowed }
+    .btn.primary{ background: linear-gradient(135deg, #e10600, #8b0200); border:none }
+    .btn input[type="file"]{ display:none }
+
+    .grid{ display:grid; grid-template-columns: 1fr; gap:16px; margin-top:18px }
+    @media (min-width:800px){ .grid{ grid-template-columns: 340px 1fr } }
+
+    .panel{ background: var(--card); border:3px solid var(--ring); border-radius: var(--radius); padding:16px; position:relative; overflow:hidden; box-shadow: var(--shadow); }
+    .panel h2{ margin:0 0 10px; font-size:18px }
+    .muted{ color:var(--muted) }
+
+    .ach-list{ display:flex; flex-direction:column; gap:10px; max-height:65vh; overflow:auto; padding-right:6px }
+    .ach{ border:1px solid var(--ring); background: rgba(255,255,255,.02); border-radius:12px; padding:10px; display:grid; grid-template-columns: 34px 1fr auto; gap:10px; align-items:center }
+    .ach .ico{ font-size:20px; width:34px; height:34px; display:grid; place-items:center; border-radius:10px; background: var(--surface); }
+    .ach .title{ font-weight:800; font-size:14px }
+    .ach .desc{ font-size:12px; color: var(--muted) }
+    .ach .points{ font-size:12px; font-weight:800; color: #ffd166 }
+    .ach .row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+
+    .ach-actions{ display:flex; gap:6px }
+    .icon-btn{ width:34px; height:34px; display:grid; place-items:center; border-radius:10px; border:1px solid var(--ring); background: var(--surface); cursor:pointer }
+
+    .search{ width:100%; display:flex; gap:8px; margin:10px 0 16px }
+    .search input, .search select{ width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--ring); background: var(--surface); color:var(--text); font-weight:600 }
+
+    .cards{ display:grid; grid-template-columns: 1fr; gap:12px }
+    @media (min-width:700px){ .cards{ grid-template-columns: 1fr 1fr } }
+    @media (min-width:1100px){ .cards{ grid-template-columns: 1fr 1fr 1fr } }
+
+    .card{ background: var(--card); border:3px solid var(--ring); border-radius: var(--radius); padding:16px; position:relative; overflow:hidden; box-shadow: var(--shadow); }
+    .card .title{ font-weight:800; font-size:18px }
+    .card .subtitle{ color:var(--muted); font-size:13px }
+    .tag{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:800; padding:6px 8px; border-radius:999px; border:1px solid var(--ring); background: rgba(255,255,255,.02) }
+    .tags{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
+
+    .chips{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px }
+    .chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px dashed var(--ring); background:rgba(255,255,255,.02); font-size:12px; font-weight:800 }
+    .chip .x{ cursor:pointer; opacity:.8 }
+
+    .empty{ text-align:center; padding:48px 16px; color:var(--muted); border:1px dashed var(--ring); border-radius:16px; margin-top:18px }
+
+    dialog{ border:none; border-radius:16px; padding:0; background:transparent }
+    .modal{ background: var(--card); border:3px solid var(--ring); border-radius:16px; padding:16px; box-shadow: var(--shadow); width:min(560px, 92vw) }
+    .modal h3{ margin:0 0 10px }
+
+    .row{ display:flex; gap:10px }
+    .row > *{ flex:1 }
+
+    footer{ margin: 28px 0 48px; color:var(--muted); text-align:center; font-size:12px }
+    code.inline{ background: #0f1320; border:1px solid var(--ring); padding:2px 6px; border-radius:6px }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" role="img" aria-label="Logo">
+            <path d="M21.93 7.23c-1.34-2.25-4.28-3.01-6.51-1.67l-3.9 2.33 1.53 2.56 3.9-2.33a2.5 2.5 0 1 1 2.5 4.33l-6.12 3.66 1.53 2.56 6.12-3.66c2.23-1.34 2.99-4.28 1.65-6.48zM4 7h6v3H4a2 2 0 0 0 0 4h6v3H4A5 5 0 0 1 4 7z"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:18px">Achievement Tracker</div>
+          <small>Funziona con <b>piloti.json</b> e (opzionale) <b>achievements.json</b></small>
+        </div>
+      </div>
+      <div class="toolbar" role="group" aria-label="Azioni">
+        <button class="btn" id="importBtn">📥 Importa JSON</button>
+        <input type="file" id="fileInput" accept="application/json" hidden>
+        <button class="btn" id="exportBtn">📤 Esporta JSON</button>
+        <button class="btn primary" id="newAchBtn">➕ Nuovo Achievement</button>
+      </div>
+    </header>
+
+    <div class="grid" aria-live="polite">
+      <!-- Master achievements -->
+      <section class="panel" aria-labelledby="achievementsHeading">
+        <h2 id="achievementsHeading">Catalogo achievements</h2>
+        <div class="muted" style="font-size:12px">Definisci una volta e riusa per tutti i piloti. Ogni achievement ha <b>id</b> (univoco), nome, descrizione, punti e icona (emoji o testo).</div>
+
+        <div class="search">
+          <input id="achSearch" placeholder="Cerca negli achievements…" aria-label="Cerca achievements">
+        </div>
+        <div id="achList" class="ach-list" role="list"></div>
+      </section>
+
+      <!-- Pilots grid -->
+      <section class="panel">
+        <div class="row">
+          <h2 style="margin:0">Piloti</h2>
+          <div style="flex:1"></div>
+          <select id="teamFilter" aria-label="Filtra per scuderia"></select>
+          <input id="pilotSearch" placeholder="Cerca pilota…" aria-label="Cerca pilota">
+        </div>
+        <div id="cards" class="cards"></div>
+        <div id="empty" class="empty" hidden>Nessun pilota trovato.</div>
+      </section>
+    </div>
+
+    <footer>
+      Metti questo file nella stessa cartella di <b>piloti.json</b>. Se c'è <b>achievements.json</b> verrà caricato, altrimenti puoi crearne uno da "Esporta JSON".<br>
+      <span class="muted">Schema JSON atteso:</span>
+      <div class="muted" style="margin-top:6px">
+        <code class="inline">{
+  "achievements": [{"id":"podio","name":"Primo podio","desc":"Arriva tra i primi 3","points":10,"icon":"🏆"}],
+  "unlocks": {"Riccardo":["podio","pole"], "Arthur":[]}
+}</code>
+      </div>
+    </footer>
+  </div>
+
+  <dialog id="modal">
+    <form method="dialog" class="modal" id="modalContent" aria-live="polite"></form>
+  </dialog>
+
+<script>
+// === Config ===
+const PILOTI_URL = 'piloti.json';
+const ACH_URL = 'achievements.json';
+
+// === State ===
+let PILOTI = [];            // [{nome, scuderia, colore, ...}]
+let ACH = { achievements: [], unlocks: {} }; // master + mapping pilota -> [ids]
+
+// === Utils ===
+const $ = (q, el=document) => el.querySelector(q);
+const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
+const by = (k) => (a,b) => (a[k]||'').localeCompare(b[k]||'', 'it', {sensitivity:'base'});
+
+// === Load data ===
+async function safeFetchJSON(url){
+  try{
+    const res = await fetch(url, {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return await res.json();
+  }catch(e){ return null; }
+}
+
+async function load(){
+  const rawPiloti = await safeFetchJSON(PILOTI_URL);
+  if(Array.isArray(rawPiloti)){
+    if(rawPiloti.length && rawPiloti[0].piloti){
+      PILOTI = rawPiloti.flatMap(t => t.piloti.map(p => ({...p, scuderia: t.scuderia || 'Team', colore: p.colore || t.colore || '#888'})));
+    } else {
+      PILOTI = rawPiloti;
+    }
+  } else if (rawPiloti && rawPiloti.piloti){
+    PILOTI = rawPiloti.piloti;
+  }
+  PILOTI = PILOTI.map(p => ({...p, Exp: p.Exp ?? 0, colore: p.colore || '#888'})).sort(by('nome'));
+
+  const fromFile = await safeFetchJSON(ACH_URL);
+  const fromLS = JSON.parse(localStorage.getItem('ACH_TRACK')||'null');
+  ACH = sanitizeAch(fromLS || fromFile || {
+    achievements:[
+      {id:'podio', name:'Primo podio', desc:'Arriva tra i primi 3 in una gara', points:10, icon:'🏆'},
+      {id:'pole', name:'Pole Position', desc:'Ottieni una pole', points:8, icon:'🎯'},
+      {id:'rimonta', name:'Grande rimonta', desc:'>10 posizioni guadagnate', points:12, icon:'🚀'}
+    ],
+    unlocks: {}
+  });
+
+  render();
+}
+
+function sanitizeAch(obj){
+  const o = obj || {}; o.achievements = Array.isArray(o.achievements) ? o.achievements : []; o.unlocks = o.unlocks||{};
+  // ensure unique ids
+  const seen = new Set();
+  o.achievements = o.achievements.filter(a => a && a.id && !seen.has(a.id) && seen.add(a.id));
+  // ensure mapping only to existing ids
+  const ids = new Set(o.achievements.map(a => a.id));
+  for(const k of Object.keys(o.unlocks)){
+    o.unlocks[k] = (o.unlocks[k]||[]).filter(id => ids.has(id));
+  }
+  return o;
+}
+
+// === Render ===
+function render(){
+  renderAchList();
+  renderFilters();
+  renderCards();
+}
+
+function renderAchList(){
+  const q = $('#achSearch').value?.trim().toLowerCase();
+  const list = $('#achList'); list.innerHTML = '';
+  const filt = (a)=> !q || a.name.toLowerCase().includes(q) || a.id.toLowerCase().includes(q) || (a.desc||'').toLowerCase().includes(q);
+  for(const a of ACH.achievements.filter(filt)){
+    const row = document.createElement('div');
+    row.className = 'ach';
+    row.innerHTML = `
+      <div class="ico" title="${esc(a.id)}">${esc(a.icon||'🏅')}</div>
+      <div>
+        <div class="row">
+          <div class="title">${esc(a.name)}</div>
+          <div class="points" title="Punti">+${Number(a.points||0)}</div>
+          <span class="muted">ID: <code class="inline">${esc(a.id)}</code></span>
+        </div>
+        <div class="desc">${esc(a.desc||'')}</div>
+      </div>
+      <div class="ach-actions">
+        <button class="icon-btn" title="Modifica" aria-label="Modifica" data-edit="${esc(a.id)}">✏️</button>
+        <button class="icon-btn" title="Elimina" aria-label="Elimina" data-del="${esc(a.id)}">🗑️</button>
+      </div>
+    `;
+    list.appendChild(row);
+  }
+}
+
+function renderFilters(){
+  const sel = $('#teamFilter');
+  const teams = Array.from(new Set(PILOTI.map(p=>p.scuderia))).sort();
+  sel.innerHTML = `<option value="">Tutte le scuderie</option>` + teams.map(t=>`<option>${esc(t)}</option>`).join('');
+}
+
+function renderCards(){
+  const team = $('#teamFilter').value || '';
+  const q = $('#pilotSearch').value?.trim().toLowerCase();
+  const cards = $('#cards');
+  cards.innerHTML = '';
+  let list = PILOTI.filter(p => (!team || p.scuderia === team) && (!q || (p.nome||'').toLowerCase().includes(q)));
+  $('#empty').hidden = list.length>0;
+  for(const p of list){
+    const unlocked = new Set(ACH.unlocks[p.nome]||[]);
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.style.borderColor = p.colore || '#888';
+    const chips = Array.from(unlocked).map(id => achChip(id, p.nome)).join('') || `<span class="muted">Nessun achievement ancora sbloccato</span>`;
+    card.innerHTML = `
+      <div class="title" style="color:${p.colore||'#e8ecf1'}">${esc(p.nome||'Pilota')}</div>
+      <div class="subtitle">${esc(p.scuderia||'Team')} · Skill <b>${esc(p.skill)}</b> · EXP <b>${esc(p.Exp)}</b></div>
+      <div class="tags"><span class="tag">Tot. achievements: ${(ACH.unlocks[p.nome]||[]).length}</span></div>
+      <div class="chips" data-pilota="${esc(p.nome)}">${chips}</div>
+      <div style="margin-top:10px; display:flex; gap:8px">
+        <button class="btn" data-add-to="${esc(p.nome)}">➕ Sblocca…</button>
+        <button class="btn" data-clear="${esc(p.nome)}">🧹 Pulisci</button>
+      </div>
+    `;
+    cards.appendChild(card);
+  }
+}
+
+function achChip(id, pilota){
+  const a = ACH.achievements.find(x => x.id === id);
+  if(!a) return '';
+  return `<span class="chip" title="${esc(a.desc||'')}"><span>${esc(a.icon||'🏅')}</span><b>${esc(a.name)}</b><span class="muted">+${Number(a.points||0)}</span><span class="x" role="button" aria-label="Rimuovi" data-remove="${esc(id)}" data-p="${esc(pilota)}">✖</span></span>`;
+}
+
+// === Persistence ===
+function save(){ localStorage.setItem('ACH_TRACK', JSON.stringify(ACH)); }
+
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(ACH, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'achievements.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// === Modals ===
+function openModal(html){
+  const dlg = $('#modal');
+  $('#modalContent').innerHTML = html + `
+    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px">
+      <button class="btn" value="cancel">Annulla</button>
+      <button class="btn primary" value="ok">Salva</button>
+    </div>`;
+  dlg.showModal();
+  return new Promise(resolve => dlg.addEventListener('close', function onClose(){ dlg.removeEventListener('close', onClose); resolve(dlg.returnValue==='ok'); }, {once:true}));
+}
+
+async function newOrEditAchievement(existing){
+  const a = existing || {id:'', name:'', desc:'', points:0, icon:'🏅'};
+  const html = `
+    <div class="modal">
+      <h3>${existing? 'Modifica' : 'Nuovo'} achievement</h3>
+      <div class="row">
+        <div>
+          <label>Id<br><input id="f_id" value="${esc(a.id)}" placeholder="univoco" required style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--ring); background:var(--surface); color:var(--text); font-weight:600"></label>
+        </div>
+        <div>
+          <label>Nome<br><input id="f_name" value="${esc(a.name)}" placeholder="es. Primo podio" required style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--ring); background:var(--surface); color:var(--text); font-weight:600"></label>
+        </div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div>
+          <label>Punti<br><input id="f_points" type="number" value="${Number(a.points||0)}" min="0" step="1" style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--ring); background:var(--surface); color:var(--text); font-weight:600"></label>
+        </div>
+        <div>
+          <label>Icona<br><input id="f_icon" value="${esc(a.icon||'')}" placeholder="emoji o testo" style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--ring); background:var(--surface); color:var(--text); font-weight:600"></label>
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        <label>Descrizione<br>
+          <textarea id="f_desc" rows="3" placeholder="Dettagli dell\'achievement" style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--ring); background:var(--surface); color:var(--text); font-weight:600">${esc(a.desc||'')}</textarea>
+        </label>
+      </div>
+    </div>`;
+
+  const ok = await openModal(html);
+  if(!ok) return false;
+  const id = $('#f_id').value.trim();
+  const name = $('#f_name').value.trim();
+  if(!id || !name){ return false; }
+  const obj = { id, name, desc: $('#f_desc').value.trim(), points: Number($('#f_points').value||0), icon: $('#f_icon').value.trim() };
+
+  // uniqueness
+  const exists = ACH.achievements.some(x => x.id === id);
+  if(existing){
+    // if id changed, update mapping
+    if(existing.id !== id && exists){ alert('Esiste già un achievement con questo id.'); return false; }
+    // replace
+    const idx = ACH.achievements.findIndex(x => x.id === existing.id);
+    ACH.achievements[idx] = obj;
+    if(existing.id !== id){
+      for(const k of Object.keys(ACH.unlocks)){
+        ACH.unlocks[k] = (ACH.unlocks[k]||[]).map(x => x===existing.id ? id : x);
+      }
+    }
+  } else {
+    if(exists){ alert('Esiste già un achievement con questo id.'); return false; }
+    ACH.achievements.push(obj);
+  }
+  ACH.achievements.sort(by('name'));
+  save(); render();
+  return true;
+}
+
+async function addToPilot(nome){
+  // pick from remaining
+  const unlocked = new Set(ACH.unlocks[nome]||[]);
+  const choices = ACH.achievements.filter(a => !unlocked.has(a.id));
+  if(!choices.length){ alert('Tutti gli achievements sono già sbloccati per questo pilota.'); return; }
+  const html = `
+    <div class="modal">
+      <h3>Sblocca achievement per <span style="color:#ffd166">${esc(nome)}</span></h3>
+      <div class="search"><input id="pickQ" placeholder="Cerca…"></div>
+      <div id="pickList" style="max-height:50vh; overflow:auto; display:flex; flex-direction:column; gap:8px"></div>
+    </div>`;
+  await openModal(html);
+  // After modal opens, populate list and handle search
+  const listEl = $('#pickList');
+  function renderList(){
+    const q = ($('#pickQ').value||'').toLowerCase();
+    listEl.innerHTML = choices.filter(a => !q || a.name.toLowerCase().includes(q) || a.id.toLowerCase().includes(q)).map(a => `
+      <label class="ach" style="cursor:pointer; grid-template-columns:34px 1fr 24px">
+        <div class="ico">${esc(a.icon||'🏅')}</div>
+        <div>
+          <div class="row"><div class="title">${esc(a.name)}</div><div class="points">+${Number(a.points||0)}</div><span class="muted">ID: <code class="inline">${esc(a.id)}</code></span></div>
+          <div class="desc">${esc(a.desc||'')}</div>
+        </div>
+        <input type="checkbox" value="${esc(a.id)}" style="width:18px; height:18px">
+      </label>`).join('');
+  }
+  renderList();
+  $('#pickQ').addEventListener('input', renderList);
+
+  const dlg = $('#modal');
+  const ok = await new Promise(resolve => dlg.addEventListener('close', function onClose(){ dlg.removeEventListener('close', onClose); resolve(dlg.returnValue==='ok'); }, {once:true}));
+  if(!ok) return;
+  const selected = $$('#pickList input[type="checkbox"]:checked').map(i => i.value);
+  if(!selected.length) return;
+  ACH.unlocks[nome] = Array.from(new Set([...(ACH.unlocks[nome]||[]), ...selected]));
+  save(); renderCards();
+}
+
+function removeFromPilot(nome, id){
+  ACH.unlocks[nome] = (ACH.unlocks[nome]||[]).filter(x => x!==id);
+  save(); renderCards();
+}
+
+function clearPilot(nome){ if(confirm('Rimuovere tutti gli achievements per '+nome+'?')){ delete ACH.unlocks[nome]; save(); renderCards(); } }
+
+// === Events ===
+$('#achSearch').addEventListener('input', renderAchList);
+$('#pilotSearch').addEventListener('input', renderCards);
+$('#teamFilter').addEventListener('change', renderCards);
+
+$('#newAchBtn').addEventListener('click', () => newOrEditAchievement());
+
+$('#achList').addEventListener('click', (e)=>{
+  const id = e.target.dataset.edit || e.target.closest('[data-edit]')?.dataset.edit;
+  if(id){ const a = ACH.achievements.find(x=>x.id===id); if(a) newOrEditAchievement(a); return; }
+  const del = e.target.dataset.del || e.target.closest('[data-del]')?.dataset.del;
+  if(del){ if(confirm('Eliminare achievement "'+del+'"?\nVerrà rimosso anche dai piloti.')){ ACH.achievements = ACH.achievements.filter(a=>a.id!==del); for(const k of Object.keys(ACH.unlocks)){ ACH.unlocks[k] = (ACH.unlocks[k]||[]).filter(x=>x!==del); } save(); render(); } }
+});
+
+$('#cards').addEventListener('click', (e)=>{
+  const add = e.target.dataset.addTo || e.target.closest('[data-add-to]')?.dataset.addTo; if(add){ addToPilot(add); return; }
+  const clr = e.target.dataset.clear || e.target.closest('[data-clear]')?.dataset.clear; if(clr){ clearPilot(clr); return; }
+  const rmv = e.target.dataset.remove; if(rmv){ const p = e.target.dataset.p; removeFromPilot(p, rmv); return; }
+});
+
+$('#exportBtn').addEventListener('click', exportJSON);
+$('#importBtn').addEventListener('click', () => $('#fileInput').click());
+$('#fileInput').addEventListener('change', async (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  const text = await file.text();
+  try{
+    const obj = sanitizeAch(JSON.parse(text));
+    ACH = obj; save(); render();
+  }catch(err){ alert('File non valido: '+err.message); }
+  e.target.value = '';
+});
+
+window.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && $('#modal').open) $('#modal').close('cancel'); });
+
+// Start
+load();
+</script>
+</body>
+</html>
