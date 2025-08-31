@@ -4,8 +4,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Progressi Piloti — EXP & Livelli</title>
-  <meta name="description" content="Panoramica progressi piloti: EXP totale, livello corrente e progresso al prossimo livello." />
+  <title>Progressi Piloti — Skill & EXP</title>
+  <meta name="description" content="Panoramica progressi piloti: EXP totale, livello e progresso al prossimo livello. La Skill viene letta dal JSON." />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -66,7 +66,7 @@
         </div>
         <div>
           <div style="font-size:18px">Progressi Piloti</div>
-          <small>EXP totale, livello e avanzamento</small>
+          <small>Skill dal JSON · EXP per il livello</small>
         </div>
       </div>
 
@@ -92,16 +92,14 @@
     <div id="empty" class="empty" hidden>Nessun pilota trovato.</div>
 
     <footer>
-      Pagina progressi — collega questo file allo stesso server / cartella del JSON.
+      Metti questo file nella stessa cartella di <b>piloti.json</b>.
     </footer>
   </div>
 
 <script>
-const JSON_URL = 'piloti.json'; // assicurati che sia nello stesso path
+const JSON_URL = 'piloti.json'; // legge direttamente il tuo file
 
 const MAX_LEVEL = 50;
-const BASE_OVERALL = 80;
-const OVERALL_SPAN = 20;
 
 const state = { q:'', sort:'exp-desc' };
 const grid = document.getElementById('grid');
@@ -110,7 +108,6 @@ const empty = document.getElementById('empty');
 function expNeeded(n){ return 100 * n * n; }
 function expCum(n){ return Math.floor(100 * n*(n+1)*(2*n+1)/6); }
 function levelFromExp(exp){
-  // Trova il più grande L tale che expCum(L) <= exp
   let lo = 0, hi = MAX_LEVEL;
   while(lo < hi){
     const mid = Math.ceil((lo + hi + 1) / 2);
@@ -118,27 +115,32 @@ function levelFromExp(exp){
   }
   return lo;
 }
-function overallFromLevel(level){
-  return (BASE_OVERALL + (level / MAX_LEVEL) * OVERALL_SPAN).toFixed(1);
-}
 
 let PILOTI = [];
 
 async function load(){
   const res = await fetch(JSON_URL);
   const raw = await res.json();
-  PILOTI = raw.flatMap(t => t.piloti.map(p => ({...p, scuderia: t.scuderia, colore: t.colore || '#888'})));
+  // Supporto a diversi schemi: un array di scuderie con piloti[] oppure un array diretto di piloti
+  if(Array.isArray(raw) && raw.length && raw[0].piloti){
+    PILOTI = raw.flatMap(t => t.piloti.map(p => ({...p, scuderia: t.scuderia || t.nome || 'Team', colore: t.colore || '#888'})));
+  } else if (Array.isArray(raw)) {
+    PILOTI = raw;
+  } else {
+    PILOTI = raw.piloti || [];
+  }
+  // default Exp se mancante
+  PILOTI = PILOTI.map(p => ({...p, Exp: (p.Exp ?? 0)}));
   render();
 }
 
 function render(){
   let list = PILOTI.slice();
-  // search
   if(state.q){
     const q = state.q.toLowerCase();
-    list = list.filter(p => p.nome.toLowerCase().includes(q) || (p.scuderia||'').toLowerCase().includes(q));
+    list = list.filter(p => (p.nome||'').toLowerCase().includes(q) || (p.scuderia||'').toLowerCase().includes(q));
   }
-  // compute runtime metrics
+
   list = list.map(p => {
     const exp = Number(p.Exp) || 0;
     const lvl = Math.min(MAX_LEVEL, levelFromExp(exp));
@@ -147,17 +149,15 @@ function render(){
     const toNext = nextLvl > lvl ? expNeeded(nextLvl) : 0;
     const inLevel = exp - curBase;
     const progress = toNext ? Math.max(0, Math.min(100, Math.floor( (inLevel / toNext) * 100 ))) : 100;
-    const overall = overallFromLevel(lvl);
-    return { ...p, exp, lvl, nextLvl, curBase, toNext, inLevel, progress, overall };
+    return { ...p, exp, lvl, nextLvl, curBase, toNext, inLevel, progress };
   });
 
-  // sort
   switch(state.sort){
     case 'exp-asc': list.sort((a,b)=> a.exp - b.exp); break;
     case 'lvl-desc': list.sort((a,b)=> b.lvl - a.lvl || b.exp - a.exp ); break;
     case 'lvl-asc': list.sort((a,b)=> a.lvl - b.lvl || a.exp - b.exp ); break;
-    case 'name-asc': list.sort((a,b)=> a.nome.localeCompare(b.nome)); break;
-    default: /* exp-desc */ list.sort((a,b)=> b.exp - a.exp); break;
+    case 'name-asc': list.sort((a,b)=> (a.nome||'').localeCompare(b.nome||'')); break;
+    default: list.sort((a,b)=> b.exp - a.exp); break;
   }
 
   grid.innerHTML = '';
@@ -170,8 +170,8 @@ function render(){
     card.innerHTML = `
       <div class="card-header">
         <div>
-          <div class="title">${escapeHtml(p.nome)} — ${escapeHtml(p.scuderia||'Team')}</div>
-          <div class="subtitle">Livello <b>${p.lvl}</b> · Overall <b>${p.overall}</b> · EXP totali: <b>${p.exp.toLocaleString('it-IT')}</b></div>
+          <div class="title">${escapeHtml(p.nome||'Pilota')} — ${escapeHtml(p.scuderia||'Team')}</div>
+          <div class="subtitle">Livello <b>${p.lvl}</b> · Skill <b>${escapeHtml(p.skill)}</b> · EXP totali: <b>${p.exp.toLocaleString('it-IT')}</b></div>
           <div class="tags">
             <span class="tag">Base livello: ${p.curBase.toLocaleString('it-IT')}</span>
             <span class="tag">Per salire: ${p.toNext ? (p.toNext - p.inLevel).toLocaleString('it-IT') : '—'} EXP</span>
@@ -188,7 +188,7 @@ function render(){
   }
 }
 
-function escapeHtml(str){ return String(str).replace(/[&<>"]+/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+function escapeHtml(str){ return String(str ?? '').replace(/[&<>"]+/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
 
 document.getElementById('q').addEventListener('input', (e)=>{ state.q = e.target.value; render(); });
 document.getElementById('sort').addEventListener('change', (e)=>{ state.sort = e.target.value; render(); });
