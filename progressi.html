@@ -1,0 +1,199 @@
+
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Progressi Piloti — EXP & Livelli</title>
+  <meta name="description" content="Panoramica progressi piloti: EXP totale, livello corrente e progresso al prossimo livello." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #0b0d12;
+      --surface: #121622;
+      --card: #171C2B;
+      --text: #e8ecf1;
+      --muted: #a7b0c0;
+      --primary: #e10600;
+      --accent: #00d2ff;
+      --ring: #3a435a;
+      --shadow: 0 10px 30px rgba(0,0,0,.4);
+      --radius: 16px;
+    }
+    body{ margin:0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    .wrap{ max-width:1200px; margin:0 auto; padding:24px; }
+    header{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding: 8px 0 12px; }
+    .brand{ display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:.3px; }
+    .brand .logo{ width:42px; height:42px; display:grid; place-items:center; border-radius:12px; background: linear-gradient(135deg, var(--primary), #8b0200); box-shadow: var(--shadow) }
+    .brand .logo svg{ width:26px; height:26px; fill:white }
+    .brand small{ display:block; color: var(--muted); font-weight:600 }
+
+    .tools{ display:grid; grid-template-columns: 1fr; gap:12px; width:100% }
+    @media (min-width:860px){ .tools{ grid-template-columns: 1fr 300px } }
+    .searchbar{ background: var(--surface); border:1px solid var(--ring); border-radius:12px; padding: 8px 12px; display:flex; align-items:center; gap:10px; box-shadow: var(--shadow) }
+    .searchbar input{ background: transparent; border:0; outline:0; color:var(--text); width:100%; font-size:15px }
+    .sort{ background: var(--surface); border:1px solid var(--ring); border-radius:12px; padding:8px 10px; box-shadow: var(--shadow); display:flex; gap:8px; align-items:center; }
+    .sort select{ background: transparent; border:0; color:var(--text); font-weight:600; outline:0 }
+
+    .grid{ display:grid; grid-template-columns: 1fr; gap:16px; margin-top:18px }
+    @media (min-width:700px){ .grid{ grid-template-columns: 1fr 1fr } }
+    @media (min-width:1100px){ .grid{ grid-template-columns: 1fr 1fr 1fr } }
+
+    .card{ background: var(--card); border:1px solid var(--ring); border-radius: var(--radius); padding:16px; position:relative; overflow:hidden; box-shadow: var(--shadow); }
+    .card-header{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px }
+    .title{ font-weight:800; font-size:18px; }
+    .subtitle{ color:var(--muted); font-size:13px }
+
+    .tags{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
+    .tag{ font-size:12px; font-weight:700; padding:6px 8px; border-radius:999px; border:1px solid var(--ring); background: rgba(255,255,255,.02) }
+
+    .bar{ margin-top:10px; background: var(--surface); border:1px solid var(--ring); border-radius:999px; height:12px; overflow:hidden; }
+    .fill{ height:100%; background: linear-gradient(90deg, var(--accent), var(--primary)); width:0% }
+
+    .meta{ display:flex; justify-content:space-between; align-items:center; margin-top:8px; color:var(--muted); font-size:12px; font-weight:700 }
+    .empty{ text-align:center; padding:48px 16px; color:var(--muted); border:1px dashed var(--ring); border-radius:16px; margin-top:18px }
+    footer{ margin: 28px 0 48px; color:var(--muted); text-align:center; font-size:12px }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" role="img" aria-label="Logo">
+            <path d="M21.93 7.23c-1.34-2.25-4.28-3.01-6.51-1.67l-3.9 2.33 1.53 2.56 3.9-2.33a2.5 2.5 0 1 1 2.5 4.33l-6.12 3.66 1.53 2.56 6.12-3.66c2.23-1.34 2.99-4.28 1.65-6.48zM4 7h6v3H4a2 2 0 0 0 0 4h6v3H4A5 5 0 0 1 4 7z"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:18px">Progressi Piloti</div>
+          <small>EXP totale, livello e avanzamento</small>
+        </div>
+      </div>
+
+      <div class="tools">
+        <label class="searchbar" for="q">
+          <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.71.71l.27.28v.79L20 20.49 21.49 19 15.5 14zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+          <input id="q" type="search" placeholder="Cerca pilota o scuderia…" autocomplete="off" />
+        </label>
+        <div class="sort">
+          <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18"><path d="M3 18h6v-2H3v2zm0-5h12v-2H3v2zm0-7v2h18V6H3z"/></svg>
+          <select id="sort">
+            <option value="exp-desc">EXP tot. (alto → basso)</option>
+            <option value="exp-asc">EXP tot. (basso → alto)</option>
+            <option value="lvl-desc">Livello (alto → basso)</option>
+            <option value="lvl-asc">Livello (basso → alto)</option>
+            <option value="name-asc">Nome (A → Z)</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <main id="grid" class="grid" aria-live="polite"></main>
+    <div id="empty" class="empty" hidden>Nessun pilota trovato.</div>
+
+    <footer>
+      Pagina progressi — collega questo file allo stesso server / cartella del JSON.
+    </footer>
+  </div>
+
+<script>
+const JSON_URL = 'piloti_exp.json'; // assicurati che sia nello stesso path
+
+const MAX_LEVEL = 50;
+const BASE_OVERALL = 80;
+const OVERALL_SPAN = 20;
+
+const state = { q:'', sort:'exp-desc' };
+const grid = document.getElementById('grid');
+const empty = document.getElementById('empty');
+
+function expNeeded(n){ return 100 * n * n; }
+function expCum(n){ return Math.floor(100 * n*(n+1)*(2*n+1)/6); }
+function levelFromExp(exp){
+  // Trova il più grande L tale che expCum(L) <= exp
+  let lo = 0, hi = MAX_LEVEL;
+  while(lo < hi){
+    const mid = Math.ceil((lo + hi + 1) / 2);
+    if(expCum(mid) <= exp) lo = mid; else hi = mid-1;
+  }
+  return lo;
+}
+function overallFromLevel(level){
+  return (BASE_OVERALL + (level / MAX_LEVEL) * OVERALL_SPAN).toFixed(1);
+}
+
+let PILOTI = [];
+
+async function load(){
+  const res = await fetch(JSON_URL);
+  const raw = await res.json();
+  PILOTI = raw.flatMap(t => t.piloti.map(p => ({...p, scuderia: t.scuderia, colore: t.colore || '#888'})));
+  render();
+}
+
+function render(){
+  let list = PILOTI.slice();
+  // search
+  if(state.q){
+    const q = state.q.toLowerCase();
+    list = list.filter(p => p.nome.toLowerCase().includes(q) || (p.scuderia||'').toLowerCase().includes(q));
+  }
+  // compute runtime metrics
+  list = list.map(p => {
+    const exp = Number(p.Exp) || 0;
+    const lvl = Math.min(MAX_LEVEL, levelFromExp(exp));
+    const nextLvl = Math.min(MAX_LEVEL, lvl + 1);
+    const curBase = expCum(lvl);
+    const toNext = nextLvl > lvl ? expNeeded(nextLvl) : 0;
+    const inLevel = exp - curBase;
+    const progress = toNext ? Math.max(0, Math.min(100, Math.floor( (inLevel / toNext) * 100 ))) : 100;
+    const overall = overallFromLevel(lvl);
+    return { ...p, exp, lvl, nextLvl, curBase, toNext, inLevel, progress, overall };
+  });
+
+  // sort
+  switch(state.sort){
+    case 'exp-asc': list.sort((a,b)=> a.exp - b.exp); break;
+    case 'lvl-desc': list.sort((a,b)=> b.lvl - a.lvl || b.exp - a.exp ); break;
+    case 'lvl-asc': list.sort((a,b)=> a.lvl - b.lvl || a.exp - b.exp ); break;
+    case 'name-asc': list.sort((a,b)=> a.nome.localeCompare(b.nome)); break;
+    default: /* exp-desc */ list.sort((a,b)=> b.exp - a.exp); break;
+  }
+
+  grid.innerHTML = '';
+  if(!list.length){ empty.hidden = false; return; }
+  empty.hidden = true;
+
+  for(const p of list){
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-header">
+        <div>
+          <div class="title">${escapeHtml(p.nome)} — ${escapeHtml(p.scuderia||'Team')}</div>
+          <div class="subtitle">Livello <b>${p.lvl}</b> · Overall <b>${p.overall}</b> · EXP totali: <b>${p.exp.toLocaleString('it-IT')}</b></div>
+          <div class="tags">
+            <span class="tag">Base livello: ${p.curBase.toLocaleString('it-IT')}</span>
+            <span class="tag">Per salire: ${p.toNext ? (p.toNext - p.inLevel).toLocaleString('it-IT') : '—'} EXP</span>
+          </div>
+          <div class="bar"><div class="fill" style="width:${p.progress}%;"></div></div>
+          <div class="meta">
+            <span>Progresso livello: ${p.progress}%</span>
+            <span>${p.inLevel.toLocaleString('it-IT')} / ${p.toNext.toLocaleString('it-IT')} EXP</span>
+          </div>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+function escapeHtml(str){ return String(str).replace(/[&<>"]+/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+
+document.getElementById('q').addEventListener('input', (e)=>{ state.q = e.target.value; render(); });
+document.getElementById('sort').addEventListener('change', (e)=>{ state.sort = e.target.value; render(); });
+
+load();
+</script>
+</body>
+</html>
