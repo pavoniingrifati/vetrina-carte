@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Progressi Piloti — Skill & EXP (Colorati)</title>
+  <title>Progressi Piloti — Skill & EXP (scala con Skill)</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -38,7 +38,7 @@
     .tag{ font-size:12px; font-weight:700; padding:6px 8px; border-radius:999px; border:1px solid var(--ring); background: rgba(255,255,255,.02) }
 
     .bar{ margin-top:10px; background: var(--surface); border:1px solid var(--ring); border-radius:999px; height:12px; overflow:hidden; }
-    .fill{ height:100%; background: linear-gradient(90deg, var(--accent,#00d2ff), var(--primary,#e10600)); width:0% }
+    .fill{ height:100%; background: linear-gradient(90deg, var(--accent, #00d2ff), var(--primary, #e10600)); width:0% }
 
     .meta{ display:flex; justify-content:space-between; align-items:center; margin-top:8px; color:var(--muted); font-size:12px; font-weight:700 }
     .empty{ text-align:center; padding:48px 16px; color:var(--muted); border:1px dashed var(--ring); border-radius:16px; margin-top:18px }
@@ -56,7 +56,7 @@
         </div>
         <div>
           <div style="font-size:18px">Progressi Piloti</div>
-          <small>Skill dal JSON · EXP per il livello · Colore team</small>
+          <small>EXP scala con Skill: più forte = più EXP per livello</small>
         </div>
       </div>
     </header>
@@ -74,15 +74,26 @@ const MAX_LEVEL = 50;
 const grid = document.getElementById('grid');
 const empty = document.getElementById('empty');
 
-function expNeeded(n){ return 100 * n * n; }
-function expCum(n){ return Math.floor(100 * n*(n+1)*(2*n+1)/6); }
-function levelFromExp(exp){
+// Base curve (senza skill multiplier)
+function baseExpNeeded(n){ return 100 * n * n; }
+function baseExpCum(n){ return Math.floor(100 * n*(n+1)*(2*n+1)/6); }
+
+function skillMultiplier(skillRaw){
+  const s = Math.max(80, Math.min(100, Number(skillRaw) || 80));
+  // 80 -> 1.0, 90 -> 1.5, 100 -> 2.0
+  return 1 + (s - 80) / 20;
+}
+
+function levelFromExpWithSkill(exp, skill){
+  const m = skillMultiplier(skill);
+  // Confronta exp_normalizzata = exp / m contro la curva base cumulativa
+  const effectiveExp = exp / m;
   let lo = 0, hi = MAX_LEVEL;
   while(lo < hi){
     const mid = Math.ceil((lo + hi + 1) / 2);
-    if(expCum(mid) <= exp) lo = mid; else hi = mid-1;
+    if(baseExpCum(mid) <= effectiveExp) lo = mid; else hi = mid-1;
   }
-  return lo;
+  return { level: lo, mult: m, effectiveExp };
 }
 
 async function load(){
@@ -107,12 +118,18 @@ function render(list){
 
   for(const p of list){
     const exp = Number(p.Exp) || 0;
-    const lvl = Math.min(MAX_LEVEL, levelFromExp(exp));
+    const skill = p.skill;
+    const { level: lvl, mult: m, effectiveExp } = levelFromExpWithSkill(exp, skill);
     const nextLvl = Math.min(MAX_LEVEL, lvl+1);
-    const curBase = expCum(lvl);
-    const toNext = nextLvl > lvl ? expNeeded(nextLvl) : 0;
+
+    // Soglie basate sulla curva base ma scalate dal moltiplicatore "m"
+    const curBaseBase = baseExpCum(lvl);
+    const nextNeedBase = nextLvl > lvl ? baseExpNeeded(nextLvl) : 0;
+
+    const curBase = Math.floor(curBaseBase * m); // soglia cumulativa reale (con skill)
+    const toNext = Math.floor(nextNeedBase * m); // exp necessaria IN QUESTO LIVELLO
     const inLevel = exp - curBase;
-    const progress = toNext ? Math.floor((inLevel/toNext)*100) : 100;
+    const progress = toNext ? Math.max(0, Math.min(100, Math.floor((inLevel / toNext) * 100))) : 100;
 
     const card = document.createElement('article');
     card.className = 'card';
@@ -120,16 +137,17 @@ function render(list){
     card.innerHTML = `
       <div class="card-header">
         <div>
-          <div class="title">${escapeHtml(p.nome||'Pilota')} — ${escapeHtml(p.scuderia||'')}</div>
-          <div class="subtitle">Livello <b>${lvl}</b> · Skill <b>${escapeHtml(p.skill)}</b> · EXP totali: <b>${exp.toLocaleString('it-IT')}</b></div>
+          <div class="title" style="color:${p.colore||'#e8ecf1'}">${escapeHtml(p.nome||'Pilota')}</div>
+          <div class="subtitle">${escapeHtml(p.scuderia||'Team')} · Skill <b>${escapeHtml(p.skill)}</b> · Livello <b>${lvl}</b> · EXP totali: <b>${exp.toLocaleString('it-IT')}</b></div>
           <div class="tags">
-            <span class="tag">Base livello: ${curBase.toLocaleString('it-IT')}</span>
-            <span class="tag">Per salire: ${toNext ? (toNext-inLevel).toLocaleString('it-IT') : '—'} EXP</span>
+            <span class="tag">Moltiplicatore Skill: ×${m.toFixed(2)}</span>
+            <span class="tag">Base livello (cum.): ${curBase.toLocaleString('it-IT')}</span>
+            <span class="tag">Per salire: ${toNext ? (toNext - Math.max(0,inLevel)).toLocaleString('it-IT') : '—'} EXP</span>
           </div>
           <div class="bar"><div class="fill" style="width:${progress}%; background:${p.colore||'#00d2ff'};"></div></div>
           <div class="meta">
             <span>Progresso livello: ${progress}%</span>
-            <span>${inLevel.toLocaleString('it-IT')} / ${toNext.toLocaleString('it-IT')} EXP</span>
+            <span>${Math.max(0,inLevel).toLocaleString('it-IT')} / ${toNext.toLocaleString('it-IT')} EXP</span>
           </div>
         </div>
       </div>
