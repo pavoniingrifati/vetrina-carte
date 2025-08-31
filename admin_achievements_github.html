@@ -1,0 +1,356 @@
+
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Achievements — Piloti (GitHub Pages)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b0d12; --surface:#121622; --card:#171C2B; --text:#e8ecf1; --muted:#a7b0c0;
+      --ring:#3a435a; --primary:#e10600; --accent:#00d2ff; --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.4);
+      --warn:#f1c40f; --err:#e74c3c; --ok:#2ecc71;
+    }
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:1200px;margin:0 auto;padding:24px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:800}
+    .brand .logo{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,var(--primary),#8b0200);box-shadow:var(--shadow)}
+    .brand .logo svg{width:26px;height:26px;fill:white}
+    .banner{padding:10px 12px;border-radius:10px;border:1px solid var(--ring);background:rgba(241,196,15,.1);color:#f9e79f;margin-bottom:12px;display:none}
+    .banner.err{background:rgba(231,76,60,.1);color:#f5b7b1;border-color:#c0392b}
+    .banner.ok{background:rgba(46,204,113,.08);color:#a9dfbf;border-color:#27ae60}
+    .panel{display:grid;grid-template-columns:1fr;gap:14px}
+    @media(min-width:1000px){.panel{grid-template-columns: 2fr 1fr}}
+    .card{background:var(--card);border:1px solid var(--ring);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    label{font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px}
+    select,input,button,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--ring);background:var(--surface);color:var(--text);font-weight:600}
+    button{cursor:pointer}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:800px){.grid{grid-template-columns:1fr 1fr}}
+    .pilot{border:3px solid var(--ring);border-radius:var(--radius);padding:12px}
+    .title{font-weight:800}
+    .sub{color:var(--muted);font-size:12px}
+    .tag{display:inline-block;margin-top:8px;margin-right:6px;font-size:12px;border:1px solid var(--ring);padding:4px 8px;border-radius:999px}
+    .bar{margin-top:10px;background:var(--surface);border:1px solid var(--ring);border-radius:999px;height:12px;overflow:hidden}
+    .fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--primary));width:0%}
+    .flex{display:flex;gap:10px;align-items:center}
+    .right{justify-content:flex-end}
+    .list{max-height:260px;overflow:auto;border:1px solid var(--ring);border-radius:10px;padding:8px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo"><svg viewBox="0 0 24 24"><path d="M21.93 7.23c-1.34-2.25-4.28-3.01-6.51-1.67l-3.9 2.33 1.53 2.56 3.9-2.33a2.5 2.5 0 1 1 2.5 4.33l-6.12 3.66 1.53 2.56 6.12-3.66c2.23-1.34 2.99-4.28 1.65-6.48zM4 7h6v3H4a2 2 0 0 0 0 4h6v3H4A5 5 0 0 1 4 7z"/></svg></div>
+        <div>
+          <div>Admin — Achievements (GitHub Pages)</div>
+          <div class="sub">Carica/leggi i piloti dalla tua repo GitHub Pages</div>
+        </div>
+      </div>
+    </header>
+
+    <div id="banner" class="banner"></div>
+
+    <div class="panel">
+      <div class="card">
+        <div class="row">
+          <div>
+            <label>Piloti</label>
+            <select id="pilotSelect"></select>
+          </div>
+          <div>
+            <label>Achievements</label>
+            <select id="achSelect"></select>
+          </div>
+        </div>
+
+        <div class="row3" style="margin-top:10px">
+          <div>
+            <label>Session ID</label>
+            <input id="sessionId" placeholder="es. live_2025_08_31" />
+          </div>
+          <div>
+            <label>Gran Premio</label>
+            <input id="gp" placeholder="es. Monza" />
+          </div>
+          <div>
+            <label>Admin/Nick</label>
+            <input id="adminNick" placeholder="chi assegna" />
+          </div>
+        </div>
+
+        <div class="flex right" style="margin-top:12px">
+          <button id="unlockBtn">Sblocca achievement</button>
+          <button id="undoBtn" title="Annulla ultimo sblocco per il pilota selezionato">Annulla ultimo</button>
+        </div>
+
+        <div class="sub" style="margin-top:12px">Se non carica i dati automaticamente, puoi caricare il tuo <b>piloti.json</b> manualmente:</div>
+        <div class="flex" style="margin-top:10px">
+          <input type="file" id="fileInput" accept=".json" />
+          <button id="downloadBtn">Scarica piloti.json aggiornato</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="title">Dettagli selezionati</div>
+        <div id="details" class="sub" style="margin-top:6px">Seleziona un pilota.</div>
+        <div id="unlockedList" class="list" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="title">Anteprima Piloti</div>
+      <div id="pilotGrid" class="grid" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+<script>
+// --- CONFIG: punta alla tua repo GitHub Pages ---
+const BASE = 'https://pavoniingrifati.github.io/vetrina-carte/';
+const PILOTI_URL = BASE + 'piloti.json';
+const ACH_URL = BASE + 'achievements_master.json';
+const MAX_LEVEL = 50;
+
+// --- curve + scaling ---
+function baseExpNeeded(n){ return 100 * n * n; }
+function baseExpCum(n){ return Math.floor(100 * n*(n+1)*(2*n+1)/6); }
+function skillMultiplier(skill){
+  const s = Math.max(80, Math.min(100, Number(skill) || 80));
+  return 1 + (s - 80) / 20;
+}
+function levelFromExpWithSkill(exp, skill){
+  const m = skillMultiplier(skill);
+  const effective = exp / m;
+  let lo=0, hi=MAX_LEVEL;
+  while(lo<hi){
+    const mid = Math.ceil((lo+hi+1)/2);
+    if(baseExpCum(mid) <= effective) lo=mid; else hi=mid-1;
+  }
+  return { level:lo, mult:m };
+}
+
+// --- state ---
+let ACHS = [];
+let RAW = null;
+let PILOTI = [];
+let pilotIndexByKey = {};
+
+function setBanner(type, msg){
+  const b = document.getElementById('banner');
+  b.className = 'banner ' + (type||'');
+  b.textContent = msg;
+  b.style.display = msg ? 'block' : 'none';
+}
+
+function escapeHtml(str){ return String(str??'').replace(/[&<>"]+/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+
+async function loadAll(){
+  try{
+    const a = await fetch(ACH_URL, {cache:'no-store'});
+    if(!a.ok) throw new Error('Achievements HTTP ' + a.status);
+    ACHS = await a.json();
+  }catch(e){
+    console.warn('Achievements fetch error', e);
+    setBanner('err', 'Non riesco a leggere achievements_master.json da GitHub Pages. Assicurati che esista nella stessa cartella.');
+  }
+
+  try{
+    const p = await fetch(PILOTI_URL, {cache:'no-store'});
+    if(!p.ok) throw new Error('Piloti HTTP ' + p.status);
+    RAW = await p.json();
+    normalizePiloti();
+    if(!PILOTI.length){
+      setBanner('warn', 'Nessun pilota trovato nel JSON online. Carica manualmente un file oppure verifica lo schema.');
+    }else{
+      setBanner('ok', 'Piloti caricati da GitHub Pages ✅');
+    }
+  }catch(e){
+    console.warn('Piloti fetch error', e);
+    setBanner('warn', 'Impossibile leggere piloti.json da GitHub Pages. Carica il file manualmente (pulsante sotto).');
+    RAW = [];
+    PILOTI = [];
+  }
+
+  renderSelectors();
+  renderGrid();
+  renderDetails();
+}
+
+function normalizePiloti(){
+  PILOTI = [];
+  pilotIndexByKey = {};
+  if(Array.isArray(RAW) && RAW.length && RAW[0].piloti){
+    RAW.forEach((team, tIdx)=>{
+      (team.piloti||[]).forEach((p, pIdx)=>{
+        const key = `t${tIdx}_p${pIdx}`;
+        pilotIndexByKey[key] = { tIdx, pIdx, flat:true };
+        PILOTI.push({ ...p, key, scuderia: team.scuderia || team.nome || 'Team', colore: p.colore || team.colore || '#888', teamPointer:{tIdx,pIdx} });
+      });
+    });
+  }else if(Array.isArray(RAW)){
+    RAW.forEach((p, idx)=>{
+      const key = `p${idx}`;
+      pilotIndexByKey[key] = { idx, flat:false };
+      PILOTI.push({ ...p, key, scuderia: p.scuderia || 'Team', colore: p.colore || '#888' });
+    });
+  }else if(RAW && Array.isArray(RAW.piloti)){
+    RAW.piloti.forEach((p, idx)=>{
+      const key = `p${idx}`;
+      pilotIndexByKey[key] = { idx, container:true };
+      PILOTI.push({ ...p, key, scuderia: p.scuderia || 'Team', colore: p.colore || '#888' });
+    });
+  }
+  PILOTI = PILOTI.map(p => ({...p, Exp: (p.Exp ?? 0), unlocked: Array.isArray(p.unlocked)? p.unlocked: [] }));
+}
+
+function renderSelectors(){
+  const pilotSel = document.getElementById('pilotSelect');
+  pilotSel.innerHTML = PILOTI.map(p => `<option value="${p.key}">${escapeHtml(p.nome)} — ${escapeHtml(p.scuderia||'Team')}</option>`).join('');
+  const achSel = document.getElementById('achSelect');
+  achSel.innerHTML = ACHS.map(a => `<option value="${a.id}">[${a.diff.toUpperCase()}·${a.type}] ${escapeHtml(a.title)} (+${a.xp} XP)</option>`).join('');
+}
+
+function computePilotView(p){
+  const { level, mult } = levelFromExpWithSkill(Number(p.Exp)||0, p.skill);
+  const next = Math.min(MAX_LEVEL, level+1);
+  const baseCur = baseExpCum(level);
+  const baseNeed = next>level ? baseExpNeeded(next) : 0;
+  const cur = Math.floor(baseCur * mult);
+  const toNext = Math.floor(baseNeed * mult);
+  const inLevel = (Number(p.Exp)||0) - cur;
+  const progress = toNext ? Math.max(0, Math.min(100, Math.floor((inLevel/toNext)*100))) : 100;
+  return { level, mult, cur, toNext, inLevel, progress };
+}
+
+function renderGrid(){
+  const grid = document.getElementById('pilotGrid');
+  grid.innerHTML = '';
+  if(!PILOTI.length){ grid.innerHTML = '<div class="sub">Nessun pilota caricato.</div>'; return; }
+  for(const p of PILOTI){
+    const v = computePilotView(p);
+    const card = document.createElement('div');
+    card.className = 'pilot';
+    card.style.borderColor = p.colore || '#888';
+    card.innerHTML = `
+      <div class="title">${escapeHtml(p.nome)} — <span class="sub">${escapeHtml(p.scuderia||'Team')}</span></div>
+      <div class="sub">Skill <b>${escapeHtml(p.skill)}</b> · Livello <b>${v.level}</b> · Exp <b>${(p.Exp||0).toLocaleString('it-IT')}</b></div>
+      <div class="bar" style="margin-top:8px"><div class="fill" style="width:${v.progress}%; background:${p.colore||'#00d2ff'}"></div></div>
+      <div class="sub" style="margin-top:6px">${Math.max(0,v.inLevel).toLocaleString('it-IT')} / ${v.toNext.toLocaleString('it-IT')} EXP (manca ${(v.toNext - Math.max(0,v.inLevel)).toLocaleString('it-IT')})</div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+function renderDetails(){
+  const details = document.getElementById('details');
+  const list = document.getElementById('unlockedList');
+  const key = document.getElementById('pilotSelect').value;
+  const p = PILOTI.find(x => x.key === key);
+  if(!p){ details.textContent = 'Seleziona un pilota.'; list.innerHTML = ''; return; }
+  const v = computePilotView(p);
+  details.innerHTML = \`
+    <div><b>\${escapeHtml(p.nome)}</b> — \${escapeHtml(p.scuderia||'Team')}</div>
+    <div class="sub">Skill <b>\${escapeHtml(p.skill)}</b> · Livello <b>\${v.level}</b> · Exp <b>\${(p.Exp||0).toLocaleString('it-IT')}</b> · Mult Skill ×\${v.mult.toFixed(2)}</div>
+  \`;
+  if(!p.unlocked || !p.unlocked.length){
+    list.innerHTML = '<div class="sub">Nessun achievement sbloccato.</div>';
+    return;
+  }
+  const rows = p.unlocked.map(u => {
+    const a = ACHS.find(x => x.id === u.achievement_id);
+    const title = a ? a.title : u.achievement_id;
+    return \`<div class="tag">\${new Date(u.ts||u.timestamp||Date.now()).toLocaleString('it-IT')} — \${escapeHtml(title)} (+\${u.xp_applied||u.xp||'?'}xp)</div>\`;
+  }).join('');
+  list.innerHTML = rows;
+}
+
+function unlock(){
+  const pKey = document.getElementById('pilotSelect').value;
+  const aId = document.getElementById('achSelect').value;
+  const sessionId = document.getElementById('sessionId').value || null;
+  const gp = document.getElementById('gp').value || null;
+  const admin = document.getElementById('adminNick').value || null;
+
+  const p = PILOTI.find(x => x.key === pKey);
+  const a = ACHS.find(x => x.id === aId);
+  if(!p || !a){ setBanner('err','Seleziona pilota e achievement'); return; }
+
+  if(p.unlocked.some(u => u.achievement_id === a.id)){
+    setBanner('warn','Già sbloccato per questo pilota'); return;
+  }
+
+  const m = skillMultiplier(p.skill);
+  const xpApplied = Math.round(a.xp * m);
+  const now = new Date().toISOString();
+
+  p.unlocked.push({ achievement_id:a.id, ts:now, session_id:sessionId, gp, xp_base:a.xp, xp_applied:xpApplied, by:admin });
+  p.Exp = (p.Exp||0) + xpApplied;
+
+  renderGrid();
+  renderDetails();
+  setBanner('ok', `Aggiunto: ${a.title} (+${xpApplied}xp)`);
+}
+
+function undoLast(){
+  const pKey = document.getElementById('pilotSelect').value;
+  const p = PILOTI.find(x => x.key === pKey);
+  if(!p || !p.unlocked || !p.unlocked.length){ setBanner('warn','Niente da annullare'); return; }
+  const last = p.unlocked.pop();
+  const refund = last.xp_applied || last.xp_base || 0;
+  p.Exp = Math.max(0, (p.Exp||0) - refund);
+  renderGrid();
+  renderDetails();
+  setBanner('ok','Ultimo sblocco annullato');
+}
+
+function downloadUpdated(){
+  // Ricostruzione "flat": exporta sempre come array flat per semplicità su GitHub Pages
+  const exportData = PILOTI.map(p => ({ nome:p.nome, skill:p.skill, Exp:p.Exp, colore:p.colore, scuderia:p.scuderia, unlocked:p.unlocked }));
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'piloti.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  setBanner('ok','Scaricato piloti.json aggiornato');
+}
+
+document.getElementById('fileInput').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const text = await file.text();
+  try{
+    RAW = JSON.parse(text);
+    normalizePiloti();
+    renderSelectors();
+    renderGrid();
+    renderDetails();
+    setBanner('ok','piloti.json caricato dal tuo file');
+  }catch(err){
+    console.error('Errore nel JSON caricato', err);
+    setBanner('err','Errore nel JSON (controlla formattazione e chiavi)');
+  }
+});
+
+document.getElementById('pilotSelect').addEventListener('change', renderDetails);
+document.getElementById('unlockBtn').addEventListener('click', unlock);
+document.getElementById('undoBtn').addEventListener('click', undoLast);
+document.getElementById('downloadBtn').addEventListener('click', downloadUpdated);
+
+loadAll();
+
+// semplice banner helper
+function setBanner(type, msg){
+  const b = document.getElementById('banner');
+  b.className = 'banner ' + (type||'');
+  b.textContent = msg;
+  b.style.display = msg ? 'block' : 'none';
+}
+</script>
+</body>
+</html>
