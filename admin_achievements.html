@@ -1,0 +1,356 @@
+
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Achievements — Piloti</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b0d12; --surface:#121622; --card:#171C2B; --text:#e8ecf1; --muted:#a7b0c0;
+      --ring:#3a435a; --primary:#e10600; --accent:#00d2ff; --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.4);
+    }
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:1200px;margin:0 auto;padding:24px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:800}
+    .brand .logo{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,var(--primary),#8b0200);box-shadow:var(--shadow)}
+    .brand .logo svg{width:26px;height:26px;fill:white}
+    .panel{display:grid;grid-template-columns:1fr;gap:14px}
+    @media(min-width:1000px){.panel{grid-template-columns: 2fr 1fr}}
+    .card{background:var(--card);border:1px solid var(--ring);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    label{font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px}
+    select,input,button,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--ring);background:var(--surface);color:var(--text);font-weight:600}
+    button{cursor:pointer}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:800px){.grid{grid-template-columns:1fr 1fr}}
+    .pilot{border:3px solid var(--ring);border-radius:var(--radius);padding:12px}
+    .title{font-weight:800}
+    .sub{color:var(--muted);font-size:12px}
+    .tag{display:inline-block;margin-top:8px;margin-right:6px;font-size:12px;border:1px solid var(--ring);padding:4px 8px;border-radius:999px}
+    .bar{margin-top:10px;background:var(--surface);border:1px solid var(--ring);border-radius:999px;height:12px;overflow:hidden}
+    .fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--primary));width:0%}
+    .flex{display:flex;gap:10px;align-items:center}
+    .right{justify-content:flex-end}
+    .toast{position:fixed;bottom:16px;right:16px;background:#0e1a2b;color:#dff6ff;padding:12px 14px;border-radius:10px;border:1px solid #204b72;box-shadow:var(--shadow);display:none}
+    .list{max-height:260px;overflow:auto;border:1px solid var(--ring);border-radius:10px;padding:8px}
+    .muted{color:var(--muted)}
+    .help{font-size:12px;color:var(--muted);margin-top:6px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo"><svg viewBox="0 0 24 24"><path d="M21.93 7.23c-1.34-2.25-4.28-3.01-6.51-1.67l-3.9 2.33 1.53 2.56 3.9-2.33a2.5 2.5 0 1 1 2.5 4.33l-6.12 3.66 1.53 2.56 6.12-3.66c2.23-1.34 2.99-4.28 1.65-6.48zM4 7h6v3H4a2 2 0 0 0 0 4h6v3H4A5 5 0 0 1 4 7z"/></svg></div>
+        <div>
+          <div>Admin — Achievements</div>
+          <div class="sub">Assegna achievement ai piloti, aggiorna Exp e scarica il JSON</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="panel">
+      <div class="card">
+        <div class="row">
+          <div>
+            <label>Piloti (da piloti.json)</label>
+            <select id="pilotSelect"></select>
+          </div>
+          <div>
+            <label>Achievements</label>
+            <select id="achSelect"></select>
+          </div>
+        </div>
+
+        <div class="row3" style="margin-top:10px">
+          <div>
+            <label>Session ID</label>
+            <input id="sessionId" placeholder="es. live_2025_08_31" />
+          </div>
+          <div>
+            <label>Gran Premio</label>
+            <input id="gp" placeholder="es. Monza" />
+          </div>
+          <div>
+            <label>Admin/Nick</label>
+            <input id="adminNick" placeholder="chi assegna" />
+          </div>
+        </div>
+
+        <div class="flex right" style="margin-top:12px">
+          <button id="unlockBtn">Sblocca achievement</button>
+          <button id="undoBtn" title="Annulla ultimo sblocco per il pilota selezionato">Annulla ultimo</button>
+        </div>
+
+        <div class="help">Suggerimento: puoi caricare un tuo <b>piloti.json</b> con il pulsante qui sotto, modificare, e poi scaricare il file aggiornato.</div>
+        <div class="flex" style="margin-top:10px">
+          <input type="file" id="fileInput" accept=".json" />
+          <button id="downloadBtn">Scarica piloti.json aggiornato</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="title">Dettagli selezionati</div>
+        <div id="details" class="muted" style="margin-top:6px">Seleziona un pilota per vedere livello, skill, exp e sblocchi.</div>
+        <div id="unlockedList" class="list" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="title">Anteprima Piloti</div>
+      <div id="pilotGrid" class="grid" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+<script>
+const PILOTI_URL = 'piloti.json';
+const ACH_URL = 'achievements_master.json';
+const MAX_LEVEL = 50;
+
+// Base curve + scaling
+function baseExpNeeded(n){ return 100 * n * n; }
+function baseExpCum(n){ return Math.floor(100 * n*(n+1)*(2*n+1)/6); }
+function skillMultiplier(skill){
+  const s = Math.max(80, Math.min(100, Number(skill) || 80));
+  return 1 + (s - 80) / 20; // 80->1.0, 100->2.0
+}
+function levelFromExpWithSkill(exp, skill){
+  const m = skillMultiplier(skill);
+  const effective = exp / m;
+  let lo=0, hi=MAX_LEVEL;
+  while(lo<hi){
+    const mid = Math.ceil((lo+hi+1)/2);
+    if(baseExpCum(mid) <= effective) lo=mid; else hi=mid-1;
+  }
+  return { level:lo, mult:m };
+}
+
+// State
+let ACHS = [];
+let RAW = null; // originale (per mantenere la struttura originale del file)
+let PILOTI = []; // flat list per UI
+let pilotIndexByKey = {}; // mapping per salvare indietro
+
+// Helpers
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(()=> t.style.display='none', 1800);
+}
+function escapeHtml(str){ return String(str??'').replace(/[&<>"]+/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+
+async function loadAll(){
+  // Carica achievements
+  const a = await fetch(ACH_URL); ACHS = await a.json();
+
+  // Carica piloti (può essere lista di team con piloti[] o lista flat)
+  try{
+    const p = await fetch(PILOTI_URL);
+    RAW = await p.json();
+    normalizePiloti();
+  }catch(e){
+    RAW = [];
+    PILOTI = [];
+  }
+  renderSelectors();
+  renderGrid();
+  renderDetails();
+}
+
+function normalizePiloti(){
+  PILOTI = [];
+  pilotIndexByKey = {};
+  if(Array.isArray(RAW) && RAW.length && RAW[0].piloti){
+    RAW.forEach((team, tIdx)=>{
+      (team.piloti||[]).forEach((p, pIdx)=>{
+        const key = `t${tIdx}_p${pIdx}`;
+        pilotIndexByKey[key] = { tIdx, pIdx, flat:true };
+        PILOTI.push({ ...p, key, scuderia: team.scuderia || team.nome || 'Team', colore: p.colore || team.colore || '#888', teamPointer:{tIdx,pIdx} });
+      });
+    });
+  }else if(Array.isArray(RAW)){
+    RAW.forEach((p, idx)=>{
+      const key = `p${idx}`;
+      pilotIndexByKey[key] = { idx, flat:false };
+      PILOTI.push({ ...p, key, scuderia: p.scuderia || 'Team', colore: p.colore || '#888' });
+    });
+  }else if(RAW && Array.isArray(RAW.piloti)){
+    RAW.piloti.forEach((p, idx)=>{
+      const key = `p${idx}`;
+      pilotIndexByKey[key] = { idx, container:true };
+      PILOTI.push({ ...p, key, scuderia: p.scuderia || 'Team', colore: p.colore || '#888' });
+    });
+  }
+  // defaults
+  PILOTI = PILOTI.map(p => ({...p, Exp: (p.Exp ?? 0), unlocked: Array.isArray(p.unlocked)? p.unlocked: [] }));
+}
+
+function renderSelectors(){
+  const pilotSel = document.getElementById('pilotSelect');
+  pilotSel.innerHTML = PILOTI.map(p => `<option value="${p.key}">${escapeHtml(p.nome)} — ${escapeHtml(p.scuderia||'Team')}</option>`).join('');
+  const achSel = document.getElementById('achSelect');
+  achSel.innerHTML = ACHS.map(a => `<option value="${a.id}">[${a.diff.toUpperCase()}·${a.type}] ${escapeHtml(a.title)} (+${a.xp} XP)</option>`).join('');
+}
+
+function computePilotView(p){
+  const { level, mult } = levelFromExpWithSkill(Number(p.Exp)||0, p.skill);
+  const next = Math.min(MAX_LEVEL, level+1);
+  const baseCur = baseExpCum(level);
+  const baseNeed = next>level ? baseExpNeeded(next) : 0;
+  const cur = Math.floor(baseCur * mult);
+  const toNext = Math.floor(baseNeed * mult);
+  const inLevel = (Number(p.Exp)||0) - cur;
+  const progress = toNext ? Math.max(0, Math.min(100, Math.floor((inLevel/toNext)*100))) : 100;
+  return { level, mult, cur, toNext, inLevel, progress };
+}
+
+function renderGrid(){
+  const grid = document.getElementById('pilotGrid');
+  grid.innerHTML = '';
+  if(!PILOTI.length){ grid.innerHTML = '<div class="muted">Nessun pilota caricato.</div>'; return; }
+  for(const p of PILOTI){
+    const v = computePilotView(p);
+    const card = document.createElement('div');
+    card.className = 'pilot';
+    card.style.borderColor = p.colore || '#888';
+    card.innerHTML = `
+      <div class="title">${escapeHtml(p.nome)} — <span class="muted">${escapeHtml(p.scuderia||'Team')}</span></div>
+      <div class="sub">Skill <b>${escapeHtml(p.skill)}</b> · Livello <b>${v.level}</b> · Exp <b>${(p.Exp||0).toLocaleString('it-IT')}</b></div>
+      <div class="bar" style="margin-top:8px"><div class="fill" style="width:${v.progress}%; background:${p.colore||'#00d2ff'}"></div></div>
+      <div class="sub" style="margin-top:6px">${Math.max(0,v.inLevel).toLocaleString('it-IT')} / ${v.toNext.toLocaleString('it-IT')} EXP (manca ${(v.toNext - Math.max(0,v.inLevel)).toLocaleString('it-IT')})</div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+function renderDetails(){
+  const details = document.getElementById('details');
+  const list = document.getElementById('unlockedList');
+  const key = document.getElementById('pilotSelect').value;
+  const p = PILOTI.find(x => x.key === key);
+  if(!p){ details.textContent = 'Seleziona un pilota.'; list.innerHTML = ''; return; }
+  const v = computePilotView(p);
+  details.innerHTML = \`
+    <div><b>\${escapeHtml(p.nome)}</b> — \${escapeHtml(p.scuderia||'Team')}</div>
+    <div class="sub">Skill <b>\${escapeHtml(p.skill)}</b> · Livello <b>\${v.level}</b> · Exp <b>\${(p.Exp||0).toLocaleString('it-IT')}</b> · Mult Skill ×\${v.mult.toFixed(2)}</div>
+  \`;
+  if(!p.unlocked || !p.unlocked.length){
+    list.innerHTML = '<div class="muted">Nessun achievement sbloccato.</div>';
+    return;
+  }
+  const rows = p.unlocked.map(u => {
+    const a = ACHS.find(x => x.id === u.achievement_id);
+    const title = a ? a.title : u.achievement_id;
+    return \`<div class="tag">\${new Date(u.ts||u.timestamp||Date.now()).toLocaleString('it-IT')} — \${escapeHtml(title)} (+\${u.xp_applied||u.xp||'?'}xp)</div>\`;
+  }).join('');
+  list.innerHTML = rows;
+}
+
+function unlock(){
+  const pKey = document.getElementById('pilotSelect').value;
+  const aId = document.getElementById('achSelect').value;
+  const sessionId = document.getElementById('sessionId').value || null;
+  const gp = document.getElementById('gp').value || null;
+  const admin = document.getElementById('adminNick').value || null;
+
+  const p = PILOTI.find(x => x.key === pKey);
+  const a = ACHS.find(x => x.id === aId);
+  if(!p || !a){ showToast('Seleziona pilota e achievement'); return; }
+
+  // evita duplicato: una volta per pilota (modifica qui se vuoi consentire ripetizioni)
+  if(p.unlocked.some(u => u.achievement_id === a.id)){
+    showToast('Già sbloccato per questo pilota'); return;
+  }
+
+  const m = skillMultiplier(p.skill);
+  const xpApplied = Math.round(a.xp * m);
+  const now = new Date().toISOString();
+
+  p.unlocked.push({ achievement_id:a.id, ts:now, session_id:sessionId, gp, xp_base:a.xp, xp_applied:xpApplied, by:admin });
+  p.Exp = (p.Exp||0) + xpApplied;
+
+  renderGrid();
+  renderDetails();
+  showToast(\`Aggiunto: \${a.title} (+\${xpApplied}xp)\`);
+}
+
+function undoLast(){
+  const pKey = document.getElementById('pilotSelect').value;
+  const p = PILOTI.find(x => x.key === pKey);
+  if(!p || !p.unlocked || !p.unlocked.length){ showToast('Niente da annullare'); return; }
+  const last = p.unlocked.pop();
+  const refund = last.xp_applied || last.xp_base || 0;
+  p.Exp = Math.max(0, (p.Exp||0) - refund);
+  renderGrid();
+  renderDetails();
+  showToast('Ultimo sblocco annullato');
+}
+
+function downloadUpdated(){
+  // Ricostruisci RAW con i dati aggiornati (conservando struttura originale)
+  if(Array.isArray(RAW) && RAW.length && RAW[0].piloti){
+    RAW.forEach((team, tIdx)=>{
+      (team.piloti||[]).forEach((p, pIdx)=>{
+        const flat = PILOTI.find(x => x.teamPointer && x.teamPointer.tIdx===tIdx && x.teamPointer.pIdx===pIdx);
+        if(flat){
+          team.piloti[pIdx].Exp = flat.Exp;
+          team.piloti[pIdx].unlocked = flat.unlocked;
+          team.piloti[pIdx].skill = flat.skill;
+          team.piloti[pIdx].colore = flat.colore;
+        }
+      });
+    });
+  }else if(Array.isArray(RAW)){
+    RAW = RAW.map((p, idx)=>{
+      const flat = PILOTI.find(x => x.key===('p'+idx));
+      return flat ? { ...p, Exp: flat.Exp, unlocked: flat.unlocked, skill: flat.skill, colore: flat.colore } : p;
+    });
+  }else if(RAW && Array.isArray(RAW.piloti)){
+    RAW.piloti = RAW.piloti.map((p, idx)=>{
+      const flat = PILOTI.find(x => x.key===('p'+idx));
+      return flat ? { ...p, Exp: flat.Exp, unlocked: flat.unlocked, skill: flat.skill, colore: flat.colore } : p;
+    });
+  }
+
+  const blob = new Blob([JSON.stringify(RAW, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'piloti.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Scaricato piloti.json aggiornato');
+}
+
+// File input override
+document.getElementById('fileInput').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const text = await file.text();
+  try{
+    RAW = JSON.parse(text);
+    normalizePiloti();
+    renderSelectors();
+    renderGrid();
+    renderDetails();
+    showToast('piloti.json caricato dal tuo file');
+  }catch(err){
+    showToast('Errore nel JSON');
+  }
+});
+
+document.getElementById('pilotSelect').addEventListener('change', renderDetails);
+document.getElementById('achSelect').addEventListener('change', ()=>{});
+document.getElementById('unlockBtn').addEventListener('click', unlock);
+document.getElementById('undoBtn').addEventListener('click', undoLast);
+document.getElementById('downloadBtn').addEventListener('click', downloadUpdated);
+
+loadAll();
+</script>
+</body>
+</html>
