@@ -74,19 +74,16 @@ const MAX_LEVEL = 50;
 const grid = document.getElementById('grid');
 const empty = document.getElementById('empty');
 
-// Base curve (senza skill multiplier)
 function baseExpNeeded(n){ return 100 * n * n; }
 function baseExpCum(n){ return Math.floor(100 * n*(n+1)*(2*n+1)/6); }
 
-function skillMultiplier(skillRaw){
-  const s = Math.max(80, Math.min(100, Number(skillRaw) || 80));
-  // 80 -> 1.0, 90 -> 1.5, 100 -> 2.0
-  return 1 + (s - 80) / 20;
+function skillMultiplier(skill){
+  const s = Math.max(80, Math.min(100, Number(skill) || 80));
+  return 1 + (s - 80) / 20; // 80 -> 1.0, 90 -> 1.5, 100 -> 2.0
 }
 
 function levelFromExpWithSkill(exp, skill){
   const m = skillMultiplier(skill);
-  // Confronta exp_normalizzata = exp / m contro la curva base cumulativa
   const effectiveExp = exp / m;
   let lo = 0, hi = MAX_LEVEL;
   while(lo < hi){
@@ -119,15 +116,12 @@ function render(list){
   for(const p of list){
     const exp = Number(p.Exp) || 0;
     const skill = p.skill;
-    const { level: lvl, mult: m, effectiveExp } = levelFromExpWithSkill(exp, skill);
+    const { level: lvl, mult: m } = levelFromExpWithSkill(exp, skill);
     const nextLvl = Math.min(MAX_LEVEL, lvl+1);
-
-    // Soglie basate sulla curva base ma scalate dal moltiplicatore "m"
     const curBaseBase = baseExpCum(lvl);
     const nextNeedBase = nextLvl > lvl ? baseExpNeeded(nextLvl) : 0;
-
-    const curBase = Math.floor(curBaseBase * m); // soglia cumulativa reale (con skill)
-    const toNext = Math.floor(nextNeedBase * m); // exp necessaria IN QUESTO LIVELLO
+    const curBase = Math.floor(curBaseBase * m);
+    const toNext = Math.floor(nextNeedBase * m);
     const inLevel = exp - curBase;
     const progress = toNext ? Math.max(0, Math.min(100, Math.floor((inLevel / toNext) * 100))) : 100;
 
