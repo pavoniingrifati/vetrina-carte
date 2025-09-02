@@ -764,6 +764,22 @@ header .wrap.after-hero{ padding-top: 0 }
 }
 </style>
 
+
+<style id="hero-featured-safe-css">
+/* Show featured only when we have a real image */
+.hero .card-mock{ background: none; }
+.hero .visual[hidden]{ display:none !important; }
+</style>
+
+
+<script id="hero-featured-config">
+/* ➜ SCEGLI TU le 3 carte "featured" indicando gli ID (come in cards.json).
+   Esempio: window.FEATURED_CARD_IDS = ["card_101","card_205","card_999"];
+   Lascia [] per usare le carte con { featured: true } in cards.json,
+   altrimenti si userà il fallback per rarità. */
+window.FEATURED_CARD_IDS = ["Fantaballa-gold","Luca-Tots10","Fiorin-Pokemon"]; // <-- METTI QUI i tuoi ID in ordine
+</script>
+
 </head>
 
 <body>
@@ -970,7 +986,9 @@ async function loadCards(){
     applyFilters();
     if (window.__setHeroCardsCount) { window.__setHeroCardsCount(CARDS.length); }
     if (window.__buildHeroCollage) { window.__buildHeroCollage(CARDS); }
-  }
+  
+    if (window.__setHeroFeatured) { window.__setHeroFeatured(CARDS); }
+}
 }
 
 function populateSeriesOptions(){
@@ -1745,6 +1763,12 @@ window.dispatchEvent(new CustomEvent('firebase-ready'));
 </script>
 
 
+
+
+
+
+
+
 <script id="hero-featured-js">
 (function(){
   function byRarityRank(r){
@@ -1752,46 +1776,86 @@ window.dispatchEvent(new CustomEvent('firebase-ready'));
     var i = order.indexOf(r || "");
     return i < 0 ? 99 : i;
   }
-  function pickFeatured(cards, n){
+  function pickByExplicitIds(cards, ids){
+    if(!Array.isArray(cards) || !Array.isArray(ids) || !ids.length) return [];
+    var map = new Map();
+    cards.forEach(function(c){ if(c && (c.id || c.name)) map.set(String(c.id || c.name), c); });
+    var out = [];
+    ids.forEach(function(raw){
+      var key = String(raw);
+      if(map.has(key)) out.push(map.get(key));
+      else{
+        // fallback: try to find by name if not found by id
+        var hit = cards.find(function(c){ return c && (c.name === key || String(c.id) === key); });
+        if(hit) out.push(hit);
+      }
+    });
+    return out;
+  }
+  function pickByFeaturedFlag(cards){
     if(!Array.isArray(cards)) return [];
-    // prefer with images and non-oggetti; then by rarity rank
-    var pool = cards.filter(c => c && c.img);
+    return cards.filter(function(c){ return c && c.featured === true; });
+  }
+  function pickByRarity(cards, n){
+    if(!Array.isArray(cards)) return [];
+    var pool = cards.filter(function(c){ return c && c.img; });
     pool.sort(function(a,b){
       return byRarityRank(a.rarity) - byRarityRank(b.rarity) || (a.name||"").localeCompare(b.name||"");
     });
-    var out = [];
-    var used = new Set();
-    for (var i=0; i<pool.length && out.length<n; i++){
-      if(used.has(pool[i].img)) continue;
-      used.add(pool[i].img);
-      out.push(pool[i]);
-    }
-    // if not enough, just random fill
-    while(out.length < n && pool.length){
-      var c = pool[Math.floor(Math.random()*pool.length)];
-      if(!used.has(c.img)){ out.push(c); used.add(c.img); }
-    }
+    return pool.slice(0, n);
+  }
+  function dedupeByImg(arr){
+    var out = [], used = new Set();
+    arr.forEach(function(c){
+      if(!c || !c.img) return;
+      if(used.has(c.img)) return;
+      used.add(c.img); out.push(c);
+    });
     return out;
   }
-  function setFeatured(cards){
+  function loadOK(url){
+    return new Promise(function(resolve){
+      var im = new Image();
+      im.onload = function(){ resolve(true); };
+      im.onerror = function(){ resolve(false); };
+      try{ im.referrerPolicy = "no-referrer"; }catch(e){}
+      im.src = url;
+    });
+  }
+  async function setFeatured(cards){
     try{
-      var featured = pickFeatured(cards, 3);
+      var visual = document.querySelector('.hero .visual');
       var boxes = [
         document.querySelector('.hero .card-mock.c1'),
         document.querySelector('.hero .card-mock.c2'),
         document.querySelector('.hero .card-mock.c3')
       ];
-      var visual = document.querySelector('.hero .visual');
-      if(!visual) return;
-      if(!featured.length){
-        // hide the visual stack if we have nothing
-        visual.style.display = "none";
+      if(!visual || !boxes[0] || !boxes[1] || !boxes[2]) return;
+
+      var explicitIds = Array.isArray(window.FEATURED_CARD_IDS) ? window.FEATURED_CARD_IDS.filter(Boolean) : [];
+      var selected = [];
+      if (explicitIds.length){
+        selected = pickByExplicitIds(cards, explicitIds);
+      }
+      if (!selected.length){
+        selected = pickByFeaturedFlag(cards);
+      }
+      if (!selected.length){
+        selected = pickByRarity(cards, 6);
+      }
+      selected = dedupeByImg(selected);
+
+      if(!selected.length){
+        visual.hidden = true;
         return;
       }
-      for (var i=0;i<boxes.length;i++){
-        var box = boxes[i];
-        if(!box) continue;
-        var c = featured[i % featured.length];
+      var filled = 0;
+      for (var i=0, bi=0; i<selected.length && bi<boxes.length; i++){
+        var c = selected[i];
+        if(!c || !c.img) continue;
+        var ok = await loadOK(c.img);
+        if(!ok) continue;
+        var box = boxes[bi++];
         box.style.backgroundImage = 'url(' + c.img + ')';
         box.title = (c.name || "") + (c.series ? " • " + c.series : "");
         var label = box.querySelector('.label');
@@ -1799,14 +1863,20 @@ window.dispatchEvent(new CustomEvent('firebase-ready'));
           label.textContent = (c.rarity ? c.rarity + " • " : "") + (c.name || "");
           label.style.display = "inline-flex";
         }
+        filled++;
       }
-    }catch(e){ console.warn("[hero-featured]", e); }
+      if (filled === 0){
+        visual.hidden = true;
+      } else {
+        visual.hidden = false;
+      }
+    }catch(e){
+      console.warn("[hero-featured]", e);
+    }
   }
 
-  // Expose a global so loadCards() can call it
   window.__setHeroFeatured = setFeatured;
 
-  // If cards already available, set immediately
   if (Array.isArray(window.CARDS) && window.CARDS.length){
     setFeatured(window.CARDS);
   }
