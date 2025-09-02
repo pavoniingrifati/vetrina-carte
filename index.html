@@ -786,6 +786,31 @@ window.FEATURED_CARD_IDS = []; // <-- METTI QUI i tuoi ID in ordine
 #authBox, #btnLogin, #btnLogout { position: relative; z-index: 5; }
 </style>
 
+
+<style id="hero-featured-proportion-css">
+/* Featured cards: preserve image proportions without cropping */
+.hero .card-mock{ position:relative; overflow:hidden }
+.hero .card-mock::before{
+  content:""; position:absolute; inset:0;
+  background-image: var(--bg);
+  background-size: cover;
+  background-position: center;
+  filter: blur(14px) brightness(.85);
+  transform: scale(1.1);
+  opacity: .65;
+}
+.hero .card-mock .fit{
+  position:absolute; inset:8px;
+  width: calc(100% - 16px);
+  height: calc(100% - 16px);
+  object-fit: contain; /* keep full image visible, no distortion */
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.28);
+}
+/* Ensure label sits on top */
+.hero .card-mock .label{ position:absolute; z-index:2 }
+</style>
+
 </head>
 
 <body>
@@ -809,9 +834,9 @@ window.FEATURED_CARD_IDS = []; // <-- METTI QUI i tuoi ID in ordine
           </div>
         </div>
         <div class="col visual" aria-hidden="true">
-          <div class="card-mock c1"><span class="label"></span></div>
-          <div class="card-mock c2"><span class="label"></span></div>
-          <div class="card-mock c3"><span class="label"></span></div>
+          <div class="card-mock c1"><span class="label"></span><img class="fit" alt="Anteprima carta"/><span class="label"></span></div>
+          <div class="card-mock c2"><span class="label"></span><img class="fit" alt="Anteprima carta"/><span class="label"></span></div>
+          <div class="card-mock c3"><span class="label"></span><img class="fit" alt="Anteprima carta"/><span class="label"></span></div>
         </div>
       </div>
     </div>
@@ -1796,6 +1821,9 @@ window.dispatchEvent(new CustomEvent('firebase-ready'));
 
 
 
+
+
+
 <script id="hero-featured-js">
 (function(){
   function byRarityRank(r){
@@ -1812,7 +1840,6 @@ window.dispatchEvent(new CustomEvent('firebase-ready'));
       var key = String(raw);
       if(map.has(key)) out.push(map.get(key));
       else{
-        // fallback: try to find by name if not found by id
         var hit = cards.find(function(c){ return c && (c.name === key || String(c.id) === key); });
         if(hit) out.push(hit);
       }
@@ -1883,7 +1910,12 @@ window.dispatchEvent(new CustomEvent('firebase-ready'));
         var ok = await loadOK(c.img);
         if(!ok) continue;
         var box = boxes[bi++];
-        box.style.backgroundImage = 'url(' + c.img + ')';
+        var img = box.querySelector('img.fit');
+        if(img){
+          img.src = c.img;
+          img.alt = (c.name || "Carta") + (c.series ? " • " + c.series : "");
+        }
+        box.style.setProperty('--bg', 'url(' + c.img + ')');
         box.title = (c.name || "") + (c.series ? " • " + c.series : "");
         var label = box.querySelector('.label');
         if(label){
@@ -1892,11 +1924,7 @@ window.dispatchEvent(new CustomEvent('firebase-ready'));
         }
         filled++;
       }
-      if (filled === 0){
-        visual.hidden = true;
-      } else {
-        visual.hidden = false;
-      }
+      visual.hidden = filled === 0;
     }catch(e){
       console.warn("[hero-featured]", e);
     }
