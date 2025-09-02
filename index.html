@@ -743,6 +743,27 @@ header .wrap.after-hero{ padding-top: 0 }
 }
 </style>
 
+
+<style id="hero-featured-css">
+/* Featured trio on the right uses real images if available */
+.hero .visual{ position:relative }
+.hero .card-mock{
+  background-size: cover;
+  background-position: center;
+}
+.hero .card-mock .label{
+  position:absolute; left:10px; bottom:10px;
+  padding:6px 8px; border-radius:10px;
+  font-size:12px; font-weight:700;
+  background: rgba(0,0,0,.5);
+  border:1px solid rgba(255,255,255,.15);
+  color:#fff;
+  max-width: 90%;
+  backdrop-filter: blur(4px);
+  display:none; /* shown only when we set a real card */
+}
+</style>
+
 </head>
 
 <body>
@@ -766,9 +787,9 @@ header .wrap.after-hero{ padding-top: 0 }
           </div>
         </div>
         <div class="col visual" aria-hidden="true">
-          <div class="card-mock c1"></div>
-          <div class="card-mock c2"></div>
-          <div class="card-mock c3"></div>
+          <div class="card-mock c1"><span class="label"></span></div>
+          <div class="card-mock c2"><span class="label"></span></div>
+          <div class="card-mock c3"><span class="label"></span></div>
         </div>
       </div>
     </div>
@@ -1719,6 +1740,75 @@ window.dispatchEvent(new CustomEvent('firebase-ready'));
   } else {
     // else wait a tiny bit; loadCards will also invoke this
     setTimeout(function(){ if(Array.isArray(window.CARDS) && window.CARDS.length){ buildHeroCollage(window.CARDS); } }, 1200);
+  }
+})();
+</script>
+
+
+<script id="hero-featured-js">
+(function(){
+  function byRarityRank(r){
+    var order = ["Leggendaria","Ultra Rara","Epica","Rara","Non Comune","Comune","Season","Oggetti","Oggetto"];
+    var i = order.indexOf(r || "");
+    return i < 0 ? 99 : i;
+  }
+  function pickFeatured(cards, n){
+    if(!Array.isArray(cards)) return [];
+    // prefer with images and non-oggetti; then by rarity rank
+    var pool = cards.filter(c => c && c.img);
+    pool.sort(function(a,b){
+      return byRarityRank(a.rarity) - byRarityRank(b.rarity) || (a.name||"").localeCompare(b.name||"");
+    });
+    var out = [];
+    var used = new Set();
+    for (var i=0; i<pool.length && out.length<n; i++){
+      if(used.has(pool[i].img)) continue;
+      used.add(pool[i].img);
+      out.push(pool[i]);
+    }
+    // if not enough, just random fill
+    while(out.length < n && pool.length){
+      var c = pool[Math.floor(Math.random()*pool.length)];
+      if(!used.has(c.img)){ out.push(c); used.add(c.img); }
+    }
+    return out;
+  }
+  function setFeatured(cards){
+    try{
+      var featured = pickFeatured(cards, 3);
+      var boxes = [
+        document.querySelector('.hero .card-mock.c1'),
+        document.querySelector('.hero .card-mock.c2'),
+        document.querySelector('.hero .card-mock.c3')
+      ];
+      var visual = document.querySelector('.hero .visual');
+      if(!visual) return;
+      if(!featured.length){
+        // hide the visual stack if we have nothing
+        visual.style.display = "none";
+        return;
+      }
+      for (var i=0;i<boxes.length;i++){
+        var box = boxes[i];
+        if(!box) continue;
+        var c = featured[i % featured.length];
+        box.style.backgroundImage = 'url(' + c.img + ')';
+        box.title = (c.name || "") + (c.series ? " • " + c.series : "");
+        var label = box.querySelector('.label');
+        if(label){
+          label.textContent = (c.rarity ? c.rarity + " • " : "") + (c.name || "");
+          label.style.display = "inline-flex";
+        }
+      }
+    }catch(e){ console.warn("[hero-featured]", e); }
+  }
+
+  // Expose a global so loadCards() can call it
+  window.__setHeroFeatured = setFeatured;
+
+  // If cards already available, set immediately
+  if (Array.isArray(window.CARDS) && window.CARDS.length){
+    setFeatured(window.CARDS);
   }
 })();
 </script>
