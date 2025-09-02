@@ -562,6 +562,187 @@ main.wrap{ margin-top: 8px; }
 
 </style>
 
+
+<style id="hero-collezione-css">
+/* =============================
+   HERO "Collezione" — big header
+   ============================= */
+:root{
+  --hero-h-mobile: 58svh;
+  --hero-h-desktop: 56vh;
+}
+header.hero-enabled{
+  position: relative;
+  background: transparent;
+  border-bottom: none;
+}
+.hero{
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.hero .hero-wrap{
+  max-width:1280px; margin:0 auto;
+  padding: clamp(16px, 4vw, 28px) clamp(12px, 4vw, 24px);
+  min-height: var(--hero-h-mobile);
+  display:grid; grid-template-columns: 1fr; align-items:center;
+}
+@media (min-width: 900px){
+  .hero .hero-wrap{ min-height: var(--hero-h-desktop); grid-template-columns: 1.1fr .9fr; gap: 24px; }
+}
+
+/* Background layers */
+.hero::before{
+  content:"";
+  position:absolute; inset:0;
+  background:
+    radial-gradient(900px 520px at 8% -10%, rgba(110,231,255,.12), transparent 60%),
+    radial-gradient(600px 420px at 90% 10%, rgba(255,77,148,.16), transparent 60%),
+    linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6));
+  z-index:-2;
+}
+/* subtle moving pattern (sparkles) */
+.hero::after{
+  content:"";
+  position:absolute; inset:-20%;
+  background:
+    radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,.25), transparent 60%),
+    radial-gradient(2px 2px at 60% 70%, rgba(255,255,255,.15), transparent 60%),
+    radial-gradient(2px 2px at 80% 20%, rgba(255,255,255,.2), transparent 60%);
+  filter: blur(0.6px);
+  animation: heroSpark 8s ease-in-out infinite alternate;
+  z-index:-1;
+  opacity:.35;
+}
+@keyframes heroSpark{
+  from{ transform: translateY(0) }
+  to  { transform: translateY(-10px) }
+}
+
+/* Left: content */
+.hero .h-kicker{
+  display:inline-flex; gap:8px; align-items:center;
+  padding:8px 12px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0));
+  font-size:14px; color: var(--muted);
+}
+.hero h1.big{
+  margin:12px 0 8px;
+  font-size: clamp(28px, 6.8vw, 54px);
+  line-height: 1.05;
+  letter-spacing: .2px;
+  text-shadow: 0 6px 28px rgba(0,0,0,.5), 0 0 24px rgba(110,231,255,.25);
+}
+.hero .sub{
+  color: var(--muted);
+  font-size: clamp(14px, 2.7vw, 18px);
+  max-width: 60ch;
+}
+.hero .hero-cta{
+  display:flex; flex-wrap:wrap; gap:10px; margin-top:16px;
+}
+.hero .cta-primary{
+  display:inline-flex; align-items:center; gap:10px;
+  padding:12px 16px; border-radius:999px; border:none;
+  background: linear-gradient(135deg, #ff9d00, #ff4d4d);
+  color:#fff; font-weight:700; cursor:pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,.35), 0 0 22px rgba(255,77,77,.7);
+  transition: transform .15s ease;
+}
+.hero .cta-primary:active{ transform: translateY(1px) }
+.hero .cta-secondary{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:12px 16px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  color: var(--text); font-weight:600; cursor:pointer;
+}
+
+/* Right: visual mock (stack of cards) */
+.hero .visual{
+  position:relative; height: clamp(220px, 38vh, 420px);
+  display:none;
+}
+@media (min-width: 900px){ .hero .visual{ display:block } }
+.hero .card-mock{
+  position:absolute; inset:auto;
+  width: clamp(160px, 26vw, 240px); aspect-ratio: 3/4;
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(255,255,255,.08), rgba(255,255,255,0) 60%), var(--card);
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow: 0 20px 40px rgba(0,0,0,.45);
+  overflow:hidden;
+}
+.hero .card-mock::after{
+  content:""; position:absolute; inset:0;
+  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.12) 45%, transparent 50%);
+  transform: translateX(-120%) skewX(-20deg);
+  animation: heroShine 3.2s ease-in-out infinite;
+}
+@keyframes heroShine{ 60%{ transform: translateX(140%) skewX(-20deg) } 100%{ transform: translateX(140%) skewX(-20deg) } }
+.hero .c1{ left: 10%; bottom: 10%; transform: rotate(-10deg) }
+.hero .c2{ left: 32%; bottom: 18%; transform: rotate(6deg) }
+.hero .c3{ left: 56%; bottom: 6%;  transform: rotate(-3deg) }
+.hero .c1{ --card: #101a30 } .hero .c2{ --card:#121f3a } .hero .c3{ --card:#0d152a }
+
+/* Stats inline under subtitle */
+.hero .stats{
+  display:flex; gap:14px; flex-wrap:wrap; margin-top:14px;
+  font-size: 14px; color: var(--muted);
+}
+.hero .stat{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 12px; border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0));
+}
+
+/* Push toolbar below the hero for clarity on first load */
+header .wrap.after-hero{ padding-top: 0 }
+</style>
+
+
+<style id="hero-collage-css">
+/* ==== HERO Collage of real cards ==== */
+.hero{ isolation:isolate }
+.hero .collage{
+  position:absolute; inset:-8% -6% -6% -6%;
+  z-index:-1;
+  pointer-events:none;
+  overflow:hidden;
+}
+.hero .collage::after{
+  /* vignette + dark overlay to keep text readable */
+  content:""; position:absolute; inset:0;
+  background: radial-gradient(1200px 600px at 10% -10%, rgba(13,19,37,.0), rgba(13,19,37,.35)),
+              linear-gradient(180deg, rgba(13,19,37,.25), rgba(13,19,37,.55) 60%, rgba(13,19,37,.85) 100%);
+}
+.hero .collage img{
+  position:absolute;
+  width: clamp(90px, 13vw, 180px);
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 12px 28px rgba(0,0,0,.45);
+  opacity: .4;
+  transform: translate3d(0,0,0) rotate(var(--rot, 0deg)) scale(var(--z, 1));
+  animation: drift var(--dur, 10s) ease-in-out infinite alternate;
+  will-change: transform;
+  filter: saturate(1.05);
+}
+@keyframes drift{
+  from{ transform: translateY(0px) rotate(var(--rot, 0deg)) scale(var(--z, 1)) }
+  to  { transform: translateY(-18px) rotate(calc(var(--rot, 0deg) + .6deg)) scale(var(--z, 1)) }
+}
+
+@media (max-width: 900px){
+  .hero .collage img{ opacity:.30 }
+}
+</style>
+
 </head>
 
 <body>
@@ -621,6 +802,7 @@ main.wrap{ margin-top: 8px; }
         <!-- le opzioni verranno aggiunte via JS in base al cards.json -->
       </select>
     </div>
+  </div>
   </div>
 </header>
 
@@ -733,10 +915,13 @@ async function loadCards(){
   } finally {
     // 🔹 Aggiorna il numero di carte disponibili
     document.getElementById('cardsCount').textContent = "Carte disponibili: " + CARDS.length;
+    if (window.__setHeroCardsCount) { window.__setHeroCardsCount(CARDS.length); }
     // 🔹 Popola il filtro "Series" in base a cards.json
     populateSeriesOptions();
     // 🔹 Applica i filtri
     applyFilters();
+    if (window.__setHeroCardsCount) { window.__setHeroCardsCount(CARDS.length); }
+    if (window.__buildHeroCollage) { window.__buildHeroCollage(CARDS); }
   }
 }
 
@@ -1407,6 +1592,107 @@ window.dispatchEvent(new CustomEvent('firebase-ready'));
     init();
   }
   mq.addEventListener ? mq.addEventListener('change', init) : mq.addListener(init);
+})();
+</script>
+
+
+<script id="hero-collezione-js">
+(function(){
+  // Update hero cards count when available
+  const setHeroCount = (n)=>{
+    var el = document.getElementById('cardsCountHero');
+    if(el){ el.textContent = "Carte disponibili: " + n; }
+  };
+  // if footer count updates via your loadCards, we also mirror it
+  const footerCount = document.getElementById('cardsCount');
+  if(footerCount && /\d+/.test(footerCount.textContent||"")){
+    var m = (footerCount.textContent||"").match(/(\d+)/);
+    if(m){ setHeroCount(m[1]); }
+  }
+
+  // Click to open "Preferite" tab
+  var btn = document.getElementById('ctaPreferite');
+  if(btn){
+    btn.addEventListener('click', function(){
+      try{
+        var favTab = document.getElementById('tabFavs');
+        if(favTab){ favTab.click(); }
+        // Smooth scroll to main content
+        var main = document.querySelector('main.wrap');
+        if(main){ main.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      }catch(e){}
+    });
+  }
+
+  // Expose helper so existing loadCards can update hero count too
+  window.__setHeroCardsCount = setHeroCount;
+})();
+</script>
+
+
+<script id="hero-collage-js">
+(function(){
+  function pickRandom(arr, n){
+    const out = [];
+    const used = new Set();
+    n = Math.min(n, arr.length);
+    while(out.length < n){
+      const i = Math.floor(Math.random()*arr.length);
+      if(used.has(i)) continue;
+      used.add(i);
+      out.push(arr[i]);
+    }
+    return out;
+  }
+  function rand(a,b){ return a + Math.random()*(b-a); }
+
+  function buildHeroCollage(cards){
+    try{
+      var root = document.querySelector('.hero .collage');
+      if(!root || !Array.isArray(cards) || !cards.length) return;
+      if(root.dataset.built === "1") return; // build once
+      root.dataset.built = "1";
+
+      const isDesktop = window.matchMedia('(min-width: 900px)').matches;
+      const N = isDesktop ? 12 : 6;
+      const chosen = pickRandom(cards.filter(c => c && c.img), N);
+
+      const W = root.clientWidth || window.innerWidth;
+      const H = root.clientHeight || (window.innerHeight * 0.56);
+
+      chosen.forEach((c, idx)=>{
+        const img = new Image();
+        img.loading = "eager";
+        img.decoding = "async";
+        img.src = c.img;
+        img.alt = "";
+        // Random position (avoid the left-top quarter too much to keep title readable)
+        const x = rand(W*0.25, W*0.92);
+        const y = rand(H*0.05, H*0.88);
+        const rot = rand(-12, 10);
+        const z = rand(0.92, 1.12);
+        const dur = rand(8, 14);
+        img.style.left = Math.round(x) + "px";
+        img.style.top  = Math.round(y) + "px";
+        img.style.setProperty("--rot", rot+"deg");
+        img.style.setProperty("--z", z);
+        img.style.setProperty("--dur", dur+"s");
+        img.style.zIndex = String(1 + Math.floor(z*10));
+        root.appendChild(img);
+      });
+    }catch(e){ console.warn("[hero-collage]", e); }
+  }
+
+  // Expose globally so loadCards() can call it once it has CARDS
+  window.__buildHeroCollage = function(cards){ buildHeroCollage(cards || (window.CARDS || [])); };
+
+  // If CARDS already exists, build immediately
+  if (Array.isArray(window.CARDS) && window.CARDS.length){
+    buildHeroCollage(window.CARDS);
+  } else {
+    // else wait a tiny bit; loadCards will also invoke this
+    setTimeout(function(){ if(Array.isArray(window.CARDS) && window.CARDS.length){ buildHeroCollage(window.CARDS); } }, 1200);
+  }
 })();
 </script>
 
