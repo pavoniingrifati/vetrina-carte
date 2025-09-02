@@ -777,8 +777,14 @@ header .wrap.after-hero{ padding-top: 0 }
    Esempio: window.FEATURED_CARD_IDS = ["card_101","card_205","card_999"];
    Lascia [] per usare le carte con { featured: true } in cards.json,
    altrimenti si userà il fallback per rarità. */
-window.FEATURED_CARD_IDS = ["Fantaballa-gold","Luca-Tots10","Fiorin-Pokemon"]; // <-- METTI QUI i tuoi ID in ordine
+window.FEATURED_CARD_IDS = []; // <-- METTI QUI i tuoi ID in ordine
 </script>
+
+
+<style id="login-zfix">
+/* Safeguard: make sure login buttons are on top of background visuals */
+#authBox, #btnLogin, #btnLogout { position: relative; z-index: 5; }
+</style>
 
 </head>
 
@@ -1381,7 +1387,6 @@ const auth = firebase.auth();
 async function safeGoogleSignIn() {
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
-
   try {
     if (auth.currentUser && auth.currentUser.isAnonymous) {
       const { user } = await auth.currentUser.linkWithPopup(provider);
@@ -1389,9 +1394,24 @@ async function safeGoogleSignIn() {
     }
     const { user } = await auth.signInWithPopup(provider);
     return user;
-
   } catch (e) {
     console.warn('[safeGoogleSignIn]', e.code, e.message);
+
+    // Common cases on static hosts / mobile browsers
+    if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || /blocked/i.test(e.message||''))) {
+      try {
+        await auth.signInWithRedirect(provider);
+        return; // will redirect
+      } catch (er) {
+        console.error('[redirectSignIn]', er);
+      }
+    }
+
+    if (e && e.code === 'auth/unauthorized-domain') {
+      alert('Dominio non autorizzato in Firebase.
+Aggiungi "pavoniingrifati.github.io" in Firebase Console → Authentication → Settings → Authorized domains.');
+      return;
+    }
 
     if (e.code === 'auth/credential-already-in-use' && e.credential) {
       const { user } = await auth.signInWithCredential(e.credential);
@@ -1430,6 +1450,13 @@ btnLogout?.addEventListener('click', async ()=>{
   try{ await auth.signOut(); }
   catch(e){ console.error('[logout]', e); }
 });
+
+// Complete redirect-based sign-in if present
+auth.getRedirectResult().then(function(res){
+  if (res && res.user) {
+    console.log('[redirectResult] signed-in as', res.user.uid);
+  }
+}).catch(function(err){ console.warn('[redirectResult]', err); });
 
 auth.onAuthStateChanged((user)=>{
   const logged = !!user;
