@@ -413,6 +413,155 @@ main.wrap{ margin-top: 8px; }
 }
 </style>
 
+
+<style id="visual-upgrades">
+/* =========================
+   VISUAL UPGRADES (only CSS)
+   - Rarity frames more evident
+   - Card shine effect
+   - Modern tab pills with icons
+   - Upgraded "Apri un pacchetto" button
+   ========================= */
+
+/* --- Helper: rarity rim colors --- */
+.card{
+  --rim1: #9aa3b2; /* default/common */
+  --rim2: rgba(255,255,255,0.12);
+}
+.card.r-comune      { --rim1:#9aa3b2; --rim2:#cfd5df; }
+.card.r-non-comune  { --rim1:#1ee59b; --rim2:#7ef7cf; }
+.card.r-rara        { --rim1:#4ea3ff; --rim2:#a9d0ff; }
+.card.r-ultra-rara  { --rim1:#ffb400; --rim2:#ffe08a; }
+.card.r-epica       { --rim1:#a78bfa; --rim2:#d6c7ff; }
+.card.r-season      { --rim1:#ff5a5a; --rim2:#ffb0b0; }
+.card.r-oggetto,
+.card.r-oggetti     { --rim1:#10b981; --rim2:#7af2c4; }
+
+/* --- Rarity border (subtle animated gradient rim) --- */
+.card::before{
+  content:"";
+  position:absolute; inset:0; border-radius: var(--radius);
+  padding:1.5px; /* rim thickness */
+  background: linear-gradient(135deg, var(--rim1), var(--rim2));
+  background-size: 200% 200%;
+  animation: rimPulse 6s ease-in-out infinite;
+  -webkit-mask: 
+    linear-gradient(#000 0 0) content-box, 
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events:none;
+  z-index:0;
+}
+/* Keep legendary custom rainbow stronger (existing rule wins because it's later in source in original). To ensure it wins, we reduce our specificity for leggendaria */
+.card.r-leggendaria::before{ display:none; }
+
+@keyframes rimPulse{
+  0%,100%{ background-position: 0% 50%; opacity:.85 }
+  50%    { background-position: 100% 50%; opacity:1 }
+}
+
+/* --- Shine effect sweeping across the card on hover/focus --- */
+.card{ overflow:hidden; position:relative }
+.card .thumb{ position:relative; z-index:1 }
+.card::after{
+  content:"";
+  position:absolute;
+  top:-40%; left:-60%;
+  width:60%; height:180%;
+  transform: skewX(-25deg) translateX(-120%);
+  background: linear-gradient(90deg, 
+    transparent 0%,
+    rgba(255,255,255,.06) 45%,
+    rgba(255,255,255,.18) 50%,
+    rgba(255,255,255,.06) 55%,
+    transparent 100%);
+  opacity:0; transition: opacity .25s ease;
+  pointer-events:none;
+  z-index:2;
+}
+.card:hover::after, .card:focus-within::after{
+  opacity:1;
+  animation: shineSweep .9s cubic-bezier(.25,.1,.25,1);
+}
+@keyframes shineSweep{
+  to{ transform: skewX(-25deg) translateX(260%); }
+}
+
+/* --- Tabs: modern glassy pills with icons --- */
+.tabs{
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.08);
+}
+.tab-btn{
+  display:inline-flex; align-items:center; gap:10px;
+  font-weight:600;
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.14);
+  transition: transform .12s ease, background .2s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.tab-btn .i{ font-size: 1.05em; line-height: 1; }
+.tab-btn[aria-selected="true"]{
+  background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.06));
+  border-color: rgba(255,255,255,.28);
+  box-shadow: 0 6px 18px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,.08) inset;
+}
+.tab-btn:active{ transform: translateY(1px); }
+
+/* --- Upgraded "Apri un pacchetto" CTA --- */
+.pill.pack-btn{
+  position:relative; overflow:hidden;
+  border: none;
+  background: linear-gradient(135deg, #ff9d00, #ff4d4d);
+  box-shadow: 0 4px 16px rgba(0,0,0,.35), 0 0 22px rgba(255,77,77,.75);
+}
+/* Shimmer sweep */
+.pill.pack-btn::before{
+  content:""; position:absolute; inset:-40% -120%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+  transform: translateX(-60%);
+  animation: ctaShimmer 3s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes ctaShimmer{ 
+  0%,25%{ transform: translateX(-60%) }
+  55%   { transform: translateX(60%) }
+  100%  { transform: translateX(60%) }
+}
+/* Sparkles */
+.pill.pack-btn::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,.75), transparent 18%),
+    radial-gradient(circle at 70% 40%, rgba(255,255,255,.6), transparent 22%),
+    radial-gradient(circle at 40% 75%, rgba(255,255,255,.55), transparent 18%);
+  mix-blend-mode: screen; opacity:.35;
+  animation: sparkFloat 4s ease-in-out infinite alternate;
+}
+@keyframes sparkFloat{
+  from{ transform: translateY(0) }
+  to  { transform: translateY(-3px) }
+}
+.pill.pack-btn:hover{ transform: translateY(-2px) }
+.pill.pack-btn:active{ transform: translateY(0) }
+
+/* --- Modal big image gets an optional subtle shine on tap --- */
+.modal .big{
+  position:relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,.35);
+}
+.modal .big:active{
+  outline: 2px solid rgba(255,255,255,.12);
+}
+
+/* --- Small bounce when fav counter updates (utility class) --- */
+@keyframes favBounce{ 0%{ transform: scale(1) } 35%{ transform: scale(1.18) } 100%{ transform: scale(1) } }
+.fav-bounce{ animation: favBounce .35s ease }
+
+</style>
+
 </head>
 
 <body>
@@ -438,8 +587,8 @@ main.wrap{ margin-top: 8px; }
 
 
     <div class="tabs" role="tablist" aria-label="Sezioni">
-      <button class="tab-btn" id="tabAll" role="tab" aria-selected="true">Tutte</button>
-      <button class="tab-btn" id="tabFavs" role="tab" aria-selected="false">Preferite ❤️ <span id="favCount" aria-hidden="true"></span></button>
+      <button class="tab-btn" id="tabAll" role="tab" aria-selected="true"><span class="i">📚</span><span>Tutte</span></button>
+      <button class="tab-btn" id="tabFavs" role="tab" aria-selected="false"><span class="i">❤️</span><span>Preferite</span> <span id="favCount" aria-hidden="true"></span></button>
     </div>
 
     <div class="toolbar" aria-label="Filtri e ricerca">
