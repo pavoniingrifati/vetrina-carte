@@ -309,6 +309,105 @@ body.modal-open { overscroll-behavior: contain }
 header{ position: sticky; top: 0; }
 main.wrap{ margin-top: 8px; }
 
+/* ======= TWEAKS GRAFICI: colori & contrasti (solo override) ======= */
+
+/* Nuovi accenti (non rompono nulla se ri-dichiarati qui) */
+:root{
+  --accent-2: #b37cff;   /* viola neon per titoli */
+  --accent-warm: #ff7a44;/* arancio caldo per call-to-action */
+  --toolbar-accent: rgba(110,231,255,.25);
+}
+
+/* 1) Sfondo: più “arioso” con overlay luminoso */
+body{
+  background:
+    radial-gradient(1200px 800px at 10% -10%, #1a274a, transparent),
+    linear-gradient(180deg, rgba(22,28,52,.55), rgba(11,15,25,1)),
+    var(--bg);
+}
+
+/* 2) Accenti cromatici per sezioni */
+
+/* Toolbar/filtri con leggero blu + bordo luminoso */
+header .toolbar{
+  background: linear-gradient(180deg, rgba(40,60,120,0.12), rgba(20,30,60,0.08));
+  border: 1px solid var(--toolbar-accent);
+  box-shadow: 0 8px 28px rgba(0,0,0,.22),
+              0 0 0 1px rgba(110,231,255,.06) inset;
+}
+
+/* Pulsante “Apri un pacchetto” più “hero” (resta la tua classe) */
+.pill.pack-btn{
+  background: linear-gradient(135deg, #ffae00, #ff4d4d);
+  box-shadow: 0 4px 16px rgba(255, 100, 50, 0.5), 0 0 14px rgba(255, 100, 50, 0.85);
+  transform: translateZ(0); /* più nitido su alcuni browser */
+}
+.pill.pack-btn:hover{
+  transform: translateY(-2px);
+}
+
+/* Titoli secondari con viola fluorescente */
+h2, h3{
+  color: var(--accent-2);
+  text-shadow: 0 0 6px rgba(179,124,255,0.45);
+}
+
+/* 3) Tab “Tutte / Preferite”: hover/selected più evidente */
+.tab-btn{
+  position: relative;
+  transition: color .18s ease, transform .14s ease, box-shadow .18s ease, background .18s ease;
+  box-shadow: 0 0 0 0 rgba(110,231,255,0);
+}
+.tab-btn:hover{
+  color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,.24), 0 0 10px rgba(110,231,255,.25);
+}
+
+/* underline neon sul tab attivo */
+.tab-btn[aria-selected="true"]::after{
+  content:"";
+  position:absolute;
+  left:18%;
+  bottom:-4px;
+  width:64%;
+  height:2px;
+  background: var(--accent);
+  border-radius: 2px;
+  box-shadow: 0 0 6px var(--accent);
+}
+
+/* pill un filo più “glow” quando attivo */
+.tab-btn[aria-selected="true"]{
+  background: rgba(255,255,255,.14);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.18),
+              0 0 12px rgba(110,231,255,.18);
+}
+
+/* Accessibilità: focus visibile anche via tastiera */
+.tab-btn:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(110,231,255,.5);
+  color: var(--accent);
+}
+
+/* Piccolo boost al contrasto dei campi input/select */
+.search, select, .range, .tag{
+  background: linear-gradient(180deg, #121a2e, #0e152b);
+  border-color: rgba(255,255,255,.12);
+}
+
+/* Titolo pagina (H1) leggermente più brillante */
+h1{
+  text-shadow: 0 1px 0 rgba(0,0,0,.5), 0 0 12px rgba(110,231,255,.18);
+}
+
+/* Riduzione animazioni se l’utente preferisce */
+@media (prefers-reduced-motion: reduce){
+  .tab-btn{ transition: none !important; }
+}
+  
+
 </style>
 
 <!-- 📱 Mobile Filters Toggle + Responsive Filters Panel -->
