@@ -117,46 +117,50 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 .pillFoot{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
 
 @media(max-width:600px){.wrap{padding:12px} .stage{grid-template-columns:1fr}}
+</style>
+<style>
 
-/* ===== Additions: FC-style sections, Collection Meter, NEW badge, Walkout controls ===== */
-/* FC-style Sections (Game Picker) */
-.choices{ display:grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap:14px; }
-.choice{ position:relative; overflow:hidden; transition:transform .25s, box-shadow .25s; }
-.choice::after{ content:""; position:absolute; inset:0; background: radial-gradient(60% 50% at 50% 0%, rgba(255,255,255,.06), transparent); opacity:.6; pointer-events:none;}
-.choice:hover{ transform: translateY(-4px); box-shadow:0 10px 30px rgba(0,0,0,.4), 0 0 0 1px rgba(110,231,255,.25); }
-.choice .prev{ position:relative; }
-.choice .prev::after{ content:""; position:absolute; inset:0; background: linear-gradient(120deg, transparent, rgba(255,255,255,.12), transparent); transform: translateX(-120%) skewX(-15deg); transition: transform .7s ease; }
-.choice:hover .prev::after{ transform: translateX(120%) skewX(-15deg); }
-/* Glow per tipo di pack */
-.choice[data-game="Gold"]{ box-shadow: 0 0 0 1px rgba(255,215,0,.25), 0 0 24px rgba(255,215,0,.20) inset; }
-.choice[data-game="Silver"]{ box-shadow: 0 0 0 1px rgba(180,200,220,.25), 0 0 24px rgba(180,200,220,.18) inset; }
-.choice[data-game="Bronze"]{ box-shadow: 0 0 0 1px rgba(205,127,50,.25), 0 0 24px rgba(205,127,50,.18) inset; }
-.choice[data-game="Legend"]{ box-shadow: 0 0 0 1px rgba(251,191,36,.3), 0 0 28px rgba(251,191,36,.22) inset; }
-.choice[data-game="Gotham Tots"]{ box-shadow: 0 0 0 1px rgba(96,165,250,.25), 0 0 24px rgba(96,165,250,.18) inset; }
-.choice[data-game="Wonderkid"]{ box-shadow: 0 0 0 1px rgba(167,139,250,.25), 0 0 24px rgba(167,139,250,.18) inset; }
-.choice[data-game="Oggetti"]{ box-shadow: 0 0 0 1px rgba(52,211,153,.25), 0 0 24px rgba(52,211,153,.18) inset; }
+/* === Additions: Collection Meter, NEW badge, Walkout overlay, FC-like hover/glow for choices === */
 
 /* Collection meter */
-.meter{position:relative; width:min(420px,70vw); height:12px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06); margin-top:10px}
-.meter .fill{position:absolute; inset:0 auto 0 0; width:0%; background:linear-gradient(90deg,#60a5fa,#a78bfa,#fbbf24); border-radius:999px; transition:width .35s ease}
-.meter .label{position:absolute; top:-20px; left:0; font-size:12px; color:var(--muted)}
+.meter{position:relative; width:min(420px,70vw); height:12px; border-radius:999px; background:rgba(255,255,255,.08); 
+  overflow:hidden; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06); margin-top:10px}
+.meter .fill{position:absolute; inset:0 auto 0 0; width:0%; background:linear-gradient(90deg,#60a5fa,#a78bfa,#fbbf24); 
+  border-radius:999px; transition:width .35s ease}
+.meter .label{position:absolute; top:-20px; left:0; font-size:12px; color:#a7b0d3}
 
 /* NEW badge on card front */
-.badge-new{position:absolute; top:10px; right:10px; padding:6px 8px; border-radius:10px; background:rgba(34,197,94,.15); border:1px solid rgba(34,197,94,.5); font-size:12px; font-weight:700; color:#b7ffcc; letter-spacing:.03em; display:none}
+.badge-new{position:absolute; top:10px; right:10px; padding:6px 8px; border-radius:10px; background:rgba(34,197,94,.15); 
+  border:1px solid rgba(34,197,94,.5); font-size:12px; font-weight:700; color:#b7ffcc; letter-spacing:.03em; display:none}
 .badge-new.show{display:inline-block}
 
 /* Walkout overlay */
-.walkout{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:radial-gradient(60vmax 40vmax at 50% 60%, rgba(255,215,0,.08), transparent 60%), rgba(2,6,22,.6); backdrop-filter:blur(6px); z-index:70}
+.walkout{position:fixed; inset:0; display:none; align-items:center; justify-content:center; 
+  background:radial-gradient(60vmax 40vmax at 50% 60%, rgba(255,215,0,.08), transparent 60%), rgba(2,6,22,.6); 
+  backdrop-filter:blur(6px); z-index:70}
 .walkout.show{display:flex; animation:overlayIn .25s ease-out}
 @keyframes overlayIn{from{opacity:0}to{opacity:1}}
-.walkout .tunnel{position:relative; width:min(700px,90vw); height:min(420px,56vw); border-radius:22px; overflow:hidden; background:linear-gradient(180deg,#0e1731,#0a1024); box-shadow:0 10px 50px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.08)}
-.walkout .tunnel::before{content:""; position:absolute; inset:-20%; background:conic-gradient(from 0deg at 50% 50%, transparent, rgba(255,215,0,.5), transparent); filter:blur(1px); animation:spin 2.2s linear infinite}
-.walkout .tunnel::after{content:""; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,230,120,.55),rgba(255,201,44,.8),rgba(255,230,120,.55),transparent); transform:translateX(-100%) skewX(-15deg); animation:sweep 1.4s ease-out forwards .2s}
-.walkout .big{position:absolute; bottom:24px; left:24px; font-weight:900; font-size:clamp(22px,4vw,34px); letter-spacing:.06em; text-transform:uppercase; background:linear-gradient(90deg,#fff,#ffd700,#ffa500,#fff); -webkit-background-clip:text; background-clip:text; color:transparent; text-shadow:0 2px 12px rgba(255,215,0,.55)}
+.walkout .tunnel{position:relative; width:min(700px,90vw); height:min(420px,56vw); border-radius:22px; overflow:hidden; 
+  background:linear-gradient(180deg,#0e1731,#0a1024); box-shadow:0 10px 50px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.08)}
+.walkout .tunnel::before{content:""; position:absolute; inset:-20%; background:conic-gradient(from 0deg at 50% 50%, transparent, rgba(255,215,0,.5), transparent); 
+  filter:blur(1px); animation:spin 2.2s linear infinite}
+.walkout .tunnel::after{content:""; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,230,120,.55),rgba(255,201,44,.8),rgba(255,230,120,.55),transparent); 
+  transform:translateX(-100%) skewX(-15deg); animation:sweep 1.4s ease-out forwards .2s}
+.walkout .big{position:absolute; bottom:24px; left:24px; font-weight:900; font-size:clamp(22px,4vw,34px); letter-spacing:.06em; text-transform:uppercase; 
+  background:linear-gradient(90deg,#fff,#ffd700,#ffa500,#fff); -webkit-background-clip:text; background-clip:text; color:transparent; 
+  text-shadow:0 2px 12px rgba(255,215,0,.55)}
 .walkout .controls{position:absolute; top:16px; right:16px; display:flex; gap:8px; align-items:center}
 .walkout .count{font-size:12px; color:#ffe08a}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes sweep{to{transform:translateX(120%) skewX(-15deg)}}
+
+/* FC-like hover/glow for game choices (non-destructive, enhances existing .choice) */
+.choice{ transition:transform .25s, box-shadow .25s; }
+.choice:hover{ transform: translateY(-4px); box-shadow:0 10px 30px rgba(0,0,0,.4), 0 0 0 1px rgba(110,231,255,.25); }
+.prev{ position:relative; }
+.prev::after{ content:""; position:absolute; inset:0; background: linear-gradient(120deg, transparent, rgba(255,255,255,.12), transparent); 
+  transform: translateX(-120%) skewX(-15deg); transition: transform .7s ease; }
+.choice:hover .prev::after{ transform: translateX(120%) skewX(-15deg); }
 
 </style>
 <style>
@@ -231,6 +235,18 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
     <span class="pillFoot">ℹ️ Resta tutto invariato: login Google, salvataggio inventario, condivisione.</span>
   </div>
 </footer>
+
+
+
+<!-- Walkout Overlay -->
+<div class="walkout" id="walkout" aria-hidden="true">
+  <div class="tunnel"></div>
+  <div class="big">WALKOUT!</div>
+  <div class="controls">
+    <span class="count">⏳ <span id="walkoutCountdown">1.5</span>s</span>
+    <button class="btn" id="skipWalkout">⏭️ Salta</button>
+  </div>
+</div>
 
 <!-- Template carta -->
 <template id="tplCard">
@@ -532,10 +548,7 @@ async function loadOwnedIds(){
     if (!u || u.isAnonymous) return;
     const snap = await db.collection('users').doc(u.uid).collection('inventory').get();
     OWNED_IDS.clear();
-    snap.forEach(doc => {
-      const id = String(doc.id);
-      OWNED_IDS.add(id);
-    });
+    snap.forEach(doc => { OWNED_IDS.add(String(doc.id)); });
     updateCollectionMeter();
   }catch(e){ console.warn('loadOwnedIds failed', e); }
 }
@@ -805,9 +818,7 @@ try {
 }
 
     // ====== UI info ======
-    renderGamePicker();
-    applyPackVisual();
-    updateOpenBtnEnabled();
+    renderGamePicker(); applyPackVisual(); updateOpenBtnEnabled(); updateCollectionMeter();
  document.getElementById('log').textContent =
   `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, `+
   `TOTS ${GAME_STATE.pools['Gotham Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
@@ -894,7 +905,7 @@ resetPacksBtn.addEventListener('click', async ()=>{
     try{ localStorage.removeItem('futtu_cursors'); }catch{}
     await loadCards(); // ricarica + rimescola tutto
     document.getElementById('log').textContent = '✅ Pacchetti rimescolati.';
-    renderGamePicker(); updateOpenBtnEnabled(); updateCollectionMeter(); applyPackVisual();
+    renderGamePicker(); updateOpenBtnEnabled(); applyPackVisual();
   }catch(e){
     console.warn('reset failed', e); document.getElementById('log').textContent = '⚠️ Reset non riuscito.';
   }
@@ -917,16 +928,18 @@ function makeCardEl(d,isFinal){
   if(isFinal) n.classList.add('final');
   const front=n.querySelector('.front img');
   front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async';
-  const badgeEl = n.querySelector('.badge'); if (badgeEl) badgeEl.textContent = d.rarity || '';
+  n.querySelector('.badge').textContent=d.rarity||'';
   // NEW badge
-  const frontFace = n.querySelector('.front');
-  if (frontFace){
+  try{
     const isNew = !OWNED_IDS.has(String(d.id));
-    const newEl = document.createElement('span');
-    newEl.className = 'badge-new' + (isNew ? ' show' : '');
-    newEl.textContent = 'NUOVA';
-    frontFace.appendChild(newEl);
-  }
+    const frontFace = n.querySelector('.front');
+    if (frontFace){
+      const newEl = document.createElement('span');
+      newEl.className = 'badge-new' + (isNew ? ' show' : '');
+      newEl.textContent = 'NUOVA';
+      frontFace.appendChild(newEl);
+    }
+  }catch{}
   n.dataset.state='back';
   n.addEventListener('click',()=>{ 
     if(n.dataset.state==='back'){ revealCard(n,d) } 
@@ -1192,16 +1205,5 @@ function triggerLegendFX(){
   }catch(e){ console.warn('legend fx failed', e); }
 }
 </script>
-
-<!-- Walkout Overlay -->
-<div class="walkout" id="walkout" aria-hidden="true">
-  <div class="tunnel"></div>
-  <div class="big">WALKOUT!</div>
-  <div class="controls">
-    <span class="count">⏳ <span id="walkoutCountdown">1.5</span>s</span>
-    <button class="btn" id="skipWalkout">⏭️ Salta</button>
-  </div>
-</div>
-
 </body>
 </html>
