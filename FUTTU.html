@@ -192,6 +192,51 @@ header{ top: var(--fcbar-h); }
 .choice .meta .price{ margin-top:4px; color:#aeb7db }
 </style>
 
+
+<style>
+/* ===== UT-STYLE PACK CARD VISUALS ===== */
+.choice{ padding:0 !important; background:transparent !important; border:none !important; box-shadow:none !important; }
+.choice .packCard{
+  display:flex; flex-direction:column; gap:10px; min-width:320px; border-radius:16px;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.08); padding:12px; position:relative;
+  box-shadow: 0 14px 34px rgba(0,0,0,.45);
+}
+.choice .packSkin{
+  position:relative; width:100%; aspect-ratio: 690/987; border-radius:14px; overflow:hidden;
+  background: center/cover no-repeat;
+  box-shadow: 0 6px 18px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.08);
+}
+.choice .packSkin::before{
+  /* green vertical ribbon like screenshot */
+  content:""; position:absolute; top:0; bottom:0; left:6px; width:18px; border-radius:6px;
+  background: linear-gradient(180deg,#18ff86,#19e2b0);
+  box-shadow: 0 0 10px #18ff86aa, inset 0 0 1px rgba(255,255,255,.6);
+}
+.choice .packSkin::after{
+  /* subtle UT letters diagonal overlay to emulate branded band */
+  content:"UT"; position:absolute; left:0; top:0; bottom:0; width:30px; writing-mode:vertical-rl;
+  text-orientation: mixed; color:#031; font-weight:900; letter-spacing:2px;
+  display:flex; align-items:center; justify-content:center; font-family: "Bebas Neue", sans-serif;
+  transform: translateX(2px) rotate(180deg);
+  opacity:.25;
+}
+.choice .packMeta{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.choice .packName{ font-weight:900; letter-spacing:.2px; }
+.choice .packPrice{ display:flex; align-items:center; gap:6px; color:#e8edff; font-weight:800; }
+.choice .packPrice .coin{ width:16px; height:16px; border-radius:50%; display:inline-block;
+  background: radial-gradient(circle at 30% 30%, #fff8, #ffcc00); box-shadow:0 0 8px #ffcc00; }
+.choice .packInfo{ display:flex; gap:8px; }
+.choice .chip{
+  display:grid; grid-template-rows:auto auto; align-items:center; justify-items:center;
+  background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+  border-radius:10px; padding:6px 8px; min-width:64px;
+}
+.choice .chip small{ font-size:11px; color:#b9c4ef }
+.choice .chip b{ font-size:14px; }
+.choice[aria-selected="true"] .packCard{ outline:2px solid rgba(110,231,255,.45); box-shadow: 0 18px 40px rgba(110,231,255,.18); }
+</style>
+
 </head>
 <body>
 
@@ -834,6 +879,7 @@ const packEl = document.getElementById('pack');
 
 function packsLeft(game){ return Math.max(0, (GAME_STATE.packs[game]||[]).length - (GAME_STATE.cursor[game]||0)); }
 
+
 function renderGamePicker(){
   const frag=document.createDocumentFragment();
   for (const game of VALID_GAMES){
@@ -846,8 +892,40 @@ function renderGamePicker(){
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
 
-    const subtitle = (game === 'Oggetti')
-      ? `∞ pacchetti • ${totalCards} carte`
+    // Dati pack "in stile UT"
+    const priceCoins = PACK_COST_PER_GAME[game] || 0;
+    const items = PACK_SIZE_PER_GAME[game] || 3;
+    // euristica rares: se size >=3, garantisco 3 rare; se 1 allora 1; altrimenti 0
+    const rares = Math.max(0, Math.min(items, items>=3?3:(items>=1?1:0)));
+
+    btn.innerHTML = `
+      <div class="packCard">
+        <div class="packSkin" style="background-image:url('${back}')"></div>
+        <div class="packMeta">
+          <div class="packName">${game}</div>
+          <div class="packPrice"><i class="coin"></i>${priceCoins}</div>
+        </div>
+        <div class="packInfo">
+          <div class="chip"><small>Players</small><b>${items}</b></div>
+          <div class="chip"><small>Items</small><b>${items}</b></div>
+          <div class="chip"><small>Rares</small><b>${rares}</b></div>
+        </div>
+      </div>`;
+
+    btn.addEventListener('click', ()=>{
+      GAME_STATE.selected = game;
+      applyPackVisual();
+      [...gamePicker.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
+      btn.setAttribute('aria-selected','true');
+      updateOpenBtnEnabled();
+    });
+    frag.appendChild(btn);
+  }
+  gamePicker.innerHTML='';
+  gamePicker.appendChild(frag);
+  pricePill.textContent = `💰 Costo: ${PACK_COST_PER_GAME[GAME_STATE.selected]}`;
+}
+ carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
 
     btn.innerHTML = `
