@@ -237,6 +237,12 @@ header{ top: var(--fcbar-h); }
 .choice[aria-selected="true"] .packCard{ outline:2px solid rgba(110,231,255,.45); box-shadow: 0 18px 40px rgba(110,231,255,.18); }
 </style>
 
+
+<style>
+.choices{ display:flex !important; gap:16px !important; overflow-x:auto !important; padding-bottom:8px; }
+.choice{ display:inline-block !important; }
+</style>
+
 </head>
 <body>
 
@@ -880,6 +886,7 @@ const packEl = document.getElementById('pack');
 function packsLeft(game){ return Math.max(0, (GAME_STATE.packs[game]||[]).length - (GAME_STATE.cursor[game]||0)); }
 
 
+
 function renderGamePicker(){
   const frag=document.createDocumentFragment();
   for (const game of VALID_GAMES){
@@ -890,17 +897,68 @@ function renderGamePicker(){
     btn.type='button'; btn.className='choice';
     btn.setAttribute('data-game',game);
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
+
+    // Wrapper card
+    const card = document.createElement('div');
+    card.className = 'packCard';
+
+    // Skin
+    const skin = document.createElement('div');
+    skin.className = 'packSkin';
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
+    skin.style.backgroundImage = "url('" + back + "')";
+    card.appendChild(skin);
 
-    // Dati pack "in stile UT"
-    const priceCoins = PACK_COST_PER_GAME[game] || 0;
+    // Meta row
+    const meta = document.createElement('div');
+    meta.className = 'packMeta';
+    const name = document.createElement('div');
+    name.className = 'packName';
+    name.textContent = game;
+    const price = document.createElement('div');
+    price.className = 'packPrice';
+    const coin = document.createElement('i');
+    coin.className = 'coin';
+    price.appendChild(coin);
+    price.appendChild(document.createTextNode(String(PACK_COST_PER_GAME[game] || 0)));
+    meta.appendChild(name); meta.appendChild(price);
+    card.appendChild(meta);
+
+    // Info chips
+    const info = document.createElement('div');
+    info.className = 'packInfo';
     const items = PACK_SIZE_PER_GAME[game] || 3;
-    // euristica rares: se size >=3, garantisco 3 rare; se 1 allora 1; altrimenti 0
     const rares = Math.max(0, Math.min(items, items>=3?3:(items>=1?1:0)));
+    function chip(label, value){
+      const c = document.createElement('div');
+      c.className = 'chip';
+      const s = document.createElement('small'); s.textContent = label;
+      const b = document.createElement('b'); b.textContent = String(value);
+      c.appendChild(s); c.appendChild(b);
+      return c;
+    }
+    info.appendChild(chip('Players', items));
+    info.appendChild(chip('Items', items));
+    info.appendChild(chip('Rares', rares));
+    card.appendChild(info);
 
-    btn.innerHTML = `
-      <div class="packCard">
-        <div class="packSkin" style="background-image:url('${back}')"></div>
+    btn.appendChild(card);
+
+    btn.addEventListener('click', ()=>{
+      GAME_STATE.selected = game;
+      applyPackVisual();
+      [...gamePicker.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
+      btn.setAttribute('aria-selected','true');
+      updateOpenBtnEnabled();
+    });
+
+    frag.appendChild(btn);
+  }
+  gamePicker.innerHTML='';
+  gamePicker.appendChild(frag);
+  pricePill.textContent = "💰 Costo: " + (PACK_COST_PER_GAME[GAME_STATE.selected] || 0);
+}
+')"></div>
         <div class="packMeta">
           <div class="packName">${game}</div>
           <div class="packPrice"><i class="coin"></i>${priceCoins}</div>
