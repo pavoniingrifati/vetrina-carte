@@ -192,6 +192,47 @@ header{ top: var(--fcbar-h); }
 .choice .meta .price{ margin-top:4px; color:#aeb7db }
 </style>
 
+
+<style>
+.featured-carousel {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 1rem;
+  padding: 1rem;
+}
+.featured-carousel::-webkit-scrollbar {
+  height: 8px;
+}
+.featured-carousel::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+.featured-card {
+  flex: 0 0 auto;
+  width: 160px;
+  scroll-snap-align: start;
+  text-align: center;
+  background: #1e1e1e;
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.featured-card:hover {
+  transform: scale(1.05);
+}
+.featured-card img {
+  width: 100%;
+  border-radius: 8px;
+}
+.featured-cost {
+  margin-top: 5px;
+  font-weight: bold;
+  color: #fff;
+}
+</style>
+
 </head>
 <body>
 
@@ -1148,5 +1189,29 @@ function triggerLegendFX(){
   }catch(e){ console.warn('legend fx failed', e); }
 }
 </script>
+
+<script>
+function renderFeaturedCarousel(packs) {
+  const featuredDiv = document.getElementById('featured');
+  featuredDiv.innerHTML = '<div class="featured-carousel" id="featuredCarousel"></div>';
+  const carousel = document.getElementById('featuredCarousel');
+  packs.forEach((pack, index) => {
+    const card = document.createElement('div');
+    card.className = 'featured-card';
+    card.innerHTML = `
+      <img src="${pack.image}" alt="${pack.name}">
+      <div class="featured-cost">Costo: ${pack.cost}</div>
+    `;
+    card.addEventListener('click', () => {
+      // seleziona e apre direttamente il pack cliccato
+      selectedGame = pack;
+      updateOpenBtnEnabled();
+      document.getElementById('openPackBtn').click();
+    });
+    carousel.appendChild(card);
+  });
+}
+</script>
+
 </body>
 </html>
