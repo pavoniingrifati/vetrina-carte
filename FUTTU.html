@@ -133,8 +133,99 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 @keyframes legendBurst{0%{transform:scale(.2);opacity:0}70%{opacity:1}100%{transform:scale(2.6);opacity:0}}
 @keyframes legendTitle{0%{transform:translateY(20px);filter:blur(8px);opacity:0}60%{opacity:1;filter:blur(0)}100%{transform:translateY(0)}}
 </style>
+
+<style>
+/* ===== FC25-LIKE DASHBOARD LAYOUT (additive, non-breaking) ===== */
+body{ --fcbar-h:56px; --side-w:240px; }
+.fc-topbar{
+  position:sticky; top:0; z-index:50; height:var(--fcbar-h);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 16px; gap:16px;
+  background:linear-gradient(180deg, rgba(10,16,38,.96), rgba(10,16,38,.72));
+  border-bottom:1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(10px);
+}
+.fc-topbar .fc-left{ display:flex; gap:24px; align-items:center; }
+.fc-brand{ display:flex; gap:10px; align-items:center; color:#eaf0ff; font-weight:800; letter-spacing:.2px }
+.fc-shield{ display:inline-grid; place-items:center; width:28px;height:28px;border-radius:8px;
+  background:linear-gradient(180deg,#1f2a4a,#121a36); border:1px solid rgba(255,255,255,.18); font-weight:900 }
+.fc-nav a{ color:#c8d2ff; padding:10px 12px; border-radius:10px; cursor:default }
+.fc-nav a.is-active{ background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1) }
+.fc-right{ display:flex; gap:16px; align-items:center }
+.fc-balance{ display:flex; gap:6px; align-items:center; color:#eaf0ff; background:rgba(255,255,255,.06);
+  padding:6px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.10) }
+.fc-ico{ width:16px; height:16px; display:inline-block; border-radius:50% }
+.fc-coin{ background: radial-gradient(circle at 30% 30%, #fff8, #ffcc00); box-shadow:0 0 8px #ffcc00 }
+.fc-gem{ background: radial-gradient(circle at 30% 30%, #fff8, #6ee7ff); box-shadow:0 0 8px #6ee7ff }
+.fc-prof{ width:28px; height:28px; border-radius:999px; background:linear-gradient(180deg,#29345a,#111833); border:1px solid rgba(255,255,255,.12); display:grid; place-items:center }
+.fc-prof .dot{ width:6px; height:6px; border-radius:999px; background:#6ee7ff; box-shadow:0 0 8px #6ee7ff }
+
+/* Sidebar */
+.fc-sidebar{
+  position:fixed; top:var(--fcbar-h); left:0; bottom:0; width:var(--side-w);
+  background:linear-gradient(180deg, rgba(12,18,40,.92), rgba(12,18,40,.76));
+  border-right:1px solid rgba(255,255,255,.08);
+  padding:14px 10px; z-index:30; backdrop-filter: blur(6px);
+}
+.fc-sidebar ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px }
+.fc-sidebar li{ color:#c6d0f8; padding:10px 12px; border-radius:10px; cursor:default }
+.fc-sidebar li.title{ color:#94a2d8; font-weight:700; text-transform:uppercase; font-size:12px; letter-spacing:.6px; margin-top:8px }
+.fc-sidebar li.active{ background: rgba(110,231,255,.08); border:1px solid rgba(110,231,255,.28); color:#eaf3ff }
+
+/* Shift existing layout to make room */
+header{ top: var(--fcbar-h); }
+.wrap{ max-width: 1200px; margin-left: calc(var(--side-w) + 16px); }
+@media(max-width: 980px){
+  .fc-sidebar{ display:none }
+  .wrap{ margin-left: auto }
+}
+
+/* Game picker as strip cards */
+.choices{ display:flex; gap:16px; overflow:auto; padding-bottom:8px }
+.choice{
+  min-width: 320px;
+  border-radius:14px; padding:10px; align-items:center;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)) !important;
+}
+.choice .prev{ width:120px; border-radius:12px }
+.choice .meta .name{ font-weight:800; }
+.choice .meta .price{ margin-top:4px; color:#aeb7db }
+</style>
+
 </head>
 <body>
+
+<!-- FC25-like Dashboard UI -->
+<div class="fc-topbar">
+  <div class="fc-left">
+    <div class="fc-brand"><span class="fc-shield">UT</span><strong>EA SPORTS FC 25</strong></div>
+    <nav class="fc-nav">
+      <a class="is-active">Home</a>
+      <a>Store</a>
+      <a>Browse</a>
+    </nav>
+  </div>
+  <div class="fc-right">
+    <div class="fc-balance"><span class="fc-ico fc-coin"></span><b id="fc-coins">5,360</b></div>
+    <div class="fc-balance"><span class="fc-ico fc-gem"></span><b id="fc-gems">550</b><small>/1,000</small></div>
+    <div class="fc-prof"><span class="dot"></span></div>
+  </div>
+</div>
+
+<aside class="fc-sidebar">
+  <ul>
+    <li class="title">Store</li>
+    <li class="active">Featured</li>
+    <li>Promo Packs</li>
+    <li>Provisions</li>
+    <li>Classic Packs</li>
+    <li class="title">Season 1</li>
+    <li>Stadium Items</li>
+    <li>Stadium Bundles</li>
+  </ul>
+</aside>
+<!-- /FC25-like Dashboard UI -->
+
 <div class="flash-line" id="flashLine" aria-hidden="true"></div>
 <div class="flash-screen" id="flashScreen" aria-hidden="true"></div>
 
