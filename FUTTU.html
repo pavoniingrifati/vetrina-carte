@@ -1397,131 +1397,128 @@ document.addEventListener('DOMContentLoaded', function(){
 
 
 <script>
-/* ====== Filtri sezione (robusti, senza dipendenze interne) ====== */
-(function(){
-  const SECTIONS = {
-    featured: ["Wonderkid","Patatine"],
-    latest:   ["Wonderkid"],
-    base:     ["Gold","Silver","Bronze"],
-    all:      "*"
-  };
-  const LABELS = {
-    "Featured":"featured",
-    "Ultimi arrivi":"latest",
-    "Pacchetti base":"base",
-    "Tutti i pacchi":"all"
-  };
-  function norm(s){ return (s||"").trim().toLowerCase(); }
+// === Selettore sezione + filtro giochi ===
+window.CURRENT_SECTION = 'featured'; // default
 
-  // Valore iniziale da ?section= oppure #section, altrimenti 'featured'
-  let currentSection = (new URLSearchParams(location.search)).get('section') || (location.hash||"").replace("#","") || "featured";
-  currentSection = (["featured","latest","base","all"].includes(currentSection)) ? currentSection : "featured";
+function getVisibleGames(){
+  const all = (typeof VALID_GAMES !== 'undefined') ? VALID_GAMES : [];
+  const sec = (window.CURRENT_SECTION && window.STORE_SECTIONS && window.STORE_SECTIONS[CURRENT_SECTION])
+    ? window.STORE_SECTIONS[CURRENT_SECTION]
+    : all;
+  // Se la sezione richiede "tutti i pacchi", prendi tutti quelli disponibili ora
+  if (window.CURRENT_SECTION === 'all') return all;
+  // Normalizza mantenendo solo quelli che esistono
+  const set = new Set(all);
+  return (sec || []).filter(g => set.has(g));
+}
 
-  function getAllowedNames(allNames){
-    const pick = SECTIONS[currentSection];
-    if (pick==="*" || currentSection==="all") return allNames;
-    const set = new Set((pick||[]).map(norm));
-    return allNames.filter(n => set.has(norm(n)));
-  }
+// Attiva la sezione sulla sidebar e rinfresca la UI
+function activateSection(section){
+  window.CURRENT_SECTION = section || 'featured';
 
-  function readChipName(el){
-    const byClass = el.querySelector('.name');
-    const byAttr  = el.getAttribute('data-game');
-    const txt = (byClass?.textContent || byAttr || el.textContent || "").trim();
-    return txt.replace(/\s+/g,' ');
-  }
-
-  function getPickerChips(){
-    return Array.from(document.querySelectorAll('#gamePicker .choice'));
-  }
-  function getStripCards(){
-    return Array.from(document.querySelectorAll('#packsStrip .featured-card'));
-  }
-
-  function selectFirstAllowed(allowed){
-    if (!allowed.length) return;
-    const chip = getPickerChips().find(c => allowed.includes(readChipName(c)));
-    if (chip) chip.click();
-  }
-
-  function applyFilter(){
-    const chips = getPickerChips();
-    const allNames = chips.map(readChipName).filter(Boolean);
-    const allowed = getAllowedNames(allNames);
-
-    // Mostra/nascondi chip del picker
-    chips.forEach(ch => {
-      const nm = readChipName(ch);
-      ch.style.display = allowed.includes(nm) ? "" : "none";
-    });
-
-    // Mostra/nascondi card nella strip (se presente)
-    const cards = getStripCards();
-    if (cards.length){
-      cards.forEach(card => {
-        // nome in prima <div> della card oppure data-game
-        const maybeDiv = card.querySelector('div');
-        const nm = (maybeDiv?.textContent || card.getAttribute('data-game') || card.textContent || "").trim().replace(/\s+/g,' ');
-        const show = (currentSection==="all" && !allowed.length) ? true : allowed.includes(nm);
-        card.style.display = show ? "" : "none";
-      });
-    }
-
-    // Se il selezionato non è visibile, seleziona il primo ammesso
-    const selected = document.querySelector('#gamePicker .choice[aria-selected="true"]');
-    if (!selected || selected.style.display==="none"){
-      selectFirstAllowed(allowed);
-    }
-  }
-
-  function setupMenu(){
-    // Cerca voci di menu e annota data-section
-    const labels = Object.keys(LABELS);
-    const nodes = Array.from(document.querySelectorAll('[data-section], nav a, .fc-sidebar li, li, a, button'))
-      .filter(el => labels.includes((el.getAttribute('data-section') || el.textContent || '').trim()));
-
-    nodes.forEach(el => {
-      const label = (el.getAttribute('data-section') || el.textContent || '').trim();
-      const sec = LABELS[label] || el.getAttribute('data-section');
-      el.setAttribute('data-section', sec);
-      el.classList.toggle('active', sec===currentSection);
-      el.addEventListener('click', (e)=>{
-        const newSec = el.getAttribute('data-section');
-        if (!newSec) return;
-        currentSection = newSec;
-        nodes.forEach(n => n.classList.toggle('active', n===el));
-        applyFilter();
-      }, {passive:true});
-    });
-  }
-
-  function whenReady(cb){
-    if (document.readyState === 'loading'){
-      document.addEventListener('DOMContentLoaded', cb, {once:true});
-    } else cb();
-  }
-
-  function waitForPickerThen(fn){
-    if (document.querySelector('#gamePicker')) return fn();
-    const obs = new MutationObserver(()=>{
-      if (document.querySelector('#gamePicker')){
-        obs.disconnect(); fn();
-      }
-    });
-    obs.observe(document.documentElement, {childList:true, subtree:true});
-  }
-
-  whenReady(()=>{
-    setupMenu();
-    waitForPickerThen(()=>{
-      applyFilter();
-      // Se il picker viene rigenerato dall'app, riapplica filtro
-      const target = document.querySelector('#gamePicker') || document.body;
-      const mo = new MutationObserver(()=> applyFilter());
-      mo.observe(target, {childList:true, subtree:true});
-    });
+  // Aggiorna stato "active" sulla sidebar
+  document.querySelectorAll('.fc-sidebar li[data-section]').forEach(li => {
+    li.classList.toggle('active', li.getAttribute('data-section') === window.CURRENT_SECTION);
   });
-})();
+
+  // Se il selezionato attuale non è visibile, rimpiazza con il primo della lista
+  const visible = getVisibleGames();
+  if (!visible.length) return; // niente da mostrare
+  if (!visible.includes(GAME_STATE.selected)) {
+    GAME_STATE.selected = visible[0];
+    applyPackVisual();
+  }
+
+  // Rerender controlli dipendenti
+  renderGamePicker();
+  renderPacksStrip && renderPacksStrip();
+  updateOpenBtnEnabled();
+}
+
+// Wire dei click alla sidebar
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.fc-sidebar li[data-section]').forEach(li => {
+    li.addEventListener('click', () => activateSection(li.getAttribute('data-section')));
+  });
+  // Avvio: rispetta la voce già marcata .active
+  const activeLi = document.querySelector('.fc-sidebar li[data-section].active');
+  activateSection(activeLi ? activeLi.getAttribute('data-section') : 'featured');
+});
+
+// Patch: renderGamePicker usa il filtro della sezione attuale
+const _renderGamePicker_orig = typeof renderGamePicker === 'function' ? renderGamePicker : null;
+window.renderGamePicker = function(){
+  const list = getVisibleGames();
+  const frag = document.createDocumentFragment();
+  const gamePicker = document.getElementById('gamePicker');
+  if (!gamePicker) return;
+
+  gamePicker.innerHTML='';
+  list.forEach(game => {
+    const totalCards = (GAME_STATE.pools[game]||[]).length;
+    const totalPacks = (GAME_STATE.packs[game]||[]).length;
+    const left = Math.max(0, totalPacks - (GAME_STATE.cursor[game]||0));
+    const btn=document.createElement('button');
+    btn.type='button'; btn.className='choice';
+    btn.setAttribute('data-game',game);
+    btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
+    const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
+    const subtitle = (game === 'Oggetti')
+      ? `∞ pacchetti • ${totalCards} carte`
+      : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
+    btn.innerHTML = `
+      <div class="prev" style="background-image:url('${back}')"></div>
+      <div class="meta">
+        <span class="name">${game}</span>
+        <span class="price">${subtitle}</span>
+      </div>`;
+    btn.addEventListener('click', ()=>{
+      GAME_STATE.selected = game;
+      applyPackVisual();
+      [...gamePicker.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
+      btn.setAttribute('aria-selected','true');
+      updateOpenBtnEnabled();
+    }, {passive:true});
+    frag.appendChild(btn);
+  });
+  gamePicker.appendChild(frag);
+  pricePill.textContent = `💰 Costo: ${PACK_COST_PER_GAME[GAME_STATE.selected]}`;
+};
+
+// Patch: renderPacksStrip (se definito) filtra in base alla sezione
+const _renderPacksStrip_orig = typeof renderPacksStrip === 'function' ? renderPacksStrip : null;
+window.renderPacksStrip = function(){
+  const container = document.getElementById('packsStrip');
+  if (!container) return;
+  const games = getVisibleGames();
+  container.innerHTML = '';
+  games.forEach(game => {
+    // Piccola card per ogni pacco disponibile nel gioco selezionato
+    const totalPacks = (GAME_STATE.packs[game]||[]).length;
+    const left = Math.max(0, totalPacks - (GAME_STATE.cursor[game]||0));
+    const card = document.createElement('div');
+    card.className = 'featured-card';
+    const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
+    card.innerHTML = `
+      <img src="${back}" alt="Anteprima ${game}">
+      <div style="margin-top:6px;font-weight:700">${game}</div>
+      <div class="featured-cost">${game==='Oggetti' ? '∞' : `${left}/${totalPacks}`} pacchi</div>
+    `;
+    card.addEventListener('click', ()=>{
+      GAME_STATE.selected = game;
+      applyPackVisual();
+      updateOpenBtnEnabled();
+      // evidenzia corrispondente chip
+      document.querySelectorAll('#gamePicker .choice').forEach(c=>c.setAttribute('aria-selected','false'));
+      const chip = document.querySelector(`#gamePicker .choice[data-game="${CSS.escape(game)}"]`);
+      if (chip) chip.setAttribute('aria-selected','true');
+      // Scroll a vista
+      const pack = document.getElementById('pack'); 
+      if (pack) pack.scrollIntoView({behavior:'smooth', block:'center'});
+    }, {passive:true});
+    container.appendChild(card);
+  });
+};
 </script>
 
 </body>
