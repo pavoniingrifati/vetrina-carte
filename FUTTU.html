@@ -274,7 +274,7 @@ window.STORE_SECTIONS = {
   featured: ['Wonderkid','Patatine'],
   new: ['Wonderkid'], // Ultimi arrivi
   base: ['Gold','Silver','Bronze'], // Pacchetti base
-  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Wonderkid','Patatine','Gold','Silver','Bronze'])
+  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Wonderkid','Patatine','Gold','Silver','Bronze','Strumenti'])
 };
 </script>
 
@@ -398,7 +398,7 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze'];
+const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Strumenti'];
 const PACK_BACK_BY_GAME = {
   'Wonderkid': 'Deck%20back%20wonderkid.png',
   'Patatine': 'patatrine.png',
@@ -407,7 +407,8 @@ const PACK_BACK_BY_GAME = {
   'Oggetti': 'Deck%20back%20tactcs.png',
   'Gold': 'Deck%20back%20ORO.png',
   'Silver': 'Deck%20back%20argento%20BATMAN.png',
-  'Bronze': 'Deck%20back%20bronzo%20BATMAN.png'
+  'Bronze': 'Deck%20back%20bronzo%20BATMAN.png',
+  'Strumenti': 'Deck%20back%20BATMAN.png'
 };
 
 
@@ -419,7 +420,8 @@ const PACK_COST_PER_GAME = {
   'Oggetti': 0,
   'Gold': 0,
   'Silver': 0,
-  'Bronze': 0
+  'Bronze': 0,
+  'Strumenti': 0
 };
 
 const PACK_SIZE_PER_GAME = {
@@ -430,7 +432,8 @@ const PACK_SIZE_PER_GAME = {
   'Oggetti': 3,
   'Gold': 9,
   'Silver': 9,
-  'Bronze': 9
+  'Bronze': 9,
+  'Strumenti': 3
 };
 
 const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
@@ -640,9 +643,9 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Wonderkid',
-  pools:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [] },
-  packs:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [] },
-  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0 }
+  pools:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [] },
+  packs:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [] },
+  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0 }
 };
 
 
@@ -715,6 +718,38 @@ async function loadCards(){
 
     // Oggetti — NEW: prende qualsiasi card con series = "Oggetto" (game: qualunque)
     GAME_STATE.pools['Oggetti'] = cleaned.filter(c => norm(c.series)==='oggetto');
+
+    // Strumenti — FINITO: prende solo series="Strumento" e game="Gotham City"; 2 copie per carta, pacchetti da 3 (ultimo 2+2 se serve)
+    const baseStrumenti = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='strumento');
+    const strumentiDoubled = baseStrumenti.flatMap(c => [c, c]); // doppione
+    GAME_STATE.pools['Strumenti'] = strumentiDoubled.slice();
+
+    // pacchetti finiti e tutti diversi tra loro (no doppie della stessa carta dentro il pacco)
+    GAME_STATE.packs['Strumenti'] = buildFinitePacks(GAME_STATE.pools['Strumenti'], PACK_SIZE_PER_GAME['Strumenti']).map(p => {
+      const seen = new Set();
+      return p.filter(x => !seen.has(x.id) && seen.add(x.id));
+    });
+    (function ensureUniquePackCombos(){
+      const sig = (p) => [...new Set(p.map(x=>x.id))].sort().join('+');
+      const used = new Set();
+      for (let i=0; i<GAME_STATE.packs['Strumenti'].length; i++){
+        let pack = GAME_STATE.packs['Strumenti'][i];
+        let s = sig(pack);
+        if (!used.has(s)){ used.add(s); continue; }
+        const next = GAME_STATE.packs['Strumenti'][i+1];
+        if (next && next.length && pack.length && next.length){
+          const a = pack[pack.length-1], b = next[next.length-1];
+          if (a.id !== b.id){
+            pack[pack.length-1] = b;
+            next[next.length-1] = a;
+            s = sig(pack);
+          }
+        }
+        used.add(s);
+      }
+    })();
+    
+
 
     // Gold — pacchetti manuali (ognuno è un pack finito con carte scelte da me)
 const BY_ID = Object.fromEntries(cleaned.map(c => [c.id, c]));
@@ -873,7 +908,7 @@ try {
  document.getElementById('log').textContent =
   `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, `+
   `TOTS ${GAME_STATE.pools['Gotham Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
-  `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}.`;
+  `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
 
 
   }catch(err){
