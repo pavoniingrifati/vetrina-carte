@@ -34,7 +34,7 @@ h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
 .btn:disabled{opacity:.6; cursor:not-allowed}
 
 /* FLASH */
-.flash-line,.flash-screen{position:fixed; inset:0; pointer-events:none; z-index:40; opacity:0}
+.flash-line,.flash-screen{position:fixed; inset:0; pointer-events:auto; z-index:40; opacity:0}
 .flash-line::before{content:""; position:absolute; top:0; bottom:0; width:32vw;
   background:linear-gradient(90deg,transparent,rgba(255,230,120,.55),rgba(255,201,44,.8),rgba(255,230,120,.55),transparent);
   filter:blur(8px); transform:translateX(-40vw) skewX(-12deg)}
@@ -120,7 +120,7 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 </style>
 <style>
 /* ===== Legendary FX ===== */
-.legend-fx{position:fixed;inset:0;pointer-events:none;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.legend-fx{position:fixed;inset:0;pointer-events:auto;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .legend-fx .halo{position:absolute;width:40vmin;height:40vmin;border-radius:50%;box-shadow:0 0 30px 10px rgba(255,215,0,.6), 0 0 120px 40px rgba(255,140,0,.35), inset 0 0 60px rgba(255,255,255,.4);animation:legendHalo 1800ms ease-out forwards}
 .legend-fx .rays{position:absolute;width:70vmin;height:70vmin;background:conic-gradient(from 0deg, rgba(255,215,0,.0), rgba(255,215,0,.9), rgba(255,215,0,.0) 25%);mix-blend-mode:screen;filter:blur(2px);animation:legendRays 2200ms linear forwards}
 .legend-fx .burst{position:absolute;width:14vmin;height:14vmin;border-radius:50%;background:radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,215,0,.9) 45%, rgba(255,140,0,.0) 70%);animation:legendBurst 900ms cubic-bezier(.2,.8,.2,1) forwards}
@@ -1234,103 +1234,11 @@ function renderFeaturedCarousel(packs) {
 // ===== Striscia orizzontale dei pacchetti (tipo carosello) =====
 const packsStrip = document.getElementById('packsStrip');
 
-function renderPacksStrip(){
-  if (!packsStrip) return;
-  packsStrip.innerHTML = '';
 
-  VALID_GAMES.forEach((game) => {
-    const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
-    const left = packsLeft(game);
-    const total = (GAME_STATE.packs[game] || []).length;
-
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = 'featured-card';
-    if (GAME_STATE.selected === game) card.setAttribute('aria-current', 'true');
-
-    const subtitle = (game === 'Oggetti')
-      ? '∞ pacchetti'
-      : `${Math.max(0, left)}/${total} pacchetti`;
-
-    card.innerHTML = `
-      <img src="${back}" alt="${game}">
-      <div class="featured-cost">${game} • ${subtitle}</div>
-    `;
-
-    card.addEventListener('click', () => {
-      GAME_STATE.selected = game;
-      applyPackVisual();
-      updateOpenBtnEnabled();
-      renderPacksStrip();
-    });
-
-    packsStrip.appendChild(card);
-  });
-
-  // drag-to-scroll (mouse + touch)
-  let isDown = false, startX = 0, startScroll = 0;
-  const start = (x) => { isDown = true; startX = x; startScroll = packsStrip.scrollLeft; };
-  const move  = (x) => { if (isDown) packsStrip.scrollLeft = startScroll - (x - startX); };
-  const stop  = () => { isDown = false; };
-
-  packsStrip.onmousedown = (e) => start(e.pageX);
-  packsStrip.onmousemove = (e) => move(e.pageX);
-  packsStrip.onmouseup = packsStrip.onmouseleave = stop;
-
-  packsStrip.ontouchstart = (e) => start(e.touches[0].pageX);
-  packsStrip.ontouchmove  = (e) => { move(e.touches[0].pageX); };
-  packsStrip.ontouchend   = stop;
-}
 
 
 // === Featured strip rendering (only: Wonderkid, Patatine) ===
-function renderPacksStrip(){
-  if (!packsStrip) return;
-  packsStrip.innerHTML = '';
 
-  // Determine which list of games to show based on CURRENT_SECTION and STORE_SECTIONS
-  const section = (typeof window !== 'undefined' && window.CURRENT_SECTION) ? window.CURRENT_SECTION : 'featured';
-  let list = [];
-  if (typeof window !== 'undefined' && window.STORE_SECTIONS && Array.isArray(window.STORE_SECTIONS[section])) {
-    list = window.STORE_SECTIONS[section].slice();
-  } else if (typeof VALID_GAMES !== 'undefined') {
-    list = VALID_GAMES.slice();
-  }
-
-  list.forEach((game) => {
-    const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
-    const left = packsLeft(game);
-    const total = (GAME_STATE.packs[game] || []).length;
-
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = 'featured-card';
-    if (GAME_STATE.selected === game) card.setAttribute('aria-current', 'true');
-
-    const subtitle = (game === 'Patatine' || game === 'Wonderkid') ? 'Special' :
-                     (game === 'Gold' || game === 'Silver' || game === 'Bronze') ? 'Base' : '';
-
-    card.innerHTML = `
-      <img src="${back}" alt="${game}" loading="lazy" decoding="async" />
-      <div class="featured-title">${game}</div>
-      <div class="featured-subtitle">${subtitle}</div>
-      <div class="featured-meta">
-        <span class="featured-left">${left} rimasti</span>
-        <span class="featured-total">${total} pacchi</span>
-      </div>
-    `;
-
-    card.addEventListener('click', () => {
-      GAME_STATE.selected = game;
-      applyPackVisual();
-      updateOpenBtnEnabled();
-      document.querySelectorAll('.featured-card[aria-current="true"]').forEach(x => x.removeAttribute('aria-current'));
-      card.setAttribute('aria-current', 'true');
-    }, {passive:true});
-
-    packsStrip.appendChild(card);
-  });
-}
 
 </script>
 
@@ -1367,6 +1275,67 @@ document.addEventListener('DOMContentLoaded', function(){
   // Ensure initial render honors CURRENT_SECTION
   try { renderPacksStrip(); } catch(e){ console.warn('first render error', e); }
 });
+</script>
+
+
+<script>
+// === Final override: single source of truth ===
+(function(){
+  const sidebar = document.querySelector('.fc-sidebar');
+  const strip = document.getElementById('packsStrip');
+  const titleEl = document.querySelector('.fc-title') || document.querySelector('.section-title') || null;
+
+  window.CURRENT_SECTION = window.CURRENT_SECTION || 'featured';
+  // Make sidebar clickable
+  if (sidebar){
+    sidebar.querySelectorAll('li[data-section]').forEach(li => {
+      li.style.cursor = 'pointer';
+      li.addEventListener('click', () => {
+        sidebar.querySelectorAll('li').forEach(x => x.classList.remove('active'));
+        li.classList.add('active');
+        window.CURRENT_SECTION = li.getAttribute('data-section');
+        if (titleEl){
+          const map = {featured:'Featured', new:'Ultimi arrivi', base:'Pacchetti base', all:'Tutti i pacchi'};
+          titleEl.textContent = map[window.CURRENT_SECTION] || 'Store';
+        }
+        try{ renderPacksStrip(); }catch(e){ console.warn(e); }
+      }, {passive:true});
+    });
+  }
+
+  // Define the ONLY renderPacksStrip used everywhere
+  window.renderPacksStrip = function(){
+    if (!strip) return;
+    const section = (window.CURRENT_SECTION || 'featured');
+    const list = (window.STORE_SECTIONS && Array.isArray(window.STORE_SECTIONS[section]))
+      ? window.STORE_SECTIONS[section].slice()
+      : (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : []);
+
+    strip.innerHTML = '';
+    list.forEach((game) => {
+      if (!window.PACK_BACK_BY_GAME || !PACK_BACK_BY_GAME[game]) return;
+      const card = document.createElement('div');
+      card.className = 'featured-card';
+      card.setAttribute('data-game', game);
+      card.innerHTML = `
+        <img src="${PACK_BACK_BY_GAME[game]}" alt="${game}" loading="lazy" decoding="async" />
+        <div class="featured-title">${game}</div>
+        <div class="featured-cost">Costo: ${PACK_COST_PER_GAME && PACK_COST_PER_GAME[game] ? PACK_COST_PER_GAME[game] : 0}</div>
+      `;
+      card.addEventListener('click', () => {
+        GAME_STATE.selected = game;
+        applyPackVisual && applyPackVisual();
+        updateOpenBtnEnabled && updateOpenBtnEnabled();
+        [...strip.children].forEach(el => el.classList.remove('is-selected'));
+        card.classList.add('is-selected');
+      }, {passive:true});
+      strip.appendChild(card);
+    });
+  };
+
+  // First render (honors CURRENT_SECTION)
+  try{ renderPacksStrip(); }catch(e){ console.warn('first render error', e); }
+})();
 </script>
 
 </body>
