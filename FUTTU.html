@@ -34,7 +34,7 @@ h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
 .btn:disabled{opacity:.6; cursor:not-allowed}
 
 /* FLASH */
-.flash-line,.flash-screen{position:fixed; inset:0; pointer-events:auto; z-index:40; opacity:0}
+.flash-line,.flash-screen{position:fixed; inset:0; pointer-events:none; z-index:40; opacity:0}
 .flash-line::before{content:""; position:absolute; top:0; bottom:0; width:32vw;
   background:linear-gradient(90deg,transparent,rgba(255,230,120,.55),rgba(255,201,44,.8),rgba(255,230,120,.55),transparent);
   filter:blur(8px); transform:translateX(-40vw) skewX(-12deg)}
@@ -120,7 +120,7 @@ footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0d
 </style>
 <style>
 /* ===== Legendary FX ===== */
-.legend-fx{position:fixed;inset:0;pointer-events:auto;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.legend-fx{position:fixed;inset:0;pointer-events:none;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .legend-fx .halo{position:absolute;width:40vmin;height:40vmin;border-radius:50%;box-shadow:0 0 30px 10px rgba(255,215,0,.6), 0 0 120px 40px rgba(255,140,0,.35), inset 0 0 60px rgba(255,255,255,.4);animation:legendHalo 1800ms ease-out forwards}
 .legend-fx .rays{position:absolute;width:70vmin;height:70vmin;background:conic-gradient(from 0deg, rgba(255,215,0,.0), rgba(255,215,0,.9), rgba(255,215,0,.0) 25%);mix-blend-mode:screen;filter:blur(2px);animation:legendRays 2200ms linear forwards}
 .legend-fx .burst{position:absolute;width:14vmin;height:14vmin;border-radius:50%;background:radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,215,0,.9) 45%, rgba(255,140,0,.0) 70%);animation:legendBurst 900ms cubic-bezier(.2,.8,.2,1) forwards}
@@ -1234,11 +1234,84 @@ function renderFeaturedCarousel(packs) {
 // ===== Striscia orizzontale dei pacchetti (tipo carosello) =====
 const packsStrip = document.getElementById('packsStrip');
 
+function renderPacksStrip(){
+  if (!packsStrip) return;
+  packsStrip.innerHTML = '';
 
+  VALID_GAMES.forEach((game) => {
+    const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
+    const left = packsLeft(game);
+    const total = (GAME_STATE.packs[game] || []).length;
+
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'featured-card';
+    if (GAME_STATE.selected === game) card.setAttribute('aria-current', 'true');
+
+    const subtitle = (game === 'Oggetti')
+      ? '∞ pacchetti'
+      : `${Math.max(0, left)}/${total} pacchetti`;
+
+    card.innerHTML = `
+      <img src="${back}" alt="${game}">
+      <div class="featured-cost">${game} • ${subtitle}</div>
+    `;
+
+    card.addEventListener('click', () => {
+      GAME_STATE.selected = game;
+      applyPackVisual();
+      updateOpenBtnEnabled();
+      renderPacksStrip();
+    });
+
+    packsStrip.appendChild(card);
+  });
+
+  // drag-to-scroll (mouse + touch)
+  let isDown = false, startX = 0, startScroll = 0;
+  const start = (x) => { isDown = true; startX = x; startScroll = packsStrip.scrollLeft; };
+  const move  = (x) => { if (isDown) packsStrip.scrollLeft = startScroll - (x - startX); };
+  const stop  = () => { isDown = false; };
+
+  packsStrip.onmousedown = (e) => start(e.pageX);
+  packsStrip.onmousemove = (e) => move(e.pageX);
+  packsStrip.onmouseup = packsStrip.onmouseleave = stop;
+
+  packsStrip.ontouchstart = (e) => start(e.touches[0].pageX);
+  packsStrip.ontouchmove  = (e) => { move(e.touches[0].pageX); };
+  packsStrip.ontouchend   = stop;
+}
 
 
 // === Featured strip rendering (only: Wonderkid, Patatine) ===
-
+function renderPacksStrip(){
+  const strip = document.getElementById('packsStrip');
+  if (!strip) return;
+  const FEATURED_LIST = ['Wonderkid','Patatine']; // solo quelli richiesti
+  strip.innerHTML='';
+  const frag = document.createDocumentFragment();
+  FEATURED_LIST.forEach(game => {
+    if (!PACK_BACK_BY_GAME[game]) return;
+    const card = document.createElement('div');
+    card.className = 'featured-card';
+    card.setAttribute('data-game', game);
+    card.innerHTML = `
+      <img src="${PACK_BACK_BY_GAME[game]}" alt="${game}" loading="lazy" decoding="async" />
+      <div>${game}</div>
+      <div class="featured-cost">Costo: ${PACK_COST_PER_GAME[game] || 0}</div>
+    `;
+    card.addEventListener('click', () => {
+      GAME_STATE.selected = game;
+      applyPackVisual();
+      updateOpenBtnEnabled();
+      // evidenzia selezione
+      [...strip.children].forEach(el => el.classList.remove('is-selected'));
+      card.classList.add('is-selected');
+    }, {passive:true});
+    frag.appendChild(card);
+  });
+  strip.appendChild(frag);
+}
 
 </script>
 
@@ -1251,91 +1324,201 @@ document.addEventListener('DOMContentLoaded', function(){
 
 
 <script>
-// Keep the section in a global so other scripts calling renderPacksStrip() respect the chosen view
-window.CURRENT_SECTION = window.CURRENT_SECTION || 'featured';
-document.addEventListener('DOMContentLoaded', function(){
-  const sidebar = document.querySelector('.fc-sidebar');
-  if (!sidebar) return;
-  const map = { featured:'Featured', new:'Ultimi arrivi', base:'Pacchetti base', all:'Tutti i pacchi' };
-  const titleEl = document.querySelector('.fc-title') || document.querySelector('.section-title') || null;
-
-  sidebar.querySelectorAll('li[data-section]').forEach(li => {
-    li.addEventListener('click', () => {
-      window.CURRENT_SECTION = li.getAttribute('data-section');
-      // Update active class
-      sidebar.querySelectorAll('li').forEach(x => x.classList.remove('active'));
-      li.classList.add('active');
-      // Update title
-      if (titleEl && map[window.CURRENT_SECTION]) titleEl.textContent = map[window.CURRENT_SECTION];
-      // Re-render cards using the central renderer so every other script stays consistent
-      try { renderPacksStrip(); } catch(e){ console.warn('renderPacksStrip error', e); }
-    }, {passive:true});
-  });
-
-  // Ensure initial render honors CURRENT_SECTION
-  try { renderPacksStrip(); } catch(e){ console.warn('first render error', e); }
-});
-</script>
-
-
-<script>
-// === Final override: single source of truth ===
+// === Navigation and section rendering ===
 (function(){
-  const sidebar = document.querySelector('.fc-sidebar');
-  const strip = document.getElementById('packsStrip');
+  // Keep a reference to title element if it exists
   const titleEl = document.querySelector('.fc-title') || document.querySelector('.section-title') || null;
+  const strip = document.getElementById('packsStrip');
 
-  window.CURRENT_SECTION = window.CURRENT_SECTION || 'featured';
-  // Make sidebar clickable
-  if (sidebar){
-    sidebar.querySelectorAll('li[data-section]').forEach(li => {
-      li.style.cursor = 'pointer';
-      li.addEventListener('click', () => {
-        sidebar.querySelectorAll('li').forEach(x => x.classList.remove('active'));
-        li.classList.add('active');
-        window.CURRENT_SECTION = li.getAttribute('data-section');
-        if (titleEl){
-          const map = {featured:'Featured', new:'Ultimi arrivi', base:'Pacchetti base', all:'Tutti i pacchi'};
-          titleEl.textContent = map[window.CURRENT_SECTION] || 'Store';
-        }
-        try{ renderPacksStrip(); }catch(e){ console.warn(e); }
-      }, {passive:true});
-    });
-  }
-
-  // Define the ONLY renderPacksStrip used everywhere
-  window.renderPacksStrip = function(){
-    if (!strip) return;
-    const section = (window.CURRENT_SECTION || 'featured');
-    const list = (window.STORE_SECTIONS && Array.isArray(window.STORE_SECTIONS[section]))
-      ? window.STORE_SECTIONS[section].slice()
-      : (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : []);
-
-    strip.innerHTML = '';
-    list.forEach((game) => {
+  function renderSection(sectionKey){
+    if (!strip || !window.STORE_SECTIONS) return;
+    const list = (window.STORE_SECTIONS[sectionKey] || []).slice();
+    strip.innerHTML='';
+    const frag = document.createDocumentFragment();
+    list.forEach(game => {
       if (!window.PACK_BACK_BY_GAME || !PACK_BACK_BY_GAME[game]) return;
       const card = document.createElement('div');
       card.className = 'featured-card';
       card.setAttribute('data-game', game);
       card.innerHTML = `
         <img src="${PACK_BACK_BY_GAME[game]}" alt="${game}" loading="lazy" decoding="async" />
-        <div class="featured-title">${game}</div>
-        <div class="featured-cost">Costo: ${PACK_COST_PER_GAME && PACK_COST_PER_GAME[game] ? PACK_COST_PER_GAME[game] : 0}</div>
+        <div>${game}</div>
+        <div class="featured-cost">Costo: ${PACK_COST_PER_GAME[game] || 0}</div>
       `;
       card.addEventListener('click', () => {
         GAME_STATE.selected = game;
-        applyPackVisual && applyPackVisual();
-        updateOpenBtnEnabled && updateOpenBtnEnabled();
+        applyPackVisual();
+        updateOpenBtnEnabled();
         [...strip.children].forEach(el => el.classList.remove('is-selected'));
         card.classList.add('is-selected');
       }, {passive:true});
-      strip.appendChild(card);
+      frag.appendChild(card);
     });
-  };
+    strip.appendChild(frag);
+    // Update title text to reflect section (optional)
+    if (titleEl){
+      const map = {
+        featured: 'Featured',
+        new: 'Ultimi arrivi',
+        base: 'Pacchetti base',
+        all: 'Tutti i pacchi'
+      };
+      titleEl.textContent = map[sectionKey] || 'Store';
+    }
+  }
 
-  // First render (honors CURRENT_SECTION)
-  try{ renderPacksStrip(); }catch(e){ console.warn('first render error', e); }
+  // Add click handlers to sidebar items
+  function bindSidebar(){
+    const sidebar = document.querySelector('.fc-sidebar');
+    if (!sidebar) return;
+    sidebar.querySelectorAll('li[data-section]').forEach(li => {
+      li.addEventListener('click', () => {
+        // Active state
+        sidebar.querySelectorAll('li').forEach(x => x.classList.remove('active'));
+        li.classList.add('active');
+        const key = li.getAttribute('data-section');
+        renderSection(key);
+      }, {passive:true});
+    });
+  }
+
+  // Expose for other scripts if needed
+  window.renderSection = renderSection;
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function(){
+    try{
+      bindSidebar();
+      renderSection('featured'); // default view
+    }catch(e){ console.warn('nav init error', e); }
+  });
 })();
+</script>
+
+
+<script>
+// === Selettore sezione + filtro giochi ===
+window.CURRENT_SECTION = 'featured'; // default
+
+function getVisibleGames(){
+  const all = (typeof VALID_GAMES !== 'undefined') ? VALID_GAMES : [];
+  const sec = (window.CURRENT_SECTION && window.STORE_SECTIONS && window.STORE_SECTIONS[CURRENT_SECTION])
+    ? window.STORE_SECTIONS[CURRENT_SECTION]
+    : all;
+  // Se la sezione richiede "tutti i pacchi", prendi tutti quelli disponibili ora
+  if (window.CURRENT_SECTION === 'all') return all;
+  // Normalizza mantenendo solo quelli che esistono
+  const set = new Set(all);
+  return (sec || []).filter(g => set.has(g));
+}
+
+// Attiva la sezione sulla sidebar e rinfresca la UI
+function activateSection(section){
+  window.CURRENT_SECTION = section || 'featured';
+
+  // Aggiorna stato "active" sulla sidebar
+  document.querySelectorAll('.fc-sidebar li[data-section]').forEach(li => {
+    li.classList.toggle('active', li.getAttribute('data-section') === window.CURRENT_SECTION);
+  });
+
+  // Se il selezionato attuale non è visibile, rimpiazza con il primo della lista
+  const visible = getVisibleGames();
+  if (!visible.length) return; // niente da mostrare
+  if (!visible.includes(GAME_STATE.selected)) {
+    GAME_STATE.selected = visible[0];
+    applyPackVisual();
+  }
+
+  // Rerender controlli dipendenti
+  renderGamePicker();
+  renderPacksStrip && renderPacksStrip();
+  updateOpenBtnEnabled();
+}
+
+// Wire dei click alla sidebar
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.fc-sidebar li[data-section]').forEach(li => {
+    li.addEventListener('click', () => activateSection(li.getAttribute('data-section')));
+  });
+  // Avvio: rispetta la voce già marcata .active
+  const activeLi = document.querySelector('.fc-sidebar li[data-section].active');
+  activateSection(activeLi ? activeLi.getAttribute('data-section') : 'featured');
+});
+
+// Patch: renderGamePicker usa il filtro della sezione attuale
+const _renderGamePicker_orig = typeof renderGamePicker === 'function' ? renderGamePicker : null;
+window.renderGamePicker = function(){
+  const list = getVisibleGames();
+  const frag = document.createDocumentFragment();
+  const gamePicker = document.getElementById('gamePicker');
+  if (!gamePicker) return;
+
+  gamePicker.innerHTML='';
+  list.forEach(game => {
+    const totalCards = (GAME_STATE.pools[game]||[]).length;
+    const totalPacks = (GAME_STATE.packs[game]||[]).length;
+    const left = Math.max(0, totalPacks - (GAME_STATE.cursor[game]||0));
+    const btn=document.createElement('button');
+    btn.type='button'; btn.className='choice';
+    btn.setAttribute('data-game',game);
+    btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
+    const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
+    const subtitle = (game === 'Oggetti')
+      ? `∞ pacchetti • ${totalCards} carte`
+      : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
+    btn.innerHTML = `
+      <div class="prev" style="background-image:url('${back}')"></div>
+      <div class="meta">
+        <span class="name">${game}</span>
+        <span class="price">${subtitle}</span>
+      </div>`;
+    btn.addEventListener('click', ()=>{
+      GAME_STATE.selected = game;
+      applyPackVisual();
+      [...gamePicker.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
+      btn.setAttribute('aria-selected','true');
+      updateOpenBtnEnabled();
+    }, {passive:true});
+    frag.appendChild(btn);
+  });
+  gamePicker.appendChild(frag);
+  pricePill.textContent = `💰 Costo: ${PACK_COST_PER_GAME[GAME_STATE.selected]}`;
+};
+
+// Patch: renderPacksStrip (se definito) filtra in base alla sezione
+const _renderPacksStrip_orig = typeof renderPacksStrip === 'function' ? renderPacksStrip : null;
+window.renderPacksStrip = function(){
+  const container = document.getElementById('packsStrip');
+  if (!container) return;
+  const games = getVisibleGames();
+  container.innerHTML = '';
+  games.forEach(game => {
+    // Piccola card per ogni pacco disponibile nel gioco selezionato
+    const totalPacks = (GAME_STATE.packs[game]||[]).length;
+    const left = Math.max(0, totalPacks - (GAME_STATE.cursor[game]||0));
+    const card = document.createElement('div');
+    card.className = 'featured-card';
+    const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
+    card.innerHTML = `
+      <img src="${back}" alt="Anteprima ${game}">
+      <div style="margin-top:6px;font-weight:700">${game}</div>
+      <div class="featured-cost">${game==='Oggetti' ? '∞' : `${left}/${totalPacks}`} pacchi</div>
+    `;
+    card.addEventListener('click', ()=>{
+      GAME_STATE.selected = game;
+      applyPackVisual();
+      updateOpenBtnEnabled();
+      // evidenzia corrispondente chip
+      document.querySelectorAll('#gamePicker .choice').forEach(c=>c.setAttribute('aria-selected','false'));
+      const chip = document.querySelector(`#gamePicker .choice[data-game="${CSS.escape(game)}"]`);
+      if (chip) chip.setAttribute('aria-selected','true');
+      // Scroll a vista
+      const pack = document.getElementById('pack'); 
+      if (pack) pack.scrollIntoView({behavior:'smooth', block:'center'});
+    }, {passive:true});
+    container.appendChild(card);
+  });
+};
 </script>
 
 </body>
