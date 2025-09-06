@@ -1285,32 +1285,51 @@ function renderPacksStrip(){
 
 // === Featured strip rendering (only: Wonderkid, Patatine) ===
 function renderPacksStrip(){
-  const strip = document.getElementById('packsStrip');
-  if (!strip) return;
-  const FEATURED_LIST = ['Wonderkid','Patatine']; // solo quelli richiesti
-  strip.innerHTML='';
-  const frag = document.createDocumentFragment();
-  FEATURED_LIST.forEach(game => {
-    if (!PACK_BACK_BY_GAME[game]) return;
-    const card = document.createElement('div');
+  if (!packsStrip) return;
+  packsStrip.innerHTML = '';
+
+  // Determine which list of games to show based on CURRENT_SECTION and STORE_SECTIONS
+  const section = (typeof window !== 'undefined' && window.CURRENT_SECTION) ? window.CURRENT_SECTION : 'featured';
+  let list = [];
+  if (typeof window !== 'undefined' && window.STORE_SECTIONS && Array.isArray(window.STORE_SECTIONS[section])) {
+    list = window.STORE_SECTIONS[section].slice();
+  } else if (typeof VALID_GAMES !== 'undefined') {
+    list = VALID_GAMES.slice();
+  }
+
+  list.forEach((game) => {
+    const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
+    const left = packsLeft(game);
+    const total = (GAME_STATE.packs[game] || []).length;
+
+    const card = document.createElement('button');
+    card.type = 'button';
     card.className = 'featured-card';
-    card.setAttribute('data-game', game);
+    if (GAME_STATE.selected === game) card.setAttribute('aria-current', 'true');
+
+    const subtitle = (game === 'Patatine' || game === 'Wonderkid') ? 'Special' :
+                     (game === 'Gold' || game === 'Silver' || game === 'Bronze') ? 'Base' : '';
+
     card.innerHTML = `
-      <img src="${PACK_BACK_BY_GAME[game]}" alt="${game}" loading="lazy" decoding="async" />
-      <div>${game}</div>
-      <div class="featured-cost">Costo: ${PACK_COST_PER_GAME[game] || 0}</div>
+      <img src="${back}" alt="${game}" loading="lazy" decoding="async" />
+      <div class="featured-title">${game}</div>
+      <div class="featured-subtitle">${subtitle}</div>
+      <div class="featured-meta">
+        <span class="featured-left">${left} rimasti</span>
+        <span class="featured-total">${total} pacchi</span>
+      </div>
     `;
+
     card.addEventListener('click', () => {
       GAME_STATE.selected = game;
       applyPackVisual();
       updateOpenBtnEnabled();
-      // evidenzia selezione
-      [...strip.children].forEach(el => el.classList.remove('is-selected'));
-      card.classList.add('is-selected');
+      document.querySelectorAll('.featured-card[aria-current="true"]').forEach(x => x.removeAttribute('aria-current'));
+      card.setAttribute('aria-current', 'true');
     }, {passive:true});
-    frag.appendChild(card);
+
+    packsStrip.appendChild(card);
   });
-  strip.appendChild(frag);
 }
 
 </script>
@@ -1393,6 +1412,34 @@ document.addEventListener('DOMContentLoaded', function(){
     }catch(e){ console.warn('nav init error', e); }
   });
 })();
+</script>
+
+
+<script>
+// Keep the section in a global so other scripts calling renderPacksStrip() respect the chosen view
+window.CURRENT_SECTION = window.CURRENT_SECTION || 'featured';
+document.addEventListener('DOMContentLoaded', function(){
+  const sidebar = document.querySelector('.fc-sidebar');
+  if (!sidebar) return;
+  const map = { featured:'Featured', new:'Ultimi arrivi', base:'Pacchetti base', all:'Tutti i pacchi' };
+  const titleEl = document.querySelector('.fc-title') || document.querySelector('.section-title') || null;
+
+  sidebar.querySelectorAll('li[data-section]').forEach(li => {
+    li.addEventListener('click', () => {
+      window.CURRENT_SECTION = li.getAttribute('data-section');
+      // Update active class
+      sidebar.querySelectorAll('li').forEach(x => x.classList.remove('active'));
+      li.classList.add('active');
+      // Update title
+      if (titleEl && map[window.CURRENT_SECTION]) titleEl.textContent = map[window.CURRENT_SECTION];
+      // Re-render cards using the central renderer so every other script stays consistent
+      try { renderPacksStrip(); } catch(e){ console.warn('renderPacksStrip error', e); }
+    }, {passive:true});
+  });
+
+  // Ensure initial render honors CURRENT_SECTION
+  try { renderPacksStrip(); } catch(e){ console.warn('first render error', e); }
+});
 </script>
 
 </body>
