@@ -232,6 +232,11 @@ header{ top: var(--fcbar-h); }
   color: #fff;
 }
 </style>
+<style>
+/* === STORE SECTIONS (clickable navigation enabled) === */
+.fc-sidebar li { user-select: none; }
+.fc-sidebar li[data-section] { cursor:pointer; pointer-events:auto; }
+</style>
 
 </head>
 <body>
@@ -256,15 +261,23 @@ header{ top: var(--fcbar-h); }
 <aside class="fc-sidebar">
   <ul>
     <li class="title">Store</li>
-    <li class="active">Featured</li>
-    <li>Promo Packs</li>
-    <li>Provisions</li>
-    <li>Classic Packs</li>
-    <li class="title">Season 1</li>
-    <li>Stadium Items</li>
-    <li>Stadium Bundles</li>
+    <li class="active" data-section="featured">Featured</li>
+    <li data-section="new">Ultimi arrivi</li>
+    <li data-section="base">Pacchetti base</li>
+    <li data-section="all">Tutti i pacchi</li>
   </ul>
 </aside>
+
+<script>
+// === Sezioni Store (solo etichette, nessuna navigazione attiva) ===
+window.STORE_SECTIONS = {
+  featured: ['Wonderkid','Patatine'],
+  new: ['Wonderkid'], // Ultimi arrivi
+  base: ['Gold','Silver','Bronze'], // Pacchetti base
+  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Wonderkid','Patatine','Gold','Silver','Bronze'])
+};
+</script>
+
 <!-- /FC25-like Dashboard UI -->
 
 <div class="flash-line" id="flashLine" aria-hidden="true"></div>
@@ -1269,6 +1282,117 @@ function renderPacksStrip(){
   packsStrip.ontouchend   = stop;
 }
 
+
+// === Featured strip rendering (only: Wonderkid, Patatine) ===
+function renderPacksStrip(){
+  const strip = document.getElementById('packsStrip');
+  if (!strip) return;
+  const FEATURED_LIST = ['Wonderkid','Patatine']; // solo quelli richiesti
+  strip.innerHTML='';
+  const frag = document.createDocumentFragment();
+  FEATURED_LIST.forEach(game => {
+    if (!PACK_BACK_BY_GAME[game]) return;
+    const card = document.createElement('div');
+    card.className = 'featured-card';
+    card.setAttribute('data-game', game);
+    card.innerHTML = `
+      <img src="${PACK_BACK_BY_GAME[game]}" alt="${game}" loading="lazy" decoding="async" />
+      <div>${game}</div>
+      <div class="featured-cost">Costo: ${PACK_COST_PER_GAME[game] || 0}</div>
+    `;
+    card.addEventListener('click', () => {
+      GAME_STATE.selected = game;
+      applyPackVisual();
+      updateOpenBtnEnabled();
+      // evidenzia selezione
+      [...strip.children].forEach(el => el.classList.remove('is-selected'));
+      card.classList.add('is-selected');
+    }, {passive:true});
+    frag.appendChild(card);
+  });
+  strip.appendChild(frag);
+}
+
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  try{ renderPacksStrip(); }catch(e){ console.warn('renderPacksStrip missing?', e); }
+});
+</script>
+
+
+<script>
+// === Navigation and section rendering ===
+(function(){
+  // Keep a reference to title element if it exists
+  const titleEl = document.querySelector('.fc-title') || document.querySelector('.section-title') || null;
+  const strip = document.getElementById('packsStrip');
+
+  function renderSection(sectionKey){
+    if (!strip || !window.STORE_SECTIONS) return;
+    const list = (window.STORE_SECTIONS[sectionKey] || []).slice();
+    strip.innerHTML='';
+    const frag = document.createDocumentFragment();
+    list.forEach(game => {
+      if (!window.PACK_BACK_BY_GAME || !PACK_BACK_BY_GAME[game]) return;
+      const card = document.createElement('div');
+      card.className = 'featured-card';
+      card.setAttribute('data-game', game);
+      card.innerHTML = `
+        <img src="${PACK_BACK_BY_GAME[game]}" alt="${game}" loading="lazy" decoding="async" />
+        <div>${game}</div>
+        <div class="featured-cost">Costo: ${PACK_COST_PER_GAME[game] || 0}</div>
+      `;
+      card.addEventListener('click', () => {
+        GAME_STATE.selected = game;
+        applyPackVisual();
+        updateOpenBtnEnabled();
+        [...strip.children].forEach(el => el.classList.remove('is-selected'));
+        card.classList.add('is-selected');
+      }, {passive:true});
+      frag.appendChild(card);
+    });
+    strip.appendChild(frag);
+    // Update title text to reflect section (optional)
+    if (titleEl){
+      const map = {
+        featured: 'Featured',
+        new: 'Ultimi arrivi',
+        base: 'Pacchetti base',
+        all: 'Tutti i pacchi'
+      };
+      titleEl.textContent = map[sectionKey] || 'Store';
+    }
+  }
+
+  // Add click handlers to sidebar items
+  function bindSidebar(){
+    const sidebar = document.querySelector('.fc-sidebar');
+    if (!sidebar) return;
+    sidebar.querySelectorAll('li[data-section]').forEach(li => {
+      li.addEventListener('click', () => {
+        // Active state
+        sidebar.querySelectorAll('li').forEach(x => x.classList.remove('active'));
+        li.classList.add('active');
+        const key = li.getAttribute('data-section');
+        renderSection(key);
+      }, {passive:true});
+    });
+  }
+
+  // Expose for other scripts if needed
+  window.renderSection = renderSection;
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function(){
+    try{
+      bindSidebar();
+      renderSection('featured'); // default view
+    }catch(e){ console.warn('nav init error', e); }
+  });
+})();
 </script>
 
 </body>
