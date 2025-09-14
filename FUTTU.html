@@ -244,13 +244,6 @@ header{ top: var(--fcbar-h); }
 #gamePicker, .choices { display: none !important; }
 </style>
 
-
-<style id="editable-balances-css">
-.editable-balances input::-webkit-outer-spin-button,
-.editable-balances input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.editable-balances input[type=number] { -moz-appearance:textfield; }
-</style>
-
 </head>
 <body>
 
@@ -265,6 +258,8 @@ header{ top: var(--fcbar-h); }
     </nav>
   </div>
   <div class="fc-right">
+    <div class="fc-balance"><span class="fc-ico fc-coin"></span><b id="fc-coins">5,360</b></div>
+    <div class="fc-balance"><span class="fc-ico fc-gem"></span><b id="fc-gems">550</b><small>/1,000</small></div>
     <div class="fc-prof"><span class="dot"></span></div>
   </div>
 </div>
@@ -307,21 +302,8 @@ window.STORE_SECTIONS = {
         <span class="pill" id="pointsBadge">Punti: —</span>
         <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
         <a href="https://pavoniingrifati.github.io/vetrina-carte/my-cards" class="btn" id="myCardsBtn">🗂️ Le mie carte</a>
+        <button id="shareBtn" class="btn" disabled>🔗 Condividi pacchetto</button>
         <button id="bonusBtn" class="btn">🎁 Ottieni 1 punto</button>
-
-<div class="editable-balances" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:8px;">
-  <label class="pill edit-pill" style="display:inline-flex; gap:8px; align-items:center;">
-    <span class="fc-ico fc-coin"></span>
-    <input id="editCoins" type="number" min="0" step="1" inputmode="numeric"
-      style="width:110px; background:transparent; border:none; color:inherit; outline:none; text-align:right;" />
-  </label>
-  <label class="pill edit-pill" style="display:inline-flex; gap:8px; align-items:center;">
-    <span class="fc-ico" aria-label="likes" title="Likes" style="display:inline-flex; align-items:center; justify-content:center;">👍</span>
-    <input id="editLikes" type="number" min="0" step="1" inputmode="numeric"
-      style="width:90px; background:transparent; border:none; color:inherit; outline:none; text-align:right;" />
-  </label>
-</div>
-
         <a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Torna alla Home</a>
       </div>
     </div>
@@ -1123,7 +1105,7 @@ function showStage(cards){
   const last=cards.length-1; const frag=document.createDocumentFragment();
   cards.forEach((c,i)=>{ const el=makeCardEl(c,i===last); frag.appendChild(el); setDropIn(el,i) });
   stage.appendChild(frag);
-  var __sb=document.getElementById('shareBtn'); if(__sb) __sb.disabled=false;
+  document.getElementById('shareBtn').disabled=false;
   document.getElementById('log').textContent='Pacchetto pronto. Tocca le carte per rivelarle.';
 }
 
@@ -1138,8 +1120,8 @@ const shareBtn = document.getElementById('shareBtn');
 document.addEventListener('click', ()=>{ try{ ensureAudio() }catch{} }, {once:true});
 
 openBtn.addEventListener('click', async () => {
-  const BTN = openBtn; const SHARE = shareBtn;
-  BTN.disabled = true; if (SHARE) SHARE.disabled = true;
+  const BTN = openBtn, SHARE = shareBtn;
+  BTN.disabled = true; SHARE.disabled = true;
 
   const game = GAME_STATE.selected;
   const cost = PACK_COST_PER_GAME[game] || 0;
@@ -1165,7 +1147,7 @@ openBtn.addEventListener('click', async () => {
     else if (code === 'failed-precondition') msg = '⚙️ Versione offline non attiva. Ricarica la pagina.';
     document.getElementById('log').textContent = msg + ' (' + code + ')';
     console.error('[OPEN BTN ERROR]', code, e);
-    BTN.disabled = false; if (SHARE) SHARE.disabled = true;
+    BTN.disabled = false; SHARE.disabled = true;
     return;
   }
 
@@ -1192,7 +1174,7 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
     const size = PACK_SIZE_PER_GAME['Oggetti'] || 3;
     if (!pool.length) {
       document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nella serie Oggetto.';
-      BTN.disabled = false; if (SHARE) SHARE.disabled = true;
+      BTN.disabled = false; SHARE.disabled = true;
       return;
     }
     chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
@@ -1202,7 +1184,7 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
     const idx = GAME_STATE.cursor[game] || 0;
     if (idx >= list.length){
       document.getElementById('log').textContent = '❌ Pacchetti esauriti per questo game.';
-      BTN.disabled = false; if (SHARE) SHARE.disabled = true;
+      BTN.disabled = false; SHARE.disabled = true;
       return;
     }
     chosen = list[idx].slice();
@@ -1624,38 +1606,6 @@ window.renderPacksStrip = function(){
     container.appendChild(card);
   });
 };
-</script>
-
-
-<script>
-(function(){
-  function loadEditableBalances(){
-    try{
-      const coins = Number(localStorage.getItem('ui_coins') || '5360');
-      const likes = Number(localStorage.getItem('ui_likes') || '550');
-      const ec = document.getElementById('editCoins');
-      const el = document.getElementById('editLikes');
-      if (ec) ec.value = isNaN(coins) ? 0 : coins;
-      if (el) el.value = isNaN(likes) ? 0 : likes;
-    }catch(e){}
-  }
-  function saveEditableBalances(){
-    try{
-      const ec = document.getElementById('editCoins');
-      const el = document.getElementById('editLikes');
-      if (ec) localStorage.setItem('ui_coins', String(ec.value || 0));
-      if (el) localStorage.setItem('ui_likes', String(el.value || 0));
-    }catch(e){}
-  }
-  document.addEventListener('input', function(e){
-    if (e.target && (e.target.id === 'editCoins' || e.target.id === 'editLikes')){
-      saveEditableBalances();
-    }
-  }, {passive:true});
-  document.addEventListener('DOMContentLoaded', loadEditableBalances);
-  // In caso lo script venga caricato dopo:
-  loadEditableBalances();
-})();
 </script>
 
 </body>
