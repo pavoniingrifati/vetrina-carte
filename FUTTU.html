@@ -925,6 +925,52 @@ const resetPacksBtn = document.getElementById('resetPacksBtn');
 const gamePicker = document.getElementById('gamePicker');
 const packEl = document.getElementById('pack');
 
+
+
+/** =========================
+ *  STRISCIA ORIZZONTALE: tutti i pacchetti in fila con scrollbar
+ *  ========================= */
+function renderPacksStrip(){
+  try {
+    const strip = document.getElementById('packsStrip');
+    if (!strip) return;
+    strip.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    for (const game of VALID_GAMES){
+      const imgSrc = PACK_BACK_BY_GAME[game] || 'patatrine.png';
+      const cost = Number(PACK_COST_PER_GAME[game] || 0);
+      const totalPacks = (GAME_STATE.packs[game] || []).length;
+      const left = (game === 'Oggetti') ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
+      const cardsCount = GAME_STATE.pools[game]?.length || 0;
+      const subtitle = (game === 'Oggetti')
+        ? `${cardsCount} carte`
+        : `${left}/${totalPacks} pacchi • ${cardsCount} carte`;
+
+      const card = document.createElement('div');
+      card.className = 'featured-card';
+      card.setAttribute('data-game', game);
+      card.innerHTML = `
+        <img src="${imgSrc}" alt="${game}" />
+        <div class="featured-cost">${game}</div>
+        <div class="featured-cost">${cost > 0 ? (cost + ' pts') : 'Gratis'}</div>
+        <div class="featured-sub" style="margin-top:4px; color:#cfd6ff; font-size:12px;">${subtitle}</div>
+      `;
+      card.addEventListener('click', ()=>{
+        GAME_STATE.selected = game;
+        applyPackVisual();
+        updateOpenBtnEnabled();
+        // evidenzia selezione nella strip
+        document.querySelectorAll('#packsStrip .featured-card').forEach(c=>c.style.outline='');
+        card.style.outline = '2px solid rgba(110,231,255,.5)';
+      }, {passive:true});
+      frag.appendChild(card);
+    }
+    strip.appendChild(frag);
+  } catch(e){
+    console.warn('[renderPacksStrip]', e);
+  }
+}
+
 function packsLeft(game){ return Math.max(0, (GAME_STATE.packs[game]||[]).length - (GAME_STATE.cursor[game]||0)); }
 
 function renderGamePicker(){
