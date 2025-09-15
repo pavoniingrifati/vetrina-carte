@@ -156,7 +156,7 @@ body{ --fcbar-h:56px; --side-w:240px; }
   padding:6px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.10) }
 .fc-ico{ width:16px; height:16px; display:inline-block; border-radius:50% }
 .fc-coin{ background: radial-gradient(circle at 30% 30%, #fff8, #ffcc00); box-shadow:0 0 8px #ffcc00 }
-.fc-gem{ background: radial-gradient(circle at 30% 30%, #fff8, #6ee7ff); box-shadow:0 0 8px #6ee7ff }
+.fc-like{ background: radial-gradient(circle at 30% 30%, #fff8, #6ee7ff); box-shadow:0 0 8px #6ee7ff }
 .fc-prof{ width:28px; height:28px; border-radius:999px; background:linear-gradient(180deg,#29345a,#111833); border:1px solid rgba(255,255,255,.12); display:grid; place-items:center }
 .fc-prof .dot{ width:6px; height:6px; border-radius:999px; background:#6ee7ff; box-shadow:0 0 8px #6ee7ff }
 
@@ -258,9 +258,8 @@ header{ top: var(--fcbar-h); }
     </nav>
   </div>
   <div class="fc-right">
-    <div class="fc-balance"><span class="fc-ico fc-coin"></span><b id="fc-coins">5,360</b></div>
-    <div class="fc-balance"><span class="fc-ico fc-gem"></span><b id="fc-gems">550</b><small>/1,000</small></div>
     <div class="fc-prof"><span class="dot"></span></div>
+  </div>
   </div>
 </div>
 
@@ -310,6 +309,12 @@ window.STORE_SECTIONS = {
       <span class="pill" id="fairnessNote">📦 Pacchetti disponibili:</span>
       <button id="resetPacksBtn" class="btn">♻️ Reset pacchetti</button>
     </div>
+
+<div class="fc-balance-bar" id="balanceCenter" aria-label="Saldo">
+  <div class="fc-balance"><span class="fc-ico fc-coin"></span><b id="fc-coins" contenteditable="true">5,360</b></div>
+  <div class="fc-balance"><span class="fc-ico fc-like"></span><b id="fc-likes" contenteditable="true">550</b></div>
+</div>
+
 <div id="packsStrip" class="featured-carousel" aria-label="Pacchetti"></div>
 
 
@@ -1525,5 +1530,61 @@ window.renderPacksStrip = function(){
 };
 </script>
 
+<script>
+// ===== Editable Coins & Likes =====
+(function(){
+  const coinsEl = document.getElementById('fc-coins');
+  const likesEl = document.getElementById('fc-likes');
+
+  function parseNumber(s){
+    if (!s) return 0;
+    return Number(String(s).replace(/[^0-9]/g,'')) || 0;
+  }
+  function formatNumber(n){
+    try{ return n.toLocaleString('it-IT'); } catch { return String(n); }
+  }
+  function load(){
+    const c = localStorage.getItem('fc_coins');
+    const l = localStorage.getItem('fc_likes');
+    if (c!==null) coinsEl.textContent = formatNumber(parseNumber(c));
+    if (l!==null) likesEl.textContent = formatNumber(parseNumber(l));
+  }
+  function saveCoins(){ localStorage.setItem('fc_coins', String(parseNumber(coinsEl.textContent))); }
+  function saveLikes(){ localStorage.setItem('fc_likes', String(parseNumber(likesEl.textContent))); }
+
+  function onEdit(el, saver){
+    el.addEventListener('input', ()=>{
+      // keep only digits while typing
+      const pos = window.getSelection && window.getSelection().anchorOffset;
+      const v = el.textContent;
+      const num = parseNumber(v);
+      el.textContent = String(num);
+      // restore caret at end
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges(); sel.addRange(range);
+    });
+    el.addEventListener('blur', ()=>{
+      el.textContent = formatNumber(parseNumber(el.textContent));
+      saver();
+      // reflect to topbar if there are mirrored elements
+      const mirrorId = el.id === 'fc-coins' ? 'fc-coins' : 'fc-likes';
+      document.querySelectorAll('#'+mirrorId).forEach((m)=>{ if (m!==el) m.textContent = el.textContent; });
+      updateOpenBtnEnabled && updateOpenBtnEnabled();
+    });
+    el.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter'){ e.preventDefault(); el.blur(); }
+    });
+  }
+
+  if (coinsEl && likesEl){
+    load();
+    onEdit(coinsEl, saveCoins);
+    onEdit(likesEl, saveLikes);
+  }
+})();
+</script>
 </body>
 </html>
