@@ -26,7 +26,7 @@ header{ position:sticky; top:0; z-index:20; backdrop-filter: blur(10px);
 .wrap{max-width:1200px; margin:0 auto; padding:20px}
 .title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
 h1{margin:0; font-size:clamp(20px,3.6vw,34px)} .subtitle{color:var(--muted)}
-.toolbar{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; align-items:center}
+.toolbar{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; align-items:center} .toolbar{justify-content:space-between}
 .pill{display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px;
   border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text)}
 .btn{background:linear-gradient(180deg,#1b2a4d,#152141); border:1px solid rgba(110,231,255,.35);
@@ -157,6 +157,7 @@ body{ --fcbar-h:56px; --side-w:240px; }
 .fc-ico{ width:16px; height:16px; display:inline-block; border-radius:50% }
 .fc-coin{ background: radial-gradient(circle at 30% 30%, #fff8, #ffcc00); box-shadow:0 0 8px #ffcc00 }
 .fc-gem{ background: radial-gradient(circle at 30% 30%, #fff8, #6ee7ff); box-shadow:0 0 8px #6ee7ff }
+.fc-link{ background: radial-gradient(circle at 30% 30%, #fff8, #a3a3ff); box-shadow:0 0 8px #a3a3ff }
 .fc-prof{ width:28px; height:28px; border-radius:999px; background:linear-gradient(180deg,#29345a,#111833); border:1px solid rgba(255,255,255,.12); display:grid; place-items:center }
 .fc-prof .dot{ width:6px; height:6px; border-radius:999px; background:#6ee7ff; box-shadow:0 0 8px #6ee7ff }
 
@@ -258,8 +259,8 @@ header{ top: var(--fcbar-h); }
     </nav>
   </div>
   <div class="fc-right">
-    <div class="fc-balance"><span class="fc-ico fc-coin"></span><b id="fc-coins">5,360</b></div>
-    <div class="fc-balance"><span class="fc-ico fc-gem"></span><b id="fc-gems">550</b><small>/1,000</small></div>
+    <div class="fc-balance"><span class="fc-ico fc-coin"></span><b id="fc-coins" contenteditable="true">5,360</b></div>
+    <div class="fc-balance"><span class="fc-ico fc-link"></span><b id="fc-likes" contenteditable="true">550</b></div>
     <div class="fc-prof"><span class="dot"></span></div>
   </div>
 </div>
@@ -302,7 +303,6 @@ window.STORE_SECTIONS = {
         <span class="pill" id="pointsBadge">Punti: —</span>
         <button id="openBtn" class="btn">🎁 Apri pacchetto</button>
         <a href="https://pavoniingrifati.github.io/vetrina-carte/my-cards" class="btn" id="myCardsBtn">🗂️ Le mie carte</a>
-        <button id="shareBtn" class="btn" disabled>🔗 Condividi pacchetto</button>
         <button id="bonusBtn" class="btn">🎁 Ottieni 1 punto</button>
         <a href="https://pavoniingrifati.github.io/vetrina-carte/" class="btn">🏠 Torna alla Home</a>
       </div>
@@ -310,6 +310,7 @@ window.STORE_SECTIONS = {
 
     <div class="toolbar">
       <span class="pill" id="fairnessNote">📦 Pacchetti disponibili:</span>
+      <div class="fc-toolbar-balances" style="display:flex;gap:8px;align-items:center;margin-left:auto;"><div class="fc-balance"><span class="fc-ico fc-coin"></span><b id="fc-coins" contenteditable="true">5,360</b></div><div class="fc-balance"><span class="fc-ico fc-link"></span><b id="fc-likes" contenteditable="true">550</b></div></div>
       <button id="resetPacksBtn" class="btn">♻️ Reset pacchetti</button>
     </div>
 <div id="packsStrip" class="featured-carousel" aria-label="Pacchetti"></div>
@@ -354,32 +355,7 @@ window.STORE_SECTIONS = {
     <div class="veil"></div>
     <div class="spark"></div>
   </article>
-</template>
-
-<!-- Share Fallback Modal -->
-<div class="shareModal" id="shareModal" aria-hidden="true" role="dialog" aria-modal="true" style="display:none">
-  <div class="shareCard">
-    <div class="shareHeader">
-      <strong>Condividi pacchetto</strong>
-      <button type="button" class="btn" id="closeShare">✖️ Chiudi</button>
-    </div>
-    <div class="shareRow" style="margin-bottom:10px">
-      <a class="shareItem" id="waShare" target="_blank" rel="noopener">WhatsApp</a>
-      <a class="shareItem" id="xShare" target="_blank" rel="noopener">X (Twitter)</a>
-      <a class="shareItem" id="fbShare" target="_blank" rel="noopener">Facebook</a>
-      <a class="shareItem" id="tgShare" target="_blank" rel="noopener">Telegram</a>
-    </div>
-    <div style="display:flex; gap:8px; align-items:center">
-      <input class="inputLike" id="shareLink" readonly />
-      <button type="button" class="btn" id="copyLink">📋 Copia</button>
-    </div>
-    <div class="shareActions">
-      <button type="button" class="btn" id="shareOk">OK</button>
-    </div>
-  </div>
-</div>
-
-<!-- Firebase (v8) -->
+</template><!-- Firebase (v8) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -1105,7 +1081,7 @@ function showStage(cards){
   const last=cards.length-1; const frag=document.createDocumentFragment();
   cards.forEach((c,i)=>{ const el=makeCardEl(c,i===last); frag.appendChild(el); setDropIn(el,i) });
   stage.appendChild(frag);
-  document.getElementById('shareBtn').disabled=false;
+  var _s = document.getElementById('shareBtn'); if(_s) _s.disabled=false;
   document.getElementById('log').textContent='Pacchetto pronto. Tocca le carte per rivelarle.';
 }
 
@@ -1606,6 +1582,35 @@ window.renderPacksStrip = function(){
     container.appendChild(card);
   });
 };
+</script>
+
+
+<script>
+// === Editable balances: persist to localStorage ===
+(function(){
+  function setupEditable(id, key){
+    const el = document.getElementById(id);
+    if(!el) return;
+    // load saved
+    const saved = localStorage.getItem(key);
+    if(saved !== null) el.textContent = saved;
+    // sanitize input to keep numbers and basic punctuation
+    function clean(s){
+      return String(s || '').replace(/[^0-9.,]/g,'');
+    }
+    el.addEventListener('input', ()=>{
+      const v = clean(el.textContent);
+      localStorage.setItem(key, v);
+    });
+    el.addEventListener('blur', ()=>{
+      const v = clean(el.textContent);
+      el.textContent = v;
+      localStorage.setItem(key, v);
+    });
+  }
+  setupEditable('fc-coins','fc_coins_value');
+  setupEditable('fc-likes','fc_likes_value');
+})();
 </script>
 
 </body>
