@@ -1089,13 +1089,10 @@ const flashLine = document.getElementById('flashLine');
 const flashScreen = document.getElementById('flashScreen');
 const packArea = document.getElementById('packArea');
 const packBox = document.getElementById('pack');
-const shareBtn = 
 document.addEventListener('click', ()=>{ try{ ensureAudio() }catch{} }, {once:true});
 
 openBtn.addEventListener('click', async () => {
-  const BTN = openBtn, SHARE = shareBtn;
-  BTN.disabled = true; SHARE.disabled = true;
-
+  const BTN = openBtn;
   const game = GAME_STATE.selected;
   const cost = PACK_COST_PER_GAME[game] || 0;
 
@@ -1120,7 +1117,6 @@ openBtn.addEventListener('click', async () => {
     else if (code === 'failed-precondition') msg = '⚙️ Versione offline non attiva. Ricarica la pagina.';
     document.getElementById('log').textContent = msg + ' (' + code + ')';
     console.error('[OPEN BTN ERROR]', code, e);
-    BTN.disabled = false; SHARE.disabled = true;
     return;
   }
 
@@ -1147,7 +1143,6 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
     const size = PACK_SIZE_PER_GAME['Oggetti'] || 3;
     if (!pool.length) {
       document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nella serie Oggetto.';
-      BTN.disabled = false; SHARE.disabled = true;
       return;
     }
     chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
@@ -1157,7 +1152,6 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
     const idx = GAME_STATE.cursor[game] || 0;
     if (idx >= list.length){
       document.getElementById('log').textContent = '❌ Pacchetti esauriti per questo game.';
-      BTN.disabled = false; SHARE.disabled = true;
       return;
     }
     chosen = list[idx].slice();
@@ -1192,56 +1186,6 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
       console.error(e);
     }
   }
-});
-
-/** =========================
- *  SHARE
- *  ========================= */
-function openShareFallback(shareData){
-  const modal = document.getElementById('shareModal');
-  const linkInput = document.getElementById('shareLink');
-  const closeBtn = document.getElementById('closeShare');
-  const okBtn = document.getElementById('shareOk');
-  const copyBtn = document.getElementById('copyLink');
-  const wa = document.getElementById('waShare'), x = document.getElementById('xShare'), fb = document.getElementById('fbShare'), tg = document.getElementById('tgShare');
-
-  const url = encodeURIComponent(shareData.url);
-  const text = encodeURIComponent(shareData.text);
-
-  wa.href = `https://api.whatsapp.com/send?text=${text}%20${url}`;
-  x.href  = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
-  fb.href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-  tg.href = `https://t.me/share/url?url=${url}&text=${text}`;
-
-  linkInput.value = shareData.url;
-
-  const close = ()=>{ modal.style.display='none'; modal.setAttribute('aria-hidden','true') };
-  closeBtn.onclick = close; okBtn.onclick = close;
-
-  copyBtn.onclick = async ()=>{
-    try{
-      await navigator.clipboard.writeText(shareData.url);
-      copyBtn.textContent = '✅ Copiato';
-      setTimeout(()=>copyBtn.textContent='📋 Copia',1200);
-    }catch{
-      copyBtn.textContent = '❌ Errore';
-      setTimeout(()=>copyBtn.textContent='📋 Copia',1200);
-    }
-  };
-
-  modal.style.display='flex'; modal.setAttribute('aria-hidden','false');
-}
-
-document.getElementById('shareBtn').addEventListener('click', async ()=>{
-  const shareData = {
-    title: 'FUTTU – Il mio pacchetto',
-    text: 'Guarda il pacchetto che ho aperto!',
-    url: window.location.href
-  };
-  if (navigator.share) {
-    try { await navigator.share(shareData); return; } catch (err) { console.warn('Condivisione annullata o fallita', err); }
-  }
-  openShareFallback(shareData);
 });
 
 /** =========================
