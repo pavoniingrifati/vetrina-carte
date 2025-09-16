@@ -776,6 +776,7 @@ async function loadCards(){
 
     // ====== Helper ======
     const isGotham = (x)=> norm(x)==='gotham city';
+const isFantaballa = (x)=> norm(x)==='fantaballa fc';
 
     // ====== Pools per game ======
 
@@ -842,6 +843,44 @@ async function loadCards(){
 
     // Gold — pacchetti manuali (ognuno è un pack finito con carte scelte da me)
 const BY_ID = Object.fromEntries(cleaned.map(c => [c.id, c]));
+/* ===== ENFORCE PACK RULES (Fantaballa-only except series "Oggetto") ===== */
+const isAllowedForBSG = (c) => !!c && (isFantaballa(c.game) || norm(c.series)==='oggetto');
+
+// Pools per rarità solo Fantaballa (usate per rimpiazzi)
+const poolFantaByRarity = {};
+for (const r of Object.keys(rarityRank)) poolFantaByRarity[norm(r)] = [];
+for (const c of cleaned) {
+  if (isFantaballa(c.game)) {
+    const r = norm(c.rarity);
+    (poolFantaByRarity[r] || (poolFantaByRarity[r] = [])).push(c);
+  }
+}
+function pickReplacement(targetRarity, seen){
+  const r = norm(targetRarity||'');
+  const pref = (poolFantaByRarity[r]||[]).filter(x=>!seen.has(x.id));
+  if (pref.length) return pref[Math.floor(Math.random()*pref.length)];
+  // Se non ne trovo della stessa rarità, prendo qualunque Fantaballa non ancora usata
+  const any = Object.values(poolFantaByRarity).flat().filter(x=>!seen.has(x.id));
+  return any.length ? any[Math.floor(Math.random()*any.length)] : null;
+}
+function fixPackIds(ids, sizeLimit){
+  const seen = new Set();
+  const out = [];
+  for (const id of ids){
+    const c = BY_ID[id];
+    if (isAllowedForBSG(c) && !seen.has(c.id)) { out.push(c); seen.add(c.id); continue; }
+    const repl = pickReplacement(c && c.rarity, seen);
+    if (repl){ out.push(repl); seen.add(repl.id); }
+  }
+  // Se ancora corto, riempiamo con Fantaballa a caso (no doppie)
+  while (out.length < (sizeLimit||9)){
+    const repl = pickReplacement(null, seen);
+    if (!repl) break;
+    out.push(repl); seen.add(repl.id);
+  }
+  return out.slice(0, sizeLimit||ids.length);
+}
+
 
 /* 
  * Ogni elemento dell’array è UN PACCHETTO GOLD.
@@ -865,30 +904,55 @@ const PACKS_GOLD = [
 
     // Silver — pacchetti manuali (6 carte ciascuno, scelti da te)
 const PACKS_SILVER = [
- ["Oggetto-rimuoviinfortunio","Slotcard-Tactics","Oggetto-trasferimentospecial","Andrea2000_silver","TheTrueIba_silver","antonionapoli-silver-72","Fedeandzi_silver","Samu_pala_silver","Anarchia_assoluta_silver"],
-  ["Maglia-Tactics","Bronze-451","Bronze-Addormenta","Karten-Derkos","DaRiz_silver","Alexciax_Silver","Silver-Xavier","Marcoesmarco-Silver","Fedeandzi_silver"],
-  ["Slot-Tactics","Oggetto-rimuoviinfortunio","Bronze-442","Andrea2000_silver","antonionapoli-silver-72","Silver-Xavier","Silver-Flavio","Fedeandzi_silver","Karten-Derkos"],
-  ["Oggetto-trasferimentobronze","Slot-Tactics","Bronze-433","DaRiz_silver","brandolatini-silver-83","Silver-Flavio","kaos13-silver-82","Anarchia_assoluta_silver","Fedeandzi_silver"],
-  ["Passaggicorti-Silverog","Oggetto-trasferimentosilver","MCCC-Tactics","Mattiagree-silver","Abatihno_Silver","Andrea2000_silver","Walter_white_silver","Friggi_silver","brandolatini-silver-83"],
-  ["Bronze-ASCOC","Fisioterapista-Tactics","Oggetto-trasferimentobronze","Alexciax_Silver","kaos13-silver-82","DaRiz_silver","Francesco_massini_silver","Anarchia_assoluta_silver","Andrea2000_silver"],
-  ["Bronze-Vice","Oggetto-trasferimentospecial","Oggetto-rimuoviinfortunio","Karten-Derkos","Silver-Xavier","brandolatini-silver-83","Gabriele_silver","Fedeandzi_silver","Marcoesmarco-Silver"],
-  ["Bronze-Addormenta","Oggetto-rimuoviinfortunio2","Patatine","Anarchia_assoluta_silver","DaRiz_silver","Abatihno_Silver","Silver-Flavio","Alexciax_Silver","Karten-Derkos"],
-  ["Oggetto-trasferimentosilver","Maglia-Tactics","Oggetto-trasferimentospecial","Mattiagree-silver","Silver-Xavier","antonionapoli-silver-72","brandolatini-silver-83","Marcoesmarco-Silver","Andrea2000_silver"],
-  ["Slotcard-Tactics","Oggetto-trasferimentosilverOggetto-trasferimentosilver","Oggetto-trasferimentobronze","kaos13-silver-82","Alexciax_Silver","DaRiz_silver","Anarchia_assoluta_silver","Fedeandzi_silver","Alexciax_Silver"]
-
+  [
+    "Evita-Silverog",
+    "Passaggio-Silverog",
+    "ASAD-Silverog",
+    "Davidonzoloo-Silver",
+    "DiegoFinamore-Silver",
+    "FK-Silver",
+    "KOLA-Silver",
+    "LorenzodaFirenze-Silver",
+    "manu3028-Silver"
+  ],
+  [
+    "ADED-Silverog",
+    "ADCOC-Silverog",
+    "Oggetto-rimuoviinfortunio",
+    "mariolangia11-Silver",
+    "pelatinho0-Silver",
+    "Reale-Silver",
+    "Abatinho-Silver",
+    "Davide-Silver",
+    "Marca-Silver"
+  ],
+  [
+    "Oggetto-trasferimentospecial",
+    "Oggetto-trasferimentobronze",
+    "Oggetto-rimuoviinfortunio2",
+    "Silver-Mrmello",
+    "Silver-Raphael",
+    "Silver-Nicknick",
+    "Silver-Luca",
+    "Silver-Lele",
+    "Silver-Balasco"
+  ],
+  [
+    "Bronze-ASCOC",
+    "Bronze-Vice",
+    "Bronze-451",
+    "Wateng-Silver",
+    "Davidonzoloo-Silver",
+    "mariolangia11-Silver",
+    "pelatinho0-Silver",
+    "Reale-Silver",
+    "Abatinho-Silver"
+  ]
 ];
 
 
-const packsSilverCards = PACKS_SILVER.map((ids, i) => {
-  const cards = ids.map(id => BY_ID[id]).filter(Boolean);
-  if (cards.length !== ids.length) {
-    const missing = ids.filter(id => !BY_ID[id]);
-    console.warn('[Silver] Pack', i+1, 'ID mancanti:', missing);
-  }
-  return cards.slice(0, PACK_SIZE_PER_GAME['Silver'] || 6);
-  renderPacksStrip();
 
-}).filter(p => p.length > 0);
+const packsSilverCards = PACKS_SILVER.map((ids, i) => fixPackIds(ids, PACK_SIZE_PER_GAME['Silver']||9)).filter(p=>p.length>0);
 
 GAME_STATE.pools['Silver'] = Array.from(new Set(packsSilverCards.flat()));
 GAME_STATE.packs['Silver'] = packsSilverCards;
@@ -908,29 +972,14 @@ const PACKS_BRONZE = [
   ["Bronze-Addormenta","Slot-Tactics","Passaggicorti-Silverog","Alexciax_bronze","Francesco_massini_bronze","GabrieleS-bronze","Fedeandzi_bronze","Friggi_bronze","carlo-bronze-83"]
 ];
 
-const packsBronzeCards = PACKS_BRONZE.map((ids, i) => {
-  const cards = ids.map(id => BY_ID[id]).filter(Boolean);
-  if (cards.length !== ids.length) {
-    const missing = ids.filter(id => !BY_ID[id]);
-    console.warn('[Bronze] Pack', i+1, 'ID mancanti:', missing);
-  }
-  return cards.slice(0, PACK_SIZE_PER_GAME['Bronze'] || 6);
-}).filter(p => p.length > 0);
+const packsBronzeCards = PACKS_BRONZE.map((ids, i) => fixPackIds(ids, PACK_SIZE_PER_GAME['Bronze']||9)).filter(p=>p.length>0);
 
 GAME_STATE.pools['Bronze'] = Array.from(new Set(packsBronzeCards.flat()));
 GAME_STATE.packs['Bronze'] = packsBronzeCards;
 
 
 /* Validazione + mapping ID -> carte */
-const packsGoldCards = PACKS_GOLD.map((ids, i) => {
-  const cards = ids.map(id => BY_ID[id]).filter(Boolean);
-  if (cards.length !== ids.length) {
-    const missing = ids.filter(id => !BY_ID[id]);
-    console.warn('[Gold] Pack', i+1, 'ID mancanti:', missing);
-  }
-  // Rispetta comunque la size configurata (9)
-  return cards.slice(0, PACK_SIZE_PER_GAME['Gold'] || 9);
-}).filter(p => p.length > 0);
+const packsGoldCards = PACKS_GOLD.map((ids, i) => fixPackIds(ids, PACK_SIZE_PER_GAME['Gold']||9)).filter(p=>p.length>0);
 
 /* Pool: somma delle carte usate (giusto per i contatori UI) */
 GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards.flat()));
