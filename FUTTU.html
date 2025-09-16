@@ -13,6 +13,12 @@
 
 <style>
 :root{
+  --bg:#071020; --panel:#0a162a; --card:#0d1b33; --card-2:#081226;
+  --text:#e0e8ff; --muted:#91a2c9; --accent:#4da6ff; --radius:18px;
+  --g-comune:rgba(154,178,255,.25); --g-non-comune:rgba(100,180,255,.35);
+  --g-rara:rgba(70,130,255,.45); --g-epica:rgba(130,160,255,.55);
+  --g-ultra-rara:rgba(180,210,255,.65); --g-season:rgba(60,120,255,.7);
+
   --bg:#0b0f19; --panel:#0f1526; --card:#121a2e; --card-2:#0d1325; --text:#ecf0ff; --muted:#a7b0d3; --accent:#6ee7ff; --radius:18px;
   --g-comune:rgba(154,163,178,.30); --g-non-comune:rgba(52,211,153,.35); --g-rara:rgba(96,165,250,.45);
   --g-epica:rgba(167,139,250,.55); --g-ultra-rara:rgba(251,191,36,.65); --g-season:rgba(239,68,68,.7);
@@ -324,8 +330,75 @@ header{ top: var(--fcbar-h); }
 #gamePicker, .choices { display: none !important; }
 </style>
 
+
+
+
+
+<!-- Gotham background (external file) + Bat-signal with custom logo -->
+<style id="gotham-bg-and-signal">
+  body {
+    margin:0;
+    background:
+      linear-gradient(180deg, rgba(5,10,22,.78), rgba(5,10,22,.9) 40%, rgba(5,10,22,.96)),
+      url('gotham.png') center bottom / cover no-repeat fixed,
+      var(--bg) !important;
+    color: var(--text);
+    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    overflow-x: hidden;
+  }
+
+  /* Bat-signal */
+  .bat-signal {
+    position: fixed;
+    right: 10vw;
+    top: 8vh;
+    width: 40vmin;
+    height: 40vmin;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    opacity: .45;
+    z-index: 5;
+    animation: pulse 6s ease-in-out infinite;
+  }
+  .bat-signal::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(220,235,255,.95), rgba(200,220,255,.35) 60%, rgba(200,220,255,0) 70%),
+      url('Bat%20approved.png') center/70% 70% no-repeat;
+    border-radius: 50%;
+    box-shadow: 0 0 40px rgba(200,220,255,.65), 0 0 120px rgba(200,220,255,.45);
+    filter: blur(.2px);
+  }
+  .bat-signal::after {
+    content: "";
+    position: absolute;
+    width: 120vmin;
+    height: 28vmin;
+    left: -105vmin;
+    top: 16vmin;
+    background: linear-gradient(90deg, rgba(190,210,255,0), rgba(190,210,255,.55) 25%, rgba(190,210,255,.35) 60%, rgba(190,210,255,0));
+    transform: rotate(-18deg);
+    filter: blur(2px);
+    opacity: .7;
+    animation: sweep 12s ease-in-out infinite;
+  }
+
+  @keyframes sweep {
+    0%, 100% { transform: rotate(-18deg) translateX(0); }
+    50% { transform: rotate(-14deg) translateX(6vmin); }
+  }
+  @keyframes pulse {
+    0%,100% { opacity: .32; filter: brightness(1); }
+    50% { opacity: .52; filter: brightness(1.15); }
+  }
+</style>
+
 </head>
 <body>
+<div class="bat-signal" aria-hidden="true"></div>
+
 
 <!-- FC25-like Dashboard UI -->
 <div class="fc-topbar">
