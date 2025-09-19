@@ -1,12 +1,13 @@
 
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Progressi Piloti — Skill & EXP (scala con Skill)</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Progressi Piloti — Skill &amp; EXP (scala con Skill)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<style>
     :root{
       --bg: #0b0d12;
       --surface: #121622;
@@ -46,29 +47,28 @@
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="brand">
-        <div class="logo" aria-hidden="true">
-          <svg viewBox="0 0 24 24" role="img" aria-label="Logo">
-            <path d="M21.93 7.23c-1.34-2.25-4.28-3.01-6.51-1.67l-3.9 2.33 1.53 2.56 3.9-2.33a2.5 2.5 0 1 1 2.5 4.33l-6.12 3.66 1.53 2.56 6.12-3.66c2.23-1.34 2.99-4.28 1.65-6.48zM4 7h6v3H4a2 2 0 0 0 0 4h6v3H4A5 5 0 0 1 4 7z"/>
-          </svg>
-        </div>
-        <div>
-          <div style="font-size:18px">Progressi Piloti</div>
-          <small>EXP scala con Skill: più forte = più EXP per livello</small>
-        </div>
-      </div>
-    </header>
-
-    <main id="grid" class="grid" aria-live="polite"></main>
-    <div id="empty" class="empty" hidden>Nessun pilota trovato.</div>
-
-    <footer>Metti questo file nella stessa cartella di <b>piloti.json</b>.</footer>
-  </div>
+<div class="wrap">
+<header>
+<div class="brand">
+<div aria-hidden="true" class="logo">
+<svg aria-label="Logo" role="img" viewbox="0 0 24 24">
+<path d="M21.93 7.23c-1.34-2.25-4.28-3.01-6.51-1.67l-3.9 2.33 1.53 2.56 3.9-2.33a2.5 2.5 0 1 1 2.5 4.33l-6.12 3.66 1.53 2.56 6.12-3.66c2.23-1.34 2.99-4.28 1.65-6.48zM4 7h6v3H4a2 2 0 0 0 0 4h6v3H4A5 5 0 0 1 4 7z"></path>
+</svg>
+</div>
+<div>
+<div style="font-size:18px">Progressi Piloti</div>
+<small>EXP scala con Skill: più forte = più EXP per livello</small>
+</div>
+</div>
+</header>
+<main aria-live="polite" class="grid" id="grid"></main>
+<div class="empty" hidden="" id="empty">Nessun pilota trovato.</div>
+<footer>Metti questo file nella stessa cartella di <b>piloti.json</b>.</footer>
+</div>
 
 <script>
-const JSON_URL = 'piloti.json';
+const PILOTI_URL = 'piloti.json';
+const EXP_URL    = 'exp.json';  // nuovo file solo per le exp
 const MAX_LEVEL = 50;
 
 const grid = document.getElementById('grid');
@@ -79,7 +79,7 @@ function baseExpCum(n){ return Math.floor(100 * n*(n+1)*(2*n+1)/6); }
 
 function skillMultiplier(skill){
   const s = Math.max(80, Math.min(100, Number(skill) || 80));
-  return 1 + (s - 80) / 20; // 80 -> 1.0, 90 -> 1.5, 100 -> 2.0
+  return 1 + (s - 80) / 20;
 }
 
 function levelFromExpWithSkill(exp, skill){
@@ -94,17 +94,47 @@ function levelFromExpWithSkill(exp, skill){
 }
 
 async function load(){
-  const res = await fetch(JSON_URL);
-  const raw = await res.json();
+  // 1) piloti.json
+  const pilotiRes = await fetch(PILOTI_URL);
+  const raw = await pilotiRes.json();
   let PILOTI = [];
   if(Array.isArray(raw) && raw.length && raw[0].piloti){
-    PILOTI = raw.flatMap(t => t.piloti.map(p => ({...p, scuderia: t.scuderia || 'Team', colore: p.colore || t.colore || '#888'})));
+    PILOTI = raw.flatMap(t => t.piloti.map(p => ({
+      ...p,
+      scuderia: t.scuderia || 'Team',
+      colore: p.colore || t.colore || '#888'
+    })));
   } else if(Array.isArray(raw)){
     PILOTI = raw;
   } else {
     PILOTI = raw.piloti || [];
   }
   PILOTI = PILOTI.map(p => ({...p, Exp: (p.Exp ?? 0), colore: p.colore || '#888'}));
+
+  // 2) exp.json → sovrascrive exp per nome
+  let expMap = new Map();
+  try{
+    const expRes = await fetch(EXP_URL, { cache: 'no-store' });
+    if(expRes.ok){
+      const expRaw = await expRes.json();
+      const list = Array.isArray(expRaw) ? expRaw : (expRaw.exp || expRaw.piloti || []);
+      for(const e of list){
+        const nome = (e.nome ?? e.Nome ?? '').trim();
+        if(!nome) continue;
+        const expVal = Number(e.Exp ?? e.exp ?? e.EXP ?? 0) || 0;
+        expMap.set(nome.toLowerCase(), expVal);
+      }
+    }
+  }catch(_){ }
+
+  // 3) merge per nome
+  PILOTI = PILOTI.map(p => {
+    let exp = expMap.has((p.nome||'').toLowerCase())
+      ? expMap.get((p.nome||'').toLowerCase())
+      : (p.Exp ?? 0);
+    return {...p, Exp: Number(exp) || 0};
+  });
+
   render(PILOTI);
 }
 
@@ -153,6 +183,5 @@ function render(list){
 function escapeHtml(str){ return String(str ?? '').replace(/[&<>"]+/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
 
 load();
-</script>
-</body>
+</script></body>
 </html>
