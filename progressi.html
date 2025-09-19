@@ -84,9 +84,45 @@
 <footer>Metti questo file nella stessa cartella di <b>piloti.json</b>.</footer>
 </div>
 <script>
-const EXP_URL = 'exp.json';       // unica fonte
-const MAX_LEVEL = 200;            // margine alto
-const BASE_START_LEVEL = 80;      // livello di partenza per tutti
+const EXP_URL = 'exp.json';           // unica fonte
+const BASE_START_LEVEL = 80;          // livello di partenza per tutti
+const MAX_LEVEL = 100;                // curva definita fino a 100
+
+// Tabella: EXP necessaria per passare da (n-1) a n
+// Solo per livelli > 80; per <=80 è 0 (baseline)
+const STEP_TABLE = {
+  81:  400,
+  82:  426,
+  83:  464,
+  84:  514,
+  85:  576,
+  86:  650,
+  87:  736,
+  88:  834,
+  89:  944,
+  90:  1066,
+  91:  1200,
+  92:  1346,
+  93:  1504,
+  94:  1674,
+  95:  1856,
+  96:  2050,
+  97:  2256,
+  98:  2474,
+  99:  2704,
+  100: 2946
+};
+
+// Precalcolo cumulativo (somma degli step 81..n)
+const CUM = (() => {
+  const arr = Array(MAX_LEVEL+1).fill(0);
+  let sum = 0;
+  for(let n = BASE_START_LEVEL+1; n <= MAX_LEVEL; n++){
+    sum += (STEP_TABLE[n] || 0);
+    arr[n] = sum;
+  }
+  return arr;
+})();
 
 const grid  = document.getElementById('grid');
 const empty = document.getElementById('empty');
@@ -94,18 +130,20 @@ const input = document.getElementById('filter');
 
 let ALL_PILOTI = [];
 
-// --- MODELLO EXP/LVL ---
-// EXP necessaria per passare da (n-1) a n
-function baseExpNeeded(n){ return 100 * n * n; } // es: 81 -> 100*81^2 per passare da 80 a 81
-// EXP cumulativa per arrivare al livello n (da 0)
-function baseExpCum(n){ return Math.floor(100 * n*(n+1)*(2*n+1)/6); }
+// EXP cumulativa (differenziale dalla baseline di Lv80) per arrivare a livello n
+function expCumFrom80To(n){
+  if(n <= BASE_START_LEVEL) return 0;
+  if(n > MAX_LEVEL) return CUM[MAX_LEVEL]; // clamp
+  return CUM[n];
+}
 
-// Trova il livello dato un totale di EXP cumulativa
-function levelFromTotalExp(totalExp){
-  let lo = 0, hi = MAX_LEVEL;
+// Data l'EXP accumulata dopo Lv80 (accum), trova il livello
+function levelFromAccum(accum){
+  // Ricerca binaria su 80..MAX_LEVEL usando CUM
+  let lo = BASE_START_LEVEL, hi = MAX_LEVEL;
   while(lo < hi){
     const mid = Math.ceil((lo + hi + 1) / 2);
-    if(baseExpCum(mid) <= totalExp) lo = mid; else hi = mid-1;
+    if(expCumFrom80To(mid) <= accum) lo = mid; else hi = mid - 1;
   }
   return lo;
 }
@@ -138,20 +176,17 @@ async function load(){
     }
   }catch(_){}
 
-  const BASELINE = baseExpCum(BASE_START_LEVEL); // EXP cumulativa del livello 80
-
   ALL_PILOTI = expList
     .map(e => {
       const nome = String(e.nome ?? e.Nome ?? '').trim();
       const accum = Math.max(0, Number(e.Exp ?? e.exp ?? e.EXP ?? 0) || 0); // accumulo dopo lv80
-      const totalExp = BASELINE + accum; // totale rispetto alla curva globale
-      const lvl = Math.max(BASE_START_LEVEL, levelFromTotalExp(totalExp));
-      const curBase = baseExpCum(lvl);
+      const lvl = levelFromAccum(accum);
       const nextLvl = Math.min(MAX_LEVEL, lvl + 1);
-      const toNext = nextLvl > lvl ? baseExpNeeded(nextLvl) : 0;
-      const inLevel = totalExp - curBase;
-      const progress = toNext ? Math.max(0, Math.min(100, Math.floor((inLevel / toNext) * 100))) : 100;
-      return { nome, accum, totalExp, lvl, curBase, nextLvl, toNext, inLevel, progress };
+      const curBase = expCumFrom80To(lvl);          // totale richiesto da 80 fino al lvl corrente
+      const stepToNext = nextLvl > lvl ? (STEP_TABLE[nextLvl] || 0) : 0;
+      const inLevel = accum - curBase;
+      const progress = stepToNext ? Math.max(0, Math.min(100, Math.floor((inLevel / stepToNext) * 100))) : 100;
+      return { nome, accum, lvl, nextLvl, curBase, stepToNext, inLevel, progress };
     })
     .filter(p => p.nome);
 
@@ -184,13 +219,16 @@ function render(list){
     card.style.borderColor = color;
 
     const tags = [];
-    // Mostra la base cumulativa solo se > 0 (sarà sempre >0 da Lv80)
     if(p.curBase > 0){
-      tags.push(`<span class="tag">Base livello (cum.): ${p.curBase.toLocaleString('it-IT')}</span>`);
+      tags.push(`<span class="tag">Cumulata da Lv80: ${p.curBase.toLocaleString('it-IT')} XP</span>`);
     }
-    tags.push(`<span class="tag">Per salire: ${p.toNext ? (p.toNext - Math.max(0,p.inLevel)).toLocaleString('it-IT') : '—'} EXP</span>`);
-    tags.push(`<span class="tag">Partenza: Lv ${BASE_START_LEVEL}</span>`);
-    tags.push(`<span class="tag">Accumulo da exp.json: ${p.accum.toLocaleString('it-IT')}</span>`);
+    if(p.stepToNext > 0){
+      const remaining = Math.max(0, p.stepToNext - Math.max(0,p.inLevel));
+      tags.push(`<span class="tag">Per salire a Lv ${p.nextLvl}: ${remaining.toLocaleString('it-IT')} XP</span>`);
+      tags.push(`<span class="tag">Step corrente: ${p.stepToNext.toLocaleString('it-IT')} XP</span>`);
+    }else{
+      tags.push(`<span class="tag">Hai raggiunto il livello massimo (${MAX_LEVEL})</span>`);
+    }
 
     card.innerHTML = `
       <div class="card-header">
@@ -205,7 +243,7 @@ function render(list){
           <div class="bar"><div class="fill" style="width:${p.progress}%; background:${color};"></div></div>
           <div class="meta">
             <span>Progresso livello: ${p.progress}%</span>
-            <span>${Math.max(0,p.inLevel).toLocaleString('it-IT')} / ${p.toNext.toLocaleString('it-IT')} EXP</span>
+            <span>${Math.max(0,p.inLevel).toLocaleString('it-IT')} / ${p.stepToNext.toLocaleString('it-IT')} XP</span>
           </div>
         </div>
       </div>
