@@ -44,7 +44,25 @@
     .meta{ display:flex; justify-content:space-between; align-items:center; margin-top:8px; color:var(--muted); font-size:12px; font-weight:700 }
     .empty{ text-align:center; padding:48px 16px; color:var(--muted); border:1px dashed var(--ring); border-radius:16px; margin-top:18px }
     footer{ margin: 28px 0 48px; color:var(--muted); text-align:center; font-size:12px }
-  </style>
+  
+    .search{ display:flex; align-items:center; gap:10px }
+    .search input{
+      width: 260px; max-width: 100%;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--ring);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      outline: none;
+      box-shadow: var(--shadow);
+    }
+    .search input::placeholder{ color: var(--muted) }
+    @media (max-width:700px){ .search input{ width: 100% } }
+    
+/* Badge for name-only mode */
+.badge{ display:inline-block; font-size:12px; padding:3px 8px; border-radius:999px; background: var(--surface); border:1px solid var(--ring); color: var(--muted); margin-left:8px; }
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -60,83 +78,86 @@
 <small>EXP scala con Skill: più forte = più EXP per livello</small>
 </div>
 </div>
-</header>
+<div class="search"><input aria-label="Cerca pilota" id="filter" placeholder="Cerca pilota…" type="search"/></div></header>
 <main aria-live="polite" class="grid" id="grid"></main>
 <div class="empty" hidden="" id="empty">Nessun pilota trovato.</div>
 <footer>Metti questo file nella stessa cartella di <b>piloti.json</b>.</footer>
 </div>
-
 <script>
-const PILOTI_URL = 'piloti.json';
-const EXP_URL    = 'exp.json';  // nuovo file solo per le exp
+const EXP_URL = 'exp.json';   // unica fonte
 const MAX_LEVEL = 50;
 
-const grid = document.getElementById('grid');
+const grid  = document.getElementById('grid');
 const empty = document.getElementById('empty');
+const input = document.getElementById('filter');
 
+let ALL_PILOTI = [];
+
+// --- EXP / LEVEL MODEL (no skill, no team) ---
 function baseExpNeeded(n){ return 100 * n * n; }
 function baseExpCum(n){ return Math.floor(100 * n*(n+1)*(2*n+1)/6); }
 
-function skillMultiplier(skill){
-  const s = Math.max(80, Math.min(100, Number(skill) || 80));
-  return 1 + (s - 80) / 20;
-}
-
-function levelFromExpWithSkill(exp, skill){
-  const m = skillMultiplier(skill);
-  const effectiveExp = exp / m;
+function levelFromExp(exp){
   let lo = 0, hi = MAX_LEVEL;
   while(lo < hi){
     const mid = Math.ceil((lo + hi + 1) / 2);
-    if(baseExpCum(mid) <= effectiveExp) lo = mid; else hi = mid-1;
+    if(baseExpCum(mid) <= exp) lo = mid; else hi = mid-1;
   }
-  return { level: lo, mult: m, effectiveExp };
+  return lo;
+}
+
+// Genera un colore deterministico dal nome (HSL → HEX)
+function colorFromName(name){
+  let h = 0;
+  for(let i=0;i<name.length;i++){ h = (h*31 + name.charCodeAt(i)) >>> 0; }
+  h = h % 360;
+  const s = 65; const l = 55;
+  // Convert HSL to hex
+  function hslToHex(h,s,l){
+    s/=100; l/=100;
+    const k = n => (n + h/30) % 12;
+    const a = s * Math.min(l, 1-l);
+    const f = n => l - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1)));
+    const toHex = x => Math.round(x*255).toString(16).padStart(2,'0');
+    return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+  }
+  return hslToHex(h,s,l);
 }
 
 async function load(){
-  // 1) piloti.json
-  const pilotiRes = await fetch(PILOTI_URL);
-  const raw = await pilotiRes.json();
-  let PILOTI = [];
-  if(Array.isArray(raw) && raw.length && raw[0].piloti){
-    PILOTI = raw.flatMap(t => t.piloti.map(p => ({
-      ...p,
-      scuderia: t.scuderia || 'Team',
-      colore: p.colore || t.colore || '#888'
-    })));
-  } else if(Array.isArray(raw)){
-    PILOTI = raw;
-  } else {
-    PILOTI = raw.piloti || [];
-  }
-  PILOTI = PILOTI.map(p => ({...p, Exp: (p.Exp ?? 0), colore: p.colore || '#888'}));
-
-  // 2) exp.json → sovrascrive exp per nome
-  let expMap = new Map();
+  // 1) exp.json → nome + Exp
+  let expList = [];
   try{
-    const expRes = await fetch(EXP_URL, { cache: 'no-store' });
-    if(expRes.ok){
-      const expRaw = await expRes.json();
-      const list = Array.isArray(expRaw) ? expRaw : (expRaw.exp || expRaw.piloti || []);
-      for(const e of list){
-        const nome = (e.nome ?? e.Nome ?? '').trim();
-        if(!nome) continue;
-        const expVal = Number(e.Exp ?? e.exp ?? e.EXP ?? 0) || 0;
-        expMap.set(nome.toLowerCase(), expVal);
-      }
+    const res = await fetch(EXP_URL, { cache: 'no-store' });
+    if(res.ok){
+      const raw = await res.json();
+      expList = Array.isArray(raw) ? raw : (raw.exp || raw.piloti || []);
     }
-  }catch(_){ }
+  }catch(_){}
 
-  // 3) merge per nome
-  PILOTI = PILOTI.map(p => {
-    let exp = expMap.has((p.nome||'').toLowerCase())
-      ? expMap.get((p.nome||'').toLowerCase())
-      : (p.Exp ?? 0);
-    return {...p, Exp: Number(exp) || 0};
-  });
+  // normalizza
+  ALL_PILOTI = expList
+    .map(e => ({
+      nome: String(e.nome ?? e.Nome ?? '').trim(),
+      Exp: Number(e.Exp ?? e.exp ?? e.EXP ?? 0) || 0
+    }))
+    .filter(p => p.nome);
 
-  render(PILOTI);
+  applyFilter();
 }
+
+// Filtro per nome
+function applyFilter(){
+  const q = (input?.value || '').toLowerCase().trim();
+  const filtered = q ? ALL_PILOTI.filter(p => p.nome.toLowerCase().includes(q)) : ALL_PILOTI.slice();
+  render(filtered);
+}
+
+// Debounce input
+function debounce(fn, ms){
+  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+if(input){ input.addEventListener('input', debounce(applyFilter, 120)); }
 
 function render(list){
   grid.innerHTML = '';
@@ -145,30 +166,35 @@ function render(list){
 
   for(const p of list){
     const exp = Number(p.Exp) || 0;
-    const skill = p.skill;
-    const { level: lvl, mult: m } = levelFromExpWithSkill(exp, skill);
+    const lvl = levelFromExp(exp);
     const nextLvl = Math.min(MAX_LEVEL, lvl+1);
-    const curBaseBase = baseExpCum(lvl);
-    const nextNeedBase = nextLvl > lvl ? baseExpNeeded(nextLvl) : 0;
-    const curBase = Math.floor(curBaseBase * m);
-    const toNext = Math.floor(nextNeedBase * m);
+    const curBase = baseExpCum(lvl);
+    const toNext = nextLvl > lvl ? baseExpNeeded(nextLvl) : 0;
     const inLevel = exp - curBase;
     const progress = toNext ? Math.max(0, Math.min(100, Math.floor((inLevel / toNext) * 100))) : 100;
 
+    const color = colorFromName(p.nome);
+
     const card = document.createElement('article');
     card.className = 'card';
-    card.style.borderColor = p.colore || '#888';
+    card.style.borderColor = color;
+    const tags = [];
+    if(curBase > 0){
+      tags.push(`<span class="tag">Base livello (cum.): ${curBase.toLocaleString('it-IT')}</span>`);
+    }
+    tags.push(`<span class="tag">Per salire: ${toNext ? (toNext - Math.max(0,inLevel)).toLocaleString('it-IT') : '—'} EXP</span>`);
+
     card.innerHTML = `
       <div class="card-header">
         <div>
-          <div class="title" style="color:${p.colore||'#e8ecf1'}">${escapeHtml(p.nome||'Pilota')}</div>
-          <div class="subtitle">${escapeHtml(p.scuderia||'Team')} · Skill <b>${escapeHtml(p.skill)}</b> · Livello <b>${lvl}</b> · EXP totali: <b>${exp.toLocaleString('it-IT')}</b></div>
-          <div class="tags">
-            <span class="tag">Moltiplicatore Skill: ×${m.toFixed(2)}</span>
-            <span class="tag">Base livello (cum.): ${curBase.toLocaleString('it-IT')}</span>
-            <span class="tag">Per salire: ${toNext ? (toNext - Math.max(0,inLevel)).toLocaleString('it-IT') : '—'} EXP</span>
+          <div class="title" style="color:${color}">${escapeHtml(p.nome)}</div>
+          <div class="subtitle">Livello <b>${lvl}</b> · EXP totali: <b>${exp.toLocaleString('it-IT')}</b>
+            <span class="badge">solo exp.json</span>
           </div>
-          <div class="bar"><div class="fill" style="width:${progress}%; background:${p.colore||'#00d2ff'};"></div></div>
+          <div class="tags">
+            ${tags.join('')}
+          </div>
+          <div class="bar"><div class="fill" style="width:${progress}%; background:${color};"></div></div>
           <div class="meta">
             <span>Progresso livello: ${progress}%</span>
             <span>${Math.max(0,inLevel).toLocaleString('it-IT')} / ${toNext.toLocaleString('it-IT')} EXP</span>
