@@ -368,6 +368,36 @@ header{ top: var(--fcbar-h); }
 @keyframes legend-frame-spin { to{ transform: rotate(360deg) } }
 </style>
 
+
+<style id="final-suspense-css">
+/* === Last card suspense FX === */
+.cCard.final.suspense .scene{ animation: fc-breathe 1.4s ease-in-out infinite; }
+@keyframes fc-breathe { 0%{ transform: rotateY(0deg) scale(1) } 50%{ transform: rotateY(0deg) scale(1.02) } 100%{ transform: rotateY(0deg) scale(1) } }
+.cCard.final .suspense-ring{
+  position:absolute; inset:-6px; border-radius:var(--radius);
+  box-shadow:0 0 0 2px rgba(110,231,255,.28), inset 0 0 40px rgba(110,231,255,.12), 0 0 32px rgba(110,231,255,.18);
+  pointer-events:none; opacity:0; transition:opacity .25s ease;
+}
+.cCard.final.suspense .suspense-ring{ opacity:1 }
+.cCard.final.revealing::after{
+  content:""; position:absolute; inset:-2%;
+  background:radial-gradient(circle at 50% 50%, rgba(255,255,255,.55), rgba(110,231,255,.18) 40%, transparent 70%);
+  filter: blur(8px); border-radius:inherit; pointer-events:none;
+  animation: fc-burst .7s ease-out forwards;
+}
+@keyframes fc-burst { 0%{opacity:0; transform:scale(.92)} 40%{opacity:1; transform:scale(1.06)} 100%{opacity:0; transform:scale(1)} }
+.cCard.final.suspense .shine { 
+  position:absolute; inset:0; border-radius:inherit; pointer-events:none; overflow:hidden;
+}
+.cCard.final.suspense .shine::before{
+  content:""; position:absolute; top:-30%; bottom:-30%; width:22%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), rgba(255,255,255,.45), rgba(255,255,255,.18), transparent);
+  filter: blur(6px); transform: translateX(-140%) skewX(-18deg);
+  animation: fc-shine 1.6s ease-in-out infinite;
+}
+@keyframes fc-shine { 0%{ transform: translateX(-140%) skewX(-18deg) } 100%{ transform: translateX(160%) skewX(-18deg) } }
+</style>
+
 </head>
 <body>
 
@@ -1066,10 +1096,19 @@ function makeCardEl(d,isFinal){
   front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async';
   n.querySelector('.badge').textContent=d.rarity||'';
   n.dataset.state='back';
-  n.addEventListener('click',()=>{ 
-    if(n.dataset.state==='back'){ revealCard(n,d) } 
-    else { n.dataset.state='back'; n.classList.remove('revealed') } 
-  },{passive:true});
+  n.addEventListener('click', async ()=>{
+  if(n.dataset.state==='back'){
+    if(n.classList.contains('final') && isLastUnrevealed()){
+      n.classList.add('suspense');
+      await preRevealFinal(n);
+    }
+    revealCard(n,d);
+    updateFinalSuspense();
+  } else {
+    n.dataset.state='back'; n.classList.remove('revealed');
+    updateFinalSuspense();
+  }
+},{passive:true});
   return n;
 }
 function addSparks(el,n=10){
@@ -1101,6 +1140,7 @@ function showStage(cards){
   const last=cards.length-1; const frag=document.createDocumentFragment();
   cards.forEach((c,i)=>{ const el=makeCardEl(c,i===last); frag.appendChild(el); setDropIn(el,i) });
   stage.appendChild(frag);
+  updateFinalSuspense();
   applyLegendFinalFrame();
   document.getElementById('log').textContent='Pacchetto pronto. Tocca le carte per rivelarle.';
 }
@@ -1117,6 +1157,38 @@ function applyLegendFinalFrame(){
       if (last) last.classList.add('legend-frame');
     }
   }catch(e){ console.warn('[applyLegendFinalFrame]', e); }
+}
+
+
+/* === Last card suspense helpers === */
+function isLastUnrevealed(){
+  return document.querySelectorAll('.cCard[data-state="back"]').length === 1;
+}
+function updateFinalSuspense(){
+  try{
+    const backs = Array.from(document.querySelectorAll('.cCard[data-state="back"]'));
+    const finals = backs.filter(el => el.classList.contains('final'));
+    document.querySelectorAll('.cCard.final').forEach(el => el.classList.remove('suspense'));
+    if (backs.length === 1 && finals.length === 1){
+      const el = finals[0];
+      el.classList.add('suspense');
+      if (!el.querySelector('.suspense-ring')){
+        const ring = document.createElement('div'); ring.className = 'suspense-ring'; el.appendChild(ring);
+      }
+      if (!el.querySelector('.shine')){
+        const sh = document.createElement('div'); sh.className = 'shine'; el.appendChild(sh);
+      }
+    }
+  }catch(e){ console.warn('[updateFinalSuspense]', e); }
+}
+async function preRevealFinal(el){
+  try{
+    ensureAudio();
+    tone(520,.09,.07,'triangle'); tone(660,.12,.06,'triangle');
+    await delay(520);
+    el.classList.add('revealing');
+    setTimeout(()=> el.classList.remove('revealing'), 700);
+  }catch(e){}
 }
 
 /** =========================
