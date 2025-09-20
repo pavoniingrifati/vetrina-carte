@@ -841,238 +841,55 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
     
 
 
-    // Gold — pacchetti manuali (ognuno è un pack finito con carte scelte da me)
-const BY_ID = Object.fromEntries(cleaned.map(c => [c.id, c]));
-/* ===== ENFORCE PACK RULES (Fantaballa-only except series "Oggetto") ===== */
-const isAllowedForBSG = (c) => !!c && (isFantaballa(c.game) || norm(c.series)==='oggetto');
+    
 
-// Pools per rarità solo Fantaballa (usate per rimpiazzi)
-const poolFantaByRarity = {};
-for (const r of Object.keys(rarityRank)) poolFantaByRarity[norm(r)] = [];
-for (const c of cleaned) {
-  if (isFantaballa(c.game)) {
-    const r = norm(c.rarity);
-    (poolFantaByRarity[r] || (poolFantaByRarity[r] = [])).push(c);
-  }
-}
-function pickReplacement(targetRarity, seen){
-  const r = norm(targetRarity||'');
-  const pref = (poolFantaByRarity[r]||[]).filter(x=>!seen.has(x.id));
-  if (pref.length) return pref[Math.floor(Math.random()*pref.length)];
-  // Se non ne trovo della stessa rarità, prendo qualunque Fantaballa non ancora usata
-  const any = Object.values(poolFantaByRarity).flat().filter(x=>!seen.has(x.id));
-  return any.length ? any[Math.floor(Math.random()*any.length)] : null;
-}
-function fixPackIds(ids, sizeLimit){
+// === AUTO B/S/G PACKS (generated from JSON) ===
+const oggettiPoolAll = cleaned.filter(c => norm(c.series)==='oggetto');
+
+function pickDistinct(source, n) {
+  const arr = source.slice();
+  shuffleInPlace(arr);
   const seen = new Set();
   const out = [];
-  for (const id of ids){
-    const c = BY_ID[id];
-    if (isAllowedForBSG(c) && !seen.has(c.id)) { out.push(c); seen.add(c.id); continue; }
-    const repl = pickReplacement(c && c.rarity, seen);
-    if (repl){ out.push(repl); seen.add(repl.id); }
+  for (const c of arr) {
+    if (!c || !c.id) continue;
+    if (!seen.has(c.id)) { out.push(c); seen.add(c.id); if (out.length>=n) break; }
   }
-  // Se ancora corto, riempiamo con Fantaballa a caso (no doppie)
-  while (out.length < (sizeLimit||9)){
-    const repl = pickReplacement(null, seen);
-    if (!repl) break;
-    out.push(repl); seen.add(repl.id);
+  // If not enough unique cards exist, allow reuse across packs but never inside the same pack
+  while (out.length < n && arr.length) {
+    const c = arr[Math.floor(Math.random()*arr.length)];
+    if (c && c.id && !seen.has(c.id)) { out.push(c); seen.add(c.id); }
   }
-  return out.slice(0, sizeLimit||ids.length);
+  return out.slice(0, n);
 }
 
+function buildBSGAutoPacks(seriesName, count=80) {
+  const seriesPool = cleaned.filter(c => isFantaballa(c.game) && norm(c.series)===norm(seriesName));
+  const packs = [];
+  for (let i=0; i<count; i++){
+    const oggs = pickDistinct(oggettiPoolAll, 3);
+    const mains = pickDistinct(seriesPool, 6);
+    const pack = [...oggs, ...mains]; // Objects first, then series cards
+    packs.push(pack);
+  }
+  const poolUnion = Array.from(new Set([...oggettiPoolAll, ...seriesPool]));
+  return { packs, pool: poolUnion };
+}
+const autoGold = buildBSGAutoPacks('Gold', 80);
+const autoSilver = buildBSGAutoPacks('Silver', 80);
+const autoBronze = buildBSGAutoPacks('Bronze', 80);
 
-/* 
- * Ogni elemento dell’array è UN PACCHETTO GOLD.
- * Metti esattamente 9 ID per pacco (o meno: verranno presi quelli trovati).
- */
-const PACKS_GOLD = [
-  [
-    "Bronze-Piede",
-    "Simuove-Silverog",
-    "Spalle-Silverog",
-    "Vasyl-Gold",
-    "Diegoal-gold",
-    "Riki-gold",
-    "Doge-",
-    "Gigachad-Gold",
-    "Johnny-gold"
-  ],
-  [
-    "Bronze-spazi",
-    "Oggetto-trasferimentosilver",
-    "Spalle-Silverog",
-    "Reale-Gold",
-    "Acobbe-gold",
-    "Davide-Gold",
-    "manu3028-Gold",
-    "LorenzodaFirenze-Gold",
-    "Marca-Gold"
-  ],
-  [
-    "Tenta-Silverog",
-    "CCMC-Silverog",
-    "ADCOC-Silverog",
-    "Nico-Gold",
-    "KOLA-Gold",
-    "Marca-Gold",
-    "mariolangia11-Gold",
-    "Abatinho-Gold",
-    "Diegoal-gold"
-  ],
-  [
-    "Bronze-Piede",
-    "Bronze-442",
-    "Bronze-Nopiede",
-    "Reale-Gold",
-    "DiegoFinamore-Gold",
-    "Bandolero-Gold",
-    "Johnny-gold",
-    "Andrea-gold",
-    "Abatinho-Gold"
-  ],
-  [
-    "Oggetto-trasferimentosilver",
-    "Oggetto-rimuoviinfortunio2",
-    "Evita-Silverog",
-    "Reale-Gold",
-    "Andrea-gold",
-    "Abatinho-Gold",
-    "Marca-Gold",
-    "Johnny-gold",
-    "Davide-Gold"
-  ]
-];
-
-
-
-
-
-
-    // Silver — pacchetti manuali (6 carte ciascuno, scelti da te)
-const PACKS_SILVER = [
-  [
-    "Evita-Silverog",
-    "Passaggio-Silverog",
-    "ASAD-Silverog",
-    "Davidonzoloo-Silver",
-    "DiegoFinamore-Silver",
-    "FK-Silver",
-    "KOLA-Silver",
-    "LorenzodaFirenze-Silver",
-    "manu3028-Silver"
-  ],
-  [
-    "ADED-Silverog",
-    "ADCOC-Silverog",
-    "Oggetto-rimuoviinfortunio",
-    "mariolangia11-Silver",
-    "pelatinho0-Silver",
-    "Reale-Silver",
-    "Abatinho-Silver",
-    "Davide-Silver",
-    "Marca-Silver"
-  ],
-  [
-    "Oggetto-trasferimentospecial",
-    "Oggetto-trasferimentobronze",
-    "Oggetto-rimuoviinfortunio2",
-    "Silver-Mrmello",
-    "Silver-Raphael",
-    "Bandolero-Silver",
-    "Silver-Luca",
-    "Davide-Silver",
-    "Silver-Balasco"
-  ],
-  [
-    "Bronze-ASCOC",
-    "Bronze-Vice",
-    "Bronze-451",
-    "Wateng-Silver",
-    "Davidonzoloo-Silver",
-    "mariolangia11-Silver",
-    "pelatinho0-Silver",
-    "Reale-Silver",
-    "Abatinho-Silver"
-  ]
-];
-
-
-
-const packsSilverCards = PACKS_SILVER.map((ids, i) => fixPackIds(ids, PACK_SIZE_PER_GAME['Silver']||9)).filter(p=>p.length>0);
-
-GAME_STATE.pools['Silver'] = Array.from(new Set(packsSilverCards.flat()));
-GAME_STATE.packs['Silver'] = packsSilverCards;
-
-
-// Bronze — pacchetti manuali (9 carte ciascuno, scelti da te)
-const PACKS_BRONZE = [
-  [
-    "Bronze-Vice",
-    "Simuove-Silverog",
-    "Bronze-433",
-    "Finn",
-    "KOLA-Bronze",
-    "manu3028-Bronze",
-    "Bandolero-Bronze",
-    "Davide-Bronze",
-    "mariolangia11-Bronze"
-  ],
-  [
-    "ASAD-Silverog",
-    "ADATT-Silverog",
-    "Oggetto-Tactics",
-    "FK-Bronze",
-    "Marca",
-    "Nocera",
-    "Nicopiu",
-    "Luca",
-    "Reale-Bronze"
-  ],
-  [
-    "Bronze-352",
-    "Bronze-Fasce",
-    "Tattico-Tactics",
-    "mariolangia11-Bronze",
-    "Tore",
-    "Reale-Bronze",
-    "Diegoal-bronze",
-    "Frazx0713",
-    "Davide-Bronze"
-  ],
-  [
-    "Oggetto-Tactics",
-    "Corre-Silverog",
-    "ASAD-Silverog",
-    "DiegoFinamore-Bronze",
-    "Luca",
-    "Edoardo",
-    "Damia-bronze",
-    "Salvatore-Buonaurio",
-    "ElSpir1t"
-  ],
-  [
-    "Maglia-Tactics",
-    "Slot-Tactics",
-    "ADED-Silverog",
-    "pelatinho0-Bronze",
-    "KOLA-Bronze",
-    "Frazx0713",
-    "Damia-bronze",
-    "manu3028-Bronze",
-    "Nicopiu"
-  ]
-];
-
-
-const packsBronzeCards = PACKS_BRONZE.map((ids, i) => fixPackIds(ids, PACK_SIZE_PER_GAME['Bronze']||9)).filter(p=>p.length>0);
-
-GAME_STATE.pools['Bronze'] = Array.from(new Set(packsBronzeCards.flat()));
-GAME_STATE.packs['Bronze'] = packsBronzeCards;
+GAME_STATE.packs['Gold'] = autoGold.packs;
+GAME_STATE.packs['Silver'] = autoSilver.packs;
+GAME_STATE.packs['Bronze'] = autoBronze.packs;
+GAME_STATE.pools['Gold'] = autoGold.pool;
+GAME_STATE.pools['Silver'] = autoSilver.pool;
+GAME_STATE.pools['Bronze'] = autoBronze.pool;
+// === END AUTO B/S/G PACKS ===
 
 
 /* Validazione + mapping ID -> carte */
-const packsGoldCards = PACKS_GOLD.map((ids, i) => fixPackIds(ids, PACK_SIZE_PER_GAME['Gold']||9)).filter(p=>p.length>0);
+const packsGoldCards = [];
 
 /* Pool: somma delle carte usate (giusto per i contatori UI) */
 GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards.flat()));
@@ -1081,8 +898,7 @@ GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards.flat()));
     GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
-    shuffleInPlace(packsGoldCards);
-    GAME_STATE.packs['Gold'] = packsGoldCards;
+    /* packs Gold set by auto */
     
     // Legend: base senza leggendarie, con ~10% di injection leggendaria
     const baseLegendPacks = buildFinitePacks(legendNonLegend, PACK_SIZE_PER_GAME['Legend']).map(p => p.slice(0, PACK_SIZE_PER_GAME['Legend']));
