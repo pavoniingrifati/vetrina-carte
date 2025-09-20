@@ -845,7 +845,6 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
 
 // === AUTO B/S/G PACKS (generated from JSON) ===
 const oggettiPoolAll = cleaned.filter(c => norm(c.series)==='oggetto');
-
 function pickDistinct(source, n) {
   const arr = source.slice();
   shuffleInPlace(arr);
@@ -855,34 +854,31 @@ function pickDistinct(source, n) {
     if (!c || !c.id) continue;
     if (!seen.has(c.id)) { out.push(c); seen.add(c.id); if (out.length>=n) break; }
   }
-  // If not enough unique cards exist, allow reuse across packs but never inside the same pack
   while (out.length < n && arr.length) {
     const c = arr[Math.floor(Math.random()*arr.length)];
     if (c && c.id && !seen.has(c.id)) { out.push(c); seen.add(c.id); }
   }
   return out.slice(0, n);
 }
-
 function buildBSGAutoPacks(seriesName, count=80) {
   const seriesPool = cleaned.filter(c => isFantaballa(c.game) && norm(c.series)===norm(seriesName));
   const packs = [];
   for (let i=0; i<count; i++){
     const oggs = pickDistinct(oggettiPoolAll, 3);
     const mains = pickDistinct(seriesPool, 6);
-    const pack = [...oggs, ...mains]; // Objects first, then series cards
+    const pack = [...oggs, ...mains]; // Oggetti first
     packs.push(pack);
   }
   const poolUnion = Array.from(new Set([...oggettiPoolAll, ...seriesPool]));
   return { packs, pool: poolUnion };
 }
-const autoGold = buildBSGAutoPacks('Gold', 80);
+const autoGold   = buildBSGAutoPacks('Gold', 80);
 const autoSilver = buildBSGAutoPacks('Silver', 80);
 const autoBronze = buildBSGAutoPacks('Bronze', 80);
-
-GAME_STATE.packs['Gold'] = autoGold.packs;
+GAME_STATE.packs['Gold']   = autoGold.packs;
 GAME_STATE.packs['Silver'] = autoSilver.packs;
 GAME_STATE.packs['Bronze'] = autoBronze.packs;
-GAME_STATE.pools['Gold'] = autoGold.pool;
+GAME_STATE.pools['Gold']   = autoGold.pool;
 GAME_STATE.pools['Silver'] = autoSilver.pool;
 GAME_STATE.pools['Bronze'] = autoBronze.pool;
 // === END AUTO B/S/G PACKS ===
@@ -900,16 +896,60 @@ GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards.flat()));
     GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
     /* packs Gold set by auto */
     
-    // Legend: base senza leggendarie, con ~10% di injection leggendaria
-    const baseLegendPacks = buildFinitePacks(legendNonLegend, PACK_SIZE_PER_GAME['Legend']).map(p => p.slice(0, PACK_SIZE_PER_GAME['Legend']));
-    const legendsBag = shuffleInPlace(legendOnlyLegend.slice()); // finite
-    for (const p of baseLegendPacks) {
-      if (Math.random() < 0.1 && legendsBag.length > 0) {
-        const idx = Math.floor(Math.random() * p.length);
-        p[idx] = legendsBag.pop();
+    
+    // ===== Legend — Fantaballa-only with keyword-weighted injection =====
+    const fantaballaAll = cleaned.filter(c => isFantaballa(c.game));
+    function matchesWord(c, re){
+      const inName = re.test(String(c.name||''));
+      const inTags = Array.isArray(c.tags) && c.tags.some(t => re.test(String(t||'')));
+      return inName || inTags;
+    }
+    const reSenatore = /senatore/i;
+    const reLegend = /\blegend\b/i;
+    const reHoF = /hall\s*of\s*fame/i;
+
+    const poolSenatore = fantaballaAll.filter(c => matchesWord(c, reSenatore));
+    const poolLegend   = fantaballaAll.filter(c => matchesWord(c, reLegend));
+    const poolHoF      = fantaballaAll.filter(c => matchesWord(c, reHoF));
+    const poolBase = fantaballaAll.filter(c => !matchesWord(c, reSenatore) && !matchesWord(c, reLegend) && !matchesWord(c, reHoF));
+
+    function drawFromBagNonDup(bag, pack){
+      if (!bag || !bag.length) return null;
+      for (let tries=0; tries<bag.length; tries++){
+        const i = Math.floor(Math.random()*bag.length);
+        const c = bag[i];
+        if (!pack.some(x=>x.id===c.id)){
+          bag.splice(i,1);
+          bag.push(c);
+          return c;
+        }
+      }
+      return null;
+    }
+
+    const baseLegendPacks = buildFinitePacks(poolBase, PACK_SIZE_PER_GAME['Legend']).map(p => p.slice(0, PACK_SIZE_PER_GAME['Legend']));
+    const senatoreBag = poolSenatore.slice();
+    const legendNameBag = poolLegend.slice();
+    const hofBag = poolHoF.slice();
+    const P_SENATORE = 1/5, P_LEGEND = 1/10, P_HOF = 1/15;
+
+    for (const p of baseLegendPacks){
+      let injected = false;
+      if (!injected && Math.random() < P_SENATORE && senatoreBag.length){
+        const card = drawFromBagNonDup(senatoreBag, p);
+        if (card){ p[Math.floor(Math.random()*p.length)] = card; injected = true; }
+      }
+      if (!injected && Math.random() < P_LEGEND && legendNameBag.length){
+        const card = drawFromBagNonDup(legendNameBag, p);
+        if (card){ p[Math.floor(Math.random()*p.length)] = card; injected = true; }
+      }
+      if (!injected && Math.random() < P_HOF && hofBag.length){
+        const card = drawFromBagNonDup(hofBag, p);
+        if (card){ p[Math.floor(Math.random()*p.length)] = card; injected = true; }
       }
     }
     GAME_STATE.packs['Legend'] = baseLegendPacks;
+
 
     // Oggetti — INFINITO: niente buildFinitePacks, lasciamo packs vuoto
     GAME_STATE.packs['Oggetti'] = [];
