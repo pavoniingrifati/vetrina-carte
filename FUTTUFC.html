@@ -346,33 +346,26 @@ header{ top: var(--fcbar-h); }
 </style>
 
 
-<style id="final-suspense-css">
-/* === Last card suspense FX === */
-.cCard.final.suspense .scene{ animation: fc-breathe 1.4s ease-in-out infinite; }
-@keyframes fc-breathe { 0%{ transform: rotateY(0deg) scale(1) } 50%{ transform: rotateY(0deg) scale(1.02) } 100%{ transform: rotateY(0deg) scale(1) } }
-.cCard.final .suspense-ring{
-  position:absolute; inset:-6px; border-radius:var(--radius);
-  box-shadow:0 0 0 2px rgba(110,231,255,.28), inset 0 0 40px rgba(110,231,255,.12), 0 0 32px rgba(110,231,255,.18);
-  pointer-events:none; opacity:0; transition:opacity .25s ease;
+<style id="legend-final-frame-css">
+/* === Special frame for the last (final) card of Legend packs === */
+.cCard.final.legend-frame .scene{
+  box-shadow:
+    0 0 0 2px rgba(255,215,0,.85),
+    0 0 22px rgba(255,215,0,.45),
+    0 0 48px rgba(255,140,0,.35);
 }
-.cCard.final.suspense .suspense-ring{ opacity:1 }
-.cCard.final.revealing::after{
-  content:""; position:absolute; inset:-2%;
-  background:radial-gradient(circle at 50% 50%, rgba(255,255,255,.55), rgba(110,231,255,.18) 40%, transparent 70%);
-  filter: blur(8px); border-radius:inherit; pointer-events:none;
-  animation: fc-burst .7s ease-out forwards;
+.cCard.final.legend-frame::before{
+  content:""; position:absolute; inset:-5px; border-radius: var(--radius);
+  background: conic-gradient(from 0deg, #ffd700, #ffa500, #ffd700);
+  -webkit-mask: 
+    linear-gradient(#000 0 0) content-box, 
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  padding:4px; pointer-events:none; opacity:.9;
+  animation: legend-frame-spin 6s linear infinite;
 }
-@keyframes fc-burst { 0%{opacity:0; transform:scale(.92)} 40%{opacity:1; transform:scale(1.06)} 100%{opacity:0; transform:scale(1)} }
-.cCard.final.suspense .shine { 
-  position:absolute; inset:0; border-radius:inherit; pointer-events:none; overflow:hidden;
-}
-.cCard.final.suspense .shine::before{
-  content:""; position:absolute; top:-30%; bottom:-30%; width:22%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), rgba(255,255,255,.45), rgba(255,255,255,.18), transparent);
-  filter: blur(6px); transform: translateX(-140%) skewX(-18deg);
-  animation: fc-shine 1.6s ease-in-out infinite;
-}
-@keyframes fc-shine { 0%{ transform: translateX(-140%) skewX(-18deg) } 100%{ transform: translateX(160%) skewX(-18deg) } }
+@keyframes legend-frame-spin { to{ transform: rotate(360deg) } }
 </style>
 
 </head>
@@ -412,51 +405,6 @@ window.STORE_SECTIONS = {
   base: ['Gold','Silver','Bronze'], // Pacchetti base
   all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Wonderkid','Patatine','Gold','Silver','Bronze','Strumenti'])
 };
-
-// === AUTO B/S/G PACKS (generated from JSON) ===
-const oggettiPoolAll = cleaned.filter(c => norm(c.series)==='oggetto');
-
-function pickDistinct(source, n) {
-  const arr = source.slice();
-  shuffleInPlace(arr);
-  const seen = new Set();
-  const out = [];
-  for (const c of arr) {
-    if (!c || !c.id) continue;
-    if (!seen.has(c.id)) { out.push(c); seen.add(c.id); if (out.length>=n) break; }
-  }
-  while (out.length < n && arr.length) {
-    const c = arr[Math.floor(Math.random()*arr.length)];
-    if (c && c.id && !seen.has(c.id)) { out.push(c); seen.add(c.id); }
-  }
-  return out.slice(0, n);
-}
-
-function buildBSGAutoPacks(seriesName, count=80) {
-  // Only Fantaballa FC for the series cards
-  const seriesPool = cleaned.filter(c => isFantaballa(c.game) && norm(c.series)===norm(seriesName));
-  const packs = [];
-  for (let i=0; i<count; i++){
-    const oggs = pickDistinct(oggettiPoolAll, 3);
-    const mains = pickDistinct(seriesPool, 6);
-    const pack = [...oggs, ...mains];
-    packs.push(pack);
-  }
-  const poolUnion = Array.from(new Set([...oggettiPoolAll, ...seriesPool]));
-  return { packs, pool: poolUnion };
-}
-const autoGold = buildBSGAutoPacks('Gold', 80);
-const autoSilver = buildBSGAutoPacks('Silver', 80);
-const autoBronze = buildBSGAutoPacks('Bronze', 80);
-
-GAME_STATE.packs['Gold'] = autoGold.packs;
-GAME_STATE.packs['Silver'] = autoSilver.packs;
-GAME_STATE.packs['Bronze'] = autoBronze.packs;
-GAME_STATE.pools['Gold'] = autoGold.pool;
-GAME_STATE.pools['Silver'] = autoSilver.pool;
-GAME_STATE.pools['Bronze'] = autoBronze.pool;
-// === END AUTO B/S/G PACKS ===
-
 </script>
 
 <!-- /FC25-like Dashboard UI -->
@@ -879,9 +827,8 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
   const poolNonLegend = poolAll.filter(c => norm(c.rarity) !== 'leggendaria');
   const poolLegendary = shuffleInPlace(poolAll.filter(c => norm(c.rarity) === 'leggendaria').slice()); // finite bag
 
-  // Groups by name tags (case-insensitive)
   const grpSenatore = poolNonLegend.filter(c => /senatore/i.test(c.name||''));
-  const grpLegendName = poolNonLegend.filter(c => /legend/i.test(c.name||'')); // "Legend" word only
+  const grpLegendName = poolNonLegend.filter(c => /legend/i.test(c.name||''));
   const grpHOF = poolNonLegend.filter(c => /hall of fame/i.test(c.name||''));
 
   function pickNonLegendBiased(seen){
@@ -890,18 +837,9 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
       if (a) { seen.add(a.id); return a; }
       return null;
     };
-    if (Math.random() < 1/5) {
-      const p = tryPick(grpSenatore);
-      if (p) return p;
-    }
-    if (Math.random() < 1/10) {
-      const p = tryPick(grpLegendName);
-      if (p) return p;
-    }
-    if (Math.random() < 1/15) {
-      const p = tryPick(grpHOF);
-      if (p) return p;
-    }
+    if (Math.random() < 1/5) { const p = tryPick(grpSenatore); if (p) return p; }
+    if (Math.random() < 1/10){ const p = tryPick(grpLegendName); if (p) return p; }
+    if (Math.random() < 1/15){ const p = tryPick(grpHOF); if (p) return p; }
     return tryPick(poolNonLegend);
   }
 
@@ -1128,19 +1066,10 @@ function makeCardEl(d,isFinal){
   front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async';
   n.querySelector('.badge').textContent=d.rarity||'';
   n.dataset.state='back';
-  n.addEventListener('click', async ()=>{
-  if(n.dataset.state==='back'){
-    if(n.classList.contains('final') && isLastUnrevealed()){
-      n.classList.add('suspense');
-      await preRevealFinal(n);
-    }
-    revealCard(n,d);
-    updateFinalSuspense();
-  } else {
-    n.dataset.state='back'; n.classList.remove('revealed');
-    updateFinalSuspense();
-  }
-},{passive:true});
+  n.addEventListener('click',()=>{ 
+    if(n.dataset.state==='back'){ revealCard(n,d) } 
+    else { n.dataset.state='back'; n.classList.remove('revealed') } 
+  },{passive:true});
   return n;
 }
 function addSparks(el,n=10){
@@ -1172,41 +1101,22 @@ function showStage(cards){
   const last=cards.length-1; const frag=document.createDocumentFragment();
   cards.forEach((c,i)=>{ const el=makeCardEl(c,i===last); frag.appendChild(el); setDropIn(el,i) });
   stage.appendChild(frag);
-  updateFinalSuspense();
+  applyLegendFinalFrame();
   document.getElementById('log').textContent='Pacchetto pronto. Tocca le carte per rivelarle.';
 }
 
 
-/* === Last card suspense helpers === */
-function isLastUnrevealed(){
-  return document.querySelectorAll('.cCard[data-state="back"]').length === 1;
-}
-function updateFinalSuspense(){
+/* === Legend final frame helper === */
+function applyLegendFinalFrame(){
   try{
-    const backs = Array.from(document.querySelectorAll('.cCard[data-state="back"]'));
-    const finals = backs.filter(el => el.classList.contains('final'));
-    // remove suspense from all finals
-    document.querySelectorAll('.cCard.final').forEach(el => el.classList.remove('suspense'));
-    if (backs.length === 1 && finals.length === 1){
-      const el = finals[0];
-      el.classList.add('suspense');
-      if (!el.querySelector('.suspense-ring')){
-        const ring = document.createElement('div'); ring.className = 'suspense-ring'; el.appendChild(ring);
-      }
-      if (!el.querySelector('.shine')){
-        const sh = document.createElement('div'); sh.className = 'shine'; el.appendChild(sh);
-      }
+    const stage = document.getElementById('stage');
+    if (!stage) return;
+    stage.querySelectorAll('.cCard.final.legend-frame').forEach(el => el.classList.remove('legend-frame'));
+    if (GAME_STATE && GAME_STATE.selected === 'Legend'){
+      const last = stage.querySelector('.cCard.final');
+      if (last) last.classList.add('legend-frame');
     }
-  }catch(e){ console.warn('[updateFinalSuspense]', e); }
-}
-async function preRevealFinal(el){
-  try{
-    ensureAudio();
-    tone(520,.09,.07,'triangle'); tone(660,.12,.06,'triangle');
-    await delay(520);
-    el.classList.add('revealing');
-    setTimeout(()=> el.classList.remove('revealing'), 700);
-  }catch(e){}
+  }catch(e){ console.warn('[applyLegendFinalFrame]', e); }
 }
 
 /** =========================
