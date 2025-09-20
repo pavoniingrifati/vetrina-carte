@@ -897,8 +897,10 @@ GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards.flat()));
     /* packs Gold set by auto */
     
     
-    // ===== Legend — Fantaballa-only with keyword-weighted injection =====
-    const fantaballaAll = cleaned.filter(c => isFantaballa(c.game));
+    // ===== Legend — Fantaballa-only (rarità >= Rara) with keyword-weighted injection =====
+    // Pool: solo game = Fantaballa FC e rarità in ['Rara','Epica','Ultra Rara','Leggendaria']
+    const fantaballaRarPlus = cleaned.filter(c => isFantaballa(c.game) && ['rara','epica','ultra rara','leggendaria'].includes(norm(c.rarity)));
+
     function matchesWord(c, re){
       const inName = re.test(String(c.name||''));
       const inTags = Array.isArray(c.tags) && c.tags.some(t => re.test(String(t||'')));
@@ -908,10 +910,12 @@ GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards.flat()));
     const reLegend = /\blegend\b/i;
     const reHoF = /hall\s*of\s*fame/i;
 
-    const poolSenatore = fantaballaAll.filter(c => matchesWord(c, reSenatore));
-    const poolLegend   = fantaballaAll.filter(c => matchesWord(c, reLegend));
-    const poolHoF      = fantaballaAll.filter(c => matchesWord(c, reHoF));
-    const poolBase = fantaballaAll.filter(c => !matchesWord(c, reSenatore) && !matchesWord(c, reLegend) && !matchesWord(c, reHoF));
+    const poolSenatore = fantaballaRarPlus.filter(c => matchesWord(c, reSenatore));
+    const poolLegend   = fantaballaRarPlus.filter(c => matchesWord(c, reLegend));
+    const poolHoF      = fantaballaRarPlus.filter(c => matchesWord(c, reHoF));
+
+    // Base pool = Fantaballa rar+ senza le parole chiave
+    const poolBase = fantaballaRarPlus.filter(c => !matchesWord(c, reSenatore) && !matchesWord(c, reLegend) && !matchesWord(c, reHoF));
 
     function drawFromBagNonDup(bag, pack){
       if (!bag || !bag.length) return null;
