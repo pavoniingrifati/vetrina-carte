@@ -345,69 +345,6 @@ header{ top: var(--fcbar-h); }
   }
 </style>
 
-
-<style id="final-suspense-css">
-/* === Last card suspense FX === */
-.cCard.final.suspense .scene{ animation: fc-breathe 1.4s ease-in-out infinite; }
-@keyframes fc-breathe { 0%{ transform: rotateY(0deg) scale(1) } 50%{ transform: rotateY(0deg) scale(1.02) } 100%{ transform: rotateY(0deg) scale(1) } }
-.cCard.final .suspense-ring{
-  position:absolute; inset:-6px; border-radius:var(--radius);
-  box-shadow:0 0 0 2px rgba(110,231,255,.28), inset 0 0 40px rgba(110,231,255,.12), 0 0 32px rgba(110,231,255,.18);
-  pointer-events:none; opacity:0; transition:opacity .25s ease;
-}
-.cCard.final.suspense .suspense-ring{ opacity:1 }
-.cCard.final.revealing::after{
-  content:""; position:absolute; inset:-2%;
-  background:radial-gradient(circle at 50% 50%, rgba(255,255,255,.55), rgba(110,231,255,.18) 40%, transparent 70%);
-  filter: blur(8px); border-radius:inherit; pointer-events:none;
-  animation: fc-burst .7s ease-out forwards;
-}
-@keyframes fc-burst { 0%{opacity:0; transform:scale(.92)} 40%{opacity:1; transform:scale(1.06)} 100%{opacity:0; transform:scale(1)} }
-.cCard.final.suspense .shine { 
-  position:absolute; inset:0; border-radius:inherit; pointer-events:none; overflow:hidden;
-}
-.cCard.final.suspense .shine::before{
-  content:""; position:absolute; top:-30%; bottom:-30%; width:22%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), rgba(255,255,255,.45), rgba(255,255,255,.18), transparent);
-  filter: blur(6px); transform: translateX(-140%) skewX(-18deg);
-  animation: fc-shine 1.6s ease-in-out infinite;
-}
-@keyframes fc-shine { 0%{ transform: translateX(-140%) skewX(-18deg) } 100%{ transform: translateX(160%) skewX(-18deg) } }
-</style>
-
-
-<style id="legend-extra-suspense">
-/* === Extra suspense for Legendary (before reveal) === */
-.cCard.final.suspense.suspense-legend .scene{
-  animation: fc-breathe-legend 1s ease-in-out infinite;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 0 44px rgba(255, 215, 0, .35), 0 0 80px rgba(255, 140, 0, .25);
-}
-@keyframes fc-breathe-legend {
-  0%{ transform: rotateY(0deg) scale(1) }
-  50%{ transform: rotateY(0deg) scale(1.05) }
-  100%{ transform: rotateY(0deg) scale(1) }
-}
-.cCard.final.suspense.suspense-legend .legend-veil{
-  position:absolute; inset:-8px; border-radius:var(--radius);
-  background: radial-gradient(60% 60% at 50% 45%, rgba(255,215,0,.28), rgba(255,140,0,.18) 50%, transparent 70%);
-  filter: blur(10px); pointer-events:none; opacity:.65;
-  animation: legend-veil-pulse 1.2s ease-in-out infinite;
-}
-@keyframes legend-veil-pulse { 0%{opacity:.3} 50%{opacity:.8} 100%{opacity:.3} }
-.cCard.final.suspense.suspense-legend .shine::before{
-  animation-duration: 2.2s; /* slower, more dramatic sweep */
-}
-.cCard.final.revealing-legend::after{
-  content:""; position:absolute; inset:-4%;
-  background:radial-gradient(circle at 50% 50%, rgba(255,255,255,.7), rgba(255,215,0,.5) 30%, transparent 65%);
-  filter: blur(10px); border-radius:inherit; pointer-events:none;
-  animation: fc-burst-legend .9s ease-out forwards;
-}
-@keyframes fc-burst-legend {
-  0%{opacity:0; transform:scale(.9)} 50%{opacity:1; transform:scale(1.1)} 100%{opacity:0; transform:scale(1)}
-}
-</style>
-
 </head>
 <body>
 
@@ -1161,21 +1098,10 @@ function makeCardEl(d,isFinal){
   front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async';
   n.querySelector('.badge').textContent=d.rarity||'';
   n.dataset.state='back';
-  n.dataset.rarity = String(d.rarity||'');
-  n.addEventListener('click', async ()=>{
-  if(n.dataset.state==='back'){
-    const isLegend = String(d.rarity||'').toLowerCase()==='leggendaria';
-    if(n.classList.contains('final') && isLastUnrevealed()){
-      n.classList.add('suspense');
-      await preRevealFinal(n, isLegend);
-    }
-    revealCard(n,d);
-    updateFinalSuspense();
-  } else {
-    n.dataset.state='back'; n.classList.remove('revealed');
-    updateFinalSuspense();
-  }
-},{passive:true});
+  n.addEventListener('click',()=>{ 
+    if(n.dataset.state==='back'){ revealCard(n,d) } 
+    else { n.dataset.state='back'; n.classList.remove('revealed') } 
+  },{passive:true});
   return n;
 }
 function addSparks(el,n=10){
@@ -1207,65 +1133,8 @@ function showStage(cards){
   const last=cards.length-1; const frag=document.createDocumentFragment();
   cards.forEach((c,i)=>{ const el=makeCardEl(c,i===last); frag.appendChild(el); setDropIn(el,i) });
   stage.appendChild(frag);
-  updateFinalSuspense();
+  
   document.getElementById('log').textContent='Pacchetto pronto. Tocca le carte per rivelarle.';
-}
-
-
-/* === Last card suspense helpers === */
-function isLastUnrevealed(){
-  return document.querySelectorAll('.cCard[data-state="back"]').length === 1;
-}
-function updateFinalSuspense(){
-  try{
-    const backs = Array.from(document.querySelectorAll('.cCard[data-state="back"]'));
-    const finals = backs.filter(el => el.classList.contains('final'));
-    // remove suspense from all finals
-    document.querySelectorAll('.cCard.final').forEach(el => { el.classList.remove('suspense','suspense-legend'); });
-    if (backs.length === 1 && finals.length === 1){
-      const el = finals[0];
-      el.classList.add('suspense');
-      if (!el.querySelector('.suspense-ring')){
-        const ring = document.createElement('div'); ring.className = 'suspense-ring'; el.appendChild(ring);
-      }
-      if (!el.querySelector('.shine')){
-        const sh = document.createElement('div'); sh.className = 'shine'; el.appendChild(sh);
-      }
-      const rarity = String(el.dataset.rarity||'').toLowerCase();
-      if (rarity === 'leggendaria'){
-        el.classList.add('suspense-legend');
-        if (!el.querySelector('.legend-veil')){
-          const veil = document.createElement('div'); veil.className = 'legend-veil'; el.appendChild(veil);
-        }
-      }
-    }
-  }catch(e){ console.warn('[updateFinalSuspense]', e); }
-}
-      if (!el.querySelector('.shine')){
-        const sh = document.createElement('div'); sh.className = 'shine'; el.appendChild(sh);
-      }
-    }
-  }catch(e){ console.warn('[updateFinalSuspense]', e); }
-}
-async function preRevealFinal(el, isLegend){
-  try{
-    ensureAudio();
-    if(isLegend){
-      // Rising beeps + short rumble for drama
-      tone(440,.12,.07,'triangle'); await delay(220);
-      tone(660,.14,.08,'triangle'); await delay(220);
-      tone(880,.16,.09,'triangle'); await delay(260);
-      noiseBoom(.7,.18); await delay(220);
-      el.classList.add('revealing-legend');
-      setTimeout(()=> el.classList.remove('revealing-legend'), 900);
-    } else {
-      tone(520,.09,.07,'triangle'); tone(660,.12,.06,'triangle');
-      await delay(520);
-      el.classList.add('revealing');
-      setTimeout(()=> el.classList.remove('revealing'), 700);
-    }
-  }catch(e){}
-}catch(e){}
 }
 
 /** =========================
