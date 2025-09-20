@@ -487,7 +487,7 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Strumenti'];
+const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Strumenti', 'Cosmetic'];
 const PACK_BACK_BY_GAME = {
   'Wonderkid': 'Deck%20back%20wonderkid.png',
   'Patatine': 'patatrine.png',
@@ -498,7 +498,8 @@ const PACK_BACK_BY_GAME = {
   'Silver': 'Deck%20back%20argento.png',
   'Bronze': 'Deck%20back%20bronzo.png',
   'Strumenti': 'Deck%20back%20strumenti.png'
-};
+
+  'Cosmetic': 'Deck%20back%20cosmetic.png',};
 
 
 const PACK_COST_PER_GAME = {
@@ -510,8 +511,8 @@ const PACK_COST_PER_GAME = {
   'Gold': 0,
   'Silver': 0,
   'Bronze': 0,
-  'Strumenti': 0
-};
+  'Strumenti': 0,
+  'Cosmetic': 0};
 
 const PACK_SIZE_PER_GAME = {
   'Wonderkid': 3,
@@ -522,8 +523,8 @@ const PACK_SIZE_PER_GAME = {
   'Gold': 9,
   'Silver': 9,
   'Bronze': 9,
-  'Strumenti': 3
-};
+  'Strumenti': 3,
+  'Cosmetic': 1};
 
 const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
 
@@ -732,9 +733,9 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Wonderkid',
-  pools:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [] },
-  packs:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [] },
-  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0 }
+  pools:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [] , 'Cosmetic': []},
+  packs:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [] , 'Cosmetic': []},
+  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0 , 'Cosmetic': 0}
 };
 
 
@@ -808,6 +809,10 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
 
     // Oggetti — NEW: prende qualsiasi card con series = "Oggetto" (game: qualunque)
     GAME_STATE.pools['Oggetti'] = cleaned.filter(c => norm(c.series)==='oggetto');
+
+    // Cosmetic — infinito: prende qualsiasi card con series = "Cosmetic"
+    GAME_STATE.pools['Cosmetic'] = cleaned.filter(c => norm(c.series)==='cosmetic');
+
 
     // Strumenti — FINITO: prende solo series="Strumento" e game="Gotham City"; 2 copie per carta, pacchetti da 3 (ultimo 2+2 se serve)
     const baseStrumenti = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='strumento');
@@ -1045,9 +1050,9 @@ function renderPacksStrip(){
       const imgSrc = PACK_BACK_BY_GAME[game] || 'patatrine.png';
       const cost = Number(PACK_COST_PER_GAME[game] || 0);
       const totalPacks = (GAME_STATE.packs[game] || []).length;
-      const left = (game === 'Oggetti') ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
+      const left = (game === 'Oggetti' || game === 'Cosmetic') ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
       const cardsCount = GAME_STATE.pools[game]?.length || 0;
-      const subtitle = (game === 'Oggetti')
+      const subtitle = (game === 'Oggetti' || game === 'Cosmetic')
         ? `${cardsCount} carte`
         : `${left}/${totalPacks} pacchi • ${cardsCount} carte`;
 
@@ -1090,7 +1095,7 @@ function renderGamePicker(){
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
 
-    const subtitle = (game === 'Oggetti')
+    const subtitle = (game === 'Oggetti' || game === 'Cosmetic')
       ? `∞ pacchetti • ${totalCards} carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
 
@@ -1127,7 +1132,7 @@ function updateOpenBtnEnabled(){
   const cost = PACK_COST_PER_GAME[game] || 0;
   const badgeText = pointsBadge.textContent || 'Punti: 0';
   const pts = Number((badgeText.split(':')[1]||'0').trim()) || 0;
-  const noLimit = (game === 'Oggetti');
+  const noLimit = (game === 'Oggetti' || game === 'Cosmetic');
 
   openBtn.disabled = (!noLimit && left <= 0) || (cost > 0 && pts < cost);
   renderGamePicker();
@@ -1263,16 +1268,16 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
 
   // Scelta carte
   let chosen;
-  if (game === 'Oggetti') {
-    // Pacchetto infinito: 3 carte random dalla serie "Oggetto", anche doppioni
-    const pool = GAME_STATE.pools['Oggetti'] || [];
-    const size = PACK_SIZE_PER_GAME['Oggetti'] || 3;
+  if (game === 'Oggetti' || game === 'Cosmetic') {
+    // Pacchetto infinito: carte random dalla serie corrispondente (anche doppioni)
+    const pool = GAME_STATE.pools[game] || [];
+    const size = PACK_SIZE_PER_GAME[game] || 1;
     if (!pool.length) {
-      document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nella serie Oggetto.';
+      document.getElementById('log').textContent = `⚠️ Nessuna carta disponibile per ${game}.`;
       return;
     }
     chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
-  } else {
+} else {
     // Estrai il prossimo pacchetto finito (comportamento standard)
     const list = GAME_STATE.packs[game] || [];
     const idx = GAME_STATE.cursor[game] || 0;
@@ -1342,13 +1347,7 @@ function triggerLegendFX(){
 <script>
 function renderFeaturedCarousel(packs) {
   const featuredDiv = document.getElementById('featured');
-  featuredDiv.innerHTML = '<div class="featured-carousel" id="featuredCarousel">
-<div class="featured-card" data-pack="cosmetic" title="Cosmetic (1 carta • infinito)">
-  <img src="Deck%20back%20cosmetic.png" alt="Cosmetic Pack" style="width:100%;border-radius:8px;aspect-ratio:690/987;object-fit:cover" />
-  <div style="margin-top:6px;font-weight:700">Cosmetic</div>
-  <div style="font-size:12px;color:#aeb7db">1 carta • infinito</div>
-</div>
-</div>';
+  featuredDiv.innerHTML = '<div class="featured-carousel" id="featuredCarousel"></div>';
   const carousel = document.getElementById('featuredCarousel');
   packs.forEach((pack, index) => {
     const card = document.createElement('div');
@@ -1384,7 +1383,7 @@ function renderPacksStrip(){
     card.className = 'featured-card';
     if (GAME_STATE.selected === game) card.setAttribute('aria-current', 'true');
 
-    const subtitle = (game === 'Oggetti')
+    const subtitle = (game === 'Oggetti' || game === 'Cosmetic')
       ? '∞ pacchetti'
       : `${Math.max(0, left)}/${total} pacchetti`;
 
@@ -1599,7 +1598,7 @@ window.renderGamePicker = function(){
     btn.setAttribute('data-game',game);
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
-    const subtitle = (game === 'Oggetti')
+    const subtitle = (game === 'Oggetti' || game === 'Cosmetic')
       ? `∞ pacchetti • ${totalCards} carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
     btn.innerHTML = `
@@ -1713,60 +1712,5 @@ window.renderPacksStrip = function(){
   }
 })();
 </script>
-
-<script>
-// Added by assistant: ensure Cosmetic pack config exists
-window.PACKS = window.PACKS || {};
-if(!window.PACKS["cosmetic"]){
-  window.PACKS["cosmetic"] = {
-    name: "Cosmetic",
-    description: "1 carta dalla serie Cosmetic. Ripetizioni possibili (infinito).",
-    cardsToDraw: 1,
-    series: ["Cosmetic"],
-    allowDuplicates: true,
-    packBackImg: "Deck%20back%20cosmetic.png"
-  };
-}
-</script>
-
-
-<script>
-// Added by assistant: standalone listener for Cosmetic pack
-(function(){
-  const CARDS_JSON_URL = (window.CARDS_JSON_URL || "cards (1).json");
-  async function fetchCards(){ const res = await fetch(CARDS_JSON_URL); return res.json(); }
-  async function drawRandomFromSeries(seriesName, allowDuplicates, count){
-    const cards = (await fetchCards()).filter(c => c.series === seriesName);
-    const out = [];
-    for(let i=0;i<count;i++){ const idx = Math.floor(Math.random()*cards.length); out.push(cards[idx]); }
-    return out;
-  }
-  document.querySelectorAll('.featured-card[data-pack="cosmetic"]').forEach(el=>{
-    el.addEventListener('click', async ()=>{
-      const cfg = (window.PACKS && window.PACKS["cosmetic"]) ? window.PACKS["cosmetic"] : {
-        name:"Cosmetic", cardsToDraw:1, series:["Cosmetic"], allowDuplicates:true, packBackImg:"Deck%20back%20cosmetic.png"
-      };
-      const pulled = await drawRandomFromSeries(cfg.series[0], cfg.allowDuplicates, cfg.cardsToDraw);
-      const stage = document.querySelector('.stage');
-      const wrap = document.querySelector('.stageWrap');
-      if(stage && wrap){
-        wrap.classList.add('show'); stage.innerHTML = '';
-        pulled.forEach((c, i)=>{
-          const node = document.createElement('div');
-          node.className = 'cCard drop r-ultra-rara'; node.dataset.state = 'back';
-          node.innerHTML = `<div class="scene">
-            <div class="face back"><img src="${cfg.packBackImg}" alt="Back"></div>
-            <div class="face front"><img src="${c.img}" alt="${c.name}"></div>
-          </div><span class="badge">Cosmetic</span>`;
-          stage.appendChild(node);
-          setTimeout(()=>{ node.dataset.state = 'front'; }, 600 + i*120);
-          node.classList.add('in');
-        });
-      } else { console.log('Pulled (Cosmetic):', pulled); }
-    });
-  });
-})();
-</script>
-
 </body>
 </html>
