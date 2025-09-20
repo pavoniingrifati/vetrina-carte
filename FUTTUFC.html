@@ -487,7 +487,7 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Strumenti'];
+const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Strumenti', 'Cosmetic'];
 const PACK_BACK_BY_GAME = {
   'Wonderkid': 'Deck%20back%20wonderkid.png',
   'Patatine': 'patatrine.png',
@@ -809,7 +809,10 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
     // Oggetti — NEW: prende qualsiasi card con series = "Oggetto" (game: qualunque)
     GAME_STATE.pools['Oggetti'] = cleaned.filter(c => norm(c.series)==='oggetto');
 
-    // Strumenti — FINITO: prende solo series="Strumento" e game="Gotham City"; 2 copie per carta, pacchetti da 3 (ultimo 2+2 se serve)
+    
+    // Cosmetic — INFINITO: prende qualsiasi card con series = \"Cosmetic\"
+    GAME_STATE.pools['Cosmetic'] = cleaned.filter(c => norm(c.series)==='cosmetic');
+// Strumenti — FINITO: prende solo series="Strumento" e game="Gotham City"; 2 copie per carta, pacchetti da 3 (ultimo 2+2 se serve)
     const baseStrumenti = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='strumento');
     const strumentiDoubled = baseStrumenti.flatMap(c => [c, c]); // doppione
     GAME_STATE.pools['Strumenti'] = strumentiDoubled.slice();
@@ -972,6 +975,9 @@ GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards.flat()));
     // Oggetti — INFINITO: niente buildFinitePacks, lasciamo packs vuoto
     GAME_STATE.packs['Oggetti'] = [];
 
+    // Cosmetic — INFINITO: niente buildFinitePacks, lasciamo packs vuoto
+    GAME_STATE.packs['Cosmetic'] = [];
+
     // ====== Ripristino cursori ======
     try{
       const saved = JSON.parse(localStorage.getItem('futtu_cursors')||'{}');
@@ -1045,9 +1051,9 @@ function renderPacksStrip(){
       const imgSrc = PACK_BACK_BY_GAME[game] || 'patatrine.png';
       const cost = Number(PACK_COST_PER_GAME[game] || 0);
       const totalPacks = (GAME_STATE.packs[game] || []).length;
-      const left = (game === 'Oggetti') ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
+      const left = (game === 'Oggetti' || game === 'Cosmetic') ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
       const cardsCount = GAME_STATE.pools[game]?.length || 0;
-      const subtitle = (game === 'Oggetti')
+      const subtitle = (game === 'Oggetti' || game === 'Cosmetic')
         ? `${cardsCount} carte`
         : `${left}/${totalPacks} pacchi • ${cardsCount} carte`;
 
@@ -1090,7 +1096,7 @@ function renderGamePicker(){
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
 
-    const subtitle = (game === 'Oggetti')
+    const subtitle = (game === 'Oggetti' || game === 'Cosmetic')
       ? `∞ pacchetti • ${totalCards} carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
 
@@ -1127,7 +1133,7 @@ function updateOpenBtnEnabled(){
   const cost = PACK_COST_PER_GAME[game] || 0;
   const badgeText = pointsBadge.textContent || 'Punti: 0';
   const pts = Number((badgeText.split(':')[1]||'0').trim()) || 0;
-  const noLimit = (game === 'Oggetti');
+  const noLimit = (game === 'Oggetti' || game === 'Cosmetic');
 
   openBtn.disabled = (!noLimit && left <= 0) || (cost > 0 && pts < cost);
   renderGamePicker();
@@ -1263,7 +1269,7 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
 
   // Scelta carte
   let chosen;
-  if (game === 'Oggetti') {
+  if (game === 'Oggetti' || game === 'Cosmetic') {
     // Pacchetto infinito: 3 carte random dalla serie "Oggetto", anche doppioni
     const pool = GAME_STATE.pools['Oggetti'] || [];
     const size = PACK_SIZE_PER_GAME['Oggetti'] || 3;
@@ -1378,7 +1384,7 @@ function renderPacksStrip(){
     card.className = 'featured-card';
     if (GAME_STATE.selected === game) card.setAttribute('aria-current', 'true');
 
-    const subtitle = (game === 'Oggetti')
+    const subtitle = (game === 'Oggetti' || game === 'Cosmetic')
       ? '∞ pacchetti'
       : `${Math.max(0, left)}/${total} pacchetti`;
 
@@ -1593,7 +1599,7 @@ window.renderGamePicker = function(){
     btn.setAttribute('data-game',game);
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
-    const subtitle = (game === 'Oggetti')
+    const subtitle = (game === 'Oggetti' || game === 'Cosmetic')
       ? `∞ pacchetti • ${totalCards} carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
     btn.innerHTML = `
