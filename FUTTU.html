@@ -914,7 +914,7 @@ const packsSilverCards = PACKS_SILVER.map((ids, i) => {
 
 }).filter(p => p.length > 0);
 
-GAME_STATE.pools['Silver'] = Array.from(new Set(packsSilverCards.flat()));
+GAME_STATE.pools['Silver'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='silver');
 GAME_STATE.packs['Silver'] = packsSilverCards;
 
 
@@ -941,7 +941,7 @@ const packsBronzeCards = PACKS_BRONZE.map((ids, i) => {
   return cards.slice(0, PACK_SIZE_PER_GAME['Bronze'] || 6);
 }).filter(p => p.length > 0);
 
-GAME_STATE.pools['Bronze'] = Array.from(new Set(packsBronzeCards.flat()));
+GAME_STATE.pools['Bronze'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='bronze');
 GAME_STATE.packs['Bronze'] = packsBronzeCards;
 
 
@@ -957,7 +957,7 @@ const packsGoldCards = PACKS_GOLD.map((ids, i) => {
 }).filter(p => p.length > 0);
 
 /* Pool: somma delle carte usate (giusto per i contatori UI) */
-GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards.flat()));
+GAME_STATE.pools['Gold'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='gold');
 
     // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
@@ -1271,7 +1271,39 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
 
   // Scelta carte
   let chosen;
-  if (game === 'Oggetti') {
+  if (["Gold","Silver","Bronze"].includes(game)) {
+  // Pacchetti G/S/B: 3 Oggetto (series="Oggetto") + 6 dalla series del pacchetto, SOLO da "Gotham City", senza doppioni nello stesso pacchetto
+  const isGotham = (x) => String(x||'').trim().toLowerCase() === 'gotham city';
+  const uniqById = (arr) => { const m = new Map(); for (const c of arr) { if (c && !m.has(c.id)) m.set(c.id, c); } return Array.from(m.values()); };
+  // Pool "Oggetto" limitata a Gotham City
+  const oggPool = uniqById((GAME_STATE.pools['Oggetti']||[]).filter(c => isGotham(c.game)));
+  // Pool principale per il game selezionato (Gold/Silver/Bronze) limitata a Gotham City + series corrispondente
+  const mainPool = uniqById((GAME_STATE.pools[game]||[]).filter(c => isGotham(c.game) && String(c.series||'').trim().toLowerCase() === game.toLowerCase()));
+  const needObj = 3, needMain = 6;
+  if (oggPool.length < needObj || mainPool.length < needMain) {
+    document.getElementById('log').textContent = '⚠️ Pool insufficiente per generare il pacchetto.';
+    return;
+  }
+  function drawUnique(pool, k, excludeIds){
+    const ids = new Set(excludeIds||[]);
+    const available = pool.filter(c => !ids.has(c.id));
+    for (let i=available.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [available[i],available[j]]=[available[j],available[i]]; }
+    return available.slice(0, k);
+  }
+  const chosenObj = drawUnique(oggPool, needObj, []);
+  const exclude = new Set(chosenObj.map(c=>c.id));
+  const chosenMain = drawUnique(mainPool, needMain, exclude);
+  chosen = chosenObj.concat(chosenMain);
+  // Consuma uno "slot" dal contatore finito per mantenere coerenza con i limiti del gioco
+  const list = GAME_STATE.packs[game] || [];
+  const idx = GAME_STATE.cursor[game] || 0;
+  if (idx >= list.length){
+    document.getElementById('log').textContent = '❌ Pacchetti esauriti per questo game.';
+    return;
+  }
+  GAME_STATE.cursor[game] = idx + 1;
+  try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
+} else if (game === 'Oggetti') {
     // Pacchetto infinito: 3 carte random dalla serie "Oggetto", anche doppioni
     const pool = GAME_STATE.pools['Oggetti'] || [];
     const size = PACK_SIZE_PER_GAME['Oggetti'] || 3;
