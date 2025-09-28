@@ -786,18 +786,12 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
     // Wonderkid (come prima)
     GAME_STATE.pools['Wonderkid'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='wonderkid');
 
-    // Patatine — esclude Season/Leggendaria + pesi per rarità
-    const basePatatine = cleaned.filter(c =>
-      isGotham(c.game) &&
-      !['season','leggendaria'].includes(norm(c.rarity))
+    // Patatine — QUALUNQUE carta di Fantaballa FC, esclusa la serie "Leggendaria"
+    GAME_STATE.pools['Patatine'] = cleaned.filter(c =>
+      isFantaballa(c.game) &&
+      norm(c.series) !== 'leggendaria'
     );
-    const weightByRarity = { 'comune':4, 'non comune':3, 'rara':2, 'ultra rara':1 };
-    GAME_STATE.pools['Patatine'] = basePatatine.flatMap(c => {
-      const w = weightByRarity[norm(c.rarity)] || 1;
-      return Array(w).fill(c);
-    });
-
-    // Gotham Tots (come prima)
+// Gotham Tots (come prima)
     GAME_STATE.pools['Gotham Tots'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='tots');
 
     // Legend (come prima)
