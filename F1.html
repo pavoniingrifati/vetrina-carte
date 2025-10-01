@@ -386,14 +386,42 @@ function carSVG(){
       });
 
       // Classifica piloti (per PUNTI)
-      const driversRows = [];
-      [...data.entries()].forEach(([teamName, team]) => (team.piloti||[]).forEach(dr => driversRows.push({
-        driver: dr.nome, team: teamName, pts: dr.punti || 0
-      })));
-      driversRows.sort((a,b)=> b.pts - a.pts || a.driver.localeCompare(b.driver));
-      tblDrivers.innerHTML = driversRows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.driver}</td><td>${r.team}</td><td><strong>${formatNumber(r.pts)}</strong></td></tr>`).join('');
+// Aggregazione tollerante: somma i punti per piloti con lo stesso nome (case-insensitive, trim)
+{
+  const NAME_KEY = (s) => (s || '').trim().toLowerCase();
+  const agg = new Map(); // key: NAME_KEY, val: { namePref, teams:Set, pts:number }
 
-      // Classifica scuderie (per punti totali scuderia)
+  // Scorri i team filtrati per categoria e accumula punti per nome
+  [...data.entries()].forEach(([teamName, team]) => {
+    (team.piloti || []).forEach(dr => {
+      const key = NAME_KEY(dr.nome);
+      const entry = agg.get(key) || { namePref: dr.nome, teams: new Set(), pts: 0 };
+      entry.pts += (dr.punti || 0);
+      entry.teams.add(teamName);
+      // Mantieni la capitalizzazione del primo incontrato
+      agg.set(key, entry);
+    });
+  });
+
+  // Prepara le righe ordinate per punti desc, poi per nome
+  const rows = [...agg.values()]
+    .map(v => ({
+      driver: v.namePref,
+      team: v.teams.size === 1 ? [...v.teams][0] : `Multi-team (${[...v.teams].join(' + ')})`,
+      pts: v.pts
+    }))
+    .sort((a,b)=> b.pts - a.pts || a.driver.localeCompare(b.driver));
+
+  tblDrivers.innerHTML = rows.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${r.driver}</td>
+      <td>${r.team}</td>
+      <td><strong>${formatNumber(r.pts)}</strong></td>
+    </tr>
+  `).join('');
+}
+// Classifica scuderie (per punti totali scuderia)
       const teamRows = [...data.keys()].map(teamName => {
         const team = data.get(teamName) || { piloti: [] };
         const drivers = team.piloti || [];
