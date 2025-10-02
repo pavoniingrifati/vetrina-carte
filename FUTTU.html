@@ -383,22 +383,6 @@ header{ top: var(--fcbar-h); }
     50% { opacity: .52; filter: brightness(1.15); }
   }
 </style>
-<!-- Fallback norm() injected -->
-<script>
-if (typeof norm !== 'function') {
-  function norm(s) {
-    try {
-      return String(s || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g,'')
-        .trim()
-        .toLowerCase();
-    } catch(_) {
-      return String(s||'').trim().toLowerCase();
-    }
-  }
-}
-</script>
 </head>
 <body>
 <div aria-hidden="true" class="bat-signal"></div>
@@ -430,7 +414,7 @@ if (typeof norm !== 'function') {
 // === Sezioni Store (solo etichette, nessuna navigazione attiva) ===
 window.STORE_SECTIONS = {
   featured: ['Wonderkid','Patatine'],
-  new: ['Wonderkid', 'Frutto del Diavolo'], // Ultimi arrivi
+  new: ['Wonderkid'], // Ultimi arrivi
   base: ['Gold','Silver','Bronze'], // Pacchetti base
   all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Wonderkid','Patatine','Gold','Silver','Bronze','Strumenti'])
 };
@@ -524,7 +508,7 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti',, 'Frutto del Diavolo', 'Gold','Silver','Bronze', 'Strumenti'];
+const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Strumenti'];
 const PACK_BACK_BY_GAME = {
   'Wonderkid': 'Deck%20back%20wonderkid.png',
   'Patatine': 'patatrine.png',
@@ -536,8 +520,7 @@ const PACK_BACK_BY_GAME = {
   'Bronze': 'Deck%20back%20bronzo%20BATMAN.png',
   'Strumenti': 'Deck%20back%20strumenti.png',
   'Cosmetic': 'Deck%20back%20cosmetic.png'
-
-  'Frutto del Diavolo': 'Back%20Deck%20ONE.png',};
+};
 
 
 const PACK_COST_PER_GAME = {
@@ -550,8 +533,7 @@ const PACK_COST_PER_GAME = {
   'Silver': 0,
   'Bronze': 0,
   'Strumenti': 0
-
-  'Frutto del Diavolo': 0,};
+};
 
 const PACK_SIZE_PER_GAME = {
   'Wonderkid': 3,
@@ -563,8 +545,7 @@ const PACK_SIZE_PER_GAME = {
   'Silver': 9,
   'Bronze': 9,
   'Strumenti': 3
-
-  'Frutto del Diavolo': 3,};
+};
 
 const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
 
@@ -773,9 +754,9 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Wonderkid',
-  pools:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': []  'Frutto del Diavolo': [],},
-  packs:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': []  'Frutto del Diavolo': [],},
-  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0 , 'Frutto del Diavolo': 0}
+  pools:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [] },
+  packs:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [] },
+  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0 }
 };
 
 
@@ -812,7 +793,7 @@ async function loadCards(){
       const series=String(c.series||''); const game=String(c.game||'');
       if(!name||!rarity||!img) continue;
       if(ids.has(id)) continue; ids.add(id);
-      cleaned.push({id,name,rarity,img,series,game,text:String(c.text||'')});
+      cleaned.push({id,name,rarity,img,series,game});
     }
 
     // ====== Helper ======
@@ -849,10 +830,7 @@ async function loadCards(){
     // Oggetti — NEW: prende qualsiasi card con series = "Oggetto" (game: qualunque)
     GAME_STATE.pools['Oggetti'] = cleaned.filter(c => norm(c.series)==='oggetto');
 
-    
-// Frutto del Diavolo — FINITO: solo carte con text="Frutto del diavolo"
-GAME_STATE.pools['Frutto del Diavolo'] = cleaned.filter(c => norm(c.text)==='frutto del diavolo');
-// Strumenti — FINITO: prende solo series="Strumento" e game="Gotham City"; 2 copie per carta, pacchetti da 3 (ultimo 2+2 se serve)
+    // Strumenti — FINITO: prende solo series="Strumento" e game="Gotham City"; 2 copie per carta, pacchetti da 3 (ultimo 2+2 se serve)
     const baseStrumenti = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='strumento');
     const strumentiDoubled = baseStrumenti.flatMap(c => [c, c]); // doppione
     GAME_STATE.pools['Strumenti'] = strumentiDoubled.slice();
@@ -1002,18 +980,7 @@ GAME_STATE.pools['Gold'] = cleaned.filter(c => isGotham(c.game) && norm(c.series
     // Oggetti — INFINITO: niente buildFinitePacks, lasciamo packs vuoto
     GAME_STATE.packs['Oggetti'] = [];
 
-    
-// Frutto del Diavolo — pacchetti finiti da 3 carte, tutti diversi e senza doppioni
-(function(){
-  const size = PACK_SIZE_PER_GAME['Frutto del Diavolo'] || 3;
-  const base = (GAME_STATE.pools['Frutto del Diavolo'] || []).slice();
-  const finite = buildFinitePacks(base, size).map(p => {
-    const seen = new Set();
-    return p.filter(x => !seen.has(x.id) && seen.add(x.id));
-  });
-  GAME_STATE.packs['Frutto del Diavolo'] = finite;
-})();
-// ====== Ripristino cursori ======
+    // ====== Ripristino cursori ======
     try{
       const saved = JSON.parse(localStorage.getItem('futtu_cursors')||'{}');
       if (saved && typeof saved==='object'){
@@ -1052,9 +1019,9 @@ try {
     applyPackVisual();
     updateOpenBtnEnabled();
  document.getElementById('log').textContent =
-  `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length 'Frutto del Diavolo': 0,}, Patatine ${GAME_STATE.pools['Patatine'].length}, `+
+  `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, `+
   `TOTS ${GAME_STATE.pools['Gotham Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
-  `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Frutto del Diavolo ${GAME_STATE.pools['Frutto del Diavolo']?.length||0}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
+  `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
 
 
   }catch(err){
