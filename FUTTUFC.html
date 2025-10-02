@@ -487,7 +487,7 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Cosmetic', 'Strumenti'];
+const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Cosmetic', 'Strumenti', 'Frutto del Diavolo'];
 const PACK_BACK_BY_GAME = {
   'Wonderkid': 'Deck%20back%20wonderkid.png',
   'Patatine': 'patatrine.png',
@@ -498,7 +498,8 @@ const PACK_BACK_BY_GAME = {
   'Silver': 'Deck%20back%20argento.png',
   'Bronze': 'Deck%20back%20bronzo.png',
   'Strumenti': 'Deck%20back%20strumenti.png',
-  'Cosmetic': 'Deck%20back%20cosmetic.png'
+  'Cosmetic': 'Deck%20back%20cosmetic.png',
+  'Frutto del Diavolo': 'Back%20Deck%20ONE.png'
 };
 
 
@@ -512,7 +513,8 @@ const PACK_COST_PER_GAME = {
   'Silver': 0,
   'Bronze': 0,
   'Strumenti': 0,
-  'Cosmetic': 0
+  'Cosmetic': 0,
+  'Frutto del Diavolo': 0
 };
 
 const PACK_SIZE_PER_GAME = {
@@ -525,7 +527,8 @@ const PACK_SIZE_PER_GAME = {
   'Silver': 9,
   'Bronze': 9,
   'Strumenti': 3,
-  'Cosmetic': 1
+  'Cosmetic': 1,
+  'Frutto del Diavolo': 3
 };
 
 const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
@@ -735,9 +738,9 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Wonderkid',
-  pools:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
-  packs:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
-  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0 }
+  pools:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Frutto del Diavolo': []},
+  packs:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Frutto del Diavolo': []},
+  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0, 'Frutto del Diavolo': 0}
 };
 
 
@@ -771,10 +774,10 @@ async function loadCards(){
       if(!c||typeof c!=='object') continue;
       const id=c.id ?? `${(c.name||'card')}-${Math.random().toString(36).slice(2,8)}`;
       const name=String(c.name||''); const rarity=String(c.rarity||''); const img=String(c.img||'');
-      const series=String(c.series||''); const game=String(c.game||'');
+      const series=String(c.series||''); const game=String(c.game||''); const text=String(c.text||''); const tags=Array.isArray(c.tags)? c.tags.map(String):[];
       if(!name||!rarity||!img) continue;
       if(ids.has(id)) continue; ids.add(id);
-      cleaned.push({id,name,rarity,img,series,game});
+      cleaned.push({id,name,rarity,img,series,game,text,tags});
     }
 
     // ====== Helper ======
@@ -807,6 +810,31 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
     GAME_STATE.pools['Oggetti'] = cleaned.filter(c => norm(c.series)==='oggetto');
 
     
+    
+
+    // Frutto del Diavolo — FINITO: solo carte con text="Frutto del diavolo"
+        const fruttoPool = cleaned.filter(c => norm(c.text) === 'frutto del diavolo');
+        GAME_STATE.pools['Frutto del Diavolo'] = fruttoPool;
+
+        // Pacchetti STRICT: gruppi da 3 esatti, nessun doppione interno, e combinazioni tutte diverse tra loro
+        (function(){
+          const SZ = PACK_SIZE_PER_GAME['Frutto del Diavolo'] || 3;
+          const arr = shuffleInPlace(fruttoPool.slice());
+          const tmp = [];
+          for (let i = 0; i + SZ <= arr.length; i += SZ) {
+            const slice = arr.slice(i, i + SZ);
+            const seen = new Set();
+            const unique = slice.filter(x => x && x.id && !seen.has(x.id) && (seen.add(x.id), true));
+            if (unique.length === SZ) tmp.push(unique);
+          }
+          // tutte combinazioni uniche
+          const sig = (p) => [...new Set(p.map(x => x.id))].sort().join('+');
+          const used = new Set();
+          const uniquePacks = [];
+          for (const p of tmp) { const s = sig(p); if (!used.has(s)) { used.add(s); uniquePacks.push(p); } }
+          GAME_STATE.packs['Frutto del Diavolo'] = uniquePacks;
+        })();
+
     // Cosmetic — INFINITO: prende qualsiasi card con series = \"Cosmetic\" (game: qualunque)
     GAME_STATE.pools['Cosmetic'] = cleaned.filter(c => norm(c.series)==='cosmetic');
 // Strumenti — FINITO: prende solo series="Strumento" e game="Gotham City"; 2 copie per carta, pacchetti da 3 (ultimo 2+2 se serve)
