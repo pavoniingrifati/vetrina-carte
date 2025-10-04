@@ -1465,20 +1465,58 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
   // Scelta carte
   let chosen;
   if ((game === 'Oggetti') || (game === 'Cosmetic') || (game === 'Bronze') || (game === 'Silver') || (game === 'Gold')) {
-      if ((game === 'Bronze') || (game === 'Silver') || (game === 'Gold')) {
-        // B/S/G: generazione on-the-fly 3+6
-        chosen = generateBSGOnTheFly(game);
-      } else {
-        // Oggetti / Cosmetic: X carte random dalla serie corrispondente (anche doppioni)
-        const pool = GAME_STATE.pools[game] || [];
-        const size = PACK_SIZE_PER_GAME[game] || 1;
-        if (!pool.length) {
-          document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nella serie Oggetto.';
-          return;
-        }
-        chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
+    if ((game === 'Bronze') || (game === 'Silver') || (game === 'Gold')) {
+      // B/S/G: generazione on-the-fly 3+6
+      chosen = generateBSGOnTheFly(game);
+    } else {
+      // Oggetti / Cosmetic: X carte random dalla serie corrispondente (anche doppioni)
+      const pool = GAME_STATE.pools[game] || [];
+      const size = PACK_SIZE_PER_GAME[game] || 1;
+      if (!pool.length) {
+        document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nella serie Oggetto.';
+        return;
       }
-    } } else {
+      chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
+    }
+  } else {
+    // Estrai il prossimo pacchetto finito (comportamento standard)
+    const list = GAME_STATE.packs[game] || [];
+    const idx = GAME_STATE.cursor[game] || 0;
+    if (idx >= list.length){
+      document.getElementById('log').textContent = '❌ Pacchetti esauriti per questa serie.';
+      return;
+    }
+    chosen = list[idx] || [];
+    GAME_STATE.cursor[game] = idx + 1;
+  }
+
+
+  // Ordinamento per rarità + FX
+  chosen.sort((a,b)=> (rarityRank[a.rarity]||0) - (rarityRank[b.rarity]||0) );
+  if (chosen.some(c => (String(c.rarity||'').toLowerCase()==='leggendaria'))) { try{ triggerLegendFX(); }catch{} }
+
+  // Mostra in scena
+  showStage(chosen);
+
+  // Aggiorna UI
+  renderGamePicker();
+  updateOpenBtnEnabled();
+
+  // Salva inventario
+  try {
+    await saveInventario(chosen);
+    const msgTail = `<a href="https://pavoniingrifati.github.io/vetrina-carte/my-cards">Vai alle mie carte →</a>`;
+    document.getElementById('log').innerHTML =
+      (cost>0 ? `✅ Pacchetto salvato. Punti rimasti: <b>${newPts}</b>. ` : '✅ Pacchetto salvato. ') + msgTail;
+  } catch (e) {
+    if (e.message === 'login-required') {
+      document.getElementById('log').textContent = '🔒 Accedi con Google per salvare le carte in "Le mie carte".';
+    } else {
+      document.getElementById('log').textContent = '⚠️ Errore nel salvataggio. Riprova.';
+      console.error(e);
+    }
+  }
+} else {
     // Estrai il prossimo pacchetto finito (comportamento standard)
     const list = GAME_STATE.packs[game] || [];
     const idx = GAME_STATE.cursor[game] || 0;
