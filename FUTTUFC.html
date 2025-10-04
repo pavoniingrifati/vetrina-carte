@@ -873,6 +873,31 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
 
 // === AUTO B/S/G PACKS (generated from JSON) ===
 const oggettiPoolAll = cleaned.filter(c => norm(c.series)==='oggetto');
+
+// === Injected: Infinite Bronze pack generation ===
+function generateBronzeOnTheFly() {
+  try {
+    const oggPool = GAME_STATE?.pools?.['Bronze_oggs'] || [];
+    const mainPool = GAME_STATE?.pools?.['Bronze_main'] || [];
+    // Reuse existing pickDistinct (assumed present) to get 3 + 6
+    const oggs = pickDistinct(oggPool, 3);
+    const mains = pickDistinct(mainPool, 6);
+    const combined = [...oggs, ...mains];
+    // Fallback: if for qualsiasi motivo non raggiunge 9, rimpiazza con scelte casuali (accetta duplicati)
+    if (combined.length < 9) {
+      const need = 9 - combined.length;
+      const mix = [...oggPool, ...mainPool];
+      for (let i = 0; i < need && mix.length; i++) {
+        combined.push(mix[Math.floor(Math.random()*mix.length)]);
+      }
+    }
+    return combined;
+  } catch (e) {
+    console.error('generateBronzeOnTheFly error', e);
+    return [];
+  }
+}
+// === End Injected ===
 function pickDistinct(source, n) {
   const arr = source.slice();
   shuffleInPlace(arr);
@@ -898,11 +923,13 @@ function buildBSGAutoPacks(seriesName, count=80) {
     packs.push(pack);
   }
   const poolUnion = Array.from(new Set([...oggettiPoolAll, ...seriesPool]));
-  return { packs, pool: poolUnion };
+  return { packs, pool: poolUnion , oggPool: oggettiPoolAll, mainPool: seriesPool };
 }
 const autoGold   = buildBSGAutoPacks('Gold', 80);
 const autoSilver = buildBSGAutoPacks('Silver', 80);
 const autoBronze = buildBSGAutoPacks('Bronze', 80);
+GAME_STATE.pools['Bronze_oggs'] = autoBronze.oggPool;
+GAME_STATE.pools['Bronze_main'] = autoBronze.mainPool;
 GAME_STATE.packs['Gold']   = autoGold.packs;
 GAME_STATE.packs['Silver'] = autoSilver.packs;
 GAME_STATE.packs['Bronze'] = autoBronze.packs;
