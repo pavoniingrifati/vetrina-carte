@@ -771,6 +771,43 @@ function buildFinitePacks(cards, size){
   const arr = shuffleInPlace(cards.slice());
   const packs = [];
   for (let i=0; i<arr.length; i+=size){ packs.push(arr.slice(i,i+size)); }
+
+function pickDistinct(source, n) {
+  const arr = source.slice();
+  // simple shuffle
+  for (let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  const seen = new Set();
+  const out = [];
+  for (const c of arr) {
+    if (!c || !c.id) continue;
+    if (!seen.has(c.id)) { out.push(c); seen.add(c.id); if (out.length>=n) break; }
+  }
+  while (out.length < n && arr.length) {
+    const c = arr[Math.floor(Math.random()*arr.length)];
+    if (c && c.id && !seen.has(c.id)) { out.push(c); seen.add(c.id); }
+  }
+  return out.slice(0, n);
+}
+
+function generateBSGOnTheFly(seriesName){
+  try{
+    const oggPool = GAME_STATE?.pools?.[seriesName + '_oggs'] || [];
+    const mainPool = GAME_STATE?.pools?.[seriesName + '_main'] || [];
+    const oggs = pickDistinct(oggPool, 3);
+    const mains = pickDistinct(mainPool, 6);
+    const out = [...oggs, ...mains];
+    if (out.length < 9){
+      const mix = [...oggPool, ...mainPool];
+      while(out.length < 9 && mix.length){
+        out.push(mix[Math.floor(Math.random()*mix.length)]);
+      }
+    }
+    return out.slice(0,9);
+  } catch(e){
+    console.error('generateBSGOnTheFly error', e);
+    return [];
+  }
+}
   if (size>1 && packs.length>1 && packs[packs.length-1].length===1){
     const prev = packs[packs.length-2];
     const last = packs[packs.length-1];
@@ -1084,9 +1121,9 @@ function renderPacksStrip(){
       const imgSrc = PACK_BACK_BY_GAME[game] || 'patatrine.png';
       const cost = Number(PACK_COST_PER_GAME[game] || 0);
       const totalPacks = (GAME_STATE.packs[game] || []).length;
-      const left = (game === 'Oggetti') ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
-      const cardsCount = GAME_STATE.pools[game]?.length || 0;
-      const subtitle = (game === 'Oggetti')
+      const left = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold') ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
+      const cardsCount = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : (GAME_STATE.pools[game]?.length || 0));
+      const subtitle = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold')
         ? `${cardsCount} carte`
         : `${left}/${totalPacks} pacchi • ${cardsCount} carte`;
 
@@ -1120,7 +1157,7 @@ function packsLeft(game){ return Math.max(0, (GAME_STATE.packs[game]||[]).length
 function renderGamePicker(){
   const frag=document.createDocumentFragment();
   for (const game of VALID_GAMES.concat('Cosmetic')){
-    const totalCards = GAME_STATE.pools[game].length;
+    const totalCards = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : (GAME_STATE.pools[game]?.length || 0));
     const totalPacks = (GAME_STATE.packs[game]||[]).length;
     const left = packsLeft(game);
     const btn=document.createElement('button');
@@ -1129,7 +1166,7 @@ function renderGamePicker(){
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
 
-    const subtitle = (game === 'Oggetti')
+    const subtitle = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold')
       ? `∞ pacchetti • ${totalCards} carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
 
@@ -1166,7 +1203,7 @@ function updateOpenBtnEnabled(){
   const cost = PACK_COST_PER_GAME[game] || 0;
   const badgeText = pointsBadge.textContent || 'Punti: 0';
   const pts = Number((badgeText.split(':')[1]||'0').trim()) || 0;
-  const noLimit = (game === 'Oggetti');
+  const noLimit = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold');
 
   openBtn.disabled = (!noLimit && left <= 0) || (cost > 0 && pts < cost);
   renderGamePicker();
@@ -1334,7 +1371,7 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
   }
   GAME_STATE.cursor[game] = idx + 1;
   try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
-} else if (game === 'Oggetti') {
+} else if (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold') {
     // Pacchetto infinito: 3 carte random dalla serie "Oggetto", anche doppioni
     const pool = GAME_STATE.pools['Oggetti'] || [];
     const size = PACK_SIZE_PER_GAME['Oggetti'] || 3;
@@ -1343,6 +1380,24 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
       return;
     }
     chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
+  } else if ((game==='Bronze')||(game==='Silver')||(game==='Gold')) {
+    const og = GAME_STATE.pools[game + '_oggs'] || [];
+    const mn = GAME_STATE.pools[game + '_main'] || [];
+    if (!og.length || !mn.length) {
+      // fallback ai pacchetti predefiniti (finito) se i pool non sono pronti
+      const list = GAME_STATE.packs[game] || [];
+      const idx  = GAME_STATE.cursor[game] || 0;
+      if (idx < list.length) {
+        chosen = list[idx].slice();
+        GAME_STATE.cursor[game] = idx + 1;
+        try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
+      } else {
+        document.getElementById('log').textContent = '⚠️ ' + game + ': sorgenti non pronte.';
+        return;
+      }
+    } else {
+      chosen = generateBSGOnTheFly(game);
+    }
   } else {
     // Estrai il prossimo pacchetto finito (comportamento standard)
     const list = GAME_STATE.packs[game] || [];
@@ -1448,7 +1503,7 @@ function renderPacksStrip(){
     card.className = 'featured-card';
     if (GAME_STATE.selected === game) card.setAttribute('aria-current', 'true');
 
-    const subtitle = (game === 'Oggetti')
+    const subtitle = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold')
       ? '∞ pacchetti'
       : `${Math.max(0, left)}/${total} pacchetti`;
 
@@ -1649,7 +1704,7 @@ window.renderGamePicker = function(){
 
   gamePicker.innerHTML='';
   list.forEach(game => {
-    const totalCards = (GAME_STATE.pools[game]||[]).length;
+    const totalCards = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : ((GAME_STATE.pools[game]||[]).length));
     const totalPacks = (GAME_STATE.packs[game]||[]).length;
     const left = Math.max(0, totalPacks - (GAME_STATE.cursor[game]||0));
     const btn=document.createElement('button');
@@ -1657,7 +1712,7 @@ window.renderGamePicker = function(){
     btn.setAttribute('data-game',game);
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
-    const subtitle = (game === 'Oggetti')
+    const subtitle = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold')
       ? `∞ pacchetti • ${totalCards} carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
     btn.innerHTML = `
