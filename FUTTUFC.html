@@ -1014,39 +1014,22 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
 const oggettiPoolAll = cleaned.filter(c => norm(c.series)==='oggetto');
 
 // === Injected: Infinite Bronze pack generation ===
-
 function generateBSGOnTheFly(seriesName) {
   try {
-    const oggPool  = (GAME_STATE && GAME_STATE.pools && GAME_STATE.pools[seriesName + '_oggs'])  || [];
-    const mainPool = (GAME_STATE && GAME_STATE.pools && GAME_STATE.pools[seriesName + '_main'])  || [];
-    // helper to pick distinct elements
-    const pickDistinct = (arr, n) => {
-      const res = [];
-      if (!Array.isArray(arr) || !arr.length) return res;
-      const seen = new Set();
-      const max = Math.min(n, arr.length);
-      while (res.length < max) {
-        const x = arr[Math.floor(Math.random() * arr.length)];
-        const key = (x && (x.id || x.name)) ? (x.id || x.name) : JSON.stringify(x);
-        if (!seen.has(key)) { seen.add(key); res.push(x); }
-      }
-      return res;
-    };
-    const oggs  = pickDistinct(oggPool, 3);
+    const oggPool = GAME_STATE?.pools?.[seriesName + '_oggs'] || [];
+    const mainPool = GAME_STATE?.pools?.[seriesName + '_main'] || [];
+    // Reuse existing pickDistinct (assumed present) to get 3 + 6
+    const oggs = pickDistinct(oggPool, 3);
     const mains = pickDistinct(mainPool, 6);
-    let combined = oggs.concat(mains);
-    // Fallback fill (allow duplicates only if pools too short)
-    while (combined.length < 9 && (oggPool.length || mainPool.length)) {
-      const src = Math.random() < 0.33 ? oggPool : mainPool;
-      if (src.length) combined.push(src[Math.floor(Math.random() * src.length)]);
+    const combined = [...oggs, ...mains];
+    // Fallback: if for qualsiasi motivo non raggiunge 9, rimpiazza con scelte casuali (accetta duplicati)
+    if (combined.length < 9) {
+      const need = 9 - combined.length;
+      const mix = [...oggPool, ...mainPool];
+      for (let i = 0; i < need && mix.length; i++) {
+        combined.push(mix[Math.floor(Math.random()*mix.length)]);
+      }
     }
-    return combined.slice(0, 9);
-  } catch (e) {
-    console.error('generateBSGOnTheFly error', e);
-    return [];
-  }
-}
-}
     return combined;
   } catch (e) {
     console.error('generateBronzeOnTheFly error', e);
@@ -1093,9 +1076,9 @@ GAME_STATE.pools['Bronze_main'] = autoBronze.mainPool;
 GAME_STATE.packs['Gold']   = autoGold.packs;
 GAME_STATE.packs['Silver'] = autoSilver.packs;
 GAME_STATE.packs['Bronze'] = autoBronze.packs;
-
-
-
+GAME_STATE.pools['Gold']   = autoGold.pool;
+GAME_STATE.pools['Silver'] = autoSilver.pool;
+GAME_STATE.pools['Bronze'] = autoBronze.pool;
 // === END AUTO B/S/G PACKS ===
 
 
@@ -1480,18 +1463,9 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
   await delay(900); packArea.style.display='none';
 
   // Scelta carte
-
-// Scelta carte
-let chosen;
-if (game === 'Bronze' || game === 'Silver' || game === 'Gold') {
-  // Pacchetto infinito: 3 Oggetto + 6 della serie Fantaballa FC
-  chosen = generateBSGOnTheFly(game);
-} else {
-
+  let chosen;
   if ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold')) {
-     
-}
-// Pacchetto infinito: X carte random dalla serie corrispondente (anche doppioni)
+     // Pacchetto infinito: X carte random dalla serie corrispondente (anche doppioni)
     const pool = GAME_STATE.pools[game] || [];
     const size = PACK_SIZE_PER_GAME[game] || 1;
     if (!pool.length) {
