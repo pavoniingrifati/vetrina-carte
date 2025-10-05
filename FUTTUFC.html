@@ -791,28 +791,19 @@ function pickDistinct(source, n) {
 
 function generateBSGOnTheFly(seriesName){
   try{
-    const isGotham = (x) => String(x||'').trim().toLowerCase() === 'gotham city';
-    const pickDistinct = (source, n) => {
-      const arr = source.slice();
-      for (let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
-      const seen = new Set();
-      const out = [];
-      for (const c of arr) {
-        if (!c || !c.id) continue;
-        if (!seen.has(c.id)) { out.push(c); seen.add(c.id); if (out.length>=n) break; }
+    const oggPool = GAME_STATE?.pools?.[seriesName + '_oggs'] || [];
+    const mainPool = GAME_STATE?.pools?.[seriesName + '_main'] || [];
+    const oggs = pickDistinct(oggPool, 3);
+    const mains = pickDistinct(mainPool, 6);
+    const out = [...oggs, ...mains];
+    if (out.length < 9){
+      const mix = [...oggPool, ...mainPool];
+      while(out.length < 9 && mix.length){
+        out.push(mix[Math.floor(Math.random()*mix.length)]);
       }
-      while (out.length < n && arr.length) {
-        const c = arr[Math.floor(Math.random()*arr.length)];
-        if (c && c.id && !seen.has(c.id)) { out.push(c); seen.add(c.id); }
-      }
-      return out.slice(0, n);
-    };
-    const oggPoolAll = (GAME_STATE?.pools?.['Oggetti']||[]).filter(c => isGotham(c.game));
-    const mainPoolAll = (GAME_STATE?.pools?.[seriesName]||[]).filter(c => isGotham(c.game) && String(c.series||'').trim().toLowerCase() === String(seriesName||'').trim().toLowerCase());
-    const oggs = pickDistinct(oggPoolAll, 3);
-    const mains = pickDistinct(mainPoolAll, 6);
-    return [...oggs, ...mains];
-  }catch(e){
+    }
+    return out.slice(0,9);
+  } catch(e){
     console.error('generateBSGOnTheFly error', e);
     return [];
   }
@@ -948,7 +939,7 @@ const BY_ID = Object.fromEntries(cleaned.map(c => [c.id, c]));
  * Ogni elemento dell’array è UN PACCHETTO GOLD.
  * Metti esattamente 9 ID per pacco (o meno: verranno presi quelli trovati).
  */
-const PACKS_GOLD = [
+/* const PACKS_GOLD = [
   ["Oggetto-rimuoviinfortunio","Chiede-Silverog","Oggetto-Tactics","alessioevangelista-gold-83","kaos13-gold-82","Francesco_massini_gold","Walter_white_gold","Mattiagree-gold","Fedeandzi_gold"],
   ["Slotcard-Tactics","MCCC-Tactics","Patatine","gabrielegrasso-gold-82","filippobarone1-gold-82","frazx0713-gold-83","Andrea2000_gold","Samu_pala_gold","Stella-Gold"],
   ["Bronze-451","Bronze-442","Passaggicorti-Silverog","alm3-gold-81","imteto1-gold-81","DaRiz_gold","peps1zero-Gold","Bers-Gold","carlo-gold-83"],
@@ -959,13 +950,13 @@ const PACKS_GOLD = [
   ["Abile-Silverog","Spalle-Silverog","Passaggicorti-Silverog","alessiomatzedda0-gold-82","imteto1-gold-81","TheTrueIba_gold","Mattiagree-gold","gabrielegrasso-gold-82","Fedeandzi_gold"],
   ["Esterno-Silverog","Oggetto-rimuoviinfortunio2","Maglia-Tactics","Francesco_massini_gold","alm3-gold-81","peps1zero-Gold","Bers-Gold","Samu_pala_gold","Stella-Gold"],
   ["Fisioterapista-Tactics","Patatine","Slot-Tactics","GabrieleS-goldGabrieleS-gold","Striker09_Gold","Abatihno_gold","frazx0713-gold-83","Andrea2000_gold","Tommy_gold"]
-];
+];  // DISABLED: using dynamic pools for B/S/G */
 
 
 
 
     // Silver — pacchetti manuali (6 carte ciascuno, scelti da te)
-const PACKS_SILVER = [
+/* const PACKS_SILVER = [
  ["Oggetto-rimuoviinfortunio","Slotcard-Tactics","Oggetto-trasferimentospecial","Andrea2000_silver","TheTrueIba_silver","antonionapoli-silver-72","Fedeandzi_silver","Samu_pala_silver","Anarchia_assoluta_silver"],
   ["Maglia-Tactics","Bronze-451","Bronze-Addormenta","Karten-Derkos","DaRiz_silver","Alexciax_Silver","Silver-Xavier","Marcoesmarco-Silver","Fedeandzi_silver"],
   ["Slot-Tactics","Oggetto-rimuoviinfortunio","Bronze-442","Andrea2000_silver","antonionapoli-silver-72","Silver-Xavier","Silver-Flavio","Fedeandzi_silver","Karten-Derkos"],
@@ -977,7 +968,7 @@ const PACKS_SILVER = [
   ["Oggetto-trasferimentosilver","Maglia-Tactics","Oggetto-trasferimentospecial","Mattiagree-silver","Silver-Xavier","antonionapoli-silver-72","brandolatini-silver-83","Marcoesmarco-Silver","Andrea2000_silver"],
   ["Slotcard-Tactics","Oggetto-trasferimentosilverOggetto-trasferimentosilver","Oggetto-trasferimentobronze","kaos13-silver-82","Alexciax_Silver","DaRiz_silver","Anarchia_assoluta_silver","Fedeandzi_silver","Alexciax_Silver"]
 
-];
+];  // DISABLED: using dynamic pools for B/S/G */
 
 
 const packsSilverCards = PACKS_SILVER.map((ids, i) => {
@@ -987,16 +978,25 @@ const packsSilverCards = PACKS_SILVER.map((ids, i) => {
     console.warn('[Silver] Pack', i+1, 'ID mancanti:', missing);
   }
   return cards.slice(0, PACK_SIZE_PER_GAME['Silver'] || 6);
-  renderPacksStrip();
+      // === Pool dinamiche per B/S/G: 3 Oggetto + 6 main (tutte Fantaballa FC)
+    ['Bronze','Silver','Gold'].forEach(tier => {
+      const norm = (s) => (s || '').toString().trim().toLowerCase();
+      // 3 carte oggetto: qualunque "series = Oggetto"
+      GAME_STATE.pools[`${tier}_oggs`] = cleaned.filter(c => norm(c.series) === 'oggetto');
+      // 6 carte main: solo Fantaballa FC e serie corrispondente
+      GAME_STATE.pools[`${tier}_main`] = cleaned.filter(c =>
+        norm(c.game) === 'fantaballa fc' && norm(c.series) === tier.toLowerCase()
+      );
+    });
 
 }).filter(p => p.length > 0);
 
 GAME_STATE.pools['Silver'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='silver');
-GAME_STATE.packs['Silver'] = packsSilverCards;
+/* disabled Silver static packs */
 
 
 // Bronze — pacchetti manuali (9 carte ciascuno, scelti da te)
-const PACKS_BRONZE = [
+/* const PACKS_BRONZE = [
   ["Bronze-442","Bronze-451","Oggetto-trasferimentosilver","TheTrueIba_bronze","Mattiagree-bronze","Friggi_bronze","Gabriele_bronze","marchetto007-bronze-72","Fedeandzi_bronze"],
   ["Slot-Tactics","MCDC-Tactics","ADED-Silverog","criscegol-Bronze-82","carlo-bronze-83","Friggi_bronze","DaRiz_bronze","marchetto007-bronze-72","Marcoesmarco-Bronze"],
   ["Oggetto-trasferimentobronze","Oggetto-rimuoviinfortunio","Maglia-Tactics","Francesco_massini_bronze","Fedeandzi_bronze","Andrea2000_bronze","marchetto007-bronze-72","Alexciax_bronze","Friggi_bronze"],
@@ -1007,7 +1007,7 @@ const PACKS_BRONZE = [
   ["Bronze-Vice","Slot-Tactics","Fisioterapista-Tactics","Friggi_bronze","Cris01_bronze","marchetto007-bronze-72","Andrea2000_bronze","Xavier","Francesco_massini_bronze"],
   ["Bronze-433","Patatine","Oggetto-Tactics","Abatihno_bronze","Mattiagree-bronze","Friggi_bronze","Cris01_bronze","Andrea2000_bronze","Graziano"],
   ["Bronze-Addormenta","Slot-Tactics","Passaggicorti-Silverog","Alexciax_bronze","Francesco_massini_bronze","GabrieleS-bronze","Fedeandzi_bronze","Friggi_bronze","carlo-bronze-83"]
-];
+];  // DISABLED: using dynamic pools for B/S/G */
 
 const packsBronzeCards = PACKS_BRONZE.map((ids, i) => {
   const cards = ids.map(id => BY_ID[id]).filter(Boolean);
@@ -1019,7 +1019,7 @@ const packsBronzeCards = PACKS_BRONZE.map((ids, i) => {
 }).filter(p => p.length > 0);
 
 GAME_STATE.pools['Bronze'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='bronze');
-GAME_STATE.packs['Bronze'] = packsBronzeCards;
+/* disabled Bronze static packs */
 
 
 /* Validazione + mapping ID -> carte */
@@ -1041,7 +1041,7 @@ GAME_STATE.pools['Gold'] = cleaned.filter(c => isGotham(c.game) && norm(c.series
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
     shuffleInPlace(packsGoldCards);
-    GAME_STATE.packs['Gold'] = packsGoldCards;
+    /* disabled Gold static packs */
     
     // Legend: base senza leggendarie, con ~10% di injection leggendaria
     const baseLegendPacks = buildFinitePacks(legendNonLegend, PACK_SIZE_PER_GAME['Legend']).map(p => p.slice(0, PACK_SIZE_PER_GAME['Legend']));
@@ -1131,7 +1131,7 @@ function renderPacksStrip(){
       const cost = Number(PACK_COST_PER_GAME[game] || 0);
       const totalPacks = (GAME_STATE.packs[game] || []).length;
       const left = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold') ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
-      const cardsCount = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game]?.length || 0) + (GAME_STATE.pools['Oggetti']?.length || 0)) : (GAME_STATE.pools[game]?.length || 0));
+      const cardsCount = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : (GAME_STATE.pools[game]?.length || 0));
       const subtitle = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold')
         ? `${cardsCount} carte`
         : `${left}/${totalPacks} pacchi • ${cardsCount} carte`;
@@ -1166,7 +1166,7 @@ function packsLeft(game){ return Math.max(0, (GAME_STATE.packs[game]||[]).length
 function renderGamePicker(){
   const frag=document.createDocumentFragment();
   for (const game of VALID_GAMES.concat('Cosmetic')){
-    const totalCards = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game]?.length || 0) + (GAME_STATE.pools['Oggetti']?.length || 0)) : (GAME_STATE.pools[game]?.length || 0));
+    const totalCards = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : (GAME_STATE.pools[game]?.length || 0));
     const totalPacks = (GAME_STATE.packs[game]||[]).length;
     const left = packsLeft(game);
     const btn=document.createElement('button');
@@ -1216,7 +1216,7 @@ function updateOpenBtnEnabled(){
 
   openBtn.disabled = (!noLimit && left <= 0) || (cost > 0 && pts < cost);
   renderGamePicker();
-  
+  renderPacksStrip();
 
 }
 
@@ -1380,7 +1380,7 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
   }
   GAME_STATE.cursor[game] = idx + 1;
   try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
-} else if (game==='Oggetti') {
+} else if (game === 'Oggetti') {
     // Pacchetto infinito: 3 carte random dalla serie "Oggetto", anche doppioni
     const pool = GAME_STATE.pools['Oggetti'] || [];
     const size = PACK_SIZE_PER_GAME['Oggetti'] || 3;
@@ -1390,8 +1390,8 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
     }
     chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
   } else if ((game==='Bronze')||(game==='Silver')||(game==='Gold')) {
-    const og = GAME_STATE.pools['Oggetti'] || [];
-    const mn = GAME_STATE.pools[game] || [];
+    const og = GAME_STATE.pools[game + '_oggs'] || [];
+    const mn = GAME_STATE.pools[game + '_main'] || [];
     if (!og.length || !mn.length) {
       // fallback ai pacchetti predefiniti (finito) se i pool non sono pronti
       const list = GAME_STATE.packs[game] || [];
@@ -1525,7 +1525,7 @@ function renderPacksStrip(){
       GAME_STATE.selected = game;
       applyPackVisual();
       updateOpenBtnEnabled();
-      
+      renderPacksStrip();
     });
 
     packsStrip.appendChild(card);
@@ -1580,7 +1580,7 @@ function renderPacksStrip(){
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-  try{  }catch(e){ console.warn('renderPacksStrip missing?', e); }
+  try{ renderPacksStrip(); }catch(e){ console.warn('renderPacksStrip missing?', e); }
 });
 </script>
 <script>
@@ -1689,7 +1689,7 @@ function activateSection(section){
 
   // Rerender controlli dipendenti
   renderGamePicker();
-  renderPacksStrip && 
+  renderPacksStrip && renderPacksStrip();
   updateOpenBtnEnabled();
 }
 
@@ -1713,7 +1713,7 @@ window.renderGamePicker = function(){
 
   gamePicker.innerHTML='';
   list.forEach(game => {
-    const totalCards = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game]?.length || 0) + (GAME_STATE.pools['Oggetti']?.length || 0)) : ((GAME_STATE.pools[game]||[]).length));
+    const totalCards = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : ((GAME_STATE.pools[game]||[]).length));
     const totalPacks = (GAME_STATE.packs[game]||[]).length;
     const left = Math.max(0, totalPacks - (GAME_STATE.cursor[game]||0));
     const btn=document.createElement('button');
