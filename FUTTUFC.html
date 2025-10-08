@@ -948,8 +948,8 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
     // Oggetti — NEW: prende qualsiasi card con series = "Oggetto" (game: qualunque)
     GAME_STATE.pools['Oggetti'] = cleaned.filter(c => norm(c.series)==='oggetto');
 
-    
-    
+
+
 
     // Frutto del Diavolo — FINITO: solo carte con text="Frutto del diavolo"
         const fruttoPool = cleaned.filter(c => norm(c.text) === 'frutto del diavolo');
@@ -1005,39 +1005,38 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
         used.add(s);
       }
     })();
-    
 
 
-    
+
+
 
 // === AUTO B/S/G PACKS (generated from JSON) ===
 const oggettiPoolAll = cleaned.filter(c => norm(c.series)==='oggetto');
 
 // === Injected: Infinite Bronze pack generation ===
-
 function generateBSGOnTheFly(seriesName) {
   try {
-    var pools = (typeof GAME_STATE!=='undefined' && GAME_STATE && GAME_STATE.pools) ? GAME_STATE.pools : {};
-    var oggPool  = pools[seriesName + '_oggs'] || [];
-    var mainPool = pools[seriesName + '_main'] || [];
-    var oggs  = pickDistinct(oggPool, 3);
-    var mains = pickDistinct(mainPool, 6);
-    var combined = oggs.concat(mains);
+    const oggPool = GAME_STATE?.pools?.[seriesName + '_oggs'] || [];
+    const mainPool = GAME_STATE?.pools?.[seriesName + '_main'] || [];
+    // Reuse existing pickDistinct (assumed present) to get 3 + 6
+    const oggs = pickDistinct(oggPool, 3);
+    const mains = pickDistinct(mainPool, 6);
+    const combined = [...oggs, ...mains];
+    // Fallback: if for qualsiasi motivo non raggiunge 9, rimpiazza con scelte casuali (accetta duplicati)
     if (combined.length < 9) {
-      var need = 9 - combined.length;
-      var mix = oggPool.concat(mainPool);
-      for (var i = 0; i < need && mix.length; i++) {
+      const need = 9 - combined.length;
+      const mix = [...oggPool, ...mainPool];
+      for (let i = 0; i < need && mix.length; i++) {
         combined.push(mix[Math.floor(Math.random()*mix.length)]);
       }
     }
     return combined;
   } catch (e) {
-    console.error('generateBSGOnTheFly error', e);
+    console.error('generateBronzeOnTheFly error', e);
     return [];
   }
 }
 // === End Injected ===
-
 function pickDistinct(source, n) {
   const arr = source.slice();
   shuffleInPlace(arr);
@@ -1084,17 +1083,18 @@ GAME_STATE.pools['Bronze'] = autoBronze.pool;
 
 
 /* Validazione + mapping ID -> carte */
-// const packsGoldCards = []; // removed (was empty and caused pool reset)
+const packsGoldCards = [];
 
 /* Pool: somma delle carte usate (giusto per i contatori UI) */
+GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards.flat()));
 
     // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
     /* packs Gold set by auto */
-    
-    
+
+
     // ===== Legend — Fantaballa-only (rarità >= Rara) with keyword-weighted injection =====
     // Pool: solo game = Fantaballa FC e rarità in ['Rara','Epica','Ultra Rara','Leggendaria']
     const fantaballaRarPlus = cleaned.filter(c => isFantaballa(c.game) && ['rara','epica','ultra rara','leggendaria'].includes(norm(c.rarity)));
@@ -1170,7 +1170,7 @@ GAME_STATE.pools['Bronze'] = autoBronze.pool;
     // Oggetti — INFINITO: niente buildFinitePacks, lasciamo packs vuoto
     GAME_STATE.packs['Oggetti'] = [];
 
-    
+
     // Cosmetic — INFINITO: niente buildFinitePacks, lasciamo packs vuoto
     GAME_STATE.packs['Cosmetic'] = [];
 // ====== Ripristino cursori ======
@@ -1246,9 +1246,11 @@ function renderPacksStrip(){
       const imgSrc = PACK_BACK_BY_GAME[game] || 'patatrine.png';
       const cost = Number(PACK_COST_PER_GAME[game] || 0);
       const totalPacks = (GAME_STATE.packs[game] || []).length;
-      const left = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold')) ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
-      const cardsCount = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : (GAME_STATE.pools[game]?.length || 0));
-      const subtitle = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
+      const left = ((game === 'Oggetti') || (game === 'Cosmetic')) ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
+      const left = ((game === 'Oggetti') || (game === 'Cosmetic') || (game === 'Bronze') || (game === 'Silver') || (game === 'Gold')) ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
+      const cardsCount = GAME_STATE.pools[game]?.length || 0;
+      const subtitle = ((game === 'Oggetti') || (game === 'Cosmetic'))
+      const subtitle = ((game === 'Oggetti') || (game === 'Cosmetic') || (game === 'Bronze') || (game === 'Silver') || (game === 'Gold'))
         ? `${cardsCount} carte`
         : `${left}/${totalPacks} pacchi • ${cardsCount} carte`;
 
@@ -1282,7 +1284,7 @@ function packsLeft(game){ return Math.max(0, (GAME_STATE.packs[game]||[]).length
 function renderGamePicker(){
   const frag=document.createDocumentFragment();
   for (const game of VALID_GAMES){
-    const totalCards = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : (GAME_STATE.pools[game]?.length || 0));
+    const totalCards = GAME_STATE.pools[game].length;
     const totalPacks = (GAME_STATE.packs[game]||[]).length;
     const left = packsLeft(game);
     const btn=document.createElement('button');
@@ -1291,7 +1293,8 @@ function renderGamePicker(){
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
 
-    const subtitle = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
+    const subtitle = ((game === 'Oggetti') || (game === 'Cosmetic'))
+    const subtitle = ((game === 'Oggetti') || (game === 'Cosmetic') || (game === 'Bronze') || (game === 'Silver') || (game === 'Gold'))
       ? `∞ pacchetti • ${totalCards} carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
 
@@ -1328,7 +1331,8 @@ function updateOpenBtnEnabled(){
   const cost = PACK_COST_PER_GAME[game] || 0;
   const badgeText = pointsBadge.textContent || 'Punti: 0';
   const pts = Number((badgeText.split(':')[1]||'0').trim()) || 0;
-  const noLimit = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'));
+  const noLimit = ((game === 'Oggetti') || (game === 'Cosmetic'));
+  const noLimit = ((game === 'Oggetti') || (game === 'Cosmetic') || (game === 'Bronze') || (game === 'Silver') || (game === 'Gold'));
 
   openBtn.disabled = (!noLimit && left <= 0) || (cost > 0 && pts < cost);
   renderGamePicker();
@@ -1405,7 +1409,7 @@ function showStage(cards){
   const last=cards.length-1; const frag=document.createDocumentFragment();
   cards.forEach((c,i)=>{ const el=makeCardEl(c,i===last); frag.appendChild(el); setDropIn(el,i) });
   stage.appendChild(frag);
-  
+
   document.getElementById('log').textContent='Pacchetto pronto. Tocca le carte per rivelarle.';
 }
 
@@ -1464,20 +1468,7 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
 
   // Scelta carte
   let chosen;
-
-// --- Added guard to ensure B/S/G generate as 3+6 ---
-try{
-  if ((game==='Bronze')||(game==='Silver')||(game==='Gold')){
-    const og = (GAME_STATE.pools && (GAME_STATE.pools[game + '_oggs']||[])) || [];
-    const mn = (GAME_STATE.pools && (GAME_STATE.pools[game + '_main']||[])) || [];
-    if (og.length || mn.length){
-      chosen = generateBSGOnTheFly(game);
-    }
-  }
-}catch(e){ console.warn('BSG guard failed', e); }
-
-
-  if ((game==='Oggetti')||(game==='Cosmetic')) {
+  if ((game === 'Oggetti') || (game === 'Cosmetic')) {
      // Pacchetto infinito: X carte random dalla serie corrispondente (anche doppioni)
     const pool = GAME_STATE.pools[game] || [];
     const size = PACK_SIZE_PER_GAME[game] || 1;
@@ -1486,26 +1477,22 @@ try{
       return;
     }
     chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
-  } else if ((game==='Bronze')||(game==='Silver')||(game==='Gold')) {
-    // Pacchetti infiniti BSG: 3 Oggetto + 6 della serie (Fantaballa FC) generati on-the-fly
-    const og = GAME_STATE.pools[game + '_oggs'] || [];
-    const mn = GAME_STATE.pools[game + '_main'] || [];
-    if (!og.length || !mn.length) {
-      // Fallback: usa pacchetti pre-costruiti (finite) se i pool non sono pronti
-      const list = GAME_STATE.packs[game] || [];
-      const idx  = GAME_STATE.cursor[game] || 0;
-      if (idx < list.length) {
-        chosen = list[idx].slice();
-        GAME_STATE.cursor[game] = idx + 1;
-        try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
-      } else {
-        document.getElementById('log').textContent = '⚠️ ' + game + ': sorgenti non pronte.';
-        return;
-      }
-    } else {
-      chosen = generateBSGOnTheFly(game);
-    }
   } else {
+  if ((game === 'Oggetti') || (game === 'Cosmetic') || (game === 'Bronze') || (game === 'Silver') || (game === 'Gold')) {
+      if ((game === 'Bronze') || (game === 'Silver') || (game === 'Gold')) {
+        // B/S/G: generazione on-the-fly 3+6
+        chosen = generateBSGOnTheFly(game);
+      } else {
+        // Oggetti / Cosmetic: X carte random dalla serie corrispondente (anche doppioni)
+        const pool = GAME_STATE.pools[game] || [];
+        const size = PACK_SIZE_PER_GAME[game] || 1;
+        if (!pool.length) {
+          document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nella serie Oggetto.';
+          return;
+        }
+        chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
+      }
+    } } else {
     // Estrai il prossimo pacchetto finito (comportamento standard)
     const list = GAME_STATE.packs[game] || [];
     const idx = GAME_STATE.cursor[game] || 0;
@@ -1611,7 +1598,8 @@ function renderPacksStrip(){
     card.className = 'featured-card';
     if (GAME_STATE.selected === game) card.setAttribute('aria-current', 'true');
 
-    const subtitle = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
+    const subtitle = ((game === 'Oggetti') || (game === 'Cosmetic'))
+    const subtitle = ((game === 'Oggetti') || (game === 'Cosmetic') || (game === 'Bronze') || (game === 'Silver') || (game === 'Gold'))
       ? '∞ pacchetti'
       : `${Math.max(0, left)}/${total} pacchetti`;
 
@@ -1818,7 +1806,7 @@ window.renderGamePicker = function(){
 
   gamePicker.innerHTML='';
   list.forEach(game => {
-    const totalCards = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : ((GAME_STATE.pools[game]||[]).length));
+    const totalCards = (GAME_STATE.pools[game]||[]).length;
     const totalPacks = (GAME_STATE.packs[game]||[]).length;
     const left = Math.max(0, totalPacks - (GAME_STATE.cursor[game]||0));
     const btn=document.createElement('button');
@@ -1826,7 +1814,8 @@ window.renderGamePicker = function(){
     btn.setAttribute('data-game',game);
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
-    const subtitle = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
+    const subtitle = ((game === 'Oggetti') || (game === 'Cosmetic'))
+    const subtitle = ((game === 'Oggetti') || (game === 'Cosmetic') || (game === 'Bronze') || (game === 'Silver') || (game === 'Gold'))
       ? `∞ pacchetti • ${totalCards} carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
     btn.innerHTML = `
