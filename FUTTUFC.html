@@ -345,145 +345,6 @@ header{ top: var(--fcbar-h); }
   }
 </style>
 
-<style>
-
-/* === Visual Refresh (non-breaking) ===================================== */
-:root{
-  --bg: #0b0f1a;
-  --fg: #e6e8ef;
-  --muted: #aab1c3;
-  --card: rgba(255,255,255,.06);
-  --card-border: rgba(255,255,255,.12);
-  --brand: #6ee7ff;
-  --brand-strong: #22d3ee;
-  --accent: #c084fc;
-  --gold: #ffcc4d;
-  --silver: #d1d5db;
-  --bronze: #d39f6a;
-  --shadow: 0 10px 30px rgba(0,0,0,.35);
-}
-
-html,body{
-  background: radial-gradient(1200px 800px at 15% -10%, rgba(110,231,255,.12), transparent 60%),
-              radial-gradient(1000px 800px at 120% 10%, rgba(192,132,252,.10), transparent 60%),
-              var(--bg);
-  color: var(--fg);
-  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  letter-spacing: .2px;
-}
-
-.wrap{ max-width: 1200px; margin-inline: auto; }
-
-/* Pill badges & counters */
-.pill, .pill-ghost{
-  backdrop-filter: blur(8px);
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 999px;
-  padding: .45rem .85rem;
-  box-shadow: var(--shadow);
-  color: var(--fg);
-}
-
-/* Featured carousel cards */
-.featured-carousel .card, .featured-carousel .pack-card, .stageWrap .card {
-  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
-  border: 1px solid var(--card-border);
-  border-radius: 18px;
-  box-shadow: var(--shadow);
-  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-}
-.featured-carousel .card:hover, .featured-carousel .pack-card:hover, .stageWrap .card:hover{
-  transform: translateY(-4px) scale(1.01);
-  border-color: rgba(255,255,255,.24);
-}
-
-/* Buttons */
-button, .btn {
-  border-radius: 14px;
-  border: 0;
-  padding: .9rem 1.1rem;
-  font-weight: 700;
-  letter-spacing: .3px;
-  transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
-  box-shadow: var(--shadow);
-}
-button:active, .btn:active { transform: translateY(1px) scale(.99); }
-
-#openBtn, #myCardsBtn, #bonusBtn, #resetPacksBtn {
-  background: linear-gradient(135deg, var(--brand), var(--accent));
-  color: #0b0f1a;
-}
-#openBtn:hover, #myCardsBtn:hover, #bonusBtn:hover, #resetPacksBtn:hover {
-  filter: brightness(1.05);
-}
-
-/* Balance bar */
-.fc-balance-bar {
-  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
-  border: 1px solid var(--card-border);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-}
-
-/* Stage (where packs/cards appear) */
-.stageWrap, .stage {
-  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.00));
-  border-radius: 18px;
-}
-
-/* Tier accents */
-[data-tier="Gold"], .tag-gold { box-shadow: 0 0 0 1px rgba(255,204,77,.4) inset, 0 6px 20px rgba(255,204,77,.20); }
-[data-tier="Silver"], .tag-silver { box-shadow: 0 0 0 1px rgba(209,213,219,.45) inset, 0 6px 20px rgba(209,213,219,.20); }
-[data-tier="Bronze"], .tag-bronze { box-shadow: 0 0 0 1px rgba(211,159,106,.45) inset, 0 6px 20px rgba(211,159,106,.18); }
-
-/* Subtle card shine */
-.card-shine {
-  position: relative;
-  overflow: hidden;
-}
-.card-shine::after{
-  content:"";
-  position:absolute; inset:-40%;
-  background: conic-gradient(from 180deg at 50% 50%, rgba(255,255,255,.0), rgba(255,255,255,.14), rgba(255,255,255,.0));
-  transform: rotate(0deg);
-  animation: shine 6s linear infinite;
-  pointer-events:none;
-}
-@keyframes shine {
-  to { transform: rotate(360deg); }
-}
-
-/* Flash screen lines during open */
-#flashScreen { backdrop-filter: blur(6px); }
-#flashLine {
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--brand-strong), transparent);
-  filter: drop-shadow(0 0 8px var(--brand-strong));
-}
-
-/* Table/list tweaks */
-table, .table-like {
-  border-collapse: separate;
-  border-spacing: 0;
-}
-table td, table th {
-  border-bottom: 1px solid rgba(255,255,255,.08);
-  padding: .6rem .7rem;
-}
-
-/* Tooltip flavor (if any) */
-[role="tooltip"], .tooltip {
-  background: #111827;
-  border: 1px solid rgba(255,255,255,.08);
-  color: #e5e7eb;
-  border-radius: 10px;
-  padding: .35rem .55rem;
-  box-shadow: 0 10px 30px rgba(0,0,0,.45);
-}
-/* ===================================================================== */
-
-</style>
 </head>
 <body>
 
@@ -626,7 +487,7 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Cosmetic', 'Strumenti', 'Frutto del Diavolo'];
+const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Cosmetic', 'Strumenti'];
 const PACK_BACK_BY_GAME = {
   'Wonderkid': 'Deck%20back%20wonderkid.png',
   'Patatine': 'patatrine.png',
@@ -637,8 +498,7 @@ const PACK_BACK_BY_GAME = {
   'Silver': 'Deck%20back%20argento.png',
   'Bronze': 'Deck%20back%20bronzo.png',
   'Strumenti': 'Deck%20back%20strumenti.png',
-  'Cosmetic': 'Deck%20back%20cosmetic.png',
-  'Frutto del Diavolo': 'Back%20Deck%20ONE.png'
+  'Cosmetic': 'Deck%20back%20cosmetic.png'
 };
 
 
@@ -652,8 +512,7 @@ const PACK_COST_PER_GAME = {
   'Silver': 0,
   'Bronze': 0,
   'Strumenti': 0,
-  'Cosmetic': 0,
-  'Frutto del Diavolo': 0
+  'Cosmetic': 0
 };
 
 const PACK_SIZE_PER_GAME = {
@@ -666,8 +525,7 @@ const PACK_SIZE_PER_GAME = {
   'Silver': 9,
   'Bronze': 9,
   'Strumenti': 3,
-  'Cosmetic': 1,
-  'Frutto del Diavolo': 3
+  'Cosmetic': 1
 };
 
 const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
@@ -877,9 +735,9 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Wonderkid',
-  pools:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Frutto del Diavolo': []},
-  packs:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Frutto del Diavolo': []},
-  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0, 'Frutto del Diavolo': 0}
+  pools:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
+  packs:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
+  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0 }
 };
 
 
@@ -913,10 +771,10 @@ async function loadCards(){
       if(!c||typeof c!=='object') continue;
       const id=c.id ?? `${(c.name||'card')}-${Math.random().toString(36).slice(2,8)}`;
       const name=String(c.name||''); const rarity=String(c.rarity||''); const img=String(c.img||'');
-      const series=String(c.series||''); const game=String(c.game||''); const text=String(c.text||''); const tags=Array.isArray(c.tags)? c.tags.map(String):[];
+      const series=String(c.series||''); const game=String(c.game||'');
       if(!name||!rarity||!img) continue;
       if(ids.has(id)) continue; ids.add(id);
-      cleaned.push({id,name,rarity,img,series,game,text,tags});
+      cleaned.push({id,name,rarity,img,series,game});
     }
 
     // ====== Helper ======
@@ -949,31 +807,6 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
     GAME_STATE.pools['Oggetti'] = cleaned.filter(c => norm(c.series)==='oggetto');
 
     
-    
-
-    // Frutto del Diavolo — FINITO: solo carte con text="Frutto del diavolo"
-        const fruttoPool = cleaned.filter(c => norm(c.text) === 'frutto del diavolo');
-        GAME_STATE.pools['Frutto del Diavolo'] = fruttoPool;
-
-        // Pacchetti STRICT: gruppi da 3 esatti, nessun doppione interno, e combinazioni tutte diverse tra loro
-        (function(){
-          const SZ = PACK_SIZE_PER_GAME['Frutto del Diavolo'] || 3;
-          const arr = shuffleInPlace(fruttoPool.slice());
-          const tmp = [];
-          for (let i = 0; i + SZ <= arr.length; i += SZ) {
-            const slice = arr.slice(i, i + SZ);
-            const seen = new Set();
-            const unique = slice.filter(x => x && x.id && !seen.has(x.id) && (seen.add(x.id), true));
-            if (unique.length === SZ) tmp.push(unique);
-          }
-          // tutte combinazioni uniche
-          const sig = (p) => [...new Set(p.map(x => x.id))].sort().join('+');
-          const used = new Set();
-          const uniquePacks = [];
-          for (const p of tmp) { const s = sig(p); if (!used.has(s)) { used.add(s); uniquePacks.push(p); } }
-          GAME_STATE.packs['Frutto del Diavolo'] = uniquePacks;
-        })();
-
     // Cosmetic — INFINITO: prende qualsiasi card con series = \"Cosmetic\" (game: qualunque)
     GAME_STATE.pools['Cosmetic'] = cleaned.filter(c => norm(c.series)==='cosmetic');
 // Strumenti — FINITO: prende solo series="Strumento" e game="Gotham City"; 2 copie per carta, pacchetti da 3 (ultimo 2+2 se serve)
@@ -1012,31 +845,6 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
 
 // === AUTO B/S/G PACKS (generated from JSON) ===
 const oggettiPoolAll = cleaned.filter(c => norm(c.series)==='oggetto');
-
-// === Injected: Infinite Bronze pack generation ===
-function generateBSGOnTheFly(seriesName) {
-  try {
-    const oggPool = GAME_STATE?.pools?.[seriesName + '_oggs'] || [];
-    const mainPool = GAME_STATE?.pools?.[seriesName + '_main'] || [];
-    // Reuse existing pickDistinct (assumed present) to get 3 + 6
-    const oggs = pickDistinct(oggPool, 3);
-    const mains = pickDistinct(mainPool, 6);
-    const combined = [...oggs, ...mains];
-    // Fallback: if for qualsiasi motivo non raggiunge 9, rimpiazza con scelte casuali (accetta duplicati)
-    if (combined.length < 9) {
-      const need = 9 - combined.length;
-      const mix = [...oggPool, ...mainPool];
-      for (let i = 0; i < need && mix.length; i++) {
-        combined.push(mix[Math.floor(Math.random()*mix.length)]);
-      }
-    }
-    return combined;
-  } catch (e) {
-    console.error('generateBronzeOnTheFly error', e);
-    return [];
-  }
-}
-// === End Injected ===
 function pickDistinct(source, n) {
   const arr = source.slice();
   shuffleInPlace(arr);
@@ -1062,17 +870,11 @@ function buildBSGAutoPacks(seriesName, count=80) {
     packs.push(pack);
   }
   const poolUnion = Array.from(new Set([...oggettiPoolAll, ...seriesPool]));
-  return { packs, pool: poolUnion , oggPool: oggettiPoolAll, mainPool: seriesPool };
+  return { packs, pool: poolUnion };
 }
 const autoGold   = buildBSGAutoPacks('Gold', 80);
-GAME_STATE.pools['Gold_oggs'] = autoGold.oggPool;
-GAME_STATE.pools['Gold_main'] = autoGold.mainPool;
 const autoSilver = buildBSGAutoPacks('Silver', 80);
-GAME_STATE.pools['Silver_oggs'] = autoSilver.oggPool;
-GAME_STATE.pools['Silver_main'] = autoSilver.mainPool;
 const autoBronze = buildBSGAutoPacks('Bronze', 80);
-GAME_STATE.pools['Bronze_oggs'] = autoBronze.oggPool;
-GAME_STATE.pools['Bronze_main'] = autoBronze.mainPool;
 GAME_STATE.packs['Gold']   = autoGold.packs;
 GAME_STATE.packs['Silver'] = autoSilver.packs;
 GAME_STATE.packs['Bronze'] = autoBronze.packs;
@@ -1246,9 +1048,9 @@ function renderPacksStrip(){
       const imgSrc = PACK_BACK_BY_GAME[game] || 'patatrine.png';
       const cost = Number(PACK_COST_PER_GAME[game] || 0);
       const totalPacks = (GAME_STATE.packs[game] || []).length;
-      const left = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold')) ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
-      const cardsCount = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : (GAME_STATE.pools[game]?.length || 0));
-      const subtitle = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
+      const left = ((game === 'Oggetti') || (game === 'Cosmetic')) ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
+      const cardsCount = GAME_STATE.pools[game]?.length || 0;
+      const subtitle = ((game === 'Oggetti') || (game === 'Cosmetic'))
         ? `${cardsCount} carte`
         : `${left}/${totalPacks} pacchi • ${cardsCount} carte`;
 
@@ -1282,7 +1084,7 @@ function packsLeft(game){ return Math.max(0, (GAME_STATE.packs[game]||[]).length
 function renderGamePicker(){
   const frag=document.createDocumentFragment();
   for (const game of VALID_GAMES){
-    const totalCards = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : (GAME_STATE.pools[game]?.length || 0));
+    const totalCards = GAME_STATE.pools[game].length;
     const totalPacks = (GAME_STATE.packs[game]||[]).length;
     const left = packsLeft(game);
     const btn=document.createElement('button');
@@ -1291,7 +1093,7 @@ function renderGamePicker(){
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
 
-    const subtitle = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
+    const subtitle = ((game === 'Oggetti') || (game === 'Cosmetic'))
       ? `∞ pacchetti • ${totalCards} carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
 
@@ -1328,7 +1130,7 @@ function updateOpenBtnEnabled(){
   const cost = PACK_COST_PER_GAME[game] || 0;
   const badgeText = pointsBadge.textContent || 'Punti: 0';
   const pts = Number((badgeText.split(':')[1]||'0').trim()) || 0;
-  const noLimit = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'));
+  const noLimit = ((game === 'Oggetti') || (game === 'Cosmetic'));
 
   openBtn.disabled = (!noLimit && left <= 0) || (cost > 0 && pts < cost);
   renderGamePicker();
@@ -1464,7 +1266,7 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
 
   // Scelta carte
   let chosen;
-  if ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold')) {
+  if ((game === 'Oggetti') || (game === 'Cosmetic')) {
      // Pacchetto infinito: X carte random dalla serie corrispondente (anche doppioni)
     const pool = GAME_STATE.pools[game] || [];
     const size = PACK_SIZE_PER_GAME[game] || 1;
@@ -1473,25 +1275,6 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
       return;
     }
     chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
-  } else if ((game==='Bronze')||(game==='Silver')||(game==='Gold')) {
-    // Pacchetti infiniti BSG: 3 Oggetto + 6 della serie (Fantaballa FC) generati on-the-fly
-    const og = GAME_STATE.pools[game + '_oggs'] || [];
-    const mn = GAME_STATE.pools[game + '_main'] || [];
-    if (!og.length || !mn.length) {
-      // Fallback: usa pacchetti pre-costruiti (finite) se i pool non sono pronti
-      const list = GAME_STATE.packs[game] || [];
-      const idx  = GAME_STATE.cursor[game] || 0;
-      if (idx < list.length) {
-        chosen = list[idx].slice();
-        GAME_STATE.cursor[game] = idx + 1;
-        try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
-      } else {
-        document.getElementById('log').textContent = '⚠️ ' + game + ': sorgenti non pronte.';
-        return;
-      }
-    } else {
-      chosen = generateBSGOnTheFly(game);
-    }
   } else {
     // Estrai il prossimo pacchetto finito (comportamento standard)
     const list = GAME_STATE.packs[game] || [];
@@ -1598,7 +1381,7 @@ function renderPacksStrip(){
     card.className = 'featured-card';
     if (GAME_STATE.selected === game) card.setAttribute('aria-current', 'true');
 
-    const subtitle = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
+    const subtitle = ((game === 'Oggetti') || (game === 'Cosmetic'))
       ? '∞ pacchetti'
       : `${Math.max(0, left)}/${total} pacchetti`;
 
@@ -1805,7 +1588,7 @@ window.renderGamePicker = function(){
 
   gamePicker.innerHTML='';
   list.forEach(game => {
-    const totalCards = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : ((GAME_STATE.pools[game]||[]).length));
+    const totalCards = (GAME_STATE.pools[game]||[]).length;
     const totalPacks = (GAME_STATE.packs[game]||[]).length;
     const left = Math.max(0, totalPacks - (GAME_STATE.cursor[game]||0));
     const btn=document.createElement('button');
@@ -1813,7 +1596,7 @@ window.renderGamePicker = function(){
     btn.setAttribute('data-game',game);
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
-    const subtitle = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
+    const subtitle = ((game === 'Oggetti') || (game === 'Cosmetic'))
       ? `∞ pacchetti • ${totalCards} carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
     btn.innerHTML = `
@@ -1926,60 +1709,6 @@ window.renderPacksStrip = function(){
     onEdit(likesEl, saveLikes);
   }
 })();
-</script>
-<script>
-
-// === Visual micro-interactions (non-breaking) ============================
-(function(){
-  const POP_CLASS = 'pop-in';
-  const style = document.createElement('style');
-  style.textContent = `
-  .${POP_CLASS} { animation: popIn .28s ease-out both; }
-  @keyframes popIn { from { transform: scale(.92); opacity:.0 } to { transform: scale(1); opacity:1 } }
-  `;
-  document.head.appendChild(style);
-
-  // Simple confetti (tiny, no deps)
-  function confettiBurst(x=window.innerWidth/2, y=120) {
-    const colors = ['#22d3ee','#06b6d4','#c084fc','#a78bfa','#f472b6','#f59e0b'];
-    const N = 60;
-    for (let i=0;i<N;i++){
-      const el = document.createElement('i');
-      Object.assign(el.style, {
-        position:'fixed', left:`${x}px`, top:`${y}px`, width:'6px', height:'6px',
-        background: colors[Math.floor(Math.random()*colors.length)],
-        transform: `translate(-50%,-50%) rotate(${Math.random()*360}deg)`,
-        borderRadius: '2px', pointerEvents:'none', zIndex: 9999,
-        boxShadow: '0 2px 8px rgba(0,0,0,.35)'
-      });
-      document.body.appendChild(el);
-      const dx = (Math.random()-.5) * 280;
-      const dy = (Math.random()*-240) - 80;
-      const rot = (Math.random()-.5) * 720;
-      el.animate([
-        { transform:`translate(-50%,-50%)`, opacity:1 },
-        { transform:`translate(${dx}px, ${dy}px) rotate(${rot}deg)`, opacity:0 }
-      ], { duration: 1200 + Math.random()*500, easing: 'cubic-bezier(.21,1,.22,1)' }).onfinish = () => el.remove();
-    }
-  }
-
-  // Hook into the existing "Open Pack" button for the burst + pop on resulting cards
-  window.addEventListener('DOMContentLoaded', () => {
-    const openBtn = document.getElementById('openBtn');
-    if (openBtn){
-      openBtn.addEventListener('click', () => {
-        setTimeout(() => confettiBurst(window.innerWidth/2, 140), 250);
-        setTimeout(() => {
-          // add pop-in to visible cards (best-effort, non-breaking)
-          document.querySelectorAll('.stageWrap .card, .stage .card, .featured-carousel .card')
-            .forEach(el => { el.classList.add(POP_CLASS); setTimeout(()=>el.classList.remove(POP_CLASS), 400); });
-        }, 320);
-      });
-    }
-  });
-})();
-// ========================================================================
-
 </script>
 </body>
 </html>
