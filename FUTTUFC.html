@@ -1083,10 +1083,9 @@ GAME_STATE.pools['Bronze'] = autoBronze.pool;
 
 
 /* Validazione + mapping ID -> carte */
-const packsGoldCards = [];
+// const packsGoldCards = []; // removed (was empty and caused pool reset)
 
 /* Pool: somma delle carte usate (giusto per i contatori UI) */
-GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards.flat()));
 
     // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
@@ -1464,7 +1463,20 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
 
   // Scelta carte
   let chosen;
-  if ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold')) {
+
+// --- Added guard to ensure B/S/G generate as 3+6 ---
+try{
+  if ((game==='Bronze')||(game==='Silver')||(game==='Gold')){
+    const og = (GAME_STATE.pools && (GAME_STATE.pools[game + '_oggs']||[])) || [];
+    const mn = (GAME_STATE.pools && (GAME_STATE.pools[game + '_main']||[])) || [];
+    if (og.length || mn.length){
+      chosen = generateBSGOnTheFly(game);
+    }
+  }
+}catch(e){ console.warn('BSG guard failed', e); }
+
+
+  if ((game==='Oggetti')||(game==='Cosmetic')) {
      // Pacchetto infinito: X carte random dalla serie corrispondente (anche doppioni)
     const pool = GAME_STATE.pools[game] || [];
     const size = PACK_SIZE_PER_GAME[game] || 1;
