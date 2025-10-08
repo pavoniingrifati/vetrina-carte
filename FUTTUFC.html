@@ -497,8 +497,11 @@ const PACK_BACK_BY_GAME = {
 'Gold': 'Deck%20back%20ORO.png',
 'Silver': 'Deck%20back%20argento.png',
 'Bronze': 'Deck%20back%20bronzo.png',
-'Strumenti': 'Deck%20back%20strumenti.png',
-'Cosmetic': 'Deck%20back%20cosmetic.png'
+  'Strumenti': 'Deck%20back%20strumenti.png'
+  'Cosmetic': 'Deck%20back%20cosmetic.png',
+
+  'Strumenti': 'Deck%20back%20strumenti.png',
+  'Cosmetic': 'Deck%20back%20cosmetic.png'
 };
 
 
@@ -511,8 +514,11 @@ const PACK_COST_PER_GAME = {
 'Gold': 0,
 'Silver': 0,
 'Bronze': 0,
-'Strumenti': 0,
-'Cosmetic': 0
+  'Strumenti': 0
+  'Cosmetic': 0,
+
+  'Strumenti': 0,
+  'Cosmetic': 0
 };
 
 const PACK_SIZE_PER_GAME = {
@@ -524,8 +530,11 @@ const PACK_SIZE_PER_GAME = {
 'Gold': 9,
 'Silver': 9,
 'Bronze': 9,
-'Strumenti': 3,
-'Cosmetic': 1
+  'Strumenti': 3
+  'Cosmetic': 1,
+
+  'Strumenti': 3,
+  'Cosmetic': 1
 };
 
 const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
@@ -786,22 +795,17 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
 // Wonderkid (come prima)
 GAME_STATE.pools['Wonderkid'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='wonderkid');
 
-    // Patatine — esclude Season/Leggendaria + pesi per rarità
-    const basePatatine = cleaned.filter(c =>
-      isGotham(c.game) &&
-      !['season','leggendaria'].includes(norm(c.rarity))
-    // Patatine — QUALUNQUE carta di Fantaballa FC, esclusa la serie "Leggendaria"
-    GAME_STATE.pools['Patatine'] = cleaned.filter(c =>
-      isFantaballa(c.game) &&
-      norm(c.series) !== 'leggendaria'
+// Patatine — esclude Season/Leggendaria + pesi per rarità
+const basePatatine = cleaned.filter(c =>
+isGotham(c.game) &&
+!['season','leggendaria'].includes(norm(c.rarity))
 );
-    const weightByRarity = { 'comune':4, 'non comune':3, 'rara':2, 'ultra rara':1 };
-    GAME_STATE.pools['Patatine'] = basePatatine.flatMap(c => {
-      const w = weightByRarity[norm(c.rarity)] || 1;
-      return Array(w).fill(c);
-    });
+const weightByRarity = { 'comune':4, 'non comune':3, 'rara':2, 'ultra rara':1 };
+GAME_STATE.pools['Patatine'] = basePatatine.flatMap(c => {
+const w = weightByRarity[norm(c.rarity)] || 1;
+return Array(w).fill(c);
+});
 
-    // Gotham Tots (come prima)
 // Gotham Tots (come prima)
 GAME_STATE.pools['Gotham Tots'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='tots');
 
