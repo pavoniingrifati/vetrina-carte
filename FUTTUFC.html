@@ -1014,29 +1014,30 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
 const oggettiPoolAll = cleaned.filter(c => norm(c.series)==='oggetto');
 
 // === Injected: Infinite Bronze pack generation ===
+
 function generateBSGOnTheFly(seriesName) {
   try {
-    const oggPool = GAME_STATE?.pools?.[seriesName + '_oggs'] || [];
-    const mainPool = GAME_STATE?.pools?.[seriesName + '_main'] || [];
-    // Reuse existing pickDistinct (assumed present) to get 3 + 6
-    const oggs = pickDistinct(oggPool, 3);
-    const mains = pickDistinct(mainPool, 6);
-    const combined = [...oggs, ...mains];
-    // Fallback: if for qualsiasi motivo non raggiunge 9, rimpiazza con scelte casuali (accetta duplicati)
+    var pools = (typeof GAME_STATE!=='undefined' && GAME_STATE && GAME_STATE.pools) ? GAME_STATE.pools : {};
+    var oggPool  = pools[seriesName + '_oggs'] || [];
+    var mainPool = pools[seriesName + '_main'] || [];
+    var oggs  = pickDistinct(oggPool, 3);
+    var mains = pickDistinct(mainPool, 6);
+    var combined = oggs.concat(mains);
     if (combined.length < 9) {
-      const need = 9 - combined.length;
-      const mix = [...oggPool, ...mainPool];
-      for (let i = 0; i < need && mix.length; i++) {
+      var need = 9 - combined.length;
+      var mix = oggPool.concat(mainPool);
+      for (var i = 0; i < need && mix.length; i++) {
         combined.push(mix[Math.floor(Math.random()*mix.length)]);
       }
     }
     return combined;
   } catch (e) {
-    console.error('generateBronzeOnTheFly error', e);
+    console.error('generateBSGOnTheFly error', e);
     return [];
   }
 }
 // === End Injected ===
+
 function pickDistinct(source, n) {
   const arr = source.slice();
   shuffleInPlace(arr);
