@@ -1082,13 +1082,7 @@ GAME_STATE.pools['Bronze'] = autoBronze.pool;
 // === END AUTO B/S/G PACKS ===
 
 
-/* Validazione + mapping ID -> carte */
-const packsGoldCards = [];
-
-/* Pool: somma delle carte usate (giusto per i contatori UI) */
-GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards.flat()));
-
-    // ====== Costruzione pacchetti finiti ======
+// ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
@@ -1464,12 +1458,12 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
 
   // Scelta carte
   let chosen;
-  if ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold')) {
+  if ((game==='Oggetti')||(game==='Cosmetic')) {
      // Pacchetto infinito: X carte random dalla serie corrispondente (anche doppioni)
     const pool = GAME_STATE.pools[game] || [];
     const size = PACK_SIZE_PER_GAME[game] || 1;
     if (!pool.length) {
-      document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nella serie Oggetto.';
+      document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile in questo pool.';
       return;
     }
     chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
