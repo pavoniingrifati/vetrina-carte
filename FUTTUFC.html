@@ -967,7 +967,7 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
             if (unique.length === SZ) tmp.push(unique);
           }
           // tutte combinazioni uniche
-          const sig = (p) => [...new Set(p.map(x => x.id))].sort().join('+');
+          const sig = (p) => [new Set(p.map(x => x.id))].sort().join('+');
           const used = new Set();
           const uniquePacks = [];
           for (const p of tmp) { const s = sig(p); if (!used.has(s)) { used.add(s); uniquePacks.push(p); } }
@@ -987,7 +987,7 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
       return p.filter(x => !seen.has(x.id) && seen.add(x.id));
     });
     (function ensureUniquePackCombos(){
-      const sig = (p) => [...new Set(p.map(x=>x.id))].sort().join('+');
+      const sig = (p) => [new Set(p.map(x=>x.id))].sort().join('+');
       const used = new Set();
       for (let i=0; i<GAME_STATE.packs['Strumenti'].length; i++){
         let pack = GAME_STATE.packs['Strumenti'][i];
@@ -1021,11 +1021,11 @@ function generateBSGOnTheFly(seriesName) {
     // Reuse existing pickDistinct (assumed present) to get 3 + 6
     const oggs = pickDistinct(oggPool, 3);
     const mains = pickDistinct(mainPool, 6);
-    const combined = [...oggs, ...mains];
+    const combined = [oggs, mains];
     // Fallback: if for qualsiasi motivo non raggiunge 9, rimpiazza con scelte casuali (accetta duplicati)
     if (combined.length < 9) {
       const need = 9 - combined.length;
-      const mix = [...oggPool, ...mainPool];
+      const mix = [oggPool, mainPool];
       for (let i = 0; i < need && mix.length; i++) {
         combined.push(mix[Math.floor(Math.random()*mix.length)]);
       }
@@ -1058,10 +1058,10 @@ function buildBSGAutoPacks(seriesName, count=80) {
   for (let i=0; i<count; i++){
     const oggs = pickDistinct(oggettiPoolAll, 3);
     const mains = pickDistinct(seriesPool, 6);
-    const pack = [...oggs, ...mains]; // Oggetti first
+    const pack = [oggs, mains]; // Oggetti first
     packs.push(pack);
   }
-  const poolUnion = Array.from(new Set([...oggettiPoolAll, ...seriesPool]));
+  const poolUnion = Array.from(new Set([oggettiPoolAll, seriesPool]));
   return { packs, pool: poolUnion , oggPool: oggettiPoolAll, mainPool: seriesPool };
 }
 const autoGold   = buildBSGAutoPacks('Gold', 80);
@@ -1147,7 +1147,7 @@ GAME_STATE.pools['Bronze'] = autoBronze.pool;
 
     // === Ensure all Legend packs are unique across the whole set ===
     function packSignature(p){
-      return [...new Set(p.map(x=>x && x.id))].filter(Boolean).sort().join('+');
+      return [new Set(p.map(x=>x && x.id))].filter(Boolean).sort().join('+');
     }
     const usedLegendSigs = new Set();
     const uniqueLegendPacks = [];
@@ -1298,7 +1298,7 @@ function renderGamePicker(){
     btn.addEventListener('click', ()=>{
       GAME_STATE.selected = game;
       applyPackVisual();
-      [...gamePicker.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
+      [gamePicker.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
       btn.setAttribute('aria-selected','true');
       updateOpenBtnEnabled();
     });
@@ -1333,7 +1333,7 @@ function updateOpenBtnEnabled(){
 // Reset cursori → 0 per tutti i game (Oggetti non usa i pacchetti, ma lasciamo uguale)
 resetPacksBtn.addEventListener('click', async ()=>{
   try{
-    document.getElementById('log').textContent = '♻️ Mischio i pacchetti...';
+    document.getElementById('log').textContent = '♻️ Mischio i pacchetti';
     // Azzera cursori e pacchetti (Oggetti non usa pacchetti, ma azzerarlo non fa male)
     for (const g of VALID_GAMES){ GAME_STATE.cursor[g]=0; GAME_STATE.packs[g]=[]; }
     try{ localStorage.removeItem('futtu_cursors'); }catch{}
@@ -1441,16 +1441,6 @@ openBtn.addEventListener('click', async () => {
     return;
   }
 
-  // Carica carte (se non già)
-if (!GAME_STATE.packs['Wonderkid'].length && 
-    !GAME_STATE.packs['Patatine'].length && 
-    !GAME_STATE.packs['Gotham Tots'].length &&
-    !GAME_STATE.packs['Gold'].length &&
-    !GAME_STATE.pools['Oggetti']?.length) {
-  await loadCards();
-}
-
-
   // Animazioni apertura
   packBox.classList.add('shake'); await delay(360); packBox.classList.remove('shake');
   flashLine.classList.add('active'); flashScreen.classList.add('active'); packBox.classList.add('opening');
@@ -1458,8 +1448,8 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
 
   // Scelta carte
   let chosen;
-  if ((game==='Oggetti')||(game==='Cosmetic')) {
-     // Pacchetto infinito: X carte random dalla serie corrispondente (anche doppioni)
+  if ((game==='Oggetti') || (game==='Cosmetic')) {
+    // Pacchetto infinito: X carte random dalla serie corrispondente (anche doppioni)
     const pool = GAME_STATE.pools[game] || [];
     const size = PACK_SIZE_PER_GAME[game] || 1;
     if (!pool.length) {
@@ -1467,7 +1457,7 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
       return;
     }
     chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
-  } else if ((game==='Bronze')||(game==='Silver')||(game==='Gold')) {
+  } else if ((game==='Bronze') || (game==='Silver') || (game==='Gold')) {
     // Pacchetti infiniti BSG: 3 Oggetto + 6 della serie (Fantaballa FC) generati on-the-fly
     const og = GAME_STATE.pools[game + '_oggs'] || [];
     const mn = GAME_STATE.pools[game + '_main'] || [];
@@ -1495,7 +1485,6 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
       return;
     }
     chosen = list[idx].slice();
-
     // Avanza cursore e salva su localStorage (solo per game finiti)
     GAME_STATE.cursor[game] = idx + 1;
     try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
@@ -1649,7 +1638,7 @@ function renderPacksStrip(){
       applyPackVisual();
       updateOpenBtnEnabled();
       // evidenzia selezione
-      [...strip.children].forEach(el => el.classList.remove('is-selected'));
+      [strip.children].forEach(el => el.classList.remove('is-selected'));
       card.classList.add('is-selected');
     }, {passive:true});
     frag.appendChild(card);
@@ -1693,7 +1682,7 @@ document.addEventListener('DOMContentLoaded', function(){
         GAME_STATE.selected = game;
         applyPackVisual();
         updateOpenBtnEnabled();
-        [...strip.children].forEach(el => el.classList.remove('is-selected'));
+        [strip.children].forEach(el => el.classList.remove('is-selected'));
         card.classList.add('is-selected');
       }, {passive:true});
       frag.appendChild(card);
@@ -1819,7 +1808,7 @@ window.renderGamePicker = function(){
     btn.addEventListener('click', ()=>{
       GAME_STATE.selected = game;
       applyPackVisual();
-      [...gamePicker.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
+      [gamePicker.querySelectorAll('.choice')].forEach(c=>c.setAttribute('aria-selected','false'));
       btn.setAttribute('aria-selected','true');
       updateOpenBtnEnabled();
     }, {passive:true});
