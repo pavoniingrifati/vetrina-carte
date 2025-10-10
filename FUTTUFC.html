@@ -1505,13 +1505,25 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
     GAME_STATE.cursor[game] = idx + 1;
     try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
   }
+// Ordinamento / raggruppamento + FX
+const hasLegend = chosen.some(c => (String(c.rarity||'').toLowerCase()==='leggendaria'));
 
-  // Ordinamento per rarità + FX
+// Per Bronze/Silver/Gold manteniamo l'ordine "3 Oggetti, poi 6 main" senza rimescolare per rarità
+if (['Bronze','Silver','Gold'].includes(game)) {
+  const isOggetto = (c) => (String(c.series||'').trim().toLowerCase() === 'oggetto');
+  const oggs  = chosen.filter(isOggetto);
+  const mains = chosen.filter(c => !isOggetto(c));
+  // preserva l'ordine originale generato (oggetti già primi), forziamo comunque il grouping
+  chosen = [...oggs, ...mains];
+} else {
+  // per gli altri giochi va bene ordinare per rarità (basso -> alto)
   chosen.sort((a,b)=> (rarityRank[a.rarity]||0) - (rarityRank[b.rarity]||0) );
-  if (chosen.some(c => (String(c.rarity||'').toLowerCase()==='leggendaria'))) { try{ triggerLegendFX(); }catch{} }
+}
 
-  // Mostra in scena
-  showStage(chosen);
+if (hasLegend) { try{ triggerLegendFX(); }catch{} }
+
+// Mostra in scena
+showStage(chosen);
 
   // Aggiorna UI
   renderGamePicker();
