@@ -863,6 +863,7 @@ async function saveInventario(cards) {
   const batch = db.batch();
   const now = firebase.firestore.FieldValue.serverTimestamp();
   for (const c of cards) {
+    if (!c || !c.id || !c.name || !c.rarity) { continue; }
     const ref = db.collection('users').doc(u.uid).collection('inventory').doc(safeDocId(c.id));
     batch.set(ref, {
       name: c.name, rarity: c.rarity, series: c.series || '', img: c.img || '',
@@ -1489,6 +1490,16 @@ openBtn.addEventListener('click', async () => {
     // Avanza cursore e salva su localStorage (solo per game finiti)
     GAME_STATE.cursor[game] = idx + 1;
     try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
+  }
+
+  
+  // Sanitize chosen: drop any malformed entries
+  chosen = (chosen || []).filter(c => c && typeof c === 'object' && c.name && c.rarity && c.img);
+  if (!chosen.length) {
+    document.getElementById('log').textContent = '⚠️ Nessuna carta valida trovata per questo pacchetto.';
+    packArea.style.display='';
+    packBox.classList.remove('opening');
+    return;
   }
 
   // Ordinamento per rarità + FX
