@@ -1036,6 +1036,7 @@ function generateBSGOnTheFly(seriesName) {
     return [];
   }
 }
+window.generateBSGOnTheFly = generateBSGOnTheFly;
 // === End Injected ===
 function pickDistinct(source, n) {
   const arr = source.slice();
@@ -1182,10 +1183,10 @@ try {
   // Usa la definizione che hai messo per "Soluzione 1"
   // (PACKS_GOLD è l'array di array di ID che definisce i tuoi pacchetti manuali)
   const GOLD_FP_KEY = 'futtu_gold_fp';
-  const newFp = JSON.stringify(PACKS_GOLD); // firma stabile del contenuto/ordine dei pacchi
+  const newFp = (typeof PACKS_GOLD !== 'undefined') ? JSON.stringify(PACKS_GOLD) : null;
   const oldFp = localStorage.getItem(GOLD_FP_KEY);
 
-  if (oldFp !== newFp) {
+  if (newFp !== null && oldFp !== newFp) {
     // contenuto cambiato -> ricomincia da capo i pacchi Gold
     GAME_STATE.cursor['Gold'] = 0;
 
