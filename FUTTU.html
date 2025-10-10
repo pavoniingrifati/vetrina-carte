@@ -508,7 +508,7 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Strumenti', 'Frutto del Diavolo'];
+const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Strumenti'];
 const PACK_BACK_BY_GAME = {
   'Wonderkid': 'Deck%20back%20wonderkid.png',
   'Patatine': 'patatrine.png',
@@ -519,8 +519,7 @@ const PACK_BACK_BY_GAME = {
   'Silver': 'Deck%20back%20argento%20BATMAN.png',
   'Bronze': 'Deck%20back%20bronzo%20BATMAN.png',
   'Strumenti': 'Deck%20back%20strumenti.png',
-  'Cosmetic': 'Deck%20back%20cosmetic.png',
-  'Frutto del Diavolo': 'Back%20Deck%20ONE.png'
+  'Cosmetic': 'Deck%20back%20cosmetic.png'
 };
 
 
@@ -533,8 +532,7 @@ const PACK_COST_PER_GAME = {
   'Gold': 0,
   'Silver': 0,
   'Bronze': 0,
-  'Strumenti': 0,
-  'Frutto del Diavolo': 0
+  'Strumenti': 0
 };
 
 const PACK_SIZE_PER_GAME = {
@@ -546,8 +544,7 @@ const PACK_SIZE_PER_GAME = {
   'Gold': 9,
   'Silver': 9,
   'Bronze': 9,
-  'Strumenti': 3,
-  'Frutto del Diavolo': 3
+  'Strumenti': 3
 };
 
 const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
@@ -757,9 +754,9 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Wonderkid',
-  pools:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Frutto del Diavolo': []},
-  packs:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Frutto del Diavolo': []},
-  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Frutto del Diavolo': 0}
+  pools:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': []},
+  packs:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': []},
+  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0}
 };
 
 
@@ -869,32 +866,6 @@ async function loadCards(){
 
     // Oggetti — NEW: prende qualsiasi card con series = "Oggetto" (game: qualunque)
     GAME_STATE.pools['Oggetti'] = cleaned.filter(c => norm(c.series)==='oggetto');
-
-    // === Frutto del Diavolo (pool da text) ===
-    const fruttoPool = cleaned.filter(c => norm(c.text) === 'frutto del diavolo');
-    GAME_STATE.pools['Frutto del Diavolo'] = fruttoPool;
-
-    // Pacchi finiti: size=3 esatti, no doppioni interni, no duplicati fra pacchi
-    (function(){
-      const SZ = PACK_SIZE_PER_GAME['Frutto del Diavolo'] || 3;
-      // Usa builder comune per creare chunk casuali
-      const raw = buildFinitePacks(fruttoPool, SZ);
-      // ripulisci doppioni dentro il pacco e scarta i pacchi incompleti
-      const compact = raw.map(p => {
-        const seen = new Set();
-        const u = p.filter(x => x && x.id && !seen.has(x.id) && (seen.add(x.id), true));
-        return u.length === SZ ? u : null;
-      }).filter(Boolean);
-      // dedup combinazioni
-      const sig = (p) => [...new Set(p.map(x=>x.id))].sort().join('+');
-      const used = new Set();
-      const unique = [];
-      for (const p of compact){
-        const s = sig(p);
-        if (!used.has(s)){ used.add(s); unique.push(p); }
-      }
-      GAME_STATE.packs['Frutto del Diavolo'] = unique;
-    })();
 
 
 
