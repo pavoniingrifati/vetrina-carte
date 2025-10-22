@@ -1022,14 +1022,21 @@ function generateBSGOnTheFly(seriesName) {
     const oggs = pickDistinct(oggPool, 3);
     const mains = pickDistinct(mainPool, 6);
     const combined = [...oggs, ...mains];
-    // Fallback: if for qualsiasi motivo non raggiunge 9, rimpiazza con scelte casuali (accetta duplicati)
-    if (combined.length < 9) {
-      const need = 9 - combined.length;
-      const mix = [...oggPool, ...mainPool];
-      for (let i = 0; i < need && mix.length; i++) {
-        combined.push(mix[Math.floor(Math.random()*mix.length)]);
-      }
-    }
+    // Fallback: Se non raggiunge 9, rimpiazza con carte casuali, ma non aggiungere oggetti oltre il limite di 3
+if (combined.length < 9) {
+  const need = 9 - combined.length;
+  const oggCount = combined.filter(card => oggs.includes(card)).length; // Conta gli oggetti già nel pacchetto
+  const maxOggsToAdd = 3 - oggCount; // Numero di oggetti che possiamo ancora aggiungere
+
+  // Se ci sono posti liberi per gli oggetti, seleziona fino a maxOggsToAdd oggetti
+  const oggsToAdd = pickDistinct(oggPool, Math.min(maxOggsToAdd, need));
+
+  // Se ci sono ancora posti liberi, aggiungi carte principali (ma non più di quelle necessarie)
+  const mainsToAdd = pickDistinct(mainPool, need - oggsToAdd.length);
+
+  // Aggiungi oggetti e carte principali al pacchetto
+  combined.push(...oggsToAdd, ...mainsToAdd);
+}
     return combined;
   } catch (e) {
     console.error('generateBronzeOnTheFly error', e);
