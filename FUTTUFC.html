@@ -1072,20 +1072,21 @@ function buildBSGAutoPacks(seriesName, count=80) {
   return { packs, pool: poolUnion , oggPool: oggettiPoolAll, mainPool: seriesPool };
 }
 const autoGold   = buildBSGAutoPacks('Gold', 80);
-GAME_STATE.pools['Gold_oggs'] = autoGold.oggPool;
-GAME_STATE.pools['Gold_main'] = autoGold.mainPool;
+GAME_STATE.pools['Bronze_oggs'] = cleaned.filter(c => norm(c.series) === 'oggetto');
+GAME_STATE.pools['Silver_oggs'] = cleaned.filter(c => norm(c.series) === 'oggetto');
+GAME_STATE.pools['Gold_oggs']   = cleaned.filter(c => norm(c.series) === 'oggetto');
+GAME_STATE.pools['Bronze_main'] = cleaned.filter(c => isFantaballa(c.game) && norm(c.series) === 'bronze');
+GAME_STATE.pools['Silver_main'] = cleaned.filter(c => isFantaballa(c.game) && norm(c.series) === 'silver');
+GAME_STATE.pools['Gold_main']   = cleaned.filter(c => isFantaballa(c.game) && norm(c.series) === 'gold');
+GAME_STATE.pools['Gold'] = cleaned.filter(c => isFantaballa(c.game) && norm(c.series)==='gold');
 const autoSilver = buildBSGAutoPacks('Silver', 80);
-GAME_STATE.pools['Silver_oggs'] = autoSilver.oggPool;
-GAME_STATE.pools['Silver_main'] = autoSilver.mainPool;
 const autoBronze = buildBSGAutoPacks('Bronze', 80);
-GAME_STATE.pools['Bronze_oggs'] = autoBronze.oggPool;
-GAME_STATE.pools['Bronze_main'] = autoBronze.mainPool;
 GAME_STATE.packs['Gold']   = autoGold.packs;
 GAME_STATE.packs['Silver'] = autoSilver.packs;
 GAME_STATE.packs['Bronze'] = autoBronze.packs;
-GAME_STATE.pools['Gold']   = autoGold.mainPool;
-GAME_STATE.pools['Silver'] = autoSilver.mainPool;
-GAME_STATE.pools['Bronze'] = autoBronze.mainPool;
+GAME_STATE.pools['Gold']   = autoGold.pool;
+GAME_STATE.pools['Silver'] = autoSilver.pool;
+GAME_STATE.pools['Bronze'] = autoBronze.pool;
 // === END AUTO B/S/G PACKS ===
 
 
@@ -1093,7 +1094,6 @@ GAME_STATE.pools['Bronze'] = autoBronze.mainPool;
 /* Validazione + mapping ID -> carte — FIX Gold */
 const packsGoldCards = autoGold.packs.flat();
 /* Pool: somma delle carte usate (giusto per i contatori UI) — usiamo i pacchetti auto-generati */
-GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards));
 // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
@@ -1480,11 +1480,10 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
     }
     chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
   } else if ((game==='Bronze')||(game==='Silver')||(game==='Gold')) {
-    // Pacchetti infiniti BSG: 3 Oggetto + 6 della serie (Fantaballa FC) generati on-the-fly
     const og = GAME_STATE.pools[game + '_oggs'] || [];
     const mn = GAME_STATE.pools[game + '_main'] || [];
     if (!og.length || !mn.length) {
-      // Fallback: usa pacchetti pre-costruiti (finite) se i pool non sono pronti
+      // fallback ai pacchetti predefiniti (finito) se i pool non sono pronti
       const list = GAME_STATE.packs[game] || [];
       const idx  = GAME_STATE.cursor[game] || 0;
       if (idx < list.length) {
