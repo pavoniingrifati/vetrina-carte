@@ -921,7 +921,7 @@ async function loadCards(){
 
     // ====== Helper ======
     const isGotham = (x)=> norm(x)==='gotham city';
-const isFantaballa = (x)=> norm(x)==='fantaballa fc';
+const isFantaballa = (x)=> { const s=norm(x); return s.includes('fantaballa'); };
 
     // ====== Pools per game ======
 
@@ -1059,8 +1059,9 @@ function pickDistinct(source, n) {
   }
   return out.slice(0, n);
 }
-function buildBSGAutoPacks(seriesName, count=80) {
-  const seriesPool = cleaned.filter(c => isFantaballa(c.game) && norm(c.series)===norm(seriesName));
+function buildBSGAutoPacks(seriesName, count=80){
+  const seriesPoolTmp = cleaned.filter(c => isFantaballa(c.game) && norm(c.series)===norm(seriesName));
+  const seriesPool = seriesPoolTmp.length ? seriesPoolTmp : cleaned.filter(c => norm(c.series)===norm(seriesName));
   const packs = [];
   for (let i=0; i<count; i++){
     const oggs = pickDistinct(oggettiPoolAll, 3);
@@ -1076,9 +1077,17 @@ GAME_STATE.pools['Bronze_oggs'] = cleaned.filter(c => norm(c.series) === 'oggett
 GAME_STATE.pools['Silver_oggs'] = cleaned.filter(c => norm(c.series) === 'oggetto');
 GAME_STATE.pools['Gold_oggs']   = cleaned.filter(c => norm(c.series) === 'oggetto');
 GAME_STATE.pools['Bronze_main'] = cleaned.filter(c => isFantaballa(c.game) && norm(c.series) === 'bronze');
+
+if (!GAME_STATE.pools['Bronze_main'].length) { GAME_STATE.pools['Bronze_main'] = cleaned.filter(c => norm(c.series) === 'bronze'); }
 GAME_STATE.pools['Silver_main'] = cleaned.filter(c => isFantaballa(c.game) && norm(c.series) === 'silver');
+
+if (!GAME_STATE.pools['Silver_main'].length) { GAME_STATE.pools['Silver_main'] = cleaned.filter(c => norm(c.series) === 'silver'); }
 GAME_STATE.pools['Gold_main']   = cleaned.filter(c => isFantaballa(c.game) && norm(c.series) === 'gold');
+
+if (!GAME_STATE.pools['Gold_main'].length) { GAME_STATE.pools['Gold_main'] = cleaned.filter(c => norm(c.series) === 'gold'); }
 GAME_STATE.pools['Gold'] = cleaned.filter(c => isFantaballa(c.game) && norm(c.series)==='gold');
+
+if (!GAME_STATE.pools['Gold'].length) { GAME_STATE.pools['Gold'] = cleaned.filter(c => norm(c.series) === 'gold'); }
 const autoSilver = buildBSGAutoPacks('Silver', 80);
 const autoBronze = buildBSGAutoPacks('Bronze', 80);
 GAME_STATE.packs['Gold']   = autoGold.packs;
