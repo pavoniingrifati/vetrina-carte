@@ -1999,5 +1999,154 @@ window.renderPacksStrip = function(){
 // ========================================================================
 
 </script>
+
+<!-- === Patch: BRONZE / SILVER / GOLD – pool per pacchetti infiniti 3+6 (Fantaballa FC) === -->
+<script>
+(function(){
+  try {
+    // Safe guards
+    window.GAME_STATE = window.GAME_STATE || { pools:{}, packs:{}, cursor:{}};
+    const GS = window.GAME_STATE;
+
+    // Utility
+    function dedupById(arr){ const m=new Map(); for(const c of arr||[]){ if(c && c.id && !m.has(c.id)) m.set(c.id,c); } return [...m.values()]; }
+    const isFantaballa = (g) => String(g||'').trim().toLowerCase() === 'fantaballa fc';
+
+    // Wait until cleaned is present
+    const ensureData = () => Array.isArray(window.cleaned) && window.cleaned.length > 0;
+
+    function buildPools(){
+      const cleaned = window.cleaned || [];
+      // 3 oggetti + 6 main TUTTO da Fantaballa FC
+      const oggettiPoolAll = cleaned.filter(c => isFantaballa(c.game) && String(c.series||'').toLowerCase() === 'oggetto');
+
+      GS.pools['Bronze_oggs'] = oggettiPoolAll.slice();
+      GS.pools['Silver_oggs'] = oggettiPoolAll.slice();
+      GS.pools['Gold_oggs']   = oggettiPoolAll.slice();
+
+      GS.pools['Bronze_main'] = cleaned.filter(c => isFantaballa(c.game) && String(c.series||'').toLowerCase()==='bronze');
+      GS.pools['Silver_main'] = cleaned.filter(c => isFantaballa(c.game) && String(c.series||'').toLowerCase()==='silver');
+      GS.pools['Gold_main']   = cleaned.filter(c => isFantaballa(c.game) && String(c.series||'').toLowerCase()==='gold');
+
+      // Pool totali per UI
+      GS.pools['Bronze'] = dedupById([...GS.pools['Bronze_oggs'], ...GS.pools['Bronze_main']]);
+      GS.pools['Silver'] = dedupById([...GS.pools['Silver_oggs'], ...GS.pools['Silver_main']]);
+      GS.pools['Gold']   = dedupById([...GS.pools['Gold_oggs'],   ...GS.pools['Gold_main']]);
+      console.info('[PATCH] B/S/G pools pronti (Fantaballa FC):',
+                  {Bronze:GS.pools['Bronze'].length, Silver:GS.pools['Silver'].length, Gold:GS.pools['Gold'].length});
+    }
+
+    // Picker helpers
+    function pickDistinct(source, n, excludeIds=new Set()){
+      const arr = (source||[]).slice();
+      for (let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+      const seen = new Set(excludeIds);
+      const out = [];
+      for (const c of arr){
+        if (c && c.id && !seen.has(c.id)) { out.push(c); seen.add(c.id); if (out.length>=n) break; }
+      }
+      return out;
+    }
+
+    // Generator 3+6
+    window.generateBSGOnTheFly = function(seriesName){
+      try{
+        const oggPool = GS.pools[seriesName + '_oggs'] || [];
+        const mainPool = GS.pools[seriesName + '_main'] || [];
+        const oggs = pickDistinct(oggPool, 3);
+        const mains = pickDistinct(mainPool, 6, new Set(oggs.map(c=>c.id)));
+        return oggs.concat(mains);
+      }catch(e){
+        console.error('[PATCH] generateBSGOnTheFly error', e);
+        return [];
+      }
+    };
+
+    // Wrap original open/selection logic if present, else provide a safe default entry
+    const originalOpenPack = window.openPack;
+
+    window.openPack = function(game){
+      try{
+        if (!ensureData()) {
+          console.warn('[PATCH] cleaned non pronto; riprova più tardi.');
+          const log = document.getElementById('log'); if (log) log.textContent = '⚠️ Dati non pronti. Riprova.';
+          return;
+        }
+        // (Re)build pools each open to stay fresh
+        buildPools();
+
+        // Ensure PACK_SIZE_PER_GAME exists
+        window.PACK_SIZE_PER_GAME = window.PACK_SIZE_PER_GAME || {};
+        window.PACK_SIZE_PER_GAME['Bronze'] = 9;
+        window.PACK_SIZE_PER_GAME['Silver'] = 9;
+        window.PACK_SIZE_PER_GAME['Gold']   = 9;
+
+        // Scelta carte
+        let chosen;
+
+        if (game==='Bronze' || game==='Silver' || game==='Gold'){
+          const og = GS.pools[game + '_oggs'] || [];
+          const mn = GS.pools[game + '_main'] || [];
+          if (!og.length || !mn.length){
+            const log = document.getElementById('log'); if (log) log.textContent = `⚠️ ${game}: pool non pronta.`;
+            return;
+          }
+          chosen = window.generateBSGOnTheFly(game);
+
+        } else if (game==='Oggetti' || game==='Cosmetic'){
+          const pool = GS.pools[game] || [];
+          const size = window.PACK_SIZE_PER_GAME[game] || 3;
+          if (!pool.length){ const log = document.getElementById('log'); if (log) log.textContent = '⚠️ Nessuna carta in pool.'; return; }
+          chosen = Array.from({length:size}, () => pool[Math.floor(Math.random()*pool.length)]);
+
+        } else {
+          if (typeof originalOpenPack === 'function'){
+            // Defer to original implementation for all altri giochi
+            return originalOpenPack(game);
+          } else {
+            const list = GS.packs[game] || [];
+            const idx = GS.cursor[game] || 0;
+            if (idx >= list.length){ const log = document.getElementById('log'); if (log) log.textContent = '❌ Pacchetti esauriti per questo game.'; return; }
+            chosen = list[idx].slice();
+            GS.cursor[game] = idx + 1;
+            try{ localStorage.setItem('futtu_cursors', JSON.stringify(GS.cursor)); }catch{}
+          }
+        }
+
+        // Render cards using existing renderer if available
+        if (Array.isArray(chosen) && chosen.length){
+          if (typeof window.renderChosenCards === 'function'){
+            window.renderChosenCards(chosen, game);
+          } else {
+            console.log('[PATCH] Carte scelte', chosen);
+            const log = document.getElementById('log'); if (log) log.textContent = `✅ ${game}: ${chosen.length} carte selezionate.`;
+          }
+        }
+      } catch (err){
+        console.error('[PATCH] openPack override error', err);
+      }
+    };
+
+    // Auto-build optional precalculated packs for UI previews (non intrusivo)
+    window.buildBSGAutoPacks = function(seriesName, count=80){
+      const seriesPool = GS.pools[seriesName + '_main'] || [];
+      const packs = [];
+      for (let i=0; i<count; i++){
+        const oggs = pickDistinct(GS.pools[seriesName + '_oggs'] || [], 3);
+        const mains = pickDistinct(seriesPool, 6, new Set(oggs.map(c=>c.id)));
+        packs.push(oggs.concat(mains));
+      }
+      const poolUnion = dedupById([...(GS.pools[seriesName + '_oggs']||[]), ...seriesPool]);
+      return { packs, pool: poolUnion };
+    };
+
+    console.info('[PATCH] B/S/G 3+6 (Fantaballa FC) attivato.');
+  } catch(e){
+    console.error('[PATCH] Inizializzazione patch B/S/G fallita', e);
+  }
+})();
+</script>
+<!-- === Fine Patch === -->
+
 </body>
 </html>
