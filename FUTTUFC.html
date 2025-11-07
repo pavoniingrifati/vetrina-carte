@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>FUT Fantaballa Tik Tok</title>
-<meta name="description" content="Pack unico diviso per 'game' (Gotham City). Pacchetti finiti: Halloween (3 carte, gratuito), Patatine (1 carta, pesato), Gotham Tots (3 carte), Legend (3 carte). Nuovo: Oggetti (3 carte, infinito). Login e salvataggio inventario invariati." />
+<meta name="description" content="Pack unico diviso per 'game' (Gotham City). Pacchetti finiti: Halloween (3 carte), Patatine (1 carta, pesato), Gotham Tots (3 carte), Legend (3 carte). Nuovo: Oggetti (3 carte, infinito). Login e salvataggio inventario invariati." />
 
 <!-- Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -591,7 +591,7 @@ window.STORE_SECTIONS = {
     <div class="rays"></div>
     <div class="scene">
       <div class="face back">
-        <img src="Deck%20back%20Halloween.png" alt="Retro carta" loading="eager" decoding="async" />
+        <img src="back%20halloween.png" alt="Retro carta" loading="eager" decoding="async" />
       </div>
       <div class="face front">
         <span class="badge"></span>
@@ -628,7 +628,7 @@ const db = firebase.firestore();
  *  ========================= */
 const VALID_GAMES = ['Halloween','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Cosmetic', 'Strumenti', 'Frutto del Diavolo'];
 const PACK_BACK_BY_GAME = {
-  'Halloween': 'Deck%20back%20Halloween.png',
+  'Halloween': 'back%20halloween.png',
   'Patatine': 'patatrine.png',
   'Gotham Tots': 'Deck%20back%20Tots.png',
   'Legend': 'Back%20legend.png',
@@ -643,7 +643,7 @@ const PACK_BACK_BY_GAME = {
 
 
 const PACK_COST_PER_GAME = {
-  'Halloween': 1800,
+  'Halloween': 0,
   'Patatine': 0,
   'Gotham Tots': 0,
   'Legend': 0,
@@ -889,23 +889,7 @@ function shuffleInPlace(a){
 }
 function buildFinitePacks(cards, size){
   const arr = shuffleInPlace(cards.slice());
-  const packs = [,
-
-    {
-      name: "Halloween",
-      price: 0,
-      back: "back%20halloween.png",
-      cards: [
-        // 7 pacchetti da 3 carte (21 carte totali)
-        { id: "halloween_pack_1", count: 3 },
-        { id: "halloween_pack_2", count: 3 },
-        { id: "halloween_pack_3", count: 3 },
-        { id: "halloween_pack_4", count: 3 },
-        { id: "halloween_pack_5", count: 3 },
-        { id: "halloween_pack_6", count: 3 },
-        { id: "halloween_pack_7", count: 3 }
-      ]
-    }];
+  const packs = [];
   for (let i=0; i<arr.length; i+=size){ packs.push(arr.slice(i,i+size)); }
   if (size>1 && packs.length>1 && packs[packs.length-1].length===1){
     const prev = packs[packs.length-2];
@@ -1077,23 +1061,7 @@ function pickDistinct(source, n) {
 }
 function buildBSGAutoPacks(seriesName, count=80) {
   const seriesPool = cleaned.filter(c => isFantaballa(c.game) && norm(c.series)===norm(seriesName));
-  const packs = [,
-
-    {
-      name: "Halloween",
-      price: 0,
-      back: "back%20halloween.png",
-      cards: [
-        // 7 pacchetti da 3 carte (21 carte totali)
-        { id: "halloween_pack_1", count: 3 },
-        { id: "halloween_pack_2", count: 3 },
-        { id: "halloween_pack_3", count: 3 },
-        { id: "halloween_pack_4", count: 3 },
-        { id: "halloween_pack_5", count: 3 },
-        { id: "halloween_pack_6", count: 3 },
-        { id: "halloween_pack_7", count: 3 }
-      ]
-    }];
+  const packs = [];
   for (let i=0; i<count; i++){
     const oggs = pickDistinct(oggettiPoolAll, 3);
     const mains = pickDistinct(seriesPool, 6);
@@ -2162,23 +2130,7 @@ window.renderPacksStrip = function(){
     // Auto-build optional precalculated packs for UI previews (non intrusivo)
     window.buildBSGAutoPacks = function(seriesName, count=80){
       const seriesPool = GS.pools[seriesName + '_main'] || [];
-      const packs = [,
-
-    {
-      name: "Halloween",
-      price: 0,
-      back: "back%20halloween.png",
-      cards: [
-        // 7 pacchetti da 3 carte (21 carte totali)
-        { id: "halloween_pack_1", count: 3 },
-        { id: "halloween_pack_2", count: 3 },
-        { id: "halloween_pack_3", count: 3 },
-        { id: "halloween_pack_4", count: 3 },
-        { id: "halloween_pack_5", count: 3 },
-        { id: "halloween_pack_6", count: 3 },
-        { id: "halloween_pack_7", count: 3 }
-      ]
-    }];
+      const packs = [];
       for (let i=0; i<count; i++){
         const oggs = pickDistinct(GS.pools[seriesName + '_oggs'] || [], 3);
         const mains = pickDistinct(seriesPool, 6, new Set(oggs.map(c=>c.id)));
