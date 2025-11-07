@@ -504,10 +504,10 @@ table td, table th {
 <script>
 // === Sezioni Store (solo etichette, nessuna navigazione attiva) ===
 window.STORE_SECTIONS = {
-  featured: ['Wonderkid','Patatine'],
-  new: ['Wonderkid'], // Ultimi arrivi
+  featured: ['Halloween','Patatine'],
+  new: ['Halloween'], // Ultimi arrivi
   base: ['Gold','Silver','Bronze'], // Pacchetti base
-  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Wonderkid','Patatine','Gold','Silver','Bronze','Strumenti'])
+  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Halloween','Patatine','Gold','Silver','Bronze','Strumenti'])
 };
 </script>
 <!-- /FC25-like Dashboard UI -->
@@ -544,7 +544,7 @@ window.STORE_SECTIONS = {
 <!-- Sticky packs menu -->
 <div class="packs-sticky">
 <div class="wrap">
-<div aria-label="Pacchetti" class="featured-carousel" id="packsStrip"><div class="choice"><div class="prev" style="background-image:url('back%20halloween.png')"></div><div class="meta"><div class="name">Halloween</div><div class="price">3 carte (7 pacchetti)</div></div></div></div>
+<div aria-label="Pacchetti" class="featured-carousel" id="packsStrip"></div>
 </div>
 </div>
 <main class="wrap">
@@ -599,9 +599,9 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Cosmetic', 'Strumenti', 'Frutto del Diavolo'];
+const VALID_GAMES = ['Halloween','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Cosmetic', 'Strumenti', 'Frutto del Diavolo'];
 const PACK_BACK_BY_GAME = {
-  'Wonderkid': 'Deck%20back%20wonderkid.png',
+  'Halloween': 'Deck%20back%20halloween.png',
   'Patatine': 'patatrine.png',
   'Gotham Tots': 'Deck%20back%20Tots.png',
   'Legend': 'Back%20legend.png',
@@ -616,7 +616,7 @@ const PACK_BACK_BY_GAME = {
 
 
 const PACK_COST_PER_GAME = {
-  'Wonderkid': 1800,
+  'Halloween': 1800,
   'Patatine': 0,
   'Gotham Tots': 0,
   'Legend': 0,
@@ -630,7 +630,7 @@ const PACK_COST_PER_GAME = {
 };
 
 const PACK_SIZE_PER_GAME = {
-  'Wonderkid': 3,
+  'Halloween': 3,
   'Patatine': 1,
   'Gotham Tots': 3,
   'Legend': 3,
@@ -849,10 +849,10 @@ async function saveInventario(cards) {
  *  DATI CARTE + PACCHETTI (FINITI)
  *  ========================= */
 const GAME_STATE = {
-  selected: 'Wonderkid',
-  pools:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Frutto del Diavolo': []},
-  packs:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Frutto del Diavolo': []},
-  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0, 'Frutto del Diavolo': 0}
+  selected: 'Halloween',
+  pools:    { 'Halloween': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Frutto del Diavolo': []},
+  packs:    { 'Halloween': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Frutto del Diavolo': []},
+  cursor:   { 'Halloween': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0, 'Frutto del Diavolo': 0}
 };
 
 
@@ -898,8 +898,8 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
 
     // ====== Pools per game ======
 
-    // Wonderkid (come prima)
-    GAME_STATE.pools['Wonderkid'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='wonderkid');
+    // Halloween (come prima)
+    GAME_STATE.pools['Halloween'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='wonderkid');
 
     // Patatine — QUALUNQUE carta di Fantaballa FC, esclusa la serie "Leggendaria"
     GAME_STATE.pools['Patatine'] = cleaned.filter(c =>
@@ -1068,7 +1068,7 @@ const packsGoldCards = autoGold.packs.flat();
 /* Pool: somma delle carte usate (giusto per i contatori UI) — usiamo i pacchetti auto-generati */
 GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards));
 // ====== Costruzione pacchetti finiti ======
-    GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
+    GAME_STATE.packs['Halloween']   = buildFinitePacks(GAME_STATE.pools['Halloween'],   PACK_SIZE_PER_GAME['Halloween']);
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
     /* packs Gold set by auto */
@@ -1191,7 +1191,7 @@ try {
     applyPackVisual();
     updateOpenBtnEnabled();
  document.getElementById('log').textContent =
-  `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, `+
+  `Caricate: Halloween ${GAME_STATE.pools['Halloween'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, `+
   `TOTS ${GAME_STATE.pools['Gotham Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
   `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
 
@@ -1427,7 +1427,7 @@ openBtn.addEventListener('click', async () => {
   }
 
   // Carica carte (se non già)
-if (!GAME_STATE.packs['Wonderkid'].length && 
+if (!GAME_STATE.packs['Halloween'].length && 
     !GAME_STATE.packs['Patatine'].length && 
     !GAME_STATE.packs['Gotham Tots'].length &&
     !GAME_STATE.packs['Gold'].length &&
@@ -1623,11 +1623,11 @@ function renderPacksStrip(){
 }
 
 
-// === Featured strip rendering (only: Wonderkid, Patatine) ===
+// === Featured strip rendering (only: Halloween, Patatine) ===
 function renderPacksStrip(){
   const strip = document.getElementById('packsStrip');
   if (!strip) return;
-  const FEATURED_LIST = ['Wonderkid','Patatine']; // solo quelli richiesti
+  const FEATURED_LIST = ['Halloween','Patatine']; // solo quelli richiesti
   strip.innerHTML='';
   const frag = document.createDocumentFragment();
   FEATURED_LIST.forEach(game => {
@@ -2111,5 +2111,10 @@ window.renderPacksStrip = function(){
 })();
 </script>
 <!-- === Fine Patch === -->
-</body>
+<script>
+// === Halloween pack definition ===
+PACK_BACK_BY_GAME['Halloween'] = 'back%20halloween.png';
+PACK_SIZE_PER_GAME['Halloween'] = 3;
+GAME_STATE.packs['Halloween'] = buildFinitePacks(GAME_STATE.pools['Halloween'], 3);
+</script></body>
 </html>
