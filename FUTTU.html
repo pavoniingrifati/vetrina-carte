@@ -508,7 +508,7 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze','Strumenti','Halloween'];
+const VALID_GAMES = ['Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze','Strumenti','Chaos'];
 const PACK_BACK_BY_GAME = {
   'Patatine': 'patatrine.png',
   'Gotham Tots': 'Deck%20back%20Tots.png',
@@ -518,7 +518,7 @@ const PACK_BACK_BY_GAME = {
   'Silver': 'Deck%20back%20argento%20BATMAN.png',
   'Bronze': 'Deck%20back%20bronzo%20BATMAN.png',
   'Strumenti': 'Deck%20back%20strumenti.png',
-  'Halloween': 'back%20halloween.png',
+  'Chaos': 'back%20Chaos.png',
   'Cosmetic': 'Deck%20back%20cosmetic.png'
 };
 
@@ -532,7 +532,7 @@ const PACK_COST_PER_GAME = {
   'Silver': 0,
   'Bronze': 0,
   'Strumenti': 0,
-  'Halloween': 0
+  'Chaos': 0
 };
 
 const PACK_SIZE_PER_GAME = {
@@ -544,7 +544,7 @@ const PACK_SIZE_PER_GAME = {
   'Silver': 9,
   'Bronze': 9,
   'Strumenti': 3,
-  'Halloween': 3
+  'Chaos': 3
 };
 
 const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
@@ -757,7 +757,7 @@ const GAME_STATE = {
   pools:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': []},
   packs:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': []},
   cursor:   { 'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0,
-  'Halloween': 0}
+  'Chaos': 0}
 };
 
 
@@ -871,10 +871,10 @@ async function loadCards(){
 
 
     // Strumenti — FINITO: prende solo series="Strumento" e game="Gotham City"; 2 copie per carta, pacchetti da 3 (ultimo 2+2 se serve)
-    // Halloween — FINITO: prende solo series="Halloween" e game="Gotham City"; 3 carte per pacco
-    const baseHalloween = cleaned.filter(c => norm(c.series)==='halloween' && norm(c.game)==='gotham city');
-    GAME_STATE.pools['Halloween'] = baseHalloween.slice();
-    GAME_STATE.packs['Halloween'] = buildFinitePacks(GAME_STATE.pools['Halloween'], PACK_SIZE_PER_GAME['Halloween']).map(p => {
+    // Chaos — FINITO: prende solo series="Chaos" e game="Gotham City"; 3 carte per pacco
+    const baseChaos = cleaned.filter(c => norm(c.series)==='chaos' && norm(c.game)==='gotham city');
+    GAME_STATE.pools['Chaos'] = baseChaos.slice();
+    GAME_STATE.packs['Chaos'] = buildFinitePacks(GAME_STATE.pools['Chaos'], PACK_SIZE_PER_GAME['Chaos']).map(p => {
       const seen = new Set();
       return p.filter(x => !seen.has(x.id) && seen.add(x.id));
     });
