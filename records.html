@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Record Gotham City</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* Minimal page but full card styling reused */
+:root{
+  --bg:#0b0f19; --panel:#0f1526; --card:#121a2e; --card-2:#0d1325;
+  --text:#ecf0ff; --muted:#a7b0d3; --accent:#6ee7ff; --radius:16px;
+}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter;padding:20px}
+h2{margin-top:32px;font-size:24px}
+.record-box{margin-bottom:26px;padding:14px 18px;background:var(--panel);border-radius:14px;border:1px solid rgba(255,255,255,.08)}
+/* Card styles trimmed */
+.card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);overflow:hidden;max-width:330px;margin-top:12px}
+.thumb{width:100%;aspect-ratio:3/4;object-fit:cover;background:#000}
+.content{padding:12px}
+.name{font-weight:600;font-size:16px}
+.meta{font-size:13px;color:var(--muted);margin-top:4px}
+</style>
+
+</head>
+<body>
+
+<h1>Record – Gotham City</h1>
+
+<h2>📘 Record di squadra</h2>
+<div class="record-box">Maggior numero di vittorie di fila: <b>10</b></div>
+<div class="record-box">Maggior numero di partite senza perdere: <b>14</b></div>
+<div class="record-box">Maggior numero di sconfitte di fila: <b>7</b></div>
+<div class="record-box">Maggior numero di partite senza vincere di fila: <b>9</b></div>
+<div class="record-box">Maggior numero di partite senza segnare di fila: <b>3</b></div>
+<div class="record-box">Maggior numero di clean sheet di fila: <b>4</b></div>
+<div class="record-box">Miglior vittoria: <b>12-1 vs Panathinaikos</b></div>
+<div class="record-box">Peggior sconfitta: <b>3-11 vs Manchester United</b></div>
+<div class="record-box">Partita con più gol: <b>3-11 vs Manchester United</b></div>
+<div class="record-box">Maggior numero di punti in Premier League: <b>73</b></div>
+
+<h2>🏆 Record individuali</h2>
+
+<script>
+// Minimal embedded cards.json list (IDs only needed here)
+const fallback = "Deck%20back%20bronzo.png";
+const cards = {};
+// Page records
+const records = [
+ {title:"Maggior numero di presenze: 170", id:"Flavio-marvel"},
+ {title:"Maggior numero di gol in campionato: 29", id:"Xavier-marvel"},
+ {title:"Gol in campionato in una stagione: 17", id:"Xavier-marvel"},
+ {title:"Voto medio più alto: 7,39", id:"Gigabyte-Dark"},
+ {title:"Rete più veloce: 12 secondi", id:"Gigabyte-Dark"},
+ {title:"Gol in una partita: 4", id:"Fork-Bronze"},
+ {title:"Assist in una stagione: 16", id:"mtg-shivan-2010"},
+ {title:"Clean sheet in una stagione: 12", id:"Tore-F1"},
+ {title:"MVP in una stagione: 8", id:"Manu-Gold"}
+];
+
+async function loadCards(){
+  try{
+    const r = await fetch("cards (4).json");
+    const data = await r.json();
+    data.forEach(c=>cards[c.id]=c);
+  }catch(e){console.log("Errore caricamento cards.json",e);}
+}
+
+function renderRecord(rec){
+  const box = document.createElement("div");
+  box.className="record-box";
+  box.innerHTML = "<b>"+rec.title+"</b>";
+
+  const card = cards[rec.id];
+  const img = card ? card.img : fallback;
+  const name = card ? card.name : rec.id+" (no card)";
+
+  box.innerHTML += `
+    <div class="card">
+      <img class="thumb" src="${img}">
+      <div class="content">
+        <div class="name">${name}</div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(box);
+}
+
+(async ()=>{
+  await loadCards();
+  records.forEach(renderRecord);
+})();
+</script>
+
+</body>
+</html>
