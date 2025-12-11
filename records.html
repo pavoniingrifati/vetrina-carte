@@ -9,20 +9,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-/* Minimal page but full card styling reused */
 :root{
-  --bg:#0b0f19; --panel:#0f1526; --card:#121a2e; --card-2:#0d1325;
-  --text:#ecf0ff; --muted:#a7b0d3; --accent:#6ee7ff; --radius:16px;
+  --bg:#0b0f19; --panel:#0f1526; --card:#121a2e;
+  --text:#ecf0ff; --muted:#a7b0d3; --radius:16px;
 }
 body{margin:0;background:var(--bg);color:var(--text);font-family:Inter;padding:20px}
 h2{margin-top:32px;font-size:24px}
-.record-box{margin-bottom:26px;padding:14px 18px;background:var(--panel);border-radius:14px;border:1px solid rgba(255,255,255,.08)}
-/* Card styles trimmed */
-.card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);overflow:hidden;max-width:330px;margin-top:12px}
+.record-box{margin-bottom:26px;padding:14px 18px;background:var(--panel);
+  border-radius:14px;border:1px solid rgba(255,255,255,.08)}
+.card{background:var(--card);border:1px solid rgba(255,255,255,.08);
+  border-radius:var(--radius);overflow:hidden;max-width:330px;margin-top:12px}
 .thumb{width:100%;aspect-ratio:3/4;object-fit:cover;background:#000}
 .content{padding:12px}
 .name{font-weight:600;font-size:16px}
-.meta{font-size:13px;color:var(--muted);margin-top:4px}
 </style>
 
 </head>
@@ -43,19 +42,29 @@ h2{margin-top:32px;font-size:24px}
 <div class="record-box">Maggior numero di punti in Premier League: <b>73</b></div>
 <div class="record-box">Super Coppa Europea: <b>1</b></div>
 <div class="record-box">Europa League: <b>1</b></div>
-<div class="record-box">Club Challange: <b>1</b></div>
-<div class="record-box">FA Cimmunity Shield: <b>1</b></div>
+<div class="record-box">Club Challenge: <b>1</b></div>
+<div class="record-box">FA Community Shield: <b>1</b></div>
 <div class="record-box">Championship: <b>1</b></div>
-  
+
+<h2>👥 Record Utenti</h2>
+<div id="user-records"></div>
 
 <h2>🏆 Record individuali</h2>
+<div id="individual-records"></div>
 
 <script>
-// Minimal embedded cards.json list (IDs only needed here)
 const fallback = "Deck%20back%20bronzo.png";
 const cards = {};
-// Page records
-const records = [
+
+const userRecords = [
+ {title:"Più vecchio donatore: Doge", id:"Doge-Season"},
+ {title:"Livello più alto: 36 Bruno", id:"pkm-pikachu-2024"},
+ {title:"Giorni con regali consecutivi: 271 Bruno", id:"pkm-pikachu-2024"},
+ {title:"Donazione totale max in live: 15700 monete", id:null},
+ {title:"Più views: 10500 views", id:null}
+];
+
+const individualRecords = [
  {title:"Maggior numero di presenze: 170", id:"Flavio-marvel"},
  {title:"Maggior numero di gol in campionato: 29", id:"Xavier-marvel"},
  {title:"Gol in campionato in una stagione: 17", id:"Xavier-marvel"},
@@ -71,33 +80,39 @@ async function loadCards(){
   try{
     const r = await fetch("cards.json");
     const data = await r.json();
-    data.forEach(c=>cards[c.id]=c);
-  }catch(e){console.log("Errore caricamento cards.json",e);}
+    data.forEach(c => cards[c.id] = c);
+  }catch(e){ console.log("Errore caricamento cards.json", e); }
 }
 
-function renderRecord(rec){
+function renderRecord(container, rec){
   const box = document.createElement("div");
-  box.className="record-box";
+  box.className = "record-box";
   box.innerHTML = "<b>"+rec.title+"</b>";
 
-  const card = cards[rec.id];
-  const img = card ? card.img : fallback;
-  const name = card ? card.name : rec.id+" (no card)";
+  if(rec.id){
+    const card = cards[rec.id];
+    const img = card ? card.img : fallback;
+    const name = card ? card.name : rec.id + " (no card)";
 
-  box.innerHTML += `
-    <div class="card">
-      <img class="thumb" src="${img}">
-      <div class="content">
-        <div class="name">${name}</div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(box);
+    box.innerHTML += `
+      <div class="card">
+        <img class="thumb" src="${img}">
+        <div class="content">
+          <div class="name">${name}</div>
+        </div>
+      </div>`;
+  }
+
+  container.appendChild(box);
 }
 
 (async ()=>{
   await loadCards();
-  records.forEach(renderRecord);
+  const u = document.getElementById("user-records");
+  const i = document.getElementById("individual-records");
+
+  userRecords.forEach(r => renderRecord(u, r));
+  individualRecords.forEach(r => renderRecord(i, r));
 })();
 </script>
 
