@@ -1204,17 +1204,33 @@ function updateOpenBtnEnabled(){
 }
 
 // Reset cursori → 0 per tutti i game (Oggetti non usa i pacchetti, ma lasciamo uguale)
-resetPacksBtn.addEventListener('click', async ()=>{
+resetPacksBtn.addEventListener('click', ()=>{
   try{
-    document.getElementById('log').textContent = '♻️ Mischio i pacchetti...';
-    // Azzera cursori e pacchetti (Oggetti non usa pacchetti, ma azzerarlo non fa male)
-    GAME_STATE.cursor['Gotham Tots']=0; GAME_STATE.packs['Gotham Tots']=[];
-    try{ localStorage.removeItem('futtu_cursors'); }catch{}
-    await loadCards(); // ricarica + rimescola tutto
-    document.getElementById('log').textContent = '✅ Pacchetti rimescolati.';
+    const g = 'Gotham Tots';
+    document.getElementById('log').textContent = '♻️ Reset SOLO TOTS...';
+
+    // se la pool è vuota, evita di creare pacchi vuoti
+    if (!GAME_STATE.pools[g] || GAME_STATE.pools[g].length === 0) {
+      document.getElementById('log').textContent = '⚠️ Pool TOTS vuota (controlla il filtro tots11).';
+      return;
+    }
+
+    // reset solo Gotham Tots
+    GAME_STATE.cursor[g] = 0;
+    GAME_STATE.packs[g]  = buildFinitePacks(GAME_STATE.pools[g], PACK_SIZE_PER_GAME[g] || 3);
+
+    // salva SOLO quel cursore, lasciando intatti gli altri
+    try{
+      const saved = JSON.parse(localStorage.getItem('futtu_cursors') || '{}');
+      saved[g] = 0;
+      localStorage.setItem('futtu_cursors', JSON.stringify(saved));
+    }catch{}
+
+    document.getElementById('log').textContent = '✅ Reset solo Gotham Tots.';
     renderGamePicker(); updateOpenBtnEnabled(); applyPackVisual();
   }catch(e){
-    console.warn('reset failed', e); document.getElementById('log').textContent = '⚠️ Reset non riuscito.';
+    console.warn('reset failed', e);
+    document.getElementById('log').textContent = '⚠️ Reset non riuscito.';
   }
 });
 
