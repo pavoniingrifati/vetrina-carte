@@ -1480,8 +1480,17 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
 
   // Scelta carte
   let chosen;
-  if ((game==='Bronze')||(game==='Silver')||(game==='Gold')) {
-    // Pacchetti infiniti B/S/G: 3 Oggetto + 6 della serie (Fantaballa FC) generati on-the-fly
+  if ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold')) {
+     // Pacchetto infinito: X carte random dalla serie corrispondente (anche doppioni)
+    const pool = GAME_STATE.pools[game] || [];
+    const size = PACK_SIZE_PER_GAME[game] || 1;
+    if (!pool.length) {
+      document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nella serie Oggetto.';
+      return;
+    }
+    chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
+  } else if ((game==='Bronze')||(game==='Silver')||(game==='Gold')) {
+    // Pacchetti infiniti BSG: 3 Oggetto + 6 della serie (Fantaballa FC) generati on-the-fly
     const og = GAME_STATE.pools[game + '_oggs'] || [];
     const mn = GAME_STATE.pools[game + '_main'] || [];
     if (!og.length || !mn.length) {
@@ -1499,15 +1508,6 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
     } else {
       chosen = generateBSGOnTheFly(game);
     }
-  } else if (game==='Oggetti' || game==='Cosmetic') {
-    // Pacchetto infinito: X carte random dalla serie corrispondente (anche doppioni)
-    const pool = GAME_STATE.pools[game] || [];
-    const size = PACK_SIZE_PER_GAME[game] || 1;
-    if (!pool.length) {
-      document.getElementById('log').textContent = `⚠️ Nessuna carta disponibile in ${game}.`;
-      return;
-    }
-    chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
   } else {
     // Estrai il prossimo pacchetto finito (comportamento standard)
     const list = GAME_STATE.packs[game] || [];
