@@ -1484,39 +1484,66 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
 
   // Scelta carte
   let chosen;
-  if ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold')) {
-     // Pacchetto infinito: X carte random dalla serie corrispondente (anche doppioni)
+
+  // Helper
+  const norm = (s)=>String(s||'').trim().toLowerCase();
+  const isFantaballa = (g)=> norm(g) === 'fantaballa fc';
+  const dedupById = (arr)=>{
+    const m = new Map();
+    for (const c of (arr||[])) if (c && c.id && !m.has(c.id)) m.set(c.id, c);
+    return [...m.values()];
+  };
+  function pickDistinct(source, n, excludeIds=new Set()){
+    const arr = dedupById(source).slice();
+    for (let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    const out = [];
+    for (const c of arr){
+      if (c && c.id && !excludeIds.has(c.id)){
+        out.push(c);
+        excludeIds.add(c.id);
+        if (out.length >= n) break;
+      }
+    }
+    return out;
+  }
+
+  if (["Gold","Silver","Bronze"].includes(game)) {
+    // B/S/G: 3 Oggetto + 6 main (tutto Fantaballa FC), senza doppioni nel pack
+
+    // Preferisci le pool dedicate create dalla patch (Bronze_oggs / Bronze_main ecc.)
+    const oggPoolRaw  = (GAME_STATE.pools[game + '_oggs'] || GAME_STATE.pools['Oggetti'] || []);
+    const mainPoolRaw = (GAME_STATE.pools[game + '_main'] || GAME_STATE.pools[game] || []);
+
+    const oggPool  = oggPoolRaw.filter(c => isFantaballa(c.game) && norm(c.series)==='oggetto');
+    const mainPool = mainPoolRaw.filter(c => isFantaballa(c.game) && norm(c.series)===norm(game));
+
+    const oggs = pickDistinct(oggPool, 3);
+    const mains = pickDistinct(mainPool, 6, new Set(oggs.map(c=>c.id)));
+
+    if (oggs.length < 3 || mains.length < 6) {
+      document.getElementById('log').textContent = '⚠️ Pool insufficiente per generare il pacchetto (3 Oggetto + 6 main).';
+      return;
+    }
+    chosen = oggs.concat(mains);
+
+  } else if (game === 'Oggetti' || game === 'Cosmetic') {
+    // Pacchetto infinito: X carte random dalla pool (anche doppioni)
     const pool = GAME_STATE.pools[game] || [];
-    const size = PACK_SIZE_PER_GAME[game] || 1;
+    const size = PACK_SIZE_PER_GAME[game] || 3;
     if (!pool.length) {
-      document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nella serie Oggetto.';
+      document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nella serie selezionata.';
       return;
     }
     chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
-  } else if ((game==='Bronze')||(game==='Silver')||(game==='Gold')) {
-    // Pacchetti infiniti BSG: 3 Oggetto + 6 della serie (Fantaballa FC) generati on-the-fly
-    const og = GAME_STATE.pools[game + '_oggs'] || [];
-    const mn = GAME_STATE.pools[game + '_main'] || [];
-    if (!og.length || !mn.length) {
-      // Fallback: usa pacchetti pre-costruiti (finite) se i pool non sono pronti
-      const list = GAME_STATE.packs[game] || [];
-      const idx  = GAME_STATE.cursor[game] || 0;
-      if (idx < list.length) {
-        chosen = list[idx].slice();
-        GAME_STATE.cursor[game] = idx + 1;
-        try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
-      } else {
-        document.getElementById('log').textContent = '⚠️ ' + game + ': sorgenti non pronte.';
-        return;
-      }
-    } else {
-      chosen = generateBSGOnTheFly(game);
-    }
+
   } else {
-    // Estrai il prossimo pacchetto finito (comportamento standard)
+    // Pacchetti finiti: prendi il prossimo pack precostruito
     const list = GAME_STATE.packs[game] || [];
     const idx = GAME_STATE.cursor[game] || 0;
-    if (idx >= list.length){
+    if (idx >= list.length) {
       document.getElementById('log').textContent = '❌ Pacchetti esauriti per questo game.';
       return;
     }
@@ -1526,22 +1553,7 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
     GAME_STATE.cursor[game] = idx + 1;
     try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
   }
-// Ordinamento / raggruppamento + FX
-const hasLegend = chosen.some(c => (String(c.rarity||'').toLowerCase()==='leggendaria'));
 
-// Per Bronze/Silver/Gold manteniamo l'ordine "3 Oggetti, poi 6 main" senza rimescolare per rarità
-if (['Bronze','Silver','Gold'].includes(game)) {
-  const isOggetto = (c) => (String(c.series||'').trim().toLowerCase() === 'oggetto');
-  const oggs  = chosen.filter(isOggetto);
-  const mains = chosen.filter(c => !isOggetto(c));
-  // preserva l'ordine originale generato (oggetti già primi), forziamo comunque il grouping
-  chosen = [...oggs, ...mains];
-} else {
-  // per gli altri giochi va bene ordinare per rarità (basso -> alto)
-  chosen.sort((a,b)=> (rarityRank[a.rarity]||0) - (rarityRank[b.rarity]||0) );
-}
-
-if (hasLegend) { try{ triggerLegendFX(); }catch{} }
 
 // Mostra in scena
 showStage(chosen);
