@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+a<!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>FUT Fantaballa Tik Tok</title>
-<meta name="description" content="Pack unico diviso per 'game' (Gotham City). Pacchetti finiti: Wonderkid (3 carte), Patatine (1 carta, pesato), Fantaballa Tots (3 carte), Legend (3 carte). Nuovo: Oggetti (3 carte, infinito). Login e salvataggio inventario invariati." />
+<meta name="description" content="Pack unico diviso per 'game' (Gotham City). Pacchetti finiti: Wonderkid (3 carte), Patatine (1 carta, pesato), Gotham Tots (3 carte), Legend (3 carte). Nuovo: Oggetti (3 carte, infinito). Login e salvataggio inventario invariati." />
 
 <!-- Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -626,11 +626,11 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid','Patatine','Fantaballa Tots','Legend','Oggetti','Gold','Silver','Bronze', 'Cosmetic', 'Strumenti', 'Frutto del Diavolo', 'Chaos'];
+const VALID_GAMES = ['Wonderkid','Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze','Strumenti','Cosmetic','Frutto del Diavolo','Chaos'];
 const PACK_BACK_BY_GAME = {
   'Wonderkid': 'Deck%20back%20wonderkid.png',
   'Patatine': 'patatrine.png',
-  'Fantaballa Tots': 'Deck%20back%20Tots.png',
+  'Gotham Tots': 'Deck%20back%20Tots.png',
   'Legend': 'Back%20legend.png',
   'Oggetti': 'Deck%20back%20tactcs.png',
   'Gold': 'Deck%20back%20ORO.png',
@@ -646,7 +646,7 @@ const PACK_BACK_BY_GAME = {
 const PACK_COST_PER_GAME = {
   'Wonderkid': 1800,
   'Patatine': 0,
-  'Fantaballa Tots': 0,
+  'Gotham Tots': 0,
   'Legend': 0,
   'Oggetti': 0,
   'Gold': 0,
@@ -661,7 +661,7 @@ const PACK_COST_PER_GAME = {
 const PACK_SIZE_PER_GAME = {
   'Wonderkid': 3,
   'Patatine': 1,
-  'Fantaballa Tots': 3,
+  'Gotham Tots': 3,
   'Legend': 3,
   'Oggetti': 3,
   'Gold': 9,
@@ -880,9 +880,9 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Wonderkid',
-  pools:    { 'Wonderkid': [], 'Patatine': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Frutto del Diavolo': []},
-  packs:    { 'Wonderkid': [], 'Patatine': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Frutto del Diavolo': []},
-  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Fantaballa Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0, 'Frutto del Diavolo': 0,
+  pools:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Frutto del Diavolo': []},
+  packs:    { 'Wonderkid': [], 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Frutto del Diavolo': []},
+  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0, 'Frutto del Diavolo': 0,
   'Chaos': 0}
 };
 
@@ -937,11 +937,12 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
       isFantaballa(c.game) &&
       norm(c.series) !== 'leggendaria'
     );
-// Fantaballa Tots — SOLO ed ESCLUSIVAMENTE Tots14 di Fantaballa FC
-    GAME_STATE.pools['Fantaballa Tots'] = cleaned.filter(c =>
+// Gotham Tots (come prima)
+    GAME_STATE.pools['Gotham Tots'] = cleaned.filter(c =>
       isFantaballa(c.game) &&
-      norm(c.series)==='tots' &&
-      (Array.isArray(c.tags) && c.tags.some(t => norm(t)==='tots14'))
+      norm(c.series) === 'tots' &&
+      Array.isArray(c.tags) &&
+      c.tags.some(t => norm(t) === 'tots14')
     );
 
     // Legend (come prima)
@@ -1111,7 +1112,7 @@ GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards));
 // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
-    GAME_STATE.packs['Fantaballa Tots'] = buildFinitePacks(GAME_STATE.pools['Fantaballa Tots'], PACK_SIZE_PER_GAME['Fantaballa Tots']);
+    GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
     /* packs Gold set by auto */
     
     
@@ -1233,7 +1234,7 @@ try {
     updateOpenBtnEnabled();
  document.getElementById('log').textContent =
   `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, `+
-  `TOTS ${GAME_STATE.pools['Fantaballa Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
+  `TOTS ${GAME_STATE.pools['Gotham Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
   `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
 
 
@@ -1470,7 +1471,7 @@ openBtn.addEventListener('click', async () => {
   // Carica carte (se non già)
 if (!GAME_STATE.packs['Wonderkid'].length && 
     !GAME_STATE.packs['Patatine'].length && 
-    !GAME_STATE.packs['Fantaballa Tots'].length &&
+    !GAME_STATE.packs['Gotham Tots'].length &&
     !GAME_STATE.packs['Gold'].length &&
     !GAME_STATE.pools['Oggetti']?.length) {
   await loadCards();
@@ -1484,66 +1485,39 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
 
   // Scelta carte
   let chosen;
-
-  // Helper
-  const norm = (s)=>String(s||'').trim().toLowerCase();
-  const isFantaballa = (g)=> norm(g) === 'fantaballa fc';
-  const dedupById = (arr)=>{
-    const m = new Map();
-    for (const c of (arr||[])) if (c && c.id && !m.has(c.id)) m.set(c.id, c);
-    return [...m.values()];
-  };
-  function pickDistinct(source, n, excludeIds=new Set()){
-    const arr = dedupById(source).slice();
-    for (let i=arr.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [arr[i],arr[j]] = [arr[j],arr[i]];
-    }
-    const out = [];
-    for (const c of arr){
-      if (c && c.id && !excludeIds.has(c.id)){
-        out.push(c);
-        excludeIds.add(c.id);
-        if (out.length >= n) break;
-      }
-    }
-    return out;
-  }
-
-  if (["Gold","Silver","Bronze"].includes(game)) {
-    // B/S/G: 3 Oggetto + 6 main (tutto Fantaballa FC), senza doppioni nel pack
-
-    // Preferisci le pool dedicate create dalla patch (Bronze_oggs / Bronze_main ecc.)
-    const oggPoolRaw  = (GAME_STATE.pools[game + '_oggs'] || GAME_STATE.pools['Oggetti'] || []);
-    const mainPoolRaw = (GAME_STATE.pools[game + '_main'] || GAME_STATE.pools[game] || []);
-
-    const oggPool  = oggPoolRaw.filter(c => isFantaballa(c.game) && norm(c.series)==='oggetto');
-    const mainPool = mainPoolRaw.filter(c => isFantaballa(c.game) && norm(c.series)===norm(game));
-
-    const oggs = pickDistinct(oggPool, 3);
-    const mains = pickDistinct(mainPool, 6, new Set(oggs.map(c=>c.id)));
-
-    if (oggs.length < 3 || mains.length < 6) {
-      document.getElementById('log').textContent = '⚠️ Pool insufficiente per generare il pacchetto (3 Oggetto + 6 main).';
-      return;
-    }
-    chosen = oggs.concat(mains);
-
-  } else if (game === 'Oggetti' || game === 'Cosmetic') {
-    // Pacchetto infinito: X carte random dalla pool (anche doppioni)
+  if ((game==='Oggetti')||(game==='Cosmetic')) {
+     // Pacchetto infinito: X carte random dalla serie corrispondente (anche doppioni)
     const pool = GAME_STATE.pools[game] || [];
-    const size = PACK_SIZE_PER_GAME[game] || 3;
+    const size = PACK_SIZE_PER_GAME[game] || 1;
     if (!pool.length) {
-      document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nella serie selezionata.';
+      document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nella serie Oggetto.';
       return;
     }
     chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
-
+  } else if ((game==='Bronze')||(game==='Silver')||(game==='Gold')) {
+    // Pacchetti infiniti BSG: 3 Oggetto + 6 della serie (Fantaballa FC) generati on-the-fly
+    const og = GAME_STATE.pools[game + '_oggs'] || [];
+    const mn = GAME_STATE.pools[game + '_main'] || [];
+    if (!og.length || !mn.length) {
+      // Fallback: usa pacchetti pre-costruiti (finite) se i pool non sono pronti
+      const list = GAME_STATE.packs[game] || [];
+      const idx  = GAME_STATE.cursor[game] || 0;
+      if (idx < list.length) {
+        chosen = list[idx].slice();
+        GAME_STATE.cursor[game] = idx + 1;
+        try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
+      } else {
+        document.getElementById('log').textContent = '⚠️ ' + game + ': sorgenti non pronte.';
+        return;
+      }
+    } else {
+      chosen = generateBSGOnTheFly(game);
+    }
   } else {
-    // Pacchetti finiti: prendi il prossimo pack precostruito
+    // Estrai il prossimo pacchetto finito (comportamento standard)
     const list = GAME_STATE.packs[game] || [];
     const idx = GAME_STATE.cursor[game] || 0;
-    if (idx >= list.length) {
+    if (idx >= list.length){
       document.getElementById('log').textContent = '❌ Pacchetti esauriti per questo game.';
       return;
     }
@@ -1553,7 +1527,22 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
     GAME_STATE.cursor[game] = idx + 1;
     try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
   }
+// Ordinamento / raggruppamento + FX
+const hasLegend = chosen.some(c => (String(c.rarity||'').toLowerCase()==='leggendaria'));
 
+// Per Bronze/Silver/Gold manteniamo l'ordine "3 Oggetti, poi 6 main" senza rimescolare per rarità
+if (['Bronze','Silver','Gold'].includes(game)) {
+  const isOggetto = (c) => (String(c.series||'').trim().toLowerCase() === 'oggetto');
+  const oggs  = chosen.filter(isOggetto);
+  const mains = chosen.filter(c => !isOggetto(c));
+  // preserva l'ordine originale generato (oggetti già primi), forziamo comunque il grouping
+  chosen = [...oggs, ...mains];
+} else {
+  // per gli altri giochi va bene ordinare per rarità (basso -> alto)
+  chosen.sort((a,b)=> (rarityRank[a.rarity]||0) - (rarityRank[b.rarity]||0) );
+}
+
+if (hasLegend) { try{ triggerLegendFX(); }catch{} }
 
 // Mostra in scena
 showStage(chosen);
