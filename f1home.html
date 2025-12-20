@@ -154,43 +154,6 @@
       overflow: hidden;
       flex: 0 0 auto;
     }
-    
-    .thumb img{
-      width: 100%;
-      height: 100%;
-      display:block;
-      object-fit: cover;
-    }
-
-    .panel-art{
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.22);
-      overflow: hidden;
-      flex: 0 0 auto;
-      box-shadow: 0 8px 18px rgba(0,0,0,.25);
-    }
-    .panel-art img{
-      width: 100%;
-      height: 100%;
-      display:block;
-      object-fit: cover;
-    }
-    .panel-art::before{
-      content:"IMG";
-      position:absolute;
-      transform: translate(10px, 18px);
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: .35px;
-      color: rgba(255,255,255,.35);
-      pointer-events:none;
-    }
-    /* hide the placeholder label if the image exists and loads (best-effort) */
-    .panel-art:has(img[src]):before{ content:""; }
-
     .thumb svg{
       width: 38px;
       height: 38px;
@@ -323,7 +286,8 @@
     }
     .tile:focus-visible .speedline{ animation: sweep .6s ease; }
     .tile:focus-visible .checkline{ animation: checkerMove .6s linear; }
-/* --- Comic guide (image panels) --- */
+
+    /* --- Comic guide --- */
     .guide{
       margin-top: 22px;
       padding: 18px;
@@ -366,214 +330,135 @@
       .guide-grid{ grid-template-columns: 1fr 1fr 1fr; }
     }
 
-    /* Square panels where the whole tile is the image */
-    .comic-tile{
-      border-radius: 16px;
-      border: 3px solid rgba(255,255,255,.14); /* cornice per separare bene */
-      overflow: hidden;
-      background: rgba(0,0,0,.22);
+    .panel{
+      position: relative;
+      padding: 14px 14px 14px 14px;
+      border-radius: 18px;
+      border: 3px solid rgba(255,255,255,.14);
+      background:
+        radial-gradient(circle at 12px 12px, rgba(255,255,255,.08) 1px, transparent 2px) 0 0/12px 12px,
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
       box-shadow: var(--shadow);
-      aspect-ratio: 1 / 1;
-      display:block;
-      transform: translateZ(0);
+      overflow: hidden;
+      transform: rotate(var(--tilt, 0deg));
       transition: transform .12s ease, filter .12s ease, border-color .12s ease;
     }
-    .comic-tile img{
-      width: 100%;
-      height: 100%;
-      display:block;
-      object-fit: cover;       /* riempie il quadrato */
-      object-position: center; /* centrata */
-    }
     @media (hover:hover){
-      .comic-tile:hover{ transform: translateY(-2px); filter: brightness(1.04); }
+      .panel:hover{ transform: rotate(var(--tilt, 0deg)) translateY(-2px); filter: brightness(1.04); }
     }
-    .comic-tile:focus-visible{
-      outline: none;
-      box-shadow: 0 0 0 4px rgba(225,6,0,.28), var(--shadow);
-      border-color: rgba(225,6,0,.9);
+
+    .panel::before{
+      content:"";
+      position:absolute;
+      inset:-40% -20% auto -20%;
+      height: 220px;
+      background: radial-gradient(closest-side, color-mix(in srgb, var(--accent, #e10600) 32%, transparent), transparent 70%);
+      transform: rotate(8deg);
+      pointer-events:none;
+      z-index: 0;
+    }
+    .panel::after{
+      content:"";
+      position:absolute;
+      right: 14px;
+      top: 14px;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      box-shadow: 0 8px 18px rgba(0,0,0,.25);
+      z-index: 0;
+    }
+
+    .panel .p-top{
+      position: relative;
+      z-index: 1;
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .step{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .3px;
+      color: rgba(232,236,241,.92);
+    }
+    .step .num{
+      width: 26px; height: 26px;
+      border-radius: 10px;
+      display:grid; place-items:center;
+      background: color-mix(in srgb, var(--accent, #e10600) 55%, rgba(255,255,255,.06));
+      border: 1px solid rgba(255,255,255,.16);
+    }
+
+    .panel h4{
+      margin: 10px 0 6px;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      position: relative;
+      z-index: 1;
+    }
+    .panel p{
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      font-weight: 650;
+      position: relative;
+      z-index: 1;
+    }
+
+    .panel .mini{
+      margin-top: 10px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+      color: rgba(232,236,241,.86);
+      font-size: 12px;
+      font-weight: 850;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      color: rgba(232,236,241,.92);
+      white-space: nowrap;
+    }
+    .chip svg{ width: 14px; height: 14px; fill: currentColor; opacity: .9; }
+
+    /* Little speech-bubble tail */
+    .tail{
+      position:absolute;
+      left: 18px;
+      bottom: -10px;
+      width: 18px;
+      height: 18px;
+      background: inherit;
+      border-left: 3px solid rgba(255,255,255,.14);
+      border-bottom: 3px solid rgba(255,255,255,.14);
+      transform: rotate(45deg);
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.25));
+      z-index: 0;
     }
 
     @media (max-width: 420px){
       .guide{ padding: 14px; }
-      .comic-tile{ border-radius: 14px; }
+      .panel{ padding: 12px; }
     }
 
-
-    /* --- Full-image tiles --- */
-    .tile{
-      padding: 0; /* content padding moved to .tile-content */
-      min-height: 190px;
-    }
-    .tile-bg{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      object-fit: cover;
-      z-index: -2;
-      transform: scale(1.02);
-      filter: saturate(1.05) contrast(1.02);
-    }
-    .tile .img-overlay{
-      position:absolute;
-      inset:0;
-      z-index: -1;
-      background: linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.35) 40%, rgba(0,0,0,.65) 100%);
-      pointer-events:none;
-    }
-    .tile-content{
-      position: relative;
-      z-index: 1;
-      height: 100%;
-      padding: 16px;
-      display:flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    .tile h2{ text-shadow: 0 8px 20px rgba(0,0,0,.55); }
-    .tile p{ text-shadow: 0 8px 20px rgba(0,0,0,.55); }
-    .meta{
-      background: rgba(0,0,0,.28);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 14px;
-      padding: 10px 12px;
-      backdrop-filter: blur(6px);
-    }
-    @media (max-width: 420px){
-      .tile{ min-height: 175px; }
-      .tile-content{ padding: 14px; }
-    }
-
-    .thumb{ display:none !important; }
-
-    /* --- Full-image comic panels --- */
-    .panel{
-      background: rgba(0,0,0,.18);
-      padding: 0;
-    }
-    .panel-bg{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      object-fit: cover;
-      z-index: -2;
-      transform: scale(1.02);
-      filter: saturate(1.05) contrast(1.02);
-    }
-    .panel .img-overlay{
-      position:absolute;
-      inset:0;
-      z-index: -1;
-      background: linear-gradient(180deg, rgba(0,0,0,.45) 0%, rgba(0,0,0,.25) 40%, rgba(0,0,0,.60) 100%);
-      pointer-events:none;
-    }
-    .panel-inner{
-      position: relative;
-      z-index: 1;
-      padding: 14px;
-    }
-    .panel h4, .panel p{ text-shadow: 0 8px 20px rgba(0,0,0,.55); }
-    .panel .mini{
-      background: rgba(0,0,0,.26);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 14px;
-      padding: 10px 12px;
-      backdrop-filter: blur(6px);
-    }
-    .tail{ display:none; }
-
-/* --- Image guide (comic squares) --- */
-    .guide{
-      margin-top: 22px;
-      padding: 18px;
-      border-radius: calc(var(--radius) + 6px);
-      border: 1px solid rgba(255,255,255,.10);
-      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
-      box-shadow: var(--shadow);
-    }
-    .guide-head{
-      display:flex;
-      align-items:flex-end;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 14px;
-    }
-    .guide h3{
-      margin: 0;
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: .2px;
-    }
-    .guide .sub{
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 650;
-      line-height: 1.4;
-      max-width: 70ch;
-    }
-    .guide-grid{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
-      margin-top: 12px;
-    }
-    @media (min-width: 740px){
-      .guide-grid{ grid-template-columns: 1fr 1fr; gap: 16px; }
-    }
-    @media (min-width: 1040px){
-      .guide-grid{ grid-template-columns: 1fr 1fr 1fr; }
-    }
-
-    .guide-tile{
-      position: relative;
-      width: 100%;
-      aspect-ratio: 1 / 1; /* quadrato */
-      border-radius: 12px;
-      border: 3px solid rgba(255,255,255,.14); /* cornice per separare */
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      background-color: rgba(0,0,0,.25);
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      transform: translateZ(0);
-      transition: transform .12s ease, filter .12s ease;
-    }
-    @media (hover:hover){
-      .guide-tile:hover{ transform: translateY(-2px); filter: brightness(1.04); }
-    }
-
-    /* Fallback pattern if the image is missing */
-    .guide-tile::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:
-        radial-gradient(circle at 12px 12px, rgba(255,255,255,.08) 1px, transparent 2px) 0 0/12px 12px,
-        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      opacity: .55;
-      pointer-events:none;
-      mix-blend-mode: overlay;
-    }
-
-    .guide-note{
-      margin: 12px 0 0;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-      line-height: 1.4;
-    }
-    .sr-only{
-      position:absolute !important;
-      width:1px; height:1px;
-      padding:0; margin:-1px;
-      overflow:hidden; clip:rect(0,0,0,0);
-      white-space:nowrap; border:0;
-    }
   </style>
 </head>
 
@@ -605,118 +490,103 @@
 
         <!-- Achievement Piloti -->
         <a class="tile accent-amber" href="https://pavoniingrifati.github.io/vetrina-carte/achievement_tracker.html" target="_self" rel="noopener">
-          <img class="tile-bg" src="img/drive.png" alt="" loading="lazy">
-          <span class="img-overlay" aria-hidden="true"></span>
           <span class="speedline" aria-hidden="true"></span>
           <span class="checkline" aria-hidden="true"></span>
-
-          <div class="tile-content">
-            <div class="top">
-              <div>
-                <h2>Drive completo</h2>
-                <p>Il foglio Google con tutti i dati del progetto.</p>
-              </div>
-              <div class="badge">Sheet</div>
+          <div class="top">
+            <div>
+              <h2>Achievement Piloti</h2>
+              <p>Traguardi, obiettivi e progressi legati ai piloti.</p>
             </div>
-
-            <div class="meta">
-              <span><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 1 7-4.58V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6.42A5 5 0 0 1 10 13Zm11.5 1a3.5 3.5 0 1 0-6.86 1H13a1 1 0 0 0 0 2h1.64a3.5 3.5 0 0 0 6.86-1Z"/></svg> Apri pagina</span>
-              <span style="opacity:.9">Sheet</span>
+            <div class="thumb" style="color: var(--accent)" aria-hidden="true">
+              <!-- Trofeo -->
+              <svg viewBox="0 0 24 24"><path d="M19 4h-2V3a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v1H5a1 1 0 0 0-1 1v3a5 5 0 0 0 5 5h.07A6.02 6.02 0 0 0 11 16.92V19H8a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-3v-2.08A6.02 6.02 0 0 0 14.93 14H15a5 5 0 0 0 5-5V5a1 1 0 0 0-1-1ZM6 8V6h1v5.9A3 3 0 0 1 6 8Zm12 0a3 3 0 0 1-1 2.9V6h1v2Z"/></svg>
             </div>
           </div>
-</a>
+          <div class="meta">
+            <span><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 1 7-4.58V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6.42A5 5 0 0 1 10 13Zm11.5 1a3.5 3.5 0 1 0-6.86 1H13a1 1 0 0 0 0 2h1.64a3.5 3.5 0 0 0 6.86-1Z"/></svg> Apri pagina</span>
+            <span class="badge">Piloti</span>
+          </div>
+        </a>
 
         <!-- Achievement Scuderie -->
         <a class="tile accent-violet" href="https://pavoniingrifati.github.io/vetrina-carte/achievement_scuderie.html" target="_self" rel="noopener">
-          <img class="tile-bg" src="img/drive.png" alt="" loading="lazy">
-          <span class="img-overlay" aria-hidden="true"></span>
           <span class="speedline" aria-hidden="true"></span>
           <span class="checkline" aria-hidden="true"></span>
-
-          <div class="tile-content">
-            <div class="top">
-              <div>
-                <h2>Drive completo</h2>
-                <p>Il foglio Google con tutti i dati del progetto.</p>
-              </div>
-              <div class="badge">Sheet</div>
+          <div class="top">
+            <div>
+              <h2>Achievement Scuderie</h2>
+              <p>Obiettivi e traguardi dedicati ai team / scuderie.</p>
             </div>
-
-            <div class="meta">
-              <span><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 1 7-4.58V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6.42A5 5 0 0 1 10 13Zm11.5 1a3.5 3.5 0 1 0-6.86 1H13a1 1 0 0 0 0 2h1.64a3.5 3.5 0 0 0 6.86-1Z"/></svg> Apri pagina</span>
-              <span style="opacity:.9">Sheet</span>
+            <div class="thumb" style="color: var(--accent)" aria-hidden="true">
+              <!-- Bandiera a scacchi -->
+              <svg viewBox="0 0 24 24"><path d="M4 3a1 1 0 0 0-1 1v18h2v-6h6.1c.59 0 1.17.17 1.67.49l.46.29c.83.53 1.79.81 2.77.81H20a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-3.1c-.59 0-1.17-.17-1.67-.49l-.46-.29A4.98 4.98 0 0 0 12 4.39V4a1 1 0 0 0-1-1H4Zm1 3h4v4H5V6Zm6 0h1.1c.59 0 1.17.17 1.67.49l.46.29c.83.53 1.79.81 2.77.81H19v4h-4v-4h-4V6Zm0 6h4v4h-4v-4Zm-6 0h4v4H5v-4Z"/></svg>
             </div>
           </div>
-</a>
+          <div class="meta">
+            <span><svg viewBox="0 0 24 24"><path d="M13 3a1 1 0 0 0-1 1v6.59L9.7 8.3a1 1 0 1 0-1.4 1.4l4 4A1 1 0 0 0 14 13V4a1 1 0 0 0-1-1Z"/><path d="M12 2a10 10 0 1 0 10 10A10.01 10.01 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8.01 8.01 0 0 1-8 8Z"/></svg> Apri pagina</span>
+            <span class="badge">Scuderie</span>
+          </div>
+        </a>
 
         <!-- Livello Piloti -->
         <a class="tile accent-cyan" href="https://pavoniingrifati.github.io/vetrina-carte/progressi.html" target="_self" rel="noopener">
-          <img class="tile-bg" src="img/drive.png" alt="" loading="lazy">
-          <span class="img-overlay" aria-hidden="true"></span>
           <span class="speedline" aria-hidden="true"></span>
           <span class="checkline" aria-hidden="true"></span>
-
-          <div class="tile-content">
-            <div class="top">
-              <div>
-                <h2>Drive completo</h2>
-                <p>Il foglio Google con tutti i dati del progetto.</p>
-              </div>
-              <div class="badge">Sheet</div>
+          <div class="top">
+            <div>
+              <h2>Livello Piloti</h2>
+              <p>Livelli, EXP e avanzamento dei piloti.</p>
             </div>
-
-            <div class="meta">
-              <span><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 1 7-4.58V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6.42A5 5 0 0 1 10 13Zm11.5 1a3.5 3.5 0 1 0-6.86 1H13a1 1 0 0 0 0 2h1.64a3.5 3.5 0 0 0 6.86-1Z"/></svg> Apri pagina</span>
-              <span style="opacity:.9">Sheet</span>
+            <div class="thumb" style="color: var(--accent)" aria-hidden="true">
+              <!-- Freccia in salita -->
+              <svg viewBox="0 0 24 24"><path d="M21 6a1 1 0 0 0-1-1h-6a1 1 0 0 0 0 2h3.59L13 11.59 10.7 9.3a1 1 0 0 0-1.4 0l-6 6a1 1 0 1 0 1.4 1.4L10 11.41l2.3 2.29a1 1 0 0 0 1.4 0L19 8.41V12a1 1 0 0 0 2 0V6Z"/></svg>
             </div>
           </div>
-</a>
+          <div class="meta">
+            <span><svg viewBox="0 0 24 24"><path d="M12 6a1 1 0 0 1 1 1v3h3a1 1 0 1 1 0 2h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/><path d="M12 2a10 10 0 1 0 10 10A10.01 10.01 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8.01 8.01 0 0 1-8 8Z"/></svg> Apri pagina</span>
+            <span class="badge">Progressi</span>
+          </div>
+        </a>
 
         <!-- Livello Scuderie -->
         <a class="tile accent-green" href="https://pavoniingrifati.github.io/vetrina-carte/progressi_scuderie.html" target="_self" rel="noopener">
-          <img class="tile-bg" src="img/drive.png" alt="" loading="lazy">
-          <span class="img-overlay" aria-hidden="true"></span>
           <span class="speedline" aria-hidden="true"></span>
           <span class="checkline" aria-hidden="true"></span>
-
-          <div class="tile-content">
-            <div class="top">
-              <div>
-                <h2>Drive completo</h2>
-                <p>Il foglio Google con tutti i dati del progetto.</p>
-              </div>
-              <div class="badge">Sheet</div>
+          <div class="top">
+            <div>
+              <h2>Livello Scuderie</h2>
+              <p>Livelli e avanzamento EXP delle scuderie.</p>
             </div>
-
-            <div class="meta">
-              <span><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 1 7-4.58V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6.42A5 5 0 0 1 10 13Zm11.5 1a3.5 3.5 0 1 0-6.86 1H13a1 1 0 0 0 0 2h1.64a3.5 3.5 0 0 0 6.86-1Z"/></svg> Apri pagina</span>
-              <span style="opacity:.9">Sheet</span>
+            <div class="thumb" style="color: var(--accent)" aria-hidden="true">
+              <!-- Scudo -->
+              <svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5.55 3.84 10.74 8 11 4.16-.26 8-5.45 8-11V5l-8-3Zm0 18c-2.78-.52-6-4.39-6-9V6.32L12 4.1l6 2.22V11c0 4.61-3.22 8.48-6 9Z"/></svg>
             </div>
           </div>
-</a>
+          <div class="meta">
+            <span><svg viewBox="0 0 24 24"><path d="M7 17h10a2 2 0 0 0 2-2V7H5v8a2 2 0 0 0 2 2Zm-2-12h14a1 1 0 0 1 1 1v1H4V6a1 1 0 0 1 1-1Z"/></svg> Apri pagina</span>
+            <span class="badge">Team</span>
+          </div>
+        </a>
 
         <!-- Drive / Spreadsheet -->
         <a class="tile accent-red" href="https://docs.google.com/spreadsheets/d/1OwvNdXJK0RJtJsfLz_2y4wKpV75KiEXOWRdtAFtP3ns/edit?gid=683160948#gid=683160948" target="_blank" rel="noopener noreferrer">
-          <img class="tile-bg" src="img/drive.png" alt="" loading="lazy">
-          <span class="img-overlay" aria-hidden="true"></span>
           <span class="speedline" aria-hidden="true"></span>
           <span class="checkline" aria-hidden="true"></span>
-
-          <div class="tile-content">
-            <div class="top">
-              <div>
-                <h2>Drive completo</h2>
-                <p>Il foglio Google con tutti i dati del progetto.</p>
-              </div>
-              <div class="badge">Sheet</div>
+          <div class="top">
+            <div>
+              <h2>Drive completo</h2>
+              <p>Il foglio Google con tutti i dati del progetto.</p>
             </div>
-
-            <div class="meta">
-              <span><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 1 7-4.58V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6.42A5 5 0 0 1 10 13Zm11.5 1a3.5 3.5 0 1 0-6.86 1H13a1 1 0 0 0 0 2h1.64a3.5 3.5 0 0 0 6.86-1Z"/></svg> Apri pagina</span>
-              <span style="opacity:.9">Sheet</span>
+            <div class="thumb" style="color: var(--accent)" aria-hidden="true">
+              <!-- Foglio -->
+              <svg viewBox="0 0 24 24"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-6Zm1 7V3.5L18.5 9H15ZM8 13h8a1 1 0 0 1 0 2H8a1 1 0 0 1 0-2Zm0 4h8a1 1 0 0 1 0 2H8a1 1 0 0 1 0-2Z"/></svg>
             </div>
           </div>
-</a>
+          <div class="meta">
+            <span><svg viewBox="0 0 24 24"><path d="M14 3a1 1 0 0 0 0 2h3.59L10 12.59l-2.29-2.3a1 1 0 0 0-1.42 0l-4 4a1 1 0 1 0 1.42 1.42L7 12.41l2.29 2.3a1 1 0 0 0 1.42 0L19 6.41V10a1 1 0 0 0 2 0V4a1 1 0 0 0-1-1h-6Z"/></svg> Apri su Google</span>
+            <span class="badge">Sheet</span>
+          </div>
+        </a>
 
       </div>
     </main>
@@ -729,12 +599,35 @@
       </div>
 
       <div class="guide-grid">
-        <div class="guide-tile" style="background-image:url('img/f11.png')" role="img" aria-label="Guida 1"></div>
-        <div class="guide-tile" style="background-image:url('img/guida-02.png')" role="img" aria-label="Guida 2"></div>
-        <div class="guide-tile" style="background-image:url('img/guida-03.png')" role="img" aria-label="Guida 3"></div>
-        <div class="guide-tile" style="background-image:url('img/guida-04.png')" role="img" aria-label="Guida 4"></div>
-        <div class="guide-tile" style="background-image:url('img/guida-05.png')" role="img" aria-label="Guida 5"></div>
-        <div class="guide-tile" style="background-image:url('img/guida-06.png')" role="img" aria-label="Guida 6"></div>
+        <div class="guide-item">
+          <div class="guide-tile" style="background-image:url('img/f11.png')" role="img" aria-label="Guida 1"></div>
+          <p class="guide-caption">Step 1 — Start<span class="muted">Da qui parti e scegli cosa aprire.</span></p>
+        </div>
+
+        <div class="guide-item">
+          <div class="guide-tile" style="background-image:url('img/guida-02.png')" role="img" aria-label="Guida 2"></div>
+          <p class="guide-caption">Step 2 — Achievement<span class="muted">Controlla traguardi sbloccati e obiettivi.</span></p>
+        </div>
+
+        <div class="guide-item">
+          <div class="guide-tile" style="background-image:url('img/guida-03.png')" role="img" aria-label="Guida 3"></div>
+          <p class="guide-caption">Step 3 — Livelli<span class="muted">Guarda EXP e livello attuale.</span></p>
+        </div>
+
+        <div class="guide-item">
+          <div class="guide-tile" style="background-image:url('img/guida-04.png')" role="img" aria-label="Guida 4"></div>
+          <p class="guide-caption">Step 4 — Scuderie<span class="muted">Stessa logica ma lato team.</span></p>
+        </div>
+
+        <div class="guide-item">
+          <div class="guide-tile" style="background-image:url('img/guida-05.png')" role="img" aria-label="Guida 5"></div>
+          <p class="guide-caption">Step 5 — Drive<span class="muted">Fonte dati: foglio Google.</span></p>
+        </div>
+
+        <div class="guide-item">
+          <div class="guide-tile" style="background-image:url('img/guida-06.png')" role="img" aria-label="Guida 6"></div>
+          <p class="guide-caption">Step 6 — Routine<span class="muted">Drive → Livelli → Achievement.</span></p>
+        </div>
       </div>
 
       <p class="guide-note">
