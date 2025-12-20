@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>F1 Hub — FAQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #0b0d12;
+      --surface: #121622;
+      --card: #171C2B;
+      --text: #e8ecf1;
+      --muted: #a7b0c0;
+      --ring: #3a435a;
+      --shadow: 0 10px 30px rgba(0,0,0,.4);
+      --radius: 16px;
+      --f1red: #e10600;
+    }
+
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background: radial-gradient(1200px 700px at 15% -10%, rgba(225,6,0,.22), transparent 60%),
+                  radial-gradient(900px 600px at 90% 0%, rgba(0,210,255,.12), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    a{ color: inherit; text-decoration: none; }
+
+    .wrap{ max-width: 980px; margin: 0 auto; padding: 22px; }
+    header{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:16px;
+      padding: 10px 0 14px;
+    }
+
+    .brand{ display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:.3px; }
+    .logo{
+      width:44px; height:44px; border-radius:12px;
+      display:grid; place-items:center;
+      background: linear-gradient(135deg, var(--f1red), #8b0200);
+      box-shadow: var(--shadow);
+      flex: 0 0 auto;
+    }
+    .logo svg{ width:26px; height:26px; fill:white; }
+    .brand-title{ font-size: 18px; line-height: 1.1; }
+    .brand small{ display:block; color: var(--muted); font-weight:600; margin-top: 3px; }
+
+    .actions{ display:flex; gap:10px; align-items:center; }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      color: var(--muted);
+      font-weight:800;
+      font-size: 12px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--ring);
+      background: rgba(255,255,255,.02);
+      box-shadow: var(--shadow);
+      user-select: none;
+      white-space: nowrap;
+      transition: filter .12s ease, transform .12s ease, border-color .12s ease;
+      outline: none;
+    }
+    .pill svg{ width:16px; height:16px; fill: currentColor; opacity:.9; }
+    @media (hover:hover){
+      .pill:hover{ filter: brightness(1.05); transform: translateY(-1px); border-color: rgba(225,6,0,.5); }
+    }
+    .pill:focus-visible{
+      box-shadow: 0 0 0 4px rgba(225,6,0,.28), var(--shadow);
+      border-color: rgba(225,6,0,.9);
+    }
+
+    .hero{
+      margin-top: 10px;
+      border-radius: calc(var(--radius) + 6px);
+      border: 1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .hero h1{
+      margin: 0;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: .2px;
+    }
+    .hero p{
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      font-weight: 650;
+      max-width: 80ch;
+    }
+
+    .toolbar{
+      margin-top: 14px;
+      display:flex;
+      gap: 12px;
+      align-items:center;
+      flex-wrap: wrap;
+    }
+    .search{
+      flex: 1 1 320px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      box-shadow: var(--shadow);
+    }
+    .search svg{ width: 18px; height: 18px; fill: var(--muted); }
+    .search input{
+      width:100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .counter{
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.02);
+      box-shadow: var(--shadow);
+      white-space: nowrap;
+    }
+
+    .faq{
+      margin-top: 14px;
+      display:grid;
+      gap: 12px;
+    }
+
+    details{
+      border-radius: var(--radius);
+      border: 3px solid var(--ring);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)) , var(--card);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: transform .12s ease, filter .12s ease, border-color .12s ease;
+    }
+    details[open]{ border-color: color-mix(in srgb, var(--f1red) 55%, var(--ring)); }
+    @media (hover:hover){
+      details:hover{ transform: translateY(-1px); filter: brightness(1.03); }
+    }
+
+    summary{
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 14px;
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      outline: none;
+    }
+    summary::-webkit-details-marker{ display:none; }
+
+    .q{
+      display:flex;
+      gap: 12px;
+      align-items:flex-start;
+    }
+    .q .dot{
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      display:grid;
+      place-items:center;
+      flex: 0 0 auto;
+      margin-top: 1px;
+    }
+    .q .dot svg{ width: 18px; height: 18px; fill: rgba(232,236,241,.92); opacity:.95; }
+    .q h2{
+      margin: 0;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: .15px;
+      line-height: 1.25;
+    }
+    .q p{
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.4;
+      font-weight: 650;
+    }
+
+    .chev{
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.02);
+      display:grid;
+      place-items:center;
+      flex: 0 0 auto;
+      transition: transform .15s ease;
+      margin-top: 1px;
+    }
+    details[open] .chev{ transform: rotate(180deg); }
+    .chev svg{ width: 18px; height: 18px; fill: var(--muted); }
+
+    .a{
+      padding: 0 14px 14px 14px;
+      color: rgba(232,236,241,.92);
+      font-size: 13px;
+      line-height: 1.55;
+      font-weight: 650;
+    }
+    .a code{
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      font-weight: 800;
+      font-size: 12px;
+      color: rgba(232,236,241,.92);
+    }
+    .a ul{ margin: 10px 0 0 18px; padding: 0; }
+    .a li{ margin: 6px 0; }
+    .a .note{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.02);
+      color: var(--muted);
+      font-weight: 750;
+      font-size: 12px;
+    }
+
+    footer{
+      margin: 18px 0 44px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 420px){
+      .actions{ display:none; }
+      .hero{ padding: 14px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" role="img" aria-label="Logo">
+            <path d="M4 16h9a6 6 0 1 0-5.65-8H4v2h2.1A6 6 0 0 0 4 16Zm14.4-8.2A7.98 7.98 0 0 1 20 12a8 8 0 0 1-8 8H4v-2h8a6 6 0 0 0 6-6c0-1.5-.55-2.87-1.46-3.93l1.86-.27Z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">F1 Hub — FAQ</div>
+          <small>Domande più frequenti del progetto</small>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a class="pill" href="./index.html" title="Torna alla Home (se il file si chiama index.html)">
+          <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          Home
+        </a>
+        <a class="pill" href="https://t.me/+kdWNOF1jTs8wZjRk" target="_blank" rel="noopener noreferrer" title="Apri Telegram">
+          <svg viewBox="0 0 24 24"><path d="M21.8 4.2a1 1 0 0 0-1.06-.23L3.4 10.55a1 1 0 0 0 .05 1.9l6.7 2.23 2.23 6.7a1 1 0 0 0 .94.68h.02a1 1 0 0 0 .93-.72l3.53-10.58a1 1 0 0 0-.3-1.05l-5.9 5.9a1 1 0 0 1-1.41-1.41l6.46-6.46a1 1 0 0 0 .16-1.2Z"/></svg>
+          Telegram
+        </a>
+      </div>
+    </header>
+
+    <section class="hero">
+      <h1>FAQ</h1>
+      <p>
+        Qui trovi le risposte rapide ai problemi più comuni: immagini della guida, GitHub Pages, link, Drive e flusso del progetto.
+        Usa la ricerca per filtrare le domande.
+      </p>
+    </section>
+
+    <div class="toolbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24"><path d="M10 2a8 8 0 1 0 5.29 14.1l4.3 4.3a1 1 0 0 0 1.42-1.42l-4.3-4.3A8 8 0 0 0 10 2Zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z"/></svg>
+        <input id="q" type="search" placeholder="Cerca nelle FAQ (es. immagini, drive, telegram, livelli)..." autocomplete="off" />
+      </div>
+      <div class="counter" id="counter">0 / 0</div>
+    </div>
+
+    <section class="faq" id="faq">
+      <details data-tags="immagini guida img github pages">
+        <summary>
+          <div class="q">
+            <div class="dot" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2ZM8.5 11.5 11 14l3.5-4.5L19 17H5l3.5-5.5Z"/></svg>
+            </div>
+            <div>
+              <h2>Come funziona il bot per diventare pilota?</h2>
+              <p>Basta digitare in chat il comando che vedi su schermo.Il comando cambia per tipologia di Formula (1,2,3). Ma la logica rimane invariata</p>
+            </div>
+          </div>
+          <div class="chev" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg>
+          </div>
+        </summary>
+        <div class="a">
+          I 3 comandi per i 3 tipi di Formula sono i seguenti:
+          <div class="note"><code><span style="color:#e10600;">!f1</span> [nome scuderia] [nome pilota] [aggressività 1-100]</code></div>
+		  <div class="note"><code><span style="color:#00D2FF;">!f2</span> [nome scuderia] [nome pilota] [aggressività 1-100]</code></div>
+	      <div class="note"><code><span style="color:#33D17A;">!f3</span> [nome scuderia] [nome pilota]</code></div>
+          <div class="note">Esempio testo in chat:<code><span style="color:#e10600;">!f1</span> Panda Fantaballa 100</code></div>
+
+          <ul>
+<li> Con <code>nome scuderia</code> si intendono le scuderie disponibili su schermo. <span style="color:#e10600;">Non</span> puoi creare una scuderia che non esiste su schermo. 
+<li> Con <code>nome pilota</code> si intendono il tuo nome che decidi tu.           
+<li> Con <code>aggressività</code> si intende quanto tu voglia essere aggressivo in gara.Va da 1 a 100, con 100 massima aggressività. In <span style="color:#33D17A;">F3</span> non c'è l'aggressività. E' uguale per tutti.
+          </ul>
+        </div>
+      </details>
+
+      <details data-tags="immagine non caricata 404 path">
+        <summary>
+          <div class="q">
+            <div class="dot" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm1 15h-2v-2h2v2Zm0-4h-2V7h2v6Z"/></svg>
+            </div>
+            <div>
+              <h2>Quando si gareggia?</h2>
+              <p>Alle ore 14.30 un giorno si e un giorno. Quindi se corriamo il Lunedì, la live successiva sarà il Mercoledì.</p>
+            </div>
+          </div>
+          <div class="chev" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg>
+          </div>
+        </summary>
+        <div class="a">
+          A fine stagione ci sarà una pausa di una live per avere il tempo di aggioranare piloti e scuderie per la stagione successiva. 
+          
+        </div>
+      </details>
+
+      <details data-tags="link utili riquadri icone svg">
+        <summary>
+          <div class="q">
+            <div class="dot" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M10.59 13.41a1 1 0 0 1 0-1.41l2.59-2.59a3 3 0 0 1 4.24 4.24l-2.12 2.12a3 3 0 0 1-4.24 0 .999.999 0 1 0-1.41 1.41 5 5 0 0 0 7.07 0l2.12-2.12A5 5 0 0 0 13.18 7.0l-2.59 2.59a3 3 0 0 0 0 4.24.999.999 0 1 0 1.41-1.42l-.01-.01z"/></svg>
+            </div>
+            <div>
+              <h2>Come posso miglioare il mio pilota?</h2>
+              <p>Devi sbloccare gli <a href="https://pavoniingrifati.github.io/vetrina-carte/achievement_tracker.html" style="color:#00D2FF;">Achievement</a>. Più obiettivi sblocchi più esperienza acquisisci e più salirai di livello.</p>
+
+
+            </div>
+          </div>
+          <div class="chev" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg>
+          </div>
+        </summary>
+        <div class="a">
+          ATTENZIONE! Gli Achievement non sono sbloccabili automaticamente, ma dovrai tu segnare quelli che hai raggiunto e comunicarli agli amministratori! 
+		  Ci sarà poi un controllo e se tutto a posto troverai sul sito dedicato ai <a href="https://pavoniingrifati.github.io/vetrina-carte/progressi.html" style="color:#00D2FF;">piloti</a> il tuo nuovo livello.
+          <div class="note">Gli achievement sono sbloccabili una sola volta e sono retroattivi, cioè se creiamo nuovi obiettivi potresti averli già sbloccati con vecchie gare.</div>
+        </div>
+      </details>
+
+      <details data-tags="drive google sheets dati">
+        <summary>
+          <div class="q">
+            <div class="dot" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-6Zm1 7V3.5L18.5 9H15Z"/></svg>
+            </div>
+            <div>
+              <h2>Che cosa è il CAP?</h2>
+              <p>Il CAP è il livello massimo limitato che un pilotà può avere in una determinata scuderia. e il livello del pilota è superiore a quello dalla scuderia, dovrà necessariamente abbassarsi il livello per poter guidare.</p>
+            </div>
+          </div>
+          <div class="chev" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg>
+          </div>
+        </summary>
+        <div class="a">
+
+          <div class="note">Il CAP ha regole diverse per le 3 categorie (F1,F2,F3) per equilibrare il livello della griglia. Più informazioni nella domanda <b>I limiti del CAP</b></div>
+        </div>
+      </details>
+
+      <details data-tags="telegram community gruppo canale">
+        <summary>
+          <div class="q">
+            <div class="dot" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M21.8 4.2a1 1 0 0 0-1.06-.23L3.4 10.55a1 1 0 0 0 .05 1.9l6.7 2.23 2.23 6.7a1 1 0 0 0 .94.68h.02a1 1 0 0 0 .93-.72l3.53-10.58a1 1 0 0 0-.3-1.05l-5.9 5.9a1 1 0 0 1-1.41-1.41l6.46-6.46a1 1 0 0 0 .16-1.2Z"/></svg>
+            </div>
+            <div>
+              <h2>Quali sono i limiti del CAP?</h2>
+              <p>Per limitare piloti troppo forti in categorie più basse il CAP ha regole diverse per Formula 1,2,3. Più in basso si va di cateogria, più diventa limitante.</p>
+            </div>
+          </div>
+          <div class="chev" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg>
+          </div>
+        </summary>
+        <div class="a">
+          Regole CAP FORMULA 1
+          <div class="note">Entrambi i piloti possono avere il CAP.</div>
+		  Regole CAP FORMULA 2
+		   <div class="note">Solo un pilota può avere il CAP. L'altro pilota deve necessariamente essere pari o sotto il livello della Scuderia.</div>
+		   Regole CAP FORMULA 3
+		   <div class="note">Solo il capo scuderia (il proprietario) può avere il CAP .L'altro pilota deve necessariamente essere pari o sotto il livello della Scuderia.</div>
+
+
+        </div>
+      </details>
+
+      <details data-tags="github pages cache aggiornamenti">
+        <summary>
+          <div class="q">
+            <div class="dot" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 6a1 1 0 0 1 1 1v3h3a1 1 0 1 1 0 2h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/><path d="M12 2a10 10 0 1 0 10 10A10.01 10.01 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8.01 8.01 0 0 1-8 8Z"/></svg>
+            </div>
+            <div>
+              <h2>Come posso acquistare una scuderia?</h2>
+              <p>Bisogna donare 100 monete durante la live</p>
+            </div>
+          </div>
+          <div class="chev" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg>
+          </div>
+        </summary>
+        <div class="a">
+          In privato su Telegram o Tik Tok mi dovete poi inviare:
+          <ul>
+            <li>Nome scuderia</li>
+            <li>Colori livrea</li>
+            <li>Eventuale logo</li>
+          </ul>
+          <div class="note">La scuderia partirà dalla prossima stagione in Formula 3</div>
+        </div>
+      </details>
+    </section>
+
+    <footer>
+      Vuoi aggiungere nuove FAQ? Duplica un blocco <b>&lt;details&gt;</b> e cambia domanda/risposta.
+    </footer>
+  </div>
+
+  <script>
+    (function(){
+      const input = document.getElementById('q');
+      const container = document.getElementById('faq');
+      const counter = document.getElementById('counter');
+      const items = Array.from(container.querySelectorAll('details'));
+
+      function norm(s){
+        return (s || '').toLowerCase().trim();
+      }
+
+      function update(){
+        const q = norm(input.value);
+        let visible = 0;
+
+        for (const d of items){
+          const text = norm(d.innerText);
+          const tags = norm(d.getAttribute('data-tags'));
+          const show = !q || text.includes(q) || tags.includes(q);
+          d.style.display = show ? '' : 'none';
+          if (show) visible++;
+          if (!show) d.open = false;
+        }
+
+        counter.textContent = visible + " / " + items.length;
+      }
+
+      input.addEventListener('input', update);
+      update();
+    })();
+  </script>
+</body>
+</html>
