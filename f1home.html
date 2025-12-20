@@ -286,8 +286,7 @@
     }
     .tile:focus-visible .speedline{ animation: sweep .6s ease; }
     .tile:focus-visible .checkline{ animation: checkerMove .6s linear; }
-
-    /* --- Comic guide --- */
+/* --- Image guide (squares) --- */
     .guide{
       margin-top: 22px;
       padding: 18px;
@@ -330,134 +329,73 @@
       .guide-grid{ grid-template-columns: 1fr 1fr 1fr; }
     }
 
-    .panel{
+    .guide-item{
+      display:flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .guide-tile{
       position: relative;
-      padding: 14px 14px 14px 14px;
-      border-radius: 18px;
-      border: 3px solid rgba(255,255,255,.14);
+      width: 100%;
+      aspect-ratio: 1 / 1; /* quadrato */
+      border-radius: 12px;
+      border: 3px solid rgba(255,255,255,.14); /* cornice per separare */
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      background-color: rgba(0,0,0,.25);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: translateZ(0);
+      transition: transform .12s ease, filter .12s ease;
+    }
+    @media (hover:hover){
+      .guide-item:hover .guide-tile{ transform: translateY(-2px); filter: brightness(1.04); }
+    }
+
+    /* Fallback pattern if the image is missing */
+    .guide-tile::before{
+      content:"";
+      position:absolute;
+      inset:0;
       background:
         radial-gradient(circle at 12px 12px, rgba(255,255,255,.08) 1px, transparent 2px) 0 0/12px 12px,
         linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      transform: rotate(var(--tilt, 0deg));
-      transition: transform .12s ease, filter .12s ease, border-color .12s ease;
-    }
-    @media (hover:hover){
-      .panel:hover{ transform: rotate(var(--tilt, 0deg)) translateY(-2px); filter: brightness(1.04); }
-    }
-
-    .panel::before{
-      content:"";
-      position:absolute;
-      inset:-40% -20% auto -20%;
-      height: 220px;
-      background: radial-gradient(closest-side, color-mix(in srgb, var(--accent, #e10600) 32%, transparent), transparent 70%);
-      transform: rotate(8deg);
+      opacity: .55;
       pointer-events:none;
-      z-index: 0;
-    }
-    .panel::after{
-      content:"";
-      position:absolute;
-      right: 14px;
-      top: 14px;
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.22);
-      box-shadow: 0 8px 18px rgba(0,0,0,.25);
-      z-index: 0;
+      mix-blend-mode: overlay;
     }
 
-    .panel .p-top{
-      position: relative;
-      z-index: 1;
-      display:flex;
-      align-items:flex-start;
-      justify-content: space-between;
-      gap: 12px;
-    }
-    .step{
-      display:inline-flex;
-      align-items:center;
-      gap: 8px;
-      font-weight: 900;
-      font-size: 12px;
-      letter-spacing: .3px;
-      color: rgba(232,236,241,.92);
-    }
-    .step .num{
-      width: 26px; height: 26px;
-      border-radius: 10px;
-      display:grid; place-items:center;
-      background: color-mix(in srgb, var(--accent, #e10600) 55%, rgba(255,255,255,.06));
-      border: 1px solid rgba(255,255,255,.16);
-    }
-
-    .panel h4{
-      margin: 10px 0 6px;
-      font-size: 16px;
-      font-weight: 900;
-      letter-spacing: .2px;
-      position: relative;
-      z-index: 1;
-    }
-    .panel p{
+    .guide-caption{
       margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.45;
-      font-weight: 650;
-      position: relative;
-      z-index: 1;
-    }
-
-    .panel .mini{
-      margin-top: 10px;
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap: 10px;
-      position: relative;
-      z-index: 1;
-      color: rgba(232,236,241,.86);
-      font-size: 12px;
-      font-weight: 850;
-    }
-    .chip{
-      display:inline-flex;
-      align-items:center;
-      gap: 8px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.03);
       color: rgba(232,236,241,.92);
-      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.35;
+      letter-spacing: .15px;
+      opacity: .92;
+      text-wrap: balance;
     }
-    .chip svg{ width: 14px; height: 14px; fill: currentColor; opacity: .9; }
+    .guide-caption .muted{
+      display:block;
+      color: var(--muted);
+      font-weight: 650;
+      margin-top: 3px;
+    }
 
-    /* Little speech-bubble tail */
-    .tail{
-      position:absolute;
-      left: 18px;
-      bottom: -10px;
-      width: 18px;
-      height: 18px;
-      background: inherit;
-      border-left: 3px solid rgba(255,255,255,.14);
-      border-bottom: 3px solid rgba(255,255,255,.14);
-      transform: rotate(45deg);
-      filter: drop-shadow(0 10px 18px rgba(0,0,0,.25));
-      z-index: 0;
+    .guide-note{
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.4;
     }
 
     @media (max-width: 420px){
       .guide{ padding: 14px; }
-      .panel{ padding: 12px; }
     }
+
 
   </style>
 </head>
@@ -589,8 +527,8 @@
         </a>
 
       </div>
-    </main>
-<section class="guide" aria-label="Guida rapida">
+    
+      <section class="guide" aria-label="Guida rapida">
       <div class="guide-head">
         <div>
           <h3>Guida rapida (fumetto)</h3>
@@ -605,22 +543,22 @@
         </div>
 
         <div class="guide-item">
-          <div class="guide-tile" style="background-image:url('img/guida-02.png')" role="img" aria-label="Guida 2"></div>
+          <div class="guide-tile" style="background-image:url('img/f12.png')" role="img" aria-label="Guida 2"></div>
           <p class="guide-caption">Step 2 — Trova un sedile grazie al tuo telefono!<span class="muted">Nel pre-gara, in live apparirà un bot per registrarti per la prossima gara. Il comando è !f1 [nome scuderia] [nome pilota] [aggressività]</span></p>
         </div>
 
         <div class="guide-item">
-          <div class="guide-tile" style="background-image:url('img/guida-03.png')" role="img" aria-label="Guida 3"></div>
+          <div class="guide-tile" style="background-image:url('img/f13.png')" role="img" aria-label="Guida 3"></div>
           <p class="guide-caption">Step 3 — Livelli<span class="muted">Guarda EXP e livello attuale.</span></p>
         </div>
 
         <div class="guide-item">
-          <div class="guide-tile" style="background-image:url('img/guida-04.png')" role="img" aria-label="Guida 4"></div>
+          <div class="guide-tile" style="background-image:url('img/f14.png')" role="img" aria-label="Guida 4"></div>
           <p class="guide-caption">Step 4 — Scuderie<span class="muted">Stessa logica ma lato team.</span></p>
         </div>
 
         <div class="guide-item">
-          <div class="guide-tile" style="background-image:url('img/guida-05.png')" role="img" aria-label="Guida 5"></div>
+          <div class="guide-tile" style="background-image:url('img/f15.png')" role="img" aria-label="Guida 5"></div>
           <p class="guide-caption">Step 5 — Drive<span class="muted">Fonte dati: foglio Google.</span></p>
         </div>
 
@@ -634,9 +572,10 @@
         Nota: se preferisci altri nomi file, cambia solo i valori dentro <b>background-image:url('img/...')</b>.
       </p>
     </section>
-<footer>
-      Suggerimento: carica le tue immagini nella cartella <b>img/</b> su GitHub e rinominale come nel codice (es. <b>img/achievement_piloti.png</b>). Puoi cambiare i nomi quando vuoi: basta aggiornare l’attributo <b>src</b>.
-    </footer>
+    </main>
+
+    <footer>
+      Suggerimento: carica le tue immagini nella cartella <b>img/</b> su GitHub e rinominale come nel codice (es. <b>img/f11.png</b>). Poi aggiorna i riquadri guida cambiando <b>background-image:url('img/...')</b>.<br>Per i riquadri dei link utili invece non servono immagini esterne (sono icone SVG).</footer>
   </div>
 </body>
 </html>
