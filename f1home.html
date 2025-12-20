@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>F1 Hub — Link utili progetto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #0b0d12;
+      --surface: #121622;
+      --card: #171C2B;
+      --text: #e8ecf1;
+      --muted: #a7b0c0;
+      --ring: #3a435a;
+      --shadow: 0 10px 30px rgba(0,0,0,.4);
+      --radius: 16px;
+      --f1red: #e10600;
+    }
+
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background: radial-gradient(1200px 700px at 15% -10%, rgba(225,6,0,.22), transparent 60%),
+                  radial-gradient(900px 600px at 90% 0%, rgba(0,210,255,.12), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    a{ color: inherit; text-decoration: none; }
+
+    .wrap{ max-width: 1100px; margin: 0 auto; padding: 22px; }
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding: 10px 0 14px;
+    }
+
+    .brand{ display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:.3px; }
+    .logo{
+      width:44px; height:44px; border-radius:12px;
+      display:grid; place-items:center;
+      background: linear-gradient(135deg, var(--f1red), #8b0200);
+      box-shadow: var(--shadow);
+      flex: 0 0 auto;
+    }
+    .logo svg{ width:26px; height:26px; fill:white; }
+    .brand-title{ font-size: 18px; line-height: 1.1; }
+    .brand small{ display:block; color: var(--muted); font-weight:600; margin-top: 3px; }
+
+    .hint{
+      display:flex; align-items:center; gap:10px;
+      color: var(--muted);
+      font-weight:700;
+      font-size: 12px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--ring);
+      background: rgba(255,255,255,.02);
+      box-shadow: var(--shadow);
+      user-select: none;
+      white-space: nowrap;
+    }
+    .hint svg{ width:16px; height:16px; fill: currentColor; opacity:.9; }
+
+    main{ margin-top: 14px; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    @media (min-width: 680px){
+      .grid{ grid-template-columns: 1fr 1fr; gap: 16px; }
+    }
+    @media (min-width: 1040px){
+      .grid{ grid-template-columns: 1fr 1fr 1fr; }
+    }
+
+    .tile{
+      position: relative;
+      border-radius: var(--radius);
+      border: 3px solid var(--ring);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)) , var(--card);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      min-height: 160px;
+      display:flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+      isolation: isolate;
+      transform: translateZ(0);
+      transition: transform .12s ease, border-color .12s ease, filter .12s ease;
+      outline: none;
+    }
+    .tile:focus-visible{
+      box-shadow: 0 0 0 4px rgba(225,6,0,.28), var(--shadow);
+      border-color: rgba(225,6,0,.9);
+    }
+    @media (hover:hover){
+      .tile:hover{ transform: translateY(-2px); filter: brightness(1.05); }
+    }
+
+    .tile .top{
+      position: relative;
+      z-index: 1;
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .tile h2{
+      margin:0;
+      font-size: 18px;
+      letter-spacing: .2px;
+      font-weight: 800;
+    }
+    .tile p{
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 600;
+      max-width: 52ch;
+    }
+
+    .badge{
+      font-size: 12px;
+      font-weight: 800;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      color: rgba(232,236,241,.9);
+      flex: 0 0 auto;
+    }
+
+    .thumb{
+      width: 64px;
+      height: 64px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      display:grid;
+      place-items: center;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+    
+    .thumb img{
+      width: 100%;
+      height: 100%;
+      display:block;
+      object-fit: cover;
+    }
+
+    .panel-art{
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      overflow: hidden;
+      flex: 0 0 auto;
+      box-shadow: 0 8px 18px rgba(0,0,0,.25);
+    }
+    .panel-art img{
+      width: 100%;
+      height: 100%;
+      display:block;
+      object-fit: cover;
+    }
+    .panel-art::before{
+      content:"IMG";
+      position:absolute;
+      transform: translate(10px, 18px);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .35px;
+      color: rgba(255,255,255,.35);
+      pointer-events:none;
+    }
+    /* hide the placeholder label if the image exists and loads (best-effort) */
+    .panel-art:has(img[src]):before{ content:""; }
+
+    .thumb svg{
+      width: 38px;
+      height: 38px;
+      fill: currentColor;
+      opacity: .95;
+    }
+
+    .meta{
+      position: relative;
+      z-index: 1;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .meta span{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .meta svg{
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+      opacity: .9;
+    }
+
+    /* Accent themes per tile */
+    .accent-red{ --accent: #e10600; }
+    .accent-cyan{ --accent: #00d2ff; }
+    .accent-amber{ --accent: #ffb020; }
+    .accent-violet{ --accent: #8f5bff; }
+    .accent-green{ --accent: #33d17a; }
+
+    .tile.accent-red,
+    .tile.accent-cyan,
+    .tile.accent-amber,
+    .tile.accent-violet,
+    .tile.accent-green{
+      border-color: color-mix(in srgb, var(--accent) 65%, var(--ring));
+    }
+    .tile::before{
+      content:"";
+      position:absolute;
+      inset:-40% -20% auto -20%;
+      height: 220px;
+      background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 38%, transparent), transparent 70%);
+      transform: rotate(8deg);
+      z-index: -1;
+      pointer-events:none;
+    }
+    .tile::after{
+      content:"";
+      position:absolute;
+      inset:auto -40% -55% auto;
+      width: 360px;
+      height: 260px;
+      background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%);
+      z-index:-1;
+      pointer-events:none;
+    }
+
+    footer{
+      margin: 22px 0 44px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* Small screens polish */
+    @media (max-width: 420px){
+      .hint{ display:none; }
+      .tile{ min-height: 150px; }
+      .thumb{ width: 58px; height: 58px; border-radius: 13px; }
+    }
+    /* --- F1 vibe: speed sweep + checkered strip --- */
+    .speedline{
+      position:absolute;
+      inset: 0;
+      pointer-events:none;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        color-mix(in srgb, var(--accent) 70%, transparent) 45%,
+        rgba(255,255,255,.14) 50%,
+        color-mix(in srgb, var(--accent) 70%, transparent) 55%,
+        transparent 100%);
+      transform: translateX(-140%) skewX(-18deg);
+      opacity: 0;
+      mix-blend-mode: screen;
+      filter: blur(.2px);
+      z-index: 0;
+    }
+
+    .checkline{
+      position:absolute;
+      left:-30%;
+      right:-30%;
+      bottom:0;
+      height:10px;
+      pointer-events:none;
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(255,255,255,.20) 0 10px,
+        rgba(0,0,0,.35) 10px 20px
+      );
+      opacity: .18;
+      transform: translateX(0);
+      z-index: 0;
+    }
+
+    @keyframes sweep{
+      0%   { transform: translateX(-140%) skewX(-18deg); opacity: 0; }
+      15%  { opacity: 1; }
+      100% { transform: translateX(140%) skewX(-18deg); opacity: 0; }
+    }
+
+    @keyframes checkerMove{
+      from { transform: translateX(0); }
+      to   { transform: translateX(-26px); }
+    }
+
+    @media (hover:hover){
+      .tile:hover .speedline{ animation: sweep .6s ease; }
+      .tile:hover .checkline{ animation: checkerMove .6s linear; }
+    }
+    .tile:focus-visible .speedline{ animation: sweep .6s ease; }
+    .tile:focus-visible .checkline{ animation: checkerMove .6s linear; }
+/* --- Comic guide (image panels) --- */
+    .guide{
+      margin-top: 22px;
+      padding: 18px;
+      border-radius: calc(var(--radius) + 6px);
+      border: 1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      box-shadow: var(--shadow);
+    }
+    .guide-head{
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .guide h3{
+      margin: 0;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: .2px;
+    }
+    .guide .sub{
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.4;
+      max-width: 70ch;
+    }
+    .guide-grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-top: 12px;
+    }
+    @media (min-width: 740px){
+      .guide-grid{ grid-template-columns: 1fr 1fr; gap: 16px; }
+    }
+    @media (min-width: 1040px){
+      .guide-grid{ grid-template-columns: 1fr 1fr 1fr; }
+    }
+
+    /* Square panels where the whole tile is the image */
+    .comic-tile{
+      border-radius: 16px;
+      border: 3px solid rgba(255,255,255,.14); /* cornice per separare bene */
+      overflow: hidden;
+      background: rgba(0,0,0,.22);
+      box-shadow: var(--shadow);
+      aspect-ratio: 1 / 1;
+      display:block;
+      transform: translateZ(0);
+      transition: transform .12s ease, filter .12s ease, border-color .12s ease;
+    }
+    .comic-tile img{
+      width: 100%;
+      height: 100%;
+      display:block;
+      object-fit: cover;       /* riempie il quadrato */
+      object-position: center; /* centrata */
+    }
+    @media (hover:hover){
+      .comic-tile:hover{ transform: translateY(-2px); filter: brightness(1.04); }
+    }
+    .comic-tile:focus-visible{
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(225,6,0,.28), var(--shadow);
+      border-color: rgba(225,6,0,.9);
+    }
+
+    @media (max-width: 420px){
+      .guide{ padding: 14px; }
+      .comic-tile{ border-radius: 14px; }
+    }
+
+
+    /* --- Full-image tiles --- */
+    .tile{
+      padding: 0; /* content padding moved to .tile-content */
+      min-height: 190px;
+    }
+    .tile-bg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      z-index: -2;
+      transform: scale(1.02);
+      filter: saturate(1.05) contrast(1.02);
+    }
+    .tile .img-overlay{
+      position:absolute;
+      inset:0;
+      z-index: -1;
+      background: linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.35) 40%, rgba(0,0,0,.65) 100%);
+      pointer-events:none;
+    }
+    .tile-content{
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      padding: 16px;
+      display:flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .tile h2{ text-shadow: 0 8px 20px rgba(0,0,0,.55); }
+    .tile p{ text-shadow: 0 8px 20px rgba(0,0,0,.55); }
+    .meta{
+      background: rgba(0,0,0,.28);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding: 10px 12px;
+      backdrop-filter: blur(6px);
+    }
+    @media (max-width: 420px){
+      .tile{ min-height: 175px; }
+      .tile-content{ padding: 14px; }
+    }
+
+    .thumb{ display:none !important; }
+
+    /* --- Full-image comic panels --- */
+    .panel{
+      background: rgba(0,0,0,.18);
+      padding: 0;
+    }
+    .panel-bg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      z-index: -2;
+      transform: scale(1.02);
+      filter: saturate(1.05) contrast(1.02);
+    }
+    .panel .img-overlay{
+      position:absolute;
+      inset:0;
+      z-index: -1;
+      background: linear-gradient(180deg, rgba(0,0,0,.45) 0%, rgba(0,0,0,.25) 40%, rgba(0,0,0,.60) 100%);
+      pointer-events:none;
+    }
+    .panel-inner{
+      position: relative;
+      z-index: 1;
+      padding: 14px;
+    }
+    .panel h4, .panel p{ text-shadow: 0 8px 20px rgba(0,0,0,.55); }
+    .panel .mini{
+      background: rgba(0,0,0,.26);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding: 10px 12px;
+      backdrop-filter: blur(6px);
+    }
+    .tail{ display:none; }
+
+/* --- Image guide (comic squares) --- */
+    .guide{
+      margin-top: 22px;
+      padding: 18px;
+      border-radius: calc(var(--radius) + 6px);
+      border: 1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      box-shadow: var(--shadow);
+    }
+    .guide-head{
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .guide h3{
+      margin: 0;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: .2px;
+    }
+    .guide .sub{
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.4;
+      max-width: 70ch;
+    }
+    .guide-grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-top: 12px;
+    }
+    @media (min-width: 740px){
+      .guide-grid{ grid-template-columns: 1fr 1fr; gap: 16px; }
+    }
+    @media (min-width: 1040px){
+      .guide-grid{ grid-template-columns: 1fr 1fr 1fr; }
+    }
+
+    .guide-tile{
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1; /* quadrato */
+      border-radius: 12px;
+      border: 3px solid rgba(255,255,255,.14); /* cornice per separare */
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      background-color: rgba(0,0,0,.25);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: translateZ(0);
+      transition: transform .12s ease, filter .12s ease;
+    }
+    @media (hover:hover){
+      .guide-tile:hover{ transform: translateY(-2px); filter: brightness(1.04); }
+    }
+
+    /* Fallback pattern if the image is missing */
+    .guide-tile::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 12px 12px, rgba(255,255,255,.08) 1px, transparent 2px) 0 0/12px 12px,
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      opacity: .55;
+      pointer-events:none;
+      mix-blend-mode: overlay;
+    }
+
+    .guide-note{
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+    .sr-only{
+      position:absolute !important;
+      width:1px; height:1px;
+      padding:0; margin:-1px;
+      overflow:hidden; clip:rect(0,0,0,0);
+      white-space:nowrap; border:0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <!-- Semplice icona "link" -->
+          <svg viewBox="0 0 24 24" role="img" aria-label="Logo">
+            <path d="M10.59 13.41a1 1 0 0 1 0-1.41l2.59-2.59a3 3 0 0 1 4.24 4.24l-2.12 2.12a3 3 0 0 1-4.24 0 .999.999 0 1 0-1.41 1.41 5 5 0 0 0 7.07 0l2.12-2.12A5 5 0 0 0 13.18 7.0l-2.59 2.59a3 3 0 0 0 0 4.24.999.999 0 1 0 1.41-1.42l-.01-.01z"></path>
+            <path d="M13.41 10.59a1 1 0 0 1 0 1.41l-2.59 2.59A3 3 0 0 1 6.58 10.35l2.12-2.12a3 3 0 0 1 4.24 0 .999.999 0 1 0 1.41-1.41 5 5 0 0 0-7.07 0L5.16 8.94a5 5 0 0 0 7.07 7.07l2.59-2.59a3 3 0 0 0 0-4.24.999.999 0 1 0-1.41 1.41z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">F1 Hub</div>
+          <small>Home page per i link utili del progetto</small>
+        </div>
+      </div>
+
+      <div class="hint" aria-hidden="true" title="Suggerimento">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 15h-2v-2h2v2Zm1.07-7.75-.9.92A1.5 1.5 0 0 0 13 11.5V13h-2v-2c0-.53.21-1.04.59-1.41l1.24-1.26A1.98 1.98 0 0 0 12 6a2 2 0 0 0-2 2H8a4 4 0 0 1 8 0c0 1.06-.42 2.08-1.17 2.83Z"/></svg>
+        Tocca un riquadro per aprire
+      </div>
+    </header>
+
+    <main>
+      <div class="grid">
+
+        <!-- Achievement Piloti -->
+        <a class="tile accent-amber" href="https://pavoniingrifati.github.io/vetrina-carte/achievement_tracker.html" target="_self" rel="noopener">
+          <img class="tile-bg" src="img/drive.png" alt="" loading="lazy">
+          <span class="img-overlay" aria-hidden="true"></span>
+          <span class="speedline" aria-hidden="true"></span>
+          <span class="checkline" aria-hidden="true"></span>
+
+          <div class="tile-content">
+            <div class="top">
+              <div>
+                <h2>Drive completo</h2>
+                <p>Il foglio Google con tutti i dati del progetto.</p>
+              </div>
+              <div class="badge">Sheet</div>
+            </div>
+
+            <div class="meta">
+              <span><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 1 7-4.58V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6.42A5 5 0 0 1 10 13Zm11.5 1a3.5 3.5 0 1 0-6.86 1H13a1 1 0 0 0 0 2h1.64a3.5 3.5 0 0 0 6.86-1Z"/></svg> Apri pagina</span>
+              <span style="opacity:.9">Sheet</span>
+            </div>
+          </div>
+</a>
+
+        <!-- Achievement Scuderie -->
+        <a class="tile accent-violet" href="https://pavoniingrifati.github.io/vetrina-carte/achievement_scuderie.html" target="_self" rel="noopener">
+          <img class="tile-bg" src="img/drive.png" alt="" loading="lazy">
+          <span class="img-overlay" aria-hidden="true"></span>
+          <span class="speedline" aria-hidden="true"></span>
+          <span class="checkline" aria-hidden="true"></span>
+
+          <div class="tile-content">
+            <div class="top">
+              <div>
+                <h2>Drive completo</h2>
+                <p>Il foglio Google con tutti i dati del progetto.</p>
+              </div>
+              <div class="badge">Sheet</div>
+            </div>
+
+            <div class="meta">
+              <span><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 1 7-4.58V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6.42A5 5 0 0 1 10 13Zm11.5 1a3.5 3.5 0 1 0-6.86 1H13a1 1 0 0 0 0 2h1.64a3.5 3.5 0 0 0 6.86-1Z"/></svg> Apri pagina</span>
+              <span style="opacity:.9">Sheet</span>
+            </div>
+          </div>
+</a>
+
+        <!-- Livello Piloti -->
+        <a class="tile accent-cyan" href="https://pavoniingrifati.github.io/vetrina-carte/progressi.html" target="_self" rel="noopener">
+          <img class="tile-bg" src="img/drive.png" alt="" loading="lazy">
+          <span class="img-overlay" aria-hidden="true"></span>
+          <span class="speedline" aria-hidden="true"></span>
+          <span class="checkline" aria-hidden="true"></span>
+
+          <div class="tile-content">
+            <div class="top">
+              <div>
+                <h2>Drive completo</h2>
+                <p>Il foglio Google con tutti i dati del progetto.</p>
+              </div>
+              <div class="badge">Sheet</div>
+            </div>
+
+            <div class="meta">
+              <span><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 1 7-4.58V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6.42A5 5 0 0 1 10 13Zm11.5 1a3.5 3.5 0 1 0-6.86 1H13a1 1 0 0 0 0 2h1.64a3.5 3.5 0 0 0 6.86-1Z"/></svg> Apri pagina</span>
+              <span style="opacity:.9">Sheet</span>
+            </div>
+          </div>
+</a>
+
+        <!-- Livello Scuderie -->
+        <a class="tile accent-green" href="https://pavoniingrifati.github.io/vetrina-carte/progressi_scuderie.html" target="_self" rel="noopener">
+          <img class="tile-bg" src="img/drive.png" alt="" loading="lazy">
+          <span class="img-overlay" aria-hidden="true"></span>
+          <span class="speedline" aria-hidden="true"></span>
+          <span class="checkline" aria-hidden="true"></span>
+
+          <div class="tile-content">
+            <div class="top">
+              <div>
+                <h2>Drive completo</h2>
+                <p>Il foglio Google con tutti i dati del progetto.</p>
+              </div>
+              <div class="badge">Sheet</div>
+            </div>
+
+            <div class="meta">
+              <span><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 1 7-4.58V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6.42A5 5 0 0 1 10 13Zm11.5 1a3.5 3.5 0 1 0-6.86 1H13a1 1 0 0 0 0 2h1.64a3.5 3.5 0 0 0 6.86-1Z"/></svg> Apri pagina</span>
+              <span style="opacity:.9">Sheet</span>
+            </div>
+          </div>
+</a>
+
+        <!-- Drive / Spreadsheet -->
+        <a class="tile accent-red" href="https://docs.google.com/spreadsheets/d/1OwvNdXJK0RJtJsfLz_2y4wKpV75KiEXOWRdtAFtP3ns/edit?gid=683160948#gid=683160948" target="_blank" rel="noopener noreferrer">
+          <img class="tile-bg" src="img/drive.png" alt="" loading="lazy">
+          <span class="img-overlay" aria-hidden="true"></span>
+          <span class="speedline" aria-hidden="true"></span>
+          <span class="checkline" aria-hidden="true"></span>
+
+          <div class="tile-content">
+            <div class="top">
+              <div>
+                <h2>Drive completo</h2>
+                <p>Il foglio Google con tutti i dati del progetto.</p>
+              </div>
+              <div class="badge">Sheet</div>
+            </div>
+
+            <div class="meta">
+              <span><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 1 7-4.58V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6.42A5 5 0 0 1 10 13Zm11.5 1a3.5 3.5 0 1 0-6.86 1H13a1 1 0 0 0 0 2h1.64a3.5 3.5 0 0 0 6.86-1Z"/></svg> Apri pagina</span>
+              <span style="opacity:.9">Sheet</span>
+            </div>
+          </div>
+</a>
+
+      </div>
+    </main>
+<section class="guide" aria-label="Guida rapida">
+      <div class="guide-head">
+        <div>
+          <h3>Guida rapida (fumetto)</h3>
+          <p class="sub">Qui sotto trovi i riquadri della guida: ogni riquadro è una <b>immagine quadrata</b> (che caricherai nella cartella <b>img</b> su GitHub). L’immagine copre tutto il riquadro.</p>
+        </div>
+      </div>
+
+      <div class="guide-grid">
+        <div class="guide-tile" style="background-image:url('img/guida-01.png')" role="img" aria-label="Guida 1"></div>
+        <div class="guide-tile" style="background-image:url('img/guida-02.png')" role="img" aria-label="Guida 2"></div>
+        <div class="guide-tile" style="background-image:url('img/guida-03.png')" role="img" aria-label="Guida 3"></div>
+        <div class="guide-tile" style="background-image:url('img/guida-04.png')" role="img" aria-label="Guida 4"></div>
+        <div class="guide-tile" style="background-image:url('img/guida-05.png')" role="img" aria-label="Guida 5"></div>
+        <div class="guide-tile" style="background-image:url('img/guida-06.png')" role="img" aria-label="Guida 6"></div>
+      </div>
+
+      <p class="guide-note">
+        Nota: se preferisci altri nomi file, cambia solo i valori dentro <b>background-image:url('img/...')</b>.
+      </p>
+    </section>
+<footer>
+      Suggerimento: carica le tue immagini nella cartella <b>img/</b> su GitHub e rinominale come nel codice (es. <b>img/achievement_piloti.png</b>). Puoi cambiare i nomi quando vuoi: basta aggiornare l’attributo <b>src</b>.
+    </footer>
+  </div>
+</body>
+</html>
