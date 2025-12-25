@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Albo d'Oro — Campionati Formula 1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0b0d12;
+      --surface:#121622;
+      --card:#171C2B;
+      --text:#e8ecf1;
+      --muted:#a7b0c0;
+      --ring:#3a435a;
+      --shadow:0 10px 30px rgba(0,0,0,.4);
+      --radius:16px;
+      --f1red:#e10600;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 700px at 15% -10%, rgba(225,6,0,.22), transparent 60%),
+                  radial-gradient(900px 600px at 90% 0%, rgba(0,210,255,.12), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    a{ color: inherit; text-decoration: none; }
+    .wrap{ max-width: 1200px; margin: 0 auto; padding: 22px; }
+    header{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding: 10px 0 14px; flex-wrap:wrap; }
+    .brand{ display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:.3px; }
+    .logo{
+      width:44px; height:44px; border-radius:12px;
+      display:grid; place-items:center;
+      background: linear-gradient(135deg, var(--f1red), #8b0200);
+      box-shadow: var(--shadow);
+      flex: 0 0 auto;
+    }
+    .logo svg{ width:26px; height:26px; fill:white; }
+    .brand-title{ font-size: 18px; line-height: 1.1; }
+    .brand small{ display:block; color: var(--muted); font-weight:600; margin-top: 3px; }
+
+    .controls{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    .pill{
+      border:1px solid var(--ring);
+      background: rgba(255,255,255,.02);
+      box-shadow: var(--shadow);
+      border-radius: 999px;
+      padding: 10px 12px;
+      display:flex; gap:10px; align-items:center;
+    }
+    .pill label{ font-size:12px; font-weight:800; color: var(--muted); }
+    .pill input, .pill select{
+      background: transparent;
+      border:none;
+      outline:none;
+      color: var(--text);
+      font: inherit;
+      font-weight: 700;
+    }
+    .pill input::placeholder{ color: var(--muted); font-weight: 650; }
+    .pill input{ width: 240px; max-width: 60vw; }
+    @media (max-width:520px){ .pill input{ width: 100%; } }
+
+    .tabs{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 8px; }
+    .tab{
+      border:1px solid var(--ring);
+      background: rgba(255,255,255,.02);
+      box-shadow: var(--shadow);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 900;
+      font-size: 12px;
+      color: rgba(232,236,241,.92);
+      cursor:pointer;
+      user-select:none;
+    }
+    .tab[aria-selected="true"]{
+      border-color: rgba(225,6,0,.9);
+      box-shadow: 0 0 0 4px rgba(225,6,0,.18), var(--shadow);
+    }
+
+    main{ margin-top: 14px; }
+    .grid{ display:grid; grid-template-columns: 1fr; gap: 14px; }
+    @media (min-width: 700px){ .grid{ grid-template-columns: 1fr 1fr; gap: 16px; } }
+    @media (min-width: 1100px){ .grid{ grid-template-columns: 1fr 1fr 1fr; } }
+
+    .card{
+      position:relative;
+      border-radius: var(--radius);
+      border: 3px solid var(--ring);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)) , var(--card);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      padding: 16px;
+      isolation:isolate;
+      transform: translateZ(0);
+      transition: transform .12s ease, filter .12s ease, border-color .12s ease;
+      min-height: 150px;
+    }
+    @media (hover:hover){ .card:hover{ transform: translateY(-2px); filter: brightness(1.04); } }
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-40% -20% auto -20%;
+      height: 220px;
+      background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 38%, transparent), transparent 70%);
+      transform: rotate(8deg);
+      z-index: -1;
+      pointer-events:none;
+    }
+    .card::after{
+      content:"";
+      position:absolute;
+      inset:auto -40% -55% auto;
+      width: 360px;
+      height: 260px;
+      background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%);
+      z-index:-1;
+      pointer-events:none;
+    }
+
+    .row{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .title{ margin:0; font-size: 18px; font-weight: 900; letter-spacing:.2px; }
+    .subtitle{ margin: 6px 0 0; color: var(--muted); font-size: 13px; font-weight: 650; line-height: 1.35; }
+    .badge{ font-size: 12px; font-weight: 900; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.03); color: rgba(232,236,241,.92); flex:0 0 auto; }
+
+    /* layout fix: avoid title overlapping record boxes */
+    .row > .meta{
+      flex: 1 1 260px;
+      min-width: 180px;
+      max-width: 100%;
+    }
+    .row > .meta .title{ word-break: break-word; }
+    .record-boxes{
+      flex: 0 0 auto;
+      margin-left: auto;
+    }
+    @media (max-width: 900px){
+      .record-boxes{
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+
+    /* Record badge (piazza    /* record boxes (miglior piazzamento + volte) */
+    .record-boxes{
+      display:flex;
+      gap:12px;
+      align-items:stretch;
+      justify-content:flex-end;
+      min-width: 220px;
+    }
+    .record-box{
+      flex:1;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding: 10px 12px;
+      text-align:center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .record-value{
+      font-size: 42px;
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: -0.03em;
+    }
+    .record-label{
+      margin-top:6px;
+      font-size: 11px;
+      font-weight: 800;
+      opacity: .65;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    /* Rendere "Mondiali" il quadretto principale */
+    .record-box.primary{
+      flex: 1.35;
+      padding: 14px 12px;
+      border-color: rgba(255,255,255,.16);
+    }
+    .record-box.primary .record-value{
+      font-size: 56px;
+      line-height: 1;
+    }
+    .record-box.primary .record-label{
+      font-size: 12px;
+      opacity: .75;
+    }
+    /* Gli altri due leggermente più piccoli */
+    .record-box:not(.primary) .record-value{
+      font-size: 36px;
+    }
+    .record-box:not(.primary) .record-label{
+      font-size: 10px;
+      opacity: .6;
+    }
+
+    
+
+    /* Titles (Mondiali vinti) */
+    .titles-box{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .titles-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 8px;
+    }
+    .titles-title{
+      font-size: 11px;
+      font-weight: 900;
+      opacity: .70;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .titles-total{
+      font-size: 12px;
+      font-weight: 900;
+      opacity: .85;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .titles-grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .title-pill{
+      display:flex;
+      align-items:baseline;
+      justify-content:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .title-pill .k{
+      font-size: 12px;
+      font-weight: 900;
+      opacity: .80;
+      letter-spacing: .04em;
+    }
+    .title-pill .v{
+      font-size: 22px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    @media (max-width:640px){
+      .titles-grid{ grid-template-columns: 1fr; }
+      .title-pill{ justify-content:space-between; }
+      .title-pill .v{ font-size: 24px; }
+    }
+
+    /* colored podium for best placement */
+    .place-1{ background: linear-gradient(135deg, rgba(201,162,39,.22), rgba(58,47,0,.45)); border-color: rgba(201,162,39,.35); }
+    .place-2{ background: linear-gradient(135deg, rgba(191,193,194,.22), rgba(42,42,42,.45)); border-color: rgba(191,193,194,.30); }
+    .place-3{ background: linear-gradient(135deg, rgba(184,115,51,.22), rgba(42,20,8,.45)); border-color: rgba(184,115,51,.30); }
+
+    /* hover interaction */
+    .record-box{ transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+    .record-box:hover{ transform: translateY(-4px); box-shadow: 0 10px 24px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06); }
+
+    /* mobile: stack boxes */
+    @media (max-width: 640px){
+      .record-boxes{ flex-direction: column; min-width: 0; width: 100%; }
+    }
+
+    @media (max-width: 520px){
+      .record-boxes{ min-width: 0; width: 100%; }
+      .record-value{ font-size: 38px; }
+    }
+
+/* small tables (summary) */
+    .panel{
+      margin-top: 16px;
+      border-radius: calc(var(--radius) + 6px);
+      border: 1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .panel h3{ margin:0; font-size: 16px; font-weight: 900; }
+    table{ width:100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+    th,td{ padding: 10px 10px; border-top: 1px solid rgba(255,255,255,.08); }
+    th{ text-align:left; color: rgba(232,236,241,.92); font-weight: 900; }
+    td{ color: rgba(232,236,241,.92); font-weight: 650; }
+    tr:hover td{ background: rgba(255,255,255,.02); }
+  
+    /* albo d'oro table */
+    .albo-head{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .albo-sub{ color: var(--muted); font-weight: 700; font-size: 12px; }
+    .albo-table td:nth-child(1), .albo-table th:nth-child(1){ width: 90px; }
+    .albo-name{ font-weight: 900; }
+    .albo-muted{ color: var(--muted); font-weight: 750; }
+    .albo-empty{ color: var(--muted); font-weight: 800; }
+
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="brand">
+          <div class="logo" aria-hidden="true">
+            <!-- trofeo -->
+            <svg viewBox="0 0 24 24" role="img" aria-label="Logo">
+              <path d="M19 4h-2V3a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v1H5a1 1 0 0 0-1 1v3a5 5 0 0 0 5 5h.07A6.02 6.02 0 0 0 11 16.92V19H8a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-3v-2.08A6.02 6.02 0 0 0 14.93 14H15a5 5 0 0 0 5-5V5a1 1 0 0 0-1-1ZM6 8V6h1v5.9A3 3 0 0 1 6 8Zm12 0a3 3 0 0 1-1 2.9V6h1v2Z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="brand-title">Albo d'Oro</div>
+            <small>Campionati Formula 1 · Piloti &amp; Scuderie</small>
+          </div>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Selezione categoria">
+          <button class="tab" id="tab-f1" role="tab" aria-selected="true" data-serie="F1">F1</button>
+          <button class="tab" id="tab-f2" role="tab" aria-selected="false" data-serie="F2">F2</button>
+          <button class="tab" id="tab-f3" role="tab" aria-selected="false" data-serie="F3">F3</button>
+          <button class="tab" id="tab-piloti" role="tab" aria-selected="true" data-tipo="piloti">Piloti</button>
+          <button class="tab" id="tab-scuderie" role="tab" aria-selected="false" data-tipo="scuderie">Scuderie</button>
+        </div>
+      </div>
+
+      <div class="controls" aria-label="Controlli">
+        <div class="pill">
+          <label for="q">Cerca</label>
+          <input id="q" type="search" placeholder="Nome…" />
+        </div>
+        <div class="pill">
+          <label for="sort">Ordina</label>
+          <select id="sort" aria-label="Ordinamento">
+            <option value="pos-asc" selected>Piazzamento ↑ (1 migliore)</option>
+            <option value="pos-desc">Piazzamento ↓</option>
+            <option value="volte-desc">Numero volte ↓</option>
+            <option value="nome-asc">Nome A→Z</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      
+      <section class="panel" id="panel-albo">
+        <div class="albo-head">
+          <h3 id="albo-title">Albo d'oro</h3>
+          <div class="albo-sub" id="albo-sub">Campioni per stagione</div>
+        </div>
+        <div id="albo-body"></div>
+      </section>
+<section class="grid" id="grid" aria-live="polite"></section>
+      <div class="empty" id="empty" hidden>Nessun risultato.</div>
+
+      <section class="panel" id="panel-summary" hidden>
+        <h3 id="panel-title">Statistiche</h3>
+        <div id="panel-body"></div>
+      </section>
+
+      <footer>
+        Dati estratti dall'ultima immagine del foglio (puoi aggiornare la lista direttamente nel file HTML).
+      </footer>
+    </main>
+  </div>
+
+<script>
+const ALBO = {"F1": [["S1", "no data", "no data"], ["S2", "no data", "no data"], ["S3", "Vince", "Lamborghini"], ["S4", "Riccardo", "Panda GP"], ["S5", "Lele", "Panda GP"], ["S6", "Lele", "Panda GP"], ["S7", "Arthur", "Panda GP"], ["S8", "Arthur", "Scuderia Futura"], ["S9", "Riccardo", "Panda GP"], ["S10", "Damians", "Panda GP"], ["S11", "Joel", "Scuderia Futura"], ["S12", "Damians", "Super Panda"]], "F2": [["S1", "no data", "no data"], ["S2", "no data", "no data"], ["S3", "Fork", "Solo Leveling"], ["S4", "Riccardo", "Palo Ruggente"], ["S5", "Arthur", "Gotham City"], ["S6", "Muxo", "Scuderia Futura"], ["S7", "Mario", "Monkey Island"], ["S8", "Damians", "Simpa Moto"], ["S9", "Damians", "Panda Juper"], ["S10", "Joel", "Red Panda"], ["S11", "Red Panda", "Riccardo"], ["S12", "Buonario", "MacPork"]], "F3": [["S1", "no data", "no data"], ["S2", "no data", "no data"], ["S3", "Lele", "Gladius"], ["S4", "Lele", "Mercedes"], ["S5", "Banana", "Turtles"], ["S6", "Muxo", "Gladius"], ["S7", "Damians", "Doubles"], ["S8", "Mario", "Warhawk Racing"], ["S9", "Damians", "Panda Futura"], ["S10", "Joel", "Black Lions"], ["S11", "Wateng", "Aka Venom"], ["S12", "Tore", "Imperator"]]};
+
+
+
+const TITLES_BY_PILOTA = (() => {
+  // Normalizza nomi per match robusto (case-insensitive)
+  const norm = (s) => (s||"").toString().trim().toLowerCase();
+  const out = {}; // {lowerName: {F1:n,F2:n,F3:n,total:n}}
+
+  for (const serie of ["F1","F2","F3"]) {
+    const rows = (ALBO[serie] || []);
+    for (const r of rows) {
+      const pilota = r && r[1] ? r[1] : "";
+      const key = norm(pilota);
+      if (!key || key === "no data") continue;
+      if (!out[key]) out[key] = {F1:0,F2:0,F3:0,total:0};
+      out[key][serie] += 1;
+      out[key].total += 1;
+    }
+  }
+  return out;
+})();
+
+const TITLES_BY_SCUDERIA = (() => {
+  // Normalizza nomi per matching robusto
+  const norm = (s) => (s||"").toString().trim().toLowerCase();
+  const out = {};
+  for (const serie of ["F1","F2","F3"]) {
+    const rows = (ALBO[serie] || []);
+    for (const r of rows) {
+      const scud = r[2]; // colonna Scuderie
+      const key = norm(scud);
+      if (!key || key === "no data") continue;
+      if (!out[key]) out[key] = {F1:0,F2:0,F3:0,total:0};
+      out[key][serie] += 1;
+      out[key].total += 1;
+    }
+  }
+  return out;
+})();
+
+const DATA = {"F1": {"piloti": [{"nome": "Lucertola", "pos": 9, "volte": 1, "note": ""}, {"nome": "Culer", "pos": 4, "volte": 2, "note": ""}, {"nome": "Antonio", "pos": 5, "volte": 1, "note": ""}, {"nome": "Sparafunghi", "pos": 1, "volte": 2, "note": ""}, {"nome": "Ema?", "pos": 5, "volte": 2, "note": ""}, {"nome": "Gigachad", "pos": 8, "volte": 1, "note": ""}, {"nome": "Darkness", "pos": 3, "volte": 1, "note": ""}, {"nome": "Edoardo", "pos": 6, "volte": 1, "note": ""}, {"nome": "Joel", "pos": 1, "volte": 1, "note": ""}, {"nome": "Luca", "pos": 3, "volte": 1, "note": ""}, {"nome": "Ste", "pos": 10, "volte": 2, "note": ""}, {"nome": "Damians", "pos": 1, "volte": 2, "note": ""}, {"nome": "Arthur", "pos": 1, "volte": 2, "note": "!Most Point! (296)"}, {"nome": "Diego Al", "pos": 9, "volte": 1, "note": ""}, {"nome": "Banana", "pos": 4, "volte": 1, "note": ""}, {"nome": "Bandolero", "pos": 12, "volte": 2, "note": ""}, {"nome": "Vince", "pos": 1, "volte": 1, "note": ""}, {"nome": "Marinosky", "pos": 11, "volte": 1, "note": ""}, {"nome": "Fork", "pos": 12, "volte": 2, "note": ""}, {"nome": "Lele", "pos": 1, "volte": 3, "note": ""}, {"nome": "Balasco", "pos": 11, "volte": 1, "note": ""}, {"nome": "Riccardo", "pos": 1, "volte": 2, "note": ""}, {"nome": "Buonario", "pos": 7, "volte": 1, "note": ""}, {"nome": "Muxo", "pos": 3, "volte": 1, "note": ""}, {"nome": "Raphael", "pos": 3, "volte": 1, "note": ""}, {"nome": "Tore", "pos": 2, "volte": 1, "note": ""}, {"nome": "Mario", "pos": 7, "volte": 2, "note": ""}, {"nome": "Alessandro", "pos": 19, "volte": 1, "note": ""}, {"nome": "Andrea", "pos": 13, "volte": 1, "note": ""}, {"nome": "Bags", "pos": 19, "volte": 1, "note": ""}, {"nome": "Baileys", "pos": 6, "volte": 1, "note": ""}, {"nome": "Bruno", "pos": 16, "volte": 1, "note": ""}, {"nome": "Ciolasalsa", "pos": 22, "volte": 1, "note": ""}, {"nome": "Ciuly", "pos": 15, "volte": 1, "note": ""}, {"nome": "Davide", "pos": 21, "volte": 1, "note": ""}, {"nome": "Flavio", "pos": 21, "volte": 1, "note": ""}, {"nome": "Gigi", "pos": 13, "volte": 1, "note": ""}, {"nome": "Gnomo", "pos": 21, "volte": 1, "note": ""}, {"nome": "Graziano", "pos": 12, "volte": 1, "note": ""}, {"nome": "Johnny", "pos": 22, "volte": 2, "note": ""}, {"nome": "Maarioski", "pos": 20, "volte": 2, "note": ""}, {"nome": "Mello", "pos": 17, "volte": 3, "note": ""}, {"nome": "Nello", "pos": 22, "volte": 1, "note": ""}, {"nome": "Paolo", "pos": 23, "volte": 1, "note": ""}, {"nome": "Piuz", "pos": 26, "volte": 1, "note": ""}, {"nome": "Poli", "pos": 16, "volte": 1, "note": ""}, {"nome": "Ronny", "pos": 18, "volte": 1, "note": ""}, {"nome": "Salex", "pos": 24, "volte": 1, "note": ""}, {"nome": "Samuel", "pos": 17, "volte": 1, "note": ""}, {"nome": "Sasi", "pos": 16, "volte": 1, "note": ""}, {"nome": "Smokey", "pos": 22, "volte": 1, "note": ""}, {"nome": "Tepic", "pos": 14, "volte": 1, "note": ""}, {"nome": "Tomm", "pos": 16, "volte": 1, "note": ""}, {"nome": "Vasyl", "pos": 23, "volte": 1, "note": ""}, {"nome": "Wateng", "pos": 12, "volte": 1, "note": ""}], "scuderie": [{"nome": "Aka Venom", "pos": 8, "volte": 1, "note": ""}, {"nome": "Black Mamba", "pos": 4, "volte": 1, "note": ""}, {"nome": "BMW", "pos": 5, "volte": 1, "note": ""}, {"nome": "Champignon", "pos": 1, "volte": 2, "note": ""}, {"nome": "Doubles", "pos": 4, "volte": 1, "note": ""}, {"nome": "EnderCervus", "pos": 7, "volte": 1, "note": ""}, {"nome": "Fantaballa Devils", "pos": 3, "volte": 1, "note": ""}, {"nome": "Fantaballa F1", "pos": 5, "volte": 1, "note": ""}, {"nome": "Imperator", "pos": 2, "volte": 1, "note": ""}, {"nome": "Imperator Academy", "pos": 3, "volte": 1, "note": ""}, {"nome": "Ironfang", "pos": 10, "volte": 1, "note": ""}, {"nome": "Juper", "pos": 2, "volte": 1, "note": ""}, {"nome": "Lamborghini", "pos": 1, "volte": 1, "note": ""}, {"nome": "Loki's Mirage", "pos": 7, "volte": 1, "note": ""}, {"nome": "McTronas", "pos": 4, "volte": 1, "note": ""}, {"nome": "Mercedes", "pos": 11, "volte": 1, "note": ""}, {"nome": "Monkey Island", "pos": 1, "volte": 1, "note": ""}, {"nome": "One Piece", "pos": 10, "volte": 1, "note": ""}, {"nome": "Palo Ruggente", "pos": 11, "volte": 2, "note": ""}, {"nome": "Panda GP", "pos": 1, "volte": 7, "note": ""}, {"nome": "Pegaso", "pos": 10, "volte": 1, "note": ""}, {"nome": "Scuderia Futura", "pos": 1, "volte": 2, "note": ""}, {"nome": "SimpaMoto", "pos": 6, "volte": 1, "note": ""}, {"nome": "Solo Leveling", "pos": 3, "volte": 1, "note": ""}, {"nome": "SSC Neapolitans", "pos": 4, "volte": 2, "note": ""}, {"nome": "Super Mario", "pos": 2, "volte": 4, "note": ""}, {"nome": "Super Sayan", "pos": 5, "volte": 1, "note": ""}], "mediaPosFinale": [{"nome": "Damians", "media": 9.55}, {"nome": "Lele", "media": 3.0}, {"nome": "Riccardo", "media": 2.8}, {"nome": "Joel", "media": 5.2}]}, "F2": {"piloti": [{"nome": "Damians", "pos": 1, "volte": 2, "note": "!MostPoint (156)"}, {"nome": "Riccardo", "pos": 1, "volte": 2, "note": ""}, {"nome": "Fork", "pos": 1, "volte": 1, "note": ""}, {"nome": "Arthur", "pos": 1, "volte": 1, "note": ""}, {"nome": "Muxo", "pos": 1, "volte": 1, "note": ""}, {"nome": "Mario", "pos": 1, "volte": 1, "note": ""}, {"nome": "Joel", "pos": 1, "volte": 1, "note": ""}, {"nome": "Buonario", "pos": 1, "volte": 1, "note": ""}, {"nome": "Ema?", "pos": 2, "volte": 1, "note": ""}, {"nome": "Lele", "pos": 2, "volte": 1, "note": ""}, {"nome": "Lucertola", "pos": 2, "volte": 1, "note": ""}, {"nome": "Raphael", "pos": 2, "volte": 1, "note": ""}, {"nome": "Bandolero22", "pos": 2, "volte": 1, "note": ""}, {"nome": "Culer", "pos": 3, "volte": 2, "note": ""}, {"nome": "Darkness", "pos": 3, "volte": 2, "note": ""}, {"nome": "Gigi", "pos": 3, "volte": 1, "note": ""}, {"nome": "Edoardo", "pos": 4, "volte": 1, "note": ""}, {"nome": "Luca", "pos": 4, "volte": 1, "note": ""}, {"nome": "Mello", "pos": 4, "volte": 1, "note": ""}, {"nome": "Sasi", "pos": 4, "volte": 1, "note": ""}, {"nome": "Balasco", "pos": 5, "volte": 1, "note": ""}, {"nome": "Wateng", "pos": 5, "volte": 1, "note": ""}, {"nome": "Antonio", "pos": 5, "volte": 1, "note": ""}, {"nome": "Fantaballa", "pos": 6, "volte": 1, "note": ""}, {"nome": "Baileys", "pos": 6, "volte": 1, "note": ""}, {"nome": "Johnny", "pos": 8, "volte": 1, "note": ""}, {"nome": "Bags", "pos": 8, "volte": 1, "note": ""}, {"nome": "Marinosky", "pos": 9, "volte": 1, "note": ""}, {"nome": "Sconosciuto", "pos": 9, "volte": 1, "note": ""}, {"nome": "Ste", "pos": 9, "volte": 1, "note": ""}, {"nome": "Diego", "pos": 10, "volte": 1, "note": ""}, {"nome": "Bruno", "pos": 10, "volte": 1, "note": ""}, {"nome": "Tore", "pos": 2, "volte": 1, "note": ""}], "scuderie": [{"nome": "Aka Venom", "pos": 2, "volte": 1, "note": ""}, {"nome": "BMW", "pos": 2, "volte": 1, "note": ""}, {"nome": "Darkside", "pos": 5, "volte": 1, "note": ""}, {"nome": "Doubles", "pos": 3, "volte": 1, "note": ""}, {"nome": "EnderCervus", "pos": 4, "volte": 1, "note": ""}, {"nome": "Fabbri", "pos": 4, "volte": 1, "note": ""}, {"nome": "Fantaballa Devils", "pos": 2, "volte": 1, "note": ""}, {"nome": "Fantaballa F1", "pos": 3, "volte": 1, "note": ""}, {"nome": "Gladius", "pos": 4, "volte": 1, "note": ""}, {"nome": "Gotham", "pos": 1, "volte": 1, "note": ""}, {"nome": "Imperator Academy", "pos": 7, "volte": 1, "note": ""}, {"nome": "Incitatus", "pos": 3, "volte": 1, "note": ""}, {"nome": "Ironfang", "pos": 4, "volte": 1, "note": ""}, {"nome": "Mac Pork", "pos": 1, "volte": 1, "note": ""}, {"nome": "McTronas", "pos": 2, "volte": 1, "note": ""}, {"nome": "Mercedes", "pos": 3, "volte": 1, "note": ""}, {"nome": "One Piece", "pos": 2, "volte": 1, "note": ""}, {"nome": "Palo Ruggente", "pos": 1, "volte": 1, "note": ""}, {"nome": "Panda Juper", "pos": 1, "volte": 1, "note": ""}, {"nome": "Partenope", "pos": 9, "volte": 1, "note": ""}, {"nome": "Pegaso", "pos": 2, "volte": 1, "note": ""}, {"nome": "Ranci Bulls", "pos": 10, "volte": 1, "note": ""}, {"nome": "Red Panda", "pos": 1, "volte": 2, "note": ""}, {"nome": "Scuderia Futura", "pos": 1, "volte": 1, "note": ""}, {"nome": "Simpa Moto", "pos": 1, "volte": 1, "note": ""}, {"nome": "Solo", "pos": 1, "volte": 1, "note": ""}, {"nome": "SSC Neapolitans", "pos": 3, "volte": 1, "note": ""}, {"nome": "Super Sayan", "pos": 2, "volte": 1, "note": ""}, {"nome": "Tempestus", "pos": 5, "volte": 1, "note": ""}, {"nome": "Toretto", "pos": 11, "volte": 1, "note": ""}, {"nome": "Train Speed", "pos": 10, "volte": 2, "note": ""}, {"nome": "Turtles", "pos": 9, "volte": 1, "note": ""}, {"nome": "Warhawk", "pos": 5, "volte": 2, "note": ""}]}, "F3": {"piloti": [{"nome": "Antonio", "pos": 4, "volte": 1, "note": ""}, {"nome": "Arthur", "pos": 6, "volte": 1, "note": ""}, {"nome": "Attilio", "pos": 9, "volte": 1, "note": ""}, {"nome": "Bags", "pos": 5, "volte": 1, "note": ""}, {"nome": "Baileys", "pos": 2, "volte": 1, "note": ""}, {"nome": "Balasco", "pos": 4, "volte": 1, "note": ""}, {"nome": "Banana", "pos": 1, "volte": 1, "note": ""}, {"nome": "Bandolero22", "pos": 2, "volte": 1, "note": ""}, {"nome": "Bruno", "pos": 3, "volte": 1, "note": ""}, {"nome": "Buonario", "pos": 4, "volte": 2, "note": ""}, {"nome": "Cortex", "pos": 5, "volte": 1, "note": ""}, {"nome": "Culer", "pos": 4, "volte": 2, "note": ""}, {"nome": "Damians", "pos": 1, "volte": 1, "note": "!MostPoint (129)"}, {"nome": "Darkness", "pos": 2, "volte": 1, "note": ""}, {"nome": "Diego Al", "pos": 7, "volte": 1, "note": ""}, {"nome": "Ema?", "pos": 1, "volte": 1, "note": ""}, {"nome": "Fantaballa", "pos": 7, "volte": 1, "note": ""}, {"nome": "Gigachad", "pos": 5, "volte": 1, "note": ""}, {"nome": "Gigi", "pos": 4, "volte": 1, "note": ""}, {"nome": "Joel", "pos": 1, "volte": 1, "note": ""}, {"nome": "JoelBot", "pos": 3, "volte": 1, "note": ""}, {"nome": "Johnny", "pos": 8, "volte": 1, "note": ""}, {"nome": "Lele", "pos": 1, "volte": 2, "note": ""}, {"nome": "Luca", "pos": 10, "volte": 1, "note": ""}, {"nome": "Lucertola", "pos": 5, "volte": 1, "note": ""}, {"nome": "Mario", "pos": 1, "volte": 1, "note": ""}, {"nome": "MatteB", "pos": 9, "volte": 1, "note": ""}, {"nome": "Mello", "pos": 2, "volte": 1, "note": ""}, {"nome": "Muxo", "pos": 1, "volte": 1, "note": ""}, {"nome": "Riccardo", "pos": 2, "volte": 1, "note": ""}, {"nome": "Ronny", "pos": 9, "volte": 1, "note": ""}, {"nome": "Salex", "pos": 5, "volte": 1, "note": ""}, {"nome": "Samuel", "pos": 7, "volte": 1, "note": ""}, {"nome": "Solo", "pos": 3, "volte": 1, "note": ""}, {"nome": "Ste", "pos": 3, "volte": 1, "note": ""}, {"nome": "Tore", "pos": 1, "volte": 1, "note": ""}, {"nome": "Tore", "pos": 1, "volte": 1, "note": ""}, {"nome": "Verstappen", "pos": 10, "volte": 1, "note": ""}, {"nome": "Vince", "pos": 6, "volte": 1, "note": ""}, {"nome": "Wateng", "pos": 1, "volte": 1, "note": ""}], "scuderie": [{"nome": "Aka Venom", "pos": 1, "volte": 1, "note": ""}, {"nome": "Alfa Rosa", "pos": 7, "volte": 1, "note": ""}, {"nome": "Astra Nova Racing Panda", "pos": 2, "volte": 1, "note": ""}, {"nome": "Attilio", "pos": 12, "volte": 1, "note": ""}, {"nome": "Augustus", "pos": 9, "volte": 1, "note": ""}, {"nome": "Bamboo Racing", "pos": 4, "volte": 1, "note": ""}, {"nome": "Banana Rc", "pos": 4, "volte": 2, "note": ""}, {"nome": "Black Lions", "pos": 1, "volte": 1, "note": ""}, {"nome": "Black Mamba Academy", "pos": 7, "volte": 1, "note": ""}, {"nome": "Blue Lock Project", "pos": 5, "volte": 1, "note": ""}, {"nome": "BMW Msport", "pos": 2, "volte": 1, "note": ""}, {"nome": "Darkside", "pos": 2, "volte": 1, "note": ""}, {"nome": "Doubles", "pos": 1, "volte": 1, "note": ""}, {"nome": "Dragon", "pos": 6, "volte": 1, "note": ""}, {"nome": "Dragon Motorsport", "pos": 6, "volte": 1, "note": ""}, {"nome": "DragonBall", "pos": 13, "volte": 1, "note": ""}, {"nome": "EnderCervus", "pos": 3, "volte": 1, "note": ""}, {"nome": "Fantaballa Devils", "pos": 4, "volte": 2, "note": ""}, {"nome": "Gengar Maserati", "pos": 15, "volte": 1, "note": ""}, {"nome": "Gladius", "pos": 1, "volte": 2, "note": ""}, {"nome": "Grizzly", "pos": 6, "volte": 1, "note": ""}, {"nome": "Imperator", "pos": 1, "volte": 1, "note": ""}, {"nome": "Imperator", "pos": 1, "volte": 1, "note": ""}, {"nome": "Incitatus", "pos": 3, "volte": 1, "note": ""}, {"nome": "Invictus Academy", "pos": 12, "volte": 1, "note": ""}, {"nome": "Lecce Racing", "pos": 6, "volte": 1, "note": ""}, {"nome": "Loki's Mirage", "pos": 3, "volte": 1, "note": ""}, {"nome": "Lyons", "pos": 15, "volte": 1, "note": ""}, {"nome": "MacPork", "pos": 5, "volte": 1, "note": ""}, {"nome": "Mercedes", "pos": 1, "volte": 1, "note": ""}, {"nome": "Mercedes Academy", "pos": 2, "volte": 1, "note": ""}, {"nome": "Olimpus", "pos": 6, "volte": 1, "note": ""}, {"nome": "One Piece", "pos": 4, "volte": 1, "note": ""}, {"nome": "Palo Ruggente", "pos": 13, "volte": 1, "note": ""}, {"nome": "Panda Futura (Red Panda)", "pos": 1, "volte": 1, "note": ""}, {"nome": "Panda Juper", "pos": 3, "volte": 1, "note": ""}, {"nome": "Partenope", "pos": 2, "volte": 1, "note": ""}, {"nome": "Rolls Royce", "pos": 9, "volte": 1, "note": ""}, {"nome": "Shockwawe Racing", "pos": 14, "volte": 1, "note": ""}, {"nome": "Simpa Moto", "pos": 2, "volte": 1, "note": ""}, {"nome": "Sons Of Anarchy", "pos": 9, "volte": 1, "note": ""}, {"nome": "Sparafunghi", "pos": 9, "volte": 1, "note": ""}, {"nome": "SSC Neapolitans", "pos": 3, "volte": 1, "note": ""}, {"nome": "Super Sayan", "pos": 2, "volte": 1, "note": ""}, {"nome": "Tempestus", "pos": 17, "volte": 1, "note": ""}, {"nome": "Tepic Racing", "pos": 9, "volte": 1, "note": ""}, {"nome": "Test", "pos": 12, "volte": 1, "note": ""}, {"nome": "Train Speed", "pos": 3, "volte": 2, "note": ""}, {"nome": "Turtles", "pos": 1, "volte": 1, "note": ""}, {"nome": "Warhawk Racing", "pos": 1, "volte": 1, "note": ""}], "migliorMediaPunti": [{"label": "1Damians F2 S9", "punti": 26.0}, {"label": "2Damians F3 S9", "punti": 21.5}, {"label": "3) Joel F2 S10", "punti": 21.33}]}};
+
+let SERIE = "F1";
+let TIPO = "piloti";
+let SORT = "pos-asc";
+
+const grid = document.getElementById("grid");
+const empty = document.getElementById("empty");
+const q = document.getElementById("q");
+const sortSel = document.getElementById("sort");
+
+const panel = document.getElementById("panel-summary");
+const panelTitle = document.getElementById("panel-title");
+const panelBody = document.getElementById("panel-body");
+
+const alboTitle = document.getElementById("albo-title");
+const alboSub = document.getElementById("albo-sub");
+const alboBody = document.getElementById("albo-body");
+
+function renderAlbo(){
+  const rows = (ALBO[SERIE] || []).map(([stagione,pilota,scuderia]) => {
+    const pil = (pilota || "").trim();
+    const scu = (scuderia || "").trim();
+    const pilCell = pil.toLowerCase() === "no data" ? `<span class="albo-empty">—</span>` : `<span class="albo-name">${escapeHtml(pil)}</span>`;
+    const scuCell = scu.toLowerCase() === "no data" ? `<span class="albo-empty">—</span>` : `<span class="albo-name">${escapeHtml(scu)}</span>`;
+    return `<tr>
+      <td><span class="badge">${escapeHtml(stagione)}</span></td>
+      <td>${pilCell}</td>
+      <td>${scuCell}</td>
+    </tr>`;
+  }).join("");
+
+  alboTitle.textContent = `Albo d'oro — ${SERIE}`;
+  alboSub.textContent = "Campioni per stagione";
+  alboBody.innerHTML = `
+    <table class="albo-table">
+      <thead><tr><th>Stagione</th><th>Pilota</th><th>Scuderia</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+
+// Colore deterministico dal nome (HSL -> HEX)
+function colorFromName(name){
+  let h = 0;
+  for(let i=0;i<name.length;i++) h = (h*31 + name.charCodeAt(i)) >>> 0;
+  h = h % 360;
+  const s = 65, l = 55;
+  const k = n => (n + h/30) % 12;
+  const a = (s/100) * Math.min(l/100, 1-(l/100));
+  const f = n => (l/100) - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1)));
+  const toHex = x => Math.round(x*255).toString(16).padStart(2,'0');
+  return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+}
+
+function setTabSelected(btn, selected){
+  btn.setAttribute("aria-selected", selected ? "true" : "false");
+}
+
+document.querySelectorAll(".tab[data-serie]").forEach(b => {
+  b.addEventListener("click", () => {
+    SERIE = b.dataset.serie;
+    document.querySelectorAll(".tab[data-serie]").forEach(x => setTabSelected(x, x===b));
+    render();
+  });
+});
+document.querySelectorAll(".tab[data-tipo]").forEach(b => {
+  b.addEventListener("click", () => {
+    TIPO = b.dataset.tipo;
+    document.querySelectorAll(".tab[data-tipo]").forEach(x => setTabSelected(x, x===b));
+    render();
+  });
+});
+
+sortSel.addEventListener("change", () => {
+  SORT = sortSel.value;
+  render();
+});
+
+function debounce(fn, ms){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); }; }
+q.addEventListener("input", debounce(render, 120));
+
+function sortList(list){
+  const s = SORT;
+  return list.slice().sort((a,b) => {
+    if(s === "pos-asc") {
+      if(a.pos !== b.pos) return a.pos - b.pos;
+      if((b.volte||0) !== (a.volte||0)) return (b.volte||0) - (a.volte||0);
+      return a.nome.localeCompare(b.nome, "it", { sensitivity:"base" });
+    }
+    if(s === "pos-desc") {
+      if(a.pos !== b.pos) return b.pos - a.pos;
+      if((b.volte||0) !== (a.volte||0)) return (b.volte||0) - (a.volte||0);
+      return a.nome.localeCompare(b.nome, "it", { sensitivity:"base" });
+    }
+    if(s === "volte-desc") {
+      if((a.volte||0) !== (b.volte||0)) return (b.volte||0) - (a.volte||0);
+      if(a.pos !== b.pos) return a.pos - b.pos;
+      return a.nome.localeCompare(b.nome, "it", { sensitivity:"base" });
+    }
+    // nome-asc
+    return a.nome.localeCompare(b.nome, "it", { sensitivity:"base" });
+  });
+}
+
+function render(){
+  renderAlbo();
+  const raw = (DATA[SERIE] && DATA[SERIE][TIPO]) ? DATA[SERIE][TIPO] : [];
+  const query = (q.value || "").trim().toLowerCase();
+
+  let list = query ? raw.filter(x => (x.nome||"").toLowerCase().includes(query)) : raw.slice();
+  list = sortList(list);
+
+  grid.innerHTML = "";
+  if(!list.length){ empty.hidden = false; } else { empty.hidden = true; }
+
+  for(const item of list){
+    const accent = colorFromName(item.nome || "");
+    const card = document.createElement("article");
+    card.className = "card";
+    card.style.setProperty("--accent", accent);
+    card.style.borderColor = accent;
+
+    const chips = [];
+    
+    const tkey = (item.nome||"").toString().trim().toLowerCase();
+    const titlesMap = (TIPO === "piloti") ? TITLES_BY_PILOTA : TITLES_BY_SCUDERIA;
+    const titles = titlesMap[tkey] || {F1:0,F2:0,F3:0,total:0};
+    const titlesInline = `
+          <div class="record-box primary">
+            <div class="record-value">${(titles[SERIE] ?? 0)}</div>
+            <div class="record-label">Mondiali</div>
+          </div>
+    `;
+if(item.mostPoints) chips.push(`<span class="chip">Most Points: <b>${Number(item.mostPoints).toLocaleString("it-IT")}</b></span>`);
+    chips.push("");
+
+card.innerHTML = `
+      <div class="row">
+        <div class="meta">
+          <h2 class="title" style="color:${accent}">${escapeHtml(item.nome)}</h2>
+          </div>
+        <div class="record-boxes">
+        ${titlesInline}
+          <div class="record-box ${posClass(item.pos)}">
+            <div class="record-value">${item.pos}°</div>
+            <div class="record-label">Miglior piazzamento</div>
+          </div>
+          <div class="record-box">
+            <div class="record-value">${item.volte ?? 1}</div>
+            <div class="record-label">Volte</div>
+          </div>
+        </div>
+      </div>
+<div class="chips">${chips.join("")}</div>
+    `;
+    grid.appendChild(card);
+  }
+
+  renderSummaryPanel();
+}
+
+function renderSummaryPanel(){
+  // Mostra pannelli solo quando esistono per la serie selezionata
+  panel.hidden = true;
+  panelBody.innerHTML = "";
+
+  if(SERIE === "F1" && DATA.F1.mediaPosFinale){
+    panel.hidden = false;
+    panelTitle.textContent = "F1 — Media posizione finale";
+    const rows = DATA.F1.mediaPosFinale
+      .slice()
+      .sort((a,b)=> (a.media ?? 999) - (b.media ?? 999))
+      .map(x => `<tr><td>${escapeHtml(x.nome)}</td><td>${formatMedia(x.media)}</td></tr>`)
+      .join("");
+    panelBody.innerHTML = `
+      <table>
+        <thead><tr><th>Pilota</th><th>Media posizione finale</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  if(SERIE === "F3" && DATA.F3.migliorMediaPunti){
+    panel.hidden = false;
+    panelTitle.textContent = "Top — Miglior media punti";
+    const rows = DATA.F3.migliorMediaPunti
+      .slice()
+      .sort((a,b)=> (a.rank||99)-(b.rank||99))
+      .map(x => `<tr><td>#${x.rank}</td><td>${escapeHtml(x.nome)}</td><td>${escapeHtml(x.serie)} ${escapeHtml(x.stagione)}</td><td>${formatMedia(x.media)}</td></tr>`)
+      .join("");
+    panelBody.innerHTML = `
+      <table>
+        <thead><tr><th>Rank</th><th>Nome</th><th>Serie</th><th>Media punti</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="margin-top:10px; color: var(--muted); font-weight:700; font-size:12px;">
+        Nota: per i primi due record la stagione è stata interpretata come <b>S2</b> (dalla tabella nell'immagine). Se vuoi, la sistemiamo al volo.
+      </div>
+    `;
+  }
+}
+
+function formatMedia(v){
+  if(v === null || v === undefined || Number.isNaN(Number(v))) return "—";
+  const n = Number(v);
+  // 2 decimali solo se servono
+  return (Math.round(n*100)/100).toLocaleString("it-IT", { minimumFractionDigits: (String(n).includes(".") ? 2 : 0), maximumFractionDigits: 2 });
+}
+
+function escapeHtml(str){ return String(str ?? '').replace(/[&<>"]+/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+
+    function posClass(pos){
+      const p = Number(pos);
+      if(p===1) return 'place-1';
+      if(p===2) return 'place-2';
+      if(p===3) return 'place-3';
+      return '';
+    }
+
+render();
+</script>
+</body>
+</html>
