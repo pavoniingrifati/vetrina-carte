@@ -148,7 +148,7 @@
   </section>
 
 <script>
-const SYMBOLS = [{"id": "bronzo", "name": "Pacchetto bronzo", "rarity": "Comune", "img": "Deck%20back%20bronzo.png"}, {"id": "silver", "name": "Pacchetto silver", "rarity": "Comune", "img": "Deck%20back%20argento.png"}, {"id": "cosmetic", "name": "Cosmetic", "rarity": "Comune", "img": "Deck%20back%20cosmetic.png"}, {"id": "patatine", "name": "Patatine", "rarity": "Comune", "img": "Patatine.png"}, {"id": "gold", "name": "Pacchetto Gold", "rarity": "Non comune", "img": "Deck%20back%20ORO.png"}, {"id": "tots", "name": "Pacchetto Tots", "rarity": "Raro", "img": "Deck%20back%20Tots.png"}, {"id": "mese", "name": "Pacco del mese", "rarity": "Raro", "img": "Deck%20back%20wonderkid.png"}, {"id": "legend", "name": "Pacchetto Legend", "rarity": "Leggendario", "img": "Back%20legend.png"}];
+const SYMBOLS = [{"id": "bronzo", "name": "Pacchetto bronzo", "rarity": "Comune", "img": "Deck%20back%20bronzo.png", "weight": 50}, {"id": "silver", "name": "Pacchetto silver", "rarity": "Comune", "img": "Deck%20back%20argento.png", "weight": 50}, {"id": "cosmetic", "name": "Cosmetic", "rarity": "Comune", "img": "Deck%20back%20cosmetic.png", "weight": 50}, {"id": "patatine", "name": "Patatine", "rarity": "Comune", "img": "Patatine.png", "weight": 50}, {"id": "gold", "name": "Pacchetto Gold", "rarity": "Non comune", "img": "Deck%20back%20ORO.png", "weight": 12}, {"id": "tots", "name": "Pacchetto Tots", "rarity": "Raro", "img": "Deck%20back%20Tots.png", "weight": 6}, {"id": "mese", "name": "Pacco del mese", "rarity": "Raro", "img": "Deck%20back%20wonderkid.png", "weight": 6}, {"id": "legend", "name": "Pacchetto Legend", "rarity": "Leggendario", "img": "Back%20legend.png", "weight": 1}];
 
 const STATE = {
   spinning: false
@@ -157,7 +157,15 @@ const STATE = {
 const $ = (s)=>document.querySelector(s);
 const reels = [$('#reel0'), $('#reel1'), $('#reel2')];
 
-function pickSymbol(){ return SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)]; }
+function pickSymbol(){
+  const total = SYMBOLS.reduce((a,s)=>a + (Number(s.weight)||0), 0);
+  let r = Math.random() * (total || 1);
+  for (const s of SYMBOLS){
+    r -= (Number(s.weight)||0);
+    if (r <= 0) return s;
+  }
+  return SYMBOLS[SYMBOLS.length - 1];
+}
 
 function sameSymbol(a,b,c){
   const ida = a.id ?? a.img ?? a.name;
