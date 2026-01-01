@@ -1,11 +1,14 @@
 
 const THEME_BY_COMPETITION = (compRaw) => {
   const c = (compRaw || "").toLowerCase().trim();
+
+  // Puoi aggiungere qui altre competizioni / alias.
   if (c.includes("champions") || c.includes("ucl") || c.includes("uefa champions")) return "ucl";
   if (c.includes("europa") || c.includes("uel")) return "uel";
   if (c.includes("premier") || c.includes("epl") || c.includes("pl")) return "premier";
   if (c.includes("serie a") || c === "seriea" || c.includes("italia")) return "seriea";
-  return "seriea";
+
+  return "seriea"; // default
 };
 
 const ICONS = {
@@ -22,6 +25,11 @@ const ICONS = {
     </svg>`
 };
 
+function pickOne(arr){
+  if (!arr || !arr.length) return "";
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 function escapeHtml(str){
   return String(str)
     .replaceAll("&","&amp;")
@@ -31,26 +39,22 @@ function escapeHtml(str){
     .replaceAll("'","&#039;");
 }
 
-function pickOneNotSame(arr, prev){
-  if (!arr || !arr.length) return "";
-  if (arr.length === 1) return arr[0];
-  for (let i=0;i<8;i++){
-    const c = arr[Math.floor(Math.random() * arr.length)];
-    if (c !== prev) return c;
-  }
-  return arr[Math.floor(Math.random() * arr.length)];
+function goalLabel(type, diff){
+  const t = type === "match" ? "MATCH GOALS" : "LIVE GOALS";
+  const d = diff.toUpperCase();
+  return `${t} • ${d}`;
 }
 
-const lastPicked = { match:{bronze:"",silver:"",gold:""}, live:{bronze:"",silver:"",gold:""} };
-
-function renderFixedDifficulties(targetEl, pools, type, packImages){
-  const bronze = pickOneNotSame(pools.bronze || [], lastPicked[type].bronze);
-  const silver = pickOneNotSame(pools.silver || [], lastPicked[type].silver);
-  const gold   = pickOneNotSame(pools.gold   || [], lastPicked[type].gold);
-
-  lastPicked[type].bronze = bronze;
-  lastPicked[type].silver = silver;
-  lastPicked[type].gold   = gold;
+/**
+ * Output: 3 cards always in this order:
+ * 1) BRONZE (random from bronze pool)
+ * 2) SILVER (random from silver pool)
+ * 3) GOLD (random from gold pool)
+ */
+function renderFixedDifficulties(targetEl, pools, type){
+  const bronze = pickOne(pools.bronze || []);
+  const silver = pickOne(pools.silver || []);
+  const gold   = pickOne(pools.gold || []);
 
   const items = [
     { diff: "bronze", rule: bronze },
@@ -58,38 +62,44 @@ function renderFixedDifficulties(targetEl, pools, type, packImages){
     { diff: "gold",   rule: gold },
   ];
 
-  targetEl.innerHTML = items.map(({diff, rule}) => {
-    const img = (packImages && packImages[diff]) ? packImages[diff] : "";
-    const imgTag = img
-      ? `<img class="pack-img" src="${img}" alt="Pacchetto ${diff}">`
-      : `<div style="font-weight:900;opacity:.7">Carica immagine ${diff}</div>`;
-
-    return `
-      <article class="goal-card">
-        <div class="goal-top">${imgTag}</div>
-        <div class="goal-bottom">
-          <div class="goal-rule ${diff}">${escapeHtml(rule || "—")}</div>
-          <div class="goal-label">${type === "match" ? "MATCH GOALS" : "LIVE GOALS"} • ${diff.toUpperCase()}</div>
+  targetEl.innerHTML = items.map(({diff, rule}) => `
+    <article class="goal-card">
+      <div class="goal-top">
+        <div class="pack ${diff}">
+          <div class="brand">
+            <div class="title">PACCHETTO ${diff.toUpperCase()}</div>
+            <div class="sub">FANTABALLA</div>
+          </div>
         </div>
-      </article>
-    `;
-  }).join("");
+      </div>
+      <div class="goal-bottom">
+        <div class="goal-rule ${diff}">${escapeHtml(rule || "—")}</div>
+        <div class="goal-label">${goalLabel(type, diff)}</div>
+      </div>
+    </article>
+  `).join("");
 }
 
 async function init(){
-  const res = await fetch("./data.json?v=" + Date.now(), { cache: "no-store" });
+  const res = await fetch("./data.json", { cache: "no-store" });
   const data = await res.json();
 
+  // Mixed competitions: set page theme as:
+  // - if all matches have the same competition -> use it
+  // - otherwise use "seriea" (neutral default) and theme per-card
   const comps = (data.matches || []).map(m => (m.competition || data.competition || "").toLowerCase().trim());
   const unique = [...new Set(comps.filter(Boolean))];
   const pageComp = unique.length === 1 ? unique[0] : (data.competition || "Serie A");
   document.body.dataset.theme = THEME_BY_COMPETITION(pageComp);
 
+  // Title
   document.querySelector("#pageTitle").textContent = data.dateLabel || "LE PARTITE DI OGGI";
 
+  // Render matches (each match has its own competition)
   const matchesGrid = document.querySelector("#matchesGrid");
   matchesGrid.innerHTML = (data.matches || []).map((m, i) => {
     const venue = (m.venue || "home").toLowerCase() === "away" ? "away" : "home";
+    const venueText = venue === "home" ? "CASA" : "TRASFERTA";
     const matchComp = m.competition || data.competition || "Competizione";
     const matchTheme = THEME_BY_COMPETITION(matchComp);
 
@@ -98,37 +108,53 @@ async function init(){
         <div>
           <div class="match-top">
             <div class="team-name">${escapeHtml(m.team || "SQUADRA")}</div>
-            <div class="comp-pill"><span class="comp-dot"></span><span>${escapeHtml(matchComp)}</span></div>
+            <div class="comp-pill" title="Competizione">
+              <span class="comp-dot"></span>
+              <span>${escapeHtml(matchComp)}</span>
+            </div>
           </div>
-          <div class="points-wrap">
-            <div class="points"><div class="num">${Number(m.points ?? 0)}</div><div class="lbl">PUNTI</div></div>
+
+          <div class="points-wrap" aria-label="Punti">
+            <div class="points">
+              <div class="num">${Number(m.points ?? 0)}</div>
+              <div class="lbl">PUNTI</div>
+            </div>
           </div>
         </div>
+
         <div class="match-bottom">
-          <div class="venue">${ICONS[venue]}</div>
+          <div class="venue" title="${venueText}">
+            ${ICONS[venue]}
+          </div>
           <div class="badge">MATCH ${i+1}</div>
         </div>
       </section>
     `;
   }).join("");
 
+  // Goals
   const goals = data.goals || {};
-  const matchPools = goals.match || {};
-  const livePools  = goals.live || {};
-  const packImages = data.packImages || {};
+  const matchPools = (goals.match || {});
+  const livePools = (goals.live || {});
 
   const matchOut = document.querySelector("#matchGoalsOut");
-  const liveOut  = document.querySelector("#liveGoalsOut");
+  const liveOut = document.querySelector("#liveGoalsOut");
 
-  renderFixedDifficulties(matchOut, matchPools, "match", packImages);
-  renderFixedDifficulties(liveOut,  livePools,  "live",  packImages);
+  // Default render
+  renderFixedDifficulties(matchOut, matchPools, "match");
+  renderFixedDifficulties(liveOut, livePools, "live");
 
+  // Buttons
   document.querySelectorAll("[data-generate]").forEach(btn => {
     btn.addEventListener("click", () => {
-      const type = btn.dataset.generate;
-      if (type === "match") renderFixedDifficulties(matchOut, matchPools, "match", packImages);
-      else renderFixedDifficulties(liveOut, livePools, "live", packImages);
+      const type = btn.dataset.generate; // match | live
+      if (type === "match") renderFixedDifficulties(matchOut, matchPools, "match");
+      else renderFixedDifficulties(liveOut, livePools, "live");
     });
   });
 }
-init().catch(err => { console.error(err); alert("Errore nel caricamento di data.json"); });
+
+init().catch(err => {
+  console.error(err);
+  alert("Errore nel caricamento di data.json");
+});
