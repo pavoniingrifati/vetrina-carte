@@ -25,42 +25,9 @@ const ICONS = {
     </svg>`
 };
 
-function sampleUnique(arr, n){
-  const copy = [...arr];
-  const out = [];
-  while(copy.length && out.length < n){
-    const idx = Math.floor(Math.random() * copy.length);
-    out.push(copy.splice(idx,1)[0]);
-  }
-  return out;
-}
-
-function goalLabel(type, diff){
-  const t = type === "match" ? "MATCH GOALS" : "LIVE GOALS";
-  const d = diff.toUpperCase();
-  return `${t} • ${d}`;
-}
-
-function renderGoalCards(targetEl, goals, type, diff){
-  const picked = sampleUnique(goals, 3);
-  targetEl.innerHTML = picked.map(rule => {
-    return `
-      <article class="goal-card">
-        <div class="goal-top">
-          <div class="pack ${diff}">
-            <div class="brand">
-              <div class="title">PACCHETTO ${diff.toUpperCase()}</div>
-              <div class="sub">FANTABALLA</div>
-            </div>
-          </div>
-        </div>
-        <div class="goal-bottom">
-          <div class="goal-rule ${diff}">${escapeHtml(rule)}</div>
-          <div class="goal-label">${goalLabel(type, diff)}</div>
-        </div>
-      </article>
-    `;
-  }).join("");
+function pickOne(arr){
+  if (!arr || !arr.length) return "";
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 function escapeHtml(str){
@@ -72,29 +39,78 @@ function escapeHtml(str){
     .replaceAll("'","&#039;");
 }
 
+function goalLabel(type, diff){
+  const t = type === "match" ? "MATCH GOALS" : "LIVE GOALS";
+  const d = diff.toUpperCase();
+  return `${t} • ${d}`;
+}
+
+/**
+ * Output: 3 cards always in this order:
+ * 1) BRONZE (random from bronze pool)
+ * 2) SILVER (random from silver pool)
+ * 3) GOLD (random from gold pool)
+ */
+function renderFixedDifficulties(targetEl, pools, type){
+  const bronze = pickOne(pools.bronze || []);
+  const silver = pickOne(pools.silver || []);
+  const gold   = pickOne(pools.gold || []);
+
+  const items = [
+    { diff: "bronze", rule: bronze },
+    { diff: "silver", rule: silver },
+    { diff: "gold",   rule: gold },
+  ];
+
+  targetEl.innerHTML = items.map(({diff, rule}) => `
+    <article class="goal-card">
+      <div class="goal-top">
+        <div class="pack ${diff}">
+          <div class="brand">
+            <div class="title">PACCHETTO ${diff.toUpperCase()}</div>
+            <div class="sub">FANTABALLA</div>
+          </div>
+        </div>
+      </div>
+      <div class="goal-bottom">
+        <div class="goal-rule ${diff}">${escapeHtml(rule || "—")}</div>
+        <div class="goal-label">${goalLabel(type, diff)}</div>
+      </div>
+    </article>
+  `).join("");
+}
+
 async function init(){
   const res = await fetch("./data.json", { cache: "no-store" });
   const data = await res.json();
 
-  // Theme from competition
-  document.body.dataset.theme = THEME_BY_COMPETITION(data.competition);
+  // Mixed competitions: set page theme as:
+  // - if all matches have the same competition -> use it
+  // - otherwise use "seriea" (neutral default) and theme per-card
+  const comps = (data.matches || []).map(m => (m.competition || data.competition || "").toLowerCase().trim());
+  const unique = [...new Set(comps.filter(Boolean))];
+  const pageComp = unique.length === 1 ? unique[0] : (data.competition || "Serie A");
+  document.body.dataset.theme = THEME_BY_COMPETITION(pageComp);
 
   // Title
   document.querySelector("#pageTitle").textContent = data.dateLabel || "LE PARTITE DI OGGI";
 
-  // Render matches
+  // Render matches (each match has its own competition)
   const matchesGrid = document.querySelector("#matchesGrid");
   matchesGrid.innerHTML = (data.matches || []).map((m, i) => {
     const venue = (m.venue || "home").toLowerCase() === "away" ? "away" : "home";
     const venueText = venue === "home" ? "CASA" : "TRASFERTA";
+    const matchComp = m.competition || data.competition || "Competizione";
+    const matchTheme = THEME_BY_COMPETITION(matchComp);
+
     return `
-      <section class="match-card">
+      <section class="match-card" data-theme="${matchTheme}">
         <div>
           <div class="match-top">
             <div class="team-name">${escapeHtml(m.team || "SQUADRA")}</div>
             <div class="comp-pill" title="Competizione">
               <span class="comp-dot"></span>
-              <span>${escapeHtml(data.competition || "Competizione")}</span>
+              <span>${escapeHtml(matchComp)}</span>
             </div>
           </div>
 
@@ -116,28 +132,24 @@ async function init(){
     `;
   }).join("");
 
-  // Goals buttons wiring
+  // Goals
   const goals = data.goals || {};
-  const matchGoals = goals.match || {};
-  const liveGoals = goals.live || {};
+  const matchPools = (goals.match || {});
+  const livePools = (goals.live || {});
 
   const matchOut = document.querySelector("#matchGoalsOut");
   const liveOut = document.querySelector("#liveGoalsOut");
 
   // Default render
-  renderGoalCards(matchOut, matchGoals.bronze || [], "match", "bronze");
-  renderGoalCards(liveOut, liveGoals.bronze || [], "live", "bronze");
+  renderFixedDifficulties(matchOut, matchPools, "match");
+  renderFixedDifficulties(liveOut, livePools, "live");
 
   // Buttons
-  document.querySelectorAll("[data-goals]").forEach(btn => {
+  document.querySelectorAll("[data-generate]").forEach(btn => {
     btn.addEventListener("click", () => {
-      const type = btn.dataset.goals;   // match | live
-      const diff = btn.dataset.diff;    // bronze | silver | gold
-
-      const pool = (type === "match" ? matchGoals : liveGoals)[diff] || [];
-      const target = type === "match" ? matchOut : liveOut;
-
-      renderGoalCards(target, pool, type, diff);
+      const type = btn.dataset.generate; // match | live
+      if (type === "match") renderFixedDifficulties(matchOut, matchPools, "match");
+      else renderFixedDifficulties(liveOut, livePools, "live");
     });
   });
 }
