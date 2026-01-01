@@ -626,7 +626,7 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid', 'Patatine', 'Fantaballa Tots', 'Legend', 'Oggetti', 'Gold', 'Silver', 'Bronze', 'Cosmetic', 'Strumenti'];
+const VALID_GAMES = ['Wonderkid', 'Patatine', 'Fantaballa Tots', 'Legend', 'Oggetti', 'Gold', 'Silver', 'Bronze', 'Cosmetic', 'Strumenti', 'Sfere del drago'];
 const PACK_BACK_BY_GAME = {
   'Wonderkid': 'Deck%20back%20wonderkid.png',
   'Patatine': 'patatrine.png',
@@ -637,7 +637,9 @@ const PACK_BACK_BY_GAME = {
   'Silver': 'Deck%20back%20argento.png',
   'Bronze': 'Deck%20back%20bronzo.png',
   'Strumenti': 'Deck%20back%20strumenti.png',
-  'Cosmetic': 'Deck%20back%20cosmetic.png'};
+  'Cosmetic': 'Deck%20back%20cosmetic.png',
+  'Sfere del drago': 'Back%20sfere.png',
+};
 
 
 const PACK_COST_PER_GAME = {
@@ -650,7 +652,9 @@ const PACK_COST_PER_GAME = {
   'Silver': 0,
   'Bronze': 0,
   'Strumenti': 0,
-  'Cosmetic': 0};
+  'Cosmetic': 0,
+  'Sfere del drago': 0,
+};
 
 const PACK_SIZE_PER_GAME = {
   'Wonderkid': 3,
@@ -662,7 +666,9 @@ const PACK_SIZE_PER_GAME = {
   'Silver': 9,
   'Bronze': 9,
   'Strumenti': 3,
-  'Cosmetic': 1};
+  'Cosmetic': 1,
+  'Sfere del drago': 1,
+};
 
 const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
 
@@ -871,9 +877,15 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Wonderkid',
-  pools:    { 'Wonderkid': [], 'Patatine': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': []},
-  packs:    { 'Wonderkid': [], 'Patatine': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': []},
-  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Fantaballa Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0}
+  pools:    { 'Wonderkid': [], 'Patatine': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [],
+ 'Sfere del drago': []
+},
+  packs:    { 'Wonderkid': [], 'Patatine': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [],
+ 'Sfere del drago': []
+},
+  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Fantaballa Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0,
+ 'Sfere del drago': 0
+}
 };
 
 
@@ -934,7 +946,13 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
       (Array.isArray(c.tags) && c.tags.some(t => norm(t)==='tots14'))
     );
 
-    // Legend (come prima)
+    
+
+    // Sfere del drago — FINITO: solo Fantaballa FC + series="Leggendaria" (1 carta per pack)
+GAME_STATE.pools['Sfere del drago'] = cleaned.filter(c =>
+  isFantaballa(c.game) && norm(c.series)==='leggendaria'
+);
+// Legend (come prima)
     const legendPoolAll = cleaned.filter(c =>
       isGotham(c.game) &&
       ['rara','epica','ultra rara','leggendaria'].includes(norm(c.rarity))
@@ -1073,7 +1091,8 @@ GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards));
     GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Fantaballa Tots'] = buildFinitePacks(GAME_STATE.pools['Fantaballa Tots'], PACK_SIZE_PER_GAME['Fantaballa Tots']);
-    /* packs Gold set by auto */
+        GAME_STATE.packs['Sfere del drago'] = buildFinitePacks(GAME_STATE.pools['Sfere del drago'], PACK_SIZE_PER_GAME['Sfere del drago']);
+/* packs Gold set by auto */
     
     
     // ===== Legend — Fantaballa-only (rarità >= Rara) with keyword-weighted injection =====
