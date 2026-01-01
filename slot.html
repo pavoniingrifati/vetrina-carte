@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Slot Classica – Offline</title>
+  <title>Slot Premi</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800;900&display=swap" rel="stylesheet">
@@ -22,6 +22,7 @@
         var(--bg);
       color:var(--text); display:grid; place-items:center; padding:18px;
     }
+
     .machine{
       width:min(1600px, 98vw); border-radius:var(--r);
       background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
@@ -33,15 +34,14 @@
       animation:shine 11s linear infinite; opacity:.20; pointer-events:none;
     }
     @keyframes shine{to{transform:rotate(360deg)}}
+
     .header{position:relative;display:flex;justify-content:space-between;align-items:center;gap:14px;padding-bottom:18px;z-index:1;}
-    .title{font-size:clamp(24px, 3vw, 44px);font-weight:900;letter-spacing:.10em;text-transform:uppercase;text-shadow:0 14px 55px rgba(0,0,0,.45);}
-    .win{background:linear-gradient(180deg,#03050b,#0b1022);border:1px solid rgba(255,255,255,.14);
-      border-radius:20px;padding:12px 16px;min-width:260px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.55);text-align:center;}
-    .win .lbl{font-size:12px;letter-spacing:.22em;opacity:.75}
-    .win .val{margin-top:6px;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size:34px;font-weight:900;letter-spacing:.14em;color:var(--gold);text-shadow:0 0 18px rgba(255,211,106,.25);user-select:none;}
+    .title{font-size:clamp(22px, 2.8vw, 44px);font-weight:900;letter-spacing:.10em;text-transform:uppercase;text-shadow:0 14px 55px rgba(0,0,0,.45);}
+    .sub{opacity:.78;font-weight:800;letter-spacing:.06em}
+
     .cabinet{position:relative;z-index:1;display:grid;grid-template-columns:1fr 120px;gap:18px;align-items:stretch;}
     @media(max-width:980px){.cabinet{grid-template-columns:1fr;} .lever{min-height:140px}}
+
     .reelBox{background:linear-gradient(180deg, rgba(0,0,0,.30), rgba(0,0,0,.16));
       border:1px solid rgba(255,255,255,.16);border-radius:30px;padding:20px;position:relative;overflow:hidden;}
     .marquee{height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;
@@ -55,12 +55,7 @@
       background:linear-gradient(90deg, transparent, rgba(255,211,106,.98), transparent);
       filter:drop-shadow(0 0 14px rgba(255,211,106,.6));opacity:.98;pointer-events:none;}
     .frame{position:absolute;inset:0;border-radius:26px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.08), inset 0 -90px 120px rgba(0,0,0,.42);pointer-events:none;}
-    .flash{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 50%, rgba(255,211,106,.18), rgba(0,0,0,0) 55%);
-      opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:3;}
-    .flash.show{opacity:1}
-    .flash .banner{padding:14px 18px;border-radius:999px;background:linear-gradient(135deg, rgba(255,211,106,.30), rgba(255,77,109,.18));
-      border:1px solid rgba(255,255,255,.22);box-shadow:0 18px 55px rgba(0,0,0,.55);
-      font-weight:900;letter-spacing:.18em;text-transform:uppercase;}
+
     .lever{border-radius:30px;background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
       border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;padding:18px 12px;position:relative;overflow:hidden;min-height:520px;}
     .rail{width:16px;height:100%;border-radius:999px;background:linear-gradient(180deg, #cfd6ea, #6b7692);
@@ -74,24 +69,85 @@
       background:linear-gradient(135deg, var(--gold), rgba(255,211,106,.65));box-shadow:0 18px 55px rgba(0,0,0,.45);
       transition:transform .12s ease, filter .12s ease, opacity .12s ease;}
     .spinBtn:hover{filter:brightness(1.04)} .spinBtn:active{transform:translateY(1px)} .spinBtn:disabled{opacity:.6;cursor:not-allowed}
+
+    /* Win popup */
+    .popup{
+      position:absolute; inset:0;
+      display:grid; place-items:center;
+      background:rgba(0,0,0,.35);
+      opacity:0; pointer-events:none;
+      transition:opacity .18s ease;
+      z-index:5;
+    }
+    .popup.show{opacity:1; pointer-events:auto;}
+    .card{
+      width:min(560px, 92vw);
+      border-radius:26px;
+      border:1px solid rgba(255,255,255,.18);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      box-shadow:0 22px 70px rgba(0,0,0,.6);
+      padding:16px;
+      display:grid;
+      grid-template-columns: 160px 1fr;
+      gap:14px;
+      align-items:center;
+    }
+    .thumb{width:160px; aspect-ratio:690/987; border-radius:18px; object-fit:cover; border:1px solid rgba(255,255,255,.12); background:#070b18;}
+    .txt h2{margin:0;font-size:20px;letter-spacing:.06em}
+    .pill{display:inline-flex;margin-top:8px;padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.14); background:rgba(0,0,0,.22);
+      font-weight:900; letter-spacing:.12em; text-transform:uppercase; font-size:12px; opacity:.9}
+    .ok{
+      margin-top:12px;
+      border:0; cursor:pointer;
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      background:linear-gradient(135deg, rgba(255,255,255,.22), rgba(255,255,255,.10));
+      color:var(--text);
+    }
+  
+    .navBtn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.16);
+      background:linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,.08));
+      color:var(--text);
+      text-decoration:none;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      box-shadow:0 16px 45px rgba(0,0,0,.35);
+      white-space:nowrap;
+    }
+    .navBtn:hover{filter:brightness(1.05)}
+    .navBtn:active{transform:translateY(1px)}
   </style>
 </head>
 <body>
   <section class="machine">
     <div class="header">
-      <div class="title">SLOT CLASSICA</div>
-      <div class="win"><div class="lbl">VINCITA</div><div class="val" id="lastWin">0000</div></div>
+      <div>
+        <div class="title">SLOT PREMI</div>
+        <div class="sub">Vinci solo con <b>3 carte uguali</b>.</div>
+      <a class="navBtn" href="https://pavoniingrifati.github.io/vetrina-carte/slot_premi" target="_blank" rel="noopener">Ruota dei Premii</a>
+      </div>
     </div>
 
     <div class="cabinet">
       <div class="reelBox">
-        <div class="marquee">LUCKY CARDS</div>
+        <div class="marquee">PRIZE SPIN</div>
         <div class="reels">
           <div class="window"><img class="img" id="reel0" alt="rullo 1"/><div class="payline"></div><div class="frame"></div></div>
           <div class="window"><img class="img" id="reel1" alt="rullo 2"/><div class="payline"></div><div class="frame"></div></div>
           <div class="window"><img class="img" id="reel2" alt="rullo 3"/><div class="payline"></div><div class="frame"></div></div>
         </div>
-        <div class="flash" id="flash" aria-hidden="true"><div class="banner" id="flashText">+60</div></div>
       </div>
 
       <div class="lever" id="lever">
@@ -99,72 +155,37 @@
         <button class="spinBtn" id="spinBtn">SPIN</button>
       </div>
     </div>
+
+    <div class="popup" id="popup" aria-hidden="true">
+      <div class="card">
+        <img class="thumb" id="prizeImg" alt="premio"/>
+        <div class="txt">
+          <h2 id="prizeName">Hai vinto!</h2>
+          <div class="pill" id="prizeRarity">RARITÀ</div>
+          <button class="ok" id="closeBtn">OK</button>
+        </div>
+      </div>
+    </div>
   </section>
 
 <script>
-const FIXED_SYMBOLS = [{"id": "Arthur-Morgan", "name": "Arthur Bronze", "rarityGroup": "Comune", "prize": 60, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/Arthur%20Morgan%20Bronze.png?raw=true"}, {"id": "Frazx0713", "name": "Frazx0713 Bronze", "rarityGroup": "Comune", "prize": 60, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/Frazx0713%20bronze.png?raw=true"}, {"id": "Nocera", "name": "Nocera Bronze", "rarityGroup": "Comune", "prize": 60, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/NOCERA%20GTA.png?raw=true"}, {"id": "Veledinovski", "name": "Veledinovski Bronze", "rarityGroup": "Comune", "prize": 60, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/Veledinovski%20Bronze.png?raw=true"}, {"id": "Edoardo", "name": "Edoardo  Bronze", "rarityGroup": "Comune", "prize": 60, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/Edoardo%20bronze.png?raw=true"}, {"id": "Ronny", "name": "Ronny Bronze", "rarityGroup": "Comune", "prize": 60, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/Ronny%20Bronze.png?raw=true"}, {"id": "Graziano", "name": "Graziano Bronze", "rarityGroup": "Comune", "prize": 60, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/Graziano.png?raw=true"}, {"id": "Marcoesmarco-Bronze", "name": "Marcoesmarco Bronze", "rarityGroup": "Comune", "prize": 60, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/Marcoesmarco.png?raw=true"}, {"id": "ElSpir1t", "name": "El Spirit Bronze", "rarityGroup": "Comune", "prize": 60, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/ElSpir1t%20bronze.png?raw=true"}, {"id": "Diegoal-bronze", "name": "Deigo Al Bronze", "rarityGroup": "Comune", "prize": 60, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/Diego%20al%20bronze.png?raw=true"}, {"id": "Damia-bronze", "name": "Damia Bronze", "rarityGroup": "Comune", "prize": 60, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/Damia%20bronze.png?raw=true"}, {"id": "Marca", "name": "Marca Bronze", "rarityGroup": "Comune", "prize": 60, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/marca%20(1).png?raw=true"}, {"id": "peps1zero-Gold", "name": "peps1zero Gold", "rarityGroup": "Non Comune", "prize": 140, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/peps1zero%20Gold.png?raw=true"}, {"id": "Flavio-gold", "name": "Flavio Gold", "rarityGroup": "Non Comune", "prize": 140, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/gold%20rare%20Flavio.png?raw=true"}, {"id": "Mattiagree-gold", "name": "Mattia Grr Gold", "rarityGroup": "Non Comune", "prize": 140, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main//Mattia%20grr%20gold.png?raw=true"}, {"id": "Solitario-Gold", "name": "Solitario Gold", "rarityGroup": "Non Comune", "prize": 140, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/Il%20solitario.png?raw=true"}, {"id": "Gigachad-Gold", "name": "Gigachad Gold", "rarityGroup": "Non Comune", "prize": 140, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/gigachad.png?raw=true"}, {"id": "Frank-TOTS12", "name": "Frank Tots12", "rarityGroup": "Rara", "prize": 260, "img": "img/Frank%20Tots12.png"}, {"id": "Attilo-Tots7", "name": "Accardi Tots7", "rarityGroup": "Rara", "prize": 260, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/Attilio%20tots7.png?raw=true"}, {"id": "Tore-Tots7", "name": "Tore Tots7", "rarityGroup": "Rara", "prize": 260, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/Tore%20tots7.png?raw=true"}, {"id": "Maks-Tots3", "name": "Maks Tots3", "rarityGroup": "Rara", "prize": 260, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/Maxx%20tots3.png?raw=true"}, {"id": "Balasco-Pokemon", "name": "Balasco Pokemon", "rarityGroup": "Epica", "prize": 420, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/bALASCO%20ev-3.png?raw=true"}, {"id": "Fiorin-Pokemon", "name": "Fiorin Pokemon", "rarityGroup": "Epica", "prize": 420, "img": "https://github.com/pavoniingrifati/vetrina-carte/blob/main/Bruno%20Fiorin%20Ev3.png?raw=true"}, {"id": "Fork-Hall", "name": "Fork Hall of Fame", "rarityGroup": "Leggendaria", "prize": 1000, "img": "img/Fork%20hall.png"}];
+const SYMBOLS = [{"id": "bronzo", "name": "Pacchetto bronzo", "rarity": "Comune", "img": "Deck%20back%20bronzo.png", "weight": 50}, {"id": "silver", "name": "Pacchetto silver", "rarity": "Comune", "img": "Deck%20back%20argento.png", "weight": 50}, {"id": "cosmetic", "name": "Cosmetic", "rarity": "Comune", "img": "Deck%20back%20cosmetic.png", "weight": 50}, {"id": "patatine", "name": "Patatine", "rarity": "Comune", "img": "Patatine.png", "weight": 50}, {"id": "gold", "name": "Pacchetto Gold", "rarity": "Non comune", "img": "Deck%20back%20ORO.png", "weight": 12}, {"id": "tots", "name": "Pacchetto Tots", "rarity": "Raro", "img": "Deck%20back%20Tots.png", "weight": 6}, {"id": "mese", "name": "Pacco del mese", "rarity": "Raro", "img": "Deck%20back%20wonderkid.png", "weight": 6}, {"id": "legend", "name": "Pacchetto Legend", "rarity": "Leggendario", "img": "Back%20legend.png", "weight": 1}];
 
-// --- SUONI DEFAULT (Web Audio API) ---
-let audioCtx = null;
-function ensureAudio(){
-  if (!audioCtx){
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    audioCtx = Ctx ? new Ctx() : null;
-  }
-  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
-  return audioCtx;
-}
-function tone({freq=440, type='sine', duration=0.08, gain=0.12, sweepTo=null} = {}){
-  const ctx = ensureAudio(); if (!ctx) return;
-  const now = ctx.currentTime;
-  const o = ctx.createOscillator(); const g = ctx.createGain();
-  o.type = type; o.frequency.setValueAtTime(freq, now);
-  if (sweepTo != null) o.frequency.exponentialRampToValueAtTime(Math.max(1, sweepTo), now + duration);
-  g.gain.setValueAtTime(0.0001, now);
-  g.gain.exponentialRampToValueAtTime(gain, now + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-  o.connect(g); g.connect(ctx.destination);
-  o.start(now); o.stop(now + duration + 0.02);
-}
-function playSpinStart(){ tone({freq:220, type:'sawtooth', duration:0.18, gain:0.10, sweepTo:70}); }
-function playReelStop(){ tone({freq:900, type:'square', duration:0.035, gain:0.08, sweepTo:650}); }
-function playWin(){ const ctx = ensureAudio(); if (!ctx) return;
-  const notes = [523.25, 659.25, 783.99];
-  notes.forEach((f,i)=>setTimeout(()=>tone({freq:f, type:'triangle', duration:0.11, gain:0.10}), i*95));
-}
-function playLose(){ tone({freq:140, type:'triangle', duration:0.12, gain:0.10, sweepTo:95}); }
-
-// --- STATE ---
 const STATE = {
-  symbols: FIXED_SYMBOLS,
-  spinning: false,
-  lastWin: 0
+  spinning: false
 };
 
 const $ = (s)=>document.querySelector(s);
 const reels = [$('#reel0'), $('#reel1'), $('#reel2')];
 
-function pad4(n){ const s=String(Math.max(0, Math.floor(n||0))); return s.padStart(4,'0').slice(-4); }
-function setDisplay(){ $('#lastWin').textContent = pad4(STATE.lastWin); }
-
-function pickSymbol(){ 
-  const a = STATE.symbols;
-  return a[Math.floor(Math.random()*a.length)];
-}
-
-function flash(text){
-  const f = $('#flash'); const txt = $('#flashText');
-  txt.textContent = text;
-  f.classList.add('show'); f.setAttribute('aria-hidden','false');
-  setTimeout(()=>{ f.classList.remove('show'); f.setAttribute('aria-hidden','true'); }, 850);
-}
-
-function preloadSymbols(symbols){
-  const unique = new Map();
-  for (const s of symbols) unique.set(s.img, true);
-  for (const url of unique.keys()) {
-    const im = new Image(); im.decoding = 'async'; im.src = url;
+function pickSymbol(){
+  const total = SYMBOLS.reduce((a,s)=>a + (Number(s.weight)||0), 0);
+  let r = Math.random() * (total || 1);
+  for (const s of SYMBOLS){
+    r -= (Number(s.weight)||0);
+    if (r <= 0) return s;
   }
+  return SYMBOLS[SYMBOLS.length - 1];
 }
 
 function sameSymbol(a,b,c){
@@ -174,74 +195,62 @@ function sameSymbol(a,b,c){
   return Boolean(ida) && ida===idb && idb===idc;
 }
 
-function sameRarity(a,b,c){
-  const ra = a.rarityGroup || '';
-  const rb = b.rarityGroup || '';
-  const rc = c.rarityGroup || '';
-  return ra && ra === rb && rb === rc;
+function preloadSymbols(){
+  const seen = new Set();
+  for (const s of SYMBOLS){
+    if (seen.has(s.img)) continue;
+    seen.add(s.img);
+    const im = new Image();
+    im.decoding = 'async';
+    im.src = s.img;
+    // if missing, fallback to placeholder
+    im.onerror = ()=>{};
+  }
 }
 
-// Premio se escono 3 carte della STESSA rarità (ma NON tutte uguali)
-const RARITY_MATCH_PRIZE = {
-  'Comune': 20,
-  'Non Comune': 50,
-  'Rara': 90,
-  'Epica': 150,
-  'Leggendaria': 250
-};
+function showPrize(sym){
+  $('#prizeImg').src = sym.img || '';
+  $('#prizeName').textContent = sym.name || 'Premio';
+  $('#prizeRarity').textContent = String(sym.rarity || '').toUpperCase();
+  const p = $('#popup');
+  p.classList.add('show');
+  p.setAttribute('aria-hidden','false');
+}
 
-function rarityPrize(r){
-  return RARITY_MATCH_PRIZE[r] ?? 50;
+function hidePrize(){
+  const p = $('#popup');
+  p.classList.remove('show');
+  p.setAttribute('aria-hidden','true');
 }
 
 async function spin(){
   if (STATE.spinning) return;
-  if (STATE.symbols.length < 3) return;
-
   STATE.spinning = true;
   $('#spinBtn').disabled = true;
 
   const lever = $('#lever');
   lever.classList.add('pull');
-  playSpinStart();
 
   const final = [pickSymbol(), pickSymbol(), pickSymbol()];
 
-  const durations = [900, 1200, 1500];
-  const intervalMs = 65;
+  // fast classic spin animation: swap src quickly, then stop one by one
+  const durations = [850, 1150, 1450];
+  const intervalMs = 70;
 
-  const timers = reels.map((imgEl)=>{
-    return setInterval(()=>{ imgEl.src = pickSymbol().img; }, intervalMs);
-  });
+  const timers = reels.map((imgEl)=> setInterval(()=>{ imgEl.src = pickSymbol().img; }, intervalMs));
 
   durations.forEach((d, idx)=>{
     setTimeout(()=>{
       clearInterval(timers[idx]);
       reels[idx].src = final[idx].img;
-      playReelStop();
 
       if (idx === 2) {
         lever.classList.remove('pull');
-        let win = 0;
 
-// 1) Jackpot: 3 carte uguali (stessa carta) -> premio pieno (60..1000)
-if (sameSymbol(final[0], final[1], final[2])) {
-  win = (final[0].prize || 60);
-}
-// 2) Consolazione: 3 carte della stessa rarità -> premio ridotto
-else if (sameRarity(final[0], final[1], final[2])) {
-  win = rarityPrize(final[0].rarityGroup);
-}
-        STATE.lastWin = win;
-        setDisplay();
-        if (win > 0) {
-          const isJackpot = sameSymbol(final[0], final[1], final[2]);
-          flash((isJackpot ? 'JACKPOT +' : '+') + win);
-          playWin();
-        } else {
-          flash('NO WIN');
-          playLose();
+        if (sameSymbol(final[0], final[1], final[2])) {
+          showPrize(final[0]);
         }
+
         STATE.spinning = false;
         $('#spinBtn').disabled = false;
       }
@@ -254,13 +263,18 @@ function wire(){
   $('#lever').addEventListener('click', (e)=>{
     if (e.target && (e.target.id==='lever' || e.target.classList.contains('rail') || e.target.classList.contains('knob'))) spin();
   });
+  $('#closeBtn').addEventListener('click', hidePrize);
+  $('#popup').addEventListener('click', (e)=>{ if (e.target && e.target.id==='popup') hidePrize(); });
 }
 
 wire();
-setDisplay();
+
+// init visuals
 const init = [pickSymbol(), pickSymbol(), pickSymbol()];
 reels.forEach((img,i)=> img.src = init[i].img);
-preloadSymbols(STATE.symbols);
+
+// preload
+preloadSymbols();
 </script>
 </body>
 </html>
