@@ -174,6 +174,26 @@ function sameSymbol(a,b,c){
   return Boolean(ida) && ida===idb && idb===idc;
 }
 
+function sameRarity(a,b,c){
+  const ra = a.rarityGroup || '';
+  const rb = b.rarityGroup || '';
+  const rc = c.rarityGroup || '';
+  return ra && ra === rb && rb === rc;
+}
+
+// Premio se escono 3 carte della STESSA rarità (ma NON tutte uguali)
+const RARITY_MATCH_PRIZE = {
+  'Comune': 20,
+  'Non Comune': 50,
+  'Rara': 90,
+  'Epica': 150,
+  'Leggendaria': 250
+};
+
+function rarityPrize(r){
+  return RARITY_MATCH_PRIZE[r] ?? 50;
+}
+
 async function spin(){
   if (STATE.spinning) return;
   if (STATE.symbols.length < 3) return;
@@ -202,11 +222,26 @@ async function spin(){
 
       if (idx === 2) {
         lever.classList.remove('pull');
-        const win = sameSymbol(final[0], final[1], final[2]) ? (final[0].prize || 60) : 0;
+        let win = 0;
+
+// 1) Jackpot: 3 carte uguali (stessa carta) -> premio pieno (60..1000)
+if (sameSymbol(final[0], final[1], final[2])) {
+  win = (final[0].prize || 60);
+}
+// 2) Consolazione: 3 carte della stessa rarità -> premio ridotto
+else if (sameRarity(final[0], final[1], final[2])) {
+  win = rarityPrize(final[0].rarityGroup);
+}
         STATE.lastWin = win;
         setDisplay();
-        if (win > 0) { flash('+' + win); playWin(); }
-        else { flash('NO WIN'); playLose(); }
+        if (win > 0) {
+          const isJackpot = sameSymbol(final[0], final[1], final[2]);
+          flash((isJackpot ? 'JACKPOT +' : '+') + win);
+          playWin();
+        } else {
+          flash('NO WIN');
+          playLose();
+        }
         STATE.spinning = false;
         $('#spinBtn').disabled = false;
       }
