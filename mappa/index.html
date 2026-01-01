@@ -6,9 +6,13 @@
 <title>Mappa Fantaballa</title>
 
 <style>
+:root{
+  --bg:#0e1622;
+  --shadow: 0 25px 60px rgba(0,0,0,.45);
+}
 body{
   margin:0;
-  background:#0e1622;
+  background:var(--bg);
   font-family:system-ui, -apple-system, Segoe UI, Roboto;
 }
 
@@ -23,12 +27,14 @@ body{
   width:100%;
   border-radius:20px;
   overflow:hidden;
-  box-shadow:0 25px 60px rgba(0,0,0,.4);
+  box-shadow: var(--shadow);
 }
 
 .map img{
   width:100%;
   display:block;
+  user-select:none;
+  -webkit-user-drag:none;
 }
 
 /* ---- HOTSPOT ---- */
@@ -36,7 +42,7 @@ body{
   position:absolute;
   border-radius:18px;
   cursor:pointer;
-  transition:.2s;
+  transition:.18s ease;
 }
 
 /* attiva questo per vedere le aree mentre sistemi */
@@ -48,74 +54,57 @@ body{
 */
 
 .hotspot:hover{
-  box-shadow:0 0 0 4px rgba(255,255,255,.4),
-             0 15px 40px rgba(0,0,0,.5);
+  box-shadow:
+    0 0 0 4px rgba(255,255,255,.35),
+    0 15px 40px rgba(0,0,0,.55);
 }
 
-/* POSIZIONI (percentuali) */
-
-/* STADIO */
-.stadio{
-  left:64%;
-  top:27%;
-  width:28%;
-  height:30%;
+/* Bottone HOME (in alto a sinistra) */
+.home-btn{
+  position:absolute;
+  left: 1.8%;
+  top: 2.6%;
+  width: 5.2%;
+  aspect-ratio: 1/1;
+  border-radius: 14px;
+  display:block;
+  cursor:pointer;
+  transition:.18s ease;
+}
+.home-btn:hover{
+  box-shadow:
+    0 0 0 4px rgba(255,255,255,.35),
+    0 15px 40px rgba(0,0,0,.55);
 }
 
-/* UFFICI */
-.uffici{
-  left:38%;
-  top:24%;
-  width:18%;
-  height:18%;
-}
+/* --- POSIZIONI (percentuali) - tarate su questa mappa --- */
+/* PISTA F1 (etichetta grande in alto a sinistra) */
+.f1{ left:2.5%; top:2.5%; width:28%; height:17%; border-radius:12px; }
 
-/* CASINO 1 */
-.casino1{
-  left:12%;
-  top:30%;
-  width:22%;
-  height:26%;
-}
+/* UFFICI (etichetta centrale in alto) */
+.uffici{ left:40.5%; top:17.5%; width:18%; height:12%; border-radius:12px; }
 
-/* CASINO 2 */
-.casino2{
-  left:68%;
-  top:58%;
-  width:22%;
-  height:25%;
-}
+/* STADIO (etichetta sullo stadio in basso a destra) */
+.stadio{ left:69%; top:40.5%; width:28%; height:16%; border-radius:12px; }
 
-/* MONDO CARTE */
-.carte{
-  left:12%;
-  top:60%;
-  width:24%;
-  height:26%;
-}
+/* CASINO 1 (edificio in alto a sinistra al centro + etichetta casinò grande sotto) */
+.casino1{ left:18%; top:33%; width:24%; height:30%; }
 
-/* SEDE FANTABALLA */
-.fantaballa{
-  left:42%;
-  top:55%;
-  width:18%;
-  height:20%;
-}
+/* CASINO 2 (casinò "premi" in basso a destra) */
+.casino2{ left:70%; top:60.5%; width:27%; height:28%; }
 
-/* SEDE GOTHAM */
-.gotham{
-  left:28%;
-  top:18%;
-  width:14%;
-  height:16%;
-}
+/* IL MONDO DELLE CARTE (etichetta in basso a sinistra) */
+.carte{ left:2.5%; top:74%; width:33%; height:14%; border-radius:12px; }
 
-/* PISTA F1 */
-.f1{
-  left:52%;
-  top:10%;
-  width:28%;
-  height:16%;
+/* SEDE FANTABALLA (etichetta al centro in basso) */
+.fantaballa{ left:40%; top:63.5%; width:28%; height:14%; border-radius:12px; }
+
+/* SEDE GOTHAM (etichetta in basso a destra) */
+.gotham{ left:62%; top:83%; width:35%; height:14%; border-radius:12px; }
+
+@media (max-width: 700px){
+  .wrapper{padding:12px}
+  .map{border-radius:16px}
 }
 </style>
 </head>
@@ -126,30 +115,38 @@ body{
 
     <img src="mappa.png" alt="Mappa Fantaballa">
 
-    <!-- STADIO -->
-    <a class="hotspot stadio"
-       href="../partite/"
-       title="Stadio - Partite"></a>
+    <!-- HOME: torna alla vetrina -->
+    <a class="home-btn" href="../" title="Torna alla vetrina" aria-label="Home"></a>
+
+    <!-- PISTA F1 -->
+    <a class="hotspot f1"
+       href="../f1home"
+       title="Pista F1"></a>
 
     <!-- UFFICI -->
     <a class="hotspot uffici"
        href="../partite/"
        title="Uffici"></a>
 
+    <!-- STADIO -->
+    <a class="hotspot stadio"
+       href="../partite/"
+       title="Stadio - Partite"></a>
+
     <!-- CASINO 1 -->
     <a class="hotspot casino1"
        href="../slot/"
-       title="Casinò"></a>
+       title="Casinò 1 - Slot"></a>
 
     <!-- CASINO 2 -->
     <a class="hotspot casino2"
        href="../slot_premi/"
-       title="Casinò Premi"></a>
+       title="Casinò 2 - Premi"></a>
 
     <!-- MONDO CARTE -->
     <a class="hotspot carte"
        href="../"
-       title="Mondo delle Carte"></a>
+       title="Il mondo delle carte"></a>
 
     <!-- SEDE FANTABALLA -->
     <a class="hotspot fantaballa"
@@ -160,11 +157,6 @@ body{
     <a class="hotspot gotham"
        href="../FUTTU.html"
        title="Sede Gotham"></a>
-
-    <!-- F1 -->
-    <a class="hotspot f1"
-       href="../f1home"
-       title="Pista F1"></a>
 
   </div>
 </div>
