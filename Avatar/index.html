@@ -3,40 +3,41 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Avatar FBX — Spogliatoio (Animazioni)</title>
+  <title>Avatar GLB — Animazioni</title>
   <style>
-  html, body{
-  height: 100%;
-  margin: 0;
-  background-color:#0b0f17;
-  background-image:
-    radial-gradient(900px 500px at 50% 20%, rgba(0,0,0,0.15), rgba(0,0,0,0.75)),
-    url("./bg.webp");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-}
-    
-
-    #app { height: 100%; width: 100%; position: relative; overflow: hidden; }
-    #app::before {
-      content: "";
-      position: absolute; inset: 0;
-      background: radial-gradient(800px 500px at 50% 35%, rgba(0,0,0,0.15), rgba(0,0,0,0.55));
-      pointer-events: none;
-      z-index: 1;
+    html, body{
+      height:100%;
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:#e6e6e6;
+      background-color:#0b0f17;
+      /* Se metti bg.webp nella stessa cartella, viene usata come sfondo realistico */
+      background-image:
+        radial-gradient(900px 500px at 50% 20%, rgba(0,0,0,0.15), rgba(0,0,0,0.78)),
+        url("./bg.webp");
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
+      background-attachment:fixed;
     }
-    canvas { display: block; position: relative; z-index: 2; }
-
-    #hud {
-      position: absolute; left: 12px; top: 12px; right: 12px;
-      display: flex; gap: 10px; align-items: flex-start; justify-content: space-between;
-      pointer-events: none;
-      z-index: 3;
+    #app{ height:100%; width:100%; position:relative; overflow:hidden; }
+    #app::before{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(900px 600px at 50% 35%, rgba(0,0,0,.08), rgba(0,0,0,.62));
+      pointer-events:none;
+      z-index:1;
     }
-    .badge {
-      pointer-events: auto;
+    canvas{ display:block; position:relative; z-index:2; }
+
+    #hud{
+      position:absolute; left:12px; top:12px; right:12px;
+      display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
+      pointer-events:none;
+      z-index:3;
+    }
+    .badge{
+      pointer-events:auto;
       background: rgba(0,0,0,0.35);
       border: 1px solid rgba(255,255,255,0.14);
       backdrop-filter: blur(6px);
@@ -45,79 +46,49 @@
       font-size: 13px;
       line-height: 1.2;
     }
-    #controlsRow {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
+    #controlsRow{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
       margin-top: 8px;
     }
-    button {
-      appearance: none;
-      border: 1px solid rgba(255,255,255,0.18);
+    button{
+      appearance:none;
+      border:1px solid rgba(255,255,255,0.18);
       background: rgba(255,255,255,0.10);
-      color: #e6e6e6;
-      padding: 7px 10px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
+      color:#e6e6e6;
+      padding:7px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
     }
-    button:hover { background: rgba(255,255,255,0.14); }
-    button:active { transform: translateY(1px); }
-    select {
+    button:hover{ background: rgba(255,255,255,0.14); }
+    button:active{ transform: translateY(1px); }
+    select{
       background: rgba(255,255,255,0.10);
-      color: #e6e6e6;
-      border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 10px;
-      padding: 7px 10px;
+      color:#e6e6e6;
+      border:1px solid rgba(255,255,255,0.18);
+      border-radius:10px;
+      padding:7px 10px;
     }
-    #loading {
-      position: absolute; inset: 0; display: grid; place-items: center;
-      z-index: 3;
+    #loading{
+      position:absolute; inset:0;
+      display:grid;
+      place-items:center;
+      z-index:3;
     }
-    .spinner {
-      width: 26px; height: 26px; border-radius: 50%;
-      border: 3px solid rgba(255,255,255,0.18);
+    .spinner{
+      width:26px; height:26px; border-radius:50%;
+      border:3px solid rgba(255,255,255,0.18);
       border-top-color: rgba(255,255,255,0.9);
-      animation: spin 0.9s linear infinite;
-      margin-right: 10px;
+      animation:spin .9s linear infinite;
+      margin-right:10px;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    #loadingRow { display: flex; align-items: center; gap: 10px; }
-    #err { white-space: pre-wrap; color: #ffb3b3; max-width: 900px; padding: 14px; }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
-    .cta{
-  position: absolute;
-  left: 50%;
-  bottom: 22px;
-  transform: translateX(-50%);
-  z-index: 4;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 12px 18px;
-  border-radius: 999px;
-  text-decoration: none;
-  font-weight: 800;
-  letter-spacing: .2px;
-
-  color: #0b0f17;
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(255,255,255,0.65);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-}
-
-.cta:hover{
-  background: rgba(255,255,255,1);
-  transform: translateX(-50%) translateY(-1px);
-}
-
-.cta:active{
-  transform: translateX(-50%) translateY(1px);
-}
-
+    @keyframes spin{ to{ transform:rotate(360deg);} }
+    #loadingRow{ display:flex; align-items:center; gap:10px; }
+    #err{ white-space:pre-wrap; color:#ffb3b3; max-width:900px; padding:14px; }
+    code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
   </style>
 
   <script type="importmap">
@@ -132,12 +103,11 @@
 
 <body>
   <div id="app">
-    <a class="cta" href="https://pavoniingrifati.github.io/vetrina-carte/mappa/" aria-label="Vai in Città">Vai in Città</a>
-
     <div id="hud">
-      <div class="badge" style="max-width: 720px;">
+      <div class="badge" style="max-width: 760px;">
         <div><b>Controlli camera</b>: trascina = ruota • rotellina = zoom • tasto destro = pan</div>
-        <div style="opacity:.85; margin-top: 6px;">File: <code>model.fbx</code> (stessa cartella di questo HTML)</div>
+        <div style="opacity:.85; margin-top: 6px;">File: <code>model.glb</code> (stessa cartella di questo HTML)</div>
+
         <div id="controlsRow">
           <label style="display:flex; gap:8px; align-items:center;">
             <span style="opacity:.9;">Animazione</span>
@@ -148,6 +118,10 @@
           <button id="playBtn" disabled>Play</button>
           <button id="onceBtn" disabled>Play (una volta)</button>
           <button id="stopBtn" disabled>Stop</button>
+        </div>
+
+        <div style="opacity:.7; margin-top: 6px;">
+          Tip: aggiungi <code>bg.webp</code> qui accanto per uno sfondo foto.
         </div>
       </div>
 
@@ -168,7 +142,7 @@
   <script type="module">
     import * as THREE from "three";
     import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-    import { FBXLoader } from "three/addons/loaders/FBXLoader.js";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
     const app = document.getElementById("app");
     const loadingEl = document.getElementById("loading");
@@ -192,7 +166,7 @@
     const camera = new THREE.PerspectiveCamera(50, app.clientWidth / app.clientHeight, 0.01, 5000);
     camera.position.set(0.8, 0.6, 1.4);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.60));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.58));
     const key = new THREE.DirectionalLight(0xffffff, 1.10);
     key.position.set(2.5, 4.5, 2.0);
     scene.add(key);
@@ -208,11 +182,12 @@
     controls.dampingFactor = 0.06;
     controls.target.set(0, 0, 0);
 
-    const loader = new FBXLoader();
-    const url = "./model.fbx";
+    const loader = new GLTFLoader();
+    const url = "./model.glb";
 
     let model = null;
     let mixer = null;
+    let clips = [];
     let actions = [];
     let activeAction = null;
 
@@ -222,12 +197,12 @@
       pre.id = "err";
       pre.className = "badge";
       pre.textContent =
-        "Errore nel caricare il modello FBX.\n\n" +
+        "Errore nel caricare il modello GLB.\n\n" +
         String(err) +
         "\n\nSuggerimenti:\n" +
-        "• Assicurati che 'model.fbx' sia nella stessa cartella di questo HTML.\n" +
+        "• Assicurati che 'model.glb' sia nella stessa cartella di questo HTML.\n" +
         "• Controlla maiuscole/minuscole nel nome file.\n" +
-        "• Se il FBX è enorme, prova a esportarlo di nuovo (Binary) o convertilo in GLB.";
+        "• Su GitHub Pages: verifica che il file sia nella sorgente pubblicata.";
       loadingEl.appendChild(pre);
       loadingEl.style.display = "grid";
     }
@@ -241,13 +216,10 @@
 
     function setActiveAction(index, { loop = THREE.LoopRepeat, clampWhenFinished = false } = {}) {
       if (!actions.length) return;
-
       const next = actions[index];
       if (!next) return;
 
-      if (activeAction && activeAction !== next) {
-        activeAction.fadeOut(0.2);
-      }
+      if (activeAction && activeAction !== next) activeAction.fadeOut(0.2);
 
       next.reset();
       next.setLoop(loop, loop === THREE.LoopOnce ? 1 : Infinity);
@@ -261,16 +233,9 @@
 
     loader.load(
       url,
-      (fbx) => {
-        model = fbx;
+      (gltf) => {
+        model = gltf.scene;
         avatarRig.add(model);
-
-        model.traverse((obj) => {
-          if (obj.isMesh) {
-            obj.castShadow = false;
-            obj.receiveShadow = false;
-          }
-        });
 
         const box = new THREE.Box3().setFromObject(model);
         const size = box.getSize(new THREE.Vector3());
@@ -281,6 +246,7 @@
         const fov = camera.fov * (Math.PI / 180);
         let camZ = (maxDim / 2) / Math.tan(fov / 2);
         camZ *= 1.65;
+
         camera.position.set(0, maxDim * 0.25, camZ);
         camera.near = Math.max(0.01, maxDim / 100);
         camera.far = maxDim * 60;
@@ -289,8 +255,8 @@
         controls.target.set(0, 0, 0);
         controls.update();
 
-        const clips = (fbx.animations && fbx.animations.length) ? fbx.animations : [];
-        statsEl.textContent = `Dimensione ~ ${maxDim.toFixed(2)} • Animazioni: ${clips.length || 0}`;
+        clips = gltf.animations || [];
+        statsEl.textContent = `Dimensione ~ ${maxDim.toFixed(2)} • Animazioni: ${clips.length}`;
 
         if (clips.length) {
           mixer = new THREE.AnimationMixer(model);
@@ -300,15 +266,17 @@
           clips.forEach((clip, i) => {
             const opt = document.createElement("option");
             opt.value = String(i);
-            opt.textContent = clip.name ? `${i+1}) ${clip.name}` : `${i+1}) Clip`;
+            opt.textContent = clip.name ? `${i + 1}) ${clip.name}` : `${i + 1}) Clip`;
             clipSelect.appendChild(opt);
           });
 
           enableUI();
-          setActiveAction(0); // auto-play prima animazione
+
+          const idleIndex = clips.findIndex(c => (c.name || "").toLowerCase().includes("idle"));
+          setActiveAction(idleIndex >= 0 ? idleIndex : 0);
         } else {
           clipSelect.innerHTML = "<option>Nessuna animazione</option>";
-          statsEl.textContent += " • (idle procedurale)";
+          statsEl.textContent += " • (solo idle procedurale)";
         }
 
         loadingEl.style.display = "none";
@@ -328,7 +296,7 @@
 
     clipSelect.addEventListener("change", () => {
       const idx = Number(clipSelect.value);
-      setActiveAction(idx);
+      setActiveAction(idx, { loop: THREE.LoopRepeat, clampWhenFinished: false });
     });
 
     playBtn.addEventListener("click", () => {
@@ -365,10 +333,11 @@
       const dt = clock.getDelta();
       if (mixer) mixer.update(dt);
 
+      // micro-idle costante (commenta se non lo vuoi)
       const t = clock.elapsedTime;
-      avatarRig.position.y = Math.sin(t * 1.2) * 0.008;
-      avatarRig.rotation.y = Math.sin(t * 0.6) * 0.05;
-      avatarRig.rotation.x = Math.sin(t * 0.9) * 0.015;
+      avatarRig.position.y = Math.sin(t * 1.2) * 0.006;
+      avatarRig.rotation.y = Math.sin(t * 0.6) * 0.035;
+      avatarRig.rotation.x = Math.sin(t * 0.9) * 0.012;
 
       renderer.render(scene, camera);
     }
