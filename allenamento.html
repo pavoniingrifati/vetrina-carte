@@ -196,10 +196,7 @@
           L’allenamento si conclude <b>solo quando il video arriva alla fine</b>.
         </p>
 
-<button id="btnAllenati"
-        class="btn"
-        type="button"
-        data-goatcounter-click="click_allenati">
+<button id="btnAllenati" class="btn" type="button">
   🏃‍♂️ Allenati
 </button>
 
@@ -399,11 +396,12 @@ function completeTraining(){
 
   // ✅ TRACK: completamento allenamento
   if (window.goatcounter && window.goatcounter.count) {
-    window.goatcounter.count({
-      path: "allenamento_completato",
-      title: "Allenamento completato",
-      event: true
-    });
+   window.goatcounter.count({
+  path: "allenamento_completato",
+  title: "Allenamento completato",
+  event: true,
+  referrer: "session_" + Date.now()
+});
   }
 
   showToast(`Allenamento completato! +1 💎 (Totale: ${d})`);
@@ -420,13 +418,20 @@ function completeTraining(){
     loadLast();
     setLocked(true);
 
-    btnAllenati.addEventListener("click", () => {
-      beginTraining();
-
-      // Se in futuro vuoi analytics:
-      // window.plausible?.("click_allenati");
-      // gtag?.("event", "click_allenati");
+   btnAllenati.addEventListener("click", () => {
+  // ✅ TRACK click (sempre contato)
+  if (window.goatcounter && window.goatcounter.count) {
+    window.goatcounter.count({
+      path: "click_allenati",
+      title: "Allenati",
+      event: true,
+      referrer: "session_" + Date.now()
     });
+  }
+
+  beginTraining();
+});
+
 
     btnReset.addEventListener("click", () => {
       localStorage.removeItem(LS_KEY);
