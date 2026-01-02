@@ -171,6 +171,95 @@
       display:none;
       z-index: 99;
     }
+  
+    /* ===== Game/UI upgrades ===== */
+    body::before{
+      content:"";
+      position:fixed; inset:-40vh -40vw;
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(110,231,255,.12), transparent 60%),
+        radial-gradient(900px 500px at 90% 30%, rgba(160,110,255,.10), transparent 55%),
+        radial-gradient(700px 420px at 40% 110%, rgba(120,255,180,.08), transparent 60%);
+      filter: blur(0px);
+      animation: drift 10s ease-in-out infinite alternate;
+      pointer-events:none;
+      z-index:-1;
+    }
+    @keyframes drift{
+      from{ transform: translate3d(-1.5%, -1.5%, 0) scale(1.02); opacity:.9; }
+      to{ transform: translate3d(1.5%, 1.5%, 0) scale(1.06); opacity:1; }
+    }
+
+    .statusBadge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:9px 11px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.03);
+      font-size:13px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.35);
+    }
+    .statusBadge[data-s="idle"]{ opacity:.9; }
+    .statusBadge[data-s="loading"]{ border-color: rgba(255,255,255,.22); }
+    .statusBadge[data-s="playing"]{
+      border-color: rgba(110,231,255,.45);
+      background: rgba(110,231,255,.10);
+      box-shadow: 0 0 0 1px rgba(110,231,255,.10), 0 0 22px rgba(110,231,255,.18);
+    }
+    .statusBadge[data-s="paused"]{
+      border-color: rgba(255,255,255,.18);
+      background: rgba(255,255,255,.05);
+    }
+    .statusBadge[data-s="ended"]{
+      border-color: rgba(120,255,180,.45);
+      background: rgba(120,255,180,.10);
+      box-shadow: 0 0 0 1px rgba(120,255,180,.10), 0 0 22px rgba(120,255,180,.14);
+    }
+
+    .btn{
+      position: relative;
+      overflow:hidden;
+    }
+    .btn::after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: radial-gradient(circle at 30% 30%, rgba(110,231,255,.25), transparent 45%);
+      transform: rotate(12deg);
+      opacity:.35;
+      pointer-events:none;
+    }
+    .btn.pulse{
+      animation: pulse 1.35s ease-in-out infinite;
+    }
+    @keyframes pulse{
+      0%,100%{ box-shadow: 0 0 0 rgba(110,231,255,0); transform: translateY(0); }
+      50%{ box-shadow: 0 0 26px rgba(110,231,255,.20); transform: translateY(-1px); }
+    }
+
+    .bar > div{
+      box-shadow: 0 0 18px rgba(110,231,255,.35);
+    }
+    .pop{ animation: pop .22s ease; }
+    @keyframes pop{
+      from{ transform: scale(1); }
+      50%{ transform: scale(1.16); }
+      to{ transform: scale(1); }
+    }
+
+    @media(max-width: 899px){
+      .ctaBar{
+        position: fixed;
+        left: 0; right: 0;
+        bottom: 0;
+        padding: 12px 12px calc(12px + var(--safe-bottom));
+        background: linear-gradient(0deg, rgba(11,15,25,.92), rgba(11,15,25,.55));
+        border-top: 1px solid rgba(255,255,255,.06);
+        z-index: 50;
+      }
+      .ctaBar .btn{ max-width: 980px; margin: 0 auto; }
+      /* hide the empty card space where the CTA was */
+      .ctaSpacer{ height: 64px; }
+    }
+
   </style>
 </head>
 
@@ -197,9 +286,12 @@
           L’allenamento si conclude <b>solo quando il video arriva alla fine</b>.
         </p>
 
+<div class="ctaBar">
 <button id="btnAllenati" class="btn" type="button">
   🏃‍♂️ Allenati
 </button>
+</div>
+<div class="ctaSpacer" aria-hidden="true"></div>
 
         <div class="diamonds">
           <span class="pill">Diamanti squadra: <span id="diamonds" class="diamondCount">0</span> 💎</span>
@@ -213,7 +305,7 @@
       <div class="playerTop">
         <div>
           <div style="font-weight:800;">Player</div>
-          <div id="status" class="muted" style="font-size:13px;">Premi “Allenati” per iniziare.</div>
+          <div id="status" class="statusBadge" data-s="idle">Premi “Allenati” per iniziare.</div>
         </div>
         <span class="pill" id="lockPill">🔒 Completamento bloccato</span>
       </div>
@@ -227,6 +319,7 @@
         <div class="timeRow">
           <span id="tNow">0:00</span>
           <span id="tTot">0:00</span>
+          <span id="pct">0%</span>
         </div>
       </div>
     </section>
@@ -261,6 +354,7 @@
     const barFill = $("#barFill");
     const tNow = $("#tNow");
     const tTot = $("#tTot");
+    const pctEl = $("#pct");
     const toast = $("#toast");
 
     function fmtTime(sec){
@@ -316,8 +410,11 @@
       barFill.style.width = "0%";
       tNow.textContent = "0:00";
       tTot.textContent = "0:00";
+      if(pctEl) pctEl.textContent = "0%";
+      statusEl.dataset.s = "idle";
       statusEl.textContent = "Premi “Allenati” per iniziare.";
       setLocked(true);
+    btnAllenati.classList.add("pulse");
     }
 
     function startTick(){
@@ -331,6 +428,7 @@
           barFill.style.width = pct.toFixed(2) + "%";
           tNow.textContent = fmtTime(cur);
           tTot.textContent = fmtTime(dur);
+          if(pctEl) pctEl.textContent = Math.round(pct) + "%";
         }
       }, 250);
     }
@@ -354,15 +452,18 @@
           onStateChange: (e) => {
             // 1 = playing, 2 = paused, 0 = ended
             if(e.data === YT.PlayerState.PLAYING){
-              statusEl.textContent = trainingStarted ? "Allenamento in corso… guarda fino alla fine! 💪" : "Riproduzione…";
+              statusEl.dataset.s = "playing";
+              statusEl.textContent = trainingStarted ? "🔥 Allenamento in corso… guarda fino alla fine!" : "Riproduzione…";
               startTick();
             }
             if(e.data === YT.PlayerState.PAUSED){
-              statusEl.textContent = "In pausa. Puoi riprendere quando vuoi.";
+              statusEl.dataset.s = "paused";
+              statusEl.textContent = "⏸️ In pausa. Puoi riprendere quando vuoi.";
             }
             if(e.data === YT.PlayerState.ENDED){
               stopTick();
-              statusEl.textContent = "Video terminato ✅ Allenamento completato!";
+              statusEl.dataset.s = "ended";
+              statusEl.textContent = "✅ Video terminato — Allenamento completato!";
               canComplete = true;
               setLocked(false);
               completeTraining();
@@ -377,7 +478,9 @@
       trainingStarted = true;
       canComplete = false;
       setLocked(true);
-      statusEl.textContent = "Carico il video…";
+      statusEl.dataset.s = "loading";
+      statusEl.textContent = "⏳ Carico il video…";
+      btnAllenati.classList.remove("pulse");
       // riparti dall’inizio (se lo rivedono, fa comunque un nuovo allenamento)
       player.seekTo(0, true);
       player.playVideo();
@@ -392,6 +495,9 @@ function completeTraining(){
   const ts = Date.now();
   const d = getDiamonds() + 1;
   setDiamonds(d);
+      diamondsEl.classList.remove("pop");
+      void diamondsEl.offsetWidth;
+      diamondsEl.classList.add("pop");
   setLast(ts);
   addCompletion(ts);
 
