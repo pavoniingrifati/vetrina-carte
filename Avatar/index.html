@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Test GLB (GitHub Pages)</title>
+  <style>
+    html, body { height: 100%; margin: 0; background: #0b0f17; color: #e6e6e6; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    #app { height: 100%; width: 100%; position: relative; overflow: hidden; }
+    #hud {
+      position: absolute; left: 12px; top: 12px; right: 12px;
+      display: flex; gap: 10px; align-items: center; justify-content: space-between;
+      pointer-events: none;
+    }
+    .badge {
+      pointer-events: auto;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(6px);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+    #loading {
+      position: absolute; inset: 0; display: grid; place-items: center;
+      background: radial-gradient(1200px 600px at 50% 30%, rgba(255,255,255,0.08), rgba(0,0,0,0));
+    }
+    .spinner {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.15);
+      border-top-color: rgba(255,255,255,0.9);
+      animation: spin 0.9s linear infinite;
+      margin-right: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loadingRow { display: flex; align-items: center; gap: 10px; }
+    #err { white-space: pre-wrap; color: #ffb3b3; max-width: 900px; padding: 14px; }
+    a { color: #9bd0ff; }
+  </style>
+
+  <!-- Import map per usare three.js come moduli ES, ideale per GitHub Pages -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="app">
+    <div id="hud">
+      <div class="badge">
+        <div><b>Controlli</b>: trascina = ruota • rotellina = zoom • tasto destro = pan</div>
+        <div style="opacity:.8">File caricato: <code>model.glb</code> (stesso folder di questo HTML)</div>
+      </div>
+      <div class="badge" id="stats">—</div>
+    </div>
+
+    <div id="loading">
+      <div id="loadingRow" class="badge">
+        <div class="spinner"></div>
+        <div>
+          <div><b>Caricamento modello…</b></div>
+          <div id="progress" style="opacity:.8">0%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+    const app = document.getElementById("app");
+    const loadingEl = document.getElementById("loading");
+    const progressEl = document.getElementById("progress");
+    const statsEl = document.getElementById("stats");
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(app.clientWidth, app.clientHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    app.appendChild(renderer.domElement);
+
+    // Scene & camera
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b0f17);
+
+    const camera = new THREE.PerspectiveCamera(50, app.clientWidth / app.clientHeight, 0.01, 2000);
+    camera.position.set(0.8, 0.6, 1.4);
+
+    // Luci (buon default)
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x223355, 0.9);
+    scene.add(hemi);
+
+    const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+    dir.position.set(3, 5, 2);
+    dir.castShadow = false;
+    scene.add(dir);
+
+    // Un piano "invisibile" per riferimento (opzionale)
+    const grid = new THREE.GridHelper(4, 20, 0x223355, 0x223355);
+    grid.material.opacity = 0.35;
+    grid.material.transparent = true;
+    scene.add(grid);
+
+    // Controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.target.set(0, 0.3, 0);
+
+    // Loader
+    const loader = new GLTFLoader();
+    const url = "./model.glb";
+
+    function showError(err) {
+      loadingEl.innerHTML = "";
+      const pre = document.createElement("div");
+      pre.id = "err";
+      pre.className = "badge";
+      pre.textContent =
+        "Errore nel caricare il modello.\n\n" +
+        String(err) +
+        "\n\nSuggerimenti:\n" +
+        "• Assicurati che 'model.glb' sia nello stesso folder di questo file HTML.\n" +
+        "• Su GitHub Pages serve URL HTTPS e percorso corretto.\n" +
+        "• Se stai aprendo il file con doppio click (file://), alcuni browser bloccano i moduli: usa un server (GitHub Pages va benissimo).";
+      loadingEl.appendChild(pre);
+      loadingEl.style.display = "grid";
+    }
+
+    let model = null;
+    loader.load(
+      url,
+      (gltf) => {
+        model = gltf.scene;
+        scene.add(model);
+
+        // Inquadra automaticamente il modello
+        const box = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+
+        // Centra il modello sull'origine
+        model.position.sub(center);
+
+        // Imposta target al centro
+        controls.target.set(0, 0, 0);
+        controls.update();
+
+        // Calcola distanza camera in base al bounding box
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const fov = camera.fov * (Math.PI / 180);
+        let camZ = (maxDim / 2) / Math.tan(fov / 2);
+        camZ *= 1.6; // un po' di margine
+        camera.position.set(0, maxDim * 0.3, camZ);
+        camera.near = Math.max(0.01, maxDim / 100);
+        camera.far = maxDim * 50;
+        camera.updateProjectionMatrix();
+
+        // Aggiorna UI
+        loadingEl.style.display = "none";
+        statsEl.textContent = `Dimensione ~ ${maxDim.toFixed(2)} unità`;
+
+        // Se ci sono animazioni, le riproduciamo
+        if (gltf.animations && gltf.animations.length) {
+          const mixer = new THREE.AnimationMixer(model);
+          for (const clip of gltf.animations) mixer.clipAction(clip).play();
+          model.userData.mixer = mixer;
+          statsEl.textContent += ` • Animazioni: ${gltf.animations.length}`;
+        }
+      },
+      (xhr) => {
+        if (xhr.total) {
+          const p = Math.round((xhr.loaded / xhr.total) * 100);
+          progressEl.textContent = `${p}%`;
+        } else {
+          // totale sconosciuto, mostriamo solo bytes caricati
+          progressEl.textContent = `${Math.round(xhr.loaded / 1024)} KB`;
+        }
+      },
+      (err) => showError(err)
+    );
+
+    // Resize
+    function onResize() {
+      const w = app.clientWidth;
+      const h = app.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+    window.addEventListener("resize", onResize);
+
+    // Render loop
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+
+      const dt = clock.getDelta();
+      if (model?.userData?.mixer) model.userData.mixer.update(dt);
+
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
