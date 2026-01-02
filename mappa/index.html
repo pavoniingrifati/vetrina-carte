@@ -34,15 +34,21 @@
       display:block;
       user-select:none;
       -webkit-user-drag:none;
+      /* Riserva spazio prima del caricamento (fallback 16:9). Se vuoi, cambia il ratio. */
+      aspect-ratio: auto 16 / 9;
     }
 
     /* HOTSPOT: centrato sul marker */
     .pin{
       position:absolute;
-      left: 0;
-      top: 0;
+      left: var(--x, 0);
+      top: var(--y, 0);
       width: clamp(52px, 6.2vw, 92px);
       height: clamp(70px, 8.2vw, 120px);
+      min-width: 44px;
+      min-height: 44px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       transform: translate(-50%, -45%);
       border-radius: 18px;
       cursor: pointer;
@@ -51,7 +57,43 @@
       background: rgba(0,0,0,0);
     }
 
-    .pin:hover{
+    /* Affordance: pin visibile (la zona cliccabile resta più grande) */
+    .pin::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      top:52%;
+      width: 16px;
+      height: 16px;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      background: rgba(255,255,255,.88);
+      box-shadow: 0 0 0 10px rgba(255,255,255,.10);
+      pointer-events:none;
+    }
+
+    /* Tooltip (desktop): mostra etichetta su hover e focus */
+    .pin[data-label]::before{
+      content: attr(data-label);
+      position:absolute;
+      left:50%;
+      top:-8px;
+      transform: translate(-50%,-100%);
+      background: rgba(0,0,0,.78);
+      color:#fff;
+      font-size: 12px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      opacity: 0;
+      pointer-events:none;
+      white-space: nowrap;
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+    }
+
+
+    .pin:hover,
+    .pin:focus-visible{
+      outline: none;
       transform: translate(-50%, -45%) scale(1.03);
       box-shadow: 0 0 0 4px var(--ring), 0 18px 40px rgba(0,0,0,.55);
       filter: brightness(1.05);
@@ -77,25 +119,50 @@
         height: clamp(86px, 14vw, 150px);
       }
     }
+  
+    .pin:hover::before,
+    .pin:focus-visible::before{ opacity: 1; }
+
+    /* Accessibilità: testo solo per screen reader */
+    .sr-only{
+      position:absolute;
+      width:1px; height:1px;
+      padding:0; margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      white-space:nowrap;
+      border:0;
+    }
+
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="map" aria-label="Mappa con marker cliccabili">
-      <img src="mappa.png" alt="Mappa" />
+      <img src="mappa.png" alt="Mappa" loading="lazy" decoding="async" />
 
       <!-- Marker cliccabili (posizionati sui pin) -->
-      <a class="pin" style="left:79.5419%; top:8.3269%;" href="../partite/" title="Stadio" aria-label="Stadio"></a>
+      <a class="pin" style="--x:79.5419%; --y:8.3269%;" href="../partite/" title="Stadio" aria-label="Stadio" data-label="Stadio">
+        <span class="sr-only">Stadio</span>
+      </a>
 <a class="pin"
-   style="left:50.0069%; top:24.6179%;"
+   style="--x:50.0069%; --y:24.6179%;"
    href="https://pavoniingrifati.github.io/vetrina-carte/allenamento"
    target="_blank"
    rel="noopener noreferrer"
    title="Campo d'allenamento"
-   aria-label="Campo d'allenamento"></a>
-      <a class="pin" style="left:83.4464%; top:52.093%;" href="../slot" title="Casinò" aria-label="Casinò"></a>
-      <a class="pin" style="left:32.6909%; top:20.2044%;" href="../" title="Uffici" aria-label="Uffici"></a>
-      <a class="pin" style="left:21.1685%; top:8.2952%;" href="../f1home" title="Pista F1" aria-label="Pista F1"></a>
+   aria-label="Campo d'allenamento" data-label="Campo d&#x27;allenamento">
+        <span class="sr-only">Campo d&#x27;allenamento</span>
+      </a>
+      <a class="pin" style="--x:83.4464%; --y:52.093%;" href="../slot" title="Casinò" aria-label="Casinò" data-label="Casinò">
+        <span class="sr-only">Casinò</span>
+      </a>
+      <a class="pin" style="--x:32.6909%; --y:20.2044%;" href="../" title="Uffici" aria-label="Uffici" data-label="Uffici">
+        <span class="sr-only">Uffici</span>
+      </a>
+      <a class="pin" style="--x:21.1685%; --y:8.2952%;" href="../f1home" title="Pista F1" aria-label="Pista F1" data-label="Pista F1">
+        <span class="sr-only">Pista F1</span>
+      </a>
 
     </div>
   </div>
