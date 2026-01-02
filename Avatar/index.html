@@ -291,34 +291,36 @@
       clipSelect.value = String(index);
     }
 
-    loader.load(
-      url,
-      (gltf) => {
-        model = gltf.scene;
-        avatarRig.add(model);
-        model.scale.setScalar(0.5);
+    loader.load(url, (gltf) => {
+  model = gltf.scene;
+  avatarRig.add(model);
 
+  model.scale.setScalar(0.5);
 
-        const box = new THREE.Box3().setFromObject(model);
-        const size = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
-        model.position.sub(center);
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
 
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const fov = camera.fov * (Math.PI / 180);
-        let camZ = (maxDim / 2) / Math.tan(fov / 2);
-        camZ *= 3.0;
+  const maxDim = Math.max(size.x, size.y, size.z);
 
-        camera.position.set(0, maxDim * 0.15, camZ);
-        // ✅ più lontano = avatar più piccolo all'avvio
-camera.position.z *= 2.0;
-camera.position.y *= 3.0;
+  model.position.sub(center);
+  model.position.y -= maxDim * 0.15;  // abbassa (prova 0.10–0.25)
+
+  const fov = camera.fov * (Math.PI / 180);
+  let camZ = (maxDim / 2) / Math.tan(fov / 2);
+  camZ *= 3.0;
+
+  camera.position.set(0, maxDim * 0.15, camZ);
+
+  // Più lontano all’avvio (se ti serve ancora “più piccolo”)
+  camera.position.z *= 2.0;
+  camera.position.y *= 3.0;
+
 camera.updateProjectionMatrix();
 controls.update();
 
         camera.near = Math.max(0.01, maxDim / 100);
         camera.far = maxDim * 60;
-        camera.updateProjectionMatrix();
 
         controls.target.set(0, 0, 0);
         controls.update();
