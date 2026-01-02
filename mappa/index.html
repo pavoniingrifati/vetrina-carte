@@ -1,10 +1,11 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Mappa</title>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Mappa</title>
+<style>
     :root {
       --bg: #0e1622;
       --shadow: 0 24px 60px rgba(0,0,0,.45);
@@ -139,37 +140,147 @@
       border:0;
     }
 
-  </style>
+  
+
+    /* Legenda sotto la mappa */
+    .legend{
+      margin-top: 14px;
+    }
+    .legend-inner{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap: wrap;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .legend-item{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      text-decoration:none;
+      color: rgba(255,255,255,.92);
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.14);
+      cursor:pointer;
+      outline: none;
+      min-height: 44px;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
+    }
+    .legend-item:hover,
+    .legend-item:focus-visible{
+      transform: translateY(-1px);
+      box-shadow: 0 0 0 4px var(--ring);
+    }
+    .legend-dot{
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--c, rgba(255,255,255,.7));
+      box-shadow: 0 0 0 3px rgba(255,255,255,.15);
+      flex: 0 0 auto;
+    }
+    .legend-text{
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: .2px;
+      white-space: nowrap;
+    }
+
+    /* Colori coerenti con i pin in mappa */
+    .legend-f1{ --c: #c83b3b; }
+    .legend-uffici{ --c: #9eb23b; }
+    .legend-allenamento{ --c: #2f8f3a; }
+    .legend-stadio{ --c: #2b60d9; }
+    .legend-casino{ --c: #d79b2b; }
+
+    /* Evidenziazione incrociata */
+    .pin.is-highlight{
+      transform: translate(-50%, -45%) scale(1.05);
+      box-shadow: 0 0 0 4px var(--ring), 0 18px 40px rgba(0,0,0,.55);
+      filter: brightness(1.06);
+    }
+    .pin.is-highlight::after{
+      opacity: 1;
+    }
+    .legend-item.is-highlight{
+      box-shadow: 0 0 0 4px var(--ring), 0 18px 40px rgba(0,0,0,.35);
+    }
+
+    /* Mobile: legenda scroll orizzontale */
+    @media (max-width: 700px){
+      .legend-inner{
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+      }
+      .legend-item{ scroll-snap-align: start; }
+    }
+
+    /* Riduci animazioni se richiesto */
+    @media (prefers-reduced-motion: reduce){
+      .legend-item{ transition:none; }
+      .legend-item:hover,
+      .legend-item:focus-visible{ transform:none; }
+    }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="map" aria-label="Mappa con marker cliccabili">
-      <img src="mappa.png" alt="Mappa" loading="lazy" decoding="async" />
+<div class="wrap">
+<div aria-label="Mappa con marker cliccabili" class="map">
+<img alt="Mappa" decoding="async" loading="lazy" src="mappa.png"/>
+<!-- Marker cliccabili (posizionati sui pin) -->
+<a aria-label="Stadio" class="pin" data-id="stadio" data-label="Stadio" href="../partite/" style="--x:72.7075%; --y:18.7100%;" title="Stadio">
+<span class="sr-only">Stadio</span>
+</a>
+<a aria-label="Campo d'allenamento" class="pin" data-id="allenamento" data-label="Campo d'allenamento" href="https://pavoniingrifati.github.io/vetrina-carte/allenamento" rel="noopener noreferrer" style="--x:57.4328%; --y:35.6833%;" target="_blank" title="Campo d'allenamento">
+<span class="sr-only">Campo d'allenamento</span>
+</a>
+<a aria-label="Casinò" class="pin" data-id="casino" data-label="Casinò" href="../slot" style="--x:77.5237%; --y:55.2433%;" title="Casinò">
+<span class="sr-only">Casinò</span>
+</a>
+<a aria-label="Uffici" class="pin" data-id="uffici" data-label="Uffici" href="../" style="--x:37.1834%; --y:31.2724%;" title="Uffici">
+<span class="sr-only">Uffici</span>
+</a>
+<a aria-label="Pista F1" class="pin" data-id="f1" data-label="Pista F1" href="../f1home" style="--x:21.6226%; --y:17.9941%;" title="Pista F1">
+<span class="sr-only">Pista F1</span>
+</a>
+</div><nav aria-label="Luoghi esplorabili" class="legend"><div class="legend-inner"><a aria-label="Pista F1" class="legend-item legend-f1" data-id="f1" href="../f1home"><span aria-hidden="true" class="legend-dot"></span><span class="legend-text">Pista F1</span></a><a aria-label="Uffici" class="legend-item legend-uffici" data-id="uffici" href="../"><span aria-hidden="true" class="legend-dot"></span><span class="legend-text">Uffici</span></a><a aria-label="Campo d'allenamento" class="legend-item legend-allenamento" data-id="allenamento" href="https://pavoniingrifati.github.io/vetrina-carte/allenamento" rel="noopener noreferrer" target="_blank"><span aria-hidden="true" class="legend-dot"></span><span class="legend-text">Campo d'allenamento</span></a><a aria-label="Stadio" class="legend-item legend-stadio" data-id="stadio" href="../partite/"><span aria-hidden="true" class="legend-dot"></span><span class="legend-text">Stadio</span></a><a aria-label="Casinò" class="legend-item legend-casino" data-id="casino" href="../slot"><span aria-hidden="true" class="legend-dot"></span><span class="legend-text">Casinò</span></a></div></nav>
+</div>
+ <script>
+    (function(){
+      const pins = Array.from(document.querySelectorAll('.pin[data-id]'));
+      const items = Array.from(document.querySelectorAll('.legend-item[data-id]'));
+      const byId = (arr) => arr.reduce((m,el)=> (m[el.dataset.id]=el, m), {});
+      const pinById = byId(pins);
+      const itemById = byId(items);
 
-      <!-- Marker cliccabili (posizionati sui pin) -->
-      <a class="pin" style="--x:72.7075%; --y:18.7100%;" href="../partite/" title="Stadio" aria-label="Stadio" data-label="Stadio">
-        <span class="sr-only">Stadio</span>
-      </a>
-<a class="pin"
-   style="--x:57.4328%; --y:35.6833%;"
-   href="https://pavoniingrifati.github.io/vetrina-carte/allenamento"
-   target="_blank"
-   rel="noopener noreferrer"
-   title="Campo d'allenamento"
-   aria-label="Campo d'allenamento" data-label="Campo d&#x27;allenamento">
-        <span class="sr-only">Campo d&#x27;allenamento</span>
-      </a>
-      <a class="pin" style="--x:77.5237%; --y:55.2433%;" href="../slot" title="Casinò" aria-label="Casinò" data-label="Casinò">
-        <span class="sr-only">Casinò</span>
-      </a>
-      <a class="pin" style="--x:37.1834%; --y:31.2724%;" href="../" title="Uffici" aria-label="Uffici" data-label="Uffici">
-        <span class="sr-only">Uffici</span>
-      </a>
-      <a class="pin" style="--x:21.6226%; --y:17.9941%;" href="../f1home" title="Pista F1" aria-label="Pista F1" data-label="Pista F1">
-        <span class="sr-only">Pista F1</span>
-      </a>
+      function setHighlight(id, on){
+        const pin = pinById[id];
+        const item = itemById[id];
+        if(pin) pin.classList.toggle('is-highlight', on);
+        if(item) item.classList.toggle('is-highlight', on);
+      }
 
-    </div>
-  </div>
-</body>
+      function bind(el){
+        const id = el.dataset.id;
+        if(!id) return;
+        el.addEventListener('mouseenter', ()=>setHighlight(id,true));
+        el.addEventListener('mouseleave', ()=>setHighlight(id,false));
+        el.addEventListener('focus', ()=>setHighlight(id,true));
+        el.addEventListener('blur', ()=>setHighlight(id,false));
+      }
+
+      pins.forEach(bind);
+      items.forEach(bind);
+    })();
+  </script></body>
 </html>
