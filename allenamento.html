@@ -388,22 +388,32 @@
       showToast("Allenamento avviato: guarda tutto il video! 🎥");
     }
 
-    function completeTraining(){
-      if(!trainingStarted || !canComplete) return;
+function completeTraining(){
+  if(!trainingStarted || !canComplete) return;
 
-      const ts = Date.now();
-      const d = getDiamonds() + 1;
-      setDiamonds(d);
-      setLast(ts);
-      addCompletion(ts);
+  const ts = Date.now();
+  const d = getDiamonds() + 1;
+  setDiamonds(d);
+  setLast(ts);
+  addCompletion(ts);
 
-      showToast(`Allenamento completato! +1 💎 (Totale: ${d})`);
-      btnAllenati.disabled = false;
-      btnAllenati.textContent = "🏃‍♂️ Allenati ancora";
-      trainingStarted = false;
-      canComplete = false;
-      setLocked(true);
-    }
+  // ✅ TRACK: completamento allenamento
+  if (window.goatcounter && window.goatcounter.count) {
+    window.goatcounter.count({
+      path: "allenamento_completato",
+      title: "Allenamento completato",
+      event: true
+    });
+  }
+
+  showToast(`Allenamento completato! +1 💎 (Totale: ${d})`);
+  btnAllenati.disabled = false;
+  btnAllenati.textContent = "🏃‍♂️ Allenati ancora";
+  trainingStarted = false;
+  canComplete = false;
+  setLocked(true);
+}
+
 
     // ===== Init =====
     setDiamonds(getDiamonds());
