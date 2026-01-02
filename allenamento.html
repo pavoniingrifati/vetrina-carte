@@ -185,8 +185,6 @@
   <main class="grid">
     <section class="card">
       <div class="inner">
-        </div>
-
         <div class="big">Pronto? Guarda tutto il video per completare l’allenamento.</div>
         <p class="muted" style="margin:0 0 14px;">
           L’allenamento si conclude <b>solo quando il video arriva alla fine</b>.
@@ -347,14 +345,21 @@
               startTick();
             }
             if(e.data === YT.PlayerState.PAUSED){
+              stopTick();
               statusEl.textContent = "In pausa. Puoi riprendere quando vuoi.";
             }
             if(e.data === YT.PlayerState.ENDED){
               stopTick();
-              statusEl.textContent = "Video terminato ✅ Allenamento completato!";
-              canComplete = true;
-              setLocked(false);
-              completeTraining();
+              if(trainingStarted){
+                statusEl.textContent = "Video terminato ✅ Allenamento completato!";
+                canComplete = true;
+                setLocked(false);
+                completeTraining();
+              } else {
+                statusEl.textContent = "Video terminato. Premi “Allenati” per completare l’allenamento e guadagnare 💎.";
+                canComplete = false;
+                setLocked(true);
+              }
             }
           }
         }
@@ -389,9 +394,8 @@ function completeTraining(){
    window.goatcounter.count({
   path: "allenamento_completato",
   title: "Allenamento completato",
-  event: true,
-  referrer: "session_" + Date.now()
-});
+  event: true
+    });
   }
 
   showToast(`Allenamento completato! +1 💎 (Totale: ${d})`);
@@ -414,8 +418,7 @@ function completeTraining(){
     window.goatcounter.count({
       path: "click_allenati",
       title: "Allenati",
-      event: true,
-      referrer: "session_" + Date.now()
+      event: true
     });
   }
 
