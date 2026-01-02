@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Avatar GLB — Spogliatoio (Idle)</title>
+  <title>Avatar FBX — Spogliatoio (Animazioni)</title>
   <style>
     html, body {
       height: 100%;
@@ -31,7 +31,7 @@
 
     #hud {
       position: absolute; left: 12px; top: 12px; right: 12px;
-      display: flex; gap: 10px; align-items: center; justify-content: space-between;
+      display: flex; gap: 10px; align-items: flex-start; justify-content: space-between;
       pointer-events: none;
       z-index: 3;
     }
@@ -41,9 +41,35 @@
       border: 1px solid rgba(255,255,255,0.14);
       backdrop-filter: blur(6px);
       border-radius: 12px;
-      padding: 8px 10px;
+      padding: 10px 12px;
       font-size: 13px;
       line-height: 1.2;
+    }
+    #controlsRow {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10);
+      color: #e6e6e6;
+      padding: 7px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: rgba(255,255,255,0.14); }
+    button:active { transform: translateY(1px); }
+    select {
+      background: rgba(255,255,255,0.10);
+      color: #e6e6e6;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 10px;
+      padding: 7px 10px;
     }
     #loading {
       position: absolute; inset: 0; display: grid; place-items: center;
@@ -75,10 +101,22 @@
 <body>
   <div id="app">
     <div id="hud">
-      <div class="badge">
-        <div><b>Controlli</b>: trascina = ruota • rotellina = zoom • tasto destro = pan</div>
-        <div style="opacity:.8">Modello: <code>model.glb</code> (stessa cartella di questo HTML)</div>
+      <div class="badge" style="max-width: 720px;">
+        <div><b>Controlli camera</b>: trascina = ruota • rotellina = zoom • tasto destro = pan</div>
+        <div style="opacity:.85; margin-top: 6px;">File: <code>model.fbx</code> (stessa cartella di questo HTML)</div>
+        <div id="controlsRow">
+          <label style="display:flex; gap:8px; align-items:center;">
+            <span style="opacity:.9;">Animazione</span>
+            <select id="clipSelect" disabled>
+              <option>Caricamento…</option>
+            </select>
+          </label>
+          <button id="playBtn" disabled>Play</button>
+          <button id="onceBtn" disabled>Play (una volta)</button>
+          <button id="stopBtn" disabled>Stop</button>
+        </div>
       </div>
+
       <div class="badge" id="stats">—</div>
     </div>
 
@@ -96,14 +134,18 @@
   <script type="module">
     import * as THREE from "three";
     import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { FBXLoader } from "three/addons/loaders/FBXLoader.js";
 
     const app = document.getElementById("app");
     const loadingEl = document.getElementById("loading");
     const progressEl = document.getElementById("progress");
     const statsEl = document.getElementById("stats");
 
-    // Renderer (alpha=true per vedere lo sfondo della pagina)
+    const clipSelect = document.getElementById("clipSelect");
+    const playBtn = document.getElementById("playBtn");
+    const onceBtn = document.getElementById("onceBtn");
+    const stopBtn = document.getElementById("stopBtn");
+
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(app.clientWidth, app.clientHeight);
@@ -111,38 +153,34 @@
     renderer.setClearAlpha(0);
     app.appendChild(renderer.domElement);
 
-    // Scene & camera
     const scene = new THREE.Scene();
 
-    const camera = new THREE.PerspectiveCamera(50, app.clientWidth / app.clientHeight, 0.01, 2000);
+    const camera = new THREE.PerspectiveCamera(50, app.clientWidth / app.clientHeight, 0.01, 5000);
     camera.position.set(0.8, 0.6, 1.4);
 
-    // Luci (indoor morbide)
-    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-
-    const key = new THREE.DirectionalLight(0xffffff, 1.15);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.60));
+    const key = new THREE.DirectionalLight(0xffffff, 1.10);
     key.position.set(2.5, 4.5, 2.0);
     scene.add(key);
-
     const rim = new THREE.DirectionalLight(0xffffff, 0.35);
     rim.position.set(-3.0, 2.0, -2.5);
     scene.add(rim);
 
-    // Contenitore per "idle" procedurale
     const avatarRig = new THREE.Group();
     scene.add(avatarRig);
 
-    // Controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
-    controls.target.set(0, 0.0, 0);
+    controls.target.set(0, 0, 0);
 
-    // Loader
-    const loader = new GLTFLoader();
-    const url = "./model.glb"; // <-- se il file ha un nome diverso, cambialo qui
+    const loader = new FBXLoader();
+    const url = "./model.fbx";
 
     let model = null;
+    let mixer = null;
+    let actions = [];
+    let activeAction = null;
 
     function showError(err) {
       loadingEl.innerHTML = "";
@@ -150,33 +188,60 @@
       pre.id = "err";
       pre.className = "badge";
       pre.textContent =
-        "Errore nel caricare il modello.\n\n" +
+        "Errore nel caricare il modello FBX.\n\n" +
         String(err) +
         "\n\nSuggerimenti:\n" +
-        "• Assicurati che il .glb sia nella stessa cartella di questo file HTML.\n" +
+        "• Assicurati che 'model.fbx' sia nella stessa cartella di questo HTML.\n" +
         "• Controlla maiuscole/minuscole nel nome file.\n" +
-        "• Su GitHub Pages: verifica che il file sia nella sorgente pubblicata (root/docs/gh-pages).";
+        "• Se il FBX è enorme, prova a esportarlo di nuovo (Binary) o convertilo in GLB.";
       loadingEl.appendChild(pre);
       loadingEl.style.display = "grid";
     }
 
+    function enableUI() {
+      clipSelect.disabled = false;
+      playBtn.disabled = false;
+      onceBtn.disabled = false;
+      stopBtn.disabled = false;
+    }
+
+    function setActiveAction(index, { loop = THREE.LoopRepeat, clampWhenFinished = false } = {}) {
+      if (!actions.length) return;
+
+      const next = actions[index];
+      if (!next) return;
+
+      if (activeAction && activeAction !== next) {
+        activeAction.fadeOut(0.2);
+      }
+
+      next.reset();
+      next.setLoop(loop, loop === THREE.LoopOnce ? 1 : Infinity);
+      next.clampWhenFinished = clampWhenFinished;
+      next.fadeIn(0.2);
+      next.play();
+
+      activeAction = next;
+      clipSelect.value = String(index);
+    }
+
     loader.load(
       url,
-      (gltf) => {
-        model = gltf.scene;
+      (fbx) => {
+        model = fbx;
         avatarRig.add(model);
 
-        // Inquadra automaticamente il modello
+        model.traverse((obj) => {
+          if (obj.isMesh) {
+            obj.castShadow = false;
+            obj.receiveShadow = false;
+          }
+        });
+
         const box = new THREE.Box3().setFromObject(model);
         const size = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
-
-        // Centra il modello sull'origine (dentro avatarRig)
         model.position.sub(center);
-
-        // Target al centro
-        controls.target.set(0, 0, 0);
-        controls.update();
 
         const maxDim = Math.max(size.x, size.y, size.z);
         const fov = camera.fov * (Math.PI / 180);
@@ -187,30 +252,68 @@
         camera.far = maxDim * 60;
         camera.updateProjectionMatrix();
 
-        loadingEl.style.display = "none";
-        statsEl.textContent = `Dimensione ~ ${maxDim.toFixed(2)}`;
+        controls.target.set(0, 0, 0);
+        controls.update();
 
-        // Se il GLB ha animazioni, le avviamo comunque (in più al micro-idle)
-        if (gltf.animations && gltf.animations.length) {
-          const mixer = new THREE.AnimationMixer(model);
-          const idle = gltf.animations.find(a => a.name.toLowerCase().includes("idle")) || gltf.animations[0];
-          mixer.clipAction(idle).play();
-          model.userData.mixer = mixer;
-          statsEl.textContent += ` • Animazioni: ${gltf.animations.length}`;
+        const clips = (fbx.animations && fbx.animations.length) ? fbx.animations : [];
+        statsEl.textContent = `Dimensione ~ ${maxDim.toFixed(2)} • Animazioni: ${clips.length || 0}`;
+
+        if (clips.length) {
+          mixer = new THREE.AnimationMixer(model);
+          actions = clips.map((clip) => mixer.clipAction(clip));
+
+          clipSelect.innerHTML = "";
+          clips.forEach((clip, i) => {
+            const opt = document.createElement("option");
+            opt.value = String(i);
+            opt.textContent = clip.name ? `${i+1}) ${clip.name}` : `${i+1}) Clip`;
+            clipSelect.appendChild(opt);
+          });
+
+          enableUI();
+          setActiveAction(0); // auto-play prima animazione
+        } else {
+          clipSelect.innerHTML = "<option>Nessuna animazione</option>";
+          statsEl.textContent += " • (idle procedurale)";
         }
+
+        loadingEl.style.display = "none";
       },
       (xhr) => {
-        if (xhr.total) {
-          const p = Math.round((xhr.loaded / xhr.total) * 100);
-          progressEl.textContent = `${p}%`;
-        } else {
-          progressEl.textContent = `${Math.round(xhr.loaded / 1024)} KB`;
+        if (xhr?.loaded) {
+          if (xhr.total) {
+            const p = Math.round((xhr.loaded / xhr.total) * 100);
+            progressEl.textContent = `${p}%`;
+          } else {
+            progressEl.textContent = `${Math.round(xhr.loaded / 1024)} KB`;
+          }
         }
       },
       (err) => showError(err)
     );
 
-    // Resize
+    clipSelect.addEventListener("change", () => {
+      const idx = Number(clipSelect.value);
+      setActiveAction(idx);
+    });
+
+    playBtn.addEventListener("click", () => {
+      const idx = Number(clipSelect.value);
+      setActiveAction(idx, { loop: THREE.LoopRepeat, clampWhenFinished: false });
+    });
+
+    onceBtn.addEventListener("click", () => {
+      const idx = Number(clipSelect.value);
+      setActiveAction(idx, { loop: THREE.LoopOnce, clampWhenFinished: true });
+    });
+
+    stopBtn.addEventListener("click", () => {
+      if (activeAction) {
+        activeAction.stop();
+        activeAction = null;
+      }
+    });
+
     function onResize() {
       const w = app.clientWidth;
       const h = app.clientHeight;
@@ -220,21 +323,18 @@
     }
     window.addEventListener("resize", onResize);
 
-    // Render loop
     const clock = new THREE.Clock();
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
 
       const dt = clock.getDelta();
-      if (model?.userData?.mixer) model.userData.mixer.update(dt);
+      if (mixer) mixer.update(dt);
 
-      // Idle procedurale (statico -> "respiro" + dondolio)
       const t = clock.elapsedTime;
-      // Intensità: cambia questi numeri se lo vuoi più calmo/vivo
-      avatarRig.position.y = Math.sin(t * 1.2) * 0.01;
-      avatarRig.rotation.y = Math.sin(t * 0.6) * 0.08;
-      avatarRig.rotation.x = Math.sin(t * 0.9) * 0.02;
+      avatarRig.position.y = Math.sin(t * 1.2) * 0.008;
+      avatarRig.rotation.y = Math.sin(t * 0.6) * 0.05;
+      avatarRig.rotation.x = Math.sin(t * 0.9) * 0.015;
 
       renderer.render(scene, camera);
     }
