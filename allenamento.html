@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Allenamento giocatore</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #0b0f19;
+      --panel: #0f1526;
+      --card: #121a2e;
+      --card-2:#0d1325;
+      --text:#ecf0ff;
+      --muted:#a7b0d3;
+      --accent:#6ee7ff;
+      --radius:16px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%; overflow-x:hidden}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg);
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background: linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6));
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .wrap{max-width:980px; margin:0 auto; padding: 14px clamp(12px,4vw,20px);}
+    h1{margin:0; font-size: clamp(20px, 5.2vw, 34px);}
+    .subtitle{margin-top:6px; color:var(--muted); font-size:14px}
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:16px;
+      padding: 16px clamp(12px,4vw,20px) calc(88px + var(--safe-bottom));
+      max-width:980px;
+      margin:0 auto;
+    }
+    @media(min-width:900px){ .grid{ grid-template-columns: 1.2fr .8fr; } }
+
+    .card{
+      background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 30px rgba(0,0,0,.45);
+      overflow:hidden;
+    }
+    .card .inner{ padding:16px; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 12px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      font-weight:600;
+    }
+    .btn{
+      width:100%;
+      display:inline-flex; align-items:center; justify-content:center; gap:10px;
+      border:1px solid rgba(255,255,255,.12);
+      background: linear-gradient(135deg, rgba(110,231,255,.18), rgba(110,231,255,.06));
+      color:var(--text);
+      padding:14px 16px;
+      border-radius: 14px;
+      font-weight:800;
+      cursor:pointer;
+      transition: transform .12s ease, box-shadow .2s ease, border-color .2s ease;
+      min-height: 48px;
+    }
+    .btn:hover{ transform: translateY(-1px); box-shadow:0 10px 24px rgba(0,0,0,.4); border-color: rgba(110,231,255,.35); }
+    .btn:disabled{
+      opacity:.55; cursor:not-allowed; transform:none; box-shadow:none;
+    }
+
+    .muted{ color:var(--muted); }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .big{
+      font-size: clamp(22px, 4.2vw, 30px);
+      line-height:1.1;
+      margin: 6px 0 10px;
+    }
+    .diamonds{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      margin-top: 10px;
+    }
+    .diamondCount{
+      font-weight:800;
+      color: var(--accent);
+    }
+
+    /* Player area */
+    .playerBox{
+      background: radial-gradient(500px 320px at 20% 0, rgba(110,231,255,.06), transparent), var(--card-2);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      overflow:hidden;
+    }
+    .playerTop{
+      padding:12px 14px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex; justify-content:space-between; gap:12px; align-items:center;
+    }
+    .progressWrap{ padding: 12px 14px 14px; }
+    .bar{
+      width:100%;
+      height:10px;
+      background: rgba(255,255,255,.08);
+      border-radius:999px;
+      overflow:hidden;
+    }
+    .bar > div{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(110,231,255,.35), rgba(110,231,255,.75));
+      border-radius:999px;
+      transition: width .2s ease;
+    }
+    .timeRow{
+      display:flex; justify-content:space-between; margin-top:8px;
+      font-size:13px; color: var(--muted);
+    }
+
+    /* Responsive iframe */
+    .ratio{
+      aspect-ratio: 9/16; /* shorts */
+      width:100%;
+      background:#000;
+    }
+    .ratio > #player{ width:100%; height:100%; }
+
+    footer{
+      position:sticky; bottom:0;
+      background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6));
+      border-top:1px solid rgba(255,255,255,.06);
+    }
+    footer .foot{
+      max-width:980px;
+      margin:0 auto;
+      padding:12px 20px calc(12px + var(--safe-bottom));
+      font-size:13px;
+      color:var(--muted);
+      display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: calc(18px + var(--safe-bottom));
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.65);
+      border: 1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(8px);
+      padding: 10px 12px;
+      border-radius: 999px;
+      color: var(--text);
+      display:none;
+      z-index: 99;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Allenamento giocatore</h1>
+      <div class="subtitle">Clicca sul bottone <b>"Allenati"</b> per allenare e aiutare la squadra! Ogni allenamento completato è un <b>diamante</b> per la squadra! 💎</div>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <div class="inner">
+        <div class="row">
+          <span class="pill">🎥 Video allenamento</span>
+          <span class="pill">⏸️ Pausa OK</span>
+          <span class="pill">⏩ Velocità OK</span>
+          <span class="pill">💾 Salva nel browser</span>
+        </div>
+
+        <div class="big">Pronto? Guarda tutto il video per completare l’allenamento.</div>
+        <p class="muted" style="margin:0 0 14px;">
+          L’allenamento si conclude <b>solo quando il video arriva alla fine</b>.
+        </p>
+
+        <button id="btnAllenati" class="btn" type="button">🏃‍♂️ Allenati</button>
+
+        <div class="diamonds">
+          <span class="pill">Diamanti squadra: <span id="diamonds" class="diamondCount">0</span> 💎</span>
+          <span class="pill">Ultimo allenamento: <span id="last" class="muted">—</span></span>
+          <button id="btnReset" class="pill" type="button" style="cursor:pointer;">♻️ Reset locale</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="playerBox">
+      <div class="playerTop">
+        <div>
+          <div style="font-weight:800;">Player</div>
+          <div id="status" class="muted" style="font-size:13px;">Premi “Allenati” per iniziare.</div>
+        </div>
+        <span class="pill" id="lockPill">🔒 Completamento bloccato</span>
+      </div>
+
+      <div class="ratio">
+        <div id="player"></div>
+      </div>
+
+      <div class="progressWrap">
+        <div class="bar"><div id="barFill"></div></div>
+        <div class="timeRow">
+          <span id="tNow">0:00</span>
+          <span id="tTot">0:00</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="foot">
+      <span>📍 Pagina allenamento (GitHub Pages)</span>
+      <span class="muted">Suggerimento: aggiungi un link a questa pagina dal tuo index.</span>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- YouTube IFrame Player API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    // ===== Config =====
+    const VIDEO_ID = "hXB655buFRo"; // preso dal tuo link Shorts
+    const LS_KEY = "allenamento_diamanti_v1";
+    const LS_LAST = "allenamento_last_v1";
+    const LS_COMPLETIONS = "allenamento_completions_v1"; // storico timestamp (opzionale)
+
+    // ===== UI helpers =====
+    const $ = (s)=>document.querySelector(s);
+    const btnAllenati = $("#btnAllenati");
+    const btnReset = $("#btnReset");
+    const diamondsEl = $("#diamonds");
+    const lastEl = $("#last");
+    const statusEl = $("#status");
+    const lockPill = $("#lockPill");
+    const barFill = $("#barFill");
+    const tNow = $("#tNow");
+    const tTot = $("#tTot");
+    const toast = $("#toast");
+
+    function fmtTime(sec){
+      sec = Math.max(0, Math.floor(sec || 0));
+      const m = Math.floor(sec / 60);
+      const s = String(sec % 60).padStart(2, "0");
+      return `${m}:${s}`;
+    }
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.style.display = "block";
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=> toast.style.display="none", 2600);
+    }
+
+    function getDiamonds(){
+      return Number(localStorage.getItem(LS_KEY) || "0") || 0;
+    }
+    function setDiamonds(n){
+      localStorage.setItem(LS_KEY, String(n));
+      diamondsEl.textContent = String(n);
+    }
+    function setLast(ts){
+      localStorage.setItem(LS_LAST, String(ts));
+      lastEl.textContent = new Date(ts).toLocaleString("it-IT");
+    }
+    function loadLast(){
+      const v = localStorage.getItem(LS_LAST);
+      lastEl.textContent = v ? new Date(Number(v)).toLocaleString("it-IT") : "—";
+    }
+
+    function addCompletion(ts){
+      const raw = localStorage.getItem(LS_COMPLETIONS);
+      let arr = [];
+      try{ arr = raw ? JSON.parse(raw) : []; }catch{ arr = []; }
+      arr.push(ts);
+      localStorage.setItem(LS_COMPLETIONS, JSON.stringify(arr));
+    }
+
+    // ===== YouTube player =====
+    let player = null;
+    let timer = null;
+    let trainingStarted = false;
+    let canComplete = false;
+
+    function setLocked(locked){
+      lockPill.textContent = locked ? "🔒 Completamento bloccato" : "✅ Allenamento completabile";
+      lockPill.style.borderColor = locked ? "rgba(255,255,255,.12)" : "rgba(110,231,255,.45)";
+      lockPill.style.background = locked ? "rgba(255,255,255,.03)" : "rgba(110,231,255,.10)";
+    }
+
+    function resetProgressUI(){
+      barFill.style.width = "0%";
+      tNow.textContent = "0:00";
+      tTot.textContent = "0:00";
+      statusEl.textContent = "Premi “Allenati” per iniziare.";
+      setLocked(true);
+    }
+
+    function startTick(){
+      stopTick();
+      timer = setInterval(()=>{
+        if(!player || typeof player.getCurrentTime !== "function") return;
+        const cur = player.getCurrentTime();
+        const dur = player.getDuration();
+        if(dur > 0){
+          const pct = Math.min(100, Math.max(0, (cur / dur) * 100));
+          barFill.style.width = pct.toFixed(2) + "%";
+          tNow.textContent = fmtTime(cur);
+          tTot.textContent = fmtTime(dur);
+        }
+      }, 250);
+    }
+    function stopTick(){
+      if(timer){ clearInterval(timer); timer = null; }
+    }
+
+    // Called by YouTube API
+    window.onYouTubeIframeAPIReady = function(){
+      player = new YT.Player("player", {
+        videoId: VIDEO_ID,
+        playerVars: {
+          playsinline: 1,
+          rel: 0,
+          modestbranding: 1
+        },
+        events: {
+          onReady: () => {
+            resetProgressUI();
+          },
+          onStateChange: (e) => {
+            // 1 = playing, 2 = paused, 0 = ended
+            if(e.data === YT.PlayerState.PLAYING){
+              statusEl.textContent = trainingStarted ? "Allenamento in corso… guarda fino alla fine! 💪" : "Riproduzione…";
+              startTick();
+            }
+            if(e.data === YT.PlayerState.PAUSED){
+              statusEl.textContent = "In pausa. Puoi riprendere quando vuoi.";
+            }
+            if(e.data === YT.PlayerState.ENDED){
+              stopTick();
+              statusEl.textContent = "Video terminato ✅ Allenamento completato!";
+              canComplete = true;
+              setLocked(false);
+              completeTraining();
+            }
+          }
+        }
+      });
+    };
+
+    function beginTraining(){
+      if(!player) return;
+      trainingStarted = true;
+      canComplete = false;
+      setLocked(true);
+      statusEl.textContent = "Carico il video…";
+      // riparti dall’inizio (se lo rivedono, fa comunque un nuovo allenamento)
+      player.seekTo(0, true);
+      player.playVideo();
+      btnAllenati.disabled = true;
+      btnAllenati.textContent = "⏳ Allenamento in corso…";
+      showToast("Allenamento avviato: guarda tutto il video! 🎥");
+    }
+
+    function completeTraining(){
+      if(!trainingStarted || !canComplete) return;
+
+      const ts = Date.now();
+      const d = getDiamonds() + 1;
+      setDiamonds(d);
+      setLast(ts);
+      addCompletion(ts);
+
+      showToast(`Allenamento completato! +1 💎 (Totale: ${d})`);
+      btnAllenati.disabled = false;
+      btnAllenati.textContent = "🏃‍♂️ Allenati ancora";
+      trainingStarted = false;
+      canComplete = false;
+      setLocked(true);
+    }
+
+    // ===== Init =====
+    setDiamonds(getDiamonds());
+    loadLast();
+    setLocked(true);
+
+    btnAllenati.addEventListener("click", () => {
+      beginTraining();
+
+      // Se in futuro vuoi analytics:
+      // window.plausible?.("click_allenati");
+      // gtag?.("event", "click_allenati");
+    });
+
+    btnReset.addEventListener("click", () => {
+      localStorage.removeItem(LS_KEY);
+      localStorage.removeItem(LS_LAST);
+      localStorage.removeItem(LS_COMPLETIONS);
+      setDiamonds(0);
+      loadLast();
+      resetProgressUI();
+      showToast("Reset locale completato.");
+    });
+  </script>
+</body>
+</html>
