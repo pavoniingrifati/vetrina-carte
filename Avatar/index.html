@@ -3,160 +3,77 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Fantaballa Spogliatoio</title>
-
+  <title>Avatar GLB — Animazioni</title>
   <style>
-    :root{
-      --bg-url: url("./bg.webp"); /* default */
-    }
-
+    :root{ --bg-url: url("./bg.webp"); }
     html, body{
       height:100%;
       margin:0;
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       color:#e6e6e6;
-      background:#0b0f17;
-      overflow:hidden;
-    }
-
-    /* Due layer per transizione sfondo */
-    .bgLayer{
-      position: fixed;
-      inset: 0;
-      z-index: 0;
       background-color:#0b0f17;
-      background-image:
+      /* Se metti bg.webp nella stessa cartella, viene usata come sfondo realistico */
+      /* Sfondo: scegli da menu (vedi select "Sfondo") */
+background-image:
         radial-gradient(900px 500px at 50% 20%, rgba(0,0,0,0.15), rgba(0,0,0,0.78)),
         var(--bg-url);
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      transition: opacity .35s ease;
-      opacity: 1;
-      will-change: opacity;
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
+      background-attachment:fixed;
     }
-    #bgB{ opacity: 0; }
-
-    #app{
-      height:100%;
-      width:100%;
-      position:relative;
-      overflow:hidden;
-      z-index: 2;
-    }
-
-    /* Vignetta + leggero blur per far risaltare il modello */
+    #app{ height:100%; width:100%; position:relative; overflow:hidden; }
     #app::before{
       content:"";
       position:absolute; inset:0;
       background: radial-gradient(900px 600px at 50% 35%, rgba(0,0,0,.08), rgba(0,0,0,.62));
-      backdrop-filter: blur(1.5px);
       pointer-events:none;
       z-index:1;
     }
-
     canvas{ display:block; position:relative; z-index:2; }
 
-    /* HUD */
     #hud{
       position:absolute; left:12px; top:12px; right:12px;
       display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
       pointer-events:none;
       z-index:3;
     }
-
     .badge{
       pointer-events:auto;
-      background: rgba(0,0,0,0.42);
-      border: 1px solid rgba(255,255,255,0.16);
-      backdrop-filter: blur(8px);
-      border-radius: 14px;
-      padding: 12px 12px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.14);
+      backdrop-filter: blur(6px);
+      border-radius: 12px;
+      padding: 10px 12px;
       font-size: 13px;
       line-height: 1.2;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
     }
-
-    .badge hr{
-      border: 0;
-      height: 1px;
-      background: rgba(255,255,255,0.10);
-      margin: 10px 0;
-    }
-
-    .title{
-      font-weight: 900;
-      letter-spacing: .2px;
-      font-size: 14px;
-    }
-    .sub{
-      opacity:.82;
-      margin-top: 6px;
-    }
-
-    .panelGrid{
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column; /* Animazioni sopra, Sfondo sotto */
-      gap: 10px;
-    }
-    .panel{
-      width: 100%;
-    }
-
-    .panelHead{
-      font-weight: 900;
-      letter-spacing: .2px;
-      margin-bottom: 8px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-    }
-
-    .row{
+    #controlsRow{
       display:flex;
       gap:8px;
       align-items:center;
       flex-wrap:wrap;
       margin-top: 8px;
     }
-
     button{
       appearance:none;
       border:1px solid rgba(255,255,255,0.18);
       background: rgba(255,255,255,0.10);
       color:#e6e6e6;
-      padding:8px 10px;
+      padding:7px 10px;
       border-radius:10px;
       cursor:pointer;
-      font-weight:800;
-      transition: transform .12s ease, background-color .12s ease, border-color .12s ease;
+      font-weight:700;
     }
     button:hover{ background: rgba(255,255,255,0.14); }
     button:active{ transform: translateY(1px); }
-
     select{
       background: rgba(255,255,255,0.10);
       color:#e6e6e6;
       border:1px solid rgba(255,255,255,0.18);
       border-radius:10px;
-      padding:8px 10px;
+      padding:7px 10px;
     }
-
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.08);
-      border:1px solid rgba(255,255,255,0.14);
-      font-weight: 800;
-    }
-
-    /* Loading */
     #loading{
       position:absolute; inset:0;
       display:grid;
@@ -171,88 +88,87 @@
       margin-right:10px;
     }
     @keyframes spin{ to{ transform:rotate(360deg);} }
-    #loadingRow{ display:flex; align-items:center; gap:10px; min-width: 280px; }
+    #loadingRow{ display:flex; align-items:center; gap:10px; }
     #err{ white-space:pre-wrap; color:#ffb3b3; max-width:900px; padding:14px; }
-
-    .progressWrap{
-      margin-top: 10px;
-      width: 100%;
-      height: 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.10);
-      border: 1px solid rgba(255,255,255,0.12);
-      overflow:hidden;
-    }
-    .progressBar{
-      height: 100%;
-      width: 0%;
-      background: rgba(255,255,255,0.70);
-      transition: width .12s ease;
-    }
-
     code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
 
-    /* Bottone Vai in Città */
+
+    /* Layout: due pannelli separati (Animazioni / Sfondo) */
+    .panelGrid{
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;   /* ✅ uno sotto l’altro */
+  gap: 10px;
+}
+
+.panel{
+  flex: none;
+  width: 100%;              /* ✅ occupa tutta la larghezza */
+}
+
+    .row{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top: 8px;
+    }
+
     .ctaCity{
-      position: absolute;
-      left: 50%;
-      bottom: 20px;
-      transform: translateX(-50%);
-      z-index: 4;
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 4;
 
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 
-      padding: 12px 18px;
-      border-radius: 999px;
-      text-decoration: none;
+  padding: 12px 18px;
+  border-radius: 999px;
+  text-decoration: none;
 
-      font-weight: 900;
-      letter-spacing: .2px;
-      color: #e6e6e6;
+  font-weight: 800;
+  letter-spacing: .2px;
+  color: #e6e6e6;
 
-      background: rgba(0,0,0,0.45);
-      border: 1px solid rgba(255,255,255,0.16);
-      backdrop-filter: blur(8px);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+  /* coerente col resto: "glass" scuro + bordo */
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.16);
+  backdrop-filter: blur(8px);
 
-      transition: transform .15s ease, background-color .15s ease, border-color .15s ease;
-      overflow:hidden;
-    }
-    .ctaCity::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      border-radius:999px;
-      background: linear-gradient(120deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02));
-      opacity: .35;
-      pointer-events:none;
-    }
-    .ctaCity:hover{
-      background: rgba(0,0,0,0.55);
-      border-color: rgba(255,255,255,0.24);
-      transform: translateX(-50%) translateY(-1px);
-    }
-    .ctaCity:active{
-      transform: translateX(-50%) translateY(1px);
-    }
-    .ctaCity:focus-visible{
-      outline: 2px solid rgba(155,208,255,0.65);
-      outline-offset: 3px;
-    }
+  /* ombra morbida */
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
 
-    /* Stat badge più leggibile */
-    .statTitle{ font-weight: 900; margin-bottom: 8px; }
-    .statLine{ display:flex; justify-content:space-between; gap:10px; opacity:.9; }
-    .statKey{ opacity:.75; }
-    .statVal{ font-weight: 800; }
+  /* micro transizioni */
+  transition: transform .15s ease, background-color .15s ease, border-color .15s ease;
+}
 
-    @media (max-width: 520px){
-      .ctaCity{ bottom: 16px; padding: 13px 18px; }
-      #hud{ left: 10px; right: 10px; top: 10px; }
-    }
+.ctaCity:hover{
+  background: rgba(0,0,0,0.55);
+  border-color: rgba(255,255,255,0.24);
+  transform: translateX(-50%) translateY(-1px);
+}
+
+.ctaCity:active{
+  transform: translateX(-50%) translateY(1px);
+}
+
+.ctaCity:focus-visible{
+  outline: 2px solid rgba(155,208,255,0.65);
+  outline-offset: 3px;
+}
+
+/* Mobile: un filo più grande e con margine */
+@media (max-width: 520px){
+  .ctaCity{
+    bottom: 16px;
+    padding: 13px 18px;
+  }
+}
+
   </style>
 
   <script type="importmap">
@@ -266,30 +182,22 @@
 </head>
 
 <body>
-  <!-- Layer sfondi (transizione) -->
-  <div id="bgA" class="bgLayer"></div>
-  <div id="bgB" class="bgLayer"></div>
-
   <div id="app">
     <div id="hud">
       <div class="badge" style="max-width: 760px;">
-        <div class="title">Fantaballa Spogliatoio</div>
-        <div class="sub">Iscriviti e seguimi su tutti i social! Sudicio.</div>
-        <hr>
-        <div style="opacity:.85;">File: <code>model.glb</code> (stessa cartella di questo HTML)</div>
+        <div><b>Fantaballa Spogliatoio</b>: Iscriviti e seguimi su tutti i social! Sudicio.</div>
+        <div style="opacity:.85; margin-top: 6px;">File: <code>model.glb</code> (stessa cartella di questo HTML)</div>
 
+        
         <div class="panelGrid">
 
-          <!-- Pannello Animazioni -->
+          <!-- QUADRATO 1: ANIMAZIONI -->
           <div class="badge panel">
-            <div class="panelHead">
-              <span>Animazioni</span>
-              <span class="pill" id="nowPlaying">—</span>
-            </div>
+            <div style="font-weight:800; margin-bottom:8px;">Animazioni</div>
 
             <div class="row">
               <label style="display:flex; gap:8px; align-items:center;">
-                <span style="opacity:.9;">Clip</span>
+                <span style="opacity:.9;">Animazione</span>
                 <select id="clipSelect" disabled>
                   <option>Caricamento…</option>
                 </select>
@@ -298,65 +206,56 @@
 
             <div class="row">
               <button id="playBtn" disabled>Play</button>
-              <button id="onceBtn" disabled>Play (1x)</button>
+              <button id="onceBtn" disabled>Play (una volta)</button>
               <button id="stopBtn" disabled>Stop</button>
-              <button id="resetBtn" disabled>Reset view</button>
-              <button id="fsBtn">Fullscreen</button>
             </div>
           </div>
 
-          <!-- Pannello Sfondo -->
+          <!-- QUADRATO 2: SFONDO -->
           <div class="badge panel">
-            <div class="panelHead">
-              <span>Sfondo</span>
-              <span class="pill" id="bgStatus">—</span>
-            </div>
+            <div style="font-weight:800; margin-bottom:8px;">Sfondo</div>
 
             <div class="row">
               <label style="display:flex; gap:8px; align-items:center;">
-                <span style="opacity:.9;">Scelta</span>
+                <span style="opacity:.9;">Sfondo</span>
                 <select id="bgSelect">
                   <option value="">Solo gradiente</option>
                   <option value="./bg.webp">Spogliatoio</option>
                   <option value="./bg-city.webp">Città</option>
                   <option value="./bg-night.webp">Notte</option>
                   <option value="./bg-field.webp">Campo</option>
+                  <option value="./bg-green.webp">Green</option>
                 </select>
               </label>
             </div>
 
             <div style="opacity:.7; margin-top: 6px;">
-              Metti i file immagine nella stessa cartella (es. <code>bg.webp</code>, <code>bg-city.webp</code>, <code>bg-night.webp</code>).
+              Metti i file immagine nella stessa cartella (es. <code>bg.webp</code>).
             </div>
           </div>
 
         </div>
+<div style="opacity:.7; margin-top: 6px;">
+          Tip: aggiungi <code>bg.webp</code> qui accanto per uno sfondo foto.
+        </div>
       </div>
 
-      <div class="badge" id="stats">
-        <div class="statTitle">Info</div>
-        <div class="statLine"><span class="statKey">Dimensione</span><span class="statVal" id="statSize">—</span></div>
-        <div class="statLine" style="margin-top:6px;"><span class="statKey">Animazioni</span><span class="statVal" id="statAnims">—</span></div>
-        <div class="statLine" style="margin-top:6px;"><span class="statKey">Caricamento</span><span class="statVal" id="statLoad">—</span></div>
-      </div>
+      <div class="badge" id="stats">—</div>
     </div>
 
     <div id="loading">
       <div id="loadingRow" class="badge">
         <div class="spinner"></div>
-        <div style="flex:1;">
+        <div>
           <div><b>Caricamento avatar…</b></div>
           <div id="progress" style="opacity:.8">0%</div>
-          <div class="progressWrap" aria-hidden="true">
-            <div id="progressBar" class="progressBar"></div>
-          </div>
         </div>
       </div>
     </div>
-
     <a class="ctaCity" href="https://pavoniingrifati.github.io/vetrina-carte/mappa/">
-      🏙️ Vai in Città
-    </a>
+  Vai in Città
+</a>
+
   </div>
 
   <script type="module">
@@ -367,101 +266,53 @@
     const app = document.getElementById("app");
     const loadingEl = document.getElementById("loading");
     const progressEl = document.getElementById("progress");
-    const progressBarEl = document.getElementById("progressBar");
-
-    const statSizeEl = document.getElementById("statSize");
-    const statAnimsEl = document.getElementById("statAnims");
-    const statLoadEl = document.getElementById("statLoad");
-
-    const nowPlayingEl = document.getElementById("nowPlaying");
-    const bgStatusEl = document.getElementById("bgStatus");
+    const statsEl = document.getElementById("stats");
 
     const clipSelect = document.getElementById("clipSelect");
     const playBtn = document.getElementById("playBtn");
     const onceBtn = document.getElementById("onceBtn");
     const stopBtn = document.getElementById("stopBtn");
-    const resetBtn = document.getElementById("resetBtn");
-    const fsBtn = document.getElementById("fsBtn");
 
+    // --- Sfondo selezionabile (salvato in localStorage) ---
     const bgSelect = document.getElementById("bgSelect");
 
-    const bgA = document.getElementById("bgA");
-    const bgB = document.getElementById("bgB");
-    let bgFlip = false;
-
-    function prettifyName(name, fallback){
-      const s = (name || "").toString().trim();
-      if (!s) return fallback;
-      const clean = s.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
-      return clean.split(" ").map(w => w ? (w[0].toUpperCase() + w.slice(1).toLowerCase()) : w).join(" ");
-    }
-
-    // --- Sfondo selezionabile (con transizione) + persistenza ---
-    function applyBackground(path){
+    function setBackground(path) {
       const val = path ? `url("${path}")` : "none";
-
-      // Cross-fade tra due layer
-      bgFlip = !bgFlip;
-      const top = bgFlip ? bgB : bgA;
-      const bottom = bgFlip ? bgA : bgB;
-
-      top.style.backgroundImage =
-        `radial-gradient(900px 500px at 50% 20%, rgba(0,0,0,0.15), rgba(0,0,0,0.78)), ${val}`;
-
-      top.style.opacity = "1";
-      bottom.style.opacity = "0";
-
-      // Label
-      bgStatusEl.textContent = path ? prettifyName(path.split("/").pop().split(".")[0], "Sfondo") : "Gradiente";
+      document.documentElement.style.setProperty("--bg-url", val);
+      document.body.style.setProperty("--bg-url", val);
       try { localStorage.setItem("bgPath", path || ""); } catch(e) {}
     }
 
-    // init background from storage
+    // Ripristina scelta precedente
     try {
       const saved = localStorage.getItem("bgPath");
       if (saved !== null) {
+        setBackground(saved);
         if (bgSelect) bgSelect.value = saved;
-        applyBackground(saved);
-      } else {
-        applyBackground("./bg.webp");
-        if (bgSelect) bgSelect.value = "./bg.webp";
       }
-    } catch(e) {
-      applyBackground("./bg.webp");
-      if (bgSelect) bgSelect.value = "./bg.webp";
-    }
+    } catch(e) {}
 
     bgSelect?.addEventListener("change", (e) => {
-      applyBackground(e.target.value);
+      setBackground(e.target.value);
     });
 
-    // --- Renderer / Scene ---
+
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(app.clientWidth, app.clientHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.setClearAlpha(0);
-
-    // Ombre soft
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
     app.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
 
     const camera = new THREE.PerspectiveCamera(50, app.clientWidth / app.clientHeight, 0.01, 5000);
+    camera.position.set(0.8, 0.6, 1.4);
 
-    // Luci indoor
-    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-
-    const key = new THREE.DirectionalLight(0xffffff, 1.15);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.58));
+    const key = new THREE.DirectionalLight(0xffffff, 1.10);
     key.position.set(2.5, 4.5, 2.0);
-    key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024);
-    key.shadow.bias = -0.0002;
     scene.add(key);
-
     const rim = new THREE.DirectionalLight(0xffffff, 0.35);
     rim.position.set(-3.0, 2.0, -2.5);
     scene.add(rim);
@@ -469,18 +320,10 @@
     const avatarRig = new THREE.Group();
     scene.add(avatarRig);
 
-    // Piano ombra (shadow catcher)
-    const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(10, 10),
-      new THREE.ShadowMaterial({ opacity: 0.25 })
-    );
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
+    controls.target.set(0, 0, 0);
 
     const loader = new GLTFLoader();
     const url = "./model.glb";
@@ -490,13 +333,6 @@
     let clips = [];
     let actions = [];
     let activeAction = null;
-
-    // salviamo la "home view" per Reset
-    const home = {
-      camPos: new THREE.Vector3(),
-      target: new THREE.Vector3(),
-      set: false
-    };
 
     function showError(err) {
       loadingEl.innerHTML = "";
@@ -519,11 +355,6 @@
       playBtn.disabled = false;
       onceBtn.disabled = false;
       stopBtn.disabled = false;
-      resetBtn.disabled = false;
-    }
-
-    function setNowPlaying(text){
-      nowPlayingEl.textContent = text ? `▶️ ${text}` : "—";
     }
 
     function setActiveAction(index, { loop = THREE.LoopRepeat, clampWhenFinished = false } = {}) {
@@ -541,63 +372,44 @@
 
       activeAction = next;
       clipSelect.value = String(index);
-
-      const nice = prettifyName(clips[index]?.name, `Clip ${index+1}`);
-      setNowPlaying(nice);
     }
 
-    loader.load(
-      url,
-      (gltf) => {
-        model = gltf.scene;
-        avatarRig.add(model);
+    loader.load(url, (gltf) => {
+  model = gltf.scene;
+  avatarRig.add(model);
 
-        // abilita ombre sul modello
-        model.traverse((o) => {
-          if (o.isMesh) {
-            o.castShadow = true;
-            o.receiveShadow = false;
-          }
-        });
+  model.scale.setScalar(0.5);
 
-        // Centra
-        const box0 = new THREE.Box3().setFromObject(model);
-        const center0 = box0.getCenter(new THREE.Vector3());
-        model.position.sub(center0);
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
 
-        // Ricalcola box dopo il centro
-        const box = new THREE.Box3().setFromObject(model);
-        const size = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
+  const maxDim = Math.max(size.x, size.y, size.z);
 
-        // Aggiusta "pavimento" ombra al punto più basso del modello
-        const bottomY = box.min.y;
-        ground.position.y = bottomY - 0.001;
+  model.position.sub(center);
+  model.position.y -= maxDim * 0.95;  // abbassa (prova 0.10–0.25)
 
-        // Inquadratura base con padding (così non è enorme all'avvio)
-        const fov = camera.fov * (Math.PI / 180);
-        let camZ = (maxDim / 2) / Math.tan(fov / 2);
-        camZ *= 3.2; // padding: aumenta = più piccolo, diminuisci = più grande
+  const fov = camera.fov * (Math.PI / 180);
+  let camZ = (maxDim / 2) / Math.tan(fov / 2);
+  camZ *= 3.0;
 
-        camera.position.set(0, maxDim * 0.20, camZ);
+  camera.position.set(0, maxDim * 0.15, camZ);
+
+  // Più lontano all’avvio (se ti serve ancora “più piccolo”)
+  camera.position.z *= 2.0;
+  camera.position.y *= 3.0;
+
+camera.updateProjectionMatrix();
+controls.update();
+
         camera.near = Math.max(0.01, maxDim / 100);
-        camera.far = maxDim * 80;
-        camera.updateProjectionMatrix();
+        camera.far = maxDim * 60;
 
-        controls.target.set(0, maxDim * 0.05, 0);
+        controls.target.set(0, 0, 0);
         controls.update();
 
-        // Salva home view per reset
-        home.camPos.copy(camera.position);
-        home.target.copy(controls.target);
-        home.set = true;
-
-        // Stats UI
-        statSizeEl.textContent = `${maxDim.toFixed(2)}`;
-        statLoadEl.textContent = "OK";
-
         clips = gltf.animations || [];
-        statAnimsEl.textContent = `${clips.length}`;
+        statsEl.textContent = `Dimensione ~ ${maxDim.toFixed(2)} • Animazioni: ${clips.length}`;
 
         if (clips.length) {
           mixer = new THREE.AnimationMixer(model);
@@ -607,7 +419,7 @@
           clips.forEach((clip, i) => {
             const opt = document.createElement("option");
             opt.value = String(i);
-            opt.textContent = `${i + 1}) ${prettifyName(clip.name, `Clip ${i+1}`)}`;
+            opt.textContent = clip.name ? `${i + 1}) ${clip.name}` : `${i + 1}) Clip`;
             clipSelect.appendChild(opt);
           });
 
@@ -617,7 +429,7 @@
           setActiveAction(idleIndex >= 0 ? idleIndex : 0);
         } else {
           clipSelect.innerHTML = "<option>Nessuna animazione</option>";
-          setNowPlaying("—");
+          statsEl.textContent += " • (solo idle procedurale)";
         }
 
         loadingEl.style.display = "none";
@@ -627,19 +439,12 @@
           if (xhr.total) {
             const p = Math.round((xhr.loaded / xhr.total) * 100);
             progressEl.textContent = `${p}%`;
-            progressBarEl.style.width = `${p}%`;
-            statLoadEl.textContent = `${p}%`;
           } else {
-            const kb = Math.round(xhr.loaded / 1024);
-            progressEl.textContent = `${kb} KB`;
-            statLoadEl.textContent = `${kb} KB`;
+            progressEl.textContent = `${Math.round(xhr.loaded / 1024)} KB`;
           }
         }
       },
-      (err) => {
-        statLoadEl.textContent = "Errore";
-        showError(err);
-      }
+      (err) => showError(err)
     );
 
     clipSelect.addEventListener("change", () => {
@@ -661,25 +466,7 @@
       if (activeAction) {
         activeAction.stop();
         activeAction = null;
-        setNowPlaying("Pausa");
       }
-    });
-
-    resetBtn.addEventListener("click", () => {
-      if (!home.set) return;
-      camera.position.copy(home.camPos);
-      controls.target.copy(home.target);
-      controls.update();
-    });
-
-    fsBtn.addEventListener("click", async () => {
-      try{
-        if (!document.fullscreenElement) {
-          await app.requestFullscreen();
-        } else {
-          await document.exitFullscreen();
-        }
-      }catch(e){}
     });
 
     function onResize() {
@@ -694,11 +481,13 @@
     const clock = new THREE.Clock();
     function animate() {
       requestAnimationFrame(animate);
+      controls.update();
 
       const dt = clock.getDelta();
       if (mixer) mixer.update(dt);
 
-      controls.update();
+      
+
       renderer.render(scene, camera);
     }
     animate();
