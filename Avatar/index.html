@@ -12,9 +12,11 @@
       color:#e6e6e6;
       background-color:#0b0f17;
       /* Se metti bg.webp nella stessa cartella, viene usata come sfondo realistico */
+      /* Sfondo: scegli da menu (vedi select "Sfondo") */
+      --bg-url: url("./bg.webp"); /* default */
       background-image:
         radial-gradient(900px 500px at 50% 20%, rgba(0,0,0,0.15), rgba(0,0,0,0.78)),
-        url("./bg.webp");
+        var(--bg-url);
       background-size:cover;
       background-position:center;
       background-repeat:no-repeat;
@@ -171,6 +173,16 @@
               <option>Caricamento…</option>
             </select>
           </label>
+          <label style="display:flex; gap:8px; align-items:center;">
+            <span style="opacity:.9;">Sfondo</span>
+            <select id="bgSelect">
+              <option value="">Solo gradiente</option>
+              <option value="./bg.webp">Spogliatoio</option>
+              <option value="./bg-city.webp">Città</option>
+              <option value="./bg-night.webp">Notte</option>
+            </select>
+          </label>
+
           <button id="playBtn" disabled>Play</button>
           <button id="onceBtn" disabled>Play (una volta)</button>
           <button id="stopBtn" disabled>Stop</button>
@@ -213,6 +225,29 @@
     const playBtn = document.getElementById("playBtn");
     const onceBtn = document.getElementById("onceBtn");
     const stopBtn = document.getElementById("stopBtn");
+
+    // --- Sfondo selezionabile (salvato in localStorage) ---
+    const bgSelect = document.getElementById("bgSelect");
+
+    function setBackground(path) {
+      const val = path ? `url("${path}")` : "none";
+      document.documentElement.style.setProperty("--bg-url", val);
+      try { localStorage.setItem("bgPath", path || ""); } catch(e) {}
+    }
+
+    // Ripristina scelta precedente
+    try {
+      const saved = localStorage.getItem("bgPath");
+      if (saved !== null) {
+        setBackground(saved);
+        if (bgSelect) bgSelect.value = saved;
+      }
+    } catch(e) {}
+
+    bgSelect?.addEventListener("change", (e) => {
+      setBackground(e.target.value);
+    });
+
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
