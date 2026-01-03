@@ -12,7 +12,773 @@
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       color:#e6e6e6;
       background-color:#0b0f17;
+      /* Se metti bg.webp nella stessa cartella, viene usata com<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Avatar GLB — Animazioni</title>
+  <style>
+    :root{ --bg-url: url("./bg.webp"); }
+    html, body{
+      height:100%;
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:#e6e6e6;
+      background-color:#0b0f17;
       /* Se metti bg.webp nella stessa cartella, viene usata come sfondo realistico */
+      /* Sfondo: scegli da menu (vedi select "Sfondo") */
+background-image:
+        radial-gradient(900px 500px at 50% 20%, rgba(0,0,0,0.15), rgba(0,0,0,0.78)),
+        var(--bg-url);
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
+      background-attachment:fixed;
+    }
+    #app{ height:100%; width:100%; position:relative; overflow:hidden; }
+    #app::before{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(900px 600px at 50% 35%, rgba(0,0,0,.08), rgba(0,0,0,.62));
+      pointer-events:none;
+      z-index:1;
+    }
+    canvas{ display:block; position:relative; z-index:2; }
+
+    #hud{
+      position:absolute; left:12px; top:12px; right:12px;
+      display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
+      pointer-events:none;
+      z-index:3;
+    }
+    .badge{
+      pointer-events:auto;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.14);
+      backdrop-filter: blur(6px);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+    #controlsRow{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top: 8px;
+    }
+    button{
+      appearance:none;
+      border:1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10);
+      color:#e6e6e6;
+      padding:7px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+    }
+    button:hover{ background: rgba(255,255,255,0.14); }
+    button:active{ transform: translateY(1px); }
+    select{
+      background: rgba(255,255,255,0.10);
+      color:#e6e6e6;
+      border:1px solid rgba(255,255,255,0.18);
+      border-radius:10px;
+      padding:7px 10px;
+    }
+    #loading{
+      position:absolute; inset:0;
+      display:grid;
+      place-items:center;
+      z-index:3;
+    }
+    .spinner{
+      width:26px; height:26px; border-radius:50%;
+      border:3px solid rgba(255,255,255,0.18);
+      border-top-color: rgba(255,255,255,0.9);
+      animation:spin .9s linear infinite;
+      margin-right:10px;
+    }
+    @keyframes spin{ to{ transform:rotate(360deg);} }
+    #loadingRow{ display:flex; align-items:center; gap:10px; }
+    #err{ white-space:pre-wrap; color:#ffb3b3; max-width:900px; padding:14px; }
+    code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+
+    /* Layout: due pannelli separati (Animazioni / Sfondo) */
+    .panelGrid{
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;   /* ✅ uno sotto l’altro */
+  gap: 10px;
+}
+
+.panel{
+  flex: none;
+  width: 100%;              /* ✅ occupa tutta la larghezza */
+}
+
+    .row{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top: 8px;
+    }
+
+    .ctaCity{
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 4;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  padding: 12px 18px;
+  border-radius: 999px;
+  text-decoration: none;
+
+  font-weight: 800;
+  letter-spacing: .2px;
+  color: #e6e6e6;
+
+  /* coerente col resto: "glass" scuro + bordo */
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.16);
+  backdrop-filter: blur(8px);
+
+  /* ombra morbida */
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+
+  /* micro transizioni */
+  transition: transform .15s ease, background-color .15s ease, border-color .15s ease;
+}
+
+.ctaCity:hover{
+  background: rgba(0,0,0,0.55);
+  border-color: rgba(255,255,255,0.24);
+  transform: translateX(-50%) translateY(-1px);
+}
+
+.ctaCity:active{
+  transform: translateX(-50%) translateY(1px);
+}
+
+.ctaCity:focus-visible{
+  outline: 2px solid rgba(155,208,255,0.65);
+  outline-offset: 3px;
+}
+
+/* Mobile: un filo più grande e con margine */
+@media (max-width: 520px){
+  .ctaCity{
+    bottom: 16px;
+    padding: 13px 18px;
+  }
+}
+
+  
+    /* --- Branding / Social --- */
+    .socialRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+    }
+    .socialLink{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      text-decoration:none;
+      color:#e6e6e6;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.12);
+      transition: transform .15s ease, background-color .15s ease, border-color .15s ease;
+    }
+    .socialLink:hover{
+      transform: translateY(-1px);
+      background: rgba(0,0,0,0.35);
+      border-color: rgba(255,255,255,0.18);
+    }
+    .socialLink svg{
+      width:18px; height:18px;
+      fill: currentColor;
+      opacity:.95;
+      flex: 0 0 auto;
+    }
+    .socialLink span{ opacity:.92; font-weight:700; letter-spacing:.2px; }
+
+    /* Skip link (accessibilità tastiera) */
+    .skipLink{
+      position:absolute;
+      left: 12px;
+      top: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.7);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      text-decoration:none;
+      transform: translateY(-150%);
+      transition: transform .15s ease;
+      z-index: 5;
+    }
+    .skipLink:focus{ transform: translateY(0); outline: none; }
+
+    /* Safe area iPhone + spazi HUD */
+    #hud{
+      left: calc(12px + env(safe-area-inset-left));
+      right: calc(12px + env(safe-area-inset-right));
+      top: calc(12px + env(safe-area-inset-top));
+    }
+    .ctaCity{
+      bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+    @media (max-width: 520px){
+      .ctaCity{
+        bottom: calc(16px + env(safe-area-inset-bottom));
+      }
+    }
+
+    /* Disattiva fixed su mobile/iOS (meno scatti) */
+    @media (max-width: 768px), (hover: none) and (pointer: coarse){
+      html, body{ background-attachment: scroll; }
+    }
+
+    /* Contrasto badge quando c'è una foto come sfondo */
+    body.hasPhotoBg .badge{
+      background: rgba(0,0,0,0.50);
+    }
+
+    /* Accordion (mobile-friendly) */
+    details.accordion > summary{
+      list-style:none;
+      cursor:pointer;
+      font-weight:800;
+      margin: 0;
+      padding: 0 0 8px 0;
+      user-select:none;
+    }
+    details.accordion > summary::-webkit-details-marker{ display:none; }
+    details.accordion > summary span{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    details.accordion > summary span::after{
+      content:"▾";
+      opacity:.7;
+      transform: translateY(-1px);
+    }
+    details.accordion[open] > summary span::after{
+      content:"▴";
+    }
+    @media (min-width: 900px){
+      details.accordion > summary{ cursor: default; }
+    }
+
+    /* Toggle */
+    .toggle{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      opacity:.95;
+      font-weight:700;
+      user-select:none;
+    }
+    .toggle input{ transform: translateY(1px); }
+
+    /* Progress bar */
+    #progressBar{
+      width: 180px;
+      height: 10px;
+      margin-top: 6px;
+    }
+
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <a class="skipLink" href="#hud">Salta ai controlli</a>
+  <div id="app">
+    <div id="hud" tabindex="-1">
+      <div class="badge" style="max-width: 760px;">
+        <div><b>Fantaballa Spogliatoio</b>: Iscriviti e seguimi su tutti i social! Sudicio.</div>
+        <div class="socialRow" aria-label="Social Fantaballa">
+          <a class="socialLink" href="https://instagram.com/fantaballa" target="_blank" rel="noopener" aria-label="Instagram /fantaballa">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 2h9A5.5 5.5 0 0 1 22 7.5v9A5.5 5.5 0 0 1 16.5 22h-9A5.5 5.5 0 0 1 2 16.5v-9A5.5 5.5 0 0 1 7.5 2Zm0 2A3.5 3.5 0 0 0 4 7.5v9A3.5 3.5 0 0 0 7.5 20h9A3.5 3.5 0 0 0 20 16.5v-9A3.5 3.5 0 0 0 16.5 4h-9Zm10.25 1.75a1 1 0 1 1 0 2 1 1 0 0 1 0-2ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
+            <span>/fantaballa</span>
+          </a>
+          <a class="socialLink" href="https://www.tiktok.com/@fantaballa" target="_blank" rel="noopener" aria-label="TikTok /fantaballa">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2h2.2c.3 2.4 1.7 4.3 3.8 5.2V9.6c-2.1-.1-4-1-5.6-2.4V15a6 6 0 1 1-6-6c.4 0 .8 0 1.2.1v2.6c-.4-.2-.8-.3-1.2-.3a3.4 3.4 0 1 0 3.4 3.4V2Z"/></svg>
+            <span>/fantaballa</span>
+          </a>
+          <a class="socialLink" href="https://twitch.tv/fantaballa" target="_blank" rel="noopener" aria-label="Twitch /fantaballa">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h18v12l-4 4h-4l-2 2H9v-2H4V3Zm16 10V5H6v12h5v2l2-2h4l3-3Zm-9-6h2v5h-2V7Zm5 0h2v5h-2V7Z"/></svg>
+            <span>/fantaballa</span>
+          </a>
+        </div>
+        <div style="opacity:.85; margin-top: 6px;">File: <code>model.glb</code> (stessa cartella di questo HTML)</div>
+
+        
+        <div class="panelGrid">
+
+          <!-- QUADRATO 1: ANIMAZIONI -->
+          <details class="badge panel accordion" id="animPanel" open>
+            <summary><span>Animazioni</span></summary>
+<div class="row">
+              <label for="clipSelect" style="display:flex; gap:8px; align-items:center;">
+                <span style="opacity:.9;">Animazione</span>
+                <select id="clipSelect" disabled>
+                  <option>Caricamento…</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="row">
+              <button id="playBtn" disabled aria-label="Play o Pausa">Play</button>
+              <button id="onceBtn" disabled aria-label="Riproduci una volta">Play (una volta)</button>
+              <button id="stopBtn" disabled aria-label="Stop animazione">Stop</button>
+            </div>
+            <div class="row" style="flex-wrap:wrap;">
+              <button id="resetCamBtn" disabled aria-label="Reset camera">Reset camera</button>
+              <label class="toggle" style="margin-left:auto;">
+                <input type="checkbox" id="autoRotateToggle" aria-label="Auto rotazione">
+                <span>Gira da solo</span>
+              </label>
+            </div>
+          </details>
+
+          <!-- QUADRATO 2: SFONDO -->
+          <details class="badge panel accordion" id="bgPanel" open>
+            <summary><span>Sfondo</span></summary>
+<div class="row">
+              <label for="bgSelect" style="display:flex; gap:8px; align-items:center;">
+                <span style="opacity:.9;">Sfondo</span>
+                <select id="bgSelect">
+                  <option value="">Solo gradiente</option>
+                  <option value="./bg.webp">Spogliatoio</option>
+                  <option value="./bg-city.webp">Città</option>
+                  <option value="./bg-night.webp">Notte</option>
+                  <option value="./bg-field.webp">Campo</option>
+                  <option value="./bg-green.webp">Green</option>
+                </select>
+              </label>
+            </div>
+
+            <div style="opacity:.7; margin-top: 6px;">
+              Metti i file immagine nella stessa cartella (es. <code>bg.webp</code>).
+            </div>
+          </div>
+
+        </div>
+<div style="opacity:.7; margin-top: 6px;">
+          Tip: aggiungi <code>bg.webp</code> qui accanto per uno sfondo foto.
+          </details>
+
+        </div>
+
+      </div>
+
+      <div class="badge" id="stats">—</div>
+    </div>
+
+    <div id="loading">
+      <div id="loadingRow" class="badge">
+        <div class="spinner"></div>
+        <div>
+          <div><b>Caricamento avatar…</b></div>
+          <div id="progress" style="opacity:.8">0%</div>
+          <progress id="progressBar" max="100" value="0" aria-label="Progresso caricamento"></progress>
+        </div>
+      </div>
+    </div>
+    <a class="ctaCity" href="https://pavoniingrifati.github.io/vetrina-carte/mappa/">
+  Vai in Città
+</a>
+
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+    const app = document.getElementById("app");
+    const loadingEl = document.getElementById("loading");
+    const progressEl = document.getElementById("progress");
+    const statsEl = document.getElementById("stats");
+
+    const clipSelect = document.getElementById("clipSelect");
+    const playBtn = document.getElementById("playBtn");
+    const onceBtn = document.getElementById("onceBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const resetCamBtn = document.getElementById("resetCamBtn");
+    const autoRotateToggle = document.getElementById("autoRotateToggle");
+    const progressBarEl = document.getElementById("progressBar");
+
+    // --- Sfondo selezionabile (salvato in localStorage) ---
+    const bgSelect = document.getElementById("bgSelect");
+
+    function setBackground(path) {
+      const val = path ? `url("${path}")` : "none";
+      document.documentElement.style.setProperty("--bg-url", val);
+      document.body.style.setProperty("--bg-url", val);
+
+      // Contrasto badge quando c'è una foto
+      document.body.classList.toggle("hasPhotoBg", !!path);
+
+      try { localStorage.setItem("bgPath", path || ""); } catch(e) {}
+    }
+
+    // Ripristina scelta precedente
+    try {
+      const saved = localStorage.getItem("bgPath");
+      if (saved !== null) {
+        setBackground(saved);
+        if (bgSelect) bgSelect.value = saved;
+      }
+    } catch(e) {}
+
+    bgSelect?.addEventListener("change", (e) => {
+      setBackground(e.target.value);
+    });
+
+    // Preload sfondi (evita flash)
+    try {
+      const urls = Array.from(bgSelect?.querySelectorAll("option") || [])
+        .map(o => o.value)
+        .filter(v => v);
+      urls.forEach(u => { const img = new Image(); img.src = u; });
+    } catch(e) {}
+
+
+
+    // Fallback: WebGL non supportato
+    (function ensureWebGL(){
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+      if (!gl) {
+        loadingEl.innerHTML = "";
+        const msg = document.createElement("div");
+        msg.className = "badge";
+        msg.style.maxWidth = "680px";
+        msg.textContent = "Questo dispositivo/browser non supporta WebGL, quindi l’avatar 3D non può essere mostrato.";
+        loadingEl.appendChild(msg);
+        throw new Error("WebGL not supported");
+      }
+    })();
+
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(app.clientWidth, app.clientHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.setClearAlpha(0);
+    app.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(50, app.clientWidth / app.clientHeight, 0.01, 5000);
+    camera.position.set(0.8, 0.6, 1.4);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.58));
+    const key = new THREE.DirectionalLight(0xffffff, 1.10);
+    key.position.set(2.5, 4.5, 2.0);
+    scene.add(key);
+    const rim = new THREE.DirectionalLight(0xffffff, 0.35);
+    rim.position.set(-3.0, 2.0, -2.5);
+    scene.add(rim);
+
+    const avatarRig = new THREE.Group();
+    scene.add(avatarRig);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = false;
+    controls.autoRotateSpeed = 1.2;
+    controls.target.set(0, 0, 0);
+
+    const loader = new GLTFLoader();
+    const url = "./model.glb";
+
+    let model = null;
+    let mixer = null;
+    let clips = [];
+    let actions = [];
+    let activeAction = null;
+
+    let resetCamera = () => {};
+
+    function showError(err) {
+      loadingEl.innerHTML = "";
+      const pre = document.createElement("div");
+      pre.id = "err";
+      pre.className = "badge";
+      pre.textContent =
+        "Errore nel caricare il modello GLB.\n\n" +
+        String(err) +
+        "\n\nSuggerimenti:\n" +
+        "• Assicurati che 'model.glb' sia nella stessa cartella di questo HTML.\n" +
+        "• Controlla maiuscole/minuscole nel nome file.\n" +
+        "• Su GitHub Pages: verifica che il file sia nella sorgente pubblicata.";
+      loadingEl.appendChild(pre);
+      loadingEl.style.display = "grid";
+    }
+
+    function enableUI() {
+      clipSelect.disabled = false;
+      playBtn.disabled = false;
+      onceBtn.disabled = false;
+      stopBtn.disabled = false;
+      if (resetCamBtn) resetCamBtn.disabled = false;
+    }
+
+    function setActiveAction(index, { loop = THREE.LoopRepeat, clampWhenFinished = false } = {}) {
+      if (!actions.length) return;
+      const next = actions[index];
+      if (!next) return;
+
+      if (activeAction && activeAction !== next) activeAction.fadeOut(0.2);
+
+      next.reset();
+      next.setLoop(loop, loop === THREE.LoopOnce ? 1 : Infinity);
+      next.clampWhenFinished = clampWhenFinished;
+      next.fadeIn(0.2);
+      next.play();
+
+      activeAction = next;
+      clipSelect.value = String(index);
+
+      // Salva ultima animazione scelta
+      try { localStorage.setItem("clipIndex", String(index)); } catch(e) {}
+
+      // Stato bottone Play/Pausa
+      playBtn.textContent = "Pausa";
+    }
+
+    loader.load(url, (gltf) => {
+  model = gltf.scene;
+  avatarRig.add(model);
+
+  model.scale.setScalar(0.5);
+
+  const box = new THREE.Box3().setFromObject(model);
+  const center = box.getCenter(new THREE.Vector3());
+
+  // Centro modello in (0,0,0) e appoggia i piedi a terra (y=0)
+  model.position.sub(center);
+  box.setFromObject(model);
+  model.position.y -= box.min.y;
+  box.setFromObject(model);
+
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+
+  const sphere = box.getBoundingSphere(new THREE.Sphere());
+  const radius = Math.max(0.001, sphere.radius);
+
+  function fitCameraToSphere(s, offset = 1.25) {
+    const fov = camera.fov * (Math.PI / 180);
+    const dist = (s.radius / Math.sin(fov / 2)) * offset;
+
+    // Un po' più alto per look naturale
+    const target = s.center.clone();
+    const pos = target.clone().add(new THREE.Vector3(0, s.radius * 0.25, dist));
+
+    camera.near = Math.max(0.01, dist / 100);
+    camera.far  = dist * 50;
+    camera.position.copy(pos);
+    camera.updateProjectionMatrix();
+
+    controls.target.copy(target);
+    controls.update();
+
+    // Limiti OrbitControls
+    controls.minDistance = Math.max(0.05, s.radius * 0.6);
+    controls.maxDistance = s.radius * 8;
+    controls.maxPolarAngle = Math.PI * 0.90;
+
+    return { pos, target, radius: s.radius };
+  }
+
+  const fitted = fitCameraToSphere(sphere, 1.35);
+  let defaultCamPos = fitted.pos.clone();
+  let defaultTarget = fitted.target.clone();
+
+  // Reset camera
+  resetCamera = () => {
+    camera.position.copy(defaultCamPos);
+    controls.target.copy(defaultTarget);
+    controls.update();
+  }
+
+        clips = gltf.animations || [];
+        statsEl.textContent = `Dimensione ~ ${maxDim.toFixed(2)} • Animazioni: ${clips.length}`;
+
+        if (clips.length) {
+          mixer = new THREE.AnimationMixer(model);
+          mixer.addEventListener("finished", (e) => {
+            // Se finisce una clip (es. Play una volta), reset testo Play/Pausa
+            if (e?.action) playBtn.textContent = "Play";
+          });
+          actions = clips.map((clip) => mixer.clipAction(clip));
+
+          clipSelect.innerHTML = "";
+          clips.forEach((clip, i) => {
+            const opt = document.createElement("option");
+            opt.value = String(i);
+            opt.textContent = clip.name ? `${i + 1}) ${clip.name}` : `${i + 1}) Clip`;
+            clipSelect.appendChild(opt);
+          });
+
+          enableUI();
+
+          // Ripristina ultima animazione scelta
+          try {
+            const savedIdx = localStorage.getItem("clipIndex");
+            if (savedIdx !== null && savedIdx !== "" && !Number.isNaN(Number(savedIdx))) {
+              clipSelect.value = String(Math.min(clips.length - 1, Math.max(0, Number(savedIdx))));
+            }
+          } catch(e) {}
+
+          const idleIndex = clips.findIndex(c => (c.name || "").toLowerCase().includes("idle"));
+
+          // Se hai una clip salvata, parte quella; altrimenti prova "idle"
+          const startIndex = !Number.isNaN(Number(clipSelect.value)) ? Number(clipSelect.value) : (idleIndex >= 0 ? idleIndex : 0);
+          setActiveAction(startIndex);
+        } else {
+          clipSelect.innerHTML = "<option>Nessuna animazione</option>";
+          statsEl.textContent += " • (solo idle procedurale)";
+        }
+
+        loadingEl.style.display = "none";
+        if (progressBarEl) progressBarEl.value = 100;
+      },
+      (xhr) => {
+        if (xhr?.loaded) {
+          if (xhr.total) {
+            const p = Math.round((xhr.loaded / xhr.total) * 100);
+            progressEl.textContent = `${p}%`;
+            if (progressBarEl) progressBarEl.value = p;
+            } else {
+            progressEl.textContent = `${Math.round(xhr.loaded / 1024)} KB`;
+            if (progressBarEl) progressBarEl.value = 0;
+            }
+        }
+      },
+      (err) => showError(err)
+    );
+
+    clipSelect.addEventListener("change", () => {
+      const idx = Number(clipSelect.value);
+      setActiveAction(idx, { loop: THREE.LoopRepeat, clampWhenFinished: false });
+    });
+
+    playBtn.addEventListener("click", () => {
+      const idx = Number(clipSelect.value);
+
+      // Se non c'è un'azione attiva o non sta girando, (ri)parti
+      if (!activeAction || (activeAction && typeof activeAction.isRunning === "function" && !activeAction.isRunning())) {
+        setActiveAction(idx, { loop: THREE.LoopRepeat, clampWhenFinished: false });
+        playBtn.textContent = "Pausa";
+        return;
+      }
+
+      // Toggle pausa/riprendi
+      activeAction.paused = !activeAction.paused;
+      playBtn.textContent = activeAction.paused ? "Riprendi" : "Pausa";
+    });
+
+    onceBtn.addEventListener("click", () => {
+      const idx = Number(clipSelect.value);
+      setActiveAction(idx, { loop: THREE.LoopOnce, clampWhenFinished: true });
+      playBtn.textContent = "Pausa";
+    });
+
+    stopBtn.addEventListener("click", () => {
+      if (activeAction) {
+        activeAction.stop();
+        activeAction = null;
+      }
+      playBtn.textContent = "Play";
+    });
+
+    resetCamBtn?.addEventListener("click", () => {
+      resetCamera();
+    });
+
+    autoRotateToggle?.addEventListener("change", () => {
+      controls.autoRotate = !!autoRotateToggle.checked;
+    });
+
+    // Scorciatoie tastiera: Space = play/pause, frecce = cambia clip, R = reset camera
+    window.addEventListener("keydown", (e) => {
+      const tag = (document.activeElement?.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "select" || tag === "textarea") return;
+
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (!playBtn.disabled) playBtn.click();
+      } else if (e.code === "ArrowRight" || e.code === "ArrowDown") {
+        e.preventDefault();
+        const n = clipSelect.options.length;
+        if (n > 0) clipSelect.value = String((Number(clipSelect.value) + 1) % n);
+        clipSelect.dispatchEvent(new Event("change"));
+      } else if (e.code === "ArrowLeft" || e.code === "ArrowUp") {
+        e.preventDefault();
+        const n = clipSelect.options.length;
+        if (n > 0) clipSelect.value = String((Number(clipSelect.value) - 1 + n) % n);
+        clipSelect.dispatchEvent(new Event("change"));
+      } else if (e.key.toLowerCase() === "r") {
+        if (!resetCamBtn?.disabled) resetCamBtn.click();
+      }
+    });
+
+    function onResize() {
+      const w = app.clientWidth;
+      const h = app.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+    window.addEventListener("resize", onResize);
+
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+
+      const dt = clock.getDelta();
+      if (mixer) mixer.update(dt);
+
+      
+
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
+e sfondo realistico */
       /* Sfondo: scegli da menu (vedi select "Sfondo") */
 background-image:
         radial-gradient(900px 500px at 50% 20%, rgba(0,0,0,0.15), rgba(0,0,0,0.78)),
