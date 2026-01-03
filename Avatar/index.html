@@ -12,20 +12,6 @@
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       color:#e6e6e6;
       background-color:#0b0f17;
-      /* Se metti bg.webp nella stessa cartella, viene usata com<!doctype html>
-<html lang="it">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Avatar GLB — Animazioni</title>
-  <style>
-    :root{ --bg-url: url("./bg.webp"); }
-    html, body{
-      height:100%;
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      color:#e6e6e6;
-      background-color:#0b0f17;
       /* Se metti bg.webp nella stessa cartella, viene usata come sfondo realistico */
       /* Sfondo: scegli da menu (vedi select "Sfondo") */
 background-image:
@@ -582,47 +568,39 @@ background-image:
   model.scale.setScalar(0.5);
 
   const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
 
-  // Centro modello in (0,0,0) e appoggia i piedi a terra (y=0)
-  model.position.sub(center);
-  box.setFromObject(model);
-  model.position.y -= box.min.y;
-  box.setFromObject(model);
-
-  const size = box.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z);
 
-  const sphere = box.getBoundingSphere(new THREE.Sphere());
-  const radius = Math.max(0.001, sphere.radius);
+  // Ripristino inquadratura come nel file originale
+  model.position.sub(center);
+  model.position.y -= maxDim * 0.95;
 
-  function fitCameraToSphere(s, offset = 1.25) {
-    const fov = camera.fov * (Math.PI / 180);
-    const dist = (s.radius / Math.sin(fov / 2)) * offset;
+  const fov = camera.fov * (Math.PI / 180);
+  let camZ = (maxDim / 2) / Math.tan(fov / 2);
+  camZ *= 3.0;
 
-    // Un po' più alto per look naturale
-    const target = s.center.clone();
-    const pos = target.clone().add(new THREE.Vector3(0, s.radius * 0.25, dist));
+  camera.position.set(0, maxDim * 0.15, camZ);
 
-    camera.near = Math.max(0.01, dist / 100);
-    camera.far  = dist * 50;
-    camera.position.copy(pos);
-    camera.updateProjectionMatrix();
+  // Più lontano all’avvio (come prima)
+  camera.position.z *= 2.0;
+  camera.position.y *= 3.0;
 
-    controls.target.copy(target);
-    controls.update();
+  camera.near = Math.max(0.01, camZ / 100);
+  camera.far  = camZ * 100;
+  camera.updateProjectionMatrix();
 
-    // Limiti OrbitControls
-    controls.minDistance = Math.max(0.05, s.radius * 0.6);
-    controls.maxDistance = s.radius * 8;
-    controls.maxPolarAngle = Math.PI * 0.90;
+  controls.target.set(0, 0, 0);
+  controls.update();
 
-    return { pos, target, radius: s.radius };
-  }
+  // Limiti OrbitControls (morbidi)
+  controls.minDistance = Math.max(0.05, camZ * 0.25);
+  controls.maxDistance = camZ * 10;
+  controls.maxPolarAngle = Math.PI * 0.90;
 
-  const fitted = fitCameraToSphere(sphere, 1.35);
-  let defaultCamPos = fitted.pos.clone();
-  let defaultTarget = fitted.target.clone();
+  let defaultCamPos = camera.position.clone();
+  let defaultTarget = controls.target.clone();
 
   // Reset camera
   resetCamera = () => {
@@ -630,6 +608,7 @@ background-image:
     controls.target.copy(defaultTarget);
     controls.update();
   }
+
 
         clips = gltf.animations || [];
         statsEl.textContent = `Dimensione ~ ${maxDim.toFixed(2)} • Animazioni: ${clips.length}`;
@@ -750,488 +729,6 @@ background-image:
         clipSelect.dispatchEvent(new Event("change"));
       } else if (e.key.toLowerCase() === "r") {
         if (!resetCamBtn?.disabled) resetCamBtn.click();
-      }
-    });
-
-    function onResize() {
-      const w = app.clientWidth;
-      const h = app.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    }
-    window.addEventListener("resize", onResize);
-
-    const clock = new THREE.Clock();
-    function animate() {
-      requestAnimationFrame(animate);
-      controls.update();
-
-      const dt = clock.getDelta();
-      if (mixer) mixer.update(dt);
-
-      
-
-      renderer.render(scene, camera);
-    }
-    animate();
-  </script>
-</body>
-</html>
-e sfondo realistico */
-      /* Sfondo: scegli da menu (vedi select "Sfondo") */
-background-image:
-        radial-gradient(900px 500px at 50% 20%, rgba(0,0,0,0.15), rgba(0,0,0,0.78)),
-        var(--bg-url);
-      background-size:cover;
-      background-position:center;
-      background-repeat:no-repeat;
-      background-attachment:fixed;
-    }
-    #app{ height:100%; width:100%; position:relative; overflow:hidden; }
-    #app::before{
-      content:"";
-      position:absolute; inset:0;
-      background: radial-gradient(900px 600px at 50% 35%, rgba(0,0,0,.08), rgba(0,0,0,.62));
-      pointer-events:none;
-      z-index:1;
-    }
-    canvas{ display:block; position:relative; z-index:2; }
-
-    #hud{
-      position:absolute; left:12px; top:12px; right:12px;
-      display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
-      pointer-events:none;
-      z-index:3;
-    }
-    .badge{
-      pointer-events:auto;
-      background: rgba(0,0,0,0.35);
-      border: 1px solid rgba(255,255,255,0.14);
-      backdrop-filter: blur(6px);
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 13px;
-      line-height: 1.2;
-    }
-    #controlsRow{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
-      margin-top: 8px;
-    }
-    button{
-      appearance:none;
-      border:1px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.10);
-      color:#e6e6e6;
-      padding:7px 10px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:700;
-    }
-    button:hover{ background: rgba(255,255,255,0.14); }
-    button:active{ transform: translateY(1px); }
-    select{
-      background: rgba(255,255,255,0.10);
-      color:#e6e6e6;
-      border:1px solid rgba(255,255,255,0.18);
-      border-radius:10px;
-      padding:7px 10px;
-    }
-    #loading{
-      position:absolute; inset:0;
-      display:grid;
-      place-items:center;
-      z-index:3;
-    }
-    .spinner{
-      width:26px; height:26px; border-radius:50%;
-      border:3px solid rgba(255,255,255,0.18);
-      border-top-color: rgba(255,255,255,0.9);
-      animation:spin .9s linear infinite;
-      margin-right:10px;
-    }
-    @keyframes spin{ to{ transform:rotate(360deg);} }
-    #loadingRow{ display:flex; align-items:center; gap:10px; }
-    #err{ white-space:pre-wrap; color:#ffb3b3; max-width:900px; padding:14px; }
-    code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
-
-
-    /* Layout: due pannelli separati (Animazioni / Sfondo) */
-    .panelGrid{
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;   /* ✅ uno sotto l’altro */
-  gap: 10px;
-}
-
-.panel{
-  flex: none;
-  width: 100%;              /* ✅ occupa tutta la larghezza */
-}
-
-    .row{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
-      margin-top: 8px;
-    }
-
-    .ctaCity{
-  position: absolute;
-  left: 50%;
-  bottom: 20px;
-  transform: translateX(-50%);
-  z-index: 4;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-
-  padding: 12px 18px;
-  border-radius: 999px;
-  text-decoration: none;
-
-  font-weight: 800;
-  letter-spacing: .2px;
-  color: #e6e6e6;
-
-  /* coerente col resto: "glass" scuro + bordo */
-  background: rgba(0,0,0,0.45);
-  border: 1px solid rgba(255,255,255,0.16);
-  backdrop-filter: blur(8px);
-
-  /* ombra morbida */
-  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
-
-  /* micro transizioni */
-  transition: transform .15s ease, background-color .15s ease, border-color .15s ease;
-}
-
-.ctaCity:hover{
-  background: rgba(0,0,0,0.55);
-  border-color: rgba(255,255,255,0.24);
-  transform: translateX(-50%) translateY(-1px);
-}
-
-.ctaCity:active{
-  transform: translateX(-50%) translateY(1px);
-}
-
-.ctaCity:focus-visible{
-  outline: 2px solid rgba(155,208,255,0.65);
-  outline-offset: 3px;
-}
-
-/* Mobile: un filo più grande e con margine */
-@media (max-width: 520px){
-  .ctaCity{
-    bottom: 16px;
-    padding: 13px 18px;
-  }
-}
-
-  </style>
-
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-      }
-    }
-  </script>
-</head>
-
-<body>
-  <div id="app">
-    <div id="hud">
-      <div class="badge" style="max-width: 760px;">
-        <div><b>Fantaballa Spogliatoio</b>: Iscriviti e seguimi su tutti i social! Sudicio.</div>
-        <div style="opacity:.85; margin-top: 6px;">File: <code>model.glb</code> (stessa cartella di questo HTML)</div>
-
-        
-        <div class="panelGrid">
-
-          <!-- QUADRATO 1: ANIMAZIONI -->
-          <div class="badge panel">
-            <div style="font-weight:800; margin-bottom:8px;">Animazioni</div>
-
-            <div class="row">
-              <label style="display:flex; gap:8px; align-items:center;">
-                <span style="opacity:.9;">Animazione</span>
-                <select id="clipSelect" disabled>
-                  <option>Caricamento…</option>
-                </select>
-              </label>
-            </div>
-
-            <div class="row">
-              <button id="playBtn" disabled>Play</button>
-              <button id="onceBtn" disabled>Play (una volta)</button>
-              <button id="stopBtn" disabled>Stop</button>
-            </div>
-          </div>
-
-          <!-- QUADRATO 2: SFONDO -->
-          <div class="badge panel">
-            <div style="font-weight:800; margin-bottom:8px;">Sfondo</div>
-
-            <div class="row">
-              <label style="display:flex; gap:8px; align-items:center;">
-                <span style="opacity:.9;">Sfondo</span>
-                <select id="bgSelect">
-                  <option value="">Solo gradiente</option>
-                  <option value="./bg.webp">Spogliatoio</option>
-                  <option value="./bg-city.webp">Città</option>
-                  <option value="./bg-night.webp">Notte</option>
-                  <option value="./bg-field.webp">Campo</option>
-                  <option value="./bg-green.webp">Green</option>
-                </select>
-              </label>
-            </div>
-
-            <div style="opacity:.7; margin-top: 6px;">
-              Metti i file immagine nella stessa cartella (es. <code>bg.webp</code>).
-            </div>
-          </div>
-
-        </div>
-<div style="opacity:.7; margin-top: 6px;">
-          Tip: aggiungi <code>bg.webp</code> qui accanto per uno sfondo foto.
-        </div>
-      </div>
-
-      <div class="badge" id="stats">—</div>
-    </div>
-
-    <div id="loading">
-      <div id="loadingRow" class="badge">
-        <div class="spinner"></div>
-        <div>
-          <div><b>Caricamento avatar…</b></div>
-          <div id="progress" style="opacity:.8">0%</div>
-        </div>
-      </div>
-    </div>
-    <a class="ctaCity" href="https://pavoniingrifati.github.io/vetrina-carte/mappa/">
-  Vai in Città
-</a>
-
-  </div>
-
-  <script type="module">
-    import * as THREE from "three";
-    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-
-    const app = document.getElementById("app");
-    const loadingEl = document.getElementById("loading");
-    const progressEl = document.getElementById("progress");
-    const statsEl = document.getElementById("stats");
-
-    const clipSelect = document.getElementById("clipSelect");
-    const playBtn = document.getElementById("playBtn");
-    const onceBtn = document.getElementById("onceBtn");
-    const stopBtn = document.getElementById("stopBtn");
-
-    // --- Sfondo selezionabile (salvato in localStorage) ---
-    const bgSelect = document.getElementById("bgSelect");
-
-    function setBackground(path) {
-      const val = path ? `url("${path}")` : "none";
-      document.documentElement.style.setProperty("--bg-url", val);
-      document.body.style.setProperty("--bg-url", val);
-      try { localStorage.setItem("bgPath", path || ""); } catch(e) {}
-    }
-
-    // Ripristina scelta precedente
-    try {
-      const saved = localStorage.getItem("bgPath");
-      if (saved !== null) {
-        setBackground(saved);
-        if (bgSelect) bgSelect.value = saved;
-      }
-    } catch(e) {}
-
-    bgSelect?.addEventListener("change", (e) => {
-      setBackground(e.target.value);
-    });
-
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(app.clientWidth, app.clientHeight);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.setClearAlpha(0);
-    app.appendChild(renderer.domElement);
-
-    const scene = new THREE.Scene();
-
-    const camera = new THREE.PerspectiveCamera(50, app.clientWidth / app.clientHeight, 0.01, 5000);
-    camera.position.set(0.8, 0.6, 1.4);
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.58));
-    const key = new THREE.DirectionalLight(0xffffff, 1.10);
-    key.position.set(2.5, 4.5, 2.0);
-    scene.add(key);
-    const rim = new THREE.DirectionalLight(0xffffff, 0.35);
-    rim.position.set(-3.0, 2.0, -2.5);
-    scene.add(rim);
-
-    const avatarRig = new THREE.Group();
-    scene.add(avatarRig);
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
-    controls.target.set(0, 0, 0);
-
-    const loader = new GLTFLoader();
-    const url = "./model.glb";
-
-    let model = null;
-    let mixer = null;
-    let clips = [];
-    let actions = [];
-    let activeAction = null;
-
-    function showError(err) {
-      loadingEl.innerHTML = "";
-      const pre = document.createElement("div");
-      pre.id = "err";
-      pre.className = "badge";
-      pre.textContent =
-        "Errore nel caricare il modello GLB.\n\n" +
-        String(err) +
-        "\n\nSuggerimenti:\n" +
-        "• Assicurati che 'model.glb' sia nella stessa cartella di questo HTML.\n" +
-        "• Controlla maiuscole/minuscole nel nome file.\n" +
-        "• Su GitHub Pages: verifica che il file sia nella sorgente pubblicata.";
-      loadingEl.appendChild(pre);
-      loadingEl.style.display = "grid";
-    }
-
-    function enableUI() {
-      clipSelect.disabled = false;
-      playBtn.disabled = false;
-      onceBtn.disabled = false;
-      stopBtn.disabled = false;
-    }
-
-    function setActiveAction(index, { loop = THREE.LoopRepeat, clampWhenFinished = false } = {}) {
-      if (!actions.length) return;
-      const next = actions[index];
-      if (!next) return;
-
-      if (activeAction && activeAction !== next) activeAction.fadeOut(0.2);
-
-      next.reset();
-      next.setLoop(loop, loop === THREE.LoopOnce ? 1 : Infinity);
-      next.clampWhenFinished = clampWhenFinished;
-      next.fadeIn(0.2);
-      next.play();
-
-      activeAction = next;
-      clipSelect.value = String(index);
-    }
-
-    loader.load(url, (gltf) => {
-  model = gltf.scene;
-  avatarRig.add(model);
-
-  model.scale.setScalar(0.5);
-
-  const box = new THREE.Box3().setFromObject(model);
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
-
-  const maxDim = Math.max(size.x, size.y, size.z);
-
-  model.position.sub(center);
-  model.position.y -= maxDim * 0.95;  // abbassa (prova 0.10–0.25)
-
-  const fov = camera.fov * (Math.PI / 180);
-  let camZ = (maxDim / 2) / Math.tan(fov / 2);
-  camZ *= 3.0;
-
-  camera.position.set(0, maxDim * 0.15, camZ);
-
-  // Più lontano all’avvio (se ti serve ancora “più piccolo”)
-  camera.position.z *= 2.0;
-  camera.position.y *= 3.0;
-
-camera.updateProjectionMatrix();
-controls.update();
-
-        camera.near = Math.max(0.01, maxDim / 100);
-        camera.far = maxDim * 60;
-
-        controls.target.set(0, 0, 0);
-        controls.update();
-
-        clips = gltf.animations || [];
-        statsEl.textContent = `Dimensione ~ ${maxDim.toFixed(2)} • Animazioni: ${clips.length}`;
-
-        if (clips.length) {
-          mixer = new THREE.AnimationMixer(model);
-          actions = clips.map((clip) => mixer.clipAction(clip));
-
-          clipSelect.innerHTML = "";
-          clips.forEach((clip, i) => {
-            const opt = document.createElement("option");
-            opt.value = String(i);
-            opt.textContent = clip.name ? `${i + 1}) ${clip.name}` : `${i + 1}) Clip`;
-            clipSelect.appendChild(opt);
-          });
-
-          enableUI();
-
-          const idleIndex = clips.findIndex(c => (c.name || "").toLowerCase().includes("idle"));
-          setActiveAction(idleIndex >= 0 ? idleIndex : 0);
-        } else {
-          clipSelect.innerHTML = "<option>Nessuna animazione</option>";
-          statsEl.textContent += " • (solo idle procedurale)";
-        }
-
-        loadingEl.style.display = "none";
-      },
-      (xhr) => {
-        if (xhr?.loaded) {
-          if (xhr.total) {
-            const p = Math.round((xhr.loaded / xhr.total) * 100);
-            progressEl.textContent = `${p}%`;
-          } else {
-            progressEl.textContent = `${Math.round(xhr.loaded / 1024)} KB`;
-          }
-        }
-      },
-      (err) => showError(err)
-    );
-
-    clipSelect.addEventListener("change", () => {
-      const idx = Number(clipSelect.value);
-      setActiveAction(idx, { loop: THREE.LoopRepeat, clampWhenFinished: false });
-    });
-
-    playBtn.addEventListener("click", () => {
-      const idx = Number(clipSelect.value);
-      setActiveAction(idx, { loop: THREE.LoopRepeat, clampWhenFinished: false });
-    });
-
-    onceBtn.addEventListener("click", () => {
-      const idx = Number(clipSelect.value);
-      setActiveAction(idx, { loop: THREE.LoopOnce, clampWhenFinished: true });
-    });
-
-    stopBtn.addEventListener("click", () => {
-      if (activeAction) {
-        activeAction.stop();
-        activeAction = null;
       }
     });
 
