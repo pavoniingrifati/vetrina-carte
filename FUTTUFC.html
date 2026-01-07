@@ -1433,6 +1433,13 @@ openBtn.addEventListener('click', async () => {
   const game = GAME_STATE.selected;
   const cost = PACK_COST_PER_GAME[game] || 0;
 
+  const _abortOpen = (msg) => {
+    try{ if (msg) document.getElementById('log').textContent = msg; }catch{}
+    try{ packArea.style.display = ''; }catch{}
+    try{ packBox.classList.remove('opening'); }catch{}
+    try{ flashLine.classList.remove('active'); flashScreen.classList.remove('active'); }catch{}
+  };
+
   // Login + Wallet (se serve) + eventuale addebito
   let newPts = await getCurrentPoints();
   try {
@@ -1474,6 +1481,7 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
 
   // Scelta carte
   let chosen;
+  try{
   if ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold')) {
      // Pacchetto infinito: X carte random dalla serie corrispondente (anche doppioni)
     const pool = GAME_STATE.pools[game] || [];
@@ -1492,11 +1500,15 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
       const list = GAME_STATE.packs[game] || [];
       const idx  = GAME_STATE.cursor[game] || 0;
       if (idx < list.length) {
-        chosen = list[idx].slice();
+        if (!Array.isArray(list[idx]) || !list[idx].length){
+      _abortOpen('⚠️ ' + game + ': pacchetto non valido (cursor=' + idx + '). Premi “Reset pacchetti”.');
+      return;
+    }
+    chosen = list[idx].slice();
         GAME_STATE.cursor[game] = idx + 1;
         try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
       } else {
-        document.getElementById('log').textContent = '⚠️ ' + game + ': sorgenti non pronte.';
+        _abortOpen('⚠️ ' + game + ': sorgenti non pronte.');
         return;
       }
     } else {
@@ -1505,9 +1517,14 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
   } else {
     // Estrai il prossimo pacchetto finito (comportamento standard)
     const list = GAME_STATE.packs[game] || [];
-    const idx = GAME_STATE.cursor[game] || 0;
+    const _idxRaw = GAME_STATE.cursor[game];
+    const idx = Number.isFinite(_idxRaw) ? _idxRaw : 0;
     if (idx >= list.length){
-      document.getElementById('log').textContent = '❌ Pacchetti esauriti per questo game.';
+      _abortOpen('❌ Pacchetti esauriti per questo game.');
+      return;
+    }
+    if (!Array.isArray(list[idx]) || !list[idx].length){
+      _abortOpen('⚠️ ' + game + ': pacchetto non valido (cursor=' + idx + '). Premi “Reset pacchetti”.');
       return;
     }
     chosen = list[idx].slice();
@@ -1516,6 +1533,12 @@ if (!GAME_STATE.packs['Wonderkid'].length &&
     GAME_STATE.cursor[game] = idx + 1;
     try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
   }
+  } catch (err) {
+    console.error('Errore scelta carte', err);
+    _abortOpen('⚠️ Errore interno durante l\'apertura del pacchetto.');
+    return;
+  }
+
 // Ordinamento / raggruppamento + FX
 const hasLegend = chosen.some(c => (String(c.rarity||'').toLowerCase()==='leggendaria'));
 
@@ -2111,7 +2134,11 @@ window.renderPacksStrip = function(){
             const list = GS.packs[game] || [];
             const idx = GS.cursor[game] || 0;
             if (idx >= list.length){ const log = document.getElementById('log'); if (log) log.textContent = '❌ Pacchetti esauriti per questo game.'; return; }
-            chosen = list[idx].slice();
+            if (!Array.isArray(list[idx]) || !list[idx].length){
+      _abortOpen('⚠️ ' + game + ': pacchetto non valido (cursor=' + idx + '). Premi “Reset pacchetti”.');
+      return;
+    }
+    chosen = list[idx].slice();
             GS.cursor[game] = idx + 1;
             try{ localStorage.setItem('futtu_cursors', JSON.stringify(GS.cursor)); }catch{}
           }
