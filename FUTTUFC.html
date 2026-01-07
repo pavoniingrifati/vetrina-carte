@@ -517,9 +517,9 @@ table td, table th {
 // === Sezioni Store (solo etichette, nessuna navigazione attiva) ===
 window.STORE_SECTIONS = {
   featured: ['Wonderkid','Patatine'],
-  new: ['Wonderkid'], // Ultimi arrivi
+  new: ['Wonderkid','Altezza mezza bellezza'], // Ultimi arrivi
   base: ['Gold','Silver','Bronze'], // Pacchetti base
-  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Wonderkid','Patatine','Gold','Silver','Bronze','Strumenti'])
+  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Wonderkid','Patatine','Altezza mezza bellezza','Fantaballa Tots','Legend','Oggetti','Gold','Silver','Bronze','Cosmetic','Strumenti','Sfere del drago'])
 };
 </script>
 
@@ -626,10 +626,11 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid', 'Patatine', 'Fantaballa Tots', 'Legend', 'Oggetti', 'Gold', 'Silver', 'Bronze', 'Cosmetic', 'Strumenti', 'Sfere del drago'];
+const VALID_GAMES = ['Wonderkid', 'Patatine', 'Altezza mezza bellezza', 'Fantaballa Tots', 'Legend', 'Oggetti', 'Gold', 'Silver', 'Bronze', 'Cosmetic', 'Strumenti', 'Sfere del drago'];
 const PACK_BACK_BY_GAME = {
   'Wonderkid': 'Deck%20back%20wonderkid.png',
   'Patatine': 'patatrine.png',
+  'Altezza mezza bellezza': 'Back%20altezza.png',
   'Fantaballa Tots': 'Deck%20back%20Tots.png',
   'Legend': 'Back%20legend.png',
   'Oggetti': 'Deck%20back%20tactcs.png',
@@ -645,6 +646,7 @@ const PACK_BACK_BY_GAME = {
 const PACK_COST_PER_GAME = {
   'Wonderkid': 1800,
   'Patatine': 0,
+  'Altezza mezza bellezza': 0,
   'Fantaballa Tots': 0,
   'Legend': 0,
   'Oggetti': 0,
@@ -659,6 +661,7 @@ const PACK_COST_PER_GAME = {
 const PACK_SIZE_PER_GAME = {
   'Wonderkid': 3,
   'Patatine': 1,
+  'Altezza mezza bellezza': 3,
   'Fantaballa Tots': 3,
   'Legend': 3,
   'Oggetti': 3,
@@ -877,13 +880,13 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Wonderkid',
-  pools:    { 'Wonderkid': [], 'Patatine': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [],
+  pools:    { 'Wonderkid': [], 'Patatine': [], 'Altezza mezza bellezza': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [],
  'Sfere del drago': []
 },
-  packs:    { 'Wonderkid': [], 'Patatine': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [],
+  packs:    { 'Wonderkid': [], 'Patatine': [], 'Altezza mezza bellezza': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [],
  'Sfere del drago': []
 },
-  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Fantaballa Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0,
+  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Altezza mezza bellezza': 0,   'Fantaballa Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0,
  'Sfere del drago': 0
 }
 };
@@ -939,6 +942,12 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
       isFantaballa(c.game) &&
       norm(c.series) !== 'leggendaria'
     );
+    // Altezza mezza bellezza — FINITO: solo Fantaballa FC + series="Altezza" (3 carte per pack)
+    GAME_STATE.pools['Altezza mezza bellezza'] = cleaned.filter(c =>
+      isFantaballa(c.game) &&
+      norm(c.series)==='altezza'
+    );
+
 // Fantaballa Tots — SOLO ed ESCLUSIVAMENTE Tots14 di Fantaballa FC
     GAME_STATE.pools['Fantaballa Tots'] = cleaned.filter(c =>
       isFantaballa(c.game) &&
@@ -1090,6 +1099,7 @@ GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards));
 // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
+    GAME_STATE.packs['Altezza mezza bellezza'] = buildFinitePacks(GAME_STATE.pools['Altezza mezza bellezza'], PACK_SIZE_PER_GAME['Altezza mezza bellezza']);
     GAME_STATE.packs['Fantaballa Tots'] = buildFinitePacks(GAME_STATE.pools['Fantaballa Tots'], PACK_SIZE_PER_GAME['Fantaballa Tots']);
         GAME_STATE.packs['Sfere del drago'] = buildFinitePacks(GAME_STATE.pools['Sfere del drago'], PACK_SIZE_PER_GAME['Sfere del drago']);
 /* packs Gold set by auto */
@@ -1212,7 +1222,7 @@ try {
     applyPackVisual();
     updateOpenBtnEnabled();
  document.getElementById('log').textContent =
-  `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, `+
+  `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, Altezza ${GAME_STATE.pools['Altezza mezza bellezza']?.length||0}, `+
   `TOTS ${GAME_STATE.pools['Fantaballa Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
   `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
 
