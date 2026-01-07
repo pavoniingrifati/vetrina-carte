@@ -429,3 +429,153 @@ body[data-theme="premier"] .page-bg{
 @media (prefers-reduced-motion: reduce){
   *{ transition: none !important; }
 }
+/* ===== PACK: più “busta di carte” (appendi in fondo) ===== */
+
+.goal-top{
+  /* più “vetrina” */
+  background:
+    radial-gradient(240px 200px at 50% 55%, rgba(0,0,0,.10), rgba(0,0,0,0) 65%),
+    linear-gradient(180deg, rgba(255,255,255,.75), rgba(245,245,245,1));
+}
+
+.pack{
+  position: relative;
+  width: 220px;
+  height: 300px;                 /* più alto = più “busta” */
+  border-radius: 18px;
+  transform: rotate(-2deg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+
+  /* bordo e profondità */
+  border: 1px solid rgba(0,0,0,.22);
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.28),
+    0 10px 18px rgba(0,0,0,.18);
+  overflow: hidden;
+
+  /* micro texture + “foil” */
+  background-image:
+    radial-gradient(140px 120px at 50% 35%, rgba(255,255,255,.42), rgba(255,255,255,0) 60%),
+    linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,0) 35%),
+    repeating-linear-gradient(115deg, rgba(255,255,255,.12) 0 2px, rgba(255,255,255,0) 2px 6px);
+  background-blend-mode: screen, overlay, normal;
+
+  /* niente “saltelli” che sballano */
+  transition: filter .16s ease, box-shadow .16s ease;
+}
+
+/* “sigillo” superiore + pieghe laterali */
+.pack::before{
+  content:"";
+  position:absolute;
+  left: 0; right: 0; top: 0;
+  height: 68px;
+
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,0)),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.18) 0 10px, rgba(255,255,255,0) 10px 22px);
+  opacity: .65;
+
+  border-bottom: 1px solid rgba(255,255,255,.18);
+}
+
+/* piega inferiore + “crinkle” */
+.pack::after{
+  content:"";
+  position:absolute;
+  left: -10px; right: -10px; bottom: -10px;
+  height: 90px;
+
+  background:
+    radial-gradient(120px 60px at 35% 50%, rgba(255,255,255,.22), rgba(255,255,255,0) 70%),
+    radial-gradient(120px 60px at 70% 55%, rgba(255,255,255,.18), rgba(255,255,255,0) 70%),
+    linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.22));
+  opacity: .75;
+
+  transform: rotate(-2deg);
+}
+
+/* “shine” diagonale (effetto cellophane) */
+.pack .brand{
+  position: relative;
+  z-index: 2;
+}
+
+.pack .brand::after{
+  content:"";
+  position:absolute;
+  inset: -40px -120px;
+  background: linear-gradient(105deg,
+    rgba(255,255,255,0) 35%,
+    rgba(255,255,255,.22) 45%,
+    rgba(255,255,255,0) 55%);
+  transform: translateX(-30%);
+  opacity: .55;
+  pointer-events:none;
+}
+
+/* bollino “logo”/sticker */
+.pack .brand .title{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.18);
+  background: rgba(255,255,255,.55);
+  box-shadow: 0 10px 18px rgba(0,0,0,.14);
+}
+
+.pack .brand .sub{
+  margin-top: 10px;
+  font-weight: 1000;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  opacity: .95;
+}
+
+/* hover: più “lucido” ma senza spostare */
+.goal-card:hover .pack{
+  filter: brightness(1.04) contrast(1.02);
+  box-shadow:
+    0 28px 70px rgba(0,0,0,.30),
+    0 12px 22px rgba(0,0,0,.18);
+}
+
+/* ===== Varianti materiali (bronze/silver/gold) ===== */
+.pack.bronze{
+  background-color: #c97a2c;
+  background-image:
+    radial-gradient(160px 130px at 55% 35%, rgba(255,220,180,.55), rgba(255,255,255,0) 62%),
+    linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,0) 35%),
+    repeating-linear-gradient(120deg, rgba(255,255,255,.14) 0 2px, rgba(255,255,255,0) 2px 7px);
+  color:#121212;
+}
+
+.pack.silver{
+  background-color: #d8dde5;
+  background-image:
+    radial-gradient(160px 130px at 55% 35%, rgba(255,255,255,.70), rgba(255,255,255,0) 62%),
+    linear-gradient(135deg, rgba(255,255,255,.22), rgba(255,255,255,0) 35%),
+    repeating-linear-gradient(120deg, rgba(255,255,255,.18) 0 2px, rgba(255,255,255,0) 2px 7px);
+  color:#121212;
+}
+
+.pack.gold{
+  background-color: #f0c51a;
+  background-image:
+    radial-gradient(160px 130px at 55% 35%, rgba(255,250,200,.72), rgba(255,255,255,0) 62%),
+    linear-gradient(135deg, rgba(255,255,255,.20), rgba(255,255,255,0) 35%),
+    repeating-linear-gradient(120deg, rgba(255,255,255,.16) 0 2px, rgba(255,255,255,0) 2px 7px);
+  color:#121212;
+}
+
+/* se stai usando anche .pack-img in alternativa al pack “testuale” */
+.pack-img{
+  transform: rotate(-2deg);
+  filter: drop-shadow(0 28px 55px rgba(0,0,0,.26));
+}
+
