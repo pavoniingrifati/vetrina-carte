@@ -508,11 +508,12 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Patatine','Gotham Tots','Legend','Oggetti','Gold','Silver','Bronze','Strumenti','Chaos'];
+const VALID_GAMES = ['Patatine','Gotham Tots','Legend','Altezza mezza bellezza','Oggetti','Gold','Silver','Bronze','Strumenti','Chaos'];
 const PACK_BACK_BY_GAME = {
   'Patatine': 'patatrine.png',
   'Gotham Tots': 'Deck%20back%20Tots.png',
   'Legend': 'Back%20legend.png',
+  'Altezza mezza bellezza': 'img/Back%20altezza.png',
   'Oggetti': 'Deck%20back%20tactcs.png',
   'Gold': 'Deck%20back%20oro%20BATMAN.png',
   'Silver': 'Deck%20back%20argento%20BATMAN.png',
@@ -527,6 +528,7 @@ const PACK_COST_PER_GAME = {
   'Patatine': 0,
   'Gotham Tots': 0,
   'Legend': 0,
+  'Altezza mezza bellezza': 0,
   'Oggetti': 0,
   'Gold': 0,
   'Silver': 0,
@@ -539,6 +541,7 @@ const PACK_SIZE_PER_GAME = {
   'Patatine': 1,
   'Gotham Tots': 3,
   'Legend': 3,
+  'Altezza mezza bellezza': 3,
   'Oggetti': 3,
   'Gold': 9,
   'Silver': 9,
@@ -754,9 +757,9 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Patatine',
-  pools:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': []},
-  packs:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': []},
-  cursor:   { 'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0,
+  pools:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Altezza mezza bellezza': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': []},
+  packs:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Altezza mezza bellezza': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': []},
+  cursor:   { 'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0, 'Altezza mezza bellezza': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0,
   'Chaos': 0}
 };
 
@@ -867,6 +870,9 @@ async function loadCards(){
 
     // Oggetti — NEW: prende qualsiasi card con series = "Oggetto" (game: qualunque)
     GAME_STATE.pools['Oggetti'] = cleaned.filter(c => norm(c.series)==='oggetto');
+
+    // Altezza mezza bellezza — FINITO: 21 carte (series="Altezza", game="Gotham City") => 7 pacchetti da 3, senza doppioni nello stesso pacco
+    GAME_STATE.pools['Altezza mezza bellezza'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='altezza');
 
 
 
@@ -1023,6 +1029,7 @@ GAME_STATE.pools['Gold'] = cleaned.filter(c => isGotham(c.game) && norm(c.series
     // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
+    GAME_STATE.packs['Altezza mezza bellezza'] = buildFinitePacks(GAME_STATE.pools['Altezza mezza bellezza'], PACK_SIZE_PER_GAME['Altezza mezza bellezza']);
     shuffleInPlace(packsGoldCards);
     GAME_STATE.packs['Gold'] = packsGoldCards;
     
@@ -1081,6 +1088,7 @@ try {
  document.getElementById('log').textContent =
   `Caricate: Patatine ${GAME_STATE.pools['Patatine'].length}, `+
   `TOTS ${GAME_STATE.pools['Gotham Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
+  `Altezza ${GAME_STATE.pools['Altezza mezza bellezza']?.length||0}, `+
   `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
 
 
