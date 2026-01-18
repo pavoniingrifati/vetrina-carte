@@ -1,5 +1,5 @@
 // docs/gamepass.js
-// Game Pass (utente) - punti totali + progresso verso il prossimo premio (tiers)
+// Game Pass (utente) - punti totali + progresso verso il prossimo premio + lista premi (tiers) con riscatto (claim)
 // Richieste su Firestore (no Cloud Functions)
 
 import { onUser, login, logout, qs, el, db, auth } from "./common.js";
@@ -14,7 +14,8 @@ import {
   addDoc,
   serverTimestamp,
   doc,
-  getDoc
+  getDoc,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const statusBox = qs("#status");
@@ -33,6 +34,9 @@ const gpProgressBar = qs("#gpProgressBar");
 const gpProgressPct = qs("#gpProgressPct");
 const gpRewardText = qs("#gpRewardText");
 
+// UI lista premi (se presente in gamepass.html)
+const gpTiersList = qs("#gpTiersList");
+
 btnLogin.onclick = () => login().catch(err => alert(err.message));
 btnLogout.onclick = () => logout().catch(err => alert(err.message));
 
@@ -47,30 +51,28 @@ function badgeForStatus(s) {
 }
 
 function formatReward(tier) {
-  // Preferisci un campo leggibile (reward.label), altrimenti costruisci una stringa semplice
   const r = tier?.reward || {};
   if (typeof r.label === "string" && r.label.trim()) return r.label.trim();
 
   const type = (r.type || tier.rewardType || "").toString();
-  if (!type) return "—";
+  if (!type) return tier?.title || tier?.id || "—";
 
   if (type === "card") {
     const ov = r.overall ?? r.cardOverall;
-    const cid = r.cardId || r.id || "";
+    const cid = r.cardId || "";
     if (ov != null) return `Carta (overall ${ov})`;
     if (cid) return `Carta (${cid})`;
     return "Carta";
   }
 
-  if (type === "skin") return r.skinName ? `Skin: ${r.skinName}` : "Skin";
-  if (type === "color") return r.colorName ? `Colore: ${r.colorName}` : "Colore";
-  if (type === "item") return r.itemName ? `Item: ${r.itemName}` : "Item";
+  if (type === "skin") return r.skinName ? `Skin: ${r.skinName}` : (r.skinId ? `Skin (${r.skinId})` : "Skin");
+  if (type === "color") return r.colorName ? `Colore: ${r.colorName}` : (r.colorId ? `Colore (${r.colorId})` : "Colore");
+  if (type === "item") return r.itemName ? `Item: ${r.itemName}` : (r.itemId ? `Item (${r.itemId})` : "Item");
 
   return type;
 }
 
 function renderProgress(points, tiers) {
-  // Se non hai aggiunto gli elementi in HTML, non fare nulla
   if (!gpPointsValue && !gpProgressBar) return;
 
   if (gpPointsValue) gpPointsValue.textContent = String(points);
@@ -79,8 +81,6 @@ function renderProgress(points, tiers) {
     .filter(t => t && typeof t.requiredPoints === "number" && t.requiredPoints > 0 && t.active !== false)
     .sort((a, b) => a.requiredPoints - b.requiredPoints);
 
-  // Prossimo premio = primo tier con requiredPoints > points
-  // Se li hai tutti raggiunti, usa l'ultimo (così mostra 100%)
   const nextTier = validTiers.find(t => t.requiredPoints > points) || validTiers[validTiers.length - 1];
 
   if (!nextTier) {
@@ -109,30 +109,87 @@ function renderProgress(points, tiers) {
   if (gpProgressPct) gpProgressPct.textContent = `${pct}%`;
 }
 
+function renderTiers(points, tiers, claimedSet, uid) {
+  if (!gpTiersList) return;
+  gpTiersList.innerHTML = "";
+
+  const list = (tiers || [])
+    .filter(t => t && typeof t.requiredPoints === "number" && t.active !== false)
+    .sort((a, b) => a.requiredPoints - b.requiredPoints);
+
+  if (!list.length) {
+    gpTiersList.append(el("div", { class: "card small" }, [document.createTextNode("Nessun premio configurato.")]));
+    return;
+  }
+
+  for (const t of list) {
+    const req = Number(t.requiredPoints) || 0;
+    const unlocked = points >= req;
+    const claimed = claimedSet.has(t.id);
+
+    const badge = claimed
+      ? "✅ riscattato"
+      : unlocked ? "🎁 sbloccato" : "🔒 bloccato";
+
+    const missing = Math.max(0, req - points);
+    const rewardLabel = formatReward(t);
+
+    const btn = el("button", {
+      class: "btn primary",
+      disabled: (!unlocked || claimed) ? "true" : null,
+      onclick: async () => {
+        try {
+          await setDoc(doc(db, `users/${uid}/gp_claims/${t.id}`), {
+            claimedAt: serverTimestamp(),
+            pointsAtClaim: points,
+            rewardLabel: rewardLabel
+          });
+
+          alert("Premio riscattato!");
+          await loadAll(uid);
+        } catch (e) {
+          alert(e?.message || "Errore riscatto");
+          console.error(e);
+        }
+      }
+    }, [document.createTextNode(claimed ? "Già riscattato" : (unlocked ? "Riscatta" : `Mancano ${missing}`))]);
+
+    gpTiersList.append(el("div", { class: "card" }, [
+      el("div", { class: "row" }, [
+        el("strong", {}, [document.createTextNode(rewardLabel)]),
+        el("span", { class: "badge" }, [document.createTextNode(badge)])
+      ]),
+      el("div", { class: "small" }, [document.createTextNode(`Soglia: ${req} punti`)]),
+      el("div", { class: "small" }, [document.createTextNode(unlocked ? "Hai abbastanza punti." : `Ti mancano ${missing} punti.`)]),
+      el("div", { style: "height:10px" }),
+      btn
+    ]));
+  }
+}
+
 async function loadAll(uid) {
   setStatus("Carico achievements e stato…");
 
-  // Achievements attivi
   const achSnap = await getDocs(collection(db, "achievements"));
   const achievements = achSnap.docs
     .map(d => ({ id: d.id, ...d.data() }))
     .filter(a => a.active !== false);
 
-  // Earned dell'utente
   const earnedSnap = await getDocs(collection(db, `users/${uid}/earned`));
   const earnedSet = new Set(earnedSnap.docs.map(d => d.id));
 
-  // Punti Game Pass (doc: users/{uid}/gamepass/progress)
   const gpSnap = await getDoc(doc(db, `users/${uid}/gamepass/progress`));
   const gpPoints = gpSnap.exists() ? (gpSnap.data().points || 0) : 0;
 
-  // Premi (tiers) - lettura semplice senza indici: leggiamo tutto e ordiniamo lato client
   const tiersSnap = await getDocs(collection(db, "gp_tiers"));
   const tiers = tiersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-  renderProgress(gpPoints, tiers);
+  const claimsSnap = await getDocs(collection(db, `users/${uid}/gp_claims`));
+  const claimedSet = new Set(claimsSnap.docs.map(d => d.id));
 
-  // Requests dell'utente (ultime 50)
+  renderProgress(gpPoints, tiers);
+  renderTiers(gpPoints, tiers, claimedSet, uid);
+
   const reqQ = query(
     collection(db, "requests"),
     where("uid", "==", uid),
@@ -145,12 +202,11 @@ async function loadAll(uid) {
   renderAchievements(achievements, earnedSet);
   renderRequests(requests);
 
-  // Status compatto (con next tier se c'e')
   const nextTier = (tiers || [])
     .filter(t => t && typeof t.requiredPoints === "number" && t.requiredPoints > 0 && t.active !== false)
     .sort((a, b) => a.requiredPoints - b.requiredPoints)
     .find(t => t.requiredPoints > gpPoints);
-  const nextStr = nextTier ? ` • Prossimo: ${nextTier.title || nextTier.id} (${gpPoints}/${nextTier.requiredPoints})` : "";
+  const nextStr = nextTier ? ` • Prossimo: ${formatReward(nextTier)} (${gpPoints}/${nextTier.requiredPoints})` : "";
 
   setStatus(`Ok. Punti GP: ${gpPoints} • Approvati: ${earnedSet.size} • Richieste: ${requests.length}${nextStr}`);
 }
@@ -180,11 +236,8 @@ function renderAchievements(achievements, earnedSet) {
         try {
           await addDoc(collection(db, "requests"), {
             uid: auth.currentUser.uid,
-
-            // Dati utili per moderazione (nome/email)
             requesterEmail: auth.currentUser.email || "",
             requesterName: auth.currentUser.displayName || "",
-
             achievementId: ach.id,
             achievementTitle: ach.title || ach.id,
             status: "pending",
