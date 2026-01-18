@@ -148,7 +148,15 @@ async function loadQueue() {
         el("strong", {}, [document.createTextNode(r.achievementTitle || r.achievementId)]),
         el("span", { class: "badge" }, [document.createTextNode("⏳ pending")]),
       ]),
-      el("div", { class: "small mono" }, [document.createTextNode(`uid: ${r.uid}`)]),
+      el("div", { class: "small" }, [
+  document.createTextNode(
+    `Utente: ${(r.requesterName || "Senza nome")} — ${(r.requesterEmail || "Senza email")}`
+  )
+]),
+el("div", { class: "small mono" }, [
+  document.createTextNode(`uid: ${r.uid}`)
+]),
+
       ...evidence,
       el("div", { class: "sep" }),
       note,
