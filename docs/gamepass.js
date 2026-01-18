@@ -1,7 +1,7 @@
 // docs/gamepass.js
 import { onUser, login, logout, qs, el, call } from "./common.js";
 import {
-  collection, getDocs, query, where, orderBy, limit
+  collection, getDocs, query, where, orderBy, limit, addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { db, auth } from "./common.js";
 
@@ -15,7 +15,6 @@ const userInfo = qs("#userInfo");
 btnLogin.onclick = () => login().catch(err => alert(err.message));
 btnLogout.onclick = () => logout().catch(err => alert(err.message));
 
-const createRequest = call("createRequest");
 
 function setStatus(msg) {
   statusBox.textContent = msg;
@@ -78,11 +77,19 @@ function renderAchievements(achievements, earnedSet) {
         if (!auth.currentUser) return alert("Devi fare login.");
         btn.disabled = true;
         try {
-          await createRequest({
-            achievementId: ach.id,
-            evidenceText: evidenceText.value.trim(),
-            evidenceUrl: evidenceUrl.value.trim(),
-          });
+        await addDoc(collection(db, "requests"), {
+  uid: auth.currentUser.uid,
+  achievementId: ach.id,
+  achievementTitle: ach.title || ach.id,
+  status: "pending",
+  evidenceText: evidenceText.value.trim(),
+  evidenceUrl: evidenceUrl.value.trim(),
+  createdAt: serverTimestamp(),
+  reviewedAt: null,
+  reviewedBy: null,
+  note: null
+});
+
           alert("Richiesta inviata!");
           await loadAll(auth.currentUser.uid);
         } catch (e) {
