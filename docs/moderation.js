@@ -1,9 +1,20 @@
 // docs/moderation.js
-import { onUser, login, logout, qs, el, call, getClaims } from "./common.js";
+import { onUser, login, logout, qs, el, db, auth } from "./common.js";
+
 import {
-  collection, getDocs, query, where, orderBy, limit
+  collection,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  doc,
+  getDoc,
+  updateDoc,
+  serverTimestamp,
+  setDoc,
+  increment
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-import { db, auth } from "./common.js";
 
 const statusBox = qs("#status");
 const queue = qs("#queue");
@@ -16,9 +27,13 @@ btnLogin.onclick = () => login().catch(err => alert(err.message));
 btnLogout.onclick = () => logout().catch(err => alert(err.message));
 btnReload.onclick = () => auth.currentUser && loadQueue();
 
-const reviewRequest = call("reviewRequest");
-
 function setStatus(msg) { statusBox.textContent = msg; }
+
+async function checkModerator(uid) {
+  // Legge SOLO il doc del proprio uid: /moderators/{uid}
+  const modSnap = await getDoc(doc(db, "moderators", uid));
+  return modSnap.exists();
+}
 
 async function loadQueue() {
   setStatus("Carico richieste pending…");
@@ -36,8 +51,8 @@ async function loadQueue() {
   try {
     snap = await getDocs(q);
   } catch (e) {
-    setStatus("Errore nel caricare la queue. Se vedi un errore index, crea l'indice richiesto in Firestore.");
     console.error(e);
+    setStatus("Errore nel caricare la queue. Se vedi un errore index, crea l'indice richiesto in Firestore.");
     return;
   }
 
@@ -57,11 +72,39 @@ async function loadQueue() {
       onclick: async () => {
         approveBtn.disabled = true;
         rejectBtn.disabled = true;
+
         try {
-          await reviewRequest({ requestId: r.id, action: "approve", note: note.value.trim() });
+          // 1) prendo il reward dall'achievement
+          const achSnap = await getDoc(doc(db, "achievements", r.achievementId));
+          if (!achSnap.exists()) throw new Error("Achievement non trovato");
+          const ach = achSnap.data();
+
+          // 2) aggiorno la richiesta -> approved
+          await updateDoc(doc(db, "requests", r.id), {
+            status: "approved",
+            note: note.value.trim(),
+            reviewedAt: serverTimestamp(),
+            reviewedBy: auth.currentUser.uid
+          });
+
+          // 3) segno earned
+          await setDoc(doc(db, `users/${r.uid}/earned/${r.achievementId}`), {
+            approvedAt: serverTimestamp(),
+            approvedBy: auth.currentUser.uid
+          }, { merge: true });
+
+          // 4) assegno reward in gp_items (NON tocca inventory carte)
+          if (ach.reward?.itemId && ach.reward?.qty) {
+            await setDoc(doc(db, `users/${r.uid}/gp_items/${ach.reward.itemId}`), {
+              qty: increment(Number(ach.reward.qty) || 0),
+              updatedAt: serverTimestamp()
+            }, { merge: true });
+          }
+
           await loadQueue();
         } catch (e) {
           alert(e?.message || "Errore");
+          console.error(e);
         } finally {
           approveBtn.disabled = false;
           rejectBtn.disabled = false;
@@ -74,11 +117,18 @@ async function loadQueue() {
       onclick: async () => {
         rejectBtn.disabled = true;
         approveBtn.disabled = true;
+
         try {
-          await reviewRequest({ requestId: r.id, action: "reject", note: note.value.trim() });
+          await updateDoc(doc(db, "requests", r.id), {
+            status: "rejected",
+            note: note.value.trim(),
+            reviewedAt: serverTimestamp(),
+            reviewedBy: auth.currentUser.uid
+          });
           await loadQueue();
         } catch (e) {
           alert(e?.message || "Errore");
+          console.error(e);
         } finally {
           rejectBtn.disabled = false;
           approveBtn.disabled = false;
@@ -117,7 +167,7 @@ onUser(async (user) => {
     btnLogout.style.display = "none";
     btnReload.style.display = "none";
     queue.innerHTML = "";
-    setStatus("Fai login. Serve ruolo moderator.");
+    setStatus("Fai login. Serve essere presente in /moderators/{uid}.");
     return;
   }
 
@@ -125,11 +175,11 @@ onUser(async (user) => {
   btnLogout.style.display = "";
   userInfo.textContent = user.email || user.uid;
 
-  const claims = await getClaims();
-  if (!claims.moderator) {
+  const ok = await checkModerator(user.uid);
+  if (!ok) {
     btnReload.style.display = "none";
     queue.innerHTML = "";
-    setStatus("Non autorizzato: serve custom claim moderator=true.");
+    setStatus("Non autorizzato: non sei in /moderators/{tuoUID}.");
     return;
   }
 
