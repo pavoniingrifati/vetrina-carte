@@ -1,9 +1,16 @@
 // docs/gamepass.js
-import { onUser, login, logout, qs, el, call } from "./common.js";
+import { onUser, login, logout, qs, el, db, auth } from "./common.js";
+
 import {
-  collection, getDocs, query, where, orderBy, limit, addDoc, serverTimestamp
+  collection,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  addDoc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-import { db, auth } from "./common.js";
 
 const statusBox = qs("#status");
 const achGrid = qs("#achGrid");
@@ -14,7 +21,6 @@ const userInfo = qs("#userInfo");
 
 btnLogin.onclick = () => login().catch(err => alert(err.message));
 btnLogout.onclick = () => logout().catch(err => alert(err.message));
-
 
 function setStatus(msg) {
   statusBox.textContent = msg;
@@ -76,24 +82,27 @@ function renderAchievements(achievements, earnedSet) {
       onclick: async () => {
         if (!auth.currentUser) return alert("Devi fare login.");
         btn.disabled = true;
+
         try {
-        await addDoc(collection(db, "requests"), {
-  uid: auth.currentUser.uid,
-  achievementId: ach.id,
-  achievementTitle: ach.title || ach.id,
-  status: "pending",
-  evidenceText: evidenceText.value.trim(),
-  evidenceUrl: evidenceUrl.value.trim(),
-  createdAt: serverTimestamp(),
-  reviewedAt: null,
-  reviewedBy: null,
-  note: null
-});
+          // ✅ NIENTE Functions: scrive direttamente su Firestore
+          await addDoc(collection(db, "requests"), {
+            uid: auth.currentUser.uid,
+            achievementId: ach.id,
+            achievementTitle: ach.title || ach.id,
+            status: "pending",
+            evidenceText: evidenceText.value.trim(),
+            evidenceUrl: evidenceUrl.value.trim(),
+            createdAt: serverTimestamp(),
+            reviewedAt: null,
+            reviewedBy: null,
+            note: null
+          });
 
           alert("Richiesta inviata!");
           await loadAll(auth.currentUser.uid);
         } catch (e) {
           alert(e?.message || "Errore");
+          console.error(e);
         } finally {
           btn.disabled = false;
         }
@@ -118,14 +127,18 @@ function renderAchievements(achievements, earnedSet) {
       el("div", { class: "small" }, [document.createTextNode(`Ricompensa: ${reward}`)]),
       locked ? el("div", { class: "small mono" }, [document.createTextNode(`Prereq mancanti: ${missing.join(", ")}`)]) : document.createTextNode(""),
       el("div", { class: "sep" }),
-      already ? el("div", { class: "small" }, [document.createTextNode("Questo achievement è già stato approvato.")]) : el("div", {}, [
-        el("div", { class: "small" }, [document.createTextNode("Inserisci una prova (facoltativa ma consigliata):")]),
-        evidenceText,
-        el("div", { style: "height:8px" }),
-        evidenceUrl,
-        el("div", { style: "height:10px" }),
-        locked ? el("button", { class: "btn", disabled: "true" }, [document.createTextNode("Non disponibile")]) : btn
-      ])
+      already
+        ? el("div", { class: "small" }, [document.createTextNode("Questo achievement è già stato approvato.")])
+        : el("div", {}, [
+            el("div", { class: "small" }, [document.createTextNode("Inserisci una prova (facoltativa ma consigliata):")]),
+            evidenceText,
+            el("div", { style: "height:8px" }),
+            evidenceUrl,
+            el("div", { style: "height:10px" }),
+            locked
+              ? el("button", { class: "btn", disabled: "true" }, [document.createTextNode("Non disponibile")])
+              : btn
+          ])
     ]);
 
     achGrid.append(card);
@@ -145,7 +158,9 @@ function renderRequests(requests) {
         el("strong", {}, [document.createTextNode(r.achievementTitle || r.achievementId)]),
         el("span", { class: "badge" }, [document.createTextNode(badgeForStatus(r.status))])
       ]),
-      r.note ? el("div", { class: "small" }, [document.createTextNode(`Nota mod: ${r.note}`)]) : el("div", { class: "small" }, [document.createTextNode(" ")])
+      r.note
+        ? el("div", { class: "small" }, [document.createTextNode(`Nota mod: ${r.note}`)])
+        : el("div", { class: "small" }, [document.createTextNode(" ")])
     ]);
     reqList.append(card);
   }
