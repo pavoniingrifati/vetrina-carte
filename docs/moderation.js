@@ -100,7 +100,7 @@ await setDoc(doc(db, `users/${r.uid}/gamepass/progress`), {
   updatedAt: serverTimestamp()
 }, { merge: true });
 
-          }
+        
 
           await loadQueue();
         } catch (e) {
