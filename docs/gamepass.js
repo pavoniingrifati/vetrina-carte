@@ -98,7 +98,7 @@ function defaultRewardPreview(tier) {
 
   // Piccole preview SVG “gamey” (placeholder)
   const base = (accent1, accent2, icon) => svgDataUrl(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="220" height="140" viewBox="0 0 220 140">
+    <svg xmlns="http://www.w3.org/2000/svg" width="260" height="340" viewBox="0 0 260 340">
       <defs>
         <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stop-color="${accent1}" stop-opacity="0.95"/>
@@ -232,7 +232,7 @@ function renderRoad(points, tiers, claimedSet) {
   const fillPct = Math.max(0, Math.min(100, Math.round((points / max) * 100)));
 
   // width dinamica (se molti tiers -> scroll)
-  const px = Math.max(760, list.length * 170);
+  const px = Math.max(980, list.length * 250);
   gpRoad.style.width = px + "px";
 
   const line = el("div", { class: "bp-roadline" }, [
