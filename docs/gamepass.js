@@ -85,18 +85,24 @@ function renderAchievements(achievements, earnedSet) {
 
         try {
           // ✅ NIENTE Functions: scrive direttamente su Firestore
-          await addDoc(collection(db, "requests"), {
-            uid: auth.currentUser.uid,
-            achievementId: ach.id,
-            achievementTitle: ach.title || ach.id,
-            status: "pending",
-            evidenceText: evidenceText.value.trim(),
-            evidenceUrl: evidenceUrl.value.trim(),
-            createdAt: serverTimestamp(),
-            reviewedAt: null,
-            reviewedBy: null,
-            note: null
-          });
+         await addDoc(collection(db, "requests"), {
+  uid: auth.currentUser.uid,
+
+  // ✅ dati “umani” per i moderatori
+  requesterEmail: auth.currentUser.email || "",
+  requesterName: auth.currentUser.displayName || "",
+
+  achievementId: ach.id,
+  achievementTitle: ach.title || ach.id,
+  status: "pending",
+  evidenceText: evidenceText.value.trim(),
+  evidenceUrl: evidenceUrl.value.trim(),
+  createdAt: serverTimestamp(),
+  reviewedAt: null,
+  reviewedBy: null,
+  note: null
+});
+
 
           alert("Richiesta inviata!");
           await loadAll(auth.currentUser.uid);
