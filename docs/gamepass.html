@@ -3,70 +3,476 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Game Pass - Utente</title>
+  <title>Game Pass</title>
+
   <link rel="stylesheet" href="./styles.css" />
+
+  <style>
+    :root{
+      --bg-0:#070912;
+      --bg-2:#0a1430;
+      --c-text: rgba(255,255,255,0.92);
+      --c-muted: rgba(255,255,255,0.70);
+      --c-faint: rgba(255,255,255,0.52);
+      --stroke: rgba(255,255,255,0.12);
+      --stroke2: rgba(255,255,255,0.16);
+      --shadow: 0 18px 60px rgba(0,0,0,0.45);
+      --shadow2: 0 12px 35px rgba(0,0,0,0.35);
+      --r: 22px;
+      --r2: 16px;
+      --maxw: 1180px;
+    }
+
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body.gp-bp{
+      margin:0;
+      color: var(--c-text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:
+        radial-gradient(1200px 700px at 8% -10%, rgba(34,211,238,0.18), transparent 55%),
+        radial-gradient(1100px 650px at 95% 0%, rgba(124,58,237,0.22), transparent 58%),
+        radial-gradient(800px 520px at 55% 15%, rgba(255,43,214,0.12), transparent 60%),
+        linear-gradient(180deg, var(--bg-0), var(--bg-2));
+      overflow-x: hidden;
+    }
+
+    .bp-bg{ position: fixed; inset: 0; pointer-events:none; z-index:0; }
+    .bp-bg::before{
+      content:""; position:absolute; inset:-25%;
+      background: conic-gradient(from 180deg at 50% 50%,
+          rgba(34,211,238,0.18),
+          rgba(124,58,237,0.18),
+          rgba(255,43,214,0.14),
+          rgba(34,211,238,0.18));
+      filter: blur(70px); animation: swirl 14s linear infinite; opacity:.55;
+    }
+    .bp-bg::after{
+      content:""; position:absolute; inset:0;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.08), transparent 45%),
+        radial-gradient(circle at 75% 35%, rgba(255,255,255,0.06), transparent 48%),
+        radial-gradient(circle at 50% 80%, rgba(255,255,255,0.05), transparent 55%),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: auto, auto, auto, 46px 46px, 46px 46px;
+      mix-blend-mode: overlay; opacity:.40;
+    }
+    @keyframes swirl{ 0%{transform:rotate(0) scale(1)} 50%{transform:rotate(180deg) scale(1.05)} 100%{transform:rotate(360deg) scale(1)} }
+
+    .bp-wrap{ position:relative; z-index:1; max-width:var(--maxw); margin:0 auto; padding: 18px 16px 80px; }
+
+    .bp-top{
+      position: sticky; top: 0; z-index:50;
+      backdrop-filter: blur(14px);
+      background: rgba(8, 10, 20, 0.62);
+      border-bottom: 1px solid var(--stroke);
+    }
+    .bp-top-inner{
+      max-width: var(--maxw); margin:0 auto; padding: 14px 16px;
+      display:flex; align-items:center; justify-content: space-between; gap:12px;
+    }
+    .bp-pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 12px; border-radius: 999px;
+      border: 1px solid var(--stroke); background: rgba(255,255,255,0.06);
+      color: var(--c-text); text-decoration:none; font-size:12px; letter-spacing:.2px;
+      white-space: nowrap;
+    }
+    .bp-actions{ display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+    #userInfo{ color: var(--c-muted); font-size: 12px; max-width: 320px; overflow:hidden; text-overflow: ellipsis; }
+
+    .bp-btn{
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.06);
+      color: var(--c-text);
+      padding: 10px 14px; border-radius: 14px;
+      font-weight: 750; letter-spacing: .18px;
+      cursor: pointer;
+    }
+    .bp-btn.primary{
+      border: 1px solid rgba(255,255,255,0.16);
+      background: linear-gradient(135deg, rgba(34,211,238,0.38), rgba(124,58,237,0.42));
+      box-shadow: 0 12px 40px rgba(34,211,238,0.12);
+    }
+
+    #status{
+      margin-top: 16px;
+      padding: 10px 12px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.12);
+      color: var(--c-muted); font-size: 12.5px;
+    }
+
+    .bp-hero{
+      margin-top: 18px;
+      border-radius: calc(var(--r) + 6px);
+      border: 1px solid var(--stroke2);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+      background:
+        radial-gradient(1200px 600px at 15% 10%, rgba(34,211,238,0.24), transparent 55%),
+        radial-gradient(900px 520px at 85% 5%, rgba(255,43,214,0.18), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+    }
+    .bp-hero-inner{
+      padding: 18px 18px 16px;
+      display:grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 14px;
+      align-items: end;
+    }
+
+    .bp-season .title{ margin:0; font-size:28px; letter-spacing:.3px; line-height:1.05; }
+    .bp-season .subtitle{ margin-top:8px; color: var(--c-muted); font-size:13px; max-width:60ch; }
+
+    .bp-stats{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stat{
+      border-radius: var(--r2);
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.16);
+      box-shadow: var(--shadow2);
+      padding: 14px 14px 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat .label{ font-size:12px; color: var(--c-muted); margin-bottom:6px; letter-spacing:.18px; text-transform:uppercase; }
+    .stat .value{ font-size:34px; font-weight:950; letter-spacing:.2px; }
+    .stat .hint{ margin-top:4px; font-size:12px; color: var(--c-faint); }
+
+    .bp-progress{
+      margin-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.10);
+      padding: 14px 18px 16px;
+      display:grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 14px;
+      align-items: center;
+    }
+    .bp-progress .next .big{ font-size:15px; font-weight:950; letter-spacing:.25px; }
+    .bp-progress .next .small{ color: var(--c-muted); font-size: 12.5px; }
+    .barwrap{
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.14);
+      border-radius: 999px;
+      padding: 6px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    progress#gpProgressBar{ width:100%; height:16px; border-radius: 999px; overflow:hidden; background:transparent; }
+    progress#gpProgressBar::-webkit-progress-bar{ background: rgba(255,255,255,0.08); border-radius: 999px; }
+    progress#gpProgressBar::-webkit-progress-value{
+      background: linear-gradient(90deg, rgba(34,211,238,0.95), rgba(124,58,237,0.95), rgba(255,43,214,0.85));
+      border-radius: 999px;
+    }
+    .pct{ display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+    .badge-strong{
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.14);
+      font-weight: 950;
+      letter-spacing: .35px;
+    }
+    .req{ color: var(--c-muted); font-size: 12px; }
+
+    /* Road preview */
+    .bp-roadcard{
+      margin-top: 14px;
+      border-radius: var(--r);
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.10);
+      box-shadow: var(--shadow2);
+      padding: 12px 12px 10px;
+      position: relative;
+      overflow: hidden;
+      grid-column: 1 / -1;
+    }
+
+    #gpRoadScroll{ overflow-x:auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
+    #gpRoad{ position:relative; padding: 10px 10px 6px; }
+
+    .bp-roadline{
+      position:absolute; left:22px; right:22px; top:66px;
+      height:10px; border-radius: 999px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.12);
+      overflow:hidden; z-index:1;
+    }
+    .bp-roadfill{
+      height:100%;
+      background: linear-gradient(90deg, rgba(34,211,238,0.95), rgba(124,58,237,0.95), rgba(255,43,214,0.85));
+      box-shadow: 0 0 20px rgba(34,211,238,0.18);
+    }
+    .bp-roadnodes{
+      position:relative; z-index:2;
+      display:flex; justify-content: space-between; gap:12px;
+      align-items:flex-start;
+    }
+    .bp-node{
+      width:150px; border-radius: 18px; padding: 10px 10px 8px;
+      border: 1px solid transparent;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.07), rgba(0,0,0,0.20)) padding-box,
+        linear-gradient(135deg, rgba(34,211,238,0.75), rgba(124,58,237,0.65), rgba(255,43,214,0.55)) border-box;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.40);
+      overflow:hidden;
+    }
+    .bp-node.is-locked{ opacity:.82; filter:saturate(0.75); }
+    .bp-node-top{ display:flex; justify-content:flex-end; }
+    .bp-node-chip{
+      font-size:11px; font-weight:900; letter-spacing:.4px;
+      padding: 5px 8px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(0,0,0,0.18);
+      color: rgba(255,255,255,0.92);
+      text-transform: uppercase;
+    }
+    .bp-node-chip.ok{ background: rgba(34,211,238,0.16); border-color: rgba(34,211,238,0.25); }
+    .bp-node-body{ margin-top:6px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+    .bp-node-img{
+      width:84px; height:54px; object-fit: cover;
+      border-radius: 14px; border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.18);
+      box-shadow: 0 16px 30px rgba(0,0,0,0.35);
+    }
+    .bp-node-label{
+      font-size:12px; color: rgba(255,255,255,0.85);
+      text-align:center; line-height: 1.15; min-height: 28px;
+      overflow:hidden; display:-webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    }
+    .bp-node-req{
+      margin-top: 8px; font-size: 12px; font-weight: 950;
+      text-align:center; color: rgba(255,255,255,0.90);
+      letter-spacing: .2px;
+    }
+    .bp-roadcursor{
+      position:absolute; top:63px;
+      transform: translateX(-50%);
+      z-index: 3; pointer-events:none;
+    }
+    .bp-roadcursor-dot{
+      width: 18px; height: 18px; border-radius: 999px;
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 0 0 6px rgba(34,211,238,0.10), 0 0 26px rgba(34,211,238,0.22);
+      border: 2px solid rgba(0,0,0,0.45);
+    }
+
+    /* Sections */
+    .bp-section{ margin-top: 22px; }
+    .bp-head{ display:flex; align-items:center; justify-content: space-between; gap:12px; margin: 0 2px 10px; }
+    .bp-head h2{
+      margin:0; font-size:13px; letter-spacing:.22px; text-transform: uppercase; color: rgba(255,255,255,0.88);
+      display:flex; align-items:center; gap:10px;
+    }
+    .bp-head h2::before{
+      content:""; width:10px; height:10px; border-radius: 999px;
+      background: linear-gradient(135deg, rgba(34,211,238,0.95), rgba(124,58,237,0.95));
+      box-shadow: 0 0 0 4px rgba(34,211,238,0.10);
+    }
+    .bp-track{
+      border-radius: var(--r);
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.10);
+      box-shadow: var(--shadow2);
+      padding: 12px;
+      overflow: hidden;
+    }
+    .track-scroll{
+      overflow-x:auto; display:flex; gap:12px; padding: 6px 4px 12px;
+      scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+    }
+    #gpTiersList.track-scroll .card{
+      min-width: 252px; scroll-snap-align: start;
+      border-radius: 18px; border: 1px solid transparent;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.07), rgba(0,0,0,0.20)) padding-box,
+        linear-gradient(135deg, rgba(34,211,238,0.80), rgba(124,58,237,0.70), rgba(255,43,214,0.60)) border-box;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.40);
+      padding: 14px 14px 12px;
+    }
+
+    .bp-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap:12px; }
+    #achGrid .card, #reqList .card{
+      border-radius: 18px; border: 1px solid transparent;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.22)) padding-box,
+        linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06)) border-box;
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+      padding: 14px 14px 12px;
+      position: relative;
+    }
+    #achGrid .card::before, #reqList .card::before{
+      content:""; position:absolute; left:0; top:0; bottom:0; width:4px;
+    }
+    #achGrid .card::before{ background: linear-gradient(180deg, rgba(34,211,238,0.95), rgba(124,58,237,0.65)); }
+    #reqList .card::before{ background: linear-gradient(180deg, rgba(124,58,237,0.95), rgba(255,43,214,0.70)); }
+
+    .row{ display:flex; align-items:center; justify-content: space-between; gap:10px; }
+    .badge{
+      border: 1px solid rgba(255,255,255,0.16) !important;
+      background: rgba(0,0,0,0.18) !important;
+      color: rgba(255,255,255,0.92) !important;
+      padding: 6px 10px !important;
+      border-radius: 999px !important;
+      font-size: 12px !important;
+      white-space: nowrap;
+    }
+    .small{ color: var(--c-muted); font-size: 12.5px; }
+    .mono{ color: var(--c-faint); }
+    .sep{
+      height: 1px;
+      background: linear-gradient(90deg, rgba(34,211,238,0.0), rgba(34,211,238,0.35), rgba(124,58,237,0.35), rgba(255,43,214,0.0));
+      margin: 10px 0;
+      opacity: .9;
+    }
+
+    textarea, input[type="url"], input[type="text"]{
+      width:100%;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.18);
+      color: var(--c-text);
+      padding: 10px 10px;
+      outline:none;
+    }
+    textarea{ min-height: 90px; resize: vertical; }
+
+    .btn{
+      border-radius: 14px !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+      background: rgba(255,255,255,0.06) !important;
+      color: var(--c-text) !important;
+      padding: 10px 12px !important;
+    }
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(34,211,238,0.38), rgba(124,58,237,0.42)) !important;
+      border: 1px solid rgba(255,255,255,0.16) !important;
+    }
+
+    @media (max-width: 920px){
+      .bp-hero-inner{ grid-template-columns: 1fr; }
+      .bp-stats{ grid-template-columns: 1fr 1fr; }
+      .bp-progress{ grid-template-columns: 1fr; }
+      .bp-grid{ grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
+    }
+    @media (max-width: 540px){
+      .bp-stats{ grid-template-columns: 1fr; }
+      .bp-season .title{ font-size: 24px; }
+    }
+  </style>
 </head>
-<body>
-<header>
-  <div class="row">
-    <a href="./index.html" class="badge">← Home</a>
-    <strong>Game Pass</strong>
-    <span class="small">Utente</span>
-  </div>
-  <div class="row">
-    <span id="userInfo" class="small"></span>
-    <button id="btnLogin" class="btn primary">Login Google</button>
-    <button id="btnLogout" class="btn" style="display:none;">Logout</button>
-  </div>
-</header>
 
-<div class="container">
-  <div id="status" class="card small">Caricamento…</div>
+<body class="gp-bp">
+  <div class="bp-bg"></div>
 
-  <!-- ✅ CARDs PUNTI + PROGRESSO PREMIO -->
-  <div class="sep"></div>
-  <div id="gpProgress" class="card">
-    <div class="row" style="justify-content:space-between;">
-      <div><strong>Punti Game Pass:</strong> <span id="gpPointsValue">0</span></div>
-      <span class="badge">Progress</span>
+  <div class="bp-top">
+    <div class="bp-top-inner">
+      <div class="bp-brand">
+        <a href="./index.html" class="bp-pill">← Home</a>
+        <span class="bp-pill"><strong>🎟️ BATTLE PASS</strong></span>
+      </div>
+
+      <div class="bp-actions">
+        <span id="userInfo"></span>
+        <button id="btnLogin" class="bp-btn primary">Login Google</button>
+        <button id="btnLogout" class="bp-btn" style="display:none;">Logout</button>
+      </div>
     </div>
-   
-    <!-- ✅ Tier  --> 
-<div class="sep"></div>
-<h3 style="margin:0 0 10px;">Premi</h3>
-<div id="gpTiersList" class="grid"></div>
-
-    <div class="sep"></div>
-
-    <div><strong>Prossimo premio:</strong> <span id="gpNextTitle">—</span></div>
-    <div class="small">Richiede <span id="gpNextReq">—</span> punti • Ti mancano <span id="gpNextMissing">—</span></div>
-
-    <div style="height:10px"></div>
-    <progress id="gpProgressBar" value="0" max="100" style="width:100%; height:18px;"></progress>
-    <div class="small">Progresso: <span id="gpProgressPct">0%</span></div>
-
-    <div style="height:8px"></div>
-    <div class="small">Premio: <span id="gpRewardText">—</span></div>
   </div>
 
-  <div class="sep"></div>
+  <main class="bp-wrap">
+    <div id="status">Caricamento…</div>
 
-  <div class="card">
-    <h3 style="margin:0 0 10px;">Richiedi un achievement</h3>
-    <div class="small">Seleziona un achievement dalla lista e inserisci una prova (link/testo).</div>
-  </div>
+    <section class="bp-hero">
+      <div class="bp-hero-inner">
+        <div class="bp-season">
+          <div>
+            <h1 class="title">Stagione 1 • Game Pass</h1>
+            <div class="subtitle">Completa achievement approvati per guadagnare <strong>XP</strong> e sbloccare premi.</div>
+          </div>
 
-  <div class="sep"></div>
+          <div class="bp-stats">
+            <div class="stat">
+              <div class="label">XP Totali</div>
+              <div class="value"><span id="gpPointsValue">0</span></div>
+              <div class="hint">Somma punti approvati</div>
+            </div>
 
-  <h3 style="margin: 0 0 10px;">Achievements</h3>
-  <div id="achGrid" class="grid"></div>
+            <div class="stat">
+              <div class="label">Mancano al prossimo</div>
+              <div class="value" style="font-size:30px;"><span id="gpNextMissing">—</span></div>
+              <div class="hint">Per raggiungere la soglia successiva</div>
+            </div>
+          </div>
+        </div>
 
-  <div class="sep"></div>
+        <div class="bp-progress">
+          <div class="next">
+            <div class="big">Prossimo premio: <span id="gpNextTitle">—</span></div>
+            <div class="small">Richiede <strong><span id="gpNextReq">—</span></strong> XP • Premio: <strong><span id="gpRewardText">—</span></strong></div>
+            <div class="barwrap">
+              <progress id="gpProgressBar" value="0" max="100"></progress>
+            </div>
+          </div>
 
-  <h3 style="margin: 0 0 10px;">Le mie richieste</h3>
-  <div id="reqList" class="grid"></div>
-</div>
+          <div class="pct">
+            <span class="badge-strong"><span id="gpProgressPct">0%</span></span>
+            <span class="req">Obiettivo: <strong><span id="gpNextReq2">—</span></strong> XP</span>
+          </div>
+        </div>
 
-<script type="module" src="./gamepass.js"></script>
+        <!-- Preview premi sulla linea -->
+        <div class="bp-roadcard">
+          <div class="bp-head">
+            <h2>Preview premi sulla linea</h2>
+            <div class="right">
+              <span class="bp-pill">scorri →</span>
+            </div>
+          </div>
+          <div id="gpRoadScroll">
+            <div id="gpRoad"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="bp-section">
+      <div class="bp-head">
+        <h2>Premi • Track</h2>
+        <div class="right"><span class="bp-pill">Deterministici</span></div>
+      </div>
+      <div class="bp-track">
+        <div id="gpTiersList" class="track-scroll"></div>
+      </div>
+    </section>
+
+    <section class="bp-section">
+      <div class="bp-head">
+        <h2>Achievements</h2>
+        <div class="right"><span class="bp-pill">Richiesta + Revisione</span></div>
+      </div>
+      <div id="achGrid" class="bp-grid"></div>
+    </section>
+
+    <section class="bp-section">
+      <div class="bp-head">
+        <h2>Le mie richieste</h2>
+        <div class="right"><span class="bp-pill">Stato</span></div>
+      </div>
+      <div id="reqList" class="bp-grid"></div>
+    </section>
+
+    <script>
+      const elReq = document.getElementById('gpNextReq');
+      const elReq2 = document.getElementById('gpNextReq2');
+      const obs = new MutationObserver(() => { if (elReq && elReq2) elReq2.textContent = elReq.textContent; });
+      if (elReq) obs.observe(elReq, { childList: true, subtree: true });
+    </script>
+
+    <script type="module" src="./gamepass.js"></script>
+  </main>
 </body>
 </html>
