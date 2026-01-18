@@ -1,6 +1,7 @@
 // docs/gamepass.js
-// Game Pass (utente) - punti totali + progresso verso il prossimo premio + lista premi (tiers) con riscatto (claim)
-// Richieste su Firestore (no Cloud Functions)
+// Game Pass (utente) - punti totali + progresso verso il prossimo premio + lista premi (tiers)
+// Sblocco AUTOMATICO: quando raggiungi la soglia, viene registrato un "claim" in users/{uid}/gp_claims/{tierId}
+// (senza bottone "Riscatta"). Nessuna Cloud Function.
 
 import { onUser, login, logout, qs, el, db, auth } from "./common.js";
 
@@ -109,7 +110,7 @@ function renderProgress(points, tiers) {
   if (gpProgressPct) gpProgressPct.textContent = `${pct}%`;
 }
 
-function renderTiers(points, tiers, claimedSet, uid) {
+function renderTiers(points, tiers, claimedSet) {
   if (!gpTiersList) return;
   gpTiersList.innerHTML = "";
 
@@ -125,34 +126,14 @@ function renderTiers(points, tiers, claimedSet, uid) {
   for (const t of list) {
     const req = Number(t.requiredPoints) || 0;
     const unlocked = points >= req;
-    const claimed = claimedSet.has(t.id);
+    const recorded = claimedSet.has(t.id);
 
-    const badge = claimed
-      ? "✅ riscattato"
-      : unlocked ? "🎁 sbloccato" : "🔒 bloccato";
+    const badge = unlocked
+      ? (recorded ? "✅ sbloccato" : "🎁 sbloccato (in registrazione)")
+      : "🔒 bloccato";
 
     const missing = Math.max(0, req - points);
     const rewardLabel = formatReward(t);
-
-    const btn = el("button", {
-      class: "btn primary",
-      disabled: (!unlocked || claimed) ? "true" : null,
-      onclick: async () => {
-        try {
-          await setDoc(doc(db, `users/${uid}/gp_claims/${t.id}`), {
-            claimedAt: serverTimestamp(),
-            pointsAtClaim: points,
-            rewardLabel: rewardLabel
-          });
-
-          alert("Premio riscattato!");
-          await loadAll(uid);
-        } catch (e) {
-          alert(e?.message || "Errore riscatto");
-          console.error(e);
-        }
-      }
-    }, [document.createTextNode(claimed ? "Già riscattato" : (unlocked ? "Riscatta" : `Mancano ${missing}`))]);
 
     gpTiersList.append(el("div", { class: "card" }, [
       el("div", { class: "row" }, [
@@ -160,36 +141,70 @@ function renderTiers(points, tiers, claimedSet, uid) {
         el("span", { class: "badge" }, [document.createTextNode(badge)])
       ]),
       el("div", { class: "small" }, [document.createTextNode(`Soglia: ${req} punti`)]),
-      el("div", { class: "small" }, [document.createTextNode(unlocked ? "Hai abbastanza punti." : `Ti mancano ${missing} punti.`)]),
-      el("div", { style: "height:10px" }),
-      btn
+      el("div", { class: "small" }, [document.createTextNode(unlocked ? "Hai raggiunto la soglia." : `Ti mancano ${missing} punti.`)])
     ]));
   }
+}
+
+async function autoRecordUnlocked(uid, points, tiers, claimedSet) {
+  // Registra automaticamente i tier sbloccati come docs in users/{uid}/gp_claims/{tierId}
+  // Questo serve se vuoi che il gioco/altre pagine possano sapere "quali premi sono stati sbloccati".
+  const list = (tiers || [])
+    .filter(t => t && typeof t.requiredPoints === "number" && t.active !== false)
+    .sort((a, b) => a.requiredPoints - b.requiredPoints);
+
+  const toCreate = list.filter(t => points >= (Number(t.requiredPoints) || 0) && !claimedSet.has(t.id));
+  if (!toCreate.length) return false;
+
+  for (const t of toCreate) {
+    // Se una scrittura fallisce (permissions/rete), non blocchiamo tutto.
+    try {
+      await setDoc(doc(db, `users/${uid}/gp_claims/${t.id}`), {
+        unlockedAt: serverTimestamp(),
+        pointsAtUnlock: points,
+        requiredPoints: Number(t.requiredPoints) || 0,
+        rewardLabel: formatReward(t)
+      }, { merge: true });
+      claimedSet.add(t.id);
+    } catch (e) {
+      console.warn("Auto-claim fallito per tier", t.id, e);
+    }
+  }
+  return true;
 }
 
 async function loadAll(uid) {
   setStatus("Carico achievements e stato…");
 
+  // Achievements attivi
   const achSnap = await getDocs(collection(db, "achievements"));
   const achievements = achSnap.docs
     .map(d => ({ id: d.id, ...d.data() }))
     .filter(a => a.active !== false);
 
+  // Earned dell'utente
   const earnedSnap = await getDocs(collection(db, `users/${uid}/earned`));
   const earnedSet = new Set(earnedSnap.docs.map(d => d.id));
 
+  // Punti Game Pass
   const gpSnap = await getDoc(doc(db, `users/${uid}/gamepass/progress`));
   const gpPoints = gpSnap.exists() ? (gpSnap.data().points || 0) : 0;
 
+  // Premi (tiers)
   const tiersSnap = await getDocs(collection(db, "gp_tiers"));
   const tiers = tiersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
+  // Premi già registrati (claims)
   const claimsSnap = await getDocs(collection(db, `users/${uid}/gp_claims`));
   const claimedSet = new Set(claimsSnap.docs.map(d => d.id));
 
-  renderProgress(gpPoints, tiers);
-  renderTiers(gpPoints, tiers, claimedSet, uid);
+  // ✅ Registra automaticamente i tier sbloccati (se vuoi tenere traccia lato DB)
+  await autoRecordUnlocked(uid, gpPoints, tiers, claimedSet);
 
+  renderProgress(gpPoints, tiers);
+  renderTiers(gpPoints, tiers, claimedSet);
+
+  // Requests dell'utente (ultime 50)
   const reqQ = query(
     collection(db, "requests"),
     where("uid", "==", uid),
