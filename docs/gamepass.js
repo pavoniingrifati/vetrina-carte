@@ -1,4 +1,6 @@
 // docs/gamepass.js
+// Game Pass (utente) - versione con punti (XP) e richieste su Firestore (no Cloud Functions)
+
 import { onUser, login, logout, qs, el, db, auth } from "./common.js";
 
 import {
@@ -9,7 +11,9 @@ import {
   orderBy,
   limit,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  doc,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const statusBox = qs("#status");
@@ -45,6 +49,10 @@ async function loadAll(uid) {
   const earnedSnap = await getDocs(collection(db, `users/${uid}/earned`));
   const earnedSet = new Set(earnedSnap.docs.map(d => d.id));
 
+  // Punti Game Pass (doc: users/{uid}/gamepass/progress)
+  const gpSnap = await getDoc(doc(db, `users/${uid}/gamepass/progress`));
+  const gpPoints = gpSnap.exists() ? (gpSnap.data().points || 0) : 0;
+
   // Requests dell'utente (ultime 50)
   const reqQ = query(
     collection(db, "requests"),
@@ -58,7 +66,7 @@ async function loadAll(uid) {
   renderAchievements(achievements, earnedSet);
   renderRequests(requests);
 
-  setStatus(`Ok. Approvati: ${earnedSet.size} • Richieste: ${requests.length}`);
+  setStatus(`Ok. Punti GP: ${gpPoints} • Approvati: ${earnedSet.size} • Richieste: ${requests.length}`);
 }
 
 function prereqMissing(ach, earnedSet) {
@@ -84,25 +92,24 @@ function renderAchievements(achievements, earnedSet) {
         btn.disabled = true;
 
         try {
-          // ✅ NIENTE Functions: scrive direttamente su Firestore
-         await addDoc(collection(db, "requests"), {
-  uid: auth.currentUser.uid,
+          // ✅ NIENTE Functions: scrive direttamente su Firestore (requests)
+          await addDoc(collection(db, "requests"), {
+            uid: auth.currentUser.uid,
 
-  // ✅ dati “umani” per i moderatori
-  requesterEmail: auth.currentUser.email || "",
-  requesterName: auth.currentUser.displayName || "",
+            // Dati utili per moderazione (nome/email)
+            requesterEmail: auth.currentUser.email || "",
+            requesterName: auth.currentUser.displayName || "",
 
-  achievementId: ach.id,
-  achievementTitle: ach.title || ach.id,
-  status: "pending",
-  evidenceText: evidenceText.value.trim(),
-  evidenceUrl: evidenceUrl.value.trim(),
-  createdAt: serverTimestamp(),
-  reviewedAt: null,
-  reviewedBy: null,
-  note: null
-});
-
+            achievementId: ach.id,
+            achievementTitle: ach.title || ach.id,
+            status: "pending",
+            evidenceText: evidenceText.value.trim(),
+            evidenceUrl: evidenceUrl.value.trim(),
+            createdAt: serverTimestamp(),
+            reviewedAt: null,
+            reviewedBy: null,
+            note: null
+          });
 
           alert("Richiesta inviata!");
           await loadAll(auth.currentUser.uid);
@@ -121,7 +128,8 @@ function renderAchievements(achievements, earnedSet) {
         ? el("span", { class: "badge" }, [document.createTextNode("🔒 bloccato (mancano prereq)")])
         : el("span", { class: "badge" }, [document.createTextNode("🟦 richiedibile")]);
 
-    const reward = ach.reward ? `${ach.reward.itemId} x${ach.reward.qty}` : "—";
+    // Mostra punti assegnati dall'achievement (se presenti)
+    const rewardText = (ach.points != null) ? `+${ach.points} punti` : "—";
 
     const card = el("div", { class: "card" }, [
       el("div", { class: "row" }, [
@@ -130,7 +138,7 @@ function renderAchievements(achievements, earnedSet) {
       ]),
       el("div", { class: "small" }, [document.createTextNode(ach.desc || "")]),
       el("div", { class: "sep" }),
-      el("div", { class: "small" }, [document.createTextNode(`Ricompensa: ${reward}`)]),
+      el("div", { class: "small" }, [document.createTextNode(`Punti: ${rewardText}`)]),
       locked ? el("div", { class: "small mono" }, [document.createTextNode(`Prereq mancanti: ${missing.join(", ")}`)]) : document.createTextNode(""),
       el("div", { class: "sep" }),
       already
