@@ -1,7 +1,7 @@
 // docs/gamepass.js
-// Game Pass (utente) - punti totali + progresso verso il prossimo premio + lista premi (tiers)
-// Sblocco AUTOMATICO: quando raggiungi la soglia, viene registrato un "claim" in users/{uid}/gp_claims/{tierId}
-// (senza bottone "Riscatta"). Nessuna Cloud Function.
+// Game Pass (utente) - punti totali + progresso + anteprima premi sulla linea (stile Battle Pass)
+// Auto-sblocco: al raggiungimento soglia, registra users/{uid}/gp_claims/{tierId} (se consentito dalle rules).
+// Nessuna Cloud Function.
 
 import { onUser, login, logout, qs, el, db, auth } from "./common.js";
 
@@ -35,8 +35,12 @@ const gpProgressBar = qs("#gpProgressBar");
 const gpProgressPct = qs("#gpProgressPct");
 const gpRewardText = qs("#gpRewardText");
 
-// UI lista premi (se presente in gamepass.html)
+// UI lista premi (track)
 const gpTiersList = qs("#gpTiersList");
+
+// UI anteprima sulla linea del progresso
+const gpRoad = qs("#gpRoad"); // inner
+const gpRoadScroll = qs("#gpRoadScroll"); // wrapper scroll
 
 btnLogin.onclick = () => login().catch(err => alert(err.message));
 btnLogout.onclick = () => logout().catch(err => alert(err.message));
@@ -51,6 +55,8 @@ function badgeForStatus(s) {
   return "⏳ in revisione";
 }
 
+/* ---------- Reward label + default preview images ---------- */
+
 function formatReward(tier) {
   const r = tier?.reward || {};
   if (typeof r.label === "string" && r.label.trim()) return r.label.trim();
@@ -61,7 +67,7 @@ function formatReward(tier) {
   if (type === "card") {
     const ov = r.overall ?? r.cardOverall;
     const cid = r.cardId || "";
-    if (ov != null) return `Carta (overall ${ov})`;
+    if (ov != null) return `Carta overall ${ov}`;
     if (cid) return `Carta (${cid})`;
     return "Carta";
   }
@@ -73,9 +79,87 @@ function formatReward(tier) {
   return type;
 }
 
-function renderProgress(points, tiers) {
-  if (!gpPointsValue && !gpProgressBar) return;
+function rewardType(tier) {
+  const r = tier?.reward || {};
+  return (r.type || tier.rewardType || "").toString() || "item";
+}
 
+function svgDataUrl(svg) {
+  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+}
+
+function defaultRewardPreview(tier) {
+  // Se in futuro vuoi usare immagini vere, basta mettere: tier.reward.imgUrl
+  const r = tier?.reward || {};
+  if (typeof r.imgUrl === "string" && r.imgUrl.trim()) return r.imgUrl.trim();
+
+  const t = rewardType(tier);
+  const label = (formatReward(tier) || "Reward").slice(0, 18);
+
+  // Piccole preview SVG “gamey” (placeholder)
+  const base = (accent1, accent2, icon) => svgDataUrl(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="220" height="140" viewBox="0 0 220 140">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="${accent1}" stop-opacity="0.95"/>
+          <stop offset="1" stop-color="${accent2}" stop-opacity="0.95"/>
+        </linearGradient>
+        <radialGradient id="r" cx="30%" cy="25%" r="80%">
+          <stop offset="0" stop-color="#ffffff" stop-opacity="0.25"/>
+          <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="s" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.35"/>
+        </filter>
+      </defs>
+      <rect x="10" y="10" width="200" height="120" rx="18" fill="url(#g)" filter="url(#s)"/>
+      <rect x="10" y="10" width="200" height="120" rx="18" fill="url(#r)"/>
+      <rect x="16" y="16" width="188" height="108" rx="14" fill="rgba(0,0,0,0.18)" stroke="rgba(255,255,255,0.22)"/>
+      ${icon}
+      <text x="110" y="122" text-anchor="middle"
+            font-family="ui-sans-serif,system-ui,Segoe UI,Roboto,Arial"
+            font-size="12" fill="rgba(255,255,255,0.92)" font-weight="700">${label}</text>
+    </svg>
+  `);
+
+  if (t === "card") {
+    return base("#22d3ee", "#7c3aed", `
+      <rect x="70" y="30" width="80" height="54" rx="10" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.35)"/>
+      <rect x="78" y="38" width="64" height="38" rx="8" fill="rgba(0,0,0,0.18)" />
+      <path d="M110 46 l6 12 13 2 -9 9 2 13 -12-6 -12 6 2-13 -9-9 13-2z"
+            fill="rgba(255,255,255,0.70)"/>
+    `);
+  }
+  if (t === "skin") {
+    return base("#ff2bd6", "#7c3aed", `
+      <circle cx="110" cy="55" r="28" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.35)"/>
+      <circle cx="100" cy="53" r="4" fill="rgba(255,255,255,0.65)"/>
+      <circle cx="120" cy="53" r="4" fill="rgba(255,255,255,0.65)"/>
+      <path d="M92 65 q18 14 36 0" stroke="rgba(255,255,255,0.65)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    `);
+  }
+  if (t === "color") {
+    return base("#fbbf24", "#ff2bd6", `
+      <path d="M110 28
+               C110 28, 80 64, 80 84
+               a30 30 0 0 0 60 0
+               C140 64,110 28,110 28Z"
+            fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.35)"/>
+      <path d="M122 62 q10 10 10 22" stroke="rgba(255,255,255,0.55)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    `);
+  }
+  // item/default
+  return base("#22d3ee", "#ff2bd6", `
+    <path d="M110 30 L145 48 L145 88 L110 106 L75 88 L75 48 Z"
+          fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.35)"/>
+    <path d="M110 30 L110 70 L75 88" fill="none" stroke="rgba(255,255,255,0.35)"/>
+    <path d="M110 70 L145 48" fill="none" stroke="rgba(255,255,255,0.35)"/>
+  `);
+}
+
+/* ---------- Progress + Track render ---------- */
+
+function renderProgress(points, tiers) {
   if (gpPointsValue) gpPointsValue.textContent = String(points);
 
   const validTiers = (tiers || [])
@@ -84,15 +168,7 @@ function renderProgress(points, tiers) {
 
   const nextTier = validTiers.find(t => t.requiredPoints > points) || validTiers[validTiers.length - 1];
 
-  if (!nextTier) {
-    if (gpNextTitle) gpNextTitle.textContent = "Nessun premio configurato";
-    if (gpNextReq) gpNextReq.textContent = "—";
-    if (gpNextMissing) gpNextMissing.textContent = "—";
-    if (gpRewardText) gpRewardText.textContent = "—";
-    if (gpProgressBar) { gpProgressBar.max = 100; gpProgressBar.value = 0; }
-    if (gpProgressPct) gpProgressPct.textContent = "0%";
-    return;
-  }
+  if (!nextTier) return;
 
   const req = Number(nextTier.requiredPoints) || 0;
   const pct = req > 0 ? Math.max(0, Math.min(100, Math.round((points / req) * 100))) : 0;
@@ -110,7 +186,7 @@ function renderProgress(points, tiers) {
   if (gpProgressPct) gpProgressPct.textContent = `${pct}%`;
 }
 
-function renderTiers(points, tiers, claimedSet) {
+function renderTrack(points, tiers, claimedSet) {
   if (!gpTiersList) return;
   gpTiersList.innerHTML = "";
 
@@ -128,36 +204,85 @@ function renderTiers(points, tiers, claimedSet) {
     const unlocked = points >= req;
     const recorded = claimedSet.has(t.id);
 
-    const badge = unlocked
-      ? (recorded ? "✅ sbloccato" : "🎁 sbloccato (in registrazione)")
-      : "🔒 bloccato";
-
+    const badge = unlocked ? (recorded ? "✅ sbloccato" : "🎁 sbloccato") : "🔒 bloccato";
     const missing = Math.max(0, req - points);
-    const rewardLabel = formatReward(t);
 
     gpTiersList.append(el("div", { class: "card" }, [
       el("div", { class: "row" }, [
-        el("strong", {}, [document.createTextNode(rewardLabel)]),
+        el("strong", {}, [document.createTextNode(formatReward(t))]),
         el("span", { class: "badge" }, [document.createTextNode(badge)])
       ]),
-      el("div", { class: "small" }, [document.createTextNode(`Soglia: ${req} punti`)]),
-      el("div", { class: "small" }, [document.createTextNode(unlocked ? "Hai raggiunto la soglia." : `Ti mancano ${missing} punti.`)])
+      el("div", { class: "small" }, [document.createTextNode(`Soglia: ${req} XP`)]),
+      el("div", { class: "small" }, [document.createTextNode(unlocked ? "Hai raggiunto la soglia." : `Ti mancano ${missing} XP.`)])
     ]));
   }
 }
 
+function renderRoad(points, tiers, claimedSet) {
+  if (!gpRoad) return;
+
+  const list = (tiers || [])
+    .filter(t => t && typeof t.requiredPoints === "number" && t.requiredPoints > 0 && t.active !== false)
+    .sort((a, b) => a.requiredPoints - b.requiredPoints);
+
+  gpRoad.innerHTML = "";
+  if (!list.length) return;
+
+  const max = Number(list[list.length - 1].requiredPoints) || 100;
+  const fillPct = Math.max(0, Math.min(100, Math.round((points / max) * 100)));
+
+  // width dinamica (se molti tiers -> scroll)
+  const px = Math.max(760, list.length * 170);
+  gpRoad.style.width = px + "px";
+
+  const line = el("div", { class: "bp-roadline" }, [
+    el("div", { class: "bp-roadfill", style: `width:${fillPct}%` }, [])
+  ]);
+
+  const nodes = el("div", { class: "bp-roadnodes" }, []);
+
+  for (const t of list) {
+    const req = Number(t.requiredPoints) || 0;
+    const unlocked = points >= req;
+    const preview = defaultRewardPreview(t);
+    const label = formatReward(t);
+
+    nodes.append(el("div", { class: `bp-node ${unlocked ? "is-unlocked" : "is-locked"}` }, [
+      el("div", { class: "bp-node-top" }, [
+        el("span", { class: `bp-node-chip ${unlocked ? "ok" : ""}` }, [document.createTextNode(unlocked ? "UNLOCKED" : "LOCKED")])
+      ]),
+      el("div", { class: "bp-node-body" }, [
+        el("img", { class: "bp-node-img", src: preview, alt: label }),
+        el("div", { class: "bp-node-label" }, [document.createTextNode(label)])
+      ]),
+      el("div", { class: "bp-node-req" }, [document.createTextNode(String(req))])
+    ]));
+  }
+
+  const cursor = el("div", { class: "bp-roadcursor", style: `left:${fillPct}%` }, [
+    el("div", { class: "bp-roadcursor-dot" }, [])
+  ]);
+
+  gpRoad.append(line, nodes, cursor);
+
+  // auto-scroll verso la posizione corrente
+  if (gpRoadScroll && gpRoadScroll.scrollWidth > gpRoadScroll.clientWidth) {
+    const target = (gpRoad.scrollWidth * (fillPct / 100)) - (gpRoadScroll.clientWidth / 2);
+    gpRoadScroll.scrollLeft = Math.max(0, target);
+  }
+}
+
+/* ---------- Auto record unlocked ---------- */
+
 async function autoRecordUnlocked(uid, points, tiers, claimedSet) {
-  // Registra automaticamente i tier sbloccati come docs in users/{uid}/gp_claims/{tierId}
-  // Questo serve se vuoi che il gioco/altre pagine possano sapere "quali premi sono stati sbloccati".
   const list = (tiers || [])
     .filter(t => t && typeof t.requiredPoints === "number" && t.active !== false)
     .sort((a, b) => a.requiredPoints - b.requiredPoints);
 
   const toCreate = list.filter(t => points >= (Number(t.requiredPoints) || 0) && !claimedSet.has(t.id));
-  if (!toCreate.length) return false;
+  if (!toCreate.length) return;
 
   for (const t of toCreate) {
-    // Se una scrittura fallisce (permissions/rete), non blocchiamo tutto.
     try {
       await setDoc(doc(db, `users/${uid}/gp_claims/${t.id}`), {
         unlockedAt: serverTimestamp(),
@@ -167,64 +292,13 @@ async function autoRecordUnlocked(uid, points, tiers, claimedSet) {
       }, { merge: true });
       claimedSet.add(t.id);
     } catch (e) {
+      // Se non hai ancora messo le rules per gp_claims, qui vedrai "permission denied"
       console.warn("Auto-claim fallito per tier", t.id, e);
     }
   }
-  return true;
 }
 
-async function loadAll(uid) {
-  setStatus("Carico achievements e stato…");
-
-  // Achievements attivi
-  const achSnap = await getDocs(collection(db, "achievements"));
-  const achievements = achSnap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .filter(a => a.active !== false);
-
-  // Earned dell'utente
-  const earnedSnap = await getDocs(collection(db, `users/${uid}/earned`));
-  const earnedSet = new Set(earnedSnap.docs.map(d => d.id));
-
-  // Punti Game Pass
-  const gpSnap = await getDoc(doc(db, `users/${uid}/gamepass/progress`));
-  const gpPoints = gpSnap.exists() ? (gpSnap.data().points || 0) : 0;
-
-  // Premi (tiers)
-  const tiersSnap = await getDocs(collection(db, "gp_tiers"));
-  const tiers = tiersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-  // Premi già registrati (claims)
-  const claimsSnap = await getDocs(collection(db, `users/${uid}/gp_claims`));
-  const claimedSet = new Set(claimsSnap.docs.map(d => d.id));
-
-  // ✅ Registra automaticamente i tier sbloccati (se vuoi tenere traccia lato DB)
-  await autoRecordUnlocked(uid, gpPoints, tiers, claimedSet);
-
-  renderProgress(gpPoints, tiers);
-  renderTiers(gpPoints, tiers, claimedSet);
-
-  // Requests dell'utente (ultime 50)
-  const reqQ = query(
-    collection(db, "requests"),
-    where("uid", "==", uid),
-    orderBy("createdAt", "desc"),
-    limit(50)
-  );
-  const reqSnap = await getDocs(reqQ);
-  const requests = reqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-  renderAchievements(achievements, earnedSet);
-  renderRequests(requests);
-
-  const nextTier = (tiers || [])
-    .filter(t => t && typeof t.requiredPoints === "number" && t.requiredPoints > 0 && t.active !== false)
-    .sort((a, b) => a.requiredPoints - b.requiredPoints)
-    .find(t => t.requiredPoints > gpPoints);
-  const nextStr = nextTier ? ` • Prossimo: ${formatReward(nextTier)} (${gpPoints}/${nextTier.requiredPoints})` : "";
-
-  setStatus(`Ok. Punti GP: ${gpPoints} • Approvati: ${earnedSet.size} • Richieste: ${requests.length}${nextStr}`);
-}
+/* ---------- Achievements + Requests ---------- */
 
 function prereqMissing(ach, earnedSet) {
   const prereq = ach.prereq || [];
@@ -247,7 +321,6 @@ function renderAchievements(achievements, earnedSet) {
       onclick: async () => {
         if (!auth.currentUser) return alert("Devi fare login.");
         btn.disabled = true;
-
         try {
           await addDoc(collection(db, "requests"), {
             uid: auth.currentUser.uid,
@@ -281,7 +354,7 @@ function renderAchievements(achievements, earnedSet) {
         ? el("span", { class: "badge" }, [document.createTextNode("🔒 bloccato (mancano prereq)")])
         : el("span", { class: "badge" }, [document.createTextNode("🟦 richiedibile")]);
 
-    const pointsText = (ach.points != null) ? `+${ach.points} punti` : "—";
+    const pointsText = (ach.points != null) ? `+${ach.points} XP` : "—";
 
     const card = el("div", { class: "card" }, [
       el("div", { class: "row" }, [
@@ -332,6 +405,49 @@ function renderRequests(requests) {
   }
 }
 
+/* ---------- Load ---------- */
+
+async function loadAll(uid) {
+  setStatus("Carico achievements e stato…");
+
+  const achSnap = await getDocs(collection(db, "achievements"));
+  const achievements = achSnap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(a => a.active !== false);
+
+  const earnedSnap = await getDocs(collection(db, `users/${uid}/earned`));
+  const earnedSet = new Set(earnedSnap.docs.map(d => d.id));
+
+  const gpSnap = await getDoc(doc(db, `users/${uid}/gamepass/progress`));
+  const gpPoints = gpSnap.exists() ? (gpSnap.data().points || 0) : 0;
+
+  const tiersSnap = await getDocs(collection(db, "gp_tiers"));
+  const tiers = tiersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  const claimsSnap = await getDocs(collection(db, `users/${uid}/gp_claims`));
+  const claimedSet = new Set(claimsSnap.docs.map(d => d.id));
+
+  await autoRecordUnlocked(uid, gpPoints, tiers, claimedSet);
+
+  renderProgress(gpPoints, tiers);
+  renderRoad(gpPoints, tiers, claimedSet);
+  renderTrack(gpPoints, tiers, claimedSet);
+
+  const reqQ = query(
+    collection(db, "requests"),
+    where("uid", "==", uid),
+    orderBy("createdAt", "desc"),
+    limit(50)
+  );
+  const reqSnap = await getDocs(reqQ);
+  const requests = reqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  renderAchievements(achievements, earnedSet);
+  renderRequests(requests);
+
+  setStatus(`Ok. XP: ${gpPoints} • Approvati: ${earnedSet.size} • Richieste: ${requests.length}`);
+}
+
 onUser(async (user) => {
   if (!user) {
     userInfo.textContent = "";
@@ -339,6 +455,8 @@ onUser(async (user) => {
     btnLogout.style.display = "none";
     achGrid.innerHTML = "";
     reqList.innerHTML = "";
+    if (gpTiersList) gpTiersList.innerHTML = "";
+    if (gpRoad) gpRoad.innerHTML = "";
     setStatus("Fai login per vedere e richiedere achievement.");
     return;
   }
