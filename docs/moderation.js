@@ -93,12 +93,13 @@ async function loadQueue() {
             approvedBy: auth.currentUser.uid
           }, { merge: true });
 
-          // 4) assegno reward in gp_items (NON tocca inventory carte)
-          if (ach.reward?.itemId && ach.reward?.qty) {
-            await setDoc(doc(db, `users/${r.uid}/gp_items/${ach.reward.itemId}`), {
-              qty: increment(Number(ach.reward.qty) || 0),
-              updatedAt: serverTimestamp()
-            }, { merge: true });
+        // 4) aggiungo punti Game Pass
+const pts = Number(ach.points) || 0;
+await setDoc(doc(db, `users/${r.uid}/gamepass/progress`), {
+  points: increment(pts),
+  updatedAt: serverTimestamp()
+}, { merge: true });
+
           }
 
           await loadQueue();
