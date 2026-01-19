@@ -93,6 +93,10 @@ async function loadQueue() {
           const ach = achSnap.data() || {};
           const pts = Number(ach.points) || 0;
 
+          // Nome/email presi dalla richiesta (inviati dal client quando l'utente richiede l'achievement)
+          const requesterName = (r.requesterName || "").toString();
+          const requesterEmail = (r.requesterEmail || "").toString();
+
           // 2) approved
           await updateDoc(doc(db, "requests", r.id), {
             status: "approved",
@@ -112,9 +116,21 @@ async function loadQueue() {
           const progSnap = await getDoc(progRef);
 
           if (!progSnap.exists() || Number(progSnap.data()?.season || 0) !== season) {
-            await setDoc(progRef, { season, points: pts, updatedAt: serverTimestamp() }, { merge: true });
+            await setDoc(progRef, {
+              season,
+              points: pts,
+              name: requesterName,
+              email: requesterEmail,
+              updatedAt: serverTimestamp()
+            }, { merge: true });
           } else {
-            await setDoc(progRef, { season, points: increment(pts), updatedAt: serverTimestamp() }, { merge: true });
+            await setDoc(progRef, {
+              season,
+              points: increment(pts),
+              name: requesterName,
+              email: requesterEmail,
+              updatedAt: serverTimestamp()
+            }, { merge: true });
           }
 
           await loadQueue();
