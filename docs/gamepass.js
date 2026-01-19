@@ -58,6 +58,20 @@ function badgeForStatus(s) {
   return "⏳ in revisione";
 }
 
+
+async function getCurrentSeason() {
+  // Config in Firestore: /config/gamepass { season: number }
+  try {
+    const cfgSnap = await getDoc(doc(db, "config", "gamepass"));
+    const s = cfgSnap.exists() ? Number(cfgSnap.data()?.season || 1) : 1;
+    return Number.isFinite(s) && s > 0 ? s : 1;
+  } catch (e) {
+    // Se manca il doc o non hai ancora creato config, usa 1
+    return 1;
+  }
+}
+
+
 /* ---------- Reward helpers ---------- */
 
 function rewardType(tier){
@@ -272,7 +286,7 @@ function renderTiersCards(points, tiers, claimedSet){
 
 /* ---------- Auto record unlocked ---------- */
 
-async function autoRecordUnlocked(uid, points, tiers, claimedSet) {
+async function autoRecordUnlocked(uid, season, points, tiers, claimedSet) {
   const list = (tiers || [])
     .filter(t => t && typeof t.requiredPoints === "number" && t.active !== false)
     .sort((a,b) => a.requiredPoints - b.requiredPoints);
@@ -283,6 +297,7 @@ async function autoRecordUnlocked(uid, points, tiers, claimedSet) {
   for (const t of toCreate) {
     try {
       await setDoc(doc(db, `users/${uid}/gp_claims/${t.id}`), {
+        season: season,
         unlockedAt: serverTimestamp(),
         pointsAtUnlock: points,
         requiredPoints: Number(t.requiredPoints) || 0,
@@ -417,16 +432,29 @@ async function loadAll(uid) {
 
   if (statChallenges) statChallenges.textContent = String(earnedSet.size);
 
+  const season = await getCurrentSeason();
+
   const gpSnap = await getDoc(doc(db, `users/${uid}/gamepass/progress`));
-  const gpPoints = gpSnap.exists() ? (gpSnap.data().points || 0) : 0;
+  let gpPoints = 0;
+  if (gpSnap.exists()) {
+    const data = gpSnap.data() || {};
+    const s = Number(data.season || 0);
+    // Se la season non combacia, per questa pagina i punti sono 0 (reset "soft")
+    if (s === season) gpPoints = Number(data.points || 0) || 0;
+  }
 
   const tiersSnap = await getDocs(collection(db, "gp_tiers"));
   const tiers = tiersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
   const claimsSnap = await getDocs(collection(db, `users/${uid}/gp_claims`));
-  const claimedSet = new Set(claimsSnap.docs.map(d => d.id));
+  // Considera "sbloccati" SOLO quelli della season corrente (i vecchi restano ignorati)
+  const claimedSet = new Set(
+    claimsSnap.docs
+      .filter(d => Number(d.data()?.season || 0) === season)
+      .map(d => d.id)
+  );
 
-  await autoRecordUnlocked(uid, gpPoints, tiers, claimedSet);
+  await autoRecordUnlocked(uid, season, gpPoints, tiers, claimedSet);
 
   renderProgress(gpPoints, tiers);
   renderRoad(gpPoints, tiers);
@@ -444,7 +472,7 @@ async function loadAll(uid) {
   renderAchievements(achievements, earnedSet);
   renderRequests(requests);
 
-  setStatus(`Ok. XP: ${gpPoints} • Approvati: ${earnedSet.size} • Richieste: ${requests.length}`);
+  setStatus(`Ok. Season ${season} • XP: ${gpPoints} • Approvati: ${earnedSet.size} • Richieste: ${requests.length}`);
 }
 
 onUser(async (user) => {
