@@ -1,4 +1,7 @@
 // docs/moderation.js
+// Moderazione Game Pass: approva/rifiuta richieste e assegna XP (points) in modo "stagionale".
+// Richiede: /config/gamepass { season: number } e /moderators/{uid} per autorizzazione.
+
 import { onUser, login, logout, qs, el, db, auth } from "./common.js";
 
 import {
@@ -29,8 +32,17 @@ btnReload.onclick = () => auth.currentUser && loadQueue();
 
 function setStatus(msg) { statusBox.textContent = msg; }
 
+async function getCurrentSeason() {
+  try {
+    const cfgSnap = await getDoc(doc(db, "config", "gamepass"));
+    const s = cfgSnap.exists() ? Number(cfgSnap.data()?.season || 1) : 1;
+    return Number.isFinite(s) && s > 0 ? s : 1;
+  } catch {
+    return 1;
+  }
+}
+
 async function checkModerator(uid) {
-  // Legge SOLO il doc del proprio uid: /moderators/{uid}
   const modSnap = await getDoc(doc(db, "moderators", uid));
   return modSnap.exists();
 }
@@ -39,7 +51,6 @@ async function loadQueue() {
   setStatus("Carico richieste pending…");
   queue.innerHTML = "";
 
-  // Pending (ultime 100)
   const q = query(
     collection(db, "requests"),
     where("status", "==", "pending"),
@@ -74,12 +85,15 @@ async function loadQueue() {
         rejectBtn.disabled = true;
 
         try {
-          // 1) prendo il reward dall'achievement
+          const season = await getCurrentSeason();
+
+          // 1) punti dall'achievement
           const achSnap = await getDoc(doc(db, "achievements", r.achievementId));
           if (!achSnap.exists()) throw new Error("Achievement non trovato");
-          const ach = achSnap.data();
+          const ach = achSnap.data() || {};
+          const pts = Number(ach.points) || 0;
 
-          // 2) aggiorno la richiesta -> approved
+          // 2) approved
           await updateDoc(doc(db, "requests", r.id), {
             status: "approved",
             note: note.value.trim(),
@@ -87,20 +101,21 @@ async function loadQueue() {
             reviewedBy: auth.currentUser.uid
           });
 
-          // 3) segno earned
+          // 3) earned
           await setDoc(doc(db, `users/${r.uid}/earned/${r.achievementId}`), {
             approvedAt: serverTimestamp(),
             approvedBy: auth.currentUser.uid
           }, { merge: true });
 
-        // 4) aggiungo punti Game Pass
-const pts = Number(ach.points) || 0;
-await setDoc(doc(db, `users/${r.uid}/gamepass/progress`), {
-  points: increment(pts),
-  updatedAt: serverTimestamp()
-}, { merge: true });
+          // 4) punti stagionali: se season diversa, reset soft (points = pts, season = current)
+          const progRef = doc(db, `users/${r.uid}/gamepass/progress`);
+          const progSnap = await getDoc(progRef);
 
-        
+          if (!progSnap.exists() || Number(progSnap.data()?.season || 0) !== season) {
+            await setDoc(progRef, { season, points: pts, updatedAt: serverTimestamp() }, { merge: true });
+          } else {
+            await setDoc(progRef, { season, points: increment(pts), updatedAt: serverTimestamp() }, { merge: true });
+          }
 
           await loadQueue();
         } catch (e) {
@@ -150,14 +165,9 @@ await setDoc(doc(db, `users/${r.uid}/gamepass/progress`), {
         el("span", { class: "badge" }, [document.createTextNode("⏳ pending")]),
       ]),
       el("div", { class: "small" }, [
-  document.createTextNode(
-    `Utente: ${(r.requesterName || "Senza nome")} — ${(r.requesterEmail || "Senza email")}`
-  )
-]),
-el("div", { class: "small mono" }, [
-  document.createTextNode(`uid: ${r.uid}`)
-]),
-
+        document.createTextNode(`Utente: ${(r.requesterName || "Senza nome")} — ${(r.requesterEmail || "Senza email")}`)
+      ]),
+      el("div", { class: "small mono" }, [document.createTextNode(`uid: ${r.uid}`)]),
       ...evidence,
       el("div", { class: "sep" }),
       note,
