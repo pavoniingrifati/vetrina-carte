@@ -418,6 +418,21 @@ button:active, .btn:active { transform: translateY(1px) scale(.99); }
   filter: brightness(1.05);
 }
 
+/* Mini reset button (sotto ad un singolo pacchetto) */
+.mini-reset-btn{
+  display:block;
+  width:100%;
+  margin-top:8px;
+  padding:.55rem .75rem;
+  font-size:12px;
+  border-radius:12px;
+  background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  border: 1px solid rgba(110,231,255,.35);
+  color: #eaf0ff;
+  box-shadow: var(--shadow);
+}
+.mini-reset-btn:hover{ filter: brightness(1.06); }
+
 /* Balance bar */
 .fc-balance-bar {
   background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
@@ -1270,7 +1285,12 @@ function renderPacksStrip(){
         <div class="featured-cost">${game}</div>
         <div class="featured-cost">${cost > 0 ? (cost + ' pts') : 'Gratis'}</div>
         <div class="featured-sub" style="margin-top:4px; color:#cfd6ff; font-size:12px;">${subtitle}</div>
+        ${game === 'Altezza mezza bellezza' ? '<button type="button" class="mini-reset-btn" data-reset-game="Altezza mezza bellezza">♻️ Reset</button>' : ''}
       `;
+      if (game === 'Altezza mezza bellezza') {
+        const rbtn = card.querySelector('.mini-reset-btn');
+        if (rbtn) rbtn.addEventListener('click', (e)=>{ e.stopPropagation(); window.resetSinglePack(game); });
+      }
       card.addEventListener('click', ()=>{
         GAME_STATE.selected = game;
         applyPackVisual();
@@ -1360,6 +1380,50 @@ resetPacksBtn.addEventListener('click', async ()=>{
     console.warn('reset failed', e); document.getElementById('log').textContent = '⚠️ Reset non riuscito.';
   }
 });
+
+// Reset di un singolo pacchetto (es. "Altezza mezza bellezza")
+window.resetSinglePack = function(game){
+  try{
+    if (!game) return;
+    if (typeof VALID_GAMES !== 'undefined' && Array.isArray(VALID_GAMES) && !VALID_GAMES.includes(game)) return;
+
+    // Azzera solo il cursore del game richiesto
+    if (typeof GAME_STATE !== 'undefined' && GAME_STATE && GAME_STATE.cursor) {
+      GAME_STATE.cursor[game] = 0;
+    }
+
+    // (Opzionale) Rimescola i pacchi FINITI del solo game (se le funzioni esistono)
+    try{
+      const noLimit = (game==='Oggetti'||game==='Cosmetic'||game==='Bronze'||game==='Silver'||game==='Gold');
+      if (!noLimit && typeof buildFinitePacks==='function' && GAME_STATE?.pools?.[game] && typeof PACK_SIZE_PER_GAME !== 'undefined') {
+        const size = Number(PACK_SIZE_PER_GAME[game] || 1) || 1;
+        GAME_STATE.packs[game] = buildFinitePacks(GAME_STATE.pools[game], size);
+      }
+    }catch(e){ /* ignore */ }
+
+    // Salva cursori in localStorage
+    try{
+      const saved = JSON.parse(localStorage.getItem('futtu_cursors')||'{}');
+      saved[game] = 0;
+      localStorage.setItem('futtu_cursors', JSON.stringify(saved));
+    }catch(e){ /* ignore */ }
+
+    // Refresh UI (compatibile con più renderer presenti nel file)
+    try{ if (typeof renderGamePicker==='function') renderGamePicker(); }catch(e){}
+    try{ if (typeof renderPacksStrip==='function') renderPacksStrip(); }catch(e){}
+    try{ if (typeof window.renderPacksStrip==='function') window.renderPacksStrip(); }catch(e){}
+    try{ if (typeof window.renderSection==='function') window.renderSection(window.CURRENT_SECTION||'featured'); }catch(e){}
+    try{ if (typeof updateOpenBtnEnabled==='function') updateOpenBtnEnabled(); }catch(e){}
+    try{ if (typeof applyPackVisual==='function') applyPackVisual(); }catch(e){}
+
+    try{
+      const log = document.getElementById('log');
+      if (log) log.textContent = `♻️ Reset: ${game}`;
+    }catch(e){}
+  }catch(err){
+    console.warn('resetSinglePack failed', err);
+  }
+};
 
 /** =========================
  *  CARTE UI
@@ -1739,7 +1803,12 @@ document.addEventListener('DOMContentLoaded', function(){
         <img src="${PACK_BACK_BY_GAME[game]}" alt="${game}" loading="lazy" decoding="async" />
         <div>${game}</div>
         <div class="featured-cost">Costo: ${PACK_COST_PER_GAME[game] || 0}</div>
+        ${game === 'Altezza mezza bellezza' ? '<button type="button" class="mini-reset-btn" data-reset-game="Altezza mezza bellezza">♻️ Reset</button>' : ''}
       `;
+      if (game === 'Altezza mezza bellezza') {
+        const rbtn = card.querySelector('.mini-reset-btn');
+        if (rbtn) rbtn.addEventListener('click', (e)=>{ e.stopPropagation(); window.resetSinglePack(game); });
+      }
       card.addEventListener('click', () => {
         GAME_STATE.selected = game;
         applyPackVisual();
@@ -1898,7 +1967,12 @@ window.renderPacksStrip = function(){
       <img src="${back}" alt="Anteprima ${game}">
       <div style="margin-top:6px;font-weight:700">${game}</div>
       <div class="featured-cost">${game==='Oggetti' ? '∞' : `${left}/${totalPacks}`} pacchi</div>
+      ${game === 'Altezza mezza bellezza' ? '<button type="button" class="mini-reset-btn" data-reset-game="Altezza mezza bellezza">♻️ Reset</button>' : ''}
     `;
+    if (game === 'Altezza mezza bellezza') {
+      const rbtn = card.querySelector('.mini-reset-btn');
+      if (rbtn) rbtn.addEventListener('click', (e)=>{ e.stopPropagation(); window.resetSinglePack(game); });
+    }
     card.addEventListener('click', ()=>{
       GAME_STATE.selected = game;
       applyPackVisual();
@@ -2179,5 +2253,16 @@ window.renderPacksStrip = function(){
 </script>
 <!-- === Fine Patch === -->
 
+
+<script id="mini-reset-delegation">
+// Fallback delegation: intercetta click sul bottone reset sotto al pack
+document.addEventListener('click', function(e){
+  const t = e.target;
+  if (!t || !t.classList || !t.classList.contains('mini-reset-btn')) return;
+  const game = t.getAttribute('data-reset-game') || 'Altezza mezza bellezza';
+  e.stopPropagation();
+  if (typeof window.resetSinglePack === 'function') window.resetSinglePack(game);
+}, true);
+</script>
 </body>
 </html>
