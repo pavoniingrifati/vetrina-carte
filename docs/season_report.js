@@ -181,13 +181,11 @@ async function loadReport() {
     const q = query(
       collectionGroup(db, "gamepass"),
       where("season", "==", season),
-      orderBy("points", "desc"),
       limit(2000)
-    );
-    snap = await getDocs(q);
+    );snap = await getDocs(q);
   } catch (e) {
     console.error(e);
-    setStatus("Errore nel caricare progress. Se vedi un errore 'index', crea l'indice richiesto in Firestore.");
+    setStatus("Errore nel caricare progress. Se vedi 'Missing or insufficient permissions' è un problema di Rules; se vedi 'index', crea l'indice richiesto in Firestore.");
     return;
   }
 
@@ -204,6 +202,64 @@ async function loadReport() {
         email: data.email || ""
       };
     });
+
+
+  // 3b) Fallback: se name/email non sono salvati in gamepass/progress,
+  // prova a recuperarli dalle richieste più recenti (requests) e li mostra nel report.
+  try {
+    const reqSnap = await getDocs(query(
+      collection(db, "requests"),
+      orderBy("createdAt", "desc"),
+      limit(2000)
+    ));
+    const map = new Map(); // uid -> {name,email}
+    for (const d of reqSnap.docs) {
+      const data = d.data() || {};
+      const uid = (data.uid || "").toString();
+      if (!uid || map.has(uid)) continue;
+      const name = (data.requesterName || "").toString();
+      const email = (data.requesterEmail || "").toString();
+      if (name || email) map.set(uid, { name, email });
+    }
+
+    rowsAll = rowsAll.map(r => {
+      const p = map.get(r.uid);
+      return {
+        ...r,
+        name: (r.name || (p?.name || "")),
+        email: (r.email || (p?.email || ""))
+      };
+    });
+  } catch (e) {
+    console.warn("Fallback requests->profile fallito:", e);
+  }
+
+  // 3c) Profilo utente: legge users/*/profile/main e usa displayName come "name" nel report
+  // (serve rule che permetta ai moderatori di leggere users/{uid}/profile/main)
+  try {
+    const profSnap = await getDocs(query(
+      collectionGroup(db, "profile"),
+      limit(2000)
+    ));
+
+    const pmap = new Map(); // uid -> displayName
+    for (const d of profSnap.docs) {
+      if (d.id !== "main") continue;
+      const seg = d.ref.path.split("/"); // users/{uid}/profile/main
+      const uid = seg[1] || "";
+      if (!uid || pmap.has(uid)) continue;
+      const data = d.data() || {};
+      const dn = (data.displayName || "").toString().trim();
+      if (dn) pmap.set(uid, dn);
+    }
+
+    rowsAll = rowsAll.map(r => ({
+      ...r,
+      name: (pmap.get(r.uid) || r.name || "")
+    }));
+  } catch (e) {
+    console.warn("Fallback profile/main fallito:", e);
+  }
 
   rowsAll.sort((a,b) => b.points - a.points);
 
