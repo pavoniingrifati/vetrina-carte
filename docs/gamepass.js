@@ -17,7 +17,9 @@ import {
   serverTimestamp,
   doc,
   getDoc,
-  setDoc
+  setDoc,
+  updateDoc,
+  increment
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const statusBox = qs("#status");
@@ -49,6 +51,132 @@ const statChallenges = qs("#statChallenges");
 
 btnLogin.onclick = () => login().catch(err => alert(err.message));
 btnLogout.onclick = () => logout().catch(err => alert(err.message));
+
+
+const DAILY_XP = 500; // <-- cambia qui il bonus giornaliero
+
+function msToHMS(ms) {
+  ms = Math.max(0, ms);
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  if (h > 0) return `${h}h ${pad(m)}m`;
+  if (m > 0) return `${m}m ${pad(s)}s`;
+  return `${s}s`;
+}
+
+let dailyTicker = null;
+
+function ensureDailyCard() {
+  // monta subito sotto lo status, così funziona con qualunque layout
+  let box = document.querySelector("#dailyCard");
+  if (box) return box;
+
+  const statusEl = document.querySelector("#status");
+  const parent = statusEl?.parentElement || document.body;
+
+  box = document.createElement("div");
+  box.id = "dailyCard";
+  box.className = "card";
+  box.style.marginTop = "14px";
+
+  box.innerHTML = `
+    <div class="row">
+      <strong>🎁 Bonus giornaliero</strong>
+      <span class="badge" id="dailyBadge">—</span>
+    </div>
+    <div class="small">Torna ogni giorno e riscatta XP gratis (una volta ogni 24 ore).</div>
+    <div class="sep"></div>
+    <div class="row" style="align-items:center; gap:10px; flex-wrap:wrap;">
+      <div class="small mono" id="dailyHint">—</div>
+      <div style="flex:1"></div>
+      <button class="btn primary" id="btnDaily">Riscatta +${DAILY_XP} XP</button>
+    </div>
+  `;
+
+  // inserisci dopo lo status (se esiste), altrimenti in fondo
+  if (statusEl && statusEl.parentElement) {
+    statusEl.parentElement.insertBefore(box, statusEl.nextSibling);
+  } else {
+    parent.appendChild(box);
+  }
+
+  return box;
+}
+
+function renderDaily(season, progressData, uid) {
+  const box = ensureDailyCard();
+  const badge = box.querySelector("#dailyBadge");
+  const hint = box.querySelector("#dailyHint");
+  const btn = box.querySelector("#btnDaily");
+
+  if (dailyTicker) { clearInterval(dailyTicker); dailyTicker = null; }
+
+  const lastDaily = progressData?.lastDailyAt?.toDate ? progressData.lastDailyAt.toDate() : null;
+  const now = new Date();
+
+  let can = true;
+  let nextAt = null;
+
+  if (lastDaily instanceof Date && !isNaN(lastDaily.getTime())) {
+    nextAt = new Date(lastDaily.getTime() + 24*60*60*1000);
+    can = now.getTime() >= nextAt.getTime();
+  }
+
+  if (can) {
+    badge.textContent = "✅ disponibile";
+    hint.textContent = "Puoi riscattare ora.";
+    btn.disabled = false;
+  } else {
+    badge.textContent = "⏳ in cooldown";
+    btn.disabled = true;
+
+    const tick = () => {
+      const ms = nextAt.getTime() - Date.now();
+      hint.textContent = `Disponibile tra ${msToHMS(ms)}`;
+      if (ms <= 0) {
+        clearInterval(dailyTicker);
+        dailyTicker = null;
+        renderDaily(season, progressData, uid);
+      }
+    };
+    tick();
+    dailyTicker = setInterval(tick, 1000);
+  }
+
+  btn.onclick = async () => {
+    if (!auth.currentUser) return alert("Devi fare login.");
+    btn.disabled = true;
+    try {
+      const seasonNow = season;
+      const progRef = doc(db, `users/${uid}/gamepass/progress`);
+      const snap = await getDoc(progRef);
+
+      if (!snap.exists() || Number(snap.data()?.season || 0) !== seasonNow) {
+        await setDoc(progRef, {
+          season: seasonNow,
+          points: DAILY_XP,
+          lastDailyAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } else {
+        await updateDoc(progRef, {
+          season: seasonNow,
+          points: increment(DAILY_XP),
+          lastDailyAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      }
+
+      await loadAll(uid);
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Errore bonus giornaliero");
+    }
+  };
+}
 
 function setStatus(msg) { statusBox.textContent = msg; }
 
@@ -430,19 +558,21 @@ async function loadAll(uid) {
   const earnedSnap = await getDocs(collection(db, `users/${uid}/earned`));
   const earnedSet = new Set(earnedSnap.docs.map(d => d.id));
 
-  if (statChallenges) statChallenges.textContent = String(earnedSet.size);
-
-  const season = await getCurrentSeason();
+  if (statChallenges) statChallenges.textContent = String(earnedSet.size);  const season = await getCurrentSeason();
 
   const gpSnap = await getDoc(doc(db, `users/${uid}/gamepass/progress`));
   let gpPoints = 0;
+  let gpDataCurrent = null;
+
   if (gpSnap.exists()) {
     const data = gpSnap.data() || {};
     const s = Number(data.season || 0);
     // Se la season non combacia, per questa pagina i punti sono 0 (reset "soft")
-    if (s === season) gpPoints = Number(data.points || 0) || 0;
+    if (s === season) {
+      gpPoints = Number(data.points || 0) || 0;
+      gpDataCurrent = data; // contiene anche lastDailyAt
+    }
   }
-
   const tiersSnap = await getDocs(collection(db, "gp_tiers"));
   const tiers = tiersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -473,6 +603,9 @@ async function loadAll(uid) {
   renderRequests(requests);
 
   setStatus(`Ok. Season ${season} • XP: ${gpPoints} • Approvati: ${earnedSet.size} • Richieste: ${requests.length}`);
+
+  // Bonus giornaliero (una volta ogni 24h)
+  renderDaily(season, gpDataCurrent, uid);
 }
 
 onUser(async (user) => {
@@ -484,6 +617,10 @@ onUser(async (user) => {
     reqList.innerHTML = "";
     if (gpTiersList) gpTiersList.innerHTML = "";
     if (gpRoad) gpRoad.innerHTML = "";
+    if (dailyTicker) { clearInterval(dailyTicker); dailyTicker = null; }
+    const dc = document.querySelector('#dailyCard');
+    if (dc) dc.remove();
+
     setStatus("Fai login per vedere e richiedere achievement.");
     return;
   }
