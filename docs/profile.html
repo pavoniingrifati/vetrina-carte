@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Profilo • Battle Pass</title>
+
+  <link rel="stylesheet" href="./styles.css" />
+
+  <style>
+
+    :root{
+      --bg0:#070815;
+      --bg1:#0A0E24;
+      --panel:#0E1733;
+      --panel2:#0B132A;
+      --stroke: rgba(255,255,255,.10);
+      --stroke2: rgba(255,255,255,.14);
+      --txt: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.70);
+      --faint: rgba(255,255,255,.52);
+
+      --cyan: #28d7ff;
+      --violet: #7c3aed;
+      --pink: #ff2bd6;
+      --gold: #fbbf24;
+      --green: #22c55e;
+
+      --r: 22px;
+      --r2: 18px;
+      --shadow: 0 34px 90px rgba(0,0,0,.60);
+      --shadow2: 0 18px 40px rgba(0,0,0,.40);
+
+      --maxw: 1220px;
+
+      /* Cards */
+      --cardW: 220px;
+      --cardH: 290px;
+      --imgW: 150px;
+      --imgH: 190px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      color:var(--txt);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:
+        radial-gradient(1200px 700px at 12% -10%, rgba(40,215,255,.18), transparent 55%),
+        radial-gradient(1100px 650px at 95% 0%, rgba(124,58,237,.22), transparent 58%),
+        radial-gradient(900px 650px at 55% 25%, rgba(255,43,214,.12), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    /* Grid background */
+    .bg-grid{
+      position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.40;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.08), transparent 50%),
+        radial-gradient(circle at 75% 35%, rgba(255,255,255,.06), transparent 55%),
+        radial-gradient(circle at 50% 85%, rgba(255,255,255,.06), transparent 58%),
+        linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: auto, auto, auto, 52px 52px, 52px 52px;
+      mix-blend-mode: overlay;
+    }
+    .bg-grid::before{
+      content:""; position:absolute; inset:-30%;
+      background: conic-gradient(from 190deg at 50% 50%,
+        rgba(40,215,255,.18), rgba(124,58,237,.18), rgba(255,43,214,.14), rgba(40,215,255,.18));
+      filter: blur(70px);
+      opacity:.55;
+      animation: swirl 14s linear infinite;
+    }
+    @keyframes swirl{
+      0%{transform:rotate(0) scale(1)}
+      50%{transform:rotate(180deg) scale(1.05)}
+      100%{transform:rotate(360deg) scale(1)}
+    }
+
+    .wrap{ position:relative; z-index:1; max-width:var(--maxw); margin:0 auto; padding: 0 16px 90px; }
+
+    /* Top bar */
+    .topbar{
+      position:sticky; top:0; z-index:50;
+      background: rgba(6,8,18,.62);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--stroke);
+    }
+    .topbar-inner{
+      max-width:var(--maxw); margin:0 auto;
+      padding: 14px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+    }
+    .brand .logo{
+      width:40px; height:40px; border-radius: 14px;
+      background:
+        radial-gradient(18px 18px at 30% 28%, rgba(255,255,255,.32), transparent 60%),
+        linear-gradient(135deg, rgba(251,191,36,.95), rgba(255,43,214,.85));
+      box-shadow: 0 18px 40px rgba(251,191,36,.20);
+      display:flex; align-items:center; justify-content:center;
+      border: 1px solid rgba(255,255,255,.16);
+    }
+    .brand .logo span{ font-size:18px; filter: drop-shadow(0 10px 14px rgba(0,0,0,.35)); }
+    .brand h1{
+      margin:0; font-size:22px; letter-spacing:.4px;
+    }
+    .brand .sub{
+      margin-top:2px; font-size:12px; color:var(--muted);
+    }
+    .brand-text{ display:flex; flex-direction:column; }
+
+    .actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    #userInfo{ color:var(--muted); font-size:12px; max-width:320px; overflow:hidden; text-overflow: ellipsis; }
+
+    .btnx{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color:var(--txt);
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-weight: 850;
+      letter-spacing: .18px;
+      cursor:pointer;
+      box-shadow: 0 16px 34px rgba(0,0,0,.40),
+                  inset 0 1px 0 rgba(255,255,255,.14),
+                  inset 0 -14px 20px rgba(0,0,0,.16);
+    }
+    .btnx.primary{
+      background: linear-gradient(135deg, rgba(40,215,255,.45), rgba(124,58,237,.45));
+      box-shadow: 0 22px 52px rgba(40,215,255,.14),
+                  0 18px 44px rgba(124,58,237,.12),
+                  inset 0 1px 0 rgba(255,255,255,.16),
+                  inset 0 -16px 22px rgba(0,0,0,.16);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--txt);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing:.35px;
+      text-transform: uppercase;
+    }
+    .pill.gold{
+      border-color: rgba(251,191,36,.30);
+      background: rgba(251,191,36,.12);
+      color: rgba(255,241,210,.95);
+    }
+
+    /* Status */
+    #status{
+      margin-top: 16px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.12);
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    /* Hero */
+    .hero{
+      margin-top: 16px;
+      border-radius: calc(var(--r) + 8px);
+      border: 1px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(1200px 600px at 18% 10%, rgba(40,215,255,.22), transparent 60%),
+        radial-gradient(900px 520px at 92% 0%, rgba(255,43,214,.18), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    .hero::after{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(900px 500px at 50% 10%, rgba(0,0,0,.0), rgba(0,0,0,.55));
+      pointer-events:none;
+      opacity:.9;
+    }
+    .hero-inner{
+      position:relative; z-index:2;
+      display:grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 16px;
+      padding: 22px;
+      align-items: stretch;
+    }
+
+    .hero-left{
+      display:flex; flex-direction:column; gap:12px;
+      padding: 10px 6px;
+    }
+
+    .headline{
+      margin: 0;
+      font-size: 44px;
+      line-height: 1.05;
+      letter-spacing: .2px;
+    }
+    .grad{
+      background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink));
+      -webkit-background-clip: text;
+      background-clip:text;
+      color: transparent;
+    }
+    .hero-desc{
+      margin: 0;
+      color: var(--muted);
+      font-size: 13.5px;
+      max-width: 60ch;
+    }
+
+    .level-card{
+      margin-top: 10px;
+      border-radius: var(--r);
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(8,12,28,.55);
+      box-shadow: var(--shadow2);
+      padding: 14px;
+      position:relative;
+      overflow:hidden;
+    }
+    .level-card::before{
+      content:""; position:absolute; inset:-2px;
+      background:
+        radial-gradient(760px 340px at 18% 10%, rgba(255,255,255,.12), transparent 55%),
+        radial-gradient(520px 260px at 85% 0%, rgba(255,255,255,.10), transparent 60%);
+      opacity:.85;
+      mix-blend-mode: overlay;
+      pointer-events:none;
+    }
+    .level-top{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom: 10px;
+    }
+    .lvl-left{ display:flex; align-items:center; gap:12px; }
+    .bolt{
+      width:36px; height:36px; border-radius: 14px;
+      background: linear-gradient(135deg, rgba(40,215,255,.95), rgba(124,58,237,.85));
+      border: 1px solid rgba(255,255,255,.18);
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 18px 38px rgba(40,215,255,.14);
+    }
+    .bolt span{ filter: drop-shadow(0 10px 14px rgba(0,0,0,.35)); }
+    .lvl-label{ font-size: 11px; color: var(--muted); letter-spacing:.32px; text-transform: uppercase; }
+    .lvl-val{ font-size: 22px; font-weight: 950; margin-top: 2px; }
+    .nextbox{ text-align:right; }
+    .nextbox .lbl{ font-size: 11px; color: var(--muted); letter-spacing:.32px; text-transform: uppercase; }
+    .nextbox .val{ font-size: 13px; font-weight: 950; color: rgba(40,215,255,.95); margin-top: 2px; }
+
+    .barwrap{
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.14);
+      border-radius: 999px;
+      padding: 6px;
+      overflow: hidden;
+    }
+    progress#gpProgressBar{ width:100%; height:16px; border-radius: 999px; overflow:hidden; background:transparent; }
+    progress#gpProgressBar::-webkit-progress-bar{ background: rgba(255,255,255,0.08); border-radius: 999px; }
+    progress#gpProgressBar::-webkit-progress-value{
+      background: linear-gradient(90deg, rgba(40,215,255,.95), rgba(124,58,237,.95), rgba(255,43,214,.85));
+      border-radius: 999px;
+    }
+    .pctline{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-top: 6px;
+      color: var(--faint);
+      font-size: 12px;
+      letter-spacing:.1px;
+      flex-wrap:wrap;
+      gap:6px 10px;
+    }
+    .pctline strong{ color: rgba(255,255,255,.90); }
+
+    .hero-right{
+      border-radius: var(--r);
+      border: 1px solid rgba(255,255,255,.12);
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,.08) 60%, rgba(0,0,0,.55)),
+        radial-gradient(700px 420px at 50% 25%, rgba(255,255,255,.08), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.20));
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+      position:relative;
+    }
+    .hero-right::before{
+      content:"";
+      position:absolute; inset:0;
+      background-image:
+        radial-gradient(circle at 15% 25%, rgba(40,215,255,.15), transparent 45%),
+        radial-gradient(circle at 85% 35%, rgba(255,43,214,.12), transparent 48%);
+      opacity:.9;
+      pointer-events:none;
+    }
+    .hero-right .ph{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      color: rgba(255,255,255,.60);
+      font-weight: 850;
+      letter-spacing: .18px;
+    }
+    .hero-right .ph small{ display:block; margin-top:8px; color: rgba(255,255,255,.45); font-weight: 700; }
+
+    /* Stats row */
+    .stats{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .stat{
+      border-radius: var(--r2);
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(8,12,28,.45);
+      box-shadow: var(--shadow2);
+      padding: 14px;
+      position:relative;
+      overflow:hidden;
+    }
+    .stat::after{
+      content:""; position:absolute; inset:0;
+      background: radial-gradient(900px 480px at 50% 0%, rgba(255,255,255,.10), transparent 60%);
+      opacity:.8;
+      pointer-events:none;
+      mix-blend-mode: overlay;
+    }
+    .stat .lab{ font-size: 11px; color: var(--muted); letter-spacing:.32px; text-transform: uppercase; }
+    .stat .big{ font-size: 26px; font-weight: 950; margin-top: 6px; }
+    .stat .sub{ font-size: 11px; color: var(--faint); margin-top: 2px; }
+    .stat .ico{
+      position:absolute; right: 12px; top: 12px;
+      width: 34px; height: 34px; border-radius: 12px;
+      display:flex; align-items:center; justify-content:center;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      box-shadow: 0 16px 34px rgba(0,0,0,.35);
+    }
+    .stat .ico.orange{ background: rgba(251,191,36,.16); border-color: rgba(251,191,36,.26); }
+    .stat .ico.cyan{ background: rgba(40,215,255,.16); border-color: rgba(40,215,255,.26); }
+    .stat .ico.pink{ background: rgba(255,43,214,.14); border-color: rgba(255,43,214,.24); }
+    .stat .ico.green{ background: rgba(34,197,94,.14); border-color: rgba(34,197,94,.24); }
+
+    /* Section headers */
+    .section{ margin-top: 20px; }
+    .section-head{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin: 0 2px 12px;
+    }
+    .section-head h2{
+      margin:0;
+      font-size: 15px;
+      letter-spacing:.18px;
+      display:flex; align-items:center; gap:10px;
+    }
+    .section-head h2::before{
+      content:"";
+      width:10px; height:10px; border-radius: 999px;
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
+      box-shadow: 0 0 0 4px rgba(40,215,255,.10);
+    }
+
+    /* Road line (nodes only) */
+    .road-wrap{
+      border-radius: var(--r);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(8,12,28,.35);
+      box-shadow: var(--shadow2);
+      padding: 12px 12px 10px;
+      overflow:hidden;
+    }
+    #gpRoadScroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom: 6px; }
+    #gpRoad{ position:relative; padding: 18px 14px 12px; }
+
+    .roadline{
+      position:absolute; left: 18px; right: 18px; top: 44px;
+      height: 10px; border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      overflow:hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 18px 38px rgba(0,0,0,.35);
+      z-index:1;
+    }
+    .roadfill{
+      height:100%;
+      background: linear-gradient(90deg, rgba(40,215,255,.95), rgba(124,58,237,.95), rgba(255,43,214,.85));
+      box-shadow: 0 0 24px rgba(40,215,255,.16);
+      position:relative;
+    }
+    .roadfill::after{
+      content:""; position:absolute; inset:0;
+      background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(255,255,255,0), rgba(255,255,255,.16));
+      opacity:.22; mix-blend-mode: overlay;
+    }
+    .roadnodes{
+      position:relative; z-index:2;
+      display:flex; justify-content: space-between; gap:14px;
+      align-items:center;
+    }
+    .node{
+      display:flex; flex-direction:column; align-items:center; gap:8px;
+      width: 130px;
+    }
+    .bubble{
+      width: 38px; height: 38px; border-radius: 999px;
+      display:flex; align-items:center; justify-content:center;
+      font-weight: 950; font-size: 12px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.22);
+      box-shadow: 0 16px 34px rgba(0,0,0,.35),
+                  inset 0 1px 0 rgba(255,255,255,.12);
+    }
+    .bubble.unlocked{
+      background: rgba(40,215,255,.18);
+      border-color: rgba(40,215,255,.30);
+      box-shadow: 0 18px 40px rgba(40,215,255,.12), 0 12px 28px rgba(0,0,0,.35),
+                  inset 0 1px 0 rgba(255,255,255,.12);
+    }
+    .node .lab{
+      font-size: 11px; color: var(--muted);
+      text-align:center;
+      line-height: 1.15;
+      min-height: 26px;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+
+    .cursor{
+      position:absolute; top: 39px;
+      transform: translateX(-50%);
+      z-index:3; pointer-events:none;
+    }
+    .cursor .dot{
+      width: 18px; height: 18px; border-radius: 999px;
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 0 0 7px rgba(40,215,255,.10), 0 0 28px rgba(40,215,255,.22);
+      border: 2px solid rgba(0,0,0,.45);
+    }
+
+    /* Rewards cards scroll */
+    .cards-wrap{
+      border-radius: var(--r);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(8,12,28,.35);
+      box-shadow: var(--shadow2);
+      padding: 12px;
+      overflow:hidden;
+    }
+    .cards-scroll{
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      display:flex; gap: 12px;
+      padding: 6px 2px 12px;
+      scroll-snap-type: x mandatory;
+    }
+    .tier-card{
+      width: var(--cardW);
+      min-width: var(--cardW);
+      height: var(--cardH);
+      scroll-snap-align: start;
+      border-radius: 20px;
+      border: 1px solid transparent;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.07), rgba(0,0,0,.28)) padding-box,
+        linear-gradient(135deg, rgba(40,215,255,.55), rgba(124,58,237,.50), rgba(255,43,214,.45)) border-box;
+      box-shadow:
+        0 34px 90px rgba(0,0,0,.62),
+        0 18px 38px rgba(0,0,0,.40),
+        inset 0 1px 0 rgba(255,255,255,.14),
+        inset 0 -20px 28px rgba(0,0,0,.22);
+      position:relative;
+      overflow:hidden;
+      padding: 12px;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .tier-card::after{
+      content:""; position:absolute; inset:0;
+      background: radial-gradient(900px 420px at 20% 10%, rgba(255,255,255,.10), transparent 55%);
+      opacity:.85; mix-blend-mode: overlay; pointer-events:none;
+    }
+    .tier-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; position:relative; z-index:1; }
+    .chip{
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing:.35px;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.90);
+      display:inline-flex; align-items:center; gap:6px;
+    }
+    .chip.common{ background: rgba(255,255,255,.06); }
+    .chip.rare{ background: rgba(40,215,255,.14); border-color: rgba(40,215,255,.26); }
+    .chip.epic{ background: rgba(255,43,214,.14); border-color: rgba(255,43,214,.24); }
+    .chip.legendary{ background: rgba(251,191,36,.14); border-color: rgba(251,191,36,.26); color: rgba(255,241,210,.95); }
+
+    .tier-imgwrap{
+      flex: 1;
+      display:flex; align-items:center; justify-content:center;
+      position:relative; z-index:1;
+    }
+    .tier-img{
+      width: var(--imgW);
+      height: var(--imgH);
+      object-fit: contain;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      padding: 6px;
+      box-shadow: 0 26px 60px rgba(0,0,0,.55),
+                  inset 0 1px 0 rgba(255,255,255,.12);
+    }
+
+    .tier-title{
+      font-weight: 950;
+      letter-spacing:.2px;
+      font-size: 13px;
+      position:relative; z-index:1;
+      min-height: 34px;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+    .tier-foot{
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      position:relative; z-index:1;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .okdot{
+      width: 18px; height: 18px; border-radius: 999px;
+      display:flex; align-items:center; justify-content:center;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.22);
+      box-shadow: 0 14px 24px rgba(0,0,0,.35);
+    }
+    .okdot.ok{ background: rgba(34,197,94,.18); border-color: rgba(34,197,94,.30); }
+
+    /* Lock overlay */
+    .locked .tier-img{ filter: blur(2px) brightness(.65) saturate(.8); }
+    .lock{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      z-index:2;
+      pointer-events:none;
+    }
+    .lock .lk{
+      width: 56px; height: 56px; border-radius: 18px;
+      background: rgba(0,0,0,.32);
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 24px 60px rgba(0,0,0,.55),
+                  inset 0 1px 0 rgba(255,255,255,.12);
+      display:flex; align-items:center; justify-content:center;
+      font-size: 22px;
+    }
+
+    /* Achievements / Requests containers */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 12px;
+    }
+    #achGrid .card, #reqList .card{
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(8,12,28,.40);
+      box-shadow: var(--shadow2);
+      padding: 14px;
+      position:relative;
+      overflow:hidden;
+    }
+    #achGrid .card::before, #reqList .card::before{
+      content:""; position:absolute; left:0; top:0; bottom:0; width:4px;
+    }
+    #achGrid .card::before{ background: linear-gradient(180deg, rgba(40,215,255,.95), rgba(124,58,237,.70)); }
+    #reqList .card::before{ background: linear-gradient(180deg, rgba(124,58,237,.95), rgba(255,43,214,.70)); }
+
+    .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .badge{
+      border: 1px solid rgba(255,255,255,.16) !important;
+      background: rgba(0,0,0,.20) !important;
+      color: rgba(255,255,255,.92) !important;
+      padding: 6px 10px !important;
+      border-radius: 999px !important;
+      font-size: 12px !important;
+      white-space: nowrap;
+      box-shadow: 0 14px 22px rgba(0,0,0,.35),
+                  inset 0 1px 0 rgba(255,255,255,.14);
+    }
+    .small{ color: var(--muted); font-size: 12.5px; }
+    .mono{ color: var(--faint); }
+    .sep{
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(40,215,255,0), rgba(40,215,255,.45), rgba(124,58,237,.45), rgba(255,43,214,0));
+      margin: 10px 0;
+      opacity: .9;
+    }
+
+    textarea, input[type="url"], input[type="text"]{
+      width:100%;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.20);
+      color: var(--txt);
+      padding: 10px 10px;
+      outline:none;
+      box-shadow: 0 18px 34px rgba(0,0,0,.40),
+                  inset 0 1px 0 rgba(255,255,255,.10),
+                  inset 0 -12px 18px rgba(0,0,0,.18);
+    }
+    textarea{ min-height: 90px; resize: vertical; }
+
+    .btn{
+      border-radius: 14px !important;
+      border: 1px solid rgba(255,255,255,.16) !important;
+      background: rgba(255,255,255,.06) !important;
+      color: var(--txt) !important;
+      padding: 10px 12px !important;
+      box-shadow: 0 16px 34px rgba(0,0,0,.42),
+                  inset 0 1px 0 rgba(255,255,255,.14),
+                  inset 0 -14px 18px rgba(0,0,0,.16) !important;
+    }
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(40,215,255,.45), rgba(124,58,237,.45)) !important;
+      border: 1px solid rgba(255,255,255,.18) !important;
+      box-shadow: 0 22px 52px rgba(40,215,255,.16),
+                  0 18px 44px rgba(124,58,237,.14),
+                  inset 0 1px 0 rgba(255,255,255,.16),
+                  inset 0 -16px 22px rgba(0,0,0,.16) !important;
+    }
+    .btn.danger{
+      background: linear-gradient(135deg, rgba(255,43,214,.35), rgba(124,58,237,.35)) !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 980px){
+      .hero-inner{ grid-template-columns: 1fr; }
+      .stats{ grid-template-columns: 1fr 1fr; }
+      .headline{ font-size: 38px; }
+    }
+    @media (max-width: 560px){
+      .stats{ grid-template-columns: 1fr; }
+      .headline{ font-size: 34px; }
+      :root{ --cardW: 205px; --imgW: 140px; --imgH: 180px; }
+    }
+  
+
+    /* ===== Road UI v2 (markers integrati, niente sovrapposizioni) ===== */
+    /* Il JS crea: .roadline + .roadmarks(.mark) + .cursor */
+    #gpRoad{
+      --barY: 64px;
+      position: relative;
+      height: 120px;
+      padding: 10px 18px 16px;
+      min-width: 820px; /* verrà alzata dal JS in base ai tiers */
+    }
+
+    /* Barra posizionata in modo stabile */
+    .roadline{
+      position: absolute;
+      left: 18px; right: 18px;
+      top: var(--barY);
+      transform: translateY(-50%);
+      z-index: 1;
+    }
+    .roadbar{
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.12);
+      overflow: hidden;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -16px 22px rgba(0,0,0,.18),
+        0 18px 38px rgba(0,0,0,.35);
+    }
+    .roadfill{
+      height: 100%;
+      background: linear-gradient(90deg, rgba(40,215,255,.95), rgba(124,58,237,.95), rgba(255,43,214,.85));
+      box-shadow: 0 0 24px rgba(40,215,255,.16);
+      position: relative;
+    }
+    .roadfill::after{
+      content:""; position:absolute; inset:0;
+      background: linear-gradient(90deg, rgba(255,255,255,.24), rgba(255,255,255,0), rgba(255,255,255,.18));
+      opacity:.20; mix-blend-mode: overlay;
+    }
+
+    /* Markers (tier numbers) */
+    .roadmarks{
+      position: absolute;
+      left: 18px; right: 18px;
+      top: 0; bottom: 0;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .mark{
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 84px;
+      transform: translateX(-50%);
+    }
+
+    /* Badge numero (integrato) */
+    .mark .tag{
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 28px;
+      min-width: 44px;
+      padding: 0 12px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 1000;
+      font-size: 12px;
+      letter-spacing: .25px;
+
+      color: rgba(255,255,255,.92);
+      border: 1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.16), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,.10));
+      box-shadow:
+        0 16px 34px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -14px 18px rgba(0,0,0,.18);
+    }
+
+    /* “stelo” che collega il badge alla barra */
+    .mark .stem{
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 36px;
+      height: calc(var(--barY) - 36px);
+      width: 2px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.16);
+      box-shadow: 0 10px 22px rgba(0,0,0,.35);
+      opacity: .7;
+    }
+
+    /* Dot sulla barra */
+    .mark .pin{
+      position: absolute;
+      left: 50%;
+      top: var(--barY);
+      transform: translate(-50%, -50%);
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.22);
+      background: rgba(0,0,0,.35);
+      box-shadow:
+        0 18px 40px rgba(0,0,0,.45),
+        inset 0 1px 0 rgba(255,255,255,.14);
+    }
+    .mark .pin::after{
+      content:"";
+      position:absolute; inset:-8px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(40,215,255,.20), transparent 65%);
+      opacity: 0;
+      transition: opacity .18s ease;
+    }
+
+    /* Stato sbloccato: glow e colore */
+    .mark.unlocked .tag{
+      border-color: rgba(40,215,255,.34);
+      background:
+        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.20), transparent 60%),
+        linear-gradient(135deg, rgba(40,215,255,.26), rgba(124,58,237,.22));
+      box-shadow:
+        0 18px 44px rgba(40,215,255,.12),
+        0 16px 34px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -14px 18px rgba(0,0,0,.18);
+    }
+    .mark.unlocked .pin{
+      border-color: rgba(40,215,255,.45);
+      background: rgba(40,215,255,.16);
+      box-shadow:
+        0 18px 44px rgba(40,215,255,.12),
+        0 18px 40px rgba(0,0,0,.45),
+        inset 0 1px 0 rgba(255,255,255,.14);
+    }
+    .mark.unlocked .pin::after{ opacity: 1; }
+
+    /* Cursor (pallino progresso) sopra la barra */
+    .cursor{
+      position: absolute;
+      top: var(--barY);
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      pointer-events: none;
+    }
+    .cursor .dot{
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 0 0 6px rgba(40,215,255,.16), 0 18px 40px rgba(0,0,0,.45);
+    }
+
+    /* Mobile: badge più piccolo e min-width più basso */
+    @media (max-width: 820px){
+      #gpRoad{ height: 112px; --barY: 60px; min-width: 720px; }
+      .mark{ width: 74px; }
+      .mark .tag{ height: 26px; min-width: 40px; padding: 0 10px; font-size: 11px; }
+    }
+    
+.hero-right { position: relative; }
+
+.hero-banner{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;     /* “banner” stile cover */
+  border-radius: inherit;
+}
+
+
+
+/* --- Profile form --- */
+.profile-grid{
+  display:grid;
+  grid-template-columns: 340px 1fr;
+  gap:18px;
+  align-items:stretch;
+}
+@media (max-width: 940px){
+  .profile-grid{ grid-template-columns: 1fr; }
+}
+.profile-card{
+  padding:18px;
+  border:1px solid var(--stroke);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+  border-radius: 18px;
+  box-shadow: var(--shadow2);
+  position:relative;
+  overflow:hidden;
+}
+.profile-card::before{
+  content:"";
+  position:absolute; inset:-40%;
+  background: conic-gradient(from 180deg, rgba(40,215,255,.22), rgba(255,43,214,.18), rgba(251,191,36,.14), rgba(124,58,237,.18), rgba(40,215,255,.22));
+  filter: blur(34px);
+  opacity:.55;
+  pointer-events:none;
+}
+.profile-inner{ position:relative; z-index:1; }
+.avatar-wrap{
+  display:flex; gap:14px; align-items:center;
+}
+.avatar{
+  width:78px; height:78px; border-radius:18px;
+  object-fit:cover;
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow: 0 18px 40px rgba(0,0,0,.35);
+  background: rgba(255,255,255,.05);
+}
+.form{
+  display:grid; gap:12px; margin-top:14px;
+}
+.label{
+  font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+  color: rgba(255,255,255,.62);
+}
+.input, .textarea{
+  width:100%;
+  background: rgba(7,8,21,.55);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius: 14px;
+  color: rgba(255,255,255,.92);
+  padding:12px 12px;
+  outline:none;
+  transition: .18s ease;
+}
+.textarea{ min-height: 96px; resize: vertical; }
+.input:focus, .textarea:focus{
+  border-color: rgba(40,215,255,.55);
+  box-shadow: 0 0 0 4px rgba(40,215,255,.12);
+}
+.btnrow{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.hint-ok{ color: rgba(34,197,94,.85); }
+.hint-warn{ color: rgba(251,191,36,.9); }
+.hint-err{ color: rgba(244,63,94,.9); }
+
+/* list cards */
+.list{
+  display:grid; gap:12px;
+}
+.list .item{
+  padding:14px;
+  border:1px solid var(--stroke);
+  border-radius:16px;
+  background: rgba(7,8,21,.35);
+}
+.item .top{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.kv{
+  display:grid; grid-template-columns: 160px 1fr; gap:10px;
+}
+@media (max-width: 640px){
+  .kv{ grid-template-columns: 1fr; }
+}
+.k{ color: rgba(255,255,255,.62); font-size:12px; letter-spacing:.06em; text-transform:uppercase; }
+.v{ color: rgba(255,255,255,.92); font-weight:600; }
+
+  </style>
+</head>
+
+<body>
+  <div class="bg-grid"></div>
+
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo"><span>🧑‍🚀</span></div>
+        <div class="brand-text">
+          <h1>PROFILO</h1>
+          <div class="sub">Imposta il tuo nome e controlla i progressi</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a class="btnx" href="./gamepass.html" style="text-decoration:none;">Vai al Battle Pass</a>
+        <span id="userInfo"></span>
+        <button id="btnLogin" class="btnx primary">Login Google</button>
+        <button id="btnLogout" class="btnx" style="display:none;">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <div id="status" class="status">Fai login per vedere il tuo profilo.</div>
+
+    <section class="hero" aria-label="profilo hero" style="margin-top:14px;">
+      <div class="hero-left">
+        <div class="tag"><span class="dot"></span> ACCOUNT</div>
+        <h2 class="hero-title">La tua <span class="grad">identità</span></h2>
+        <p class="hero-desc">
+          Qui puoi impostare il tuo nome pubblico (nickname) e vedere tutte le info collegate al tuo account.
+        </p>
+
+        <div class="profile-grid" style="margin-top:16px;">
+          <div class="profile-card">
+            <div class="profile-inner">
+              <div class="avatar-wrap">
+                <img id="avatar" class="avatar" alt="Avatar" />
+                <div>
+                  <div class="lvl-label">Nickname</div>
+                  <div class="lvl-val" id="namePreview">—</div>
+                  <div class="small" id="emailPreview" style="margin-top:4px;">—</div>
+                </div>
+              </div>
+
+              <div class="form">
+                <div>
+                  <div class="label">Nome (visibile agli altri)</div>
+                  <input id="displayName" class="input" maxlength="24" placeholder="Es: PavoniIngrifati" />
+                </div>
+
+                <div>
+                  <div class="label">Bio (opzionale)</div>
+                  <textarea id="bio" class="textarea" maxlength="160" placeholder="Una frase su di te…"></textarea>
+                </div>
+
+                <div class="btnrow">
+                  <button id="btnSave" class="btn primary">Salva profilo</button>
+                  <span id="saveHint" class="small">—</span>
+                </div>
+
+                <div class="small" style="color:rgba(255,255,255,.55); line-height:1.4;">
+                  Suggerimento: usa un nome breve (2–24 caratteri). L’avatar viene dal tuo account Google.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-card">
+            <div class="profile-inner">
+              <div class="tag"><span class="dot"></span> PANORAMICA</div>
+              <h3 style="margin:8px 0 0 0;">Le tue info</h3>
+              <div class="sep" style="margin:12px 0;"></div>
+
+              <div class="kv">
+                <div class="k">Email</div><div class="v" id="kvEmail">—</div>
+                <div class="k">UID</div><div class="v" id="kvUid">—</div>
+                <div class="k">Stagione</div><div class="v" id="kvSeason">—</div>
+                <div class="k">XP (stagione)</div><div class="v" id="kvXP">—</div>
+                <div class="k">Tier raggiunto</div><div class="v" id="kvTier">—</div>
+                <div class="k">Prossima soglia</div><div class="v" id="kvNext">—</div>
+              </div>
+
+              <div class="sep" style="margin:14px 0;"></div>
+
+              <div class="row">
+                <div class="badge" id="badgeGP">—</div>
+                <div style="flex:1"></div>
+                <a class="btn" href="./gamepass.html" style="text-decoration:none;">Apri Battle Pass</a>
+              </div>
+
+              <div style="margin-top:12px;">
+                <div class="lvl-label">Progresso verso la prossima soglia</div>
+                <div class="prog" style="margin-top:8px;">
+                  <div id="gpBar" class="prog-bar"></div>
+                </div>
+                <div class="row small" style="margin-top:8px;">
+                  <span id="gpPct">0%</span>
+                  <span style="margin-left:auto;" id="gpHint">—</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <img class="hero-banner" src="https://images.unsplash.com/photo-1520975916090-3105956dac38?auto=format&fit=crop&w=1200&q=60" alt="Banner" />
+      </div>
+    </section>
+
+    <section class="stats" aria-label="stats profilo">
+      <div class="stat">
+        <div class="ico cyan">🏆</div>
+        <div>
+          <div class="slabel">Achievement approvati</div>
+          <div class="sval" id="statEarned">0</div>
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="ico pink">📩</div>
+        <div>
+          <div class="slabel">Richieste totali</div>
+          <div class="sval" id="statReq">0</div>
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="ico gold">⏳</div>
+        <div>
+          <div class="slabel">In revisione</div>
+          <div class="sval" id="statPending">0</div>
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="ico green">✅</div>
+        <div>
+          <div class="slabel">Approvate</div>
+          <div class="sval" id="statApproved">0</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="attivita">
+      <div class="panel-head">
+        <div class="panel-title">Ultime richieste</div>
+        <div class="panel-sub">Le ultime 10 richieste inviate.</div>
+      </div>
+      <div id="reqList" class="list"></div>
+    </section>
+
+    <footer class="foot">
+      <div class="small">© Battle Pass • Profilo utente</div>
+    </footer>
+  </main>
+
+  <script type="module" src="./profile.js"></script>
+</body>
+</html>
