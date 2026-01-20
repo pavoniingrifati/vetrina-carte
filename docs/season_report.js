@@ -42,18 +42,6 @@ async function checkModerator(uid) {
   return modSnap.exists();
 }
 
-
-async function checkModerator(uid) {
-  try {
-    const modSnap = await getDoc(doc(db, "moderators", uid));
-    return modSnap.exists();
-  } catch (e) {
-    console.warn("checkModerator fallito:", e);
-    return false;
-  }
-}
-
-
 async function getCurrentSeason() {
   try {
     const cfg = await getDoc(doc(db, "config", "gamepass"));
@@ -177,7 +165,7 @@ btnCSV.onclick = () => {
 };
 
 async function loadReport() {
-  setStatus("Carico season, tiers e progress utenti…");
+  setStatus("Carico season, tiers e progress utenti… (modalità NO-INDEX)");
 
   const season = await getCurrentSeason();
   statSeason.textContent = String(season);
@@ -193,7 +181,8 @@ async function loadReport() {
     const q = query(
       collectionGroup(db, "gamepass"),
       limit(5000)
-    );snap = await getDocs(q);
+    );
+    snap = await getDocs(q);
   } catch (e) {
     console.error(e);
     setStatus("Errore nel caricare progress. Se vedi 'Missing or insufficient permissions' è un problema di Rules; se vedi 'index', crea l'indice richiesto in Firestore.");
@@ -203,31 +192,24 @@ async function loadReport() {
   rowsAll = snap.docs
     .filter(d => d.id === "progress")
     .map(d => {
-      const path = d.ref.path.split("/"); // users/{uid}/gamepass/progress
-      const uid = path[1];
+      const seg = d.ref.path.split('/'); // users/{uid}/gamepass/progress
+      const uid = seg[1] || '';
       const data = d.data() || {};
       return {
         uid,
         season: Number(data.season || 0) || 0,
         points: Number(data.points || 0) || 0,
-        name: (data.name || "").toString(),
-        email: (data.email || "").toString(),
+        name: (data.name || data.displayName || '').toString(),
+        email: (data.email || '').toString(),
       };
     })
     .filter(r => r.season === season);
-      const uid = seg[1] || "";
-      const data = d.data() || {};
-      return {
-        uid,
-        points: Number(data.points || 0) || 0,
-        name: data.name || data.displayName || "",
-        email: data.email || ""
-      };
-    });
 
 
-  // 3b) Fallback: se name/email non sono salvati in gamepass/progress,
-  // prova a recuperarli dalle richieste più recenti (requests) e li mostra nel report.
+  rowsAll.sort((a,b) => b.points - a.points);
+
+
+  // Fallback 1: prova a riempire name/email dalle requests più recenti (se mancanti)
   try {
     const reqSnap = await getDocs(query(
       collection(db, "requests"),
@@ -237,10 +219,10 @@ async function loadReport() {
     const map = new Map(); // uid -> {name,email}
     for (const d of reqSnap.docs) {
       const data = d.data() || {};
-      const uid = (data.uid || "").toString();
+      const uid = (data.uid || '').toString();
       if (!uid || map.has(uid)) continue;
-      const name = (data.requesterName || "").toString();
-      const email = (data.requesterEmail || "").toString();
+      const name = (data.requesterName || '').toString();
+      const email = (data.requesterEmail || '').toString();
       if (name || email) map.set(uid, { name, email });
     }
 
@@ -248,42 +230,39 @@ async function loadReport() {
       const p = map.get(r.uid);
       return {
         ...r,
-        name: (r.name || (p?.name || "")),
-        email: (r.email || (p?.email || ""))
+        name: (r.name || (p?.name || '')),
+        email: (r.email || (p?.email || '')),
       };
     });
   } catch (e) {
-    console.warn("Fallback requests->profile fallito:", e);
+    console.warn('Fallback requests fallito:', e);
   }
 
-  // 3c) Profilo utente: legge users/*/profile/main e usa displayName come "name" nel report
-  // (serve rule che permetta ai moderatori di leggere users/{uid}/profile/main)
+  // Fallback 2: usa users/{uid}/profile/main.displayName come name (serve read ai moderatori)
   try {
     const profSnap = await getDocs(query(
       collectionGroup(db, "profile"),
-      limit(2000)
+      limit(5000)
     ));
 
     const pmap = new Map(); // uid -> displayName
     for (const d of profSnap.docs) {
-      if (d.id !== "main") continue;
-      const seg = d.ref.path.split("/"); // users/{uid}/profile/main
-      const uid = seg[1] || "";
+      if (d.id !== 'main') continue;
+      const seg = d.ref.path.split('/'); // users/{uid}/profile/main
+      const uid = seg[1] || '';
       if (!uid || pmap.has(uid)) continue;
       const data = d.data() || {};
-      const dn = (data.displayName || "").toString().trim();
+      const dn = (data.displayName || '').toString().trim();
       if (dn) pmap.set(uid, dn);
     }
 
     rowsAll = rowsAll.map(r => ({
       ...r,
-      name: (pmap.get(r.uid) || r.name || "")
+      name: (pmap.get(r.uid) || r.name || ''),
     }));
   } catch (e) {
-    console.warn("Fallback profile/main fallito:", e);
+    console.warn('Fallback profile/main fallito:', e);
   }
-
-  rowsAll.sort((a,b) => b.points - a.points);
 
   hint.textContent = `${rowsAll.length} righe`;
   renderTable(rowsAll);
@@ -308,12 +287,6 @@ onUser(async (user) => {
   if (!ok) {
     tbody.innerHTML = '<tr><td colspan="8" class="muted">Non autorizzato: non sei in /moderators/{uid}.</td></tr>';
     setStatus("Non autorizzato: non sei in /moderators/{tuoUID}.");
-    return;
-  }
-
-  const ok = await checkModerator(user.uid);
-  if (!ok) {
-    setStatus("Non autorizzato: questa pagina è solo per moderatori (serve doc in /moderators/{tuoUID}).");
     return;
   }
 
