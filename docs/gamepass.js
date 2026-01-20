@@ -17,9 +17,7 @@ import {
   serverTimestamp,
   doc,
   getDoc,
-  setDoc,
-  updateDoc,
-  increment
+  setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const statusBox = qs("#status");
@@ -52,132 +50,6 @@ const statChallenges = qs("#statChallenges");
 btnLogin.onclick = () => login().catch(err => alert(err.message));
 btnLogout.onclick = () => logout().catch(err => alert(err.message));
 
-
-const DAILY_XP = 500; // <-- cambia qui il bonus giornaliero
-
-function msToHMS(ms) {
-  ms = Math.max(0, ms);
-  const totalSec = Math.floor(ms / 1000);
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  const pad = (n) => String(n).padStart(2, "0");
-  if (h > 0) return `${h}h ${pad(m)}m`;
-  if (m > 0) return `${m}m ${pad(s)}s`;
-  return `${s}s`;
-}
-
-let dailyTicker = null;
-
-function ensureDailyCard() {
-  // monta subito sotto lo status, così funziona con qualunque layout
-  let box = document.querySelector("#dailyCard");
-  if (box) return box;
-
-  const statusEl = document.querySelector("#status");
-  const parent = statusEl?.parentElement || document.body;
-
-  box = document.createElement("div");
-  box.id = "dailyCard";
-  box.className = "card";
-  box.style.marginTop = "14px";
-
-  box.innerHTML = `
-    <div class="row">
-      <strong>🎁 Bonus giornaliero</strong>
-      <span class="badge" id="dailyBadge">—</span>
-    </div>
-    <div class="small">Torna ogni giorno e riscatta XP gratis (una volta ogni 24 ore).</div>
-    <div class="sep"></div>
-    <div class="row" style="align-items:center; gap:10px; flex-wrap:wrap;">
-      <div class="small mono" id="dailyHint">—</div>
-      <div style="flex:1"></div>
-      <button class="btn primary" id="btnDaily">Riscatta +${DAILY_XP} XP</button>
-    </div>
-  `;
-
-  // inserisci dopo lo status (se esiste), altrimenti in fondo
-  if (statusEl && statusEl.parentElement) {
-    statusEl.parentElement.insertBefore(box, statusEl.nextSibling);
-  } else {
-    parent.appendChild(box);
-  }
-
-  return box;
-}
-
-function renderDaily(season, progressData, uid) {
-  const box = ensureDailyCard();
-  const badge = box.querySelector("#dailyBadge");
-  const hint = box.querySelector("#dailyHint");
-  const btn = box.querySelector("#btnDaily");
-
-  if (dailyTicker) { clearInterval(dailyTicker); dailyTicker = null; }
-
-  const lastDaily = progressData?.lastDailyAt?.toDate ? progressData.lastDailyAt.toDate() : null;
-  const now = new Date();
-
-  let can = true;
-  let nextAt = null;
-
-  if (lastDaily instanceof Date && !isNaN(lastDaily.getTime())) {
-    nextAt = new Date(lastDaily.getTime() + 24*60*60*1000);
-    can = now.getTime() >= nextAt.getTime();
-  }
-
-  if (can) {
-    badge.textContent = "✅ disponibile";
-    hint.textContent = "Puoi riscattare ora.";
-    btn.disabled = false;
-  } else {
-    badge.textContent = "⏳ in cooldown";
-    btn.disabled = true;
-
-    const tick = () => {
-      const ms = nextAt.getTime() - Date.now();
-      hint.textContent = `Disponibile tra ${msToHMS(ms)}`;
-      if (ms <= 0) {
-        clearInterval(dailyTicker);
-        dailyTicker = null;
-        renderDaily(season, progressData, uid);
-      }
-    };
-    tick();
-    dailyTicker = setInterval(tick, 1000);
-  }
-
-  btn.onclick = async () => {
-    if (!auth.currentUser) return alert("Devi fare login.");
-    btn.disabled = true;
-    try {
-      const seasonNow = season;
-      const progRef = doc(db, `users/${uid}/gamepass/progress`);
-      const snap = await getDoc(progRef);
-
-      if (!snap.exists() || Number(snap.data()?.season || 0) !== seasonNow) {
-        await setDoc(progRef, {
-          season: seasonNow,
-          points: DAILY_XP,
-          lastDailyAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-      } else {
-        await updateDoc(progRef, {
-          season: seasonNow,
-          points: increment(DAILY_XP),
-          lastDailyAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-      }
-
-      await loadAll(uid);
-    } catch (e) {
-      console.error(e);
-      alert(e?.message || "Errore bonus giornaliero");
-    }
-  };
-}
-
 function setStatus(msg) { statusBox.textContent = msg; }
 
 function badgeForStatus(s) {
@@ -185,20 +57,6 @@ function badgeForStatus(s) {
   if (s === "rejected") return "❌ rifiutata";
   return "⏳ in revisione";
 }
-
-
-async function getCurrentSeason() {
-  // Config in Firestore: /config/gamepass { season: number }
-  try {
-    const cfgSnap = await getDoc(doc(db, "config", "gamepass"));
-    const s = cfgSnap.exists() ? Number(cfgSnap.data()?.season || 1) : 1;
-    return Number.isFinite(s) && s > 0 ? s : 1;
-  } catch (e) {
-    // Se manca il doc o non hai ancora creato config, usa 1
-    return 1;
-  }
-}
-
 
 /* ---------- Reward helpers ---------- */
 
@@ -327,34 +185,55 @@ function renderRoad(points, tiers) {
   gpRoad.innerHTML = "";
   if (!list.length) return;
 
+  // Spaziatura: evita sovrapposizioni. (Con scroll se serve)
+  const minW = Math.max(820, list.length * 140);
+  gpRoad.style.minWidth = `${minW}px`;
+
   const max = Number(list[list.length - 1].requiredPoints) || 100;
-  const fillPct = Math.max(0, Math.min(100, Math.round((points / max) * 100)));
+  const fillPct = Math.max(0, Math.min(100, (Number(points || 0) / max) * 100));
 
-  // larghezza per scroll
-  const px = Math.max(820, list.length * 150);
-  gpRoad.style.width = px + "px";
-
+  // Barra
   const line = el("div", { class: "roadline" }, [
-    el("div", { class: "roadfill", style: `width:${fillPct}%` }, [])
+    el("div", { class: "roadbar" }, [
+      el("div", { class: "roadfill", style: `width:${fillPct}%` }, [])
+    ])
   ]);
 
-  const nodes = el("div", { class: "roadnodes" }, []);
+  // Markers (tier numbers) integrati e ben allineati
+  const marks = el("div", { class: "roadmarks" }, []);
+  const n = list.length;
+
   list.forEach((t, idx) => {
     const req = Number(t.requiredPoints) || 0;
-    const unlocked = points >= req;
-    const label = formatReward(t);
-    nodes.append(el("div", { class: "node" }, [
-      el("div", { class: `bubble ${unlocked ? "unlocked" : ""}` }, [document.createTextNode(String(idx + 1))]),
-      el("div", { class: "lab" }, [document.createTextNode(label)]),
-    ]));
+    const unlocked = Number(points || 0) >= req;
+
+    // Distribuzione uniforme lungo la track (stile Battle Pass)
+    const leftPct = (n <= 1) ? 0 : (idx / (n - 1)) * 100;
+
+    // Numero mostrato: di default 1..N (se vuoi 1,10,20..., metti un campo t.displayNumber)
+    const num = (t.displayNumber != null) ? String(t.displayNumber) : String(idx + 1);
+
+    const node = el("div", {
+      class: `mark ${unlocked ? "unlocked" : ""}`,
+      style: `left:${leftPct}%`,
+      title: `${num} • soglia: ${req} XP`
+    }, [
+      el("div", { class: "tag" }, [document.createTextNode(num)]),
+      el("div", { class: "stem" }, []),
+      el("div", { class: "pin" }, []),
+    ]);
+
+    marks.append(node);
   });
 
+  // Cursore (posizione XP)
   const cursor = el("div", { class: "cursor", style: `left:${fillPct}%` }, [
     el("div", { class: "dot" }, [])
   ]);
 
-  gpRoad.append(line, nodes, cursor);
+  gpRoad.append(line, marks, cursor);
 
+  // Auto-scroll verso la posizione dell'utente
   if (gpRoadScroll && gpRoadScroll.scrollWidth > gpRoadScroll.clientWidth) {
     const target = (gpRoad.scrollWidth * (fillPct / 100)) - (gpRoadScroll.clientWidth / 2);
     gpRoadScroll.scrollLeft = Math.max(0, target);
@@ -414,7 +293,7 @@ function renderTiersCards(points, tiers, claimedSet){
 
 /* ---------- Auto record unlocked ---------- */
 
-async function autoRecordUnlocked(uid, season, points, tiers, claimedSet) {
+async function autoRecordUnlocked(uid, points, tiers, claimedSet) {
   const list = (tiers || [])
     .filter(t => t && typeof t.requiredPoints === "number" && t.active !== false)
     .sort((a,b) => a.requiredPoints - b.requiredPoints);
@@ -425,7 +304,6 @@ async function autoRecordUnlocked(uid, season, points, tiers, claimedSet) {
   for (const t of toCreate) {
     try {
       await setDoc(doc(db, `users/${uid}/gp_claims/${t.id}`), {
-        season: season,
         unlockedAt: serverTimestamp(),
         pointsAtUnlock: points,
         requiredPoints: Number(t.requiredPoints) || 0,
@@ -558,33 +436,18 @@ async function loadAll(uid) {
   const earnedSnap = await getDocs(collection(db, `users/${uid}/earned`));
   const earnedSet = new Set(earnedSnap.docs.map(d => d.id));
 
-  if (statChallenges) statChallenges.textContent = String(earnedSet.size);  const season = await getCurrentSeason();
+  if (statChallenges) statChallenges.textContent = String(earnedSet.size);
 
   const gpSnap = await getDoc(doc(db, `users/${uid}/gamepass/progress`));
-  let gpPoints = 0;
-  let gpDataCurrent = null;
+  const gpPoints = gpSnap.exists() ? (gpSnap.data().points || 0) : 0;
 
-  if (gpSnap.exists()) {
-    const data = gpSnap.data() || {};
-    const s = Number(data.season || 0);
-    // Se la season non combacia, per questa pagina i punti sono 0 (reset "soft")
-    if (s === season) {
-      gpPoints = Number(data.points || 0) || 0;
-      gpDataCurrent = data; // contiene anche lastDailyAt
-    }
-  }
   const tiersSnap = await getDocs(collection(db, "gp_tiers"));
   const tiers = tiersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
   const claimsSnap = await getDocs(collection(db, `users/${uid}/gp_claims`));
-  // Considera "sbloccati" SOLO quelli della season corrente (i vecchi restano ignorati)
-  const claimedSet = new Set(
-    claimsSnap.docs
-      .filter(d => Number(d.data()?.season || 0) === season)
-      .map(d => d.id)
-  );
+  const claimedSet = new Set(claimsSnap.docs.map(d => d.id));
 
-  await autoRecordUnlocked(uid, season, gpPoints, tiers, claimedSet);
+  await autoRecordUnlocked(uid, gpPoints, tiers, claimedSet);
 
   renderProgress(gpPoints, tiers);
   renderRoad(gpPoints, tiers);
@@ -602,10 +465,7 @@ async function loadAll(uid) {
   renderAchievements(achievements, earnedSet);
   renderRequests(requests);
 
-  setStatus(`Ok. Season ${season} • XP: ${gpPoints} • Approvati: ${earnedSet.size} • Richieste: ${requests.length}`);
-
-  // Bonus giornaliero (una volta ogni 24h)
-  renderDaily(season, gpDataCurrent, uid);
+  setStatus(`Ok. XP: ${gpPoints} • Approvati: ${earnedSet.size} • Richieste: ${requests.length}`);
 }
 
 onUser(async (user) => {
@@ -617,10 +477,6 @@ onUser(async (user) => {
     reqList.innerHTML = "";
     if (gpTiersList) gpTiersList.innerHTML = "";
     if (gpRoad) gpRoad.innerHTML = "";
-    if (dailyTicker) { clearInterval(dailyTicker); dailyTicker = null; }
-    const dc = document.querySelector('#dailyCard');
-    if (dc) dc.remove();
-
     setStatus("Fai login per vedere e richiedere achievement.");
     return;
   }
