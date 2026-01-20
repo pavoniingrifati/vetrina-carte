@@ -42,6 +42,18 @@ async function checkModerator(uid) {
   return modSnap.exists();
 }
 
+
+async function checkModerator(uid) {
+  try {
+    const modSnap = await getDoc(doc(db, "moderators", uid));
+    return modSnap.exists();
+  } catch (e) {
+    console.warn("checkModerator fallito:", e);
+    return false;
+  }
+}
+
+
 async function getCurrentSeason() {
   try {
     const cfg = await getDoc(doc(db, "config", "gamepass"));
@@ -180,8 +192,7 @@ async function loadReport() {
   try {
     const q = query(
       collectionGroup(db, "gamepass"),
-      where("season", "==", season),
-      limit(2000)
+      limit(5000)
     );snap = await getDocs(q);
   } catch (e) {
     console.error(e);
@@ -192,7 +203,18 @@ async function loadReport() {
   rowsAll = snap.docs
     .filter(d => d.id === "progress")
     .map(d => {
-      const seg = d.ref.path.split("/");
+      const path = d.ref.path.split("/"); // users/{uid}/gamepass/progress
+      const uid = path[1];
+      const data = d.data() || {};
+      return {
+        uid,
+        season: Number(data.season || 0) || 0,
+        points: Number(data.points || 0) || 0,
+        name: (data.name || "").toString(),
+        email: (data.email || "").toString(),
+      };
+    })
+    .filter(r => r.season === season);
       const uid = seg[1] || "";
       const data = d.data() || {};
       return {
@@ -286,6 +308,12 @@ onUser(async (user) => {
   if (!ok) {
     tbody.innerHTML = '<tr><td colspan="8" class="muted">Non autorizzato: non sei in /moderators/{uid}.</td></tr>';
     setStatus("Non autorizzato: non sei in /moderators/{tuoUID}.");
+    return;
+  }
+
+  const ok = await checkModerator(user.uid);
+  if (!ok) {
+    setStatus("Non autorizzato: questa pagina è solo per moderatori (serve doc in /moderators/{tuoUID}).");
     return;
   }
 
