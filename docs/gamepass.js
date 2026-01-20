@@ -17,7 +17,9 @@ import {
   serverTimestamp,
   doc,
   getDoc,
-  setDoc
+  setDoc,
+  updateDoc,
+  increment
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const statusBox = qs("#status");
@@ -57,6 +59,163 @@ function badgeForStatus(s) {
   if (s === "rejected") return "❌ rifiutata";
   return "⏳ in revisione";
 }
+
+
+/* ---------- Season + Daily bonus (una volta ogni 24h) ---------- */
+
+const DAILY_XP = 500; // <-- cambia qui il bonus giornaliero (deve combaciare con le Rules)
+
+async function getCurrentSeason() {
+  try {
+    const snap = await getDoc(doc(db, "config", "gamepass"));
+    if (!snap.exists()) return 1;
+    return Number(snap.data()?.season || 1) || 1;
+  } catch {
+    return 1;
+  }
+}
+
+function msToHMS(ms) {
+  ms = Math.max(0, ms);
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  if (h > 0) return `${h}h ${pad(m)}m`;
+  if (m > 0) return `${m}m ${pad(s)}s`;
+  return `${s}s`;
+}
+
+let dailyTicker = null;
+
+function ensureDailyCard() {
+  let box = document.querySelector("#dailyCard");
+  if (box) return box;
+
+  // Prova a inserirlo sotto la card XP principale, se esiste
+  const anchor = document.querySelector(".level-card") || document.querySelector("#status");
+  const parent = anchor?.parentElement || document.body;
+
+  box = document.createElement("div");
+  box.id = "dailyCard";
+  box.className = "level-card";
+  box.style.marginTop = "12px";
+
+  box.innerHTML = `
+    <div class="level-top">
+      <div class="lvl-left">
+        <div class="bolt" style="background: linear-gradient(135deg, rgba(251,191,36,.95), rgba(255,43,214,.65)); box-shadow: 0 18px 38px rgba(251,191,36,.14);">
+          <span>🎁</span>
+        </div>
+        <div>
+          <div class="lvl-label">Bonus giornaliero</div>
+          <div class="lvl-val" style="font-size:20px">+${DAILY_XP} XP</div>
+        </div>
+      </div>
+      <div class="nextbox">
+        <div class="lbl">Stato</div>
+        <div class="val" id="dailyState">—</div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="row" style="align-items:center; gap:10px; flex-wrap:wrap;">
+      <div class="small mono" id="dailyHint">—</div>
+      <div style="flex:1"></div>
+      <button class="btn primary" id="btnDaily">Riscatta</button>
+    </div>
+  `;
+
+  if (anchor && anchor.parentElement) {
+    anchor.parentElement.insertBefore(box, anchor.nextSibling);
+  } else {
+    parent.appendChild(box);
+  }
+
+  return box;
+}
+
+function removeDailyCard() {
+  if (dailyTicker) { clearInterval(dailyTicker); dailyTicker = null; }
+  const box = document.querySelector("#dailyCard");
+  if (box) box.remove();
+}
+
+function renderDaily(season, progressData, uid) {
+  const box = ensureDailyCard();
+  const state = box.querySelector("#dailyState");
+  const hint = box.querySelector("#dailyHint");
+  const btn = box.querySelector("#btnDaily");
+
+  if (dailyTicker) { clearInterval(dailyTicker); dailyTicker = null; }
+
+  const lastDaily = progressData?.lastDailyAt?.toDate ? progressData.lastDailyAt.toDate() : null;
+  const now = new Date();
+
+  let can = true;
+  let nextAt = null;
+
+  if (lastDaily instanceof Date && !isNaN(lastDaily.getTime())) {
+    nextAt = new Date(lastDaily.getTime() + 24*60*60*1000);
+    can = now.getTime() >= nextAt.getTime();
+  }
+
+  if (can) {
+    state.textContent = "✅ disponibile";
+    hint.textContent = "Puoi riscattare ora.";
+    btn.disabled = false;
+  } else {
+    state.textContent = "⏳ in cooldown";
+    btn.disabled = true;
+
+    const tick = () => {
+      const ms = nextAt.getTime() - Date.now();
+      hint.textContent = `Disponibile tra ${msToHMS(ms)}`;
+      if (ms <= 0) {
+        clearInterval(dailyTicker);
+        dailyTicker = null;
+        renderDaily(season, progressData, uid);
+      }
+    };
+    tick();
+    dailyTicker = setInterval(tick, 1000);
+  }
+
+  btn.onclick = async () => {
+    if (!auth.currentUser) return alert("Devi fare login.");
+    btn.disabled = true;
+
+    try {
+      const progRef = doc(db, `users/${uid}/gamepass/progress`);
+      const snap = await getDoc(progRef);
+
+      if (!snap.exists() || Number(snap.data()?.season || 0) !== season) {
+        // Prima claim della season (o reset soft): set punti = DAILY_XP
+        await setDoc(progRef, {
+          season,
+          points: DAILY_XP,
+          lastDailyAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } else {
+        await updateDoc(progRef, {
+          season,
+          points: increment(DAILY_XP),
+          lastDailyAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      }
+
+      await loadAll(uid); // ricarica UI e aggiorna cooldown
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Errore bonus giornaliero");
+    }
+  };
+}
+
 
 /* ---------- Reward helpers ---------- */
 
@@ -438,8 +597,21 @@ async function loadAll(uid) {
 
   if (statChallenges) statChallenges.textContent = String(earnedSet.size);
 
+  const season = await getCurrentSeason();
+
   const gpSnap = await getDoc(doc(db, `users/${uid}/gamepass/progress`));
-  const gpPoints = gpSnap.exists() ? (gpSnap.data().points || 0) : 0;
+  let gpPoints = 0;
+  let gpDataCurrent = null;
+
+  if (gpSnap.exists()) {
+    const data = gpSnap.data() || {};
+    const s = Number(data.season || 0);
+    // Se la season non combacia, per questa pagina i punti sono 0 (reset "soft")
+    if (s === season) {
+      gpPoints = Number(data.points || 0) || 0;
+      gpDataCurrent = data; // include lastDailyAt
+    }
+  }
 
   const tiersSnap = await getDocs(collection(db, "gp_tiers"));
   const tiers = tiersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -465,7 +637,10 @@ async function loadAll(uid) {
   renderAchievements(achievements, earnedSet);
   renderRequests(requests);
 
-  setStatus(`Ok. XP: ${gpPoints} • Approvati: ${earnedSet.size} • Richieste: ${requests.length}`);
+  setStatus(`Ok. Season ${season} • XP: ${gpPoints} • Approvati: ${earnedSet.size} • Richieste: ${requests.length}`);
+
+  // Bonus giornaliero
+  renderDaily(season, gpDataCurrent, uid);
 }
 
 onUser(async (user) => {
@@ -477,6 +652,7 @@ onUser(async (user) => {
     reqList.innerHTML = "";
     if (gpTiersList) gpTiersList.innerHTML = "";
     if (gpRoad) gpRoad.innerHTML = "";
+    removeDailyCard();
     setStatus("Fai login per vedere e richiedere achievement.");
     return;
   }
