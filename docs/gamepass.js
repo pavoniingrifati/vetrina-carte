@@ -63,7 +63,7 @@ function badgeForStatus(s) {
 
 /* ---------- Season + Daily bonus (una volta ogni 24h) ---------- */
 
-const DAILY_XP = 500; // <-- cambia qui il bonus giornaliero (deve combaciare con le Rules)
+const DAILY_XP = 100; // <-- cambia qui il bonus giornaliero (deve combaciare con le Rules)
 
 async function getCurrentSeason() {
   try {
