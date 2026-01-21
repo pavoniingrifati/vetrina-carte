@@ -566,83 +566,160 @@
       font-size: 22px;
     }
 
-    /* Achievements / Requests containers */
+    /* Achievements / Requests containers (più leggibili, “gaming card”) */
     .grid{
       display:grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 12px;
+      gap: 14px;
     }
+
+    /* Card base: più chiara, bordo più evidente, separazione migliore */
     #achGrid .card, #reqList .card{
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(8,12,28,.40);
-      box-shadow: var(--shadow2);
-      padding: 14px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(900px 520px at 18% 12%, rgba(255,255,255,.14), transparent 58%),
+        radial-gradient(800px 520px at 92% 0%, rgba(40,215,255,.12), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.18));
+      box-shadow:
+        0 28px 70px rgba(0,0,0,.55),
+        0 16px 30px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.16),
+        inset 0 -18px 26px rgba(0,0,0,.18);
+      padding: 16px;
       position:relative;
       overflow:hidden;
+      transition: transform .16s ease, border-color .16s ease, filter .16s ease;
+      isolation:isolate;
     }
-    #achGrid .card::before, #reqList .card::before{
-      content:""; position:absolute; left:0; top:0; bottom:0; width:4px;
-    }
-    #achGrid .card::before{ background: linear-gradient(180deg, rgba(40,215,255,.95), rgba(124,58,237,.70)); }
-    #reqList .card::before{ background: linear-gradient(180deg, rgba(124,58,237,.95), rgba(255,43,214,.70)); }
 
-    .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    /* Striscia laterale “categoria” */
+    #achGrid .card::before, #reqList .card::before{
+      content:"";
+      position:absolute; left:0; top:0; bottom:0; width:5px;
+      z-index:0;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.35));
+    }
+    #achGrid .card::before{
+      background: linear-gradient(180deg, rgba(40,215,255,.95), rgba(124,58,237,.80));
+    }
+    #reqList .card::before{
+      background: linear-gradient(180deg, rgba(255,43,214,.90), rgba(124,58,237,.80));
+    }
+
+    /* Highlight/hover: più “corposo” */
+    #achGrid .card:hover, #reqList .card:hover{
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.26);
+      filter: brightness(1.06);
+    }
+
+    /* Titolo più evidente */
+    #achGrid .card strong, #reqList .card strong{
+      font-size: 14px;
+      letter-spacing: .22px;
+      text-shadow: 0 10px 18px rgba(0,0,0,.35);
+    }
+
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      position:relative;
+      z-index:1;
+    }
+
+    /* Badge più leggibile */
     .badge{
-      border: 1px solid rgba(255,255,255,.16) !important;
-      background: rgba(0,0,0,.20) !important;
-      color: rgba(255,255,255,.92) !important;
+      border: 1px solid rgba(255,255,255,.22) !important;
+      background:
+        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.18), transparent 60%),
+        rgba(0,0,0,.18) !important;
+      color: rgba(255,255,255,.94) !important;
       padding: 6px 10px !important;
       border-radius: 999px !important;
       font-size: 12px !important;
       white-space: nowrap;
-      box-shadow: 0 14px 22px rgba(0,0,0,.35),
-                  inset 0 1px 0 rgba(255,255,255,.14);
+      box-shadow:
+        0 16px 26px rgba(0,0,0,.40),
+        inset 0 1px 0 rgba(255,255,255,.16);
+      backdrop-filter: blur(8px);
     }
-    .small{ color: var(--muted); font-size: 12.5px; }
-    .mono{ color: var(--faint); }
+
+    /* Testi: più chiari */
+    .small{
+      color: rgba(255,255,255,.78);
+      font-size: 13px;
+      line-height: 1.35;
+      position:relative;
+      z-index:1;
+      text-shadow: 0 10px 18px rgba(0,0,0,.25);
+    }
+    .mono{
+      color: rgba(255,255,255,.62);
+    }
+
+    /* Separatore più visibile */
     .sep{
       height: 2px;
       border-radius: 999px;
-      background: linear-gradient(90deg, rgba(40,215,255,0), rgba(40,215,255,.45), rgba(124,58,237,.45), rgba(255,43,214,0));
-      margin: 10px 0;
-      opacity: .9;
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0),
+        rgba(255,255,255,.18),
+        rgba(40,215,255,.30),
+        rgba(255,43,214,.24),
+        rgba(255,255,255,0));
+      margin: 12px 0;
+      opacity: 1;
+      position:relative;
+      z-index:1;
     }
 
+    /* Input/textarea: più chiari e leggibili */
     textarea, input[type="url"], input[type="text"]{
       width:100%;
       border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.20);
-      color: var(--txt);
+      border: 1px solid rgba(255,255,255,.22);
+      background:
+        radial-gradient(520px 220px at 22% 0%, rgba(255,255,255,.12), transparent 55%),
+        rgba(255,255,255,.06);
+      color: rgba(255,255,255,.92);
       padding: 10px 10px;
       outline:none;
-      box-shadow: 0 18px 34px rgba(0,0,0,.40),
-                  inset 0 1px 0 rgba(255,255,255,.10),
-                  inset 0 -12px 18px rgba(0,0,0,.18);
+      box-shadow:
+        0 18px 34px rgba(0,0,0,.45),
+        inset 0 1px 0 rgba(255,255,255,.14),
+        inset 0 -12px 18px rgba(0,0,0,.14);
     }
-    textarea{ min-height: 90px; resize: vertical; }
+    textarea::placeholder, input::placeholder{ color: rgba(255,255,255,.58); }
+    textarea{ min-height: 92px; resize: vertical; }
 
+    /* Bottoni dentro le card: un pelo più “pop” */
     .btn{
       border-radius: 14px !important;
-      border: 1px solid rgba(255,255,255,.16) !important;
-      background: rgba(255,255,255,.06) !important;
-      color: var(--txt) !important;
+      border: 1px solid rgba(255,255,255,.20) !important;
+      background:
+        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.14), transparent 60%),
+        rgba(255,255,255,.06) !important;
+      color: rgba(255,255,255,.94) !important;
       padding: 10px 12px !important;
-      box-shadow: 0 16px 34px rgba(0,0,0,.42),
-                  inset 0 1px 0 rgba(255,255,255,.14),
-                  inset 0 -14px 18px rgba(0,0,0,.16) !important;
+      box-shadow:
+        0 18px 34px rgba(0,0,0,.45),
+        inset 0 1px 0 rgba(255,255,255,.16),
+        inset 0 -14px 18px rgba(0,0,0,.14) !important;
     }
     .btn.primary{
-      background: linear-gradient(135deg, rgba(40,215,255,.45), rgba(124,58,237,.45)) !important;
-      border: 1px solid rgba(255,255,255,.18) !important;
-      box-shadow: 0 22px 52px rgba(40,215,255,.16),
-                  0 18px 44px rgba(124,58,237,.14),
-                  inset 0 1px 0 rgba(255,255,255,.16),
-                  inset 0 -16px 22px rgba(0,0,0,.16) !important;
+      background: linear-gradient(135deg, rgba(40,215,255,.52), rgba(124,58,237,.52)) !important;
+      border: 1px solid rgba(255,255,255,.22) !important;
+      box-shadow:
+        0 22px 52px rgba(40,215,255,.18),
+        0 18px 44px rgba(124,58,237,.16),
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -16px 22px rgba(0,0,0,.14) !important;
     }
     .btn.danger{
-      background: linear-gradient(135deg, rgba(255,43,214,.35), rgba(124,58,237,.35)) !important;
+      background: linear-gradient(135deg, rgba(255,43,214,.42), rgba(124,58,237,.40)) !important;
     }
 
     /* Responsive */
