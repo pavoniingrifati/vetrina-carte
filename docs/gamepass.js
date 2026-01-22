@@ -58,6 +58,64 @@ function badgeForStatus(s) {
   return "⏳ in revisione";
 }
 
+
+function ensureTypeCss() {
+  if (document.getElementById("gpTypeCss")) return;
+  const style = document.createElement("style");
+  style.id = "gpTypeCss";
+  style.textContent = `
+    /* ===== Game Pass Achievement type styles (FUT / WWE / F1 / LIVE) ===== */
+    #achGrid .card{ position:relative; overflow:hidden; }
+    .row-right{ display:flex; align-items:center; gap:8px; }
+
+    .typeTag{
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .45px;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.92);
+      white-space: nowrap;
+    }
+
+    /* Colori card (tinta leggera + bordo sinistro) */
+    #achGrid .card.type-fut{  border-left:5px solid rgba(34,197,94,.95);
+      background:
+        radial-gradient(900px 520px at 18% 12%, rgba(34,197,94,.18), transparent 58%),
+        radial-gradient(800px 520px at 92% 0%, rgba(16,185,129,.14), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.18));
+    }
+    #achGrid .card.type-wwe{  border-left:5px solid rgba(255,59,48,.95);
+      background:
+        radial-gradient(900px 520px at 18% 12%, rgba(255,59,48,.18), transparent 58%),
+        radial-gradient(800px 520px at 92% 0%, rgba(251,191,36,.14), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.18));
+    }
+    #achGrid .card.type-f1{   border-left:5px solid rgba(239,68,68,.95);
+      background:
+        radial-gradient(900px 520px at 18% 12%, rgba(239,68,68,.18), transparent 58%),
+        radial-gradient(800px 520px at 92% 0%, rgba(255,255,255,.08), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.18));
+    }
+    #achGrid .card.type-live{ border-left:5px solid rgba(59,130,246,.95);
+      background:
+        radial-gradient(900px 520px at 18% 12%, rgba(59,130,246,.18), transparent 58%),
+        radial-gradient(800px 520px at 92% 0%, rgba(147,51,234,.14), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.18));
+    }
+
+    /* Badge tipo */
+    .typeTag.type-fut{  background: rgba(34,197,94,.18);  border-color: rgba(34,197,94,.28); }
+    .typeTag.type-wwe{  background: rgba(255,59,48,.18);  border-color: rgba(255,59,48,.28); }
+    .typeTag.type-f1{   background: rgba(239,68,68,.18);   border-color: rgba(239,68,68,.28); }
+    .typeTag.type-live{ background: rgba(59,130,246,.18);  border-color: rgba(59,130,246,.28); }
+  `;
+  document.head.appendChild(style);
+}
+
 /* ---------- Reward helpers ---------- */
 
 function rewardType(tier){
@@ -324,6 +382,7 @@ function prereqMissing(ach, earnedSet) {
 }
 
 function renderAchievements(achievements, earnedSet) {
+  ensureTypeCss();
   achGrid.innerHTML = "";
 
   for (const ach of achievements) {
@@ -374,37 +433,17 @@ function renderAchievements(achievements, earnedSet) {
 
     const pointsText = (ach.points != null) ? `+${ach.points} XP` : "—";
 
-
     // Tipo achievement: FUT / WWE / F1 / LIVE (fallback: LIVE)
     const rawType = (ach.type || ach.category || ach.game || "").toString().trim().toUpperCase();
     const type = (["FUT","WWE","F1","LIVE"].includes(rawType)) ? rawType : "LIVE";
     const typeCls = `type-${type.toLowerCase()}`;
+    const typeTag = el("span", { class: `typeTag ${typeCls}` }, [document.createTextNode(type)]);
 
-    // Palette colori per i quadranti achievement
-    const pal = {
-      fut:  { tintA: "rgba(34,197,94,.18)",  tintB: "rgba(16,185,129,.14)",  border: "rgba(34,197,94,.32)" },
-      wwe:  { tintA: "rgba(255,59,48,.18)",  tintB: "rgba(251,191,36,.12)",  border: "rgba(255,59,48,.32)" },
-      f1:   { tintA: "rgba(239,68,68,.18)",  tintB: "rgba(255,255,255,.06)", border: "rgba(239,68,68,.30)" },
-      live: { tintA: "rgba(59,130,246,.18)", tintB: "rgba(147,51,234,.14)",  border: "rgba(59,130,246,.30)" },
-    }[type.toLowerCase()] || { tintA: "rgba(59,130,246,.18)", tintB: "rgba(147,51,234,.14)", border: "rgba(59,130,246,.30)" };
-
-    const typeTag = el("span", {
-      class: "badge",
-      style: `background:${pal.tintA} !important; border: 1px solid ${pal.border} !important;`
-    }, [document.createTextNode(type)]);
 
     const card = el("div", { class: `card ${typeCls}` }, [
-      // Applica tinta in base al tipo (più leggibile e differenziata)
-      card.style.borderColor = pal.border;
-      card.style.background = `
-        radial-gradient(900px 520px at 18% 12%, ${pal.tintA}, transparent 58%),
-        radial-gradient(800px 520px at 92% 0%, ${pal.tintB}, transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.18))
-      `;
-
       el("div", { class: "row" }, [
         el("strong", {}, [document.createTextNode(ach.title || ach.id)]),
-        el("div", { style: "display:flex;align-items:center;gap:8px;" }, [typeTag, state])
+        el("div", { class: "row-right" }, [typeTag, state])
       ]),
       el("div", { class: "small" }, [document.createTextNode(ach.desc || "")]),
       el("div", { class: "sep" }),
