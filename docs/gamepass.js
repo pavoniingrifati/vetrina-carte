@@ -675,6 +675,24 @@ async function loadAll(uid) {
     .map(d => ({ id: d.id, ...d.data() }))
     .filter(a => a.active !== false);
 
+  const ORDER = { FUT: 1, WWE: 2, F1: 3, LIVE: 4 };
+
+achievements.sort((a, b) => {
+  const ta = (a.type || "").toString().trim().toUpperCase();
+  const tb = (b.type || "").toString().trim().toUpperCase();
+
+  const ra = ORDER[ta] ?? 99;
+  const rb = ORDER[tb] ?? 99;
+
+  if (ra !== rb) return ra - rb;
+
+  // dentro lo stesso type: ordina per titolo
+  const aa = (a.title || a.id || "").toString().toLowerCase();
+  const bb = (b.title || b.id || "").toString().toLowerCase();
+  return aa.localeCompare(bb);
+});
+
+
   const earnedSnap = await getDocs(collection(db, `users/${uid}/earned`));
   const earnedSet = new Set(earnedSnap.docs.map(d => d.id));
 
