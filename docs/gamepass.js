@@ -63,7 +63,7 @@ function badgeForStatus(s) {
 
 /* ---------- Season + Daily bonus (una volta ogni 24h) ---------- */
 
-const DAILY_XP = 500; // <-- cambia qui il bonus giornaliero (deve combaciare con le Rules)
+const DAILY_XP = 100; // <-- cambia qui il bonus giornaliero (deve combaciare con le Rules)
 
 async function getCurrentSeason() {
   try {
@@ -533,21 +533,10 @@ function renderAchievements(achievements, earnedSet) {
 
     const pointsText = (ach.points != null) ? `+${ach.points} XP` : "—";
 
-    const card = el("div", { class: `card ${typeCls}`, "data-type": type }, [
-    // Applica stile in base al tipo (più leggibile su sfondo scuro)
-    // Bordo sinistro + tinta (senza richiedere CSS extra)
-    card.style.borderLeft = `5px solid ${p.a}`;
-    card.style.background = `
-      radial-gradient(900px 520px at 18% 12%, ${p.tintA}, transparent 58%),
-      radial-gradient(760px 460px at 98% 0%, ${p.tintB}, transparent 58%),
-      linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.18))
-    `;
-    // Badge tipo un filo più colorato
-    typeTag.style.background = p.tintA;
-    typeTag.style.borderColor = p.tintA.replace("0.18","0.28");
+    const card = el("div", { class: "card" }, [
       el("div", { class: "row" }, [
         el("strong", {}, [document.createTextNode(ach.title || ach.id)]),
-        el("div", { class: "row-right", style: "display:flex;align-items:center;gap:8px;" }, [typeTag, state])
+        state
       ]),
       el("div", { class: "small" }, [document.createTextNode(ach.desc || "")]),
       el("div", { class: "sep" }),
