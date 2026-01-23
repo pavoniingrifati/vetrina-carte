@@ -57,6 +57,44 @@ let ALL_CARDS_CACHE = null;
 
 function norm(s){ return (s||"").toString().trim().toLowerCase(); }
 
+// --- immagini: gestione path relativo + fallback ---
+function isAbsUrl(u){
+  const s = (u||"").toString().trim();
+  return /^https?:\/\//i.test(s) || s.startsWith("data:") || s.startsWith("blob:");
+}
+
+function candidateImgUrls(raw){
+  const s = (raw||"").toString().trim();
+  if(!s) return [];
+
+  // encodeURI risolve spazi e caratteri speciali senza rovinare gli URL già con %20
+  const enc = isAbsUrl(s) ? s : encodeURI(s);
+
+  // Proviamo più varianti perché le pagine possono stare in cartelle diverse (es. /docs/)
+  const out = [enc];
+
+  // Se in JSON è "img/..." ma la pagina è in una sottocartella, spesso serve "../img/..."
+  if (enc.startsWith("img/")) out.push("../" + enc);
+  if (enc.startsWith("./img/")) out.push("../" + enc.replace(/^\.\//, ""));
+
+  // Root-relative: utile su molti server locali (attenzione su GitHub Pages con repo in sottocartella)
+  if (!enc.startsWith("/") && !isAbsUrl(enc)) out.push("/" + enc);
+
+  // Dedup
+  return Array.from(new Set(out));
+}
+
+function setImgWithFallback(imgEl, rawSrc){
+  const cands = candidateImgUrls(rawSrc);
+  let i = 0;
+  const tryNext = () => {
+    if (i >= cands.length) return;
+    imgEl.src = cands[i++];
+  };
+  imgEl.onerror = () => tryNext();
+  tryNext();
+}
+
 async function loadAllCardsJson(){
   if (Array.isArray(ALL_CARDS_CACHE)) return ALL_CARDS_CACHE;
   try{
@@ -127,7 +165,11 @@ function renderLinkedCards(list, query){
         el("span", { class: "small" }, [document.createTextNode(c.role || "—")])
       ]),
       el("div", { class: "tier-imgwrap" }, [
-        el("img", { class: "tier-img", src: c.img, alt: c.name || c.id || "Carta", loading: "lazy" })
+        (() => {
+          const img = el("img", { class: "tier-img", alt: c.name || c.id || "Carta", loading: "lazy" });
+          setImgWithFallback(img, c.img);
+          return img;
+        })()
       ]),
       el("div", { class: "tier-title" }, [document.createTextNode(c.name || c.id || "Carta")]),
       el("div", { class: "tier-foot" }, [
