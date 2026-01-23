@@ -48,6 +48,134 @@ const statApproved = qs("#statApproved");
 
 // Lists
 const reqList = qs("#reqList");
+// ==== Carte collegate (da cards.json) ====
+const myCards = qs("#myCards");
+const myCardsSub = qs("#myCardsSub");
+const myCardsBtn = qs("#myCardsBtn");
+
+let ALL_CARDS_CACHE = null;
+
+function norm(s){ return (s||"").toString().trim().toLowerCase(); }
+
+async function loadAllCardsJson(){
+  if (Array.isArray(ALL_CARDS_CACHE)) return ALL_CARDS_CACHE;
+  try{
+    const res = await fetch("cards.json", { cache: "no-store" });
+    if(!res.ok) throw new Error("cards.json non trovato");
+    const data = await res.json();
+    ALL_CARDS_CACHE = Array.isArray(data) ? data : [];
+  }catch(e){
+    console.warn("[profile] impossibile caricare cards.json", e);
+    ALL_CARDS_CACHE = [];
+  }
+  return ALL_CARDS_CACHE;
+}
+
+function bestGameForRoot(root, cards){
+  const key = norm(root);
+  if(!key) return "";
+  const games = Array.from(new Set(cards.map(c => c && c.game).filter(Boolean)));
+  let best = "";
+  let bestScore = 0;
+
+  for (const g of games){
+    const gl = norm(g);
+    let score = 0;
+
+    if (gl === key) score = 100;
+    else if (gl.startsWith(key)) score = 90;      // "Fantaballa" -> "Fantaballa FC"
+    else if (gl.includes(key)) score = 70;
+
+    if (score > bestScore){
+      bestScore = score;
+      best = g;
+    }
+  }
+  return best;
+}
+
+function chipClassForRarity(r){
+  const s = norm(r);
+  if (s.includes("legg")) return "legendary";
+  if (s.includes("epic") || s.includes("ultra")) return "epic";
+  if (s.includes("rara") || s.includes("non comune")) return "rare";
+  return "common";
+}
+
+function renderLinkedCards(list, gameLabel){
+  if(!myCards) return;
+
+  myCards.innerHTML = "";
+
+  if (!list.length){
+    myCards.append(
+      el("div", { class: "small", style: "padding:12px; color: rgba(255,255,255,.72);" }, [
+        document.createTextNode("Nessuna carta trovata per questo nome. (Controlla che in cards.json il campo 'game' contenga la tua radice, es: 'Fantaballa FC'.)")
+      ])
+    );
+    return;
+  }
+
+  for (const c of list){
+    const href = gameLabel
+      ? `./index.html?game=${encodeURIComponent(gameLabel)}&card=${encodeURIComponent(c.id)}`
+      : `./index.html?card=${encodeURIComponent(c.id)}`;
+
+    const cardNode = el("a", { class: "tier-card", href }, [
+      el("div", { class: "tier-top" }, [
+        el("span", { class: "chip " + chipClassForRarity(c.rarity) }, [document.createTextNode(c.rarity || "Carta")]),
+        el("span", { class: "small" }, [document.createTextNode(c.role || "—")])
+      ]),
+      el("div", { class: "tier-imgwrap" }, [
+        el("img", { class: "tier-img", src: c.img, alt: c.name || c.id || "Carta", loading: "lazy" })
+      ]),
+      el("div", { class: "tier-title" }, [document.createTextNode(c.name || c.id || "Carta")]),
+      el("div", { class: "tier-foot" }, [
+        el("span", { class: "mono" }, [document.createTextNode(c.game || "—")]),
+        el("span", { class: "small" }, [document.createTextNode(`${c.series || "—"} • ${c.role || "—"}`)])
+      ])
+    ]);
+
+    myCards.append(cardNode);
+  }
+}
+
+async function updateLinkedCards(){
+  if(!myCards) return;
+
+  const root = (inpName?.value || "").trim();
+  if(!root){
+    myCardsSub && (myCardsSub.textContent = "Inserisci un nome per collegare le carte.");
+    myCards.innerHTML = "";
+    return;
+  }
+
+  const all = await loadAllCardsJson();
+
+  const bestGame = bestGameForRoot(root, all);
+
+  let list = [];
+  if (bestGame){
+    list = all.filter(c => c && c.game === bestGame);
+  } else {
+    const k = norm(root);
+    list = all.filter(c => c && norm(c.game).includes(k));
+  }
+
+  list.sort((a,b)=> (a?.name||"").localeCompare(b?.name||"", "it"));
+
+  if (myCardsSub){
+    myCardsSub.textContent = bestGame
+      ? `Trovate ${list.length} carte per: ${bestGame}`
+      : `Trovate ${list.length} carte che contengono: "${root}"`;
+  }
+  if (myCardsBtn){
+    myCardsBtn.href = bestGame ? `./index.html?game=${encodeURIComponent(bestGame)}` : "./index.html";
+  }
+
+  renderLinkedCards(list, bestGame);
+}
+
 
 btnLogin.onclick = () => login().catch(err => alert(err.message));
 btnLogout.onclick = () => logout().catch(err => alert(err.message));
@@ -249,6 +377,11 @@ on_attach_listeners();
 function on_attach_listeners() {
   inpName.addEventListener("input", () => {
     namePreview.textContent = inpName.value.trim() || "Senza nome";
+    // aggiorna anche la sezione "Le tue carte" (debounce)
+    try{
+      clearTimeout(window.__cardsTimer);
+      window.__cardsTimer = setTimeout(() => { updateLinkedCards(); }, 250);
+    }catch(e){}
   });
 }
 
@@ -271,6 +404,8 @@ onUser(async (user) => {
     statReq.textContent = "0";
     statPending.textContent = "0";
     statApproved.textContent = "0";
+    if (myCardsSub) myCardsSub.textContent = "Fai login per vedere le tue carte."; 
+    if (myCards) myCards.innerHTML = "";
     avatar.removeAttribute("src");
     namePreview.textContent = "—";
     emailPreview.textContent = "—";
@@ -289,8 +424,9 @@ onUser(async (user) => {
 
   // Carica tutto
   await loadProfile(user.uid, user);
+  await updateLinkedCards();
 
-  btnSave.onclick = () => saveProfile(user.uid);
+  btnSave.onclick = async () => { await saveProfile(user.uid); await updateLinkedCards(); };
 
   try {
     await loadGamepass(user.uid);
