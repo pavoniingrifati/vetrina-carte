@@ -102,7 +102,7 @@ function chipClassForRarity(r){
   return "common";
 }
 
-function renderLinkedCards(list, gameLabel){
+function renderLinkedCards(list, query){
   if(!myCards) return;
 
   myCards.innerHTML = "";
@@ -110,15 +110,15 @@ function renderLinkedCards(list, gameLabel){
   if (!list.length){
     myCards.append(
       el("div", { class: "small", style: "padding:12px; color: rgba(255,255,255,.72);" }, [
-        document.createTextNode("Nessuna carta trovata per questo nome. (Controlla che in cards.json il campo 'game' contenga la tua radice, es: 'Fantaballa FC'.)")
+        document.createTextNode("Nessuna carta trovata per questo testo. (Controlla che in cards.json il campo 'name' delle carte inizi con la radice che hai inserito, es: 'Fork'.)")
       ])
     );
     return;
   }
 
   for (const c of list){
-    const href = gameLabel
-      ? `./index.html?game=${encodeURIComponent(gameLabel)}&card=${encodeURIComponent(c.id)}`
+    const href = query
+      ? `./index.html?q=${encodeURIComponent(query)}&card=${encodeURIComponent(c.id)}`
       : `./index.html?card=${encodeURIComponent(c.id)}`;
 
     const cardNode = el("a", { class: "tier-card", href }, [
@@ -145,36 +145,34 @@ async function updateLinkedCards(){
 
   const root = (inpName?.value || "").trim();
   if(!root){
-    myCardsSub && (myCardsSub.textContent = "Inserisci un nome per collegare le carte.");
+    myCardsSub && (myCardsSub.textContent = "Inserisci una radice nel campo Nome per collegare le carte (in base al campo 'name' di cards.json).");
     myCards.innerHTML = "";
     return;
   }
 
   const all = await loadAllCardsJson();
+  const k = norm(root);
 
-  const bestGame = bestGameForRoot(root, all);
+  // 1) Preferisci i match "radice" (startsWith), es: "Fork" -> "Fork X", "Fork-1"
+  let prefix = all.filter(c => c && norm(c.name).startsWith(k));
 
-  let list = [];
-  if (bestGame){
-    list = all.filter(c => c && c.game === bestGame);
-  } else {
-    const k = norm(root);
-    list = all.filter(c => c && norm(c.game).includes(k));
-  }
+  // 2) Se non ci sono match, fai fallback su "contiene"
+  let list = prefix.length ? prefix : all.filter(c => c && norm(c.name).includes(k));
 
   list.sort((a,b)=> (a?.name||"").localeCompare(b?.name||"", "it"));
 
   if (myCardsSub){
-    myCardsSub.textContent = bestGame
-      ? `Trovate ${list.length} carte per: ${bestGame}`
-      : `Trovate ${list.length} carte che contengono: "${root}"`;
+    myCardsSub.textContent = prefix.length
+      ? `Trovate ${list.length} carte con nome che inizia con: "${root}"`
+      : `Trovate ${list.length} carte con nome che contiene: "${root}"`;
   }
   if (myCardsBtn){
-    myCardsBtn.href = bestGame ? `./index.html?game=${encodeURIComponent(bestGame)}` : "./index.html";
+    myCardsBtn.href = `./index.html?q=${encodeURIComponent(root)}`;
   }
 
-  renderLinkedCards(list, bestGame);
+  renderLinkedCards(list, root);
 }
+
 
 
 btnLogin.onclick = () => login().catch(err => alert(err.message));
