@@ -57,40 +57,96 @@ let ALL_CARDS_CACHE = null;
 
 function norm(s){ return (s||"").toString().trim().toLowerCase(); }
 
-// --- immagini: gestione path relativo + fallback ---
-function isAbsUrl(u){
-  const s = (u||"").toString().trim();
-  return /^https?:\/\//i.test(s) || s.startsWith("data:") || s.startsWith("blob:");
+
+// --- Fix percorsi immagini locali (GitHub Pages + doppia-encoding) ---
+// Problemi tipici:
+// 1) "%2520" = spazio codificato due volte (dovrebbe essere "%20")
+// 2) path relativo risolto nella cartella sbagliata (se la pagina non è in root)
+
+function projectRootUrl(){
+  // Su GitHub Pages "project site" l'app gira sotto "/<repo>/"
+  try{
+    const origin = location.origin;
+    const seg = (location.pathname.split("/").filter(Boolean)[0] || "").trim();
+    if (location.hostname.endsWith("github.io") && seg){
+      return `${origin}/${seg}/`; // es: https://user.github.io/vetrina-carte/
+    }
+    return `${origin}/`;
+  }catch(e){
+    return "/";
+  }
 }
 
-function candidateImgUrls(raw){
-  const s = (raw||"").toString().trim();
-  if(!s) return [];
+function decodeMany(s){
+  let out = (s ?? "").toString().trim();
+  // Decodifica più volte (max 3) per gestire casi come %2520 -> %20 -> " "
+  for (let i = 0; i < 3; i++){
+    try{
+      const dec = decodeURIComponent(out);
+      if (dec === out) break;
+      out = dec;
+    }catch(e){
+      break;
+    }
+  }
+  return out;
+}
 
-  // encodeURI risolve spazi e caratteri speciali senza rovinare gli URL già con %20
-  const enc = isAbsUrl(s) ? s : encodeURI(s);
+function buildImgCandidates(rawSrc){
+  const src0 = (rawSrc ?? "").toString().trim();
+  if (!src0) return [];
 
-  // Proviamo più varianti perché le pagine possono stare in cartelle diverse (es. /docs/)
-  const out = [enc];
+  // URL esterne: ok così
+  if (/^(https?:|data:|blob:)/i.test(src0)) return [src0];
 
-  // Se in JSON è "img/..." ma la pagina è in una sottocartella, spesso serve "../img/..."
-  if (enc.startsWith("img/")) out.push("../" + enc);
-  if (enc.startsWith("./img/")) out.push("../" + enc.replace(/^\.\//, ""));
+  // Normalizza: elimina doppia codifica e prefissi tipo "./"
+  let clean = decodeMany(src0).replace(/^\.\/+/, "").replace(/^\/+/, "");
+  // Se qualcuno ha messo "vetrina-carte/img/..." nel JSON, togli il prefisso repo per evitare duplicati
+  const repoSeg = (location.pathname.split("/").filter(Boolean)[0] || "").trim();
+  if (repoSeg && clean.startsWith(repoSeg + "/")) clean = clean.slice(repoSeg.length + 1);
 
-  // Root-relative: utile su molti server locali (attenzione su GitHub Pages con repo in sottocartella)
-  if (!enc.startsWith("/") && !isAbsUrl(enc)) out.push("/" + enc);
+  // Se nel JSON manca la cartella (es: "Fork Altezza.png"), prova anche dentro "img/"
+  const cleanImg = (!clean.includes("/") && !clean.startsWith("img/")) ? ("img/" + clean) : null;
+
+  const rootBase = projectRootUrl();               // .../vetrina-carte/
+  const pageBase = new URL("./", document.baseURI).href; // cartella corrente della pagina
+
+  // NB: usando new URL() lasciamo che il browser codifichi gli spazi una sola volta (%20)
+  const candidates = [
+    new URL(clean, rootBase).href,  // ✅ quello “giusto” per la tua struttura: /vetrina-carte/img/...
+    new URL(clean, pageBase).href   // fallback: relativo alla cartella della pagina
+  ];
+
+  if (cleanImg){
+    candidates.push(new URL(cleanImg, rootBase).href);
+    candidates.push(new URL(cleanImg, pageBase).href);
+  }
+
+  // Se la pagina è in sottocartella e il JSON è "img/...", prova anche "../img/..."
+  if (clean.startsWith("img/")){
+    candidates.push(new URL("../" + clean, pageBase).href);
+  }
+
+  // Se pubblichi da root ma tieni assets in /docs/
+  candidates.push(new URL("docs/" + clean, rootBase).href);
 
   // Dedup
-  return Array.from(new Set(out));
+  return Array.from(new Set(candidates));
 }
 
-function setImgWithFallback(imgEl, rawSrc){
-  const cands = candidateImgUrls(rawSrc);
+function setImgSrcWithFallback(imgEl, rawSrc){
+  const candidates = buildImgCandidates(rawSrc);
+  if (!candidates.length) return;
+
   let i = 0;
   const tryNext = () => {
-    if (i >= cands.length) return;
-    imgEl.src = cands[i++];
+    if (i >= candidates.length) {
+      imgEl.onerror = null;
+      return;
+    }
+    imgEl.src = candidates[i++];
   };
+
   imgEl.onerror = () => tryNext();
   tryNext();
 }
@@ -164,13 +220,12 @@ function renderLinkedCards(list, query){
         el("span", { class: "chip " + chipClassForRarity(c.rarity) }, [document.createTextNode(c.rarity || "Carta")]),
         el("span", { class: "small" }, [document.createTextNode(c.role || "—")])
       ]),
-      el("div", { class: "tier-imgwrap" }, [
-        (() => {
-          const img = el("img", { class: "tier-img", alt: c.name || c.id || "Carta", loading: "lazy" });
-          setImgWithFallback(img, c.img);
-          return img;
-        })()
-      ]),
+      (() => {
+  const imgEl = el("img", { class: "tier-img", alt: c.name || c.id || "Carta", loading: "lazy" });
+  setImgSrcWithFallback(imgEl, c.img);
+  return el("div", { class: "tier-imgwrap" }, [ imgEl ]);
+})(),
+
       el("div", { class: "tier-title" }, [document.createTextNode(c.name || c.id || "Carta")]),
       el("div", { class: "tier-foot" }, [
         el("span", { class: "mono" }, [document.createTextNode(c.game || "—")]),
