@@ -29,6 +29,12 @@ const btnLogin = qs("#btnLogin");
 const btnLogout = qs("#btnLogout");
 const userInfo = qs("#userInfo");
 
+
+const achSearch = qs("#achSearch");
+const achTypeSel = qs("#achType");
+const achStateSel = qs("#achState");
+const achClear = qs("#achClear");
+const achCount = qs("#achCount");
 const gpPointsValue = qs("#gpPointsValue");
 const gpNextTitle = qs("#gpNextTitle");
 const gpNextReq = qs("#gpNextReq");
@@ -59,6 +65,123 @@ function badgeForStatus(s) {
   if (s === "rejected") return "❌ rifiutata";
   return "⏳ in revisione";
 }
+
+
+/* ---------- Achievement filters ---------- */
+
+let _achAll = [];
+let _earnedSet = new Set();
+let _reqByAch = new Map();
+let _filtersReady = false;
+
+const ORDER_TYPE = { FUT: 1, WWE: 2, F1: 3, LIVE: 4 };
+
+function buildReqByAch(requests) {
+  // requests è già ordinato DESC per createdAt
+  const m = new Map();
+  for (const r of (requests || [])) {
+    const id = (r && r.achievementId) ? String(r.achievementId) : "";
+    if (!id) continue;
+    if (!m.has(id)) m.set(id, String(r.status || "pending"));
+  }
+  return m;
+}
+
+function norm(s) { return (s ?? "").toString().toLowerCase(); }
+
+function debounce(fn, ms = 140) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+}
+
+function setupAchFilters() {
+  if (_filtersReady) return;
+  if (!achSearch || !achTypeSel || !achStateSel || !achClear) { _filtersReady = true; return; }
+
+  const rerender = debounce(() => applyAchievementFilters(), 140);
+
+  achSearch.addEventListener("input", rerender);
+  achTypeSel.addEventListener("change", () => applyAchievementFilters());
+  achStateSel.addEventListener("change", () => applyAchievementFilters());
+  achClear.addEventListener("click", () => {
+    achSearch.value = "";
+    achTypeSel.value = "all";
+    achStateSel.value = "all";
+    applyAchievementFilters();
+  });
+
+  _filtersReady = true;
+}
+
+function applyAchievementFilters() {
+  if (!achGrid) return;
+
+  const q = norm(achSearch?.value || "").trim();
+  const typeSel = (achTypeSel?.value || "all").toString().trim().toUpperCase(); // ALL / FUT / WWE / F1 / LIVE
+  const stateSel = (achStateSel?.value || "all").toString().trim().toLowerCase(); // all/available/locked/pending/approved/rejected
+
+  const base = (_achAll || []).filter(a => a && a.active !== false);
+
+  let out = base.filter(ach => {
+    const title = norm(ach.title || ach.id);
+    const desc = norm(ach.desc || "");
+    const id = norm(ach.id || "");
+
+    const rawType = (ach.type || ach.category || ach.game || "").toString().trim().toUpperCase();
+    const type = (["FUT","WWE","F1","LIVE"].includes(rawType)) ? rawType : "LIVE";
+
+    const missing = prereqMissing(ach, _earnedSet);
+    const locked = missing.length > 0;
+    const approved = _earnedSet.has(ach.id);
+    const reqStatus = _reqByAch.get(ach.id) || null;
+
+    // Search
+    if (q && !(title.includes(q) || desc.includes(q) || id.includes(q))) return false;
+
+    // Type
+    if (typeSel !== "ALL" && type !== typeSel) return false;
+
+    // State
+    if (stateSel !== "all") {
+      if (stateSel === "available") {
+        // Richiedibile = non locked, non già approvato, e non c'è pending
+        if (locked || approved || reqStatus === "pending") return false;
+      } else if (stateSel === "locked") {
+        if (!locked) return false;
+      } else if (stateSel === "approved") {
+        if (!approved) return false;
+      } else if (stateSel === "pending") {
+        if (reqStatus !== "pending") return false;
+      } else if (stateSel === "rejected") {
+        if (reqStatus !== "rejected") return false;
+      }
+    }
+
+    return true;
+  });
+
+  // Ordina: per type (FUT/WWE/F1/LIVE) e poi per titolo
+  out.sort((a, b) => {
+    const ta = (a.type || a.category || a.game || "").toString().trim().toUpperCase();
+    const tb = (b.type || b.category || b.game || "").toString().trim().toUpperCase();
+
+    const ra = ORDER_TYPE[ta] ?? 99;
+    const rb = ORDER_TYPE[tb] ?? 99;
+    if (ra !== rb) return ra - rb;
+
+    const aa = (a.title || a.id || "").toString().toLowerCase();
+    const bb = (b.title || b.id || "").toString().toLowerCase();
+    return aa.localeCompare(bb);
+  });
+
+  if (achCount) achCount.textContent = `${out.length} / ${base.length}`;
+
+  renderAchievements(out, _earnedSet, _reqByAch);
+}
+
 
 /* ---------- Achievement type colors (FUT / WWE / F1 / LIVE) ---------- */
 
@@ -558,14 +681,21 @@ function prereqMissing(ach, earnedSet) {
   return prereq.filter(id => !earnedSet.has(id));
 }
 
-function renderAchievements(achievements, earnedSet) {
+function renderAchievements(achievements, earnedSet, reqByAch = new Map()) {
   ensureAchTypeStyles();
   achGrid.innerHTML = "";
+
+  if (!achievements || !achievements.length) {
+    achGrid.append(el("div", { class: "card small" }, [document.createTextNode("Nessun achievement trovato con questi filtri.")]));
+    return;
+  }
 
   for (const ach of achievements) {
     const missing = prereqMissing(ach, earnedSet);
     const locked = missing.length > 0;
     const already = earnedSet.has(ach.id);
+    const reqStatus = reqByAch.get(ach.id) || null;
+    const pending = (!already && reqStatus === "pending");
 
     const evidenceText = el("textarea", { placeholder: "Prova (testo) — es: minuto della clip, contesto…" });
     const evidenceUrl = el("input", { placeholder: "Link prova (opzionale)", type: "url" });
@@ -574,6 +704,7 @@ function renderAchievements(achievements, earnedSet) {
       class: "btn primary",
       onclick: async () => {
         if (!auth.currentUser) return alert("Devi fare login.");
+        if (pending) return alert("Hai già una richiesta in revisione per questo achievement.");
         btn.disabled = true;
         try {
           await addDoc(collection(db, "requests"), {
@@ -604,9 +735,13 @@ function renderAchievements(achievements, earnedSet) {
 
     const state = already
       ? el("span", { class: "badge" }, [document.createTextNode("✅ già approvato")])
-      : locked
-        ? el("span", { class: "badge" }, [document.createTextNode("🔒 bloccato (mancano prereq)")])
-        : el("span", { class: "badge" }, [document.createTextNode("🟦 richiedibile")]);
+      : pending
+        ? el("span", { class: "badge" }, [document.createTextNode("⏳ in revisione")])
+      : (!already && reqStatus === "rejected")
+        ? el("span", { class: "badge" }, [document.createTextNode("❌ rifiutata")])
+        : locked
+          ? el("span", { class: "badge" }, [document.createTextNode("🔒 bloccato (mancano prereq)")])
+          : el("span", { class: "badge" }, [document.createTextNode("🟦 richiedibile")]);
 
     const pointsText = (ach.points != null) ? `+${ach.points} XP` : "—";
 
@@ -628,8 +763,10 @@ function renderAchievements(achievements, earnedSet) {
       el("div", { class: "sep" }),
       already
         ? el("div", { class: "small" }, [document.createTextNode("Questo achievement è già stato approvato.")])
-        : el("div", {}, [
-            el("div", { class: "small" }, [document.createTextNode("Inserisci una prova (facoltativa ma consigliata):")]),
+        : pending
+          ? el("div", { class: "small" }, [document.createTextNode("Hai già inviato una richiesta per questo achievement. Attendi la revisione.")])
+          : el("div", {}, [
+el("div", { class: "small" }, [document.createTextNode("Inserisci una prova (facoltativa ma consigliata):")]),
             evidenceText,
             el("div", { style: "height:8px" }),
             evidenceUrl,
@@ -675,24 +812,6 @@ async function loadAll(uid) {
     .map(d => ({ id: d.id, ...d.data() }))
     .filter(a => a.active !== false);
 
-  const ORDER = { FUT: 1, WWE: 2, F1: 3, LIVE: 4 };
-
-achievements.sort((a, b) => {
-  const ta = (a.type || "").toString().trim().toUpperCase();
-  const tb = (b.type || "").toString().trim().toUpperCase();
-
-  const ra = ORDER[ta] ?? 99;
-  const rb = ORDER[tb] ?? 99;
-
-  if (ra !== rb) return ra - rb;
-
-  // dentro lo stesso type: ordina per titolo
-  const aa = (a.title || a.id || "").toString().toLowerCase();
-  const bb = (b.title || b.id || "").toString().toLowerCase();
-  return aa.localeCompare(bb);
-});
-
-
   const earnedSnap = await getDocs(collection(db, `users/${uid}/earned`));
   const earnedSet = new Set(earnedSnap.docs.map(d => d.id));
 
@@ -735,7 +854,12 @@ achievements.sort((a, b) => {
   const reqSnap = await getDocs(reqQ);
   const requests = reqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-  renderAchievements(achievements, earnedSet);
+  _achAll = achievements;
+  _earnedSet = earnedSet;
+  _reqByAch = buildReqByAch(requests);
+  setupAchFilters();
+  applyAchievementFilters();
+
   renderRequests(requests);
 
   setStatus(`Ok. Season ${season} • XP: ${gpPoints} • Approvati: ${earnedSet.size} • Richieste: ${requests.length}`);
@@ -751,6 +875,10 @@ onUser(async (user) => {
     btnLogout.style.display = "none";
     achGrid.innerHTML = "";
     reqList.innerHTML = "";
+    _achAll = [];
+    _earnedSet = new Set();
+    _reqByAch = new Map();
+    if (achCount) achCount.textContent = "—";
     if (gpTiersList) gpTiersList.innerHTML = "";
     if (gpRoad) gpRoad.innerHTML = "";
     removeDailyCard();
