@@ -577,6 +577,7 @@ function renderRoad(points, tiers) {
       title: `${num} • soglia: ${req} XP`
     }, [
       el("div", { class: "tag" }, [document.createTextNode(num)]),
+      el("div", { class: "req" }, [document.createTextNode(`${req} XP`)]),
       el("div", { class: "stem" }, []),
       el("div", { class: "pin" }, []),
     ]);
