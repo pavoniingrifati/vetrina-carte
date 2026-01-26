@@ -32,6 +32,9 @@
 
       --maxw: 1220px;
 
+
+      --ease: 180ms cubic-bezier(.2,.8,.2,1);
+      --ring: 0 0 0 3px rgba(40,215,255,.28);
       /* Cards */
       --cardW: 220px;
       --cardH: 290px;
@@ -829,15 +832,27 @@
 
 .hero-banner{
   position: absolute;
+  z-index: 0;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;     /* “banner” stile cover */
   border-radius: inherit;
+  filter: saturate(1.05) contrast(1.03);
 }
 
 
-    /* ===== Filters (Achievements) ===== */
+    
+
+.hero-right::after{
+  content:\"\";
+  position:absolute;
+  inset:0;
+  background: linear-gradient(90deg, rgba(6,8,18,.78), rgba(6,8,18,.10) 55%, rgba(6,8,18,.78));
+  pointer-events:none;
+  z-index: 1;
+}
+/* ===== Filters (Achievements) ===== */
     .filters{
       display:flex;
       gap:10px;
@@ -899,6 +914,47 @@
       .filters .selectWrap{ width: 100%; flex: 1 1 100%; }
       .filters .count{ margin-left: 0; width: 100%; }
     }
+
+/* --- Pro interactions & accessibility (non invasivo) --- */
+.btnx, .btn, button, a, input, select, textarea{
+  transition: transform var(--ease), box-shadow var(--ease), border-color var(--ease), background var(--ease), filter var(--ease);
+}
+
+.btnx:hover, .btn:hover, button:hover{
+  transform: translateY(-1px);
+}
+
+.btnx:active, .btn:active, button:active{
+  transform: translateY(0);
+}
+
+.btnx:focus-visible, .btn:focus-visible, button:focus-visible,
+input:focus-visible, select:focus-visible, textarea:focus-visible{
+  outline: none;
+  box-shadow: var(--ring), 0 16px 34px rgba(0,0,0,.40);
+}
+
+/* Scrollbar più pulite (Road + Cards) */
+.cards-scroll, #gpRoadScroll{
+  scrollbar-color: rgba(255,255,255,.18) rgba(0,0,0,.18);
+  scrollbar-width: thin;
+}
+.cards-scroll::-webkit-scrollbar, #gpRoadScroll::-webkit-scrollbar{ height: 10px; }
+.cards-scroll::-webkit-scrollbar-thumb, #gpRoadScroll::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.14);
+  border-radius: 999px;
+  border: 2px solid rgba(0,0,0,.18);
+}
+.cards-scroll::-webkit-scrollbar-track, #gpRoadScroll::-webkit-scrollbar-track{
+  background: rgba(0,0,0,.18);
+  border-radius: 999px;
+}
+
+/* Rispetta chi preferisce meno animazioni */
+@media (prefers-reduced-motion: reduce){
+  *{ animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
 </style>
 </head>
 
