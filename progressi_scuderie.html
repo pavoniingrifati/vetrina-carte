@@ -85,9 +85,12 @@
 </div>
 
 <script>
-const EXP_URL = 'scuderie.json';      // unica fonte (nomi + EXP accumulata da Lv80)
-const BASE_START_LEVEL = 80;          // livello di partenza per tutti
-const MAX_LEVEL = 100;                // curva definita fino a 100
+const EXP_URL = 'scuderie.json';      // unica fonte (nomi + EXP accumulata dalla base: Lv70 mostrato / Lv80 interno)
+const BASE_START_LEVEL = 80;          // base interna per i calcoli (curva EXP invariata)
+const DISPLAY_START_LEVEL = 70;       // livello mostrato come partenza
+const LEVEL_OFFSET = DISPLAY_START_LEVEL - BASE_START_LEVEL; // -10
+const MAX_LEVEL = 100;                // curva definita fino a 100 (interno)
+const DISPLAY_MAX_LEVEL = MAX_LEVEL + LEVEL_OFFSET; // max mostrato
 
 // Tabella: EXP necessaria per passare da (n-1) a n — identica al file piloti
 const STEP_TABLE = {
@@ -130,14 +133,14 @@ const input = document.getElementById('filter');
 
 let ALL_TEAMS = [];
 
-// EXP cumulativa (differenziale dalla baseline di Lv80) per arrivare a livello n
+// EXP cumulativa (differenziale dalla baseline interna di Lv80) per arrivare a livello n
 function expCumFrom80To(n){
   if(n <= BASE_START_LEVEL) return 0;
   if(n > MAX_LEVEL) return CUM[MAX_LEVEL]; // clamp
   return CUM[n];
 }
 
-// Data l'EXP accumulata dopo Lv80 (accum), trova il livello
+// Data l'EXP accumulata dopo la base interna (Lv80) (accum), trova il livello
 function levelFromAccum(accum){
   // Ricerca binaria su 80..MAX_LEVEL usando CUM
   let lo = BASE_START_LEVEL, hi = MAX_LEVEL;
@@ -182,11 +185,13 @@ async function load(){
       const accum = Math.max(0, Number(e.Exp ?? e.exp ?? e.EXP ?? 0) || 0); // accumulo dopo lv80
       const lvl = levelFromAccum(accum);
       const nextLvl = Math.min(MAX_LEVEL, lvl + 1);
+      const displayLvl = lvl + LEVEL_OFFSET;
+      const displayNextLvl = nextLvl + LEVEL_OFFSET;
       const curBase = expCumFrom80To(lvl);          // totale richiesto da 80 fino al lvl corrente
       const stepToNext = nextLvl > lvl ? (STEP_TABLE[nextLvl] || 0) : 0;
       const inLevel = accum - curBase;
       const progress = stepToNext ? Math.max(0, Math.min(100, Math.floor((inLevel / stepToNext) * 100))) : 100;
-      return { nome, accum, lvl, nextLvl, curBase, stepToNext, inLevel, progress };
+      return { nome, accum, lvl, nextLvl, displayLvl, displayNextLvl, curBase, stepToNext, inLevel, progress };
     })
     .filter(t => t.nome);
 
@@ -220,21 +225,21 @@ function render(list){
 
     const tags = [];
     if(t.curBase > 0){
-      tags.push(`<span class="tag">Cumulata da Lv80: ${t.curBase.toLocaleString('it-IT')} XP</span>`);
+      tags.push(`<span class="tag">Cumulata da Lv${DISPLAY_START_LEVEL}: ${t.curBase.toLocaleString('it-IT')} XP</span>`);
     }
     if(t.stepToNext > 0){
       const remaining = Math.max(0, t.stepToNext - Math.max(0,t.inLevel));
-      tags.push(`<span class="tag">Per salire a Lv ${t.nextLvl}: ${remaining.toLocaleString('it-IT')} XP</span>`);
+      tags.push(`<span class="tag">Per salire a Lv ${t.displayNextLvl}: ${remaining.toLocaleString('it-IT')} XP</span>`);
       tags.push(`<span class="tag">Step corrente: ${t.stepToNext.toLocaleString('it-IT')} XP</span>`);
     }else{
-      tags.push(`<span class="tag">Hai raggiunto il livello massimo (${MAX_LEVEL})</span>`);
+      tags.push(`<span class="tag">Hai raggiunto il livello massimo (${DISPLAY_MAX_LEVEL})</span>`);
     }
 
     card.innerHTML = `
       <div class="card-header">
         <div>
           <div class="title" style="color:${color}">${escapeHtml(t.nome)}</div>
-          <div class="subtitle">Livello <b>${t.lvl}</b> · Avanzamento livello: <b>${t.progress}%</b>
+          <div class="subtitle">Livello <b>${t.displayLvl}</b> · Avanzamento livello: <b>${t.progress}%</b>
             <span class="badge">solo scuderie.json</span>
           </div>
           <div class="tags">
