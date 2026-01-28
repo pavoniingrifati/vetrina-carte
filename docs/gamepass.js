@@ -701,6 +701,15 @@ function renderAchievements(achievements, earnedSet, reqByAch = new Map()) {
     const evidenceText = el("textarea", { placeholder: "Prova (testo) — es: minuto della clip, contesto…" });
     const evidenceUrl = el("input", { placeholder: "Link prova (opzionale)", type: "url" });
 
+    // Achievement "link request": clicchi un link e invii la richiesta ai moderatori (senza punti automatici)
+    const linkUrl = (ach.linkUrl || ach.url || ach.link || "").toString().trim();
+    const isLinkRequest = (ach.linkRequest === true) && !!linkUrl;
+    if (isLinkRequest) {
+      // precompila il link (l'utente può comunque aggiungere una nota)
+      evidenceUrl.value = linkUrl;
+      evidenceUrl.disabled = true;
+    }
+
     const btn = el("button", {
       class: "btn primary",
       onclick: async () => {
@@ -708,6 +717,10 @@ function renderAchievements(achievements, earnedSet, reqByAch = new Map()) {
         if (pending) return alert("Hai già una richiesta in revisione per questo achievement.");
         btn.disabled = true;
         try {
+          if (isLinkRequest) {
+            // Apri il link in una nuova scheda (azione utente -> meno blocchi popup)
+            try { window.open(linkUrl, "_blank", "noopener"); } catch {}
+          }
           await addDoc(collection(db, "requests"), {
             uid: auth.currentUser.uid,
             requesterEmail: auth.currentUser.email || "",
@@ -716,7 +729,7 @@ function renderAchievements(achievements, earnedSet, reqByAch = new Map()) {
             achievementTitle: ach.title || ach.id,
             status: "pending",
             evidenceText: evidenceText.value.trim(),
-            evidenceUrl: evidenceUrl.value.trim(),
+            evidenceUrl: (isLinkRequest ? linkUrl : evidenceUrl.value.trim()),
             createdAt: serverTimestamp(),
             reviewedAt: null,
             reviewedBy: null,
@@ -732,7 +745,7 @@ function renderAchievements(achievements, earnedSet, reqByAch = new Map()) {
           btn.disabled = false;
         }
       }
-    }, [document.createTextNode("Richiedi")]);
+    }, [document.createTextNode(isLinkRequest ? "Apri link e Richiedi" : "Richiedi")]);
 
     const state = already
       ? el("span", { class: "badge" }, [document.createTextNode("✅ già approvato")])
@@ -767,9 +780,16 @@ function renderAchievements(achievements, earnedSet, reqByAch = new Map()) {
         : pending
           ? el("div", { class: "small" }, [document.createTextNode("Hai già inviato una richiesta per questo achievement. Attendi la revisione.")])
           : el("div", {}, [
-el("div", { class: "small" }, [document.createTextNode("Inserisci una prova (facoltativa ma consigliata):")]),
+            isLinkRequest
+              ? el("div", { class: "small" }, [document.createTextNode("Apri il link e invia la richiesta ai moderatori (il link viene allegato automaticamente).")])
+              : el("div", { class: "small" }, [document.createTextNode("Inserisci una prova (facoltativa ma consigliata):")]),
+            // Nota opzionale (per linkRequest è consigliata)
+            el("div", { class: "small", style: "margin-top:8px" }, [
+              document.createTextNode(isLinkRequest ? "Nota (opzionale):" : "")
+            ]),
             evidenceText,
             el("div", { style: "height:8px" }),
+            // Link prova (per linkRequest è precompilato e bloccato)
             evidenceUrl,
             el("div", { style: "height:10px" }),
             locked
