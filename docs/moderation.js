@@ -1,6 +1,5 @@
 // docs/moderation.js
-// Moderazione Game Pass: approva/rifiuta richieste e assegna XP (points) in modo "stagionale".
-// Richiede: /config/gamepass { season: number } e /moderators/{uid} per autorizzazione.
+// Moderazione richieste Game Pass + fallback nome da /users/{uid}/profile/main
 
 import { onUser, login, logout, qs, el, db, auth } from "./common.js";
 
@@ -32,19 +31,34 @@ btnReload.onclick = () => auth.currentUser && loadQueue();
 
 function setStatus(msg) { statusBox.textContent = msg; }
 
-async function getCurrentSeason() {
-  try {
-    const cfgSnap = await getDoc(doc(db, "config", "gamepass"));
-    const s = cfgSnap.exists() ? Number(cfgSnap.data()?.season || 1) : 1;
-    return Number.isFinite(s) && s > 0 ? s : 1;
-  } catch {
-    return 1;
-  }
-}
-
 async function checkModerator(uid) {
   const modSnap = await getDoc(doc(db, "moderators", uid));
   return modSnap.exists();
+}
+
+// Cache profili (evita getDoc ripetuti)
+const profileNameCache = new Map(); // uid -> string|null oppure Promise
+async function getProfileName(uid) {
+  if (profileNameCache.has(uid)) return await profileNameCache.get(uid);
+
+  const p = (async () => {
+    try {
+      const snap = await getDoc(doc(db, `users/${uid}/profile/main`));
+      if (snap.exists()) {
+        const d = snap.data() || {};
+        const n = (d.displayName || "").toString().trim();
+        return n || null;
+      }
+    } catch (e) {
+      console.warn("getProfileName error", uid, e);
+    }
+    return null;
+  })();
+
+  profileNameCache.set(uid, p);
+  const v = await p;
+  profileNameCache.set(uid, v);
+  return v;
 }
 
 async function loadQueue() {
@@ -75,6 +89,16 @@ async function loadQueue() {
     return;
   }
 
+  // Precarica profili per le richieste senza requesterName
+  const uidsNeedingProfile = [...new Set(
+    items
+      .filter(r => !(r.requesterName && String(r.requesterName).trim()))
+      .map(r => r.uid)
+      .filter(Boolean)
+  )];
+
+  await Promise.all(uidsNeedingProfile.map(uid => getProfileName(uid)));
+
   for (const r of items) {
     const note = el("textarea", { placeholder: "Nota (opzionale)" });
 
@@ -85,19 +109,12 @@ async function loadQueue() {
         rejectBtn.disabled = true;
 
         try {
-          const season = await getCurrentSeason();
-
-          // 1) punti dall'achievement
+          // 1) prendo i punti dall'achievement
           const achSnap = await getDoc(doc(db, "achievements", r.achievementId));
           if (!achSnap.exists()) throw new Error("Achievement non trovato");
           const ach = achSnap.data() || {};
-          const pts = Number(ach.points) || 0;
 
-          // Nome/email presi dalla richiesta (inviati dal client quando l'utente richiede l'achievement)
-          const requesterName = (r.requesterName || "").toString();
-          const requesterEmail = (r.requesterEmail || "").toString();
-
-          // 2) approved
+          // 2) aggiorno la richiesta -> approved
           await updateDoc(doc(db, "requests", r.id), {
             status: "approved",
             note: note.value.trim(),
@@ -105,30 +122,17 @@ async function loadQueue() {
             reviewedBy: auth.currentUser.uid
           });
 
-          // 3) earned
+          // 3) segno earned
           await setDoc(doc(db, `users/${r.uid}/earned/${r.achievementId}`), {
             approvedAt: serverTimestamp(),
             approvedBy: auth.currentUser.uid
           }, { merge: true });
 
-          // 4) punti stagionali: se season diversa, reset soft (points = pts, season = current)
-          const progRef = doc(db, `users/${r.uid}/gamepass/progress`);
-          const progSnap = await getDoc(progRef);
-
-          if (!progSnap.exists() || Number(progSnap.data()?.season || 0) !== season) {
-            await setDoc(progRef, {
-              season,
-              points: pts,
-              name: requesterName,
-              email: requesterEmail,
-              updatedAt: serverTimestamp()
-            }, { merge: true });
-          } else {
-            await setDoc(progRef, {
-              season,
+          // 4) aggiungo punti Game Pass
+          const pts = Number(ach.points) || 0;
+          if (pts) {
+            await setDoc(doc(db, `users/${r.uid}/gamepass/progress`), {
               points: increment(pts),
-              name: requesterName,
-              email: requesterEmail,
               updatedAt: serverTimestamp()
             }, { merge: true });
           }
@@ -168,6 +172,7 @@ async function loadQueue() {
       }
     }, [document.createTextNode("Rifiuta")]);
 
+    // Prove
     const evidence = [];
     if (r.evidenceText) evidence.push(el("div", { class: "small" }, [document.createTextNode(`Prova: ${r.evidenceText}`)]));
     if (r.evidenceUrl) evidence.push(el("div", { class: "small" }, [
@@ -175,15 +180,29 @@ async function loadQueue() {
       el("a", { href: r.evidenceUrl, target: "_blank", rel: "noopener" }, [document.createTextNode(r.evidenceUrl)])
     ]));
 
+    // Nome: 1) requesterName nella request 2) profile/main.displayName 3) fallback
+    const profileName = await getProfileName(r.uid);
+    const shownName =
+      (r.requesterName && String(r.requesterName).trim())
+        ? String(r.requesterName).trim()
+        : (profileName || "Senza nome");
+
+    const shownEmail =
+      (r.requesterEmail && String(r.requesterEmail).trim())
+        ? String(r.requesterEmail).trim()
+        : "Senza email";
+
     const card = el("div", { class: "card" }, [
       el("div", { class: "row" }, [
         el("strong", {}, [document.createTextNode(r.achievementTitle || r.achievementId)]),
         el("span", { class: "badge" }, [document.createTextNode("⏳ pending")]),
       ]),
       el("div", { class: "small" }, [
-        document.createTextNode(`Utente: ${(r.requesterName || "Senza nome")} — ${(r.requesterEmail || "Senza email")}`)
+        document.createTextNode(`Utente: ${shownName} — ${shownEmail}`)
       ]),
-      el("div", { class: "small mono" }, [document.createTextNode(`uid: ${r.uid}`)]),
+      el("div", { class: "small mono" }, [
+        document.createTextNode(`uid: ${r.uid}`)
+      ]),
       ...evidence,
       el("div", { class: "sep" }),
       note,
