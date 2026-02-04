@@ -532,9 +532,9 @@ table td, table th {
 // === Sezioni Store (solo etichette, nessuna navigazione attiva) ===
 window.STORE_SECTIONS = {
   featured: ['Wonderkid','Patatine'],
-  new: ['Wonderkid','Altezza mezza bellezza'], // Ultimi arrivi
+  new: ['Wonderkid','Ritorno al passato'], // Ultimi arrivi
   base: ['Gold','Silver','Bronze'], // Pacchetti base
-  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Wonderkid','Patatine','Altezza mezza bellezza','Fantaballa Tots','Legend','Oggetti','Gold','Silver','Bronze','Cosmetic','Strumenti','Sfere del drago'])
+  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Wonderkid','Patatine','Ritorno al passato','Fantaballa Tots','Legend','Oggetti','Gold','Silver','Bronze','Cosmetic','Strumenti','Sfere del drago'])
 };
 </script>
 
@@ -641,12 +641,13 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid', 'Patatine', 'Altezza mezza bellezza', 'Fantaballa Tots', 'Legend', 'Oggetti', 'Gold', 'Silver', 'Bronze', 'Cosmetic', 'Strumenti', 'Sfere del drago'];
+const VALID_GAMES = ['Wonderkid', 'Patatine', 'Ritorno al passato', 'Fantaballa Tots', 'Legend', 'Oggetti', 'Gold', 'Silver', 'Bronze', 'Cosmetic', 'Strumenti', 'Sfere del drago'];
 const PACK_BACK_BY_GAME = {
   'Wonderkid': 'Deck%20back%20wonderkid.png',
   'Patatine': 'patatrine.png',
-  'Altezza mezza bellezza': 'img/Back%20altezza.png',
-  'Fantaballa Tots': 'Deck%20back%20Tots.png',
+
+  'Ritorno al passato': "img/back%20tothefuture.png",
+'Fantaballa Tots': 'Deck%20back%20Tots.png',
   'Legend': 'Back%20legend.png',
   'Oggetti': 'Deck%20back%20tactcs.png',
   'Gold': 'Deck%20back%20ORO.png',
@@ -661,8 +662,9 @@ const PACK_BACK_BY_GAME = {
 const PACK_COST_PER_GAME = {
   'Wonderkid': 1800,
   'Patatine': 0,
-  'Altezza mezza bellezza': 0,
-  'Fantaballa Tots': 0,
+
+  'Ritorno al passato': 0,
+'Fantaballa Tots': 0,
   'Legend': 0,
   'Oggetti': 0,
   'Gold': 0,
@@ -676,8 +678,9 @@ const PACK_COST_PER_GAME = {
 const PACK_SIZE_PER_GAME = {
   'Wonderkid': 3,
   'Patatine': 1,
-  'Altezza mezza bellezza': 3,
-  'Fantaballa Tots': 3,
+
+  'Ritorno al passato': 3,
+'Fantaballa Tots': 3,
   'Legend': 3,
   'Oggetti': 3,
   'Gold': 9,
@@ -895,13 +898,13 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Wonderkid',
-  pools:    { 'Wonderkid': [], 'Patatine': [], 'Altezza mezza bellezza': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [],
+  pools:    { 'Wonderkid': [], 'Patatine': [], 'Ritorno al passato': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [],
  'Sfere del drago': []
 },
-  packs:    { 'Wonderkid': [], 'Patatine': [], 'Altezza mezza bellezza': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [],
+  packs:    { 'Wonderkid': [], 'Patatine': [], 'Ritorno al passato': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [],
  'Sfere del drago': []
 },
-  cursor:   { 'Wonderkid': 0,   'Patatine': 0,   'Altezza mezza bellezza': 0,   'Fantaballa Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0,
+  cursor:   { 'Wonderkid': 0,   'Patatine': 0, 'Ritorno al passato': 0, 'Fantaballa Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0,
  'Sfere del drago': 0
 }
 };
@@ -923,7 +926,88 @@ function buildFinitePacks(cards, size){
   return packs.filter(p=>p.length>0);
 }
 
+// === Ritorno al passato: pacchetti stabili (no doppioni, persistenti al refresh) ===
+function buildRitornoStablePacks(pool){
+  const GAME = 'Ritorno al passato';
+  const PACKS_KEY = 'futtu_fc_ritorno_packs_v1';
+  const FP_KEY    = 'futtu_fc_ritorno_fp_v1';
+
+  const byId = {};
+  (pool||[]).forEach(c=>{ if(c && c.id) byId[c.id]=c; });
+
+  const ids = (pool||[]).map(c=>c && c.id).filter(Boolean);
+  const fp  = JSON.stringify(ids.slice().sort());
+
+  let storedFp = null;
+  let packsIds = null;
+  try{ storedFp = localStorage.getItem(FP_KEY); }catch{}
+  try{ packsIds = JSON.parse(localStorage.getItem(PACKS_KEY)||'null'); }catch{}
+
+  const validate = ()=>{
+    if (!Array.isArray(packsIds) || !packsIds.length) return false;
+    const flat = packsIds.flat();
+    if (flat.length !== ids.length) return false;
+    const setFlat = new Set(flat);
+    if (setFlat.size !== flat.length) return false;
+    const setIds = new Set(ids);
+    if (setIds.size !== ids.length) return false;
+    if (setFlat.size !== setIds.size) return false;
+    for (const id of setIds){ if (!setFlat.has(id)) return false; }
+    // regola: pacchi da 3 finché restano 4 carte, poi ultimo pacco = 4 (se totale = 22)
+    if (ids.length === 22){
+      if (packsIds.length !== 7) return false;
+      for (let i=0;i<6;i++){ if (!Array.isArray(packsIds[i]) || packsIds[i].length !== 3) return false; }
+      if (!Array.isArray(packsIds[6]) || packsIds[6].length !== 4) return false;
+    }
+    return true;
+  };
+
+  const regenerate = ()=>{
+    const shuffled = ids.slice();
+    shuffleInPlace(shuffled);
+
+    const out = [];
+    let i = 0;
+    while ((shuffled.length - i) > 4){
+      out.push(shuffled.slice(i, i+3));
+      i += 3;
+    }
+    if (i < shuffled.length) out.push(shuffled.slice(i)); // ultimo pacco (tipicamente 4)
+
+    packsIds = out;
+
+    try{ localStorage.setItem(PACKS_KEY, JSON.stringify(packsIds)); }catch{}
+    try{ localStorage.setItem(FP_KEY, fp); }catch{}
+
+    // reset cursor solo se rigenero (evita "pacchi infiniti" al refresh)
+    GAME_STATE.cursor[GAME] = 0;
+    try{
+      const saved = JSON.parse(localStorage.getItem('futtu_cursors')||'{}');
+      saved[GAME] = 0;
+      localStorage.setItem('futtu_cursors', JSON.stringify(saved));
+    }catch{}
+  };
+
+  if (storedFp !== fp) regenerate();
+  else if (!validate()) regenerate();
+
+  // Mappa IDs -> carte (garantendo 3 sempre diverse; l'ultimo può essere 4)
+  return (packsIds||[]).map(idsPack=>{
+    const seen = new Set();
+    const pack = [];
+    for (const id of (idsPack||[])){
+      const c = byId[id];
+      if (c && !seen.has(c.id)){
+        seen.add(c.id);
+        pack.push(c);
+      }
+    }
+    return pack;
+  }).filter(p=>p && p.length);
+}
+
 async function loadCards(){
+
   const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),CONFIG.FETCH_TIMEOUT_MS);
   try{
     const res=await fetch(CONFIG.CARDS_JSON,{cache:'no-store',signal:ctrl.signal});
@@ -957,12 +1041,11 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
       isFantaballa(c.game) &&
       norm(c.series) !== 'leggendaria'
     );
-    // Altezza mezza bellezza — FINITO: solo Fantaballa FC + series="Altezza" (3 carte per pack)
-    GAME_STATE.pools['Altezza mezza bellezza'] = cleaned.filter(c =>
+    // Ritorno al passato — Fantaballa FC + series="Ritorno" (22 carte: 6 pacchi da 3 + 1 da 4)
+    GAME_STATE.pools['Ritorno al passato'] = cleaned.filter(c =>
       isFantaballa(c.game) &&
-      norm(c.series)==='altezza'
+      norm(c.series)==='ritorno'
     );
-
 // Fantaballa Tots — SOLO ed ESCLUSIVAMENTE Tots14 di Fantaballa FC
     GAME_STATE.pools['Fantaballa Tots'] = cleaned.filter(c =>
       isFantaballa(c.game) &&
@@ -1114,7 +1197,7 @@ GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards));
 // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
-    GAME_STATE.packs['Altezza mezza bellezza'] = buildFinitePacks(GAME_STATE.pools['Altezza mezza bellezza'], PACK_SIZE_PER_GAME['Altezza mezza bellezza']);
+    GAME_STATE.packs['Ritorno al passato'] = buildRitornoStablePacks(GAME_STATE.pools['Ritorno al passato']);
     GAME_STATE.packs['Fantaballa Tots'] = buildFinitePacks(GAME_STATE.pools['Fantaballa Tots'], PACK_SIZE_PER_GAME['Fantaballa Tots']);
         GAME_STATE.packs['Sfere del drago'] = buildFinitePacks(GAME_STATE.pools['Sfere del drago'], PACK_SIZE_PER_GAME['Sfere del drago']);
 /* packs Gold set by auto */
@@ -1237,7 +1320,7 @@ try {
     applyPackVisual();
     updateOpenBtnEnabled();
  document.getElementById('log').textContent =
-  `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, Altezza ${GAME_STATE.pools['Altezza mezza bellezza']?.length||0}, `+
+  `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, Ritorno ${GAME_STATE.pools['Ritorno al passato']?.length||0}, `+
   `TOTS ${GAME_STATE.pools['Fantaballa Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
   `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
 
@@ -1283,11 +1366,10 @@ function renderPacksStrip(){
       card.innerHTML = `
         <img src="${imgSrc}" alt="${game}" />
         <div class="featured-cost">${game}</div>
-        <div class="featured-cost">${cost > 0 ? (cost + ' pts') : 'Gratis'}</div>
+        ${cost > 0 ? '<div class="featured-cost">'+cost+' pts</div>' : ''}
         <div class="featured-sub" style="margin-top:4px; color:#cfd6ff; font-size:12px;">${subtitle}</div>
-        ${game === 'Altezza mezza bellezza' ? '<button type="button" class="mini-reset-btn" data-reset-game="Altezza mezza bellezza">♻️ Reset</button>' : ''}
-      `;
-      if (game === 'Altezza mezza bellezza') {
+              `;
+      if (game === 'Ritorno al passato') {
         const rbtn = card.querySelector('.mini-reset-btn');
         if (rbtn) rbtn.addEventListener('click', (e)=>{ e.stopPropagation(); window.resetSinglePack(game); });
       }
@@ -1381,7 +1463,7 @@ resetPacksBtn.addEventListener('click', async ()=>{
   }
 });
 
-// Reset di un singolo pacchetto (es. "Altezza mezza bellezza")
+// Reset di un singolo pacchetto
 window.resetSinglePack = function(game){
   try{
     if (!game) return;
@@ -1803,9 +1885,8 @@ document.addEventListener('DOMContentLoaded', function(){
         <img src="${PACK_BACK_BY_GAME[game]}" alt="${game}" loading="lazy" decoding="async" />
         <div>${game}</div>
         <div class="featured-cost">Costo: ${PACK_COST_PER_GAME[game] || 0}</div>
-        ${game === 'Altezza mezza bellezza' ? '<button type="button" class="mini-reset-btn" data-reset-game="Altezza mezza bellezza">♻️ Reset</button>' : ''}
-      `;
-      if (game === 'Altezza mezza bellezza') {
+              `;
+      if (game === 'Ritorno al passato') {
         const rbtn = card.querySelector('.mini-reset-btn');
         if (rbtn) rbtn.addEventListener('click', (e)=>{ e.stopPropagation(); window.resetSinglePack(game); });
       }
@@ -1967,9 +2048,8 @@ window.renderPacksStrip = function(){
       <img src="${back}" alt="Anteprima ${game}">
       <div style="margin-top:6px;font-weight:700">${game}</div>
       <div class="featured-cost">${game==='Oggetti' ? '∞' : `${left}/${totalPacks}`} pacchi</div>
-      ${game === 'Altezza mezza bellezza' ? '<button type="button" class="mini-reset-btn" data-reset-game="Altezza mezza bellezza">♻️ Reset</button>' : ''}
-    `;
-    if (game === 'Altezza mezza bellezza') {
+          `;
+    if (game === 'Ritorno al passato') {
       const rbtn = card.querySelector('.mini-reset-btn');
       if (rbtn) rbtn.addEventListener('click', (e)=>{ e.stopPropagation(); window.resetSinglePack(game); });
     }
@@ -2256,13 +2336,6 @@ window.renderPacksStrip = function(){
 
 <script id="mini-reset-delegation">
 // Fallback delegation: intercetta click sul bottone reset sotto al pack
-document.addEventListener('click', function(e){
-  const t = e.target;
-  if (!t || !t.classList || !t.classList.contains('mini-reset-btn')) return;
-  const game = t.getAttribute('data-reset-game') || 'Altezza mezza bellezza';
-  e.stopPropagation();
-  if (typeof window.resetSinglePack === 'function') window.resetSinglePack(game);
-}, true);
 </script>
 </body>
 </html>
