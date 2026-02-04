@@ -508,18 +508,17 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Patatine','Gotham Tots','Legend','Altezza mezza bellezza','Oggetti','Gold','Silver','Bronze','Strumenti','Chaos'];
+const VALID_GAMES = ['Patatine','Gotham Tots','Legend','Ritorno al passato','Oggetti','Gold','Silver','Bronze','Strumenti'];
 const PACK_BACK_BY_GAME = {
   'Patatine': 'patatrine.png',
   'Gotham Tots': 'Deck%20back%20Tots.png',
   'Legend': 'Back%20legend.png',
-  'Altezza mezza bellezza': 'img/Back%20altezza.png',
+  'Ritorno al passato': 'img/back%20tothefuture.png',
   'Oggetti': 'Deck%20back%20tactcs.png',
   'Gold': 'Deck%20back%20oro%20BATMAN.png',
   'Silver': 'Deck%20back%20argento%20BATMAN.png',
   'Bronze': 'Deck%20back%20bronzo%20BATMAN.png',
   'Strumenti': 'Deck%20back%20strumenti.png',
-  'Chaos': 'Back%20Chaos.png',
   'Cosmetic': 'Deck%20back%20cosmetic.png'
 };
 
@@ -528,26 +527,24 @@ const PACK_COST_PER_GAME = {
   'Patatine': 0,
   'Gotham Tots': 0,
   'Legend': 0,
-  'Altezza mezza bellezza': 0,
+  'Ritorno al passato': 0,
   'Oggetti': 0,
   'Gold': 0,
   'Silver': 0,
   'Bronze': 0,
-  'Strumenti': 0,
-  'Chaos': 0
+  'Strumenti': 0
 };
 
 const PACK_SIZE_PER_GAME = {
   'Patatine': 1,
   'Gotham Tots': 3,
   'Legend': 3,
-  'Altezza mezza bellezza': 3,
+  'Ritorno al passato': 3,
   'Oggetti': 3,
   'Gold': 9,
   'Silver': 9,
   'Bronze': 9,
-  'Strumenti': 3,
-  'Chaos': 3
+  'Strumenti': 3
 };
 
 const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
@@ -757,10 +754,9 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Patatine',
-  pools:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Altezza mezza bellezza': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': []},
-  packs:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Altezza mezza bellezza': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': []},
-  cursor:   { 'Patatine': 0,   'Gotham Tots': 0,   'Legend': 0, 'Altezza mezza bellezza': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0,
-  'Chaos': 0}
+  pools:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Ritorno al passato': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
+  packs:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Ritorno al passato': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
+  cursor:   { 'Patatine':0,'Gotham Tots':0,'Legend':0,'Ritorno al passato':0,'Oggetti':0,'Gold':0,'Silver':0,'Bronze':0,'Strumenti':0,'Cosmetic':0 }
 };
 
 
@@ -817,6 +813,20 @@ function generateBSGOnTheFly(seriesName){
   return packs.filter(p=>p.length>0);
 }
 
+function buildRitornoPacks(cards){
+  // 22 carte => 6 pacchetti da 3 + 1 pacchetto da 4 (quando restano 4 carte, prendile tutte)
+  const arr = shuffleInPlace(cards.slice());
+  const packs = [];
+  let i = 0;
+  while (i < arr.length){
+    const remaining = arr.length - i;
+    const take = (remaining === 4) ? 4 : 3;
+    packs.push(arr.slice(i, i + take));
+    i += take;
+  }
+  return packs.filter(p => p.length > 0);
+}
+
 async function loadCards(){
   const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),CONFIG.FETCH_TIMEOUT_MS);
   try{
@@ -871,19 +881,12 @@ async function loadCards(){
     // Oggetti — NEW: prende qualsiasi card con series = "Oggetto" (game: qualunque)
     GAME_STATE.pools['Oggetti'] = cleaned.filter(c => norm(c.series)==='oggetto');
 
-    // Altezza mezza bellezza — FINITO: 21 carte (series="Altezza", game="Gotham City") => 7 pacchetti da 3, senza doppioni nello stesso pacco
-    GAME_STATE.pools['Altezza mezza bellezza'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='altezza');
+    // Ritorno al passato — FINITO: 22 carte (series="Ritorno", game="Gotham City") => 6 pacchetti da 3 + 1 pacchetto da 4
+    GAME_STATE.pools['Ritorno al passato'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='ritorno');
 
 
 
     // Strumenti — FINITO: prende solo series="Strumento" e game="Gotham City"; 2 copie per carta, pacchetti da 3 (ultimo 2+2 se serve)
-    // Chaos — FINITO: prende solo series="Chaos" e game="Gotham City"; 3 carte per pacco
-    const baseChaos = cleaned.filter(c => norm(c.series)==='chaos' && norm(c.game)==='gotham city');
-    GAME_STATE.pools['Chaos'] = baseChaos.slice();
-    GAME_STATE.packs['Chaos'] = buildFinitePacks(GAME_STATE.pools['Chaos'], PACK_SIZE_PER_GAME['Chaos']).map(p => {
-      const seen = new Set();
-      return p.filter(x => !seen.has(x.id) && seen.add(x.id));
-    });
 
     const baseStrumenti = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='strumento');
     const strumentiDoubled = baseStrumenti.flatMap(c => [c, c]); // doppione
@@ -1029,7 +1032,7 @@ GAME_STATE.pools['Gold'] = cleaned.filter(c => isGotham(c.game) && norm(c.series
     // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
-    GAME_STATE.packs['Altezza mezza bellezza'] = buildFinitePacks(GAME_STATE.pools['Altezza mezza bellezza'], PACK_SIZE_PER_GAME['Altezza mezza bellezza']);
+        GAME_STATE.packs['Ritorno al passato'] = buildRitornoPacks(GAME_STATE.pools['Ritorno al passato']);
     shuffleInPlace(packsGoldCards);
     GAME_STATE.packs['Gold'] = packsGoldCards;
     
@@ -1088,8 +1091,8 @@ try {
  document.getElementById('log').textContent =
   `Caricate: Patatine ${GAME_STATE.pools['Patatine'].length}, `+
   `TOTS ${GAME_STATE.pools['Gotham Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
-  `Altezza ${GAME_STATE.pools['Altezza mezza bellezza']?.length||0}, `+
-  `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
+  `Ritorno ${GAME_STATE.pools['Ritorno al passato']?.length||0}, `+
+    `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
 
 
   }catch(err){
@@ -1133,8 +1136,7 @@ function renderPacksStrip(){
       card.innerHTML = `
         <img src="${imgSrc}" alt="${game}" />
         <div class="featured-cost">${game}</div>
-        <div class="featured-cost">${cost > 0 ? (cost + ' pts') : 'Gratis'}</div>
-        <div class="featured-sub" style="margin-top:4px; color:#cfd6ff; font-size:12px;">${subtitle}</div>
+                <div class="featured-sub" style="margin-top:4px; color:#cfd6ff; font-size:12px;">${subtitle}</div>
       `;
       card.addEventListener('click', ()=>{
         GAME_STATE.selected = game;
