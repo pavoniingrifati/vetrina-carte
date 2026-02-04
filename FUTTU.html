@@ -756,7 +756,8 @@ const GAME_STATE = {
   selected: 'Patatine',
   pools:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Ritorno al passato': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
   packs:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Ritorno al passato': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
-  cursor:   { 'Patatine':0,'Gotham Tots':0,'Legend':0,'Ritorno al passato':0,'Oggetti':0,'Gold':0,'Silver':0,'Bronze':0,'Strumenti':0,'Cosmetic':0 }
+  cursor:   { 'Patatine':0,'Gotham Tots':0,'Legend':0,'Ritorno al passato':0,'Oggetti':0,'Gold':0,'Silver':0,'Bronze':0,'Strumenti':0,'Cosmetic':0 },
+  remaining: { 'Ritorno al passato': [] }
 };
 
 
@@ -883,6 +884,40 @@ async function loadCards(){
 
     // Ritorno al passato — FINITO: 22 carte (series="Ritorno", game="Gotham City") => 6 pacchetti da 3 + 1 pacchetto da 4
     GAME_STATE.pools['Ritorno al passato'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='ritorno');
+    // Ritorno al passato — ordine persistente: nessun doppione anche dopo refresh
+    try{
+      const game = 'Ritorno al passato';
+      const pool = GAME_STATE.pools[game] || [];
+      const idsAll = pool.map(c => c.id);
+      const fp = idsAll.slice().sort().join('|');
+      const FP_KEY = 'futtu_ritorno_fp_v1';
+      const REM_KEY = 'futtu_ritorno_remaining_v1';
+      const savedFp = localStorage.getItem(FP_KEY) || '';
+      let remaining = null;
+      try{ remaining = JSON.parse(localStorage.getItem(REM_KEY) || 'null'); }catch{}
+      const set = new Set(idsAll);
+      if (!Array.isArray(remaining) || savedFp !== fp){
+        remaining = shuffleInPlace(idsAll.slice());
+        localStorage.setItem(REM_KEY, JSON.stringify(remaining));
+        localStorage.setItem(FP_KEY, fp);
+      } else {
+        remaining = remaining.filter(id => set.has(id));
+        const missing = idsAll.filter(id => !remaining.includes(id));
+        if (missing.length){
+          shuffleInPlace(missing);
+          remaining = remaining.concat(missing);
+          localStorage.setItem(REM_KEY, JSON.stringify(remaining));
+        }
+      }
+      GAME_STATE.remaining[game] = remaining;
+    }catch(e){
+      console.warn('Ritorno persistence init failed', e);
+      try{
+        const game='Ritorno al passato';
+        GAME_STATE.remaining[game] = shuffleInPlace((GAME_STATE.pools[game]||[]).map(c=>c.id));
+      }catch{}
+    }
+
 
 
 
@@ -1032,7 +1067,7 @@ GAME_STATE.pools['Gold'] = cleaned.filter(c => isGotham(c.game) && norm(c.series
     // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
-        GAME_STATE.packs['Ritorno al passato'] = buildRitornoPacks(GAME_STATE.pools['Ritorno al passato']);
+        GAME_STATE.packs['Ritorno al passato'] = []; // gestito via remaining persistente
     shuffleInPlace(packsGoldCards);
     GAME_STATE.packs['Gold'] = packsGoldCards;
     
@@ -1123,8 +1158,8 @@ function renderPacksStrip(){
     for (const game of VALID_GAMES.concat('Cosmetic')){
       const imgSrc = PACK_BACK_BY_GAME[game] || 'patatrine.png';
       const cost = Number(PACK_COST_PER_GAME[game] || 0);
-      const totalPacks = (GAME_STATE.packs[game] || []).length;
-      const left = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold') ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
+      const totalPacks = totalPacksForGame(game);
+      const left = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold') ? '∞' : String(packsLeft(game));
       const cardsCount = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : (GAME_STATE.pools[game]?.length || 0));
       const subtitle = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold')
         ? `${cardsCount} carte`
@@ -1154,13 +1189,47 @@ function renderPacksStrip(){
   }
 }
 
-function packsLeft(game){ return Math.max(0, (GAME_STATE.packs[game]||[]).length - (GAME_STATE.cursor[game]||0)); }
+function totalPacksForGame(game){
+  if (game==='Ritorno al passato'){
+    const total = (GAME_STATE.pools[game]||[]).length;
+    let count = 0, n = total;
+    const sz = (PACK_SIZE_PER_GAME[game] || 3);
+    while (n > 0){ count++; n -= (n === 4 ? 4 : sz); }
+    return count;
+  }
+  return (GAME_STATE.packs[game]||[]).length;
+}
+
+function packsLeft(game){
+  if (game==='Ritorno al passato'){
+    const rem = (GAME_STATE.remaining?.[game] || []).length;
+    let count = 0, n = rem;
+    const sz = (PACK_SIZE_PER_GAME[game] || 3);
+    while (n > 0){ count++; n -= (n === 4 ? 4 : sz); }
+    return count;
+  }
+  return Math.max(0, totalPacksForGame(game) - (GAME_STATE.cursor[game]||0));
+}
+
+function drawRitornoPack(){
+  const game = 'Ritorno al passato';
+  const pool = GAME_STATE.pools[game] || [];
+  const byId = new Map(pool.map(c => [c.id, c]));
+  let remaining = (GAME_STATE.remaining?.[game] || []);
+  if (!remaining.length) return [];
+  const take = (remaining.length === 4) ? 4 : (PACK_SIZE_PER_GAME[game] || 3);
+  const packIds = remaining.slice(0, take);
+  remaining = remaining.slice(take);
+  GAME_STATE.remaining[game] = remaining;
+  try{ localStorage.setItem('futtu_ritorno_remaining_v1', JSON.stringify(remaining)); }catch{}
+  return packIds.map(id => byId.get(id)).filter(Boolean);
+}
 
 function renderGamePicker(){
   const frag=document.createDocumentFragment();
   for (const game of VALID_GAMES.concat('Cosmetic')){
     const totalCards = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : (GAME_STATE.pools[game]?.length || 0));
-    const totalPacks = (GAME_STATE.packs[game]||[]).length;
+    const totalPacks = totalPacksForGame(game);
     const left = packsLeft(game);
     const btn=document.createElement('button');
     btn.type='button'; btn.className='choice';
@@ -1408,6 +1477,12 @@ try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }
       }
     } else {
       chosen = generateBSGOnTheFly(game);
+    }
+  } else if (game==='Ritorno al passato') {
+    chosen = drawRitornoPack();
+    if (!chosen || !chosen.length) {
+      document.getElementById('log').textContent = '📦 Ritorno al passato: pacchetti esauriti.';
+      return;
     }
   } else {
     // Estrai il prossimo pacchetto finito (comportamento standard)
@@ -1713,7 +1788,7 @@ window.renderGamePicker = function(){
   gamePicker.innerHTML='';
   list.forEach(game => {
     const totalCards = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : ((GAME_STATE.pools[game]||[]).length));
-    const totalPacks = (GAME_STATE.packs[game]||[]).length;
+    const totalPacks = totalPacksForGame(game);
     const left = Math.max(0, totalPacks - (GAME_STATE.cursor[game]||0));
     const btn=document.createElement('button');
     btn.type='button'; btn.className='choice';
@@ -1751,7 +1826,7 @@ window.renderPacksStrip = function(){
   container.innerHTML = '';
   games.forEach(game => {
     // Piccola card per ogni pacco disponibile nel gioco selezionato
-    const totalPacks = (GAME_STATE.packs[game]||[]).length;
+    const totalPacks = totalPacksForGame(game);
     const left = Math.max(0, totalPacks - (GAME_STATE.cursor[game]||0));
     const card = document.createElement('div');
     card.className = 'featured-card';
