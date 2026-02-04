@@ -901,13 +901,10 @@ async function loadCards(){
         localStorage.setItem(REM_KEY, JSON.stringify(remaining));
         localStorage.setItem(FP_KEY, fp);
       } else {
+        // Mantieni SOLO le carte rimanenti (non ancora aperte).
+        // Non reinserire le "missing": quelle sono le carte già uscite.
         remaining = remaining.filter(id => set.has(id));
-        const missing = idsAll.filter(id => !remaining.includes(id));
-        if (missing.length){
-          shuffleInPlace(missing);
-          remaining = remaining.concat(missing);
-          localStorage.setItem(REM_KEY, JSON.stringify(remaining));
-        }
+        try{ localStorage.setItem(REM_KEY, JSON.stringify(remaining)); }catch{}
       }
       GAME_STATE.remaining[game] = remaining;
     }catch(e){
