@@ -413,10 +413,10 @@ header{ top: var(--fcbar-h); }
 <script>
 // === Sezioni Store (solo etichette, nessuna navigazione attiva) ===
 window.STORE_SECTIONS = {
-  featured: ['Wonderkid','Patatine'],
-  new: ['Wonderkid'], // Ultimi arrivi
+  featured: ['Wonderkid','Patatine','Mondo'],
+  new: ['Wonderkid','Mondo'], // Ultimi arrivi
   base: ['Gold','Silver','Bronze'], // Pacchetti base
-  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Wonderkid','Patatine','Gold','Silver','Bronze','Strumenti'])
+  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Wonderkid','Patatine','Mondo','Gold','Silver','Bronze','Strumenti'])
 };
 </script>
 <!-- /FC25-like Dashboard UI -->
@@ -508,11 +508,12 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Patatine','Gotham Tots','Legend','Ritorno al passato','Oggetti','Gold','Silver','Bronze','Strumenti'];
+const VALID_GAMES = ['Patatine','Gotham Tots','Legend','Mondo','Ritorno al passato','Oggetti','Gold','Silver','Bronze','Strumenti'];
 const PACK_BACK_BY_GAME = {
   'Patatine': 'patatrine.png',
   'Gotham Tots': 'Deck%20back%20Tots.png',
   'Legend': 'Back%20legend.png',
+  'Mondo': 'img/Mondo.png',
   'Ritorno al passato': 'img/back%20tothefuture.png',
   'Oggetti': 'Deck%20back%20tactcs.png',
   'Gold': 'Deck%20back%20oro%20BATMAN.png',
@@ -527,6 +528,7 @@ const PACK_COST_PER_GAME = {
   'Patatine': 0,
   'Gotham Tots': 0,
   'Legend': 0,
+  'Mondo': 0,
   'Ritorno al passato': 0,
   'Oggetti': 0,
   'Gold': 0,
@@ -539,6 +541,7 @@ const PACK_SIZE_PER_GAME = {
   'Patatine': 1,
   'Gotham Tots': 3,
   'Legend': 3,
+  'Mondo': 1,
   'Ritorno al passato': 3,
   'Oggetti': 3,
   'Gold': 9,
@@ -754,9 +757,9 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Patatine',
-  pools:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Ritorno al passato': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
-  packs:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Ritorno al passato': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
-  cursor:   { 'Patatine':0,'Gotham Tots':0,'Legend':0,'Ritorno al passato':0,'Oggetti':0,'Gold':0,'Silver':0,'Bronze':0,'Strumenti':0,'Cosmetic':0 },
+  pools:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Mondo': [], 'Ritorno al passato': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
+  packs:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Mondo': [], 'Ritorno al passato': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
+  cursor:   { 'Patatine':0,'Gotham Tots':0,'Legend':0,'Mondo':0,'Ritorno al passato':0,'Oggetti':0,'Gold':0,'Silver':0,'Bronze':0,'Strumenti':0,'Cosmetic':0 },
   remaining: { 'Ritorno al passato': [] }
 };
 
@@ -881,6 +884,9 @@ async function loadCards(){
 
     // Oggetti — NEW: prende qualsiasi card con series = "Oggetto" (game: qualunque)
     GAME_STATE.pools['Oggetti'] = cleaned.filter(c => norm(c.series)==='oggetto');
+
+    // Mondo — FINITO: series=\"Mondo\" + game=\"Gotham City\" => pacchetti da 1 (8 tot)
+    GAME_STATE.pools['Mondo'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='mondo');
 
     // Ritorno al passato — FINITO: 22 carte (series="Ritorno", game="Gotham City") => 6 pacchetti da 3 + 1 pacchetto da 4
     GAME_STATE.pools['Ritorno al passato'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='ritorno');
@@ -1064,6 +1070,7 @@ GAME_STATE.pools['Gold'] = cleaned.filter(c => isGotham(c.game) && norm(c.series
     // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
+    GAME_STATE.packs['Mondo']       = buildFinitePacks(GAME_STATE.pools['Mondo'],       PACK_SIZE_PER_GAME['Mondo']);      // size=1
         GAME_STATE.packs['Ritorno al passato'] = []; // gestito via remaining persistente
     shuffleInPlace(packsGoldCards);
     GAME_STATE.packs['Gold'] = packsGoldCards;
