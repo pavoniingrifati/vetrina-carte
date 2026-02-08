@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>FUT Fantaballa Tik Tok</title>
-<meta name="description" content="Pack unico diviso per 'game' (Gotham City). Pacchetti finiti: Wonderkid (3 carte), Patatine (1 carta, pesato), Fantaballa Tots (3 carte), Legend (3 carte). Nuovo: Oggetti (3 carte, infinito). Login e salvataggio inventario invariati." />
+<meta name="description" content="Pack unico diviso per 'game' (Gotham City). Pacchetti finiti:  (3 carte), Patatine (1 carta, pesato), Fantaballa Tots (3 carte), Legend (3 carte). Nuovo: Oggetti (3 carte, infinito). Login e salvataggio inventario invariati." />
 
 <!-- Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -531,10 +531,10 @@ table td, table th {
 <script>
 // === Sezioni Store (solo etichette, nessuna navigazione attiva) ===
 window.STORE_SECTIONS = {
-  featured: ['Wonderkid','Patatine'],
-  new: ['Wonderkid','Ritorno al passato'], // Ultimi arrivi
+  featured: ['','Patatine'],
+  new: ['','Ritorno al passato'], // Ultimi arrivi
   base: ['Gold','Silver','Bronze'], // Pacchetti base
-  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Wonderkid','Patatine','Ritorno al passato','Fantaballa Tots','Legend','Oggetti','Gold','Silver','Bronze','Cosmetic','Strumenti','Sfere del drago'])
+  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['','Patatine','Ritorno al passato','Fantaballa Tots','Legend','Oggetti','Gold','Silver','Bronze','Cosmetic','Strumenti','Sfere del drago'])
 };
 </script>
 
@@ -641,9 +641,9 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Wonderkid', 'Patatine', 'Ritorno al passato', 'Fantaballa Tots', 'Legend', 'Oggetti', 'Gold', 'Silver', 'Bronze', 'Cosmetic', 'Strumenti', 'Sfere del drago'];
+const VALID_GAMES = ['', 'Patatine', 'Ritorno al passato', 'Fantaballa Tots', 'Legend', 'Oggetti', 'Gold', 'Silver', 'Bronze', 'Cosmetic', 'Strumenti', 'Sfere del drago'];
 const PACK_BACK_BY_GAME = {
-  'Wonderkid': 'Deck%20back%20wonderkid.png',
+  '': 'Deck%20back%20wonderkid.png',
   'Patatine': 'patatrine.png',
 
   'Ritorno al passato': "img/back%20tothefuture.png",
@@ -660,7 +660,7 @@ const PACK_BACK_BY_GAME = {
 
 
 const PACK_COST_PER_GAME = {
-  'Wonderkid': 1800,
+  '': 1800,
   'Patatine': 0,
 
   'Ritorno al passato': 0,
@@ -897,14 +897,14 @@ async function saveInventario(cards) {
  *  DATI CARTE + PACCHETTI (FINITI)
  *  ========================= */
 const GAME_STATE = {
-  selected: 'Wonderkid',
-  pools:    { 'Wonderkid': [], 'Patatine': [], 'Ritorno al passato': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [],
+  selected: '',
+  pools:    { '': [], 'Patatine': [], 'Ritorno al passato': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [],
  'Sfere del drago': []
 },
-  packs:    { 'Wonderkid': [], 'Patatine': [], 'Ritorno al passato': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [],
+  packs:    { '': [], 'Patatine': [], 'Ritorno al passato': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [],
  'Sfere del drago': []
 },
-  cursor:   { 'Wonderkid': 0,   'Patatine': 0, 'Ritorno al passato': 0, 'Fantaballa Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0,
+  cursor:   { '': 0,   'Patatine': 0, 'Ritorno al passato': 0, 'Fantaballa Tots': 0,   'Legend': 0,   'Oggetti': 0,   'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0,
  'Sfere del drago': 0
 }
 };
@@ -1033,8 +1033,8 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
 
     // ====== Pools per game ======
 
-    // Wonderkid (come prima)
-    GAME_STATE.pools['Wonderkid'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='wonderkid');
+    //  (come prima)
+    GAME_STATE.pools[''] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='wonderkid');
 
     // Patatine — QUALUNQUE carta di Fantaballa FC, esclusa la serie "Leggendaria"
     GAME_STATE.pools['Patatine'] = cleaned.filter(c =>
@@ -1325,7 +1325,7 @@ try {
     applyPackVisual();
     updateOpenBtnEnabled();
  document.getElementById('log').textContent =
-  `Caricate: Wonderkid ${GAME_STATE.pools['Wonderkid'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, Ritorno ${GAME_STATE.pools['Ritorno al passato']?.length||0}, `+
+  `Caricate:  ${GAME_STATE.pools[''].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, Ritorno ${GAME_STATE.pools['Ritorno al passato']?.length||0}, `+
   `TOTS ${GAME_STATE.pools['Fantaballa Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
   `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
 
@@ -1616,7 +1616,7 @@ openBtn.addEventListener('click', async () => {
   }
 
   // Carica carte (se non già)
-if (!GAME_STATE.packs['Wonderkid'].length && 
+if (!GAME_STATE.packs[''].length && 
     !GAME_STATE.packs['Patatine'].length && 
     !GAME_STATE.packs['Fantaballa Tots'].length &&
     !GAME_STATE.packs['Gold'].length &&
@@ -1829,11 +1829,11 @@ function renderPacksStrip(){
 }
 
 
-// === Featured strip rendering (only: Wonderkid, Patatine) ===
+// === Featured strip rendering (only: , Patatine) ===
 function renderPacksStrip(){
   const strip = document.getElementById('packsStrip');
   if (!strip) return;
-  const FEATURED_LIST = ['Wonderkid','Patatine']; // solo quelli richiesti
+  const FEATURED_LIST = ['','Patatine']; // solo quelli richiesti
   strip.innerHTML='';
   const frag = document.createDocumentFragment();
   FEATURED_LIST.forEach(game => {
