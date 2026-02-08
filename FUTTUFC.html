@@ -676,8 +676,8 @@ const PACK_COST_PER_GAME = {
 };
 
 const PACK_SIZE_PER_GAME = {
-  'Wonderkid': 3,
-  'Patatine': 1,
+    'Patatine': 1,
+  'Mondo': 1,
 
   'Ritorno al passato': 3,
 'Fantaballa Tots': 3,
@@ -1195,8 +1195,13 @@ const packsGoldCards = autoGold.packs.flat();
 /* Pool: somma delle carte usate (giusto per i contatori UI) — usiamo i pacchetti auto-generati */
 GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards));
 // ====== Costruzione pacchetti finiti ======
-    GAME_STATE.packs['Wonderkid']   = buildFinitePacks(GAME_STATE.pools['Wonderkid'],   PACK_SIZE_PER_GAME['Wonderkid']);
-    GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
+
+    // === Mondo pack (1 carta, tutte diverse) ===
+    const mondoPool = cleaned.filter(c => isFantaballa(c.game) && norm(c.series)==='mondo');
+    GAME_STATE.pools['Mondo'] = mondoPool;
+    GAME_STATE.packs['Mondo'] = buildFinitePacks(mondoPool, 1).slice(0,17);
+
+        GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Ritorno al passato'] = buildRitornoStablePacks(GAME_STATE.pools['Ritorno al passato']);
     GAME_STATE.packs['Fantaballa Tots'] = buildFinitePacks(GAME_STATE.pools['Fantaballa Tots'], PACK_SIZE_PER_GAME['Fantaballa Tots']);
         GAME_STATE.packs['Sfere del drago'] = buildFinitePacks(GAME_STATE.pools['Sfere del drago'], PACK_SIZE_PER_GAME['Sfere del drago']);
