@@ -514,7 +514,7 @@ const PACK_BACK_BY_GAME = {
   'Gotham Tots': 'Deck%20back%20Tots.png',
   'Legend': 'Back%20legend.png',
   'Mondo': 'img/Mondo.png',
-  'Inazuma': 'img/back%20Inazuma.png',
+  'Inazuma': 'Back%20Inazuma.png',
   'Oggetti': 'Deck%20back%20tactcs.png',
   'Gold': 'Deck%20back%20oro%20BATMAN.png',
   'Silver': 'Deck%20back%20argento%20BATMAN.png',
@@ -760,7 +760,7 @@ const GAME_STATE = {
   pools:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Mondo': [], 'Inazuma': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
   packs:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Mondo': [], 'Inazuma': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
   cursor:   { 'Patatine':0,'Gotham Tots':0,'Legend':0,'Mondo':0,'Inazuma':0,'Oggetti':0,'Gold':0,'Silver':0,'Bronze':0,'Strumenti':0,'Cosmetic':0 },
-  remaining: { 'Ritorno al passato': [] }
+  remaining: { 'Inazuma': [] }
 };
 
 
@@ -887,8 +887,45 @@ GAME_STATE.pools['Gotham Tots'] = cleaned.filter(c => {
     GAME_STATE.pools['Oggetti'] = cleaned.filter(c => norm(c.series)==='oggetto');
 
     // Mondo — FINITO: series=\"Mondo\" + game=\"Gotham City\" => pacchetti da 1 (8 tot)
-    GAME_STATE.pools['Mondo'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='mondo');
+    GAME_STATE.pools['Mondo'] = cleaned.filter
+    // Inazuma — 21 carte (series="Inazuma", game="Gotham City") => 7 pacchetti da 3
+    const baseInazuma = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='inazuma');
+    const inazuma21 = shuffleInPlace(baseInazuma.slice()).slice(0,21);
+    GAME_STATE.pools['Inazuma'] = inazuma21;
+    (c => isGotham(c.game) && norm(c.series)==='mondo');
 
+    // Inazuma — FINITO: 22 carte (series="Ritorno", game="Gotham City") => 6 pacchetti da 3 + 1 pacchetto da 4
+    GAME_STATE.pools['Inazuma'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='ritorno');
+    // Inazuma — ordine persistente: nessun doppione anche dopo refresh
+    try{
+      const game = 'Inazuma';
+      const pool = GAME_STATE.pools[game] || [];
+      const idsAll = pool.map(c => c.id);
+      const fp = idsAll.slice().sort().join('|');
+      const FP_KEY = 'futtu_inazuma_fp_v1';
+      const REM_KEY = 'futtu_inazuma_remaining_v1';
+      const savedFp = localStorage.getItem(FP_KEY) || '';
+      let remaining = null;
+      try{ remaining = JSON.parse(localStorage.getItem(REM_KEY) || 'null'); }catch{}
+      const set = new Set(idsAll);
+      if (!Array.isArray(remaining) || savedFp !== fp){
+        remaining = shuffleInPlace(idsAll.slice());
+        localStorage.setItem(REM_KEY, JSON.stringify(remaining));
+        localStorage.setItem(FP_KEY, fp);
+      } else {
+        // Mantieni SOLO le carte rimanenti (non ancora aperte).
+        // Non reinserire le "missing": quelle sono le carte già uscite.
+        remaining = remaining.filter(id => set.has(id));
+        try{ localStorage.setItem(REM_KEY, JSON.stringify(remaining)); }catch{}
+      }
+      GAME_STATE.remaining[game] = remaining;
+    }catch(e){
+      console.warn('Ritorno persistence init failed', e);
+      try{
+        const game='Inazuma';
+        GAME_STATE.remaining[game] = shuffleInPlace((GAME_STATE.pools[game]||[]).map(c=>c.id));
+      }catch{}
+    }
 
 
 
@@ -1039,8 +1076,10 @@ GAME_STATE.pools['Gold'] = cleaned.filter(c => isGotham(c.game) && norm(c.series
     // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
-    GAME_STATE.packs['Mondo']       = buildFinitePacks(GAME_STATE.pools['Mondo'],       PACK_SIZE_PER_GAME['Mondo']);      // size=1
-        GAME_STATE.packs['Ritorno al passato'] = []; // gestito via remaining persistente
+    GAME_STATE.packs['Mondo']
+    GAME_STATE.packs['Inazuma'] = buildFinitePacks(GAME_STATE.pools['Inazuma'], 3);
+           = buildFinitePacks(GAME_STATE.pools['Mondo'],       PACK_SIZE_PER_GAME['Mondo']);      // size=1
+        GAME_STATE.packs['Inazuma'] = []; // gestito via remaining persistente
     shuffleInPlace(packsGoldCards);
     GAME_STATE.packs['Gold'] = packsGoldCards;
     
@@ -1099,7 +1138,7 @@ try {
  document.getElementById('log').textContent =
   `Caricate: Patatine ${GAME_STATE.pools['Patatine'].length}, `+
   `TOTS ${GAME_STATE.pools['Gotham Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
-  `Ritorno ${GAME_STATE.pools['Ritorno al passato']?.length||0}, `+
+  `Ritorno ${GAME_STATE.pools['Inazuma']?.length||0}, `+
     `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
 
 
@@ -1163,7 +1202,7 @@ function renderPacksStrip(){
 }
 
 function totalPacksForGame(game){
-  if (game==='Ritorno al passato'){
+  if (game==='Inazuma'){
     const total = (GAME_STATE.pools[game]||[]).length;
     let count = 0, n = total;
     const sz = (PACK_SIZE_PER_GAME[game] || 3);
@@ -1174,7 +1213,7 @@ function totalPacksForGame(game){
 }
 
 function packsLeft(game){
-  if (game==='Ritorno al passato'){
+  if (game==='Inazuma'){
     const rem = (GAME_STATE.remaining?.[game] || []).length;
     let count = 0, n = rem;
     const sz = (PACK_SIZE_PER_GAME[game] || 3);
@@ -1185,7 +1224,7 @@ function packsLeft(game){
 }
 
 function drawRitornoPack(){
-  const game = 'Ritorno al passato';
+  const game = 'Inazuma';
   const pool = GAME_STATE.pools[game] || [];
   const byId = new Map(pool.map(c => [c.id, c]));
   let remaining = (GAME_STATE.remaining?.[game] || []);
@@ -1194,7 +1233,7 @@ function drawRitornoPack(){
   const packIds = remaining.slice(0, take);
   remaining = remaining.slice(take);
   GAME_STATE.remaining[game] = remaining;
-  try{ localStorage.setItem('futtu_ritorno_remaining_v1', JSON.stringify(remaining)); }catch{}
+  try{ localStorage.setItem('futtu_inazuma_remaining_v1', JSON.stringify(remaining)); }catch{}
   return packIds.map(id => byId.get(id)).filter(Boolean);
 }
 
@@ -1451,10 +1490,10 @@ try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }
     } else {
       chosen = generateBSGOnTheFly(game);
     }
-  } else if (game==='Ritorno al passato') {
+  } else if (game==='Inazuma') {
     chosen = drawRitornoPack();
     if (!chosen || !chosen.length) {
-      document.getElementById('log').textContent = '📦 Ritorno al passato: pacchetti esauriti.';
+      document.getElementById('log').textContent = '📦 Inazuma: pacchetti esauriti.';
       return;
     }
   } else {
