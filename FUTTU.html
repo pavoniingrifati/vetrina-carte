@@ -508,13 +508,13 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Patatine','Gotham Tots','Legend','Mondo','Ritorno al passato','Oggetti','Gold','Silver','Bronze','Strumenti'];
+const VALID_GAMES = ['Patatine','Gotham Tots','Legend','Mondo','Inazuma','Oggetti','Gold','Silver','Bronze','Strumenti'];
 const PACK_BACK_BY_GAME = {
   'Patatine': 'patatrine.png',
   'Gotham Tots': 'Deck%20back%20Tots.png',
   'Legend': 'Back%20legend.png',
   'Mondo': 'img/Mondo.png',
-  'Ritorno al passato': 'img/back%20tothefuture.png',
+  'Inazuma': 'img/back%20Inazuma.png',
   'Oggetti': 'Deck%20back%20tactcs.png',
   'Gold': 'Deck%20back%20oro%20BATMAN.png',
   'Silver': 'Deck%20back%20argento%20BATMAN.png',
@@ -529,7 +529,7 @@ const PACK_COST_PER_GAME = {
   'Gotham Tots': 0,
   'Legend': 0,
   'Mondo': 0,
-  'Ritorno al passato': 0,
+  'Inazuma': 0,
   'Oggetti': 0,
   'Gold': 0,
   'Silver': 0,
@@ -542,7 +542,7 @@ const PACK_SIZE_PER_GAME = {
   'Gotham Tots': 3,
   'Legend': 3,
   'Mondo': 1,
-  'Ritorno al passato': 3,
+  'Inazuma': 3,
   'Oggetti': 3,
   'Gold': 9,
   'Silver': 9,
@@ -757,9 +757,9 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Patatine',
-  pools:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Mondo': [], 'Ritorno al passato': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
-  packs:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Mondo': [], 'Ritorno al passato': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
-  cursor:   { 'Patatine':0,'Gotham Tots':0,'Legend':0,'Mondo':0,'Ritorno al passato':0,'Oggetti':0,'Gold':0,'Silver':0,'Bronze':0,'Strumenti':0,'Cosmetic':0 },
+  pools:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Mondo': [], 'Inazuma': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
+  packs:    { 'Patatine': [], 'Gotham Tots': [], 'Legend': [], 'Mondo': [], 'Inazuma': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [] },
+  cursor:   { 'Patatine':0,'Gotham Tots':0,'Legend':0,'Mondo':0,'Inazuma':0,'Oggetti':0,'Gold':0,'Silver':0,'Bronze':0,'Strumenti':0,'Cosmetic':0 },
   remaining: { 'Ritorno al passato': [] }
 };
 
@@ -889,38 +889,6 @@ GAME_STATE.pools['Gotham Tots'] = cleaned.filter(c => {
     // Mondo — FINITO: series=\"Mondo\" + game=\"Gotham City\" => pacchetti da 1 (8 tot)
     GAME_STATE.pools['Mondo'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='mondo');
 
-    // Ritorno al passato — FINITO: 22 carte (series="Ritorno", game="Gotham City") => 6 pacchetti da 3 + 1 pacchetto da 4
-    GAME_STATE.pools['Ritorno al passato'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='ritorno');
-    // Ritorno al passato — ordine persistente: nessun doppione anche dopo refresh
-    try{
-      const game = 'Ritorno al passato';
-      const pool = GAME_STATE.pools[game] || [];
-      const idsAll = pool.map(c => c.id);
-      const fp = idsAll.slice().sort().join('|');
-      const FP_KEY = 'futtu_ritorno_fp_v1';
-      const REM_KEY = 'futtu_ritorno_remaining_v1';
-      const savedFp = localStorage.getItem(FP_KEY) || '';
-      let remaining = null;
-      try{ remaining = JSON.parse(localStorage.getItem(REM_KEY) || 'null'); }catch{}
-      const set = new Set(idsAll);
-      if (!Array.isArray(remaining) || savedFp !== fp){
-        remaining = shuffleInPlace(idsAll.slice());
-        localStorage.setItem(REM_KEY, JSON.stringify(remaining));
-        localStorage.setItem(FP_KEY, fp);
-      } else {
-        // Mantieni SOLO le carte rimanenti (non ancora aperte).
-        // Non reinserire le "missing": quelle sono le carte già uscite.
-        remaining = remaining.filter(id => set.has(id));
-        try{ localStorage.setItem(REM_KEY, JSON.stringify(remaining)); }catch{}
-      }
-      GAME_STATE.remaining[game] = remaining;
-    }catch(e){
-      console.warn('Ritorno persistence init failed', e);
-      try{
-        const game='Ritorno al passato';
-        GAME_STATE.remaining[game] = shuffleInPlace((GAME_STATE.pools[game]||[]).map(c=>c.id));
-      }catch{}
-    }
 
 
 
