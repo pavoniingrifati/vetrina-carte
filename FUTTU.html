@@ -550,7 +550,7 @@ const PACK_SIZE_PER_GAME = {
   'Strumenti': 3
 };
 
-const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
+const CONFIG = { CARDS_JSON: 'cards (2).json', FETCH_TIMEOUT_MS: 8000 };
 
 // Espone config su window per gli script non-module (sidebar/section rendering)
 try{
@@ -869,13 +869,11 @@ GAME_STATE.pools['Gotham Tots'] = cleaned.filter(c => {
 });
 
 
-    // Legend (come prima)
+    // Legend — pool completo Gotham; l'ultima carta usa probabilità speciali via id
     const legendPoolAll = cleaned.filter(c =>
       isGotham(c.game) &&
-      ['rara','epica','ultra rara','leggendaria'].includes(norm(c.rarity))
+      ['rara','ultra rara','epica','leggendaria'].includes(norm(c.rarity))
     );
-    const legendNonLegend = legendPoolAll.filter(c => norm(c.rarity) !== 'leggendaria');
-    const legendOnlyLegend = legendPoolAll.filter(c => norm(c.rarity) === 'leggendaria');
     GAME_STATE.pools['Legend'] = legendPoolAll;
 
     // Oggetti — NEW: prende qualsiasi card con series = "Oggetto" (game: qualunque)
@@ -1039,16 +1037,8 @@ GAME_STATE.pools['Gold'] = cleaned.filter(c => isGotham(c.game) && norm(c.series
     shuffleInPlace(packsGoldCards);
     GAME_STATE.packs['Gold'] = packsGoldCards;
     
-    // Legend: base senza leggendarie, con ~10% di injection leggendaria
-    const baseLegendPacks = buildFinitePacks(legendNonLegend, PACK_SIZE_PER_GAME['Legend']).map(p => p.slice(0, PACK_SIZE_PER_GAME['Legend']));
-    const legendsBag = shuffleInPlace(legendOnlyLegend.slice()); // finite
-    for (const p of baseLegendPacks) {
-      if (Math.random() < 0.1 && legendsBag.length > 0) {
-        const idx = Math.floor(Math.random() * p.length);
-        p[idx] = legendsBag.pop();
-      }
-    }
-    GAME_STATE.packs['Legend'] = baseLegendPacks;
+    // Legend — INFINITO: niente buildFinitePacks, apertura on-the-fly
+    GAME_STATE.packs['Legend'] = [];
 
     // Oggetti — INFINITO: niente buildFinitePacks, lasciamo packs vuoto
     GAME_STATE.packs['Oggetti'] = [];
@@ -1127,9 +1117,9 @@ function renderPacksStrip(){
       const imgSrc = PACK_BACK_BY_GAME[game] || 'patatrine.png';
       const cost = Number(PACK_COST_PER_GAME[game] || 0);
       const totalPacks = totalPacksForGame(game);
-      const left = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold') ? '∞' : String(packsLeft(game));
+      const left = (game==='Oggetti' || game==='Legend' || game==='Bronze' || game==='Silver' || game==='Gold') ? '∞' : String(packsLeft(game));
       const cardsCount = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : (GAME_STATE.pools[game]?.length || 0));
-      const subtitle = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold')
+      const subtitle = (game==='Oggetti' || game==='Legend' || game==='Bronze' || game==='Silver' || game==='Gold')
         ? `${cardsCount} carte`
         : `${left}/${totalPacks} pacchi • ${cardsCount} carte`;
 
@@ -1177,7 +1167,7 @@ function renderGamePicker(){
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
 
-    const subtitle = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold')
+    const subtitle = (game==='Oggetti' || game==='Legend' || game==='Bronze' || game==='Silver' || game==='Gold')
       ? `∞ pacchetti • ${totalCards} carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
 
@@ -1214,7 +1204,7 @@ function updateOpenBtnEnabled(){
   const cost = PACK_COST_PER_GAME[game] || 0;
   const badgeText = pointsBadge.textContent || 'Punti: 0';
   const pts = Number((badgeText.split(':')[1]||'0').trim()) || 0;
-  const noLimit = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold');
+  const noLimit = (game==='Oggetti' || game==='Legend' || game==='Bronze' || game==='Silver' || game==='Gold');
 
   openBtn.disabled = (!noLimit && left <= 0) || (cost > 0 && pts < cost);
   renderGamePicker();
@@ -1311,6 +1301,65 @@ function showStage(cards){
   document.getElementById('log').textContent='Pacchetto pronto. Tocca le carte per rivelarle.';
 }
 
+function getRandom(arr){
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function isLegendIdSpecial(id){
+  const s = String(id||'').toLowerCase();
+  return s.includes('senatore') || s.includes('leggendaria') || s.includes('hall of fame');
+}
+
+function getLegendNormalCards(cards){
+  return (cards||[]).filter(c => {
+    const rarity = String(c?.rarity||'').trim().toLowerCase();
+    return (rarity === 'rara' || rarity === 'ultra rara') && !isLegendIdSpecial(c?.id);
+  });
+}
+
+function getLegendFinalCardType(){
+  const rand = Math.random() * 100;
+  if (rand < 10) return 'LEGEND';      // 10%
+  if (rand < 17) return 'HOF';         // 7%
+  if (rand < 37) return 'SENATORE';    // 20%
+  return 'NORMAL';                     // 63%
+}
+
+function getLegendPoolByType(cards, type){
+  const all = Array.isArray(cards) ? cards : [];
+  const byNeedle = (needle) => all.filter(c => String(c?.id||'').toLowerCase().includes(needle));
+
+  if (type === 'LEGEND') return byNeedle('leggendaria');
+  if (type === 'HOF') return byNeedle('hall of fame');
+  if (type === 'SENATORE') return byNeedle('senatore');
+  return getLegendNormalCards(all);
+}
+
+function pickLegendFinalCard(cards){
+  const type = getLegendFinalCardType();
+  let pool = getLegendPoolByType(cards, type);
+  if (!pool.length) pool = getLegendNormalCards(cards);
+  if (!pool.length) pool = Array.isArray(cards) ? cards : [];
+  if (!pool.length) return null;
+  return getRandom(pool);
+}
+
+function generateLegendPack(){
+  const all = GAME_STATE.pools['Legend'] || [];
+  let normalPool = getLegendNormalCards(all);
+  if (!normalPool.length) normalPool = all;
+  if (!normalPool.length) return [];
+
+  const finalCard = pickLegendFinalCard(all);
+  const result = [
+    getRandom(normalPool),
+    getRandom(normalPool),
+    finalCard
+  ].filter(Boolean);
+
+  return result;
+}
+
 /** =========================
  *  OPEN PACK (con caso speciale Oggetti infinito)
  *  ========================= */
@@ -1366,7 +1415,13 @@ if (
 
   // Scelta carte
   let chosen;
-  if (["Gold","Silver","Bronze"].includes(game)) {
+  if (game==='Legend') {
+    chosen = generateLegendPack();
+    if (!chosen.length) {
+      document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nel pack Legend.';
+      return;
+    }
+  } else if (["Gold","Silver","Bronze"].includes(game)) {
   // Pacchetti G/S/B: 3 Oggetto (series="Oggetto") + 6 dalla series del pacchetto, SOLO da "Gotham City", senza doppioni nello stesso pacchetto
   const isGotham = (x) => String(x||'').trim().toLowerCase() === 'gotham city';
   const uniqById = (arr) => { const m = new Map(); for (const c of arr) { if (c && !m.has(c.id)) m.set(c.id, c); } return Array.from(m.values()); };
@@ -1729,7 +1784,7 @@ window.renderGamePicker = function(){
     btn.setAttribute('data-game',game);
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
-    const subtitle = (game==='Oggetti' || game==='Bronze' || game==='Silver' || game==='Gold')
+    const subtitle = (game==='Oggetti' || game==='Legend' || game==='Bronze' || game==='Silver' || game==='Gold')
       ? `∞ pacchetti • ${totalCards} carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
     btn.innerHTML = `
