@@ -477,10 +477,12 @@ window.STORE_SECTIONS = {
 <div class="face back">
 <img alt="Retro carta" decoding="async" loading="eager" src="Deck%20back%20wonderkid.png"/>
 </div>
-<div class="face front">
-<span class="badge"></span>
-<img alt="" decoding="async" loading="lazy"/>
-</div>
+<img 
+  alt="" 
+  decoding="async" 
+  loading="lazy"
+  onerror="this.onerror=null; this.src='img/nEW%20pLAYER.png';"
+/>
 </div>
 <div class="veil"></div>
 <div class="spark"></div>
@@ -15613,8 +15615,17 @@ function makeCardEl(d,isFinal){
   if(rslug) n.classList.add('r-'+rslug);
   if(isFinal) n.classList.add('final');
   const front=n.querySelector('.front img');
-  front.src=d.img||''; front.alt=`Carta ${d.name||''}`; front.loading='lazy'; front.decoding='async';
-  n.querySelector('.badge').textContent=d.rarity||'';
+if (front) {
+  front.src = d.img || 'img/nEW%20pLAYER.png';
+  front.alt = `Carta ${d.name || ''}`;
+  front.loading = 'lazy';
+  front.decoding = 'async';
+
+  front.onerror = () => {
+    front.onerror = null;
+    front.src = 'img/nEW%20pLAYER.png';
+  };
+}  n.querySelector('.badge').textContent=d.rarity||'';
   n.dataset.state='back';
   n.addEventListener('click',()=>{ 
     if(n.dataset.state==='back'){ revealCard(n,d) } 
