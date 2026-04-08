@@ -40,7 +40,7 @@ function renderFixedDifficulties(targetEl, pools, type){
         <div class="pack ${type === "cursed" ? "cursed" : diff}">
           ${type === "cursed" ? '<div class="corruption" aria-hidden="true"></div>' : ""}
           <div class="brand">
-            <div class="title">PACCHETTO ${diff.toUpperCase()}</div>
+            <div class="title">${type === "cursed" ? "PACCHETTO CURSED" : `PACCHETTO ${diff.toUpperCase()}`}</div>
             <div class="sub">FANTABALLA</div>
           </div>
         </div>
@@ -68,16 +68,21 @@ async function init(){
   const liveOut = document.querySelector("#liveGoalsOut");
   const cursedOut = document.querySelector("#cursedGoalsOut");
 
-  renderFixedDifficulties(matchOut, matchPools, "match");
-  renderFixedDifficulties(liveOut, livePools, "live");
-  renderFixedDifficulties(cursedOut, cursedPools, "cursed");
+  if (matchOut) renderFixedDifficulties(matchOut, matchPools, "match");
+  if (liveOut) renderFixedDifficulties(liveOut, livePools, "live");
+  if (cursedOut) renderFixedDifficulties(cursedOut, cursedPools, "cursed");
 
   document.querySelectorAll("[data-generate]").forEach(btn => {
     btn.addEventListener("click", () => {
       const type = btn.dataset.generate;
-      if (type === "match") renderFixedDifficulties(matchOut, matchPools, "match");
-      else if (type === "live") renderFixedDifficulties(liveOut, livePools, "live");
-      else if (type === "cursed") renderFixedDifficulties(cursedOut, cursedPools, "cursed");
+
+      if (type === "match" && matchOut) {
+        renderFixedDifficulties(matchOut, matchPools, "match");
+      } else if (type === "live" && liveOut) {
+        renderFixedDifficulties(liveOut, livePools, "live");
+      } else if (type === "cursed" && cursedOut) {
+        renderFixedDifficulties(cursedOut, cursedPools, "cursed");
+      }
     });
   });
 }
