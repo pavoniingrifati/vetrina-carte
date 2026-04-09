@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>FUT Fantaballa Tik Tok</title>
-<meta name="description" content="Pack unico diviso per 'game' (Fantaballa FC / Gotham City). Pacchetti finiti: Patatine (1 carta, pesato), Cursed (1 carta), Formula 1 (22 carte in 7 pack unici), Fantaballa Tots (3 carte), Legend (3 carte). Nuovo: Oggetti (3 carte, infinito). Login e salvataggio inventario invariati." />
+<meta name="description" content="Pack unico diviso per 'game' (Fantaballa FC / Gotham City). Pacchetti finiti: Patatine (1 carta, pesato), Formula 1 (22 carte in 7 pack unici), Fantaballa Tots (3 carte), Legend (3 carte). Nuovo: Oggetti (3 carte, infinito). Login e salvataggio inventario invariati." />
 
 <!-- Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -531,10 +531,10 @@ table td, table th {
 <script>
 // === Sezioni Store (solo etichette, nessuna navigazione attiva) ===
 window.STORE_SECTIONS = {
-  featured: ['Formula 1','Patatine','Cursed'],
-  new: ['Formula 1','Cursed'], // Ultimi arrivi
+  featured: ['Formula 1','Patatine','Dannazione'],
+  new: ['Formula 1'], // Ultimi arrivi
   base: ['Gold','Silver','Bronze'], // Pacchetti base
-  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Formula 1','Patatine','Cursed','Fantaballa Tots','Legend','Oggetti','Gold','Silver','Bronze','Cosmetic','Strumenti','Sfere del drago'])
+  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Formula 1','Patatine','Dannazione','Fantaballa Tots','Legend','Oggetti','Gold','Silver','Bronze','Cosmetic','Strumenti','Sfere del drago'])
 };
 </script>
 
@@ -634,18 +634,18 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 </script>
 
-<script>
+<script type="module">
 // Firestore
 const db = firebase.firestore();
 
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Formula 1', 'Patatine', 'Cursed', 'Fantaballa Tots', 'Legend', 'Oggetti', 'Gold', 'Silver', 'Bronze', 'Cosmetic', 'Strumenti', 'Sfere del drago'];
+const VALID_GAMES = ['Formula 1', 'Patatine', 'Dannazione', 'Fantaballa Tots', 'Legend', 'Oggetti', 'Gold', 'Silver', 'Bronze', 'Cosmetic', 'Strumenti', 'Sfere del drago'];
 const PACK_BACK_BY_GAME = {
   'Formula 1': 'img/Back%20f1.png',
   'Patatine': 'patatrine.png',
-  'Cursed': 'img/Back_cursed.png',
+  'Dannazione': 'img/back%20dannazione.png',
   'Fantaballa Tots': 'Deck%20back%20Tots.png',
   'Legend': 'Back%20legend.png',
   'Oggetti': 'Deck%20back%20tactcs.png',
@@ -661,7 +661,7 @@ const PACK_BACK_BY_GAME = {
 const PACK_COST_PER_GAME = {
   'Formula 1': 0,
   'Patatine': 0,
-  'Cursed': 0,
+  'Dannazione': 0,
   'Fantaballa Tots': 0,
   'Legend': 0,
   'Oggetti': 0,
@@ -676,7 +676,7 @@ const PACK_COST_PER_GAME = {
 const PACK_SIZE_PER_GAME = {
   'Formula 1': 3,
   'Patatine': 1,
-  'Cursed': 1,
+  'Dannazione': 1,
   'Fantaballa Tots': 3,
   'Legend': 3,
   'Oggetti': 3,
@@ -689,10 +689,6 @@ const PACK_SIZE_PER_GAME = {
 };
 
 const CONFIG = { CARDS_JSON: 'cards.json', FETCH_TIMEOUT_MS: 8000 };
-window.VALID_GAMES = VALID_GAMES;
-window.PACK_BACK_BY_GAME = PACK_BACK_BY_GAME;
-window.PACK_COST_PER_GAME = PACK_COST_PER_GAME;
-window.PACK_SIZE_PER_GAME = PACK_SIZE_PER_GAME;
 
 /** =========================
  *  AUTH
@@ -899,12 +895,12 @@ async function saveInventario(cards) {
  *  ========================= */
 const GAME_STATE = {
   selected: 'Formula 1',
-  pools:    { 'Formula 1': [], 'Patatine': [], 'Cursed': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Sfere del drago': [] },
-  packs:    { 'Formula 1': [], 'Patatine': [], 'Cursed': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Sfere del drago': [] },
-  cursor:   { 'Formula 1': 0, 'Patatine': 0, 'Cursed': 0, 'Fantaballa Tots': 0, 'Legend': 0, 'Oggetti': 0, 'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0, 'Sfere del drago': 0 },
+  pools:    { 'Formula 1': [], 'Patatine': [], 'Dannazione': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Sfere del drago': [] },
+  packs:    { 'Formula 1': [], 'Patatine': [], 'Dannazione': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Sfere del drago': [] },
+  cursor:   { 'Formula 1': 0, 'Patatine': 0, 'Dannazione': 0, 'Fantaballa Tots': 0, 'Legend': 0, 'Oggetti': 0, 'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0, 'Sfere del drago': 0 },
   opening:false
 };
-window.GAME_STATE = GAME_STATE;
+
 
 function shuffleInPlace(a){
   for (let i=a.length-1; i>0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
@@ -956,7 +952,6 @@ async function loadCards(){
       if(ids.has(id)) continue; ids.add(id);
       cleaned.push({id,name,rarity,img,series,game,text,tags});
     }
-    window.cleaned = cleaned.slice();
 
     // ====== Helper ======
     const isGotham = (x)=> norm(x)==='gotham city';
@@ -977,10 +972,9 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
       isFantaballa(c.game) &&
       norm(c.series) !== 'leggendaria'
     );
-
-    // Cursed — stessa logica di Patatine, ma prende tutte le carte con series="Cursed"
-    GAME_STATE.pools['Cursed'] = cleaned.filter(c =>
-      norm(c.series) === 'cursed'
+// Dannazione — tutte le carte con series = "Cursed" (1 carta per pack, finito)
+    GAME_STATE.pools['Dannazione'] = cleaned.filter(c =>
+      norm(c.series)==='cursed'
     );
 // Fantaballa Tots — SOLO ed ESCLUSIVAMENTE Tots16 di Fantaballa FC
     GAME_STATE.pools['Fantaballa Tots'] = cleaned.filter(c =>
@@ -1133,7 +1127,7 @@ GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards));
 // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Formula 1'] = buildFormula1Packs(GAME_STATE.pools['Formula 1']);
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
-    GAME_STATE.packs['Cursed']      = buildFinitePacks(GAME_STATE.pools['Cursed'],      PACK_SIZE_PER_GAME['Cursed']);     // size=1
+    GAME_STATE.packs['Dannazione'] = buildFinitePacks(GAME_STATE.pools['Dannazione'], PACK_SIZE_PER_GAME['Dannazione']);   // size=1
     GAME_STATE.packs['Fantaballa Tots'] = buildFinitePacks(GAME_STATE.pools['Fantaballa Tots'], PACK_SIZE_PER_GAME['Fantaballa Tots']);
         GAME_STATE.packs['Sfere del drago'] = buildFinitePacks(GAME_STATE.pools['Sfere del drago'], PACK_SIZE_PER_GAME['Sfere del drago']);
 /* packs Gold set by auto */
@@ -1256,7 +1250,7 @@ try {
     applyPackVisual();
     updateOpenBtnEnabled();
  document.getElementById('log').textContent =
-  `Caricate: Formula 1 ${GAME_STATE.pools['Formula 1'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, Cursed ${GAME_STATE.pools['Cursed'].length}, `+
+  `Caricate: Formula 1 ${GAME_STATE.pools['Formula 1'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, Dannazione ${GAME_STATE.pools['Dannazione'].length}, `+
   `TOTS ${GAME_STATE.pools['Fantaballa Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
   `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
 
@@ -1549,7 +1543,7 @@ openBtn.addEventListener('click', async () => {
   // Carica carte (se non già)
 if (!GAME_STATE.packs['Formula 1'].length && 
     !GAME_STATE.packs['Patatine'].length && 
-    !GAME_STATE.packs['Cursed'].length && 
+    !GAME_STATE.packs['Dannazione'].length && 
     !GAME_STATE.packs['Fantaballa Tots'].length &&
     !GAME_STATE.packs['Gold'].length &&
     !GAME_STATE.pools['Oggetti']?.length) {
@@ -1761,11 +1755,11 @@ function renderPacksStrip(){
 }
 
 
-// === Featured strip rendering (Formula 1, Patatine, Cursed) ===
+// === Featured strip rendering (only: Formula 1, Patatine) ===
 function renderPacksStrip(){
   const strip = document.getElementById('packsStrip');
   if (!strip) return;
-  const FEATURED_LIST = ['Formula 1','Patatine','Cursed']; // pack in evidenza
+  const FEATURED_LIST = ['Formula 1','Patatine','Dannazione']; // solo quelli richiesti
   strip.innerHTML='';
   const frag = document.createDocumentFragment();
   FEATURED_LIST.forEach(game => {
