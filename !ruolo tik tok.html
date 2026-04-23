@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overlay Ruoli Popup - TikTok Live</title>
+<style>
+    html, body{
+        margin:0;
+        padding:0;
+        width:100%;
+        height:100%;
+        overflow:hidden;
+        background:transparent;
+        font-family:Arial, Helvetica, sans-serif;
+    }
+
+    body{
+        pointer-events:none;
+    }
+
+    #popupWrap{
+        position:fixed;
+        left:50%;
+        bottom:40px;
+        transform:translateX(-50%);
+        width:min(1000px, 92vw);
+        display:flex;
+        justify-content:center;
+        align-items:flex-end;
+    }
+
+    #rolePopup{
+        opacity:0;
+        transform:translateY(30px) scale(0.92);
+        transition:opacity .35s ease, transform .35s ease;
+        background:rgba(10,13,26,.94);
+        color:#ffffff;
+        border:2px solid rgba(56,84,255,.95);
+        border-radius:22px;
+        padding:18px 28px;
+        text-align:center;
+        font-weight:900;
+        font-size:34px;
+        line-height:1.2;
+        box-shadow:0 14px 36px rgba(0,0,0,.45);
+        max-width:100%;
+        word-break:break-word;
+    }
+
+    #rolePopup.show{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+
+    .name{
+        color:#7dd3fc;
+    }
+
+    .role{
+        color:#86efac;
+    }
+
+    #status{
+        position:fixed;
+        top:18px;
+        right:18px;
+        padding:8px 12px;
+        border-radius:999px;
+        font-size:14px;
+        font-weight:700;
+        background:rgba(10,13,26,.78);
+        color:#fca5a5;
+        border:1px solid rgba(239,68,68,.5);
+        letter-spacing:.3px;
+    }
+
+    #status.online{
+        color:#86efac;
+        border-color:rgba(34,197,94,.55);
+    }
+</style>
+</head>
+<body>
+    <div id="status">TikTok WS: OFFLINE</div>
+
+    <div id="popupWrap">
+        <div id="rolePopup"></div>
+    </div>
+
+<script>
+const query = new URLSearchParams(window.location.search);
+const CONFIG = {
+    ws: query.get('ws') || 'ws://localhost:21213/',
+    command: (query.get('command') || '!ruolo').trim().toLowerCase(),
+    popupMs: Math.max(1000, Number(query.get('popupMs') || 3500)),
+    allowRepeat: query.get('allowRepeat') === '1'
+};
+
+let ws = null;
+let reconnectTimer = null;
+const usedUsers = new Set();
+
+function pickFirstString(...values) {
+    for (const v of values) {
+        if (typeof v === 'string' && v.trim()) return v.trim();
+    }
+    return '';
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+function setStatus(isOnline) {
+    const status = document.getElementById('status');
+    if (!status) return;
+    status.textContent = isOnline ? 'TikTok WS: ONLINE' : 'TikTok WS: OFFLINE';
+    status.classList.toggle('online', isOnline);
+}
+
+function normalizeTikTokMessage(payload) {
+    const root = payload?.data || payload || {};
+    const text = pickFirstString(
+        root?.comment,
+        root?.text,
+        root?.message,
+        root?.content,
+        root?.data?.comment,
+        payload?.comment,
+        payload?.text
+    );
+
+    const user = pickFirstString(
+        root?.uniqueId,
+        root?.user?.uniqueId,
+        root?.username,
+        root?.user?.username,
+        root?.nickname,
+        root?.user?.nickname,
+        payload?.uniqueId
+    ) || 'utente';
+
+    const displayName = pickFirstString(
+        root?.nickname,
+        root?.user?.nickname,
+        root?.uniqueId,
+        root?.user?.uniqueId,
+        root?.username,
+        user
+    ) || user;
+
+    const eventType = pickFirstString(
+        payload?.event,
+        payload?.type,
+        root?.event,
+        root?.type
+    ).toLowerCase();
+
+    return { text, user, displayName, eventType };
+}
+
+function isCommentEvent(normalized) {
+    if (!normalized.text) return false;
+    if (!normalized.eventType) return true;
+    return ['comment', 'chat', 'message'].some(type => normalized.eventType.includes(type));
+}
+
+function showRolePopup(user, role) {
+    const popup = document.getElementById('rolePopup');
+    if (!popup) return;
+
+    popup.innerHTML = `⚽ <span class="name">${escapeHtml(user)}</span> è il nuovo: <span class="role">${escapeHtml(role)}</span>`;
+    popup.classList.add('show');
+
+    clearTimeout(showRolePopup._timer);
+    showRolePopup._timer = setTimeout(() => {
+        popup.classList.remove('show');
+    }, CONFIG.popupMs);
+}
+
+function handleRoleMessage({ text, user, displayName }) {
+    const trimmed = text.trim();
+    const lower = trimmed.toLowerCase();
+    if (!lower.startsWith(CONFIG.command)) return;
+
+    const role = trimmed.slice(CONFIG.command.length).trim();
+    if (role.length < 2) return;
+
+    const normalizedUser = user.toLowerCase();
+    if (!CONFIG.allowRepeat && usedUsers.has(normalizedUser)) return;
+
+    usedUsers.add(normalizedUser);
+    showRolePopup(displayName, role);
+}
+
+function processTikTokPayload(payload) {
+    const normalized = normalizeTikTokMessage(payload);
+    if (!isCommentEvent(normalized)) return;
+    handleRoleMessage(normalized);
+}
+
+function connectTikTokWS() {
+    try {
+        ws = new WebSocket(CONFIG.ws);
+
+        ws.addEventListener('open', () => {
+            clearTimeout(reconnectTimer);
+            setStatus(true);
+        });
+
+        ws.addEventListener('message', (event) => {
+            let payload;
+            try {
+                payload = JSON.parse(event.data);
+            } catch {
+                return;
+            }
+            processTikTokPayload(payload);
+        });
+
+        ws.addEventListener('close', () => {
+            setStatus(false);
+            clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(connectTikTokWS, 2500);
+        });
+
+        ws.addEventListener('error', () => {
+            setStatus(false);
+        });
+    } catch {
+        setStatus(false);
+        clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(connectTikTokWS, 3000);
+    }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    setStatus(false);
+    connectTikTokWS();
+});
+</script>
+</body>
+</html>
