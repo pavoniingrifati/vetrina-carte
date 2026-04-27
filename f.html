@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overlay Ruoli Popup - TikTok / TikFinity</title>
+<style>
+    html, body{
+        margin:0;
+        padding:0;
+        width:100%;
+        height:100%;
+        overflow:hidden;
+        background:transparent;
+        font-family:Arial, Helvetica, sans-serif;
+    }
+
+    body{
+        pointer-events:none;
+    }
+
+    #popupWrap{
+        position:fixed;
+        left:50%;
+        bottom:40px;
+        transform:translateX(-50%);
+        width:min(1000px, 92vw);
+        display:flex;
+        justify-content:center;
+        align-items:flex-end;
+    }
+
+    #rolePopup{
+        opacity:0;
+        transform:translateY(30px) scale(0.92);
+        transition:opacity .35s ease, transform .35s ease;
+        background:rgba(10,13,26,.94);
+        color:#ffffff;
+        border:2px solid rgba(56,84,255,.95);
+        border-radius:22px;
+        padding:18px 28px;
+        text-align:center;
+        font-weight:900;
+        font-size:34px;
+        line-height:1.2;
+        box-shadow:0 14px 36px rgba(0,0,0,.45);
+        max-width:100%;
+        word-break:break-word;
+    }
+
+    #rolePopup.show{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+
+    .name{
+        color:#7dd3fc;
+    }
+
+    .role{
+        color:#86efac;
+    }
+</style>
+</head>
+<body>
+    <div id="popupWrap">
+        <div id="rolePopup"></div>
+    </div>
+
+    <audio id="registrationSound" src="registrazione.wav" preload="auto"></audio>
+
+<script>
+const query = new URLSearchParams(window.location.search);
+const TIKFINITY_CONFIG = {
+    host: query.get('host') || '127.0.0.1',
+    port: Number(query.get('port') || 21213),
+    endpoint: query.get('endpoint') || '/',
+};
+
+let ws = null;
+let reconnectTimer = null;
+
+function pickFirstString(...values) {
+    for (const v of values) {
+        if (typeof v === 'string' && v.trim()) return v.trim();
+    }
+    return '';
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+function playRegistrationSound() {
+    const audio = document.getElementById('registrationSound');
+    if (!audio) return;
+
+    try {
+        audio.pause();
+        audio.currentTime = 0;
+        const playPromise = audio.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {});
+        }
+    } catch {}
+}
+
+function showRolePopup(user, role) {
+    const popup = document.getElementById('rolePopup');
+    if (!popup) return;
+
+    popup.innerHTML = `🏎️ <span class="name">${escapeHtml(user)}</span> è un nuovo predestinato! Su i motori <span class="role">${escapeHtml(role)}!</span>`;
+    popup.classList.add('show');
+
+    playRegistrationSound();
+
+    clearTimeout(showRolePopup._timer);
+    showRolePopup._timer = setTimeout(() => {
+        popup.classList.remove('show');
+    }, 3500);
+}
+
+function handlePredictionMessage(text, displayName) {
+    const cleanText = pickFirstString(text);
+    const lower = cleanText.toLowerCase();
+    if (!lower.startsWith('!f ')) return;
+
+    const role = cleanText.substring(3).trim();
+    if (role.length < 2) return;
+
+    showRolePopup(displayName || 'utente', role);
+}
+
+function processTikFinityMessage(rawData) {
+    const text = pickFirstString(
+        rawData?.data?.comment,
+        rawData?.comment,
+        rawData?.data?.message,
+        rawData?.message,
+        rawData?.text
+    );
+
+    const displayName = pickFirstString(
+        rawData?.data?.nickname,
+        rawData?.data?.uniqueId,
+        rawData?.nickname,
+        rawData?.uniqueId,
+        rawData?.data?.user,
+        rawData?.user
+    ) || 'utente';
+
+    if (!text) return;
+    handlePredictionMessage(text, displayName);
+}
+
+function connectTikFinity() {
+    clearTimeout(reconnectTimer);
+
+    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+    const endpoint = TIKFINITY_CONFIG.endpoint.startsWith('/') ? TIKFINITY_CONFIG.endpoint : `/${TIKFINITY_CONFIG.endpoint}`;
+    const wsUrl = `${protocol}://${TIKFINITY_CONFIG.host}:${TIKFINITY_CONFIG.port}${endpoint}`;
+
+    try {
+        ws = new WebSocket(wsUrl);
+
+        ws.addEventListener('message', (evt) => {
+            let payload;
+            try {
+                payload = JSON.parse(evt.data);
+            } catch {
+                return;
+            }
+
+            processTikFinityMessage(payload);
+        });
+
+        ws.addEventListener('close', () => {
+            reconnectTimer = setTimeout(connectTikFinity, 2000);
+        });
+
+        ws.addEventListener('error', () => {
+            try { ws.close(); } catch {}
+        });
+    } catch {
+        reconnectTimer = setTimeout(connectTikFinity, 2000);
+    }
+}
+
+window.addEventListener('DOMContentLoaded', connectTikFinity);
+</script>
+</body>
+</html>
