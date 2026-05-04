@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>FUT Fantaballa Tik Tok</title>
-<meta name="description" content="Pack unico diviso per 'game' (Fantaballa FC / Gotham City). Pacchetti finiti: Patatine (1 carta, pesato), Formula 1 (22 carte in 7 pack unici), Fantaballa Tots (3 carte), Legend (3 carte). Nuovo: Oggetti (3 carte, infinito). Login e salvataggio inventario invariati." />
+<meta name="description" content="Pack unico diviso per 'game' (Fantaballa FC / Gotham City). Pacchetti finiti: Patatine (1 carta, pesato), Dream Regen (22 carte in 7 pack unici), Fantaballa Tots (3 carte), Legend (3 carte). Nuovo: Oggetti (3 carte, infinito). Login e salvataggio inventario invariati." />
 
 <!-- Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -531,10 +531,10 @@ table td, table th {
 <script>
 // === Sezioni Store (solo etichette, nessuna navigazione attiva) ===
 window.STORE_SECTIONS = {
-  featured: ['Formula 1','Patatine','Dannazione'],
-  new: ['Formula 1'], // Ultimi arrivi
+  featured: ['Dream Regen','Patatine','Dannazione'],
+  new: ['Dream Regen'], // Ultimi arrivi
   base: ['Gold','Silver','Bronze'], // Pacchetti base
-  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Formula 1','Patatine','Dannazione','Fantaballa Tots','Legend','Oggetti','Gold','Silver','Bronze','Cosmetic','Strumenti','Sfere del drago'])
+  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Dream Regen','Patatine','Dannazione','Fantaballa Tots','Legend','Oggetti','Gold','Silver','Bronze','Cosmetic','Strumenti','Sfere del drago'])
 };
 </script>
 
@@ -606,7 +606,7 @@ window.STORE_SECTIONS = {
     <div class="rays"></div>
     <div class="scene">
       <div class="face back">
-        <img src="img/Back%20f1.png" alt="Retro carta" loading="eager" decoding="async" />
+        <img src="img/dregen%20back.png" alt="Retro carta" loading="eager" decoding="async" />
       </div>
       <div class="face front">
         <span class="badge"></span>
@@ -641,9 +641,9 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Formula 1', 'Patatine', 'Dannazione', 'Fantaballa Tots', 'Legend', 'Oggetti', 'Gold', 'Silver', 'Bronze', 'Cosmetic', 'Strumenti', 'Sfere del drago'];
+const VALID_GAMES = ['Dream Regen', 'Patatine', 'Dannazione', 'Fantaballa Tots', 'Legend', 'Oggetti', 'Gold', 'Silver', 'Bronze', 'Cosmetic', 'Strumenti', 'Sfere del drago'];
 const PACK_BACK_BY_GAME = {
-  'Formula 1': 'img/Back%20f1.png',
+  'Dream Regen': 'img/dregen%20back.png',
   'Patatine': 'patatrine.png',
   'Dannazione': 'img/back%20dannazione.png',
   'Fantaballa Tots': 'Deck%20back%20Tots.png',
@@ -659,7 +659,7 @@ const PACK_BACK_BY_GAME = {
 
 
 const PACK_COST_PER_GAME = {
-  'Formula 1': 0,
+  'Dream Regen': 0,
   'Patatine': 0,
   'Dannazione': 0,
   'Fantaballa Tots': 0,
@@ -674,7 +674,7 @@ const PACK_COST_PER_GAME = {
 };
 
 const PACK_SIZE_PER_GAME = {
-  'Formula 1': 3,
+  'Dream Regen': 3,
   'Patatine': 1,
   'Dannazione': 1,
   'Fantaballa Tots': 3,
@@ -894,10 +894,10 @@ async function saveInventario(cards) {
  *  DATI CARTE + PACCHETTI (FINITI)
  *  ========================= */
 const GAME_STATE = {
-  selected: 'Formula 1',
-  pools:    { 'Formula 1': [], 'Patatine': [], 'Dannazione': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Sfere del drago': [] },
-  packs:    { 'Formula 1': [], 'Patatine': [], 'Dannazione': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Sfere del drago': [] },
-  cursor:   { 'Formula 1': 0, 'Patatine': 0, 'Dannazione': 0, 'Fantaballa Tots': 0, 'Legend': 0, 'Oggetti': 0, 'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0, 'Sfere del drago': 0 },
+  selected: 'Dream Regen',
+  pools:    { 'Dream Regen': [], 'Patatine': [], 'Dannazione': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Sfere del drago': [] },
+  packs:    { 'Dream Regen': [], 'Patatine': [], 'Dannazione': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Sfere del drago': [] },
+  cursor:   { 'Dream Regen': 0, 'Patatine': 0, 'Dannazione': 0, 'Fantaballa Tots': 0, 'Legend': 0, 'Oggetti': 0, 'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0, 'Sfere del drago': 0 },
   opening:false
 };
 
@@ -920,7 +920,8 @@ function buildFinitePacks(cards, size){
 
 
 
-function buildFormula1Packs(cards){
+function buildDreamRegenPacks(cards){
+  // 22 carte => 6 pacchetti da 3 + ultimo pacchetto da 4, senza doppioni nello stesso pacchetto.
   const arr = shuffleInPlace(cards.slice());
   const packs = [];
   for (let i=0; i<18 && i<arr.length; i+=3){
@@ -958,14 +959,11 @@ async function loadCards(){
 const isFantaballa = (x)=> norm(x)==='fantaballa fc';
 
     // ====== Pools per game ======
-    // Formula 1 — 22 carte totali, 7 pacchi unici (6 da 3, 1 da 4)
-    // Nel JSON le carte Formula 1 sono salvate come Gotham City; qui le usiamo per questo pack come richiesto.
-    const formula1All = cleaned.filter(c =>
-      norm(c.series)==='formula 1' &&
-      (isFantaballa(c.game))
-    );
-    formula1All.sort((a,b)=> String(a.id).localeCompare(String(b.id), 'it', {numeric:true, sensitivity:'base'}));
-    GAME_STATE.pools['Formula 1'] = formula1All.slice(0,22);
+    // Dream Regen — 22 carte totali, 7 pacchi unici (6 da 3, 1 da 4)
+    // Prende dal JSON tutte le carte con series = "Dream Regen".
+    const dreamRegenAll = cleaned.filter(c => norm(c.series)==='dream regen');
+    dreamRegenAll.sort((a,b)=> String(a.id).localeCompare(String(b.id), 'it', {numeric:true, sensitivity:'base'}));
+    GAME_STATE.pools['Dream Regen'] = dreamRegenAll.slice(0,22);
 
     // Patatine — QUALUNQUE carta di Fantaballa FC, esclusa la serie "Leggendaria"
     GAME_STATE.pools['Patatine'] = cleaned.filter(c =>
@@ -1125,7 +1123,7 @@ const packsGoldCards = autoGold.packs.flat();
 /* Pool: somma delle carte usate (giusto per i contatori UI) — usiamo i pacchetti auto-generati */
 GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards));
 // ====== Costruzione pacchetti finiti ======
-    GAME_STATE.packs['Formula 1'] = buildFormula1Packs(GAME_STATE.pools['Formula 1']);
+    GAME_STATE.packs['Dream Regen'] = buildDreamRegenPacks(GAME_STATE.pools['Dream Regen']);
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
     GAME_STATE.packs['Dannazione'] = buildFinitePacks(GAME_STATE.pools['Dannazione'], PACK_SIZE_PER_GAME['Dannazione']);   // size=1
     GAME_STATE.packs['Fantaballa Tots'] = buildFinitePacks(GAME_STATE.pools['Fantaballa Tots'], PACK_SIZE_PER_GAME['Fantaballa Tots']);
@@ -1250,7 +1248,7 @@ try {
     applyPackVisual();
     updateOpenBtnEnabled();
  document.getElementById('log').textContent =
-  `Caricate: Formula 1 ${GAME_STATE.pools['Formula 1'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, Dannazione ${GAME_STATE.pools['Dannazione'].length}, `+
+  `Caricate: Dream Regen ${GAME_STATE.pools['Dream Regen'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, Dannazione ${GAME_STATE.pools['Dannazione'].length}, `+
   `TOTS ${GAME_STATE.pools['Fantaballa Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
   `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
 
@@ -1299,7 +1297,7 @@ function renderPacksStrip(){
         ${cost > 0 ? '<div class="featured-cost">'+cost+' pts</div>' : ''}
         <div class="featured-sub" style="margin-top:4px; color:#cfd6ff; font-size:12px;">${subtitle}</div>
               `;
-      if (game === 'Formula 1') {
+      if (game === 'Dream Regen') {
         const rbtn = card.querySelector('.mini-reset-btn');
         if (rbtn) rbtn.addEventListener('click', (e)=>{ e.stopPropagation(); window.resetSinglePack(game); });
       }
@@ -1407,9 +1405,13 @@ window.resetSinglePack = function(game){
     // (Opzionale) Rimescola i pacchi FINITI del solo game (se le funzioni esistono)
     try{
       const noLimit = (game==='Oggetti'||game==='Cosmetic'||game==='Bronze'||game==='Silver'||game==='Gold');
-      if (!noLimit && typeof buildFinitePacks==='function' && GAME_STATE?.pools?.[game] && typeof PACK_SIZE_PER_GAME !== 'undefined') {
-        const size = Number(PACK_SIZE_PER_GAME[game] || 1) || 1;
-        GAME_STATE.packs[game] = buildFinitePacks(GAME_STATE.pools[game], size);
+      if (!noLimit && GAME_STATE?.pools?.[game] && typeof PACK_SIZE_PER_GAME !== 'undefined') {
+        if (game === 'Dream Regen' && typeof buildDreamRegenPacks === 'function') {
+          GAME_STATE.packs[game] = buildDreamRegenPacks(GAME_STATE.pools[game]);
+        } else if (typeof buildFinitePacks === 'function') {
+          const size = Number(PACK_SIZE_PER_GAME[game] || 1) || 1;
+          GAME_STATE.packs[game] = buildFinitePacks(GAME_STATE.pools[game], size);
+        }
       }
     }catch(e){ /* ignore */ }
 
@@ -1541,7 +1543,7 @@ openBtn.addEventListener('click', async () => {
   }
 
   // Carica carte (se non già)
-if (!GAME_STATE.packs['Formula 1'].length && 
+if (!GAME_STATE.packs['Dream Regen'].length && 
     !GAME_STATE.packs['Patatine'].length && 
     !GAME_STATE.packs['Dannazione'].length && 
     !GAME_STATE.packs['Fantaballa Tots'].length &&
@@ -1668,6 +1670,13 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   document.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !openBtn.disabled) openBtn.click() });
   document.getElementById('pack').addEventListener('click', ()=>{ if(!openBtn.disabled) openBtn.click() }, {passive:true});
 });
+
+// Esporta le configurazioni principali per gli script UI successivi presenti nel file.
+Object.assign(window, {
+  VALID_GAMES, PACK_BACK_BY_GAME, PACK_COST_PER_GAME, PACK_SIZE_PER_GAME,
+  GAME_STATE, packsLeft, renderGamePicker, renderPacksStrip, applyPackVisual,
+  updateOpenBtnEnabled, buildFinitePacks, buildDreamRegenPacks
+});
 </script>
 <script>
 function triggerLegendFX(){
@@ -1755,11 +1764,11 @@ function renderPacksStrip(){
 }
 
 
-// === Featured strip rendering (only: Formula 1, Patatine) ===
+// === Featured strip rendering (only: Dream Regen, Patatine) ===
 function renderPacksStrip(){
   const strip = document.getElementById('packsStrip');
   if (!strip) return;
-  const FEATURED_LIST = ['Formula 1','Patatine','Dannazione']; // solo quelli richiesti
+  const FEATURED_LIST = ['Dream Regen','Patatine','Dannazione']; // solo quelli richiesti
   strip.innerHTML='';
   const frag = document.createDocumentFragment();
   FEATURED_LIST.forEach(game => {
@@ -1817,7 +1826,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <div>${game}</div>
         <div class="featured-cost">Costo: ${PACK_COST_PER_GAME[game] || 0}</div>
               `;
-      if (game === 'Formula 1') {
+      if (game === 'Dream Regen') {
         const rbtn = card.querySelector('.mini-reset-btn');
         if (rbtn) rbtn.addEventListener('click', (e)=>{ e.stopPropagation(); window.resetSinglePack(game); });
       }
@@ -1980,7 +1989,7 @@ window.renderPacksStrip = function(){
       <div style="margin-top:6px;font-weight:700">${game}</div>
       <div class="featured-cost">${game==='Oggetti' ? '∞' : `${left}/${totalPacks}`} pacchi</div>
           `;
-    if (game === 'Formula 1') {
+    if (game === 'Dream Regen') {
       const rbtn = card.querySelector('.mini-reset-btn');
       if (rbtn) rbtn.addEventListener('click', (e)=>{ e.stopPropagation(); window.resetSinglePack(game); });
     }
