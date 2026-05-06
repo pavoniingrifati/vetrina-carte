@@ -774,7 +774,7 @@ function renderAchievements(achievements, earnedSet, reqByAch = new Map()) {
 
     // Tipo achievement: FUT / WWE / F1 / LIVE (fallback LIVE)
     const rawType = (ach.type || ach.category || ach.game || "").toString().trim().toUpperCase();
-    const type = (["FUT","WWE","F1","LIVE"].includes(rawType)) ? rawType : "LIVE";
+    const type = (["FUT","WWE","F1","LIVE","SOCIAL"].includes(rawType)) ? rawType : "LIVE";
     const typeCls = `type-${type.toLowerCase()}`;
     const typeTag = el("span", { class: `typeTag ${typeCls}` }, [document.createTextNode(type)]);
 
