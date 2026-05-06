@@ -207,6 +207,19 @@ function ensureAchTypeStyles() {
                   inset 0 1px 0 rgba(255,255,255,.14);
     }
 
+    #achGrid .card.type-social{
+  border-left:5px solid rgba(251,146,60,.95);
+  background:
+    radial-gradient(900px 520px at 18% 12%, rgba(251,146,60,.18), transparent 58%),
+    radial-gradient(800px 520px at 92% 0%, rgba(236,72,153,.14), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.18));
+}
+.typeTag.type-social{
+  background: rgba(251,146,60,.18);
+  border-color: rgba(251,146,60,.28);
+}
+
+
     /* Card tint + left stripe overrides */
     #achGrid .card.type-fut{
       background:
