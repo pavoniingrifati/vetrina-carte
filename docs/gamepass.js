@@ -74,7 +74,7 @@ let _earnedSet = new Set();
 let _reqByAch = new Map();
 let _filtersReady = false;
 
-const ORDER_TYPE = { FUT: 1, WWE: 2, F1: 3, LIVE: 4 };
+const ORDER_TYPE = { FUT: 1, WWE: 2, F1: 3, LIVE: 4, SOCIAL: 5 };
 
 function buildReqByAch(requests) {
   // requests è già ordinato DESC per createdAt
