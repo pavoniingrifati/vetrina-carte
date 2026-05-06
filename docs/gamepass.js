@@ -131,7 +131,7 @@ function applyAchievementFilters() {
     const id = norm(ach.id || "");
 
     const rawType = (ach.type || ach.category || ach.game || "").toString().trim().toUpperCase();
-    const type = (["FUT","WWE","F1","LIVE"].includes(rawType)) ? rawType : "LIVE";
+    const type = (["FUT","WWE","F1","LIVE","SOCIAL"].includes(rawType)) ? rawType : "LIVE";
 
     const missing = prereqMissing(ach, _earnedSet);
     const locked = missing.length > 0;
