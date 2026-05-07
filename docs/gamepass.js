@@ -1880,11 +1880,11 @@ onUser(async (user) => {
 
     .tier-title{
       color:#fff !important;
-      font-size:22px !important;
-      line-height:.95 !important;
-      font-weight:1000 !important;
+      font-size:16px !important;
+      line-height:1.05 !important;
+      font-weight:900 !important;
       text-transform:uppercase;
-      letter-spacing:-.045em;
+      letter-spacing:-.02em;
       text-shadow:0 6px 24px rgba(0,0,0,.45);
     }
 
