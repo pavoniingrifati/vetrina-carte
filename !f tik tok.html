@@ -79,6 +79,7 @@ const TIKFINITY_CONFIG = {
 
 let ws = null;
 let reconnectTimer = null;
+const usedUsers = new Set();
 
 function pickFirstString(...values) {
     for (const v of values) {
@@ -125,14 +126,18 @@ function showRolePopup(user, role) {
     }, 3500);
 }
 
-function handlePredictionMessage(text, displayName) {
+function handlePredictionMessage(text, displayName, userId) {
     const cleanText = pickFirstString(text);
     const lower = cleanText.toLowerCase();
     if (!lower.startsWith('!f ')) return;
 
+    const userKey = String(userId || displayName || 'utente').trim().toLowerCase();
+    if (usedUsers.has(userKey)) return;
+
     const role = cleanText.substring(3).trim();
     if (role.length < 2) return;
 
+    usedUsers.add(userKey);
     showRolePopup(displayName || 'utente', role);
 }
 
@@ -154,8 +159,16 @@ function processTikFinityMessage(rawData) {
         rawData?.user
     ) || 'utente';
 
+    const userId = pickFirstString(
+        rawData?.data?.uniqueId,
+        rawData?.uniqueId,
+        rawData?.data?.userId,
+        rawData?.userId,
+        displayName
+    );
+
     if (!text) return;
-    handlePredictionMessage(text, displayName);
+    handlePredictionMessage(text, displayName, userId);
 }
 
 function connectTikFinity() {
