@@ -2369,5 +2369,296 @@ window.renderPacksStrip = function(){
 })();
 </script>
 
+
+
+<!-- === V3: New-card placeholder + Legend/TOTS visible === -->
+<style id="new-card-placeholder-style">
+/* Carte nuove senza grafica: placeholder ufficiale, non errore */
+.cCard.is-new-card .scene{
+  box-shadow:0 0 0 1px rgba(110,231,255,.18), 0 0 28px rgba(110,231,255,.22), 0 10px 28px rgba(0,0,0,.45);
+}
+.cCard.is-new-card .front{
+  background:
+    radial-gradient(circle at 50% 18%, rgba(110,231,255,.22), transparent 34%),
+    radial-gradient(circle at 80% 85%, rgba(192,132,252,.18), transparent 34%),
+    linear-gradient(160deg, #111827 0%, #0b1020 52%, #171b33 100%);
+}
+.cCard.is-new-card .front > img.new-card-hidden{
+  display:none !important;
+}
+.new-card-placeholder{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  padding:34px 28px;
+  text-align:center;
+  color:#eef7ff;
+  overflow:hidden;
+}
+.new-card-placeholder::before{
+  content:attr(data-initial);
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-52%);
+  font-size:clamp(140px, 22vw, 250px);
+  font-weight:900;
+  line-height:1;
+  color:rgba(255,255,255,.045);
+  z-index:0;
+  pointer-events:none;
+}
+.new-card-placeholder::after{
+  content:"";
+  position:absolute;
+  inset:14px;
+  border-radius:calc(var(--radius) - 4px);
+  border:1px solid rgba(255,255,255,.12);
+  background:
+    linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent) 0 0/220% 100% no-repeat;
+  animation:newCardSweep 5s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes newCardSweep{
+  0%,100%{background-position:-160% 0}
+  50%{background-position:160% 0}
+}
+.new-card-topline{
+  position:absolute;
+  top:16px;
+  left:16px;
+  right:16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  z-index:2;
+}
+.new-card-new-badge,
+.new-card-rarity{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:28px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.32);
+  backdrop-filter:blur(8px);
+}
+.new-card-new-badge{
+  color:#09111f;
+  background:linear-gradient(135deg,#6ee7ff,#c084fc);
+  border:0;
+  box-shadow:0 0 18px rgba(110,231,255,.35);
+}
+.new-card-rarity{
+  color:#dce8ff;
+  max-width:58%;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.new-card-icon{
+  position:relative;
+  z-index:1;
+  width:78px;
+  height:78px;
+  display:grid;
+  place-items:center;
+  border-radius:24px;
+  border:1px solid rgba(255,255,255,.16);
+  background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.04));
+  box-shadow:0 12px 30px rgba(0,0,0,.35), inset 0 0 24px rgba(110,231,255,.10);
+  font-size:36px;
+}
+.new-card-title{
+  position:relative;
+  z-index:1;
+  max-width:100%;
+  margin:0;
+  font-size:clamp(24px, 4.6vw, 42px);
+  line-height:1.04;
+  font-weight:950;
+  letter-spacing:.03em;
+  text-transform:uppercase;
+  text-wrap:balance;
+  text-shadow:0 8px 24px rgba(0,0,0,.45);
+}
+.new-card-subtitle{
+  position:relative;
+  z-index:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:9px 14px;
+  border-radius:999px;
+  color:#ccecff;
+  background:rgba(110,231,255,.10);
+  border:1px solid rgba(110,231,255,.20);
+  font-weight:800;
+}
+.new-card-series{
+  position:absolute;
+  left:20px;
+  right:20px;
+  bottom:20px;
+  z-index:1;
+  color:rgba(238,247,255,.72);
+  font-size:13px;
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+@media(max-width:600px){
+  .new-card-placeholder{padding:26px 20px; gap:10px}
+  .new-card-icon{width:62px;height:62px;border-radius:20px;font-size:30px}
+  .new-card-title{font-size:clamp(22px,8vw,34px)}
+}
+</style>
+
+<script id="new-card-placeholder-and-pack-fixes-v3">
+(function(){
+  const ALWAYS_VISIBLE_BASE = ['Gold','Silver','Bronze'];
+  const FEATURED_PACKS = ['Patatine','Dannazione','Fantaballa Tots','Legend','Gold','Silver','Bronze'];
+  const NEW_PACKS = ['Dannazione','Fantaballa Tots','Legend','Gold','Silver','Bronze'];
+  const norm = (v) => String(v || '').trim().toLowerCase();
+  const esc = (v) => String(v == null ? '' : v)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+
+  function cleanGameList(list){
+    const base = Array.isArray(list) ? list : [];
+    const valid = Array.isArray(window.VALID_GAMES) ? new Set(window.VALID_GAMES) : null;
+    return [...new Set(base.concat(ALWAYS_VISIBLE_BASE))]
+      .filter(g => g !== 'Dream Regen')
+      .filter(g => !valid || valid.has(g));
+  }
+
+  function applyPackVisibilityV3(){
+    try{
+      if (Array.isArray(window.VALID_GAMES)) {
+        window.VALID_GAMES = window.VALID_GAMES.filter(g => g !== 'Dream Regen');
+      }
+      if (window.STORE_SECTIONS) {
+        window.STORE_SECTIONS.featured = cleanGameList(FEATURED_PACKS);
+        window.STORE_SECTIONS.new = cleanGameList(NEW_PACKS);
+        window.STORE_SECTIONS.base = cleanGameList(ALWAYS_VISIBLE_BASE);
+        window.STORE_SECTIONS.all = Array.isArray(window.VALID_GAMES)
+          ? window.VALID_GAMES.filter(g => g !== 'Dream Regen')
+          : cleanGameList(window.STORE_SECTIONS.all);
+      }
+      if (window.GAME_STATE) {
+        if (window.GAME_STATE.selected === 'Dream Regen') window.GAME_STATE.selected = 'Patatine';
+        const cleaned = Array.isArray(window.cleaned) ? window.cleaned : [];
+        if (cleaned.length) {
+          // Dannazione = logica Patatine: pacchetti finiti da 1, solo carte Cursed.
+          window.GAME_STATE.pools['Dannazione'] = cleaned.filter(c => norm(c.series) === 'cursed');
+          window.GAME_STATE.packs['Dannazione'] = (typeof window.buildFinitePacks === 'function')
+            ? window.buildFinitePacks(window.GAME_STATE.pools['Dannazione'], 1)
+            : window.GAME_STATE.pools['Dannazione'].map(c => [c]);
+        }
+        window.GAME_STATE.pools['Dream Regen'] = [];
+        window.GAME_STATE.packs['Dream Regen'] = [];
+        window.GAME_STATE.cursor['Dream Regen'] = 0;
+      }
+      if (typeof window.renderGamePicker === 'function') window.renderGamePicker();
+      if (typeof window.renderPacksStrip === 'function') window.renderPacksStrip();
+      if (typeof window.applyPackVisual === 'function') window.applyPackVisual();
+      if (typeof window.updateOpenBtnEnabled === 'function') window.updateOpenBtnEnabled();
+    }catch(e){ console.warn('[v3 pack visibility]', e); }
+  }
+
+  function isMissingArtUrl(url){
+    const value = String(url || '').trim();
+    if (!value) return true;
+    const low = value.toLowerCase();
+    return low === '#' || low === 'null' || low === 'undefined' || low === 'about:blank';
+  }
+
+  function applyNewCardPlaceholder(cardEl, data){
+    try{
+      const frontFace = cardEl.querySelector('.front');
+      const img = cardEl.querySelector('.front img');
+      if (!frontFace || !img) return;
+      if (frontFace.querySelector('.new-card-placeholder')) return;
+
+      cardEl.classList.add('is-new-card');
+      img.classList.add('new-card-hidden');
+      img.removeAttribute('src');
+      img.alt = '';
+
+      const name = data && data.name ? String(data.name) : 'Nuova carta';
+      const rarity = data && data.rarity ? String(data.rarity) : 'Nuova';
+      const series = data && (data.series || data.game) ? String(data.series || data.game) : 'Fantaballa FC';
+      const initial = (name.trim().charAt(0) || '★').toUpperCase();
+
+      const placeholder = document.createElement('div');
+      placeholder.className = 'new-card-placeholder';
+      placeholder.dataset.initial = initial;
+      placeholder.innerHTML = `
+        <div class="new-card-topline">
+          <span class="new-card-new-badge">NEW</span>
+          <span class="new-card-rarity">${esc(rarity)}</span>
+        </div>
+        <div class="new-card-icon" aria-hidden="true">✦</div>
+        <h3 class="new-card-title">${esc(name)}</h3>
+        <div class="new-card-subtitle">Grafica in arrivo</div>
+        <div class="new-card-series">${esc(series)}</div>
+      `;
+      frontFace.appendChild(placeholder);
+    }catch(e){ console.warn('[new card placeholder]', e); }
+  }
+
+  function installMakeCardFallback(){
+    try{
+      const original = window.makeCardEl;
+      window.makeCardEl = function(d, isFinal){
+        const el = (typeof original === 'function') ? original(d, isFinal) : null;
+        if (!el) return el;
+        const img = el.querySelector('.front img');
+        if (!img) return el;
+        const url = d && d.img;
+        if (isMissingArtUrl(url)) {
+          applyNewCardPlaceholder(el, d || {});
+        } else {
+          img.addEventListener('error', () => applyNewCardPlaceholder(el, d || {}), { once:true });
+        }
+        return el;
+      };
+      // Alcuni browser risolvono il nome globale direttamente: ridefiniamo anche la funzione globale.
+      try { makeCardEl = window.makeCardEl; } catch(e) {}
+    }catch(e){ console.warn('[install makeCard fallback]', e); }
+  }
+
+  window.applyPackVisibilityV3 = applyPackVisibilityV3;
+  window.applyNewCardPlaceholder = applyNewCardPlaceholder;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    installMakeCardFallback();
+    setTimeout(applyPackVisibilityV3, 0);
+    setTimeout(applyPackVisibilityV3, 600);
+  });
+  window.addEventListener('load', () => {
+    installMakeCardFallback();
+    setTimeout(applyPackVisibilityV3, 250);
+    setTimeout(applyPackVisibilityV3, 1200);
+  });
+})();
+</script>
+<!-- === Fine V3 === -->
+
 </body>
 </html>
