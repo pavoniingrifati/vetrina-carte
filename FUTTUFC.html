@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>FUT Fantaballa Tik Tok</title>
-<meta name="description" content="Pack unico diviso per 'game' (Fantaballa FC / Gotham City). Pacchetti finiti: Patatine (1 carta, pesato), Dream Regen (22 carte in 7 pack unici), Fantaballa Tots (3 carte), Legend (3 carte). Nuovo: Oggetti (3 carte, infinito). Login e salvataggio inventario invariati." />
+<meta name="description" content="Pack unico diviso per 'game' (Fantaballa FC / Gotham City). Pacchetti finiti: Patatine (1 carta), Dannazione (1 carta Cursed), Fantaballa Tots (3 carte), Legend (3 carte). Pacchetti infiniti: Gold/Silver/Bronze (3 Oggetti + 6 carte serie), Oggetti e Cosmetic. Login e salvataggio inventario invariati." />
 
 <!-- Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -562,10 +562,11 @@ table td, table th {
 <script>
 // === Sezioni Store (solo etichette, nessuna navigazione attiva) ===
 window.STORE_SECTIONS = {
-  featured: ['Dream Regen','Patatine','Dannazione'],
-  new: ['Dream Regen'], // Ultimi arrivi
+  // Dream Regen rimosso. Gold/Silver/Bronze restano sempre presenti nello store.
+  featured: ['Patatine','Dannazione','Gold','Silver','Bronze'],
+  new: ['Dannazione','Gold','Silver','Bronze'], // Ultimi arrivi
   base: ['Gold','Silver','Bronze'], // Pacchetti base
-  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Dream Regen','Patatine','Dannazione','Fantaballa Tots','Legend','Oggetti','Gold','Silver','Bronze','Cosmetic','Strumenti','Sfere del drago'])
+  all: (typeof VALID_GAMES !== 'undefined' ? VALID_GAMES.slice() : ['Patatine','Dannazione','Fantaballa Tots','Legend','Oggetti','Gold','Silver','Bronze','Cosmetic','Strumenti','Sfere del drago'])
 };
 </script>
 
@@ -597,8 +598,8 @@ window.STORE_SECTIONS = {
     </div>
 
 <div class="fc-balance-bar" id="balanceCenter" aria-label="Saldo">
-  <div class="fc-balance"><span class="fc-ico fc-coin"></span><b id="fc-coins" aria-label="Coins">5,360</b></div>
-  <div class="fc-balance"><span class="fc-ico fc-like"></span><b id="fc-likes" aria-label="Likes">550</b></div>
+  <div class="fc-balance"><span class="fc-ico fc-coin"></span><b id="fc-coins" contenteditable="true" aria-label="Coins">5,360</b></div>
+  <div class="fc-balance"><span class="fc-ico fc-like"></span><b id="fc-likes" contenteditable="true" aria-label="Likes">550</b></div>
 </div>
 <!-- Game picker -->
     <div class="choices" id="gamePicker" aria-label="Seleziona game"></div>
@@ -672,7 +673,7 @@ const db = firebase.firestore();
 /** =========================
  *  CONFIG PER GAME
  *  ========================= */
-const VALID_GAMES = ['Dream Regen', 'Patatine', 'Dannazione', 'Fantaballa Tots', 'Legend', 'Oggetti', 'Gold', 'Silver', 'Bronze', 'Cosmetic', 'Strumenti', 'Sfere del drago'];
+const VALID_GAMES = ['Patatine', 'Dannazione', 'Fantaballa Tots', 'Legend', 'Oggetti', 'Gold', 'Silver', 'Bronze', 'Cosmetic', 'Strumenti', 'Sfere del drago'];
 const PACK_BACK_BY_GAME = {
   'Dream Regen': 'img/dregen%20back.png',
   'Patatine': 'patatrine.png',
@@ -925,7 +926,7 @@ async function saveInventario(cards) {
  *  DATI CARTE + PACCHETTI (FINITI)
  *  ========================= */
 const GAME_STATE = {
-  selected: 'Dream Regen',
+  selected: 'Patatine',
   pools:    { 'Dream Regen': [], 'Patatine': [], 'Dannazione': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Sfere del drago': [] },
   packs:    { 'Dream Regen': [], 'Patatine': [], 'Dannazione': [], 'Fantaballa Tots': [], 'Legend': [], 'Oggetti': [], 'Gold': [], 'Silver': [], 'Bronze': [], 'Strumenti': [], 'Cosmetic': [], 'Sfere del drago': [] },
   cursor:   { 'Dream Regen': 0, 'Patatine': 0, 'Dannazione': 0, 'Fantaballa Tots': 0, 'Legend': 0, 'Oggetti': 0, 'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Strumenti': 0, 'Cosmetic': 0, 'Sfere del drago': 0 },
@@ -1291,7 +1292,7 @@ try {
     applyPackVisual();
     updateOpenBtnEnabled();
  document.getElementById('log').textContent =
-  `Caricate: Dream Regen ${GAME_STATE.pools['Dream Regen'].length}, Patatine ${GAME_STATE.pools['Patatine'].length}, Dannazione ${GAME_STATE.pools['Dannazione'].length}, `+
+  `Caricate: Patatine ${GAME_STATE.pools['Patatine'].length}, Dannazione/Cursed ${GAME_STATE.pools['Dannazione'].length}, `+
   `TOTS ${GAME_STATE.pools['Fantaballa Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
   `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
 
@@ -1800,11 +1801,11 @@ function renderPacksStrip(){
 }
 
 
-// === Featured strip rendering (only: Dream Regen, Patatine) ===
+// === Featured strip rendering ===
 function renderPacksStrip(){
   const strip = document.getElementById('packsStrip');
   if (!strip) return;
-  const FEATURED_LIST = ['Dream Regen','Patatine','Dannazione']; // solo quelli richiesti
+  const FEATURED_LIST = ['Patatine','Dannazione','Gold','Silver','Bronze']; // Dream Regen rimosso, B/S/G sempre presenti
   strip.innerHTML='';
   const frag = document.createDocumentFragment();
   FEATURED_LIST.forEach(game => {
@@ -1928,9 +1929,11 @@ function getVisibleGames(){
     : all;
   // Se la sezione richiede "tutti i pacchi", prendi tutti quelli disponibili ora
   if (window.CURRENT_SECTION === 'all') return all;
-  // Normalizza mantenendo solo quelli che esistono
+  // Normalizza mantenendo solo quelli che esistono. Gold/Silver/Bronze restano sempre visibili.
   const set = new Set(all);
-  return (sec || []).filter(g => set.has(g));
+  const forcedBase = ['Gold','Silver','Bronze'];
+  const merged = [...(sec || []), ...forcedBase];
+  return [...new Set(merged)].filter(g => set.has(g));
 }
 
 // Attiva la sezione sulla sidebar e rinfresca la UI
@@ -2047,17 +2050,55 @@ window.renderPacksStrip = function(){
 </script>
 
 <script>
-// ===== Coins & Likes display =====
+// ===== Coins & Likes display/edit =====
 (function(){
   const coinsEl = document.getElementById('fc-coins');
   const likesEl = document.getElementById('fc-likes');
   if (!coinsEl || !likesEl) return;
+
   function parseNumber(s){ return Number(String(s || '').replace(/[^0-9]/g,'')) || 0; }
   function formatNumber(n){ try { return n.toLocaleString('it-IT'); } catch { return String(n); } }
-  const c = localStorage.getItem('fc_coins');
-  const l = localStorage.getItem('fc_likes');
-  if (c !== null) coinsEl.textContent = formatNumber(parseNumber(c));
-  if (l !== null) likesEl.textContent = formatNumber(parseNumber(l));
+
+  function loadEditableBalance(){
+    const c = localStorage.getItem('fc_coins');
+    const l = localStorage.getItem('fc_likes');
+    if (c !== null) coinsEl.textContent = formatNumber(parseNumber(c));
+    if (l !== null) likesEl.textContent = formatNumber(parseNumber(l));
+  }
+
+  function bindEditable(el, key){
+    el.setAttribute('contenteditable', 'true');
+    el.setAttribute('spellcheck', 'false');
+    el.setAttribute('inputmode', 'numeric');
+    el.style.cursor = 'text';
+
+    const save = () => {
+      const n = parseNumber(el.textContent);
+      el.textContent = formatNumber(n);
+      localStorage.setItem(key, String(n));
+    };
+
+    el.addEventListener('focus', () => {
+      el.textContent = String(parseNumber(el.textContent));
+      try { document.execCommand('selectAll', false, null); } catch(e) {}
+    });
+    el.addEventListener('blur', save);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        el.blur();
+      }
+    });
+    el.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const txt = (e.clipboardData || window.clipboardData).getData('text');
+      document.execCommand('insertText', false, String(parseNumber(txt)));
+    });
+  }
+
+  loadEditableBalance();
+  bindEditable(coinsEl, 'fc_coins');
+  bindEditable(likesEl, 'fc_likes');
 })();
 </script>
 <script>
@@ -2271,5 +2312,62 @@ window.renderPacksStrip = function(){
 <script id="mini-reset-delegation">
 // Fallback delegation: intercetta click sul bottone reset sotto al pack
 </script>
+
+<script id="requested-pack-fixes">
+// === Fix richiesti: Dream Regen rimosso, B/S/G sempre visibili, Dannazione = Cursed come Patatine ===
+(function(){
+  const BASE_PACKS_ALWAYS = ['Gold','Silver','Bronze'];
+  const normFix = (v) => String(v || '').trim().toLowerCase();
+
+  function uniqueValid(list){
+    const valid = Array.isArray(window.VALID_GAMES) ? new Set(window.VALID_GAMES) : null;
+    return [...new Set((list || []).concat(BASE_PACKS_ALWAYS))]
+      .filter(g => g !== 'Dream Regen')
+      .filter(g => !valid || valid.has(g));
+  }
+
+  function applyRequestedFixes(){
+    try {
+      if (Array.isArray(window.VALID_GAMES)) {
+        window.VALID_GAMES = window.VALID_GAMES.filter(g => g !== 'Dream Regen');
+      }
+      if (window.STORE_SECTIONS) {
+        window.STORE_SECTIONS.featured = uniqueValid(['Patatine','Dannazione']);
+        window.STORE_SECTIONS.new = uniqueValid(['Dannazione']);
+        window.STORE_SECTIONS.base = uniqueValid(BASE_PACKS_ALWAYS);
+        window.STORE_SECTIONS.all = (Array.isArray(window.VALID_GAMES) ? window.VALID_GAMES.slice() : uniqueValid(window.STORE_SECTIONS.all));
+      }
+      if (window.GAME_STATE) {
+        if (window.GAME_STATE.selected === 'Dream Regen') window.GAME_STATE.selected = 'Patatine';
+        const cleaned = window.cleaned || [];
+        if (Array.isArray(cleaned) && cleaned.length) {
+          // Dannazione: stessa logica di Patatine (pacchetti finiti da 1 carta), ma solo carte Cursed.
+          window.GAME_STATE.pools['Dannazione'] = cleaned.filter(c => normFix(c.series) === 'cursed');
+          if (typeof window.buildFinitePacks === 'function') {
+            window.GAME_STATE.packs['Dannazione'] = window.buildFinitePacks(window.GAME_STATE.pools['Dannazione'], 1);
+          } else {
+            window.GAME_STATE.packs['Dannazione'] = window.GAME_STATE.pools['Dannazione'].map(c => [c]);
+          }
+        }
+        // Mantieni le chiavi vuote per compatibilità con vecchi controlli, ma il pack non è più visibile.
+        window.GAME_STATE.pools['Dream Regen'] = [];
+        window.GAME_STATE.packs['Dream Regen'] = [];
+        window.GAME_STATE.cursor['Dream Regen'] = 0;
+      }
+      if (typeof window.renderGamePicker === 'function') window.renderGamePicker();
+      if (typeof window.renderPacksStrip === 'function') window.renderPacksStrip();
+      if (typeof window.applyPackVisual === 'function') window.applyPackVisual();
+      if (typeof window.updateOpenBtnEnabled === 'function') window.updateOpenBtnEnabled();
+    } catch(e) {
+      console.warn('[requested-pack-fixes]', e);
+    }
+  }
+
+  window.applyRequestedPackFixes = applyRequestedFixes;
+  document.addEventListener('DOMContentLoaded', () => setTimeout(applyRequestedFixes, 0));
+  window.addEventListener('load', () => setTimeout(applyRequestedFixes, 250));
+})();
+</script>
+
 </body>
 </html>
