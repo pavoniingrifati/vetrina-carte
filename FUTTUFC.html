@@ -499,6 +499,38 @@ table td, table th {
 /* ===================================================================== */
 
 </style>
+
+<style id="futtu-cleanup-2026">
+/* Cleanup 2026: UI più stabile, responsive e leggibile */
+.title > div { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.title h1, .title .subtitle { flex-basis:100%; }
+#openBtn { font-size:1rem; padding:14px 20px; }
+#resetPacksBtn { opacity:.82; }
+.featured-card.is-selected, .featured-card[aria-current="true"]{
+  outline:2px solid rgba(110,231,255,.65);
+  box-shadow:0 12px 30px rgba(0,0,0,.55), 0 0 16px rgba(110,231,255,.22);
+}
+.featured-sub{ min-height:1.2em; }
+#balanceCenter b{ user-select:text; cursor:default; }
+@media(max-width: 760px){
+  body{ --fcbar-h:52px; }
+  .fc-topbar{ padding:0 10px; }
+  .fc-brand strong{ font-size:13px; }
+  .fc-nav{ display:none; }
+  header{ position:relative; top:auto; }
+  .packs-sticky{ position:relative; top:auto; }
+  .wrap{ padding:12px; }
+  .title > div, .toolbar{ align-items:stretch; }
+  .btn, .pill{ width:100%; justify-content:center; text-align:center; }
+  .fc-balance-bar{ gap:10px; margin:12px 0; padding:10px; }
+  .fc-balance{ flex:1; justify-content:center; padding:10px 12px; }
+  .featured-carousel{ gap:.65rem; padding:.75rem .25rem; }
+  .featured-card{ width:124px; padding:8px; }
+  .packArea{ min-height:58vh; }
+  .pack{ width:min(360px,92vw); }
+}
+</style>
+
 </head>
 <body>
 
@@ -514,7 +546,6 @@ table td, table th {
   </div>
   <div class="fc-right">
     <div class="fc-prof"><span class="dot"></span></div>
-  </div>
   </div>
 </div>
 
@@ -566,8 +597,8 @@ window.STORE_SECTIONS = {
     </div>
 
 <div class="fc-balance-bar" id="balanceCenter" aria-label="Saldo">
-  <div class="fc-balance"><span class="fc-ico fc-coin"></span><b id="fc-coins" contenteditable="true">5,360</b></div>
-  <div class="fc-balance"><span class="fc-ico fc-like"></span><b id="fc-likes" contenteditable="true">550</b></div>
+  <div class="fc-balance"><span class="fc-ico fc-coin"></span><b id="fc-coins" aria-label="Coins">5,360</b></div>
+  <div class="fc-balance"><span class="fc-ico fc-like"></span><b id="fc-likes" aria-label="Likes">550</b></div>
 </div>
 <!-- Game picker -->
     <div class="choices" id="gamePicker" aria-label="Seleziona game"></div>
@@ -634,7 +665,7 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 </script>
 
-<script type="module">
+<script>
 // Firestore
 const db = firebase.firestore();
 
@@ -901,6 +932,15 @@ const GAME_STATE = {
   opening:false
 };
 
+// Espone la configurazione agli script successivi della pagina.
+Object.assign(window, {
+  VALID_GAMES,
+  PACK_BACK_BY_GAME,
+  PACK_COST_PER_GAME,
+  PACK_SIZE_PER_GAME,
+  GAME_STATE
+});
+
 
 function shuffleInPlace(a){
   for (let i=a.length-1; i>0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
@@ -953,6 +993,9 @@ async function loadCards(){
       if(ids.has(id)) continue; ids.add(id);
       cleaned.push({id,name,rarity,img,series,game,text,tags});
     }
+
+    // Rende il dataset normalizzato disponibile anche agli script di supporto in fondo pagina.
+    window.cleaned = cleaned;
 
     // ====== Helper ======
     const isGotham = (x)=> norm(x)==='gotham city';
@@ -1224,7 +1267,7 @@ try {
   // Usa la definizione che hai messo per "Soluzione 1"
   // (PACKS_GOLD è l'array di array di ID che definisce i tuoi pacchetti manuali)
   const GOLD_FP_KEY = 'futtu_gold_fp';
-  const newFp = JSON.stringify(PACKS_GOLD); // firma stabile del contenuto/ordine dei pacchi
+  const newFp = JSON.stringify(GAME_STATE.packs['Gold'] || []); // firma stabile del contenuto/ordine dei pacchi
   const oldFp = localStorage.getItem(GOLD_FP_KEY);
 
   if (oldFp !== newFp) {
@@ -1561,31 +1604,15 @@ if (!GAME_STATE.packs['Dream Regen'].length &&
   // Scelta carte
   let chosen;
   try{
-  if ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold')) {
-     // Pacchetto infinito: X carte random dalla serie corrispondente (anche doppioni)
-    const pool = GAME_STATE.pools[game] || [];
-    const size = PACK_SIZE_PER_GAME[game] || 1;
-    if (!pool.length) {
-      document.getElementById('log').textContent = '⚠️ Nessuna carta disponibile nella serie Oggetto.';
-      return;
-    }
-    chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
-  } else if ((game==='Bronze')||(game==='Silver')||(game==='Gold')) {
-    // Pacchetti infiniti BSG: 3 Oggetto + 6 della serie (Fantaballa FC) generati on-the-fly
+  if ((game==='Bronze')||(game==='Silver')||(game==='Gold')) {
+    // Pacchetti infiniti B/S/G: 3 Oggetto + 6 carte della serie Fantaballa FC.
     const og = GAME_STATE.pools[game + '_oggs'] || [];
     const mn = GAME_STATE.pools[game + '_main'] || [];
     if (!og.length || !mn.length) {
-      // Fallback: usa pacchetti pre-costruiti (finite) se i pool non sono pronti
       const list = GAME_STATE.packs[game] || [];
       const idx  = GAME_STATE.cursor[game] || 0;
-      if (idx < list.length) {
-        if (!Array.isArray(list[idx]) || !list[idx].length){
-      _abortOpen('⚠️ ' + game + ': pacchetto non valido (cursor=' + idx + '). Premi “Reset pacchetti”.');
-      return;
-    }
-    chosen = list[idx].slice();
-        GAME_STATE.cursor[game] = idx + 1;
-        try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }catch{}
+      if (idx < list.length && Array.isArray(list[idx]) && list[idx].length) {
+        chosen = list[idx].slice();
       } else {
         _abortOpen('⚠️ ' + game + ': sorgenti non pronte.');
         return;
@@ -1593,6 +1620,15 @@ if (!GAME_STATE.packs['Dream Regen'].length &&
     } else {
       chosen = generateBSGOnTheFly(game);
     }
+  } else if ((game==='Oggetti')||(game==='Cosmetic')) {
+    // Pacchetti infiniti semplici: X carte random dalla serie corrispondente.
+    const pool = GAME_STATE.pools[game] || [];
+    const size = PACK_SIZE_PER_GAME[game] || 1;
+    if (!pool.length) {
+      _abortOpen('⚠️ Nessuna carta disponibile per ' + game + '.');
+      return;
+    }
+    chosen = Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
   } else {
     // Estrai il prossimo pacchetto finito (comportamento standard)
     const list = GAME_STATE.packs[game] || [];
@@ -1817,7 +1853,7 @@ document.addEventListener('DOMContentLoaded', function(){
     strip.innerHTML='';
     const frag = document.createDocumentFragment();
     list.forEach(game => {
-      if (!window.PACK_BACK_BY_GAME || !PACK_BACK_BY_GAME[game]) return;
+      if (!PACK_BACK_BY_GAME[game]) return;
       const card = document.createElement('div');
       card.className = 'featured-card';
       card.setAttribute('data-game', game);
@@ -1987,7 +2023,7 @@ window.renderPacksStrip = function(){
     card.innerHTML = `
       <img src="${back}" alt="Anteprima ${game}">
       <div style="margin-top:6px;font-weight:700">${game}</div>
-      <div class="featured-cost">${game==='Oggetti' ? '∞' : `${left}/${totalPacks}`} pacchi</div>
+      <div class="featured-cost">${(['Oggetti','Cosmetic','Bronze','Silver','Gold'].includes(game)) ? '∞' : `${left}/${totalPacks}`} pacchi</div>
           `;
     if (game === 'Dream Regen') {
       const rbtn = card.querySelector('.mini-reset-btn');
@@ -2011,59 +2047,17 @@ window.renderPacksStrip = function(){
 </script>
 
 <script>
-// ===== Editable Coins & Likes =====
+// ===== Coins & Likes display =====
 (function(){
   const coinsEl = document.getElementById('fc-coins');
   const likesEl = document.getElementById('fc-likes');
-
-  function parseNumber(s){
-    if (!s) return 0;
-    return Number(String(s).replace(/[^0-9]/g,'')) || 0;
-  }
-  function formatNumber(n){
-    try{ return n.toLocaleString('it-IT'); } catch { return String(n); }
-  }
-  function load(){
-    const c = localStorage.getItem('fc_coins');
-    const l = localStorage.getItem('fc_likes');
-    if (c!==null) coinsEl.textContent = formatNumber(parseNumber(c));
-    if (l!==null) likesEl.textContent = formatNumber(parseNumber(l));
-  }
-  function saveCoins(){ localStorage.setItem('fc_coins', String(parseNumber(coinsEl.textContent))); }
-  function saveLikes(){ localStorage.setItem('fc_likes', String(parseNumber(likesEl.textContent))); }
-
-  function onEdit(el, saver){
-    el.addEventListener('input', ()=>{
-      // keep only digits while typing
-      const pos = window.getSelection && window.getSelection().anchorOffset;
-      const v = el.textContent;
-      const num = parseNumber(v);
-      el.textContent = String(num);
-      // restore caret at end
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      range.collapse(false);
-      const sel = window.getSelection();
-      sel.removeAllRanges(); sel.addRange(range);
-    });
-    el.addEventListener('blur', ()=>{
-      el.textContent = formatNumber(parseNumber(el.textContent));
-      saver();
-      // reflect to topbar if there are mirrored elements
-      const mirrorId = el.id === 'fc-coins' ? 'fc-coins' : 'fc-likes';
-      document.querySelectorAll('#'+mirrorId).forEach((m)=>{ if (m!==el) m.textContent = el.textContent; });
-      updateOpenBtnEnabled && updateOpenBtnEnabled();
-    });
-    el.addEventListener('keydown', (e)=>{
-      if (e.key === 'Enter'){ e.preventDefault(); el.blur(); }
-    });
-  }
-
-  if (coinsEl && likesEl){
-    load();
-    onEdit(coinsEl, saveCoins);
-    onEdit(likesEl, saveLikes);
-  }
+  if (!coinsEl || !likesEl) return;
+  function parseNumber(s){ return Number(String(s || '').replace(/[^0-9]/g,'')) || 0; }
+  function formatNumber(n){ try { return n.toLocaleString('it-IT'); } catch { return String(n); } }
+  const c = localStorage.getItem('fc_coins');
+  const l = localStorage.getItem('fc_likes');
+  if (c !== null) coinsEl.textContent = formatNumber(parseNumber(c));
+  if (l !== null) likesEl.textContent = formatNumber(parseNumber(l));
 })();
 </script>
 <script>
