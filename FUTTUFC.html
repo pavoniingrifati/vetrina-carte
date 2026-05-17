@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>FUT Fantaballa Tik Tok</title>
-<meta name="description" content="Pack unico diviso per 'game' (Fantaballa FC / Gotham City). Pacchetti finiti: Patatine (1 carta), Dannazione (1 carta Cursed), Fantaballa Tots (3 carte), Legend (3 carte). Pacchetti infiniti: Gold/Silver/Bronze (3 Oggetti + 6 carte serie), Oggetti e Cosmetic. Login e salvataggio inventario invariati." />
+<meta name="description" content="Pack unico diviso per 'game' (Fantaballa FC / Gotham City). Pacchetti finiti: Patatine (1 carta), Fantaballa Tots (3 carte), Legend (3 carte). Pacchetti infiniti: Dannazione (1 carta Cursed), Gold/Silver/Bronze (3 Oggetti + 6 carte serie), Oggetti e Cosmetic. Login e salvataggio inventario invariati." />
 
 <!-- Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1014,7 +1014,7 @@ const isFantaballa = (x)=> norm(x)==='fantaballa fc';
       isFantaballa(c.game) &&
       norm(c.series) !== 'leggendaria'
     );
-// Dannazione — tutte le carte con series = "Cursed" (1 carta per pack, finito)
+// Dannazione — INFINITO: pesca sempre 1 carta random dalla pool con series = "Cursed"
     GAME_STATE.pools['Dannazione'] = cleaned.filter(c =>
       norm(c.series)==='cursed'
     );
@@ -1169,7 +1169,7 @@ GAME_STATE.pools['Gold'] = Array.from(new Set(packsGoldCards));
 // ====== Costruzione pacchetti finiti ======
     GAME_STATE.packs['Dream Regen'] = buildDreamRegenPacks(GAME_STATE.pools['Dream Regen']);
     GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
-    GAME_STATE.packs['Dannazione'] = buildFinitePacks(GAME_STATE.pools['Dannazione'], PACK_SIZE_PER_GAME['Dannazione']);   // size=1
+    GAME_STATE.packs['Dannazione'] = []; // INFINITO: non usa pacchetti finiti, pesca 1 Cursed random ogni volta
     GAME_STATE.packs['Fantaballa Tots'] = buildFinitePacks(GAME_STATE.pools['Fantaballa Tots'], PACK_SIZE_PER_GAME['Fantaballa Tots']);
         GAME_STATE.packs['Sfere del drago'] = buildFinitePacks(GAME_STATE.pools['Sfere del drago'], PACK_SIZE_PER_GAME['Sfere del drago']);
 /* packs Gold set by auto */
@@ -1292,7 +1292,7 @@ try {
     applyPackVisual();
     updateOpenBtnEnabled();
  document.getElementById('log').textContent =
-  `Caricate: Patatine ${GAME_STATE.pools['Patatine'].length}, Dannazione/Cursed ${GAME_STATE.pools['Dannazione'].length}, `+
+  `Caricate: Patatine ${GAME_STATE.pools['Patatine'].length}, Dannazione/Cursed infinite ${GAME_STATE.pools['Dannazione'].length}, `+
   `TOTS ${GAME_STATE.pools['Fantaballa Tots'].length}, Legend ${GAME_STATE.pools['Legend']?.length||0}, `+
   `Oggetti ${GAME_STATE.pools['Oggetti'].length}, Gold ${GAME_STATE.pools['Gold'].length}, Strumenti ${GAME_STATE.pools['Strumenti']?.length||0}.`;
 
@@ -1326,9 +1326,9 @@ function renderPacksStrip(){
       const imgSrc = PACK_BACK_BY_GAME[game] || 'patatrine.png';
       const cost = Number(PACK_COST_PER_GAME[game] || 0);
       const totalPacks = (GAME_STATE.packs[game] || []).length;
-      const left = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold')) ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
+      const left = ((game==='Dannazione')||(game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold')) ? '∞' : String(Math.max(0, totalPacks - (GAME_STATE.cursor[game] || 0)));
       const cardsCount = ((game==='Bronze'||game==='Silver'||game==='Gold') ? ((GAME_STATE.pools[game + '_main']?.length || 0) + (GAME_STATE.pools[game + '_oggs']?.length || 0)) : (GAME_STATE.pools[game]?.length || 0));
-      const subtitle = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
+      const subtitle = ((game==='Dannazione')||(game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
         ? `${cardsCount} carte`
         : `${left}/${totalPacks} pacchi • ${cardsCount} carte`;
 
@@ -1375,7 +1375,7 @@ function renderGamePicker(){
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
 
-    const subtitle = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
+    const subtitle = ((game==='Dannazione')||(game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
       ? `∞ pacchetti • ${totalCards} carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
 
@@ -1412,7 +1412,7 @@ function updateOpenBtnEnabled(){
   const cost = PACK_COST_PER_GAME[game] || 0;
   const badgeText = pointsBadge.textContent || 'Punti: 0';
   const pts = Number((badgeText.split(':')[1]||'0').trim()) || 0;
-  const noLimit = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'));
+  const noLimit = ((game==='Dannazione')||(game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'));
 
   openBtn.disabled = (!noLimit && left <= 0) || (cost > 0 && pts < cost);
   renderGamePicker();
@@ -1448,7 +1448,7 @@ window.resetSinglePack = function(game){
 
     // (Opzionale) Rimescola i pacchi FINITI del solo game (se le funzioni esistono)
     try{
-      const noLimit = (game==='Oggetti'||game==='Cosmetic'||game==='Bronze'||game==='Silver'||game==='Gold');
+      const noLimit = (game==='Dannazione'||game==='Dannazione'||game==='Oggetti'||game==='Cosmetic'||game==='Bronze'||game==='Silver'||game==='Gold');
       if (!noLimit && GAME_STATE?.pools?.[game] && typeof PACK_SIZE_PER_GAME !== 'undefined') {
         if (game === 'Dream Regen' && typeof buildDreamRegenPacks === 'function') {
           GAME_STATE.packs[game] = buildDreamRegenPacks(GAME_STATE.pools[game]);
@@ -1542,7 +1542,7 @@ function showStage(cards){
 }
 
 /** =========================
- *  OPEN PACK (con caso speciale Oggetti infinito)
+ *  OPEN PACK (con casi speciali infiniti: Dannazione, Oggetti, Cosmetic, B/S/G)
  *  ========================= */
 const flashLine = document.getElementById('flashLine');
 const flashScreen = document.getElementById('flashScreen');
@@ -1621,8 +1621,8 @@ if (!GAME_STATE.packs['Dream Regen'].length &&
     } else {
       chosen = generateBSGOnTheFly(game);
     }
-  } else if ((game==='Oggetti')||(game==='Cosmetic')) {
-    // Pacchetti infiniti semplici: X carte random dalla serie corrispondente.
+  } else if ((game==='Dannazione')||(game==='Oggetti')||(game==='Cosmetic')) {
+    // Pacchetti infiniti semplici: Dannazione pesca 1 Cursed; Oggetti/Cosmetic pescano dalla loro pool.
     const pool = GAME_STATE.pools[game] || [];
     const size = PACK_SIZE_PER_GAME[game] || 1;
     if (!pool.length) {
@@ -1766,7 +1766,7 @@ function renderPacksStrip(){
     card.className = 'featured-card';
     if (GAME_STATE.selected === game) card.setAttribute('aria-current', 'true');
 
-    const subtitle = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
+    const subtitle = ((game==='Dannazione')||(game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
       ? '∞ pacchetti'
       : `${Math.max(0, left)}/${total} pacchetti`;
 
@@ -1987,7 +1987,7 @@ window.renderGamePicker = function(){
     btn.setAttribute('data-game',game);
     btn.setAttribute('aria-selected', String(GAME_STATE.selected===game));
     const back = PACK_BACK_BY_GAME[game] || 'patatrine.png';
-    const subtitle = ((game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
+    const subtitle = ((game==='Dannazione')||(game==='Oggetti')||(game==='Cosmetic')||(game==='Bronze')||(game==='Silver')||(game==='Gold'))
       ? `∞ pacchetti • ${totalCards} carte`
       : `${left}/${totalPacks} pacchetti • ${totalCards} carte`;
     btn.innerHTML = `
@@ -2026,7 +2026,7 @@ window.renderPacksStrip = function(){
     card.innerHTML = `
       <img src="${back}" alt="Anteprima ${game}">
       <div style="margin-top:6px;font-weight:700">${game}</div>
-      <div class="featured-cost">${(['Oggetti','Cosmetic','Bronze','Silver','Gold'].includes(game)) ? '∞' : `${left}/${totalPacks}`} pacchi</div>
+      <div class="featured-cost">${(['Dannazione','Oggetti','Cosmetic','Bronze','Silver','Gold'].includes(game)) ? '∞' : `${left}/${totalPacks}`} pacchi</div>
           `;
     if (game === 'Dream Regen') {
       const rbtn = card.querySelector('.mini-reset-btn');
@@ -2249,7 +2249,7 @@ window.renderPacksStrip = function(){
           }
           chosen = window.generateBSGOnTheFly(game);
 
-        } else if (game==='Oggetti' || game==='Cosmetic'){
+        } else if (game==='Dannazione' || game==='Oggetti' || game==='Cosmetic'){
           const pool = GS.pools[game] || [];
           const size = window.PACK_SIZE_PER_GAME[game] || 3;
           if (!pool.length){ const log = document.getElementById('log'); if (log) log.textContent = '⚠️ Nessuna carta in pool.'; return; }
