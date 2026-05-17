@@ -531,135 +531,6 @@ table td, table th {
 }
 </style>
 
-
-
-<!-- === V5: schermata risultato apertura ordinata === -->
-<style id="pack-result-screen-style">
-.result-stage{
-  display:block !important;
-  margin:22px 0 42px;
-}
-.result-panel{
-  width:100%;
-  border-radius:24px;
-  padding:22px;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(110,231,255,.14), transparent 42%),
-    linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.025));
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 18px 48px rgba(0,0,0,.38);
-}
-.result-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:16px;
-  flex-wrap:wrap;
-  margin-bottom:18px;
-}
-.result-kicker{
-  color:var(--muted);
-  font-weight:800;
-  text-transform:uppercase;
-  letter-spacing:.12em;
-  font-size:12px;
-}
-.result-title{
-  margin:4px 0 0;
-  font-size:clamp(24px,4vw,42px);
-  line-height:1;
-}
-.result-subtitle{
-  margin:8px 0 0;
-  color:var(--muted);
-}
-.result-counter{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  min-width:124px;
-  padding:10px 14px;
-  border-radius:999px;
-  font-weight:900;
-  color:#eaf7ff;
-  background:rgba(110,231,255,.10);
-  border:1px solid rgba(110,231,255,.24);
-}
-.result-cards{
-  display:grid;
-  gap:16px;
-  grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
-  align-items:start;
-}
-.result-cards.count-1{
-  max-width:340px;
-  margin:0 auto;
-  grid-template-columns:1fr;
-}
-.result-cards.count-2,
-.result-cards.count-3,
-.result-cards.count-4{
-  max-width:920px;
-  margin:0 auto;
-}
-.result-cards .cCard{
-  max-width:260px;
-  margin:0 auto;
-}
-.result-summary{
-  display:none;
-  margin-top:22px;
-  padding:18px;
-  border-radius:20px;
-  background:rgba(0,0,0,.22);
-  border:1px solid rgba(255,255,255,.12);
-  animation:stageIn .35s ease both;
-}
-.result-summary.show{display:block}
-.summary-grid{
-  display:grid;
-  gap:10px;
-  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-  margin-top:12px;
-}
-.summary-chip{
-  padding:10px 12px;
-  border-radius:14px;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.10);
-  color:#eaf0ff;
-  font-weight:800;
-}
-.summary-best{
-  margin-top:14px;
-  padding:14px;
-  border-radius:16px;
-  background:linear-gradient(135deg, rgba(110,231,255,.12), rgba(192,132,252,.10));
-  border:1px solid rgba(110,231,255,.20);
-}
-.summary-actions{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-top:16px;
-}
-.summary-actions .btn{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-}
-@media(max-width:700px){
-  .result-panel{padding:14px;border-radius:20px}
-  .result-head{align-items:stretch}
-  .result-counter{width:100%}
-  .result-cards{grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:12px}
-  .result-cards .cCard{max-width:190px}
-  .summary-actions .btn{width:100%}
-}
-</style>
-<!-- === Fine V5 risultato apertura === -->
-
 </head>
 <body>
 
@@ -1662,104 +1533,12 @@ function revealCard(n,d){
 function setDropIn(el,i,extra=0){ el.classList.add('drop'); setTimeout(()=>el.classList.add('in'),120*i+extra) }
 function showStage(cards){
   const wrap=document.getElementById('stageWrap'), stage=document.getElementById('stage');
-  const game = GAME_STATE.selected || 'Pacchetto';
-  const safe = (v)=>String(v==null?'':v)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  const normLocal = (v)=>String(v||'').trim().toLowerCase();
-  const isNoArt = (c)=>{
-    const value = String((c && c.img) || '').trim().toLowerCase();
-    return !value || value==='#' || value==='null' || value==='undefined' || value==='about:blank';
-  };
-  const countBy = (arr, fn)=>{
-    const map = new Map();
-    for (const item of arr){
-      const key = fn(item) || 'Altro';
-      map.set(key, (map.get(key)||0)+1);
-    }
-    return [...map.entries()].sort((a,b)=>b[1]-a[1] || String(a[0]).localeCompare(String(b[0]), 'it'));
-  };
-  const rarityScore = (c)=>rarityRank[(c && c.rarity) || ''] ?? 0;
-  const best = cards.slice().sort((a,b)=>rarityScore(b)-rarityScore(a))[0] || cards[0] || {};
-
-  stage.innerHTML='';
-  stage.classList.add('result-stage');
-  wrap.classList.add('show');
-
-  const panel=document.createElement('div');
-  panel.className='result-panel';
-  panel.innerHTML = `
-    <div class="result-head">
-      <div>
-        <div class="result-kicker">Pacchetto aperto</div>
-        <h2 class="result-title">${safe(game)}</h2>
-        <p class="result-subtitle">Tocca le carte per rivelarle una alla volta.</p>
-      </div>
-      <div class="result-counter" id="resultCounter">Rivelate 0/${cards.length}</div>
-    </div>
-    <div class="result-cards count-${Math.min(cards.length,4)}" id="resultCards"></div>
-    <div class="result-summary" id="resultSummary" aria-live="polite"></div>
-  `;
-  stage.appendChild(panel);
-
-  const cardsGrid = panel.querySelector('#resultCards');
-  const counter = panel.querySelector('#resultCounter');
-  const summary = panel.querySelector('#resultSummary');
-  const last=cards.length-1;
-  let summaryShown = false;
-
-  function updateResultUI(){
-    const revealed = cardsGrid.querySelectorAll('.cCard[data-state="front"]').length;
-    counter.textContent = `Rivelate ${revealed}/${cards.length}`;
-    if (revealed >= cards.length && !summaryShown) {
-      summaryShown = true;
-      const rarityRows = countBy(cards, c => c.rarity || 'Senza rarità')
-        .map(([k,v])=>`<div class="summary-chip">${safe(k)}: ${v}</div>`).join('');
-      const seriesRows = countBy(cards, c => c.series || c.game || 'Altro')
-        .map(([k,v])=>`<div class="summary-chip">${safe(k)}: ${v}</div>`).join('');
-      const newCards = cards.filter(isNoArt).length;
-      summary.innerHTML = `
-        <h3 style="margin:0;font-size:22px">Riepilogo</h3>
-        <div class="summary-grid">
-          <div class="summary-chip">Carte totali: ${cards.length}</div>
-          <div class="summary-chip">Nuove con grafica in arrivo: ${newCards}</div>
-          ${rarityRows}
-          ${seriesRows}
-        </div>
-        <div class="summary-best">
-          <div style="color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:12px">Miglior carta</div>
-          <div style="font-size:20px;font-weight:950;margin-top:4px">${safe(best.name || '—')}</div>
-          <div style="color:var(--muted);margin-top:2px">${safe(best.rarity || '')}${best.series ? ' · ' + safe(best.series) : ''}</div>
-        </div>
-        <div class="summary-actions">
-          <button class="btn" type="button" id="openAgainBtn">🎁 Apri un altro ${safe(game)}</button>
-          <a class="btn" href="https://pavoniingrifati.github.io/vetrina-carte/my-cards">🗂️ Le mie carte</a>
-        </div>
-      `;
-      summary.classList.add('show');
-      const openAgain = summary.querySelector('#openAgainBtn');
-      if (openAgain) openAgain.addEventListener('click', () => {
-        try{
-          packArea.style.display='';
-          packBox.classList.remove('opening','shake');
-          flashLine.classList.remove('active');
-          flashScreen.classList.remove('active');
-          wrap.classList.remove('show');
-          setTimeout(()=>openBtn.click(), 80);
-        }catch(e){ openBtn.click(); }
-      });
-      document.getElementById('log').textContent='Tutte le carte sono state rivelate. Riepilogo pronto.';
-    }
-  }
-
-  cards.forEach((c,i)=>{
-    const el=makeCardEl(c,i===last);
-    cardsGrid.appendChild(el);
-    setDropIn(el,i);
-    el.addEventListener('click', () => setTimeout(updateResultUI, 0), {passive:true});
-  });
-  updateResultUI();
-  document.getElementById('log').textContent='Pacchetto aperto. Tocca le carte per rivelarle.';
+  stage.innerHTML=''; wrap.classList.add('show');
+  const last=cards.length-1; const frag=document.createDocumentFragment();
+  cards.forEach((c,i)=>{ const el=makeCardEl(c,i===last); frag.appendChild(el); setDropIn(el,i) });
+  stage.appendChild(frag);
+  
+  document.getElementById('log').textContent='Pacchetto pronto. Tocca le carte per rivelarle.';
 }
 
 /** =========================
@@ -1810,7 +1589,7 @@ openBtn.addEventListener('click', async () => {
   // Carica carte (se non già)
 if (!GAME_STATE.packs['Dream Regen'].length && 
     !GAME_STATE.packs['Patatine'].length && 
-    !GAME_STATE.pools['Dannazione']?.length && 
+    !GAME_STATE.packs['Dannazione'].length && 
     !GAME_STATE.packs['Fantaballa Tots'].length &&
     !GAME_STATE.packs['Gold'].length &&
     !GAME_STATE.pools['Oggetti']?.length) {
@@ -2785,9 +2564,11 @@ window.renderPacksStrip = function(){
         if (window.GAME_STATE.selected === 'Dream Regen') window.GAME_STATE.selected = 'Patatine';
         const cleaned = Array.isArray(window.cleaned) ? window.cleaned : [];
         if (cleaned.length) {
-          // Dannazione = infinito: 1 carta Cursed casuale per apertura.
+          // Dannazione = logica Patatine: pacchetti finiti da 1, solo carte Cursed.
           window.GAME_STATE.pools['Dannazione'] = cleaned.filter(c => norm(c.series) === 'cursed');
-          window.GAME_STATE.packs['Dannazione'] = [];
+          window.GAME_STATE.packs['Dannazione'] = (typeof window.buildFinitePacks === 'function')
+            ? window.buildFinitePacks(window.GAME_STATE.pools['Dannazione'], 1)
+            : window.GAME_STATE.pools['Dannazione'].map(c => [c]);
         }
         window.GAME_STATE.pools['Dream Regen'] = [];
         window.GAME_STATE.packs['Dream Regen'] = [];
