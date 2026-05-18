@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FantaMondiale Fantaballa - Squadra</title>
+  <title>FantaMondiale FM - Squadra</title>
   <style>
     :root {
       --bg: #111111;
@@ -967,19 +967,214 @@ function buildShareCard() {
   return card;
 }
 
-async function createRosterCanvas() {
-  if (typeof html2canvas === 'undefined') {
-    throw new Error('html2canvas non disponibile');
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function drawRoundedRect(ctx, x, y, w, h, r, fill, stroke = null, lineWidth = 1) {
+  roundRectPath(ctx, x, y, w, h, r);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
   }
-  els.shareStage.innerHTML = '';
-  const card = buildShareCard();
-  els.shareStage.appendChild(card);
-  const canvas = await html2canvas(card, {
-    backgroundColor: null,
-    scale: 2,
-    useCORS: true
+}
+
+function drawShirt(ctx, x, y, w, h, p) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x + w * .18, y);
+  ctx.lineTo(x + w * .36, y);
+  ctx.lineTo(x + w * .42, y + h * .10);
+  ctx.lineTo(x + w * .58, y + h * .10);
+  ctx.lineTo(x + w * .64, y);
+  ctx.lineTo(x + w * .82, y);
+  ctx.lineTo(x + w, y + h * .18);
+  ctx.lineTo(x + w * .86, y + h * .42);
+  ctx.lineTo(x + w * .86, y + h);
+  ctx.lineTo(x + w * .14, y + h);
+  ctx.lineTo(x + w * .14, y + h * .42);
+  ctx.lineTo(x, y + h * .18);
+  ctx.closePath();
+
+  ctx.fillStyle = p.nation === 'Inghilterra' ? '#d71920' : shirtColor(p.nation);
+  ctx.fill();
+  ctx.lineWidth = p.nation === 'Inghilterra' ? 4 : 1;
+  ctx.strokeStyle = p.nation === 'Inghilterra' ? '#b31218' : 'rgba(255,255,255,.35)';
+  ctx.stroke();
+
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 13px Inter, Arial';
+  ctx.fillText(nationCode(p.nation), x + w / 2, y + h * .28);
+  ctx.font = '1000 25px Inter, Arial';
+  ctx.fillText(String(p.rating || 0), x + w / 2, y + h * .68);
+  ctx.restore();
+}
+
+function drawPlayerCard(ctx, cx, cy, p) {
+  const w = 138;
+  const h = 150;
+  const x = cx - w / 2;
+  const y = cy - h / 2;
+
+  drawRoundedRect(ctx, x, y, w, h, 16, '#ffffff', 'rgba(0,0,0,.10)', 2);
+
+  drawShirt(ctx, cx - 32, y + 10, 64, 58, p);
+
+  drawRoundedRect(ctx, x + 12, y + 75, w - 24, 25, 6, '#111111');
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '1000 12px Inter, Arial';
+  const cleanName = String(p.name || '').toUpperCase();
+  const shortName = cleanName.length > 15 ? cleanName.slice(0, 14) + '…' : cleanName;
+  ctx.fillText(shortName, cx, y + 88);
+
+  drawRoundedRect(ctx, x + 12, y + 107, w - 24, 22, 6, '#f2f2f2', '#d8d8d8', 1);
+  ctx.fillStyle = '#111111';
+  ctx.font = '900 10px Inter, Arial';
+  ctx.fillText(`${ROLE_LABEL[p.role]} · MED ${formatOneDecimal(playerExpectedPoints(p))}`, cx, y + 118);
+
+  ctx.fillStyle = '#606060';
+  ctx.font = '900 9px Inter, Arial';
+  const nation = String(p.nation || '');
+  ctx.fillText(nation.length > 18 ? nation.slice(0, 17) + '…' : nation, cx, y + 140);
+}
+
+function drawPitch(ctx, x, y, w, h) {
+  const grad = ctx.createLinearGradient(0, y, 0, y + h);
+  grad.addColorStop(0, '#03bf6a');
+  grad.addColorStop(1, '#00aa5a');
+  drawRoundedRect(ctx, x, y, w, h, 28, grad, 'rgba(255,255,255,.88)', 5);
+
+  ctx.save();
+  ctx.beginPath();
+  roundRectPath(ctx, x, y, w, h, 28);
+  ctx.clip();
+  ctx.fillStyle = 'rgba(255,255,255,.045)';
+  const stripe = w / 8;
+  for (let i = 0; i < 8; i += 2) {
+    ctx.fillRect(x + i * stripe, y, stripe, h);
+  }
+
+  ctx.strokeStyle = 'rgba(255,255,255,.82)';
+  ctx.lineWidth = 4;
+  drawRoundedRect(ctx, x + 28, y + 28, w - 56, h - 56, 18, 'rgba(0,0,0,0)', 'rgba(255,255,255,.82)', 4);
+
+  ctx.beginPath();
+  ctx.moveTo(x + 28, y + h / 2);
+  ctx.lineTo(x + w - 28, y + h / 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(x + w / 2, y + h / 2, 70, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Aree
+  ctx.strokeRect(x + w / 2 - 145, y + 28, 290, 90);
+  ctx.strokeRect(x + w / 2 - 85, y + 28, 170, 54);
+  ctx.strokeRect(x + w / 2 - 170, y + h - 118, 340, 90);
+  ctx.strokeRect(x + w / 2 - 90, y + h - 82, 180, 54);
+  ctx.restore();
+}
+
+function drawCenteredText(ctx, text, x, y, maxWidth, font, fill) {
+  ctx.font = font;
+  ctx.fillStyle = fill;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y, maxWidth);
+}
+
+async function createRosterCanvas() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080;
+  canvas.height = 1600;
+  const ctx = canvas.getContext('2d');
+
+  const bg = ctx.createRadialGradient(540, 0, 120, 540, 300, 1100);
+  bg.addColorStop(0, '#2d2d2d');
+  bg.addColorStop(.45, '#171717');
+  bg.addColorStop(1, '#0d0d0d');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const teamName = els.managerInput.value.trim() || 'La mia rosa';
+  const moduleText = state.module.replace(/^(\\d)(\\d)(\\d)$/, '$1-$2-$3');
+
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '1000 62px Inter, Arial';
+  ctx.fillText('Fanta mondiale', 540, 92);
+  ctx.fillText('Fantaballa', 540, 154);
+
+  ctx.fillStyle = '#bdbdbd';
+  ctx.font = '900 22px Inter, Arial';
+  ctx.fillText(teamName.toUpperCase(), 540, 210);
+
+  const pillY = 250;
+  const pillW = 260;
+  const pillH = 84;
+  const pills = [
+    ['MODULO', moduleText],
+    ['CREDITI', String(remaining())],
+    ['PREVISTO', formatOneDecimal(startersProjection())]
+  ];
+  pills.forEach((item, i) => {
+    const px = 110 + i * 305;
+    drawRoundedRect(ctx, px, pillY, pillW, pillH, 20, '#222222', 'rgba(255,255,255,.12)', 2);
+    ctx.fillStyle = '#bdbdbd';
+    ctx.font = '900 15px Inter, Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(item[0], px + pillW / 2, pillY + 24);
+    ctx.fillStyle = item[0] === 'PREVISTO' ? '#d6ff00' : '#ffffff';
+    ctx.font = '1000 34px Inter, Arial';
+    ctx.fillText(item[1], px + pillW / 2, pillY + 58);
   });
-  els.shareStage.innerHTML = '';
+
+  const pitchX = 90;
+  const pitchY = 375;
+  const pitchW = 900;
+  const pitchH = 1060;
+  drawPitch(ctx, pitchX, pitchY, pitchW, pitchH);
+
+  const groups = { A: [], C: [], D: [], P: [] };
+  state.starters.forEach(s => {
+    if (s.playerId) groups[s.role].push(player(s.playerId));
+  });
+
+  const rows = [
+    { players: groups.A, y: pitchY + 150 },
+    { players: groups.C, y: pitchY + 405 },
+    { players: groups.D, y: pitchY + 675 },
+    { players: groups.P, y: pitchY + 900 }
+  ];
+
+  rows.forEach(row => {
+    const count = Math.max(row.players.length, 1);
+    row.players.forEach((p, idx) => {
+      const cx = pitchX + pitchW * ((idx + 1) / (count + 1));
+      drawPlayerCard(ctx, cx, row.y, p);
+    });
+  });
+
+  ctx.fillStyle = '#bdbdbd';
+  ctx.font = '800 20px Inter, Arial';
+  ctx.fillText('Gli 11 titolari · Generato con Fanta mondiale Fantaballa', 540, 1505);
+
   return canvas;
 }
 
