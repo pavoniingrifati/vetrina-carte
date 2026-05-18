@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FantaMondiale Fantaballa - Squadra</title>
+  <style>
+    :root {
+      --bg: #111111;
+      --panel: #e7e7e3;
+      --text: #f5f5f5;
+      --dark: #171717;
+      --green: #00c875;
+      --green2: #00a65a;
+      --gold: #d6ff00;
+      --pitch: #03bf6a;
+      --pitch2: #00aa5a;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    button, input, select { font: inherit; }
+    button { cursor: pointer; border: 0; transition: transform .12s ease, opacity .12s ease, background .12s ease; }
+    button:hover { transform: translateY(-1px); }
+    button:disabled { cursor: not-allowed; opacity: .38; transform: none; }
+
+    .app {
+      max-width: 1180px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(640px, 1fr) 410px;
+      gap: 24px;
+      padding: 42px 32px 28px;
+    }
+
+    @media (max-width: 1050px) { .app { grid-template-columns: 1fr; padding: 20px; } }
+    .left { min-width: 0; }
+
+    .topbar {
+      display: grid;
+      place-items: center;
+      margin-bottom: 18px;
+    }
+    .simplified-topbar { text-align: center; }
+    .app-title {
+      margin: 0;
+      color: #fff;
+      font-size: clamp(28px, 5vw, 52px);
+      line-height: .95;
+      font-weight: 1000;
+      letter-spacing: -0.055em;
+      text-transform: uppercase;
+      text-shadow: 0 10px 34px rgba(0,0,0,.38);
+    }
+
+    .top-item {
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-right: 24px;
+      border-right: 1px solid rgba(255,255,255,0.28);
+    }
+    .top-item:last-child { border-right: 0; padding-right: 0; }
+    .top-big { font-size: 18px; line-height: 1; font-weight: 950; letter-spacing: -0.03em; }
+    .top-big .arrow { color: var(--green); font-size: 12px; margin-left: 3px; }
+    .top-label { color: #777; font-size: 9px; line-height: 1; margin-top: 10px; text-transform: uppercase; font-weight: 900; }
+    .status-title { font-size: 17px; font-weight: 950; letter-spacing: .02em; }
+    .status-sub { color: #777; font-size: 9px; margin-top: 9px; font-weight: 900; text-transform: uppercase; }
+    .help {
+      width: 20px; height: 20px; border: 2px solid #fff; border-radius: 50%;
+      display: grid; place-items: center; font-size: 12px; font-weight: 950;
+    }
+
+    .credits {
+      display: inline-grid;
+      align-items: center;
+      justify-items: center;
+      min-width: 190px;
+      min-height: 72px;
+      background: linear-gradient(135deg, #242424, #343434);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      margin: 0 0 22px;
+      padding: 12px 18px;
+      box-shadow: 0 14px 32px rgba(0,0,0,.25);
+      letter-spacing: -0.04em;
+    }
+    .credits strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 28px;
+      line-height: 1;
+      font-weight: 1000;
+      color: var(--green);
+    }
+    .credits span {
+      display: block;
+      color: #bdbdbd;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 950;
+    }
+
+    .score-summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      max-width: 540px;
+      margin: 0 auto 18px;
+    }
+    .score-card {
+      background: linear-gradient(135deg, #1c1c1c, #292929);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      padding: 12px 14px;
+      text-align: center;
+      box-shadow: 0 12px 28px rgba(0,0,0,.22);
+    }
+    .score-card span {
+      display: block;
+      color: #aaa;
+      font-size: 9px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .score-card strong {
+      display: block;
+      color: var(--gold);
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 1000;
+      letter-spacing: -0.04em;
+    }
+    .stat-tag {
+      display: inline-grid;
+      place-items: center;
+      min-width: 48px;
+      height: 20px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: #f0f0f0;
+      color: #333;
+      font-size: 8px;
+      font-weight: 950;
+      letter-spacing: .02em;
+      white-space: nowrap;
+    }
+
+    .teamline { display: flex; justify-content: center; align-items: center; gap: 16px; margin-bottom: 14px; }
+    .captain-box { display: grid; gap: 6px; }
+    .cap-label {
+      background: var(--gold); color: #111; display: inline-grid; place-items: center;
+      width: 42px; height: 32px; font-weight: 950; border-radius: 2px 2px 0 0;
+    }
+    .cap-number {
+      background: #fff; color: #111; display: inline-grid; place-items: center;
+      width: 42px; height: 34px; font-weight: 950; border-radius: 0 0 4px 4px;
+    }
+    .team-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .manager-input {
+      width: 190px; height: 40px; border-radius: 7px; border: 1px solid #3a3a3a;
+      background: #161616; color: #fff; padding: 0 12px; font-weight: 800;
+    }
+    .random-btn {
+      height: 40px; border-radius: 7px; padding: 0 18px; background: transparent;
+      border: 1px solid var(--green); color: var(--green); font-weight: 950; letter-spacing: .02em;
+    }
+
+    .pitch-area { position: relative; min-height: 640px; display: grid; place-items: center; }
+
+    .pitch {
+      width: min(560px, 88vw);
+      height: 540px;
+      position: relative;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0 54px, transparent 54px 108px),
+        linear-gradient(180deg, var(--pitch), var(--pitch2));
+      border-radius: 18px;
+      box-shadow: 0 26px 70px rgba(0,0,0,.35);
+      overflow: hidden;
+      border: 3px solid rgba(255,255,255,.86);
+    }
+    .pitch:before {
+      content: "";
+      position: absolute;
+      inset: 16px;
+      border: 3px solid rgba(255,255,255,.83);
+      border-radius: 12px;
+      pointer-events: none;
+    }
+    .pitch:after {
+      content: "";
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 76px; height: 76px;
+      border: 3px solid rgba(255,255,255,.83);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .midline, .box-top, .box-bottom, .goal-bottom {
+      position: absolute;
+      left: 50%; transform: translateX(-50%);
+      border: 3px solid rgba(255,255,255,.83);
+      pointer-events: none;
+    }
+    .midline { top: 50%; width: 100%; border-width: 3px 0 0 0; }
+    .box-top { top: 16px; width: 210px; height: 58px; border-top: 0; border-radius: 0 0 12px 12px; }
+    .box-bottom { bottom: 16px; width: 250px; height: 84px; border-bottom: 0; border-radius: 12px 12px 0 0; }
+    .goal-bottom { bottom: 16px; width: 124px; height: 46px; border-bottom: 0; border-radius: 8px 8px 0 0; }
+
+    .formation {
+      position: absolute;
+      inset: 0;
+      padding: 18px 34px 18px;
+      display: grid;
+      grid-template-rows: 125px 132px 132px 105px;
+      align-items: center;
+      z-index: 2;
+    }
+    .line { display: flex; justify-content: center; align-items: center; gap: 34px; }
+    .line.def, .line.mid, .line.att { gap: 34px; }
+
+    .slot {
+      width: 76px;
+      min-height: 90px;
+      background: #fff;
+      color: #111;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 7px 5px;
+      box-shadow: 0 10px 20px rgba(0,0,0,.16);
+      position: relative;
+      border: 2px solid transparent;
+    }
+    .slot.active { border-color: var(--gold); box-shadow: 0 0 0 4px rgba(214,255,0,.25), 0 10px 20px rgba(0,0,0,.16); }
+    .slot .plus {
+      width: 19px; height: 19px; background: #191919; color: #fff; border-radius: 50%;
+      display: grid; place-items: center; font-size: 18px; font-weight: 900; line-height: 18px; margin: 0 auto 8px;
+    }
+    .slot-role { font-size: 11px; font-weight: 800; }
+    .remove-mini {
+      position: absolute; right: -9px; top: -9px; width: 22px; height: 22px; border-radius: 50%;
+      background: #fff; color: #111; border: 1px solid #111; display: grid; place-items: center;
+      font-weight: 950; font-size: 13px; z-index: 5;
+    }
+    .pitch-player { width: 100%; display: grid; justify-items: center; gap: 2px; }
+    .pitch-shirt {
+      width: 46px; height: 40px; position: relative; display: block;
+      clip-path: polygon(18% 0, 36% 0, 42% 10%, 58% 10%, 64% 0, 82% 0, 100% 18%, 86% 42%, 86% 100%, 14% 100%, 14% 42%, 0 18%);
+      color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.35); margin-top: -2px;
+      border: 1px solid rgba(255,255,255,.12);
+      overflow: hidden;
+    }
+    .slot-name {
+      background: #111; color: #fff; border-radius: 3px; padding: 3px 5px; margin-top: 1px;
+      max-width: 80px; font-size: 9px; font-weight: 950; line-height: 1.05; text-transform: uppercase;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .slot-info {
+      display: grid; grid-template-columns: 1fr 1fr; width: 62px; background: #fff; color: #111;
+      border: 1px solid #d8d8d8; border-radius: 4px; overflow: hidden; font-size: 8px; font-weight: 950;
+    }
+    .slot-info span { padding: 2px 1px; border-right: 1px solid #ddd; }
+    .slot-info span:last-child { border-right: 0; }
+    .slot-nation { color: #555; font-size: 8px; font-weight: 900; max-width: 70px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .bench-title { text-align: center; color: #8f8f8f; font-size: 11px; font-weight: 950; margin-top: -2px; }
+    .bench { display: flex; justify-content: space-between; gap: 16px; margin: 14px 0 16px; }
+    @media (max-width: 760px) {
+      body { overflow-x: hidden; }
+      .app { padding: 12px; gap: 18px; }
+      .topbar { margin-bottom: 14px; }
+      .app-title { font-size: 30px; line-height: 1; }
+      .teamline { flex-wrap: wrap; align-items: stretch; gap: 12px; }
+      .team-actions { width: 100%; flex-wrap: wrap; }
+      .manager-input { width: 100%; min-width: 0; }
+      .module-select { min-width: 96px; }
+      .random-btn { flex: 1 1 180px; }
+      .pitch-area { min-height: auto; }
+      .pitch {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        aspect-ratio: 1.3 / 1;
+      }
+      .formation {
+        padding: 10px 10px 8px;
+        grid-template-rows: 76px 92px 92px 76px;
+      }
+      .line {
+        width: 100%;
+        justify-content: space-evenly !important;
+        gap: 8px !important;
+      }
+      .bench { flex-wrap: wrap; justify-content: center; gap: 10px; }
+      .slot { width: 62px; min-height: 78px; padding: 6px 4px; }
+      .slot .plus { margin-bottom: 6px; }
+      .slot-name { max-width: 58px; font-size: 8px; }
+      .slot-info { width: 54px; font-size: 7px; }
+      .slot-nation { max-width: 58px; font-size: 7px; }
+      .pitch-shirt { width: 38px; height: 33px; }
+      .pitch-shirt-code { font-size: 6px; top: 5px; }
+      .pitch-shirt-num { font-size: 10px; bottom: 5px; }
+    }
+
+    @media (max-width: 480px) {
+      .app { padding: 10px; }
+      .topbar { display: grid; place-items: center; }
+      .app-title { font-size: 26px; }
+      .pitch {
+        aspect-ratio: 1.18 / 1;
+      }
+      .formation {
+        padding: 8px 8px 6px;
+        grid-template-rows: 70px 86px 86px 72px;
+      }
+      .line { gap: 6px !important; }
+      .slot { width: 56px; min-height: 72px; padding: 5px 3px; }
+      .slot-role { font-size: 10px; }
+      .slot-name { max-width: 52px; font-size: 7px; }
+      .slot-info { width: 48px; font-size: 6.5px; }
+      .slot-nation { max-width: 50px; font-size: 6.5px; }
+      .pitch-shirt { width: 34px; height: 30px; }
+      .remove-mini { width: 20px; height: 20px; right: -7px; top: -7px; }
+    }
+
+    .bottom-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 540px; margin: 0 auto; }
+    .cancel-btn, .save-btn { height: 42px; border-radius: 6px; font-weight: 950; font-size: 16px; }
+    .cancel-btn { color: #fff; background: #151515; border: 1px solid #555; }
+    .save-btn { color: #fff; background: #747474; }
+    .save-btn.valid { background: var(--green); color: #07120c; }
+
+    .market {
+      background: var(--panel); color: var(--dark); border-radius: 20px; padding: 18px 20px;
+      min-height: calc(100vh - 84px); display: flex; flex-direction: column; box-shadow: 0 25px 70px rgba(0,0,0,.35);
+    }
+    .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 26px; }
+    .tab { display: grid; place-items: center; gap: 5px; color: #333; font-size: 11px; font-weight: 700; }
+    .tab svg { width: 22px; height: 22px; stroke-width: 1.6; }
+    .tab.active { color: var(--green2); }
+
+    .search-row { display: grid; grid-template-columns: 1fr 44px; gap: 8px; margin-bottom: 10px; }
+    .search-box {
+      height: 41px; background: white; border-radius: 6px; display: grid; grid-template-columns: 34px 1fr;
+      align-items: center; padding: 0 10px;
+    }
+    .search-box input { border: 0; outline: 0; background: transparent; font-weight: 700; color: #444; width: 100%; }
+    .filter-btn { height: 41px; border: 1px solid #777; background: transparent; border-radius: 6px; color: #333; display: grid; place-items: center; }
+
+    .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+    .chip { min-width: 31px; height: 31px; border-radius: 6px; border: 1px solid #111; background: transparent; color: #111; font-weight: 900; }
+    .chip.active { background: #111; color: #fff; }
+    .nation-select, .module-select, .sort-select {
+      height: 31px; border-radius: 6px; border: 1px solid #111; background: transparent; color: #111;
+      font-weight: 900; padding: 0 8px; max-width: 145px;
+    }
+    .module-select { background: #fff; }
+
+    .players-list { display: grid; gap: 10px; overflow: auto; padding-right: 2px; max-height: calc(100vh - 280px); }
+    .player-card {
+      min-height: 76px;
+      background: #fff;
+      border-radius: 10px;
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr) 62px;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 9px 9px 0;
+      overflow: visible;
+      position: relative;
+    }
+    .player-card.disabled { opacity: .45; }
+    .shirt {
+      height: 60px; width: 64px; position: relative; display: block;
+      clip-path: polygon(18% 0, 36% 0, 42% 10%, 58% 10%, 64% 0, 82% 0, 100% 18%, 86% 42%, 86% 100%, 14% 100%, 14% 42%, 0 18%);
+      color: white; font-weight: 950; text-shadow: 0 1px 4px rgba(0,0,0,.35);
+      overflow: hidden;
+    }
+    .shirt-code, .pitch-shirt-code { position: absolute; left: 50%; transform: translateX(-50%); top: 7px; font-size: 8px; line-height: 1; font-weight: 900; letter-spacing: .08em; }
+    .shirt-num, .pitch-shirt-num { position: absolute; left: 50%; transform: translateX(-50%); bottom: 7px; font-size: 15px; line-height: 1; font-weight: 950; }
+    .pitch-shirt-code { top: 6px; font-size: 7px; }
+    .pitch-shirt-num { bottom: 6px; font-size: 12px; }
+    .pname { font-size: 12px; line-height: 1.05; font-weight: 950; text-transform: uppercase; margin-bottom: 5px; }
+    .pmeta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px 6px;
+      color: #666;
+      font-size: 9px;
+      font-weight: 850;
+      line-height: 1.25;
+      overflow: visible;
+    }
+    .role-mini {
+      display: inline-grid; place-items: center; min-width: 15px; height: 15px; background: #e8e8e8; color: #777;
+      border-radius: 3px; font-size: 8px; font-weight: 950; margin-right: 5px;
+    }
+    .price {
+      height: 42px;
+      border: 1px solid #222;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font-size: 16px;
+      font-weight: 950;
+      display: grid;
+      place-items: center;
+    }
+
+    .export-box { margin-top: 14px; display: none; }
+    .export-box textarea {
+      width: 100%; min-height: 120px; resize: vertical; border: 1px solid #aaa; border-radius: 8px;
+      padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px;
+    }
+    .toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #fff; color: #111;
+      padding: 12px 16px; border-radius: 999px; font-weight: 950; opacity: 0; pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease; box-shadow: 0 10px 30px rgba(0,0,0,.25); z-index: 10;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+  
+    /* Mobile final fix */
+    @media (max-width: 760px) {
+      .app { padding: 12px; gap: 18px; }
+      .topbar { margin-bottom: 14px; }
+      .app-title { font-size: 30px; line-height: 1; text-align: center; }
+      .credits { width: 100%; max-width: 260px; margin-left: auto; margin-right: auto; display: grid; }
+      .teamline { display: grid; justify-items: center; gap: 12px; }
+      .team-actions { width: 100%; display: grid; grid-template-columns: 1fr 110px; gap: 10px; justify-items: stretch; }
+      .manager-input { grid-column: 1 / -1; width: 100%; }
+      .module-select { width: 100%; max-width: none; }
+      .random-btn {
+        grid-column: 1 / -1;
+        justify-self: center;
+        width: min(260px, 100%);
+        text-align: center;
+        padding: 0 14px;
+      }
+      .score-summary { grid-template-columns: 1fr 1fr; width: 100%; }
+      .score-card { padding: 10px 8px; }
+      .score-card strong { font-size: 20px; }
+      .pitch-area { width: 100%; min-height: auto; overflow: visible; }
+      .pitch { width: 100%; max-width: 100%; height: auto; aspect-ratio: 0.78 / 1; }
+      .formation { padding: 14px 6px 12px; grid-template-rows: 22% 27% 27% 22%; }
+      .line { width: 100%; justify-content: space-around !important; gap: 3px !important; }
+      .slot { width: 54px; min-height: 68px; padding: 4px 3px; }
+      .slot-name { max-width: 50px; font-size: 6.8px; padding: 2px 3px; }
+      .slot-info { width: 46px; font-size: 6px; }
+      .slot-nation { max-width: 48px; font-size: 6px; }
+      .pitch-shirt { width: 30px; height: 27px; }
+      .pitch-shirt-code { font-size: 5px; top: 4px; }
+      .pitch-shirt-num { font-size: 9px; bottom: 4px; }
+      .remove-mini { width: 18px; height: 18px; right: -6px; top: -6px; font-size: 11px; }
+    }
+    @media (max-width: 420px) {
+      .app { padding: 10px 8px; }
+      .app-title { font-size: 25px; }
+      .pitch { aspect-ratio: 0.70 / 1; }
+      .formation { padding: 12px 4px 10px; }
+      .slot { width: 49px; min-height: 64px; padding: 4px 2px; }
+      .slot-name { max-width: 45px; font-size: 6.1px; }
+      .slot-info { width: 41px; font-size: 5.6px; }
+      .slot-nation { max-width: 42px; font-size: 5.6px; }
+      .pitch-shirt { width: 27px; height: 24px; }
+      .pitch-shirt-code { font-size: 4.5px; }
+      .pitch-shirt-num { font-size: 8px; }
+    }
+
+      /* Player card large fix */
+
+    @media (max-width: 760px) {
+      .player-card {
+        min-height: 82px;
+        grid-template-columns: 58px minmax(0, 1fr) 58px;
+        gap: 8px;
+        padding: 9px 8px 9px 0;
+      }
+      .shirt { width: 58px; height: 56px; }
+      .pname { font-size: 11px; }
+      .pmeta { gap: 4px 5px; font-size: 8px; }
+      .stat-tag { min-width: 43px; height: 18px; padding: 0 5px; font-size: 7px; }
+      .price { width: 52px; height: 40px; font-size: 15px; }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="left">
+      <div class="topbar simplified-topbar">
+        <h1 class="app-title">Fanta mondiale Fantaballa</h1>
+      </div>
+
+      <div class="credits credits-large"><span>Crediti rimanenti</span><strong id="creditsText">250/250</strong></div>
+
+      <div class="score-summary">
+        <div class="score-card"><span>Previsto titolari</span><strong id="startersProjection">0.0</strong></div>
+        <div class="score-card"><span>Previsto rosa</span><strong id="rosterProjection">0.0</strong></div>
+      </div>
+
+      <div class="teamline">
+        <div class="team-actions">
+          <input class="manager-input" id="managerInput" placeholder="Nome squadra" />
+          <select class="module-select" id="moduleSelect"><option value="442">4-4-2</option><option value="433">4-3-3</option><option value="343">3-4-3</option><option value="352">3-5-2</option></select>
+          <button class="random-btn" id="randomBtn">Squadra casuale</button>
+        </div>
+      </div>
+
+      <div class="pitch-area">
+        <div class="pitch">
+          <div class="box-top"></div><div class="midline"></div><div class="box-bottom"></div><div class="goal-bottom"></div>
+          <div class="formation" id="formation"></div>
+        </div>
+      </div>
+
+      <div class="bench-title" id="benchInfo">PANCHINA: Giocatori 0 FPT, Coach 100% FPT</div>
+      <div class="bench" id="bench"></div>
+      <div class="bottom-actions"><button class="cancel-btn" id="cancelBtn">Svuota rosa</button><button class="save-btn" id="saveBtn">Salva</button></div>
+    </section>
+
+    <aside class="market">
+      <div class="tabs">
+        <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg><span>Giocatori</span></div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span>Calendario</span></div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="4" width="3" height="14"/></svg><span>Statistiche</span></div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>News</span></div>
+      </div>
+
+      <div class="search-row">
+        <div class="search-box"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#555"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input id="searchInput" placeholder="Cerca giocatore" /></div>
+        <button class="filter-btn" title="Filtri"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 3H2l8 9v7l4 2v-9l8-9z"/></svg></button>
+      </div>
+
+      <div class="filters">
+        <button class="chip active" data-role="all">T1</button><button class="chip" data-role="P">P</button><button class="chip" data-role="D">D</button><button class="chip" data-role="C">C</button><button class="chip" data-role="A">A</button>
+        <select class="nation-select" id="nationFilter"><option value="all">Nazionali</option></select>
+        <select class="sort-select" id="sortSelect"><option value="cost_desc">Costo ↓</option><option value="cost_asc">Costo ↑</option><option value="rating_desc">Forza ↓</option><option value="rating_asc">Forza ↑</option><option value="name_asc">Nome A-Z</option></select>
+      </div>
+
+      <div class="players-list" id="playersList"></div>
+      <div class="export-box" id="exportBoxWrap"><textarea id="exportBox"></textarea></div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast">Salvato</div>
+
+<script>
+const RAW_NAMES = `alessiodrinkteam
+antonio__77777
+Attilio
+Balasco
+bandolero__22
+billyboss2012
+brun0_scarso
+Ciolasalsa
+d4rkn3s5xx
+Damians
+deathwing1986
+fantaballa
+FireLuk29
+flashyt_11
+gabrielfwz
+gigachad345667
+joel73xyz
+Johnny
+justmario01
+klajdi_bossi
+Lele
+marcoprogame4
+Marinosky
+Marioski
+Martinico
+mino_zip
+MisterFM
+nathan2290
+pizzaboyr0w
+raphaelaex
+rxr_kz95gianluca
+Samuel
+watengakazz1m
+xavieeeeer_
+Arthur
+diggodog30
+Edo_falcone
+emadk_
+Fork
+Fra
+Gabriel Mancini
+Gabriele
+Gigabyte
+lorenzobitontii
+Maks
+nickgulmoxxiv
+Pacchoo
+Piuz
+re13andrea2
+RushErPazzo
+tepic85
+TommasoM
+fed.vet.5
+nickfochi
+sololeveling80
+andrea_zanzibar
+anto_gra22
+bananaiper44
+sebasalatii
+Stefano_lovero
+Tore
+?
+Calcio edit
+Checco
+Ciccarelli
+Ciuly
+Emamu
+Flavio
+Frank Lubros
+Frazx
+Ildanix
+Luca dp
+Markus
+pippofromibiza88
+Ronny
+Salex
+Scibet
+secondo.mattia
+yuridigius
+dav_masilla
+Ilbhobhobho
+Lucertola
+claudio_cola05
+emanuele_z_
+fruci_alessandro_
+andreatarulli
+cloud88c
+game_of_lambs
+i.m_tendaman98
+jonden3402
+Lemming
+Lilolder
+natigno00
+pummarolaelvetica
+ricvy21
+rikiii
+tendaman98
+thomas_popolizio
+tieppog
+tieppogabriele
+valetap9o
+alessiocesareo
+biafrigerio_09
+bruno.ceck
+damiano_onepablo
+dany.heerous
+dimarzio_manuel
+Domy19.7
+follochristian
+halland_pio
+leooo4206
+luk.e1110
+Marco gioffredi
+marco.urbanii12
+marcosal
+micaeldp
+un_bambino_in_viaggio
+adrianesen
+alessandro_dilecce
+alessanidro
+andrewgroove_music
+Antonio di Mario
+blind_memory10
+canala_max6
+diaf.11
+Enricosa89
+er.tommy.10
+fra_maffo10_
+france_sco.cairo
+Geofri074
+Gioiquelloveo
+gioiquellovero
+giuseppe_olimpio116
+lapo2301
+leandrosantiagomunez
+lore_dema_95
+lu_fucacciu
+lucera_davide
+Matt_011
+mattia_villa_vmi
+paky.oprivat
+raffyagnese11
+rick25
+roberto683194
+sconosciuto
+ste_fa_nello
+steefanovignati
+tommaso.derosa_
+walterilprofeta21
+z.a.n.huf`;
+
+const NATIONAL_TEAMS = ['Argentina','Brasile','Francia','Inghilterra','Spagna','Portogallo','Germania','Paesi Bassi','Belgio','Croazia','Uruguay','Colombia','Marocco','Giappone','Senegal','Stati Uniti','Messico','Canada','Svizzera','Norvegia','Svezia','Turchia','Austria','Cechia','Scozia','Bosnia','Corea del Sud','Australia','Iran','Qatar','Arabia Saudita','Iraq','Giordania','Uzbekistan','Nuova Zelanda','Egitto','Algeria','Tunisia','Ghana','Costa d’Avorio','Sudafrica','Capo Verde','Congo DR','Paraguay','Ecuador','Panama','Haiti','Curaçao'];
+const FLAGS = ['🇦🇷','🇧🇷','🇫🇷','🏴','🇪🇸','🇵🇹','🇩🇪','🇳🇱','🇧🇪','🇭🇷','🇺🇾','🇨🇴','🇲🇦','🇯🇵','🇸🇳','🇺🇸','🇲🇽','🇨🇦','🇨🇭','🇳🇴','🇸🇪','🇹🇷','🇦🇹','🇨🇿','🏴','🇧🇦','🇰🇷','🇦🇺','🇮🇷','🇶🇦','🇸🇦','🇮🇶','🇯🇴','🇺🇿','🇳🇿','🇪🇬','🇩🇿','🇹🇳','🇬🇭','🇨🇮','🇿🇦','🇨🇻','🇨🇩','🇵🇾','🇪🇨','🇵🇦','🇭🇹','🇨🇼'];
+const ROLE_LABEL = { P: 'POR', D: 'DIF', C: 'CEN', A: 'ATT', J: 'ALL' };
+const BUDGET = 250;
+const FORMATIONS = { '442': { A: 2, C: 4, D: 4, P: 1 }, '433': { A: 3, C: 3, D: 4, P: 1 }, '343': { A: 3, C: 4, D: 3, P: 1 }, '352': { A: 2, C: 5, D: 3, P: 1 } };
+const BENCH = ['P','D','C','A','J'];
+
+function hashCode(str) { let hash = 0; for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i) | 0; return Math.abs(hash); }
+function buildPlayers() {
+  const names = RAW_NAMES.split('\n').map(x => x.trim()).filter(Boolean);
+  const rolesCycle = ['P','D','D','C','C','C','A','A'];
+  return names.map((name, idx) => {
+    const h = hashCode(name + idx);
+    const role = rolesCycle[(idx + h) % rolesCycle.length];
+    const nIdx = (idx + h) % NATIONAL_TEAMS.length;
+    const rating = 56 + (h % 40);
+    const roleMultiplier = role === 'A' ? 0.62 : role === 'C' ? 0.50 : role === 'D' ? 0.38 : 0.30;
+    const rolePremium = role === 'A' ? 6 : role === 'C' ? 4 : role === 'D' ? 2 : 0;
+    const rawCost = ((rating - 50) * roleMultiplier) + rolePremium;
+    const cost = Math.max(3, Math.min(45, Math.round(rawCost)));
+    const popularity = ((h % 500) / 10).toFixed(1);
+    const fpm = (9 + ((h % 1150) / 100)).toFixed(2).replace('.', ',');
+    return { id: idx + 1, name, role, nation: NATIONAL_TEAMS[nIdx], flag: FLAGS[nIdx], rating, cost: Number(cost.toFixed(1)), popularity, fpm, games: 0, totalPoints: 0, avgPoints: 0, goals: 0, assists: 0, yellows: 0, reds: 0 };
+  }).sort((a,b) => b.cost - a.cost);
+}
+
+let players = buildPlayers();
+let state = JSON.parse(localStorage.getItem('fm_world_state') || 'null') || newState('442');
+let activeSlot = null;
+let roleFilter = 'all';
+
+function newState(module) {
+  const f = FORMATIONS[module];
+  const starters = [];
+  ['A','C','D','P'].forEach(role => { for (let i = 0; i < f[role]; i++) starters.push({ key: `${role}${i}`, role, playerId: null }); });
+  return { manager: '', module, starters, bench: BENCH.map((role, i) => ({ key: `B${i}`, role, playerId: null })) };
+}
+
+const els = {
+  formation: document.getElementById('formation'), bench: document.getElementById('bench'), playersList: document.getElementById('playersList'),
+  searchInput: document.getElementById('searchInput'), nationFilter: document.getElementById('nationFilter'), sortSelect: document.getElementById('sortSelect'),
+  moduleSelect: document.getElementById('moduleSelect'), capNumber: document.getElementById('capNumber'), creditsText: document.getElementById('creditsText'),
+  benchInfo: document.getElementById('benchInfo'), saveBtn: document.getElementById('saveBtn'), managerInput: document.getElementById('managerInput'),
+  exportBoxWrap: document.getElementById('exportBoxWrap'), exportBox: document.getElementById('exportBox'), toast: document.getElementById('toast'), startersProjection: document.getElementById('startersProjection'), rosterProjection: document.getElementById('rosterProjection')
+};
+
+function player(id) { return players.find(p => p.id === id); }
+function allSlots() { return [...state.starters, ...state.bench]; }
+function usedIds() { return allSlots().map(s => s.playerId).filter(Boolean); }
+function usedCost() { return usedIds().reduce((s,id) => s + player(id).cost, 0); }
+function remaining() { return Math.round((BUDGET - usedCost()) * 10) / 10; }
+function playerExpectedPoints(p) {
+  if (!p) return 0;
+  if (Number(p.games || 0) > 0) return Number(p.avgPoints || 0);
+  return 0;
+}
+function slotExpectedPoints(slot) {
+  return slot && slot.playerId ? playerExpectedPoints(player(slot.playerId)) : 0;
+}
+function startersProjection() {
+  return Math.round(state.starters.reduce((sum, s) => sum + slotExpectedPoints(s), 0) * 10) / 10;
+}
+function rosterProjection() {
+  return Math.round(allSlots().reduce((sum, s) => sum + slotExpectedPoints(s), 0) * 10) / 10;
+}
+function formatOneDecimal(value) {
+  return Number(value || 0).toFixed(1);
+}
+function saveLocal() { state.manager = els.managerInput.value.trim(); localStorage.setItem('fm_world_state', JSON.stringify(state)); }
+function isValid() { return state.starters.every(s => s.playerId) && remaining() >= 0; }
+function showToast(text) { els.toast.textContent = text; els.toast.classList.add('show'); setTimeout(() => els.toast.classList.remove('show'), 1600); }
+function shirtColor(nation) { const h = hashCode(nation); const colors = ['#0b5bd3','#101010','#e3223d','#08a05c','#f5b400','#7b1b1b','#149ddf','#222f86']; return colors[h % colors.length]; }
+function nationCode(nation) {
+  const map = { 'Argentina':'ARG','Brasile':'BRA','Francia':'FRA','Inghilterra':'ENG','Spagna':'ESP','Portogallo':'POR','Germania':'GER','Paesi Bassi':'NED','Belgio':'BEL','Croazia':'CRO','Uruguay':'URU','Colombia':'COL','Marocco':'MAR','Giappone':'JPN','Senegal':'SEN','Stati Uniti':'USA','Messico':'MEX','Canada':'CAN','Svizzera':'SUI','Norvegia':'NOR','Svezia':'SWE','Turchia':'TUR','Austria':'AUT','Cechia':'CZE','Scozia':'SCO','Bosnia':'BIH','Corea del Sud':'KOR','Australia':'AUS','Iran':'IRN','Qatar':'QAT','Arabia Saudita':'KSA','Iraq':'IRQ','Giordania':'JOR','Uzbekistan':'UZB','Nuova Zelanda':'NZL','Egitto':'EGY','Algeria':'ALG','Tunisia':'TUN','Ghana':'GHA','Costa d’Avorio':'CIV','Sudafrica':'RSA','Capo Verde':'CPV','Congo DR':'COD','Paraguay':'PAR','Ecuador':'ECU','Panama':'PAN','Haiti':'HAI','Curaçao':'CUW' };
+  return map[nation] || nation.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase();
+}
+function shirtStyle(nation) {
+  if (nation === 'Inghilterra') return 'background:#d71920;border:2px solid #b31218;color:#ffffff;text-shadow:none;';
+  return `background:${shirtColor(nation)};color:#ffffff;`;
+}
+function shirtMarkup(p, pitch = false) {
+  const codeClass = pitch ? 'pitch-shirt-code' : 'shirt-code';
+  const numClass = pitch ? 'pitch-shirt-num' : 'shirt-num';
+  const num = String(p.rating || 0);
+  return `<span class="${codeClass}">${nationCode(p.nation)}</span><span class="${numClass}">${num}</span>`;
+}
+
+function populateNations() { NATIONAL_TEAMS.forEach(n => { const opt = document.createElement('option'); opt.value = n; opt.textContent = n; els.nationFilter.appendChild(opt); }); }
+
+function slotHTML(slot) {
+  const p = slot.playerId ? player(slot.playerId) : null;
+  const active = activeSlot === slot.key ? ' active' : '';
+  if (!p) return `<button class="slot${active}" onclick="setActiveSlot('${slot.key}')"><div><div class="plus">+</div><div class="slot-role">${ROLE_LABEL[slot.role]}</div></div></button>`;
+  return `<button class="slot${active}" onclick="setActiveSlot('${slot.key}')">
+    <span class="remove-mini" onclick="event.stopPropagation(); removeFromSlot('${slot.key}')">×</span>
+    <div class="pitch-player">
+      <div class="pitch-shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, true)}</div>
+      <div class="slot-name" title="${p.name}">${p.name}</div>
+      <div class="slot-info"><span>${String(p.cost).replace('.', ',')}</span><span>MED ${formatOneDecimal(playerExpectedPoints(p))}</span></div>
+      <div class="slot-nation">${ROLE_LABEL[p.role]} · ${p.nation}</div>
+    </div>
+  </button>`;
+}
+
+function renderFormation() {
+  const groups = { A: [], C: [], D: [], P: [] };
+  state.starters.forEach(s => groups[s.role].push(s));
+  els.formation.innerHTML = `<div class="line att">${groups.A.map(slotHTML).join('')}</div><div class="line mid">${groups.C.map(slotHTML).join('')}</div><div class="line def">${groups.D.map(slotHTML).join('')}</div><div class="line gk">${groups.P.map(slotHTML).join('')}</div>`;
+}
+function renderBench() { els.bench.innerHTML = state.bench.map(slotHTML).join(''); const filled = state.bench.filter(s => s.playerId).length; els.benchInfo.textContent = `PANCHINA: Giocatori ${filled} FPT, Coach 100% FPT`; }
+
+function sortPlayers(list) {
+  const sort = els.sortSelect.value;
+  const sorted = [...list];
+  if (sort === 'cost_asc') sorted.sort((a,b) => a.cost - b.cost || b.rating - a.rating);
+  else if (sort === 'rating_desc') sorted.sort((a,b) => b.rating - a.rating || b.cost - a.cost);
+  else if (sort === 'rating_asc') sorted.sort((a,b) => a.rating - b.rating || a.cost - b.cost);
+  else if (sort === 'name_asc') sorted.sort((a,b) => a.name.localeCompare(b.name));
+  else sorted.sort((a,b) => b.cost - a.cost || b.rating - a.rating);
+  return sorted;
+}
+
+function renderPlayers() {
+  const q = els.searchInput.value.trim().toLowerCase();
+  const nation = els.nationFilter.value;
+  const active = allSlots().find(s => s.key === activeSlot);
+  let desiredRole = roleFilter;
+  if (active && roleFilter === 'all') desiredRole = active.role === 'J' ? 'all' : active.role;
+
+  let list = players.filter(p => {
+    if (usedIds().includes(p.id)) return false;
+    if (q && !p.name.toLowerCase().includes(q)) return false;
+    if (nation !== 'all' && p.nation !== nation) return false;
+    if (desiredRole !== 'all' && p.role !== desiredRole) return false;
+    return true;
+  });
+  list = sortPlayers(list);
+
+  els.playersList.innerHTML = list.map(p => {
+    const canAfford = remaining() >= p.cost;
+    return `<button class="player-card ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'} onclick="pickPlayer(${p.id})"><div class="shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, false)}</div><div><div class="pname"><span class="role-mini">${p.role}</span>${p.name}</div><div class="pmeta"><span>${p.nation}</span><span class="stat-tag">MED ${formatOneDecimal(playerExpectedPoints(p))}</span><span class="stat-tag">PRES ${p.games || 0}</span><span class="stat-tag">TOT ${formatOneDecimal(p.totalPoints || 0)}</span><span>FOR ${p.rating}</span></div></div><div class="price">${p.cost}</div></button>`;
+  }).join('') || '<div style="color:#555;font-weight:900;text-align:center;padding:30px">Nessun giocatore disponibile</div>';
+}
+
+function renderMeta() {
+  els.creditsText.textContent = `${remaining().toString().replace('.', ',')}/${BUDGET}`;
+  els.moduleSelect.value = state.module;
+  if (els.capNumber) els.capNumber.textContent = state.module;
+  els.saveBtn.classList.toggle('valid', isValid());
+  if (els.startersProjection) els.startersProjection.textContent = formatOneDecimal(startersProjection());
+  if (els.rosterProjection) els.rosterProjection.textContent = formatOneDecimal(rosterProjection());
+}
+function render() { renderFormation(); renderBench(); renderPlayers(); renderMeta(); }
+function setActiveSlot(key) {
+  activeSlot = key;
+  const s = allSlots().find(x => x.key === key);
+  if (s && s.role !== 'J') {
+    roleFilter = 'all';
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.role === 'all'));
+  }
+  render();
+}
+function removeFromSlot(key) {
+  const s = allSlots().find(x => x.key === key);
+  if (s) s.playerId = null;
+  saveLocal();
+  render();
+}
+function pickPlayer(id) {
+  const p = player(id);
+  let slot = activeSlot ? allSlots().find(s => s.key === activeSlot) : null;
+  if (!slot || slot.playerId || (slot.role !== 'J' && slot.role !== p.role)) {
+    slot = allSlots().find(s => !s.playerId && (s.role === p.role || s.role === 'J'));
+  }
+  if (!slot) return showToast('Nessuno slot compatibile');
+  if (remaining() < p.cost) return showToast('Crediti insufficienti');
+  slot.playerId = id;
+  activeSlot = null;
+  saveLocal();
+  render();
+}
+function changeModule(module) {
+  const selectedPlayers = usedIds().map(id => player(id));
+  state = newState(module);
+  state.manager = els.managerInput.value.trim();
+  selectedPlayers.forEach(p => {
+    const slot = allSlots().find(s => !s.playerId && (s.role === p.role || s.role === 'J'));
+    if (slot) slot.playerId = p.id;
+  });
+  activeSlot = null;
+  saveLocal();
+  render();
+}
+function randomTeam() {
+  const module = state.module;
+  state = newState(module);
+  state.manager = els.managerInput.value.trim();
+  const sorted = [...players].sort((a,b) => b.cost - a.cost);
+  allSlots().forEach(slot => {
+    const candidates = sorted.filter(p => !usedIds().includes(p.id) && (slot.role === 'J' || p.role === slot.role) && remaining() >= p.cost);
+    if (candidates.length) {
+      const index = Math.min(candidates.length - 1, Math.floor(Math.random() * Math.min(candidates.length, 8)));
+      slot.playerId = candidates[index].id;
+    }
+  });
+  saveLocal();
+  render();
+}
+function exportRoster() {
+  const data = {
+    competizione: 'FantaMondiale FM',
+    squadra: els.managerInput.value.trim() || 'Senza nome',
+    modulo: state.module,
+    budget: BUDGET,
+    creditiResidui: remaining(),
+    punteggioPrevistoTitolari: startersProjection(),
+    punteggioPrevistoRosa: rosterProjection(),
+    titolari: state.starters.map(s => ({ slot: ROLE_LABEL[s.role], giocatore: s.playerId ? player(s.playerId) : null })),
+    panchina: state.bench.map(s => ({ slot: ROLE_LABEL[s.role], giocatore: s.playerId ? player(s.playerId) : null })),
+    regolamento: {
+      voto: 'voto Football Manager',
+      gol: 3,
+      assist: 1,
+      autogol: -3,
+      giallo: -0.5,
+      rosso: -1,
+      cartellini: 'giallo e rosso non si sommano; vale il rosso'
+    }
+  };
+  els.exportBoxWrap.style.display = 'block';
+  els.exportBox.value = JSON.stringify(data, null, 2);
+  showToast('Rosa salvata ed esportata');
+}
+populateNations();
+els.managerInput.value = state.manager || '';
+render();
+
+document.querySelectorAll('.chip').forEach(chip => chip.addEventListener('click', () => { roleFilter = chip.dataset.role; document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c === chip)); renderPlayers(); }));
+els.searchInput.addEventListener('input', renderPlayers);
+els.nationFilter.addEventListener('change', renderPlayers);
+els.sortSelect.addEventListener('change', renderPlayers);
+els.moduleSelect.addEventListener('change', e => changeModule(e.target.value));
+els.managerInput.addEventListener('input', saveLocal);
+document.getElementById('randomBtn').addEventListener('click', randomTeam);
+document.getElementById('cancelBtn').addEventListener('click', () => { if (!confirm('Vuoi davvero svuotare tutta la rosa?')) return; state = newState(state.module); state.manager = els.managerInput.value.trim(); activeSlot = null; saveLocal(); render(); });
+els.saveBtn.addEventListener('click', exportRoster);
+</script>
+</body>
+</html>
