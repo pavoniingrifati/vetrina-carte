@@ -343,9 +343,11 @@
     .bottom-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 540px; margin: 0 auto; }
     .bottom-actions-three { grid-template-columns: 1fr 1fr; }
     .bottom-actions-three .share-btn { grid-column: 1 / -1; }
-    .cancel-btn, .save-btn, .share-btn { height: 42px; border-radius: 6px; font-weight: 950; font-size: 16px; }
+    .bottom-actions-four { grid-template-columns: 1fr 1fr; }
+    .cancel-btn, .save-btn, .share-btn, .download-btn { height: 42px; border-radius: 6px; font-weight: 950; font-size: 16px; }
     .cancel-btn { color: #fff; background: #151515; border: 1px solid #555; }
     .save-btn { color: #fff; background: #747474; }
+    .download-btn { color: #fff; background: #2765ff; border: 1px solid rgba(255,255,255,.12); }
     .share-btn { color: #07120c; background: var(--green); border: 1px solid rgba(255,255,255,.1); }
     .save-btn.valid { background: var(--green); color: #07120c; }
 
@@ -536,10 +538,11 @@
 
       <div class="bench-title" id="benchInfo">PANCHINA</div>
       <div class="bench" id="bench"></div>
-      <div class="bottom-actions bottom-actions-three">
+      <div class="bottom-actions bottom-actions-four">
         <button class="cancel-btn" id="cancelBtn">Svuota rosa</button>
         <button class="save-btn" id="saveBtn">Salva</button>
-        <button class="share-btn" id="shareBtn">Condividi rosa</button>
+        <button class="download-btn" id="downloadBtn">Scarica immagine</button>
+        <button class="share-btn" id="shareBtn">Condividi immagine</button>
       </div>
     </section>
 
@@ -565,6 +568,8 @@
   </div>
 
   <div class="toast" id="toast">Salvato</div>
+
+  <div class="share-stage" id="shareStage" aria-hidden="true"></div>
 
 <script>
 const RAW_NAMES = `alessiodrinkteam
@@ -761,7 +766,7 @@ const els = {
   searchInput: document.getElementById('searchInput'), nationFilter: document.getElementById('nationFilter'), sortSelect: document.getElementById('sortSelect'),
   moduleSelect: document.getElementById('moduleSelect'), capNumber: document.getElementById('capNumber'), creditsText: document.getElementById('creditsText'),
   benchInfo: document.getElementById('benchInfo'), saveBtn: document.getElementById('saveBtn'), managerInput: document.getElementById('managerInput'),
-  exportBoxWrap: document.getElementById('exportBoxWrap'), exportBox: document.getElementById('exportBox'), toast: document.getElementById('toast'), startersProjection: document.getElementById('startersProjection'), rosterProjection: document.getElementById('rosterProjection')
+  exportBoxWrap: document.getElementById('exportBoxWrap'), exportBox: document.getElementById('exportBox'), toast: document.getElementById('toast'), startersProjection: document.getElementById('startersProjection'), rosterProjection: document.getElementById('rosterProjection'), pitch: document.getElementById('pitch'), shareStage: document.getElementById('shareStage')
 };
 
 function player(id) { return players.find(p => p.id === id); }
@@ -927,51 +932,95 @@ function randomTeam() {
   render();
 }
 
-function buildShareText() {
+
+function cloneWithoutIds(node) {
+  const clone = node.cloneNode(true);
+  clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+  return clone;
+}
+
+function buildShareCard() {
   const teamName = els.managerInput.value.trim() || 'La mia rosa';
-  const starters = state.starters
-    .map(s => s.playerId ? player(s.playerId) : null)
-    .filter(Boolean);
-
   const moduleText = state.module.replace(/^(\d)(\d)(\d)$/, '$1-$2-$3');
-  const lines = [];
-  lines.push(`🏆 ${teamName}`);
-  lines.push('Fanta mondiale Fantaballa');
-  lines.push('');
-  lines.push(`Modulo: ${moduleText}`);
-  lines.push(`Crediti residui: ${remaining()}/${BUDGET}`);
-  lines.push(`Previsto titolari: ${formatOneDecimal(startersProjection())}`);
-  lines.push('');
-  lines.push('Titolari:');
-  starters.forEach(p => {
-    lines.push(`- ${p.name} (${p.role}, ${p.nation}) · FOR ${p.rating} · MED ${formatOneDecimal(playerExpectedPoints(p))}`);
-  });
+  const card = document.createElement('div');
+  card.className = 'share-card';
 
-  return lines.join('\n');
+  const pitchClone = cloneWithoutIds(els.pitch);
+  pitchClone.querySelectorAll('.remove-mini').forEach(btn => btn.remove());
+
+  card.innerHTML = `
+    <div class="share-head">
+      <div>
+        <div class="share-title">Fanta mondiale Fantaballa</div>
+        <div class="share-subtitle">${teamName}</div>
+      </div>
+      <div class="share-meta">
+        <div class="share-pill"><span>Modulo</span><strong>${moduleText}</strong></div>
+        <div class="share-pill"><span>Crediti</span><strong>${remaining()}</strong></div>
+        <div class="share-pill"><span>Previsto</span><strong>${formatOneDecimal(startersProjection())}</strong></div>
+      </div>
+    </div>
+    <div class="pitch-wrap"></div>
+    <div class="share-footer">Gli 11 titolari · Generato con Fanta mondiale Fantaballa</div>
+  `;
+  card.querySelector('.pitch-wrap').appendChild(pitchClone);
+  return card;
+}
+
+async function createRosterCanvas() {
+  if (typeof html2canvas === 'undefined') {
+    throw new Error('html2canvas non disponibile');
+  }
+  els.shareStage.innerHTML = '';
+  const card = buildShareCard();
+  els.shareStage.appendChild(card);
+  const canvas = await html2canvas(card, {
+    backgroundColor: null,
+    scale: 2,
+    useCORS: true
+  });
+  els.shareStage.innerHTML = '';
+  return canvas;
+}
+
+async function downloadRosterImage() {
+  try {
+    const canvas = await createRosterCanvas();
+    const link = document.createElement('a');
+    const teamName = (els.managerInput.value.trim() || 'rosa').toLowerCase().replace(/[^a-z0-9]+/gi, '_');
+    link.download = `${teamName}_fantamondiale.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('Immagine scaricata');
+  } catch (err) {
+    showToast('Impossibile generare immagine');
+    console.error(err);
+  }
 }
 
 async function shareRoster() {
-  const text = buildShareText();
+  try {
+    const canvas = await createRosterCanvas();
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const file = new File([blob], 'fantamondiale-rosa.png', { type: 'image/png' });
 
-  if (navigator.share) {
-    try {
+    if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
       await navigator.share({
         title: 'Fanta mondiale Fantaballa',
-        text
+        text: 'La mia formazione titolare',
+        files: [file]
       });
       return;
-    } catch (err) {
-      // fallback sotto
     }
-  }
 
-  try {
-    await navigator.clipboard.writeText(text);
-    showToast('Rosa copiata: incollala sui social');
+    const link = document.createElement('a');
+    link.download = 'fantamondiale-rosa.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('Immagine pronta: condividila dal telefono');
   } catch (err) {
-    els.exportBoxWrap.style.display = 'block';
-    els.exportBox.value = text;
-    showToast('Testo pronto da copiare');
+    showToast('Impossibile condividere immagine');
+    console.error(err);
   }
 }
 
@@ -1013,7 +1062,9 @@ els.managerInput.addEventListener('input', saveLocal);
 document.getElementById('randomBtn').addEventListener('click', randomTeam);
 document.getElementById('cancelBtn').addEventListener('click', () => { if (!confirm('Vuoi davvero svuotare tutta la rosa?')) return; state = newState(state.module); state.manager = els.managerInput.value.trim(); activeSlot = null; saveLocal(); render(); });
 els.saveBtn.addEventListener('click', exportRoster);
+document.getElementById('downloadBtn').addEventListener('click', downloadRosterImage);
 document.getElementById('shareBtn').addEventListener('click', shareRoster);
 </script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </body>
 </html>
