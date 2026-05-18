@@ -341,9 +341,12 @@
     }
 
     .bottom-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 540px; margin: 0 auto; }
-    .cancel-btn, .save-btn { height: 42px; border-radius: 6px; font-weight: 950; font-size: 16px; }
+    .bottom-actions-three { grid-template-columns: 1fr 1fr; }
+    .bottom-actions-three .share-btn { grid-column: 1 / -1; }
+    .cancel-btn, .save-btn, .share-btn { height: 42px; border-radius: 6px; font-weight: 950; font-size: 16px; }
     .cancel-btn { color: #fff; background: #151515; border: 1px solid #555; }
     .save-btn { color: #fff; background: #747474; }
+    .share-btn { color: #07120c; background: var(--green); border: 1px solid rgba(255,255,255,.1); }
     .save-btn.valid { background: var(--green); color: #07120c; }
 
     .market {
@@ -351,6 +354,8 @@
       min-height: calc(100vh - 84px); display: flex; flex-direction: column; box-shadow: 0 25px 70px rgba(0,0,0,.35);
     }
     .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 26px; }
+    .tabs-single { grid-template-columns: 1fr; margin-bottom: 20px; }
+    .tabs-single .tab { justify-content: center; }
     .tab { display: grid; place-items: center; gap: 5px; color: #333; font-size: 11px; font-weight: 700; }
     .tab svg { width: 22px; height: 22px; stroke-width: 1.6; }
     .tab.active { color: var(--green2); }
@@ -529,17 +534,18 @@
         </div>
       </div>
 
-      <div class="bench-title" id="benchInfo">PANCHINA: Giocatori 0 FPT, Coach 100% FPT</div>
+      <div class="bench-title" id="benchInfo">PANCHINA</div>
       <div class="bench" id="bench"></div>
-      <div class="bottom-actions"><button class="cancel-btn" id="cancelBtn">Svuota rosa</button><button class="save-btn" id="saveBtn">Salva</button></div>
+      <div class="bottom-actions bottom-actions-three">
+        <button class="cancel-btn" id="cancelBtn">Svuota rosa</button>
+        <button class="save-btn" id="saveBtn">Salva</button>
+        <button class="share-btn" id="shareBtn">Condividi rosa</button>
+      </div>
     </section>
 
     <aside class="market">
-      <div class="tabs">
+      <div class="tabs tabs-single">
         <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg><span>Giocatori</span></div>
-        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span>Calendario</span></div>
-        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="4" width="3" height="14"/></svg><span>Statistiche</span></div>
-        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>News</span></div>
       </div>
 
       <div class="search-row">
@@ -821,7 +827,7 @@ function renderFormation() {
   state.starters.forEach(s => groups[s.role].push(s));
   els.formation.innerHTML = `<div class="line att">${groups.A.map(slotHTML).join('')}</div><div class="line mid">${groups.C.map(slotHTML).join('')}</div><div class="line def">${groups.D.map(slotHTML).join('')}</div><div class="line gk">${groups.P.map(slotHTML).join('')}</div>`;
 }
-function renderBench() { els.bench.innerHTML = state.bench.map(slotHTML).join(''); const filled = state.bench.filter(s => s.playerId).length; els.benchInfo.textContent = `PANCHINA: Giocatori ${filled} FPT, Coach 100% FPT`; }
+function renderBench() { els.bench.innerHTML = state.bench.map(slotHTML).join(''); els.benchInfo.textContent = 'PANCHINA'; }
 
 function sortPlayers(list) {
   const sort = els.sortSelect.value;
@@ -920,6 +926,55 @@ function randomTeam() {
   saveLocal();
   render();
 }
+
+function buildShareText() {
+  const teamName = els.managerInput.value.trim() || 'La mia rosa';
+  const starters = state.starters
+    .map(s => s.playerId ? player(s.playerId) : null)
+    .filter(Boolean);
+
+  const moduleText = state.module.replace(/^(\d)(\d)(\d)$/, '$1-$2-$3');
+  const lines = [];
+  lines.push(`🏆 ${teamName}`);
+  lines.push('Fanta mondiale Fantaballa');
+  lines.push('');
+  lines.push(`Modulo: ${moduleText}`);
+  lines.push(`Crediti residui: ${remaining()}/${BUDGET}`);
+  lines.push(`Previsto titolari: ${formatOneDecimal(startersProjection())}`);
+  lines.push('');
+  lines.push('Titolari:');
+  starters.forEach(p => {
+    lines.push(`- ${p.name} (${p.role}, ${p.nation}) · FOR ${p.rating} · MED ${formatOneDecimal(playerExpectedPoints(p))}`);
+  });
+
+  return lines.join('\n');
+}
+
+async function shareRoster() {
+  const text = buildShareText();
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'Fanta mondiale Fantaballa',
+        text
+      });
+      return;
+    } catch (err) {
+      // fallback sotto
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Rosa copiata: incollala sui social');
+  } catch (err) {
+    els.exportBoxWrap.style.display = 'block';
+    els.exportBox.value = text;
+    showToast('Testo pronto da copiare');
+  }
+}
+
 function exportRoster() {
   const data = {
     competizione: 'FantaMondiale FM',
@@ -958,6 +1013,7 @@ els.managerInput.addEventListener('input', saveLocal);
 document.getElementById('randomBtn').addEventListener('click', randomTeam);
 document.getElementById('cancelBtn').addEventListener('click', () => { if (!confirm('Vuoi davvero svuotare tutta la rosa?')) return; state = newState(state.module); state.manager = els.managerInput.value.trim(); activeSlot = null; saveLocal(); render(); });
 els.saveBtn.addEventListener('click', exportRoster);
+document.getElementById('shareBtn').addEventListener('click', shareRoster);
 </script>
 </body>
 </html>
