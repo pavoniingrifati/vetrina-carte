@@ -979,6 +979,55 @@ function buildPacksSixByThreeAndOneByFour(cards){
   return packs.filter(p => p.length > 0);
 }
 
+function dedupePack(p){
+  const seen = new Set();
+  return (p || []).filter(x => x && !seen.has(x.id) && seen.add(x.id));
+}
+
+const FINITE_PACKS_STORAGE_KEY = 'futtu_finite_packs_order_v1';
+function finitePackSignature(game, cards, size){
+  const ids = (cards || []).map(c => String(c && c.id || '')).filter(Boolean).sort();
+  return JSON.stringify({ game, size, ids });
+}
+function readFinitePackStore(){
+  try { return JSON.parse(localStorage.getItem(FINITE_PACKS_STORAGE_KEY) || '{}') || {}; }
+  catch(e){ return {}; }
+}
+function writeFinitePackStore(store){
+  try { localStorage.setItem(FINITE_PACKS_STORAGE_KEY, JSON.stringify(store || {})); }
+  catch(e){}
+}
+function clearSavedFinitePacks(game){
+  const store = readFinitePackStore();
+  if (game) delete store[game];
+  else Object.keys(store).forEach(k => delete store[k]);
+  writeFinitePackStore(store);
+}
+function restoreOrBuildFinitePacks(game, cards, size, builder){
+  const source = cards || [];
+  const make = builder || buildFinitePacks;
+  const signature = finitePackSignature(game, source, size);
+  const byId = new Map(source.map(c => [String(c && c.id || ''), c]));
+  const store = readFinitePackStore();
+  const saved = store[game];
+
+  if (saved && saved.signature === signature && Array.isArray(saved.packs)) {
+    const restored = saved.packs.map(packIds => (packIds || []).map(id => byId.get(String(id))).filter(Boolean)).filter(p => p.length > 0);
+    const savedCardCount = saved.packs.reduce((sum, p) => sum + ((p || []).length), 0);
+    const restoredCardCount = restored.reduce((sum, p) => sum + p.length, 0);
+    if (restored.length && savedCardCount === restoredCardCount) return restored;
+  }
+
+  const built = make(source, size);
+  store[game] = {
+    signature,
+    createdAt: Date.now(),
+    packs: built.map(p => (p || []).map(c => String(c && c.id || '')).filter(Boolean))
+  };
+  writeFinitePackStore(store);
+  return built;
+}
+
 function pickDistinct(source, n) {
   const arr = (source || []).slice();
   for (let i = arr.length - 1; i > 0; i--) {
@@ -1110,10 +1159,9 @@ GAME_STATE.pools['Gotham Tots'] = cleaned.filter(c => {
     GAME_STATE.pools['Cosmetic'] = cleaned.filter(c => norm(c.series) === 'cosmetic');
 
     // pacchetti finiti e tutti diversi tra loro (no doppie della stessa carta dentro il pacco)
-    GAME_STATE.packs['Strumenti'] = buildFinitePacks(GAME_STATE.pools['Strumenti'], PACK_SIZE_PER_GAME['Strumenti']).map(p => {
-    GAME_STATE.packs['Cosmetic'] = buildFinitePacks(GAME_STATE.pools['Cosmetic'], 1);
-      const seen = new Set();
-      return p.filter(x => !seen.has(x.id) && seen.add(x.id));
+    GAME_STATE.packs['Cosmetic'] = restoreOrBuildFinitePacks('Cosmetic', GAME_STATE.pools['Cosmetic'], 1);
+    GAME_STATE.packs['Strumenti'] = restoreOrBuildFinitePacks('Strumenti', GAME_STATE.pools['Strumenti'], PACK_SIZE_PER_GAME['Strumenti'], (cards, size) => {
+      return buildFinitePacks(cards, size).map(dedupePack);
     });
     (function ensureUniquePackCombos(){
       const sig = (p) => [...new Set(p.map(x=>x.id))].sort().join('+');
@@ -1246,10 +1294,10 @@ const packsGoldCards = PACKS_GOLD.map((ids, i) => {
 GAME_STATE.pools['Gold'] = cleaned.filter(c => isGotham(c.game) && norm(c.series)==='gold');
 
     // ====== Costruzione pacchetti finiti ======
-    GAME_STATE.packs['Patatine']    = buildFinitePacks(GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
-    GAME_STATE.packs['Dannazione']  = buildFinitePacks(GAME_STATE.pools['Dannazione'],  PACK_SIZE_PER_GAME['Dannazione']); // size=1
-    GAME_STATE.packs['Gotham Tots'] = buildFinitePacks(GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
-    GAME_STATE.packs['Fusion2'] = buildFinitePacks(GAME_STATE.pools['Fusion2'], PACK_SIZE_PER_GAME['Fusion2']);
+    GAME_STATE.packs['Patatine']    = restoreOrBuildFinitePacks('Patatine',    GAME_STATE.pools['Patatine'],    PACK_SIZE_PER_GAME['Patatine']);   // size=1
+    GAME_STATE.packs['Dannazione']  = restoreOrBuildFinitePacks('Dannazione',  GAME_STATE.pools['Dannazione'],  PACK_SIZE_PER_GAME['Dannazione']); // size=1
+    GAME_STATE.packs['Gotham Tots'] = restoreOrBuildFinitePacks('Gotham Tots', GAME_STATE.pools['Gotham Tots'], PACK_SIZE_PER_GAME['Gotham Tots']);
+    GAME_STATE.packs['Fusion2'] = restoreOrBuildFinitePacks('Fusion2', GAME_STATE.pools['Fusion2'], PACK_SIZE_PER_GAME['Fusion2']);
     shuffleInPlace(packsGoldCards);
     GAME_STATE.packs['Gold'] = packsGoldCards;
     
@@ -1444,9 +1492,10 @@ resetPacksBtn.addEventListener('click', ()=>{
       return;
     }
 
-    // reset solo Gotham Tots
+    // reset solo Gotham Tots: azzera anche l'ordine salvato, poi ricrea una nuova sequenza stabile
     GAME_STATE.cursor[g] = 0;
-    GAME_STATE.packs[g]  = buildFinitePacks(GAME_STATE.pools[g], PACK_SIZE_PER_GAME[g] || 3);
+    clearSavedFinitePacks(g);
+    GAME_STATE.packs[g]  = restoreOrBuildFinitePacks(g, GAME_STATE.pools[g], PACK_SIZE_PER_GAME[g] || 3);
 
     // salva SOLO quel cursore, lasciando intatti gli altri
     try{
@@ -1757,8 +1806,12 @@ try{ localStorage.setItem('futtu_cursors', JSON.stringify(GAME_STATE.cursor)); }
     // Estrai il prossimo pacchetto finito (comportamento standard)
     const list = GAME_STATE.packs[game] || [];
     const idx = GAME_STATE.cursor[game] || 0;
-/* [PATCH] Infinite G/S/B: removed exhaustion guard */
-chosen = list[idx].slice();
+    if (idx >= list.length || !list[idx]) {
+      document.getElementById('log').textContent = '⚠️ ' + game + ': pacchetti finiti.';
+      updateOpenBtnEnabled();
+      return;
+    }
+    chosen = list[idx].slice();
 
     // Avanza cursore e salva su localStorage (solo per game finiti)
     GAME_STATE.cursor[game] = idx + 1;
