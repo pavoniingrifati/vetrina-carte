@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overlay Box Scuderie - TikTok Live</title>
+<style>
+    html, body{
+        margin:0;
+        padding:0;
+        width:100%;
+        height:100%;
+        overflow:hidden;
+        background:transparent;
+        font-family:Arial, Helvetica, sans-serif;
+    }
+
+    body{ pointer-events:none; }
+
+    #popupWrap{
+        position:fixed;
+        left:50%;
+        bottom:46px;
+        transform:translateX(-50%);
+        width:min(1080px, 94vw);
+        display:flex;
+        justify-content:center;
+        align-items:flex-end;
+    }
+
+    #rolePopup{
+        opacity:0;
+        transform:translateY(34px) scale(.92);
+        transition:opacity .35s ease, transform .35s ease;
+        background:rgba(10,13,26,.95);
+        color:#fff;
+        border:3px solid rgba(255,255,255,.25);
+        border-radius:26px;
+        padding:22px 34px;
+        text-align:center;
+        font-weight:900;
+        font-size:34px;
+        line-height:1.22;
+        box-shadow:0 18px 44px rgba(0,0,0,.52);
+        max-width:100%;
+        word-break:break-word;
+        overflow:hidden;
+        position:relative;
+    }
+
+    #rolePopup::before{
+        content:"";
+        position:absolute;
+        inset:0;
+        background:linear-gradient(90deg, var(--c1, #3854ff), var(--c2, #7dd3fc));
+        opacity:.92;
+        z-index:-2;
+    }
+
+    #rolePopup::after{
+        content:"";
+        position:absolute;
+        inset:4px;
+        border-radius:22px;
+        background:rgba(8,10,20,.86);
+        z-index:-1;
+    }
+
+    #rolePopup.show{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+
+    .name{ color:#7dd3fc; text-shadow:0 2px 8px rgba(0,0,0,.75); }
+    .teamName{
+        display:inline-block;
+        padding:2px 12px;
+        border-radius:999px;
+        color:#fff;
+        background:linear-gradient(90deg, var(--c1, #3854ff), var(--c2, #7dd3fc));
+        text-shadow:0 2px 8px rgba(0,0,0,.85);
+        border:1px solid rgba(255,255,255,.35);
+    }
+    .details{
+        margin-top:10px;
+        font-size:20px;
+        font-weight:800;
+        opacity:.94;
+    }
+
+    #status{
+        position:fixed;
+        top:18px;
+        right:18px;
+        padding:8px 12px;
+        border-radius:999px;
+        font-size:14px;
+        font-weight:800;
+        background:rgba(10,13,26,.78);
+        color:#fca5a5;
+        border:1px solid rgba(239,68,68,.5);
+        letter-spacing:.3px;
+    }
+    #status.online{
+        color:#86efac;
+        border-color:rgba(34,197,94,.55);
+    }
+    body.hideStatus #status{ display:none; }
+
+    #testPanel{
+        display:none;
+        position:fixed;
+        left:50%;
+        bottom:10px;
+        transform:translateX(-50%);
+        width:min(760px, 90vw);
+        pointer-events:auto;
+        gap:8px;
+    }
+    #testPanel input{
+        flex:1;
+        padding:12px 14px;
+        border-radius:12px;
+        border:1px solid rgba(255,255,255,.25);
+        background:rgba(0,0,0,.8);
+        color:#fff;
+        font-size:16px;
+    }
+    #testPanel button{
+        padding:12px 16px;
+        border-radius:12px;
+        border:0;
+        font-weight:900;
+        cursor:pointer;
+    }
+    body.test #testPanel{ display:flex; }
+
+    /* Colori scuderie F1 */
+    .scud-horizon{ --c1:#d4af37; --c2:#6b7280; }
+    .scud-imperator{ --c1:#7a4a21; --c2:#ffd400; }
+    .scud-juper{ --c1:#8000ff; --c2:#0a0a0a; }
+    .scud-mac{ --c1:#ffd400; --c2:#ff7f00; }
+    .scud-mamba{ --c1:#ff2d2d; --c2:#0a0a0a; }
+    .scud-nintendo{ --c1:#6b7280; --c2:#dc2626; }
+    .scud-one{ --c1:#1a4cff; --c2:#ffd400; }
+    .scud-monkey{ --c1:#39ff14; --c2:#0a0a0a; }
+    .scud-lecce{ --c1:#ffd400; --c2:#ff2d2d; }
+    .scud-panda{ --c1:#ffd400; --c2:#ffffff; }
+    .scud-tepic{ --c1:#ff7f00; --c2:#000000; }
+
+    /* Colori scuderie F2 */
+    .scud-mercedes{ --c1:#9ca3af; --c2:#22c55e; }
+    .scud-venom{ --c1:#000000; --c2:#ffffff; }
+    .scud-incitatus{ --c1:#ffd400; --c2:#000000; }
+    .scud-dragon{ --c1:#38bdf8; --c2:#ff2d2d; }
+    .scud-petronas{ --c1:#22c55e; --c2:#9ca3af; }
+    .scud-astra{ --c1:#3b0764; --c2:#c084fc; }
+    .scud-futura{ --c1:#ff2d2d; --c2:#ffffff; }
+    .scud-mediaset{ --c1:#dc2626; --c2:#2563eb; }
+    .scud-pika{ --c1:#ffd400; --c2:#1a4cff; }
+    .scud-juventus{ --c1:#ffffff; --c2:#000000; }
+    .scud-train{ --c1:#ffd400; --c2:#00aa00; }
+
+    /* Colori scuderie F3 */
+    .scud-dark{ --c1:#6a0dad; --c2:#0a0a0a; }
+    .scud-fast{ --c1:#1a4cff; --c2:#ffffff; }
+    .scud-forli{ --c1:#ff2d2d; --c2:#ffffff; }
+    .scud-fortnite{ --c1:#ffffff; --c2:#800080; }
+    .scud-lions{ --c1:#000000; --c2:#ffffff; }
+    .scud-loki{ --c1:#22c55e; --c2:#ffd400; }
+    .scud-pegaso{ --c1:#1a4cff; --c2:#ffffff; }
+    .scud-nova{ --c1:#ffffff; --c2:#1a4cff; }
+    .scud-gladiator{ --c1:#800000; --c2:#ffd400; }
+    .scud-sayan{ --c1:#ffd400; --c2:#1a4cff; }
+    .scud-trapani{ --c1:#ff2d2d; --c2:#ffffff; }
+    .scud-gasterrav{ --c1:#ff2d2d; --c2:#ffffff; }
+    .scud-spqr{ --c1:#7a4a18; --c2:#ffd400; }
+    .scud-bmw{ --c1:#1a4cff; --c2:#ffffff; }
+</style>
+</head>
+<body>
+    <div id="status">TikTok WS: OFFLINE</div>
+
+    <div id="popupWrap">
+        <div id="rolePopup"></div>
+    </div>
+
+    <div id="testPanel">
+        <input id="testCommand" type="text" placeholder="Test: !f2 mercedes balla 85">
+        <button id="testButton">Mostra</button>
+    </div>
+
+    <audio id="registrationSound" src="registrazione.wav" preload="auto"></audio>
+
+<script>
+const query = new URLSearchParams(window.location.search);
+const CONFIG = {
+    // URL del WebSocket TikTok Live Connector / TikFinity / bridge compatibile.
+    ws: query.get('ws') || 'ws://localhost:21213/',
+    popupMs: Math.max(1000, Number(query.get('popupMs') || 4200)),
+    hideStatus: query.get('hideStatus') === '1'
+};
+
+const COMMANDS = {
+    '!f1': {
+        requiresStats: true,
+        teams: ['horizon','imperator','juper','mac','mamba','nintendo','one','monkey','lecce','panda','tepic'],
+        aliases: new Map([
+            ['mb','imperator'], ['amg','imperator'],
+            ['nint','nintendo'], ['nintendo','nintendo'],
+            ['orizzonte','horizon'], ['horiz','horizon']
+        ])
+    },
+    '!f2': {
+        requiresStats: true,
+        teams: ['mercedes','venom','incitatus','dragon','petronas','astra','futura','mediaset','pika','juventus','train'],
+        aliases: new Map([
+            ['merc','mercedes'], ['petro','petronas'], ['drag','dragon'], ['inci','incitatus'],
+            ['fut','futura'], ['media','mediaset'], ['juve','juventus']
+        ])
+    },
+    '!f3': {
+        requiresStats: false,
+        teams: ['dark','fast','forli','fortnite','lions','loki','pegaso','nova','gladiator','sayan','trapani','gasterrav','spqr','bmw'],
+        aliases: new Map([])
+    }
+};
+
+let ws = null;
+let reconnectTimer = null;
+
+function pickFirstString(...values) {
+    for (const v of values) {
+        if (typeof v === 'string' && v.trim()) return v.trim();
+    }
+    return '';
+}
+
+function normalize(str){
+    return String(str || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
+}
+
+function classSafe(team){
+    return normalize(team).replace(/[^a-z0-9]+/g, '');
+}
+
+function normalizeTeam(name, config){
+    const raw = normalize(name);
+    const direct = config.teams.find(t => normalize(t) === raw);
+    if (direct) return direct;
+    if (config.aliases.has(raw)) return config.aliases.get(raw);
+    const partial = config.teams.find(t => normalize(t).startsWith(raw));
+    return partial || null;
+}
+
+function isValidNumberToken(value){
+    if (!/^\d+$/.test(String(value || ''))) return false;
+    const n = Number(value);
+    return Number.isInteger(n) && n >= 0 && n <= 100;
+}
+
+function parseCommand(text){
+    const parts = String(text || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length < 3) return null;
+
+    const command = parts[0].toLowerCase();
+    const config = COMMANDS[command];
+    if (!config) return null;
+
+    if (config.requiresStats) {
+        // !f1/!f2 <scuderia> <pilota> <aggressività> [ballast]
+        if (parts.length < 4) return null;
+
+        let ballast = null;
+        let aggressivity = null;
+        let pilot = '';
+        let teamPart = '';
+
+        const last = parts[parts.length - 1];
+        const prev = parts[parts.length - 2];
+        const lastIsNum = isValidNumberToken(last);
+        const prevIsNum = isValidNumberToken(prev);
+
+        if (parts.length >= 5 && lastIsNum && prevIsNum) {
+            ballast = Number(last);
+            aggressivity = Number(prev);
+            pilot = parts[parts.length - 3];
+            teamPart = parts.slice(1, parts.length - 3).join(' ');
+        } else {
+            if (!lastIsNum) return null;
+            aggressivity = Number(last);
+            ballast = null;
+            pilot = parts[parts.length - 2];
+            teamPart = parts.slice(1, parts.length - 2).join(' ');
+        }
+
+        const team = normalizeTeam(teamPart, config);
+        if (!team || !pilot || pilot.startsWith('!')) return null;
+
+        return { command, team, pilot, aggressivity, ballast };
+    }
+
+    // !f3 <scuderia> <pilota>
+    const pilot = parts[parts.length - 1];
+    const teamPart = parts.slice(1, parts.length - 1).join(' ');
+    const team = normalizeTeam(teamPart, config);
+    if (!team || !pilot || pilot.startsWith('!')) return null;
+
+    return { command, team, pilot, aggressivity: null, ballast: null };
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+function titleTeam(team){
+    return String(team || '').charAt(0).toUpperCase() + String(team || '').slice(1);
+}
+
+function setStatus(isOnline) {
+    const status = document.getElementById('status');
+    if (!status) return;
+    status.textContent = isOnline ? 'TikTok WS: ONLINE' : 'TikTok WS: OFFLINE';
+    status.classList.toggle('online', isOnline);
+}
+
+function normalizeTikTokMessage(payload) {
+    const root = payload?.data || payload || {};
+    const text = pickFirstString(
+        root?.comment,
+        root?.text,
+        root?.message,
+        root?.content,
+        root?.data?.comment,
+        payload?.comment,
+        payload?.text
+    );
+
+    const user = pickFirstString(
+        root?.uniqueId,
+        root?.user?.uniqueId,
+        root?.username,
+        root?.user?.username,
+        root?.nickname,
+        root?.user?.nickname,
+        payload?.uniqueId
+    ) || 'utente';
+
+    const displayName = pickFirstString(
+        root?.nickname,
+        root?.user?.nickname,
+        root?.uniqueId,
+        root?.user?.uniqueId,
+        root?.username,
+        user
+    ) || user;
+
+    const eventType = pickFirstString(
+        payload?.event,
+        payload?.type,
+        root?.event,
+        root?.type
+    ).toLowerCase();
+
+    return { text, user, displayName, eventType };
+}
+
+function isCommentEvent(normalized) {
+    if (!normalized.text) return false;
+    if (!normalized.eventType) return true;
+    return ['comment', 'chat', 'message'].some(type => normalized.eventType.includes(type));
+}
+
+function playRegistrationSound() {
+    const audio = document.getElementById('registrationSound');
+    if (!audio) return;
+    try {
+        audio.pause();
+        audio.currentTime = 0;
+        const playPromise = audio.play();
+        if (playPromise && typeof playPromise.catch === 'function') playPromise.catch(() => {});
+    } catch {}
+}
+
+function showBoxPopup(displayName, parsed) {
+    const popup = document.getElementById('rolePopup');
+    if (!popup) return;
+
+    const safeTeam = escapeHtml(titleTeam(parsed.team));
+    const safeUser = escapeHtml(displayName || 'utente');
+    const safePilot = escapeHtml(parsed.pilot);
+
+    const stats = [];
+    stats.push(`Pilota: ${safePilot}`);
+    if (parsed.aggressivity !== null) stats.push(`Aggressività: ${parsed.aggressivity}`);
+    if (parsed.ballast !== null) stats.push(`Ballast: ${parsed.ballast}`);
+
+    popup.className = `scud-${classSafe(parsed.team)}`;
+    popup.innerHTML = `🏎️ Balla <span class="name">${safeUser}</span> è nei box della <span class="teamName">${safeTeam}</span><div class="details">${stats.join(' • ')}</div>`;
+
+    void popup.offsetWidth;
+    popup.classList.add('show');
+
+    playRegistrationSound();
+
+    clearTimeout(showBoxPopup._timer);
+    showBoxPopup._timer = setTimeout(() => popup.classList.remove('show'), CONFIG.popupMs);
+}
+
+function handlePredictionMessage({ text, displayName }) {
+    const parsed = parseCommand(text);
+    if (!parsed) return;
+    showBoxPopup(displayName, parsed);
+}
+
+function processTikTokPayload(payload) {
+    const normalized = normalizeTikTokMessage(payload);
+    if (!isCommentEvent(normalized)) return;
+    handlePredictionMessage(normalized);
+}
+
+function connectTikTokWS() {
+    try {
+        ws = new WebSocket(CONFIG.ws);
+
+        ws.addEventListener('open', () => {
+            clearTimeout(reconnectTimer);
+            setStatus(true);
+        });
+
+        ws.addEventListener('message', (event) => {
+            let payload;
+            try {
+                payload = JSON.parse(event.data);
+            } catch {
+                return;
+            }
+            processTikTokPayload(payload);
+        });
+
+        ws.addEventListener('close', () => {
+            setStatus(false);
+            clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(connectTikTokWS, 2500);
+        });
+
+        ws.addEventListener('error', () => {
+            setStatus(false);
+        });
+    } catch {
+        setStatus(false);
+        clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(connectTikTokWS, 3000);
+    }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    if (query.get('test') === '1') document.body.classList.add('test');
+    if (CONFIG.hideStatus) document.body.classList.add('hideStatus');
+
+    const input = document.getElementById('testCommand');
+    const btn = document.getElementById('testButton');
+    const runTest = () => handlePredictionMessage({ text: input.value, displayName: 'NomeUtente' });
+    btn?.addEventListener('click', runTest);
+    input?.addEventListener('keydown', e => { if (e.key === 'Enter') runTest(); });
+
+    setStatus(false);
+    connectTikTokWS();
+});
+</script>
+</body>
+</html>
