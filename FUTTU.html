@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>FUT Fantaballa Tik Tok</title>
-<meta content="Pack unico diviso per 'game' (Gotham City). Pacchetti finiti: Patatine (1 carta, pesato), Fusion2 (pool fusion2), Gotham Tots (3 carte), Legend (3 carte). Oggetti (3 carte, infinito). Login e salvataggio inventario invariati." name="description"/>
+<meta content="Pack unico diviso per 'game' (Gotham City). Pacchetti finiti: Patatine (1 carta, pesato), Fusion2 (solo Gotham City), Gotham Tots (3 carte), Legend (3 carte). Oggetti (3 carte, infinito). Login e salvataggio inventario invariati." name="description"/>
 <!-- Font -->
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -1142,12 +1142,15 @@ GAME_STATE.pools['Gotham Tots'] = cleaned.filter(c => {
 
     // Oggetti — NEW: prende qualsiasi card con series = "Oggetto" (game: qualunque)
     GAME_STATE.pools['Oggetti'] = cleaned.filter(c => norm(c.series)==='oggetto');
-    // Fusion2 — FINITO: prende la pool "fusion2"; pacchetti da 3, ultimo da 2 se restano 2 carte
+    // Fusion2 — FINITO: prende solo carte Fusion2 appartenenti a Gotham City;
+    // pacchetti da 3, ultimo da 2 se restano 2 carte.
     GAME_STATE.pools['Fusion2'] = cleaned
       .filter(c =>
-        norm(c.series)==='fusion2' ||
-        norm(c.game)==='fusion2' ||
-        (Array.isArray(c.tags) && c.tags.some(t => norm(t)==='fusion2'))
+        isGotham(c.game) &&
+        (
+          norm(c.series)==='fusion2' ||
+          (Array.isArray(c.tags) && c.tags.some(t => norm(t)==='fusion2'))
+        )
       )
       .sort((a,b)=> String(a.id).localeCompare(String(b.id), 'it', {numeric:true, sensitivity:'base'}));
 
