@@ -505,6 +505,94 @@
       .price { width: 52px; height: 40px; font-size: 15px; }
     }
 
+  
+    .send-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      place-items: center;
+      padding: 18px;
+    }
+    .send-modal.open { display: grid; }
+    .send-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.68);
+      backdrop-filter: blur(8px);
+    }
+    .send-modal-card {
+      position: relative;
+      width: min(680px, 100%);
+      max-height: 88vh;
+      overflow: auto;
+      background: #f4f4ef;
+      color: #111;
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 28px 90px rgba(0,0,0,.48);
+      border: 1px solid rgba(255,255,255,.25);
+    }
+    .send-modal-card h2 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      letter-spacing: -.04em;
+      font-weight: 1000;
+    }
+    .send-modal-card p {
+      margin: 0 0 14px;
+      color: #333;
+      line-height: 1.45;
+      font-size: 14px;
+      font-weight: 650;
+    }
+    .send-modal-card textarea {
+      width: 100%;
+      min-height: 310px;
+      resize: vertical;
+      border: 1px solid #cfcfcf;
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+      color: #111;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      outline: none;
+    }
+    .send-modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .copy-send-btn, .ghost-send-btn {
+      height: 42px;
+      border-radius: 10px;
+      font-weight: 950;
+    }
+    .copy-send-btn { background: var(--green); color: #07120c; }
+    .ghost-send-btn { background: #111; color: #fff; }
+    .send-modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #111;
+      color: #fff;
+      font-size: 22px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+    }
+    @media (max-width: 640px) {
+      .send-modal-card { padding: 18px; }
+      .send-modal-card textarea { min-height: 360px; }
+      .send-modal-actions { grid-template-columns: 1fr; }
+    }
+
   </style>
 </head>
 <body>
@@ -540,7 +628,7 @@
       <div class="bench" id="bench"></div>
       <div class="bottom-actions bottom-actions-four">
         <button class="cancel-btn" id="cancelBtn">Svuota rosa</button>
-        <button class="save-btn" id="saveBtn">Salva</button>
+        <button class="save-btn" id="sendBtn">Invia</button>
         <button class="download-btn" id="downloadBtn">Scarica immagine</button>
         <button class="share-btn" id="shareBtn">Condividi immagine</button>
       </div>
@@ -565,6 +653,23 @@
       <div class="players-list" id="playersList"></div>
       <div class="export-box" id="exportBoxWrap"><textarea id="exportBox"></textarea></div>
     </aside>
+  </div>
+
+  
+  <div class="send-modal" id="sendModal" aria-hidden="true">
+    <div class="send-modal-backdrop" id="sendBackdrop"></div>
+    <div class="send-modal-card" role="dialog" aria-modal="true" aria-labelledby="sendTitle">
+      <button class="send-modal-close" id="sendClose" aria-label="Chiudi">×</button>
+      <h2 id="sendTitle">Invia formazione</h2>
+      <p>
+        Copia il testo qui sotto e invialo privatamente a <strong>Fantaballa</strong>.
+      </p>
+      <textarea id="sendText" readonly></textarea>
+      <div class="send-modal-actions">
+        <button class="copy-send-btn" id="copySendBtn">Copia testo</button>
+        <button class="ghost-send-btn" id="selectSendBtn">Seleziona tutto</button>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast">Salvato</div>
@@ -765,8 +870,8 @@ const els = {
   formation: document.getElementById('formation'), bench: document.getElementById('bench'), playersList: document.getElementById('playersList'),
   searchInput: document.getElementById('searchInput'), nationFilter: document.getElementById('nationFilter'), sortSelect: document.getElementById('sortSelect'),
   moduleSelect: document.getElementById('moduleSelect'), capNumber: document.getElementById('capNumber'), creditsText: document.getElementById('creditsText'),
-  benchInfo: document.getElementById('benchInfo'), saveBtn: document.getElementById('saveBtn'), managerInput: document.getElementById('managerInput'),
-  exportBoxWrap: document.getElementById('exportBoxWrap'), exportBox: document.getElementById('exportBox'), toast: document.getElementById('toast'), startersProjection: document.getElementById('startersProjection'), rosterProjection: document.getElementById('rosterProjection'), pitch: document.getElementById('pitch'), shareStage: document.getElementById('shareStage')
+  benchInfo: document.getElementById('benchInfo'), sendBtn: document.getElementById('sendBtn'), managerInput: document.getElementById('managerInput'),
+  exportBoxWrap: document.getElementById('exportBoxWrap'), exportBox: document.getElementById('exportBox'), toast: document.getElementById('toast'), startersProjection: document.getElementById('startersProjection'), rosterProjection: document.getElementById('rosterProjection'), pitch: document.getElementById('pitch'), shareStage: document.getElementById('shareStage'), sendModal: document.getElementById('sendModal'), sendText: document.getElementById('sendText'), copySendBtn: document.getElementById('copySendBtn'), selectSendBtn: document.getElementById('selectSendBtn'), sendClose: document.getElementById('sendClose'), sendBackdrop: document.getElementById('sendBackdrop')
 };
 
 function player(id) { return players.find(p => p.id === id); }
@@ -871,7 +976,7 @@ function renderMeta() {
   els.creditsText.textContent = `${remaining().toString().replace('.', ',')}/${BUDGET}`;
   els.moduleSelect.value = state.module;
   if (els.capNumber) els.capNumber.textContent = state.module;
-  els.saveBtn.classList.toggle('valid', isValid());
+  els.sendBtn.classList.toggle('valid', isValid());
   if (els.startersProjection) els.startersProjection.textContent = formatOneDecimal(startersProjection());
   if (els.rosterProjection) els.rosterProjection.textContent = formatOneDecimal(rosterProjection());
 }
@@ -1219,6 +1324,90 @@ async function shareRoster() {
   }
 }
 
+
+function buildFormationText() {
+  const teamName = els.managerInput.value.trim() || 'Senza nome';
+  const moduleText = state.module.replace(/^(\d)(\d)(\d)$/, '$1-$2-$3');
+
+  const starters = state.starters.map(s => ({
+    slot: ROLE_LABEL[s.role],
+    player: s.playerId ? player(s.playerId) : null
+  }));
+
+  const benchPlayers = state.bench.map(s => ({
+    slot: ROLE_LABEL[s.role],
+    player: s.playerId ? player(s.playerId) : null
+  }));
+
+  const lines = [];
+  lines.push('🏆 FANTA MONDIALE FANTABALLA');
+  lines.push('');
+  lines.push(`Squadra: ${teamName}`);
+  lines.push(`Modulo: ${moduleText}`);
+  lines.push(`Crediti residui: ${remaining()}/${BUDGET}`);
+  lines.push(`Previsto titolari: ${formatOneDecimal(startersProjection())}`);
+  lines.push(`Previsto rosa: ${formatOneDecimal(rosterProjection())}`);
+  lines.push('');
+  lines.push('TITOLARI');
+  starters.forEach((item, index) => {
+    if (!item.player) {
+      lines.push(`${index + 1}. ${item.slot} - [VUOTO]`);
+      return;
+    }
+    const p = item.player;
+    lines.push(`${index + 1}. ${item.slot} - ${p.name} - ${p.nation} - FOR ${p.rating} - MED ${formatOneDecimal(playerExpectedPoints(p))} - ${p.cost} cr`);
+  });
+
+  lines.push('');
+  lines.push('PANCHINA');
+  benchPlayers.forEach((item, index) => {
+    if (!item.player) {
+      lines.push(`${index + 1}. ${item.slot} - [VUOTO]`);
+      return;
+    }
+    const p = item.player;
+    lines.push(`${index + 1}. ${item.slot} - ${p.name} - ${p.nation} - FOR ${p.rating} - MED ${formatOneDecimal(playerExpectedPoints(p))} - ${p.cost} cr`);
+  });
+
+  lines.push('');
+  lines.push('Istruzioni: copia questo testo e invialo privatamente a Fantaballa.');
+  return lines.join('\n');
+}
+
+function openSendModal() {
+  els.sendText.value = buildFormationText();
+  els.sendModal.classList.add('open');
+  els.sendModal.setAttribute('aria-hidden', 'false');
+  setTimeout(() => {
+    els.sendText.focus();
+    els.sendText.select();
+  }, 50);
+}
+
+function closeSendModal() {
+  els.sendModal.classList.remove('open');
+  els.sendModal.setAttribute('aria-hidden', 'true');
+}
+
+async function copySendText() {
+  const text = els.sendText.value || buildFormationText();
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Testo copiato');
+  } catch (err) {
+    els.sendText.focus();
+    els.sendText.select();
+    showToast('Testo selezionato: copialo manualmente');
+  }
+}
+
+function selectSendText() {
+  els.sendText.focus();
+  els.sendText.select();
+  showToast('Testo selezionato');
+}
+
+
 function exportRoster() {
   const data = {
     competizione: 'FantaMondiale FM',
@@ -1256,9 +1445,14 @@ els.moduleSelect.addEventListener('change', e => changeModule(e.target.value));
 els.managerInput.addEventListener('input', saveLocal);
 document.getElementById('randomBtn').addEventListener('click', randomTeam);
 document.getElementById('cancelBtn').addEventListener('click', () => { if (!confirm('Vuoi davvero svuotare tutta la rosa?')) return; state = newState(state.module); state.manager = els.managerInput.value.trim(); activeSlot = null; saveLocal(); render(); });
-els.saveBtn.addEventListener('click', exportRoster);
+els.sendBtn.addEventListener('click', openSendModal);
 document.getElementById('downloadBtn').addEventListener('click', downloadRosterImage);
 document.getElementById('shareBtn').addEventListener('click', shareRoster);
+els.copySendBtn.addEventListener('click', copySendText);
+els.selectSendBtn.addEventListener('click', selectSendText);
+els.sendClose.addEventListener('click', closeSendModal);
+els.sendBackdrop.addEventListener('click', closeSendModal);
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeSendModal(); });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </body>
