@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calcolatore Overall Mondiale</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #101827, #1f2937);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 760px;
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: 22px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #cbd5e1;
+      margin-bottom: 26px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .card {
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #f9fafb;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #4b5563;
+      background: #030712;
+      color: white;
+      font-size: 16px;
+      outline: none;
+    }
+
+    select:focus, input:focus {
+      border-color: #38bdf8;
+    }
+
+    .bonus-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .bonus-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #030712;
+      border: 1px solid #374151;
+      border-radius: 12px;
+      padding: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .bonus-item input {
+      width: auto;
+      transform: scale(1.2);
+    }
+
+    .result {
+      margin-top: 22px;
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      border-radius: 20px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .overall {
+      font-size: 66px;
+      font-weight: 900;
+      line-height: 1;
+      margin: 8px 0;
+    }
+
+    .range {
+      font-size: 16px;
+      color: #e0f2fe;
+    }
+
+    .details {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .detail-box {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .detail-box span {
+      display: block;
+      color: #dbeafe;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .detail-box strong {
+      font-size: 22px;
+    }
+
+    .note {
+      margin-top: 18px;
+      color: #cbd5e1;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .table {
+      margin-top: 22px;
+      overflow: hidden;
+      border-radius: 16px;
+      border: 1px solid #374151;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #374151;
+      text-align: left;
+    }
+
+    th {
+      background: #030712;
+      color: #f9fafb;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .reset-btn {
+      margin-top: 16px;
+      width: 100%;
+      padding: 13px;
+      border: 0;
+      border-radius: 14px;
+      background: #f59e0b;
+      color: #111827;
+      font-weight: 800;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .reset-btn:hover {
+      background: #fbbf24;
+    }
+
+    @media (max-width: 720px) {
+      .grid, .details {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .overall {
+        font-size: 56px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Calcolatore Overall Mondiale</h1>
+    <p class="subtitle">
+      Tutti partono da <strong>60</strong>. Scegli il risultato della nazionale e aggiungi i bonus prestazione.
+      Il calcolatore blocca automaticamente il punteggio massimo della fascia.
+    </p>
+
+    <section class="grid">
+      <div class="card">
+        <label for="teamName">Nome utente / squadra</label>
+        <input id="teamName" type="text" placeholder="Es. Marco - Brasile" />
+      </div>
+
+      <div class="card">
+        <label for="placement">Risultato della nazionale</label>
+        <select id="placement">
+          <option value="groups">Eliminata ai gironi</option>
+          <option value="round32">Eliminata ai sedicesimi</option>
+          <option value="round16">Eliminata agli ottavi</option>
+          <option value="quarters">Eliminata ai quarti</option>
+          <option value="semis">Arriva in semifinale</option>
+          <option value="finalist">Finalista perdente</option>
+          <option value="champion">Campione del mondo</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top: 18px;">
+      <label>Bonus prestazione</label>
+      <div class="bonus-list">
+        <label class="bonus-item">
+          <input type="checkbox" class="bonus" value="2" /> Vince il girone (+2)
+        </label>
+        <label class="bonus-item">
+          <input type="checkbox" class="bonus" value="2" /> Fa almeno 7 punti nel girone (+2)
+        </label>
+        <label class="bonus-item">
+          <input type="checkbox" class="bonus" value="1" /> Differenza reti girone +4 o migliore (+1)
+        </label>
+        <label class="bonus-item">
+          <input type="checkbox" class="bonus" value="1" /> Miglior difesa del girone (+1)
+        </label>
+        <label class="bonus-item">
+          <input type="checkbox" class="bonus" value="1" /> Vince una partita knockout con 2+ gol di scarto (+1)
+        </label>
+        <label class="bonus-item">
+          <input type="checkbox" class="bonus" value="1" /> Resta imbattuta fino all'eliminazione / vittoria finale (+1)
+        </label>
+      </div>
+    </section>
+
+    <section class="result">
+      <div id="nameOutput">Overall finale</div>
+      <div class="overall" id="overall">60</div>
+      <div class="range" id="rangeText">Fascia: 60 - 70</div>
+
+      <div class="details">
+        <div class="detail-box">
+          <span>Base fascia</span>
+          <strong id="baseValue">60</strong>
+        </div>
+        <div class="detail-box">
+          <span>Bonus scelti</span>
+          <strong id="bonusValue">0</strong>
+        </div>
+        <div class="detail-box">
+          <span>Cap fascia</span>
+          <strong id="capValue">70</strong>
+        </div>
+      </div>
+    </section>
+
+    <button class="reset-btn" onclick="resetCalculator()">Reset calcolatore</button>
+
+    <section class="table">
+      <table>
+        <thead>
+          <tr>
+            <th>Risultato</th>
+            <th>Overall minimo</th>
+            <th>Overall massimo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Gironi</td><td>60</td><td>70</td></tr>
+          <tr><td>Sedicesimi</td><td>71</td><td>78</td></tr>
+          <tr><td>Ottavi</td><td>79</td><td>86</td></tr>
+          <tr><td>Quarti</td><td>87</td><td>98</td></tr>
+          <tr><td>Semifinale</td><td>99</td><td>100</td></tr>
+          <tr><td>Finale persa</td><td>101</td><td>102</td></tr>
+          <tr><td>Campione</td><td>103</td><td>104</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <p class="note">
+      Regola: i bonus aumentano l'overall solo fino al massimo della fascia. Per esempio, una squadra eliminata ai quarti non può superare 98, mentre chi arriva in semifinale parte direttamente da 99.
+    </p>
+  </main>
+
+  <script>
+    const placements = {
+      groups: {
+        label: 'Eliminata ai gironi',
+        min: 60,
+        max: 70
+      },
+      round32: {
+        label: 'Eliminata ai sedicesimi',
+        min: 71,
+        max: 78
+      },
+      round16: {
+        label: 'Eliminata agli ottavi',
+        min: 79,
+        max: 86
+      },
+      quarters: {
+        label: 'Eliminata ai quarti',
+        min: 87,
+        max: 98
+      },
+      semis: {
+        label: 'Arriva in semifinale',
+        min: 99,
+        max: 100
+      },
+      finalist: {
+        label: 'Finalista perdente',
+        min: 101,
+        max: 102
+      },
+      champion: {
+        label: 'Campione del mondo',
+        min: 103,
+        max: 104
+      }
+    };
+
+    const teamNameInput = document.getElementById('teamName');
+    const placementSelect = document.getElementById('placement');
+    const bonusCheckboxes = document.querySelectorAll('.bonus');
+    const overallOutput = document.getElementById('overall');
+    const rangeText = document.getElementById('rangeText');
+    const baseValue = document.getElementById('baseValue');
+    const bonusValue = document.getElementById('bonusValue');
+    const capValue = document.getElementById('capValue');
+    const nameOutput = document.getElementById('nameOutput');
+
+    function calculateOverall() {
+      const selectedPlacement = placements[placementSelect.value];
+      let bonus = 0;
+
+      bonusCheckboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          bonus += Number(checkbox.value);
+        }
+      });
+
+      const rawOverall = selectedPlacement.min + bonus;
+      const finalOverall = Math.min(rawOverall, selectedPlacement.max);
+      const teamName = teamNameInput.value.trim();
+
+      overallOutput.textContent = finalOverall;
+      rangeText.textContent = `Fascia: ${selectedPlacement.min} - ${selectedPlacement.max} | ${selectedPlacement.label}`;
+      baseValue.textContent = selectedPlacement.min;
+      bonusValue.textContent = `+${bonus}`;
+      capValue.textContent = selectedPlacement.max;
+      nameOutput.textContent = teamName ? `Overall finale: ${teamName}` : 'Overall finale';
+    }
+
+    function resetCalculator() {
+      teamNameInput.value = '';
+      placementSelect.value = 'groups';
+      bonusCheckboxes.forEach(checkbox => checkbox.checked = false);
+      calculateOverall();
+    }
+
+    teamNameInput.addEventListener('input', calculateOverall);
+    placementSelect.addEventListener('change', calculateOverall);
+    bonusCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', calculateOverall);
+    });
+
+    calculateOverall();
+  </script>
+</body>
+</html>
