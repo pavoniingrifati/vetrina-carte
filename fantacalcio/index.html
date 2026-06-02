@@ -594,52 +594,6 @@
       .send-modal-actions { grid-template-columns: 1fr; }
     }
 
-    .stats-import-bottom {
-      max-width: 540px;
-      margin: 14px auto 0;
-      background: linear-gradient(135deg, #202020, #303030);
-      border: 2px solid var(--green);
-      border-radius: 16px;
-      padding: 14px;
-      color: #fff;
-      display: grid;
-      gap: 10px;
-      text-align: center;
-      box-shadow: 0 14px 34px rgba(0,0,0,.28);
-    }
-    .stats-import-title {
-      font-size: 13px;
-      font-weight: 1000;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      color: #fff;
-    }
-    .stats-import-button {
-      display: grid;
-      place-items: center;
-      min-height: 44px;
-      background: var(--green);
-      color: #07120c;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 1000;
-      cursor: pointer;
-      border: 0;
-    }
-    .stats-import-bottom input {
-      position: absolute;
-      left: -9999px;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
-    }
-    .stats-import-help {
-      color: #d9d9d9;
-      font-size: 11px;
-      line-height: 1.35;
-      font-weight: 750;
-    }
-
   </style>
 </head>
 <body>
@@ -679,14 +633,6 @@
         <button class="download-btn" id="downloadBtn">Scarica immagine</button>
         <button class="share-btn" id="shareBtn">Condividi immagine</button>
       </div>
-
-      <div class="stats-import-bottom">
-        <div class="stats-import-title">Per admin (lasciate perdere)</div>
-        <label class="stats-import-button" for="statsImportInput">Carica players_stats.json</label>
-        <input type="file" id="statsImportInput" accept=".json,application/json" />
-        <div class="stats-import-help">Serve per caricare i voti</div>
-      </div>
-
     </section>
 
     <aside class="market">
@@ -797,7 +743,7 @@ function newState(module) {
 }
 
 const els = {
-  formation: document.getElementById('formation'), bench: document.getElementById('bench'), playersList: document.getElementById('playersList'), statsImportInput: document.getElementById('statsImportInput'), officialCount: document.getElementById('officialCount'),
+  formation: document.getElementById('formation'), bench: document.getElementById('bench'), playersList: document.getElementById('playersList'), officialCount: document.getElementById('officialCount'),
   searchInput: document.getElementById('searchInput'), nationFilter: document.getElementById('nationFilter'), sortSelect: document.getElementById('sortSelect'),
   moduleSelect: document.getElementById('moduleSelect'), capNumber: document.getElementById('capNumber'), creditsText: document.getElementById('creditsText'),
   benchInfo: document.getElementById('benchInfo'), sendBtn: document.getElementById('sendBtn'), managerInput: document.getElementById('managerInput'),
@@ -1468,9 +1414,9 @@ async function shareRoster() {
 
 
 
-function mergeImportedStats(importedPlayers) {
+function mergeOfficialStats(importedPlayers) {
   if (!Array.isArray(importedPlayers)) {
-    throw new Error('Il file statistiche deve contenere un array di giocatori');
+    throw new Error('players_stats.json deve contenere un array di giocatori');
   }
 
   const statsByKey = new Map();
@@ -1505,20 +1451,15 @@ function mergeImportedStats(importedPlayers) {
   return updated;
 }
 
-async function importStatsFile(event) {
-  const file = event.target.files && event.target.files[0];
-  if (!file) return;
-
+async function loadRemoteOfficialStats() {
   try {
-    const raw = await file.text();
-    const imported = JSON.parse(raw);
-    const updated = mergeImportedStats(imported);
-    showToast(`Statistiche aggiornate: ${updated} giocatori`);
+    const response = await fetch(`players_stats.json?v=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) return;
+    const imported = await response.json();
+    const updated = mergeOfficialStats(imported);
+    if (updated > 0) showToast('Statistiche ufficiali aggiornate');
   } catch (err) {
-    console.error(err);
-    showToast('File statistiche non valido');
-  } finally {
-    event.target.value = '';
+    console.info('players_stats.json non trovato o non caricabile', err);
   }
 }
 
@@ -1625,6 +1566,7 @@ function exportRoster() {
 populateNations();
 els.managerInput.value = state.manager || '';
 render();
+loadRemoteOfficialStats();
 
 document.querySelectorAll('.chip').forEach(chip => chip.addEventListener('click', () => { roleFilter = chip.dataset.role; document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c === chip)); renderPlayers(); }));
 els.searchInput.addEventListener('input', renderPlayers);
@@ -1632,7 +1574,6 @@ els.nationFilter.addEventListener('change', renderPlayers);
 els.sortSelect.addEventListener('change', renderPlayers);
 els.moduleSelect.addEventListener('change', e => changeModule(e.target.value));
 els.managerInput.addEventListener('input', saveLocal);
-if (els.statsImportInput) els.statsImportInput.addEventListener('change', importStatsFile);
 document.getElementById('randomBtn').addEventListener('click', randomTeam);
 document.getElementById('cancelBtn').addEventListener('click', () => { if (!confirm('Vuoi davvero svuotare tutta la rosa?')) return; state = newState(state.module); state.manager = els.managerInput.value.trim(); activeSlot = null; saveLocal(); render(); });
 els.sendBtn.addEventListener('click', openSendModal);
