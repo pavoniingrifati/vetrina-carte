@@ -379,6 +379,7 @@
     }
     .module-select { background: #fff; }
 
+    .official-count { color:#555; font-size:11px; font-weight:900; text-align:center; margin:-6px 0 8px; }
     .players-list { display: grid; gap: 10px; overflow: auto; padding-right: 2px; max-height: calc(100vh - 280px); }
     .player-card {
       min-height: 76px;
@@ -650,7 +651,7 @@
         <select class="sort-select" id="sortSelect"><option value="cost_desc">Costo ↓</option><option value="cost_asc">Costo ↑</option><option value="rating_desc">Forza ↓</option><option value="rating_asc">Forza ↑</option><option value="name_asc">Nome A-Z</option></select>
       </div>
 
-      <div class="players-list" id="playersList"></div>
+      <div class="official-count" id="officialCount"></div><div class="players-list" id="playersList"></div>
       <div class="export-box" id="exportBoxWrap"><textarea id="exportBox"></textarea></div>
     </aside>
   </div>
@@ -677,159 +678,9 @@
   <div class="share-stage" id="shareStage" aria-hidden="true"></div>
 
 <script>
-const RAW_NAMES = `alessiodrinkteam
-antonio__77777
-Attilio
-Balasco
-bandolero__22
-billyboss2012
-brun0_scarso
-Ciolasalsa
-d4rkn3s5xx
-Damians
-deathwing1986
-fantaballa
-FireLuk29
-flashyt_11
-gabrielfwz
-gigachad345667
-joel73xyz
-Johnny
-justmario01
-klajdi_bossi
-Lele
-marcoprogame4
-Marinosky
-Marioski
-Martinico
-mino_zip
-MisterFM
-nathan2290
-pizzaboyr0w
-raphaelaex
-rxr_kz95gianluca
-Samuel
-watengakazz1m
-xavieeeeer_
-Arthur
-diggodog30
-Edo_falcone
-emadk_
-Fork
-Fra
-Gabriel Mancini
-Gabriele
-Gigabyte
-lorenzobitontii
-Maks
-nickgulmoxxiv
-Pacchoo
-Piuz
-re13andrea2
-RushErPazzo
-tepic85
-TommasoM
-fed.vet.5
-nickfochi
-sololeveling80
-andrea_zanzibar
-anto_gra22
-bananaiper44
-sebasalatii
-Stefano_lovero
-Tore
-?
-Calcio edit
-Checco
-Ciccarelli
-Ciuly
-Emamu
-Flavio
-Frank Lubros
-Frazx
-Ildanix
-Luca dp
-Markus
-pippofromibiza88
-Ronny
-Salex
-Scibet
-secondo.mattia
-yuridigius
-dav_masilla
-Ilbhobhobho
-Lucertola
-claudio_cola05
-emanuele_z_
-fruci_alessandro_
-andreatarulli
-cloud88c
-game_of_lambs
-i.m_tendaman98
-jonden3402
-Lemming
-Lilolder
-natigno00
-pummarolaelvetica
-ricvy21
-rikiii
-tendaman98
-thomas_popolizio
-tieppog
-tieppogabriele
-valetap9o
-alessiocesareo
-biafrigerio_09
-bruno.ceck
-damiano_onepablo
-dany.heerous
-dimarzio_manuel
-Domy19.7
-follochristian
-halland_pio
-leooo4206
-luk.e1110
-Marco gioffredi
-marco.urbanii12
-marcosal
-micaeldp
-un_bambino_in_viaggio
-adrianesen
-alessandro_dilecce
-alessanidro
-andrewgroove_music
-Antonio di Mario
-blind_memory10
-canala_max6
-diaf.11
-Enricosa89
-er.tommy.10
-fra_maffo10_
-france_sco.cairo
-Geofri074
-Gioiquelloveo
-gioiquellovero
-giuseppe_olimpio116
-lapo2301
-leandrosantiagomunez
-lore_dema_95
-lu_fucacciu
-lucera_davide
-Matt_011
-mattia_villa_vmi
-paky.oprivat
-raffyagnese11
-rick25
-roberto683194
-sconosciuto
-ste_fa_nello
-steefanovignati
-tommaso.derosa_
-walterilprofeta21
-z.a.n.huf`;
-
-const NATIONAL_TEAMS = ['Argentina','Brasile','Francia','Inghilterra','Spagna','Portogallo','Germania','Paesi Bassi','Belgio','Croazia','Uruguay','Colombia','Marocco','Giappone','Senegal','Stati Uniti','Messico','Canada','Svizzera','Norvegia','Svezia','Turchia','Austria','Cechia','Scozia','Bosnia','Corea del Sud','Australia','Iran','Qatar','Arabia Saudita','Iraq','Giordania','Uzbekistan','Nuova Zelanda','Egitto','Algeria','Tunisia','Ghana','Costa d’Avorio','Sudafrica','Capo Verde','Congo DR','Paraguay','Ecuador','Panama','Haiti','Curaçao'];
-const FLAGS = ['🇦🇷','🇧🇷','🇫🇷','🏴','🇪🇸','🇵🇹','🇩🇪','🇳🇱','🇧🇪','🇭🇷','🇺🇾','🇨🇴','🇲🇦','🇯🇵','🇸🇳','🇺🇸','🇲🇽','🇨🇦','🇨🇭','🇳🇴','🇸🇪','🇹🇷','🇦🇹','🇨🇿','🏴','🇧🇦','🇰🇷','🇦🇺','🇮🇷','🇶🇦','🇸🇦','🇮🇶','🇯🇴','🇺🇿','🇳🇿','🇪🇬','🇩🇿','🇹🇳','🇬🇭','🇨🇮','🇿🇦','🇨🇻','🇨🇩','🇵🇾','🇪🇨','🇵🇦','🇭🇹','🇨🇼'];
+const OFFICIAL_PLAYERS = [{"name":"matte.paolini","nation":"Algeria","overall":140.0,"rating":70},{"name":"luigi79","nation":"Algeria","overall":146.0,"rating":73},{"name":"matt_priv💞","nation":"Algeria","overall":140.0,"rating":70},{"name":"omarmazielli","nation":"Algeria","overall":127.0,"rating":64},{"name":"ra","nation":"Algeria","overall":123.0,"rating":62},{"name":"mario lancione","nation":"Algeria","overall":142.0,"rating":71},{"name":"Nicola Marinelli","nation":"Algeria","overall":129.0,"rating":64,"role":"A"},{"name":"lucafiore090","nation":"Algeria","overall":146.0,"rating":73},{"name":"IoVisal","nation":"Algeria","overall":120.0,"rating":60},{"name":"michele_5790","nation":"Algeria","overall":131.0,"rating":66},{"name":"P. T. 1","nation":"Algeria","overall":125.0,"rating":62},{"name":"manu","nation":"Algeria","overall":144.0,"rating":72},{"name":"Pulisic.ftbl","nation":"Algeria","overall":124.0,"rating":62},{"name":"masaneomatteo25","nation":"Algeria","overall":141.0,"rating":70},{"name":"nunziata_francesco12","nation":"Algeria","overall":127.0,"rating":64},{"name":"P I E T R O 🌟","nation":"Algeria","overall":126.0,"rating":63,"role":"P"},{"name":"mattia.giomi","nation":"Algeria","overall":135.0,"rating":68},{"name":"mauro🇮🇹","nation":"Algeria","overall":134.0,"rating":67},{"name":"lollogulag","nation":"Algeria","overall":146.0,"rating":73},{"name":"MCTOMINAY.","nation":"Algeria","overall":134.0,"rating":67},{"name":"nicolascompassi","nation":"Algeria","overall":127.0,"rating":64},{"name":"Blaze","nation":"Argentina","overall":172.0,"rating":86},{"name":"hbotte1990","nation":"Argentina","overall":144.0,"rating":72},{"name":"nathan2290","nation":"Argentina","overall":157.0,"rating":78,"role":"P"},{"name":"xavieeeeer_","nation":"Argentina","overall":146.0,"rating":73},{"name":"Los","nation":"Argentina","overall":148.0,"rating":74},{"name":"Tore","nation":"Argentina","overall":144.0,"rating":72},{"name":"Lele","nation":"Argentina","overall":148.0,"rating":74},{"name":"d4rkn3s5xx","nation":"Argentina","overall":170.0,"rating":85,"role":"A"},{"name":"Damians","nation":"Argentina","overall":156.0,"rating":78},{"name":"mino_zip","nation":"Argentina","overall":143.0,"rating":72},{"name":"flashyt_11","nation":"Argentina","overall":156.0,"rating":78},{"name":"Mr Mello","nation":"Argentina","overall":159.0,"rating":80},{"name":"gabrielfwz","nation":"Argentina","overall":152.0,"rating":76},{"name":"joel73xyz","nation":"Argentina","overall":170.0,"rating":85},{"name":"Martinico","nation":"Argentina","overall":168.0,"rating":84},{"name":"gigachad345667","nation":"Argentina","overall":149.0,"rating":74},{"name":"Calcio edit","nation":"Argentina","overall":152.0,"rating":76},{"name":"Ciuly","nation":"Argentina","overall":144.0,"rating":72,"role":"A"},{"name":"Ettorezio","nation":"Australia","overall":118.0,"rating":59},{"name":"dvdrom29","nation":"Australia","overall":121.0,"rating":60},{"name":"Dinho","nation":"Australia","overall":127.0,"rating":64},{"name":"ema.crocetta_","nation":"Australia","overall":120.0,"rating":60},{"name":"Dybale","nation":"Australia","overall":120.0,"rating":60},{"name":"davi_tiri11","nation":"Australia","overall":131.0,"rating":66,"role":"P"},{"name":"emanuele_tedeschi92","nation":"Australia","overall":120.0,"rating":60},{"name":"fravstheworld","nation":"Australia","overall":115.0,"rating":58},{"name":"flautorobb","nation":"Australia","overall":116.0,"rating":58},{"name":"Diego Piacentino","nation":"Australia","overall":127.0,"rating":64},{"name":"emanuele.goliuso_08","nation":"Australia","overall":120.0,"rating":60},{"name":"dica_007","nation":"Australia","overall":128.0,"rating":64},{"name":"fil_lap_","nation":"Australia","overall":117.0,"rating":58},{"name":"feder_cava","nation":"Australia","overall":118.0,"rating":59,"role":"A"},{"name":"Dc22","nation":"Australia","overall":130.0,"rating":65},{"name":"francescopio_sant","nation":"Australia","overall":114.0,"rating":57},{"name":"dav_imperatore","nation":"Australia","overall":133.0,"rating":66},{"name":"fraad_","nation":"Australia","overall":115.0,"rating":58},{"name":"mirk0_pad0","nation":"Austria","overall":147.0,"rating":74},{"name":"pirox_11","nation":"Austria","overall":137.0,"rating":68},{"name":"rubenporcelli","nation":"Austria","overall":132.0,"rating":66},{"name":"samu.biato","nation":"Austria","overall":129.0,"rating":64,"role":"P"},{"name":"roggi.27","nation":"Austria","overall":134.0,"rating":67},{"name":"P E P P E","nation":"Austria","overall":142.0,"rating":71},{"name":"renatomarini_","nation":"Austria","overall":136.0,"rating":68},{"name":"marz_6317","nation":"Austria","overall":153.0,"rating":76},{"name":"mattiabonifazi_","nation":"Austria","overall":150.0,"rating":75},{"name":"mauroservodio","nation":"Austria","overall":148.0,"rating":74},{"name":"pietro_fresu12","nation":"Austria","overall":140.0,"rating":70},{"name":"Pice","nation":"Austria","overall":142.0,"rating":71},{"name":"salvatoretalaricogiuseppe","nation":"Austria","overall":130.0,"rating":65},{"name":"Giuseppe.restaino07","nation":"Austria","overall":128.0,"rating":64},{"name":"redha_chaoui11","nation":"Austria","overall":136.0,"rating":68},{"name":"giancarlo_fabbrini","nation":"Austria","overall":127.0,"rating":64},{"name":"Richardmille.15","nation":"Austria","overall":135.0,"rating":68,"role":"A"},{"name":"mirkomastrocinque","nation":"Austria","overall":145.0,"rating":72},{"name":"pino_palombino","nation":"Austria","overall":138.0,"rating":69},{"name":"rikiii","nation":"Belgio","overall":170.0,"rating":85},{"name":"tieppog","nation":"Belgio","overall":158.0,"rating":79,"role":"A"},{"name":"ricvy21","nation":"Belgio","overall":181.0,"rating":90,"role":"P"},{"name":"aesse27","nation":"Belgio","overall":155.0,"rating":78},{"name":"luk.e1110","nation":"Belgio","overall":138.0,"rating":69},{"name":"thomas_popolizio","nation":"Belgio","overall":159.0,"rating":80},{"name":"edoardo_ambrosino","nation":"Belgio","overall":149.0,"rating":74},{"name":"france_sco.cairo","nation":"Belgio","overall":148.0,"rating":74},{"name":"valetap9o","nation":"Belgio","overall":150.0,"rating":75},{"name":"roberto683194","nation":"Belgio","overall":166.0,"rating":83},{"name":"lorenzo_marmoni","nation":"Belgio","overall":138.0,"rating":69},{"name":"marcosal","nation":"Belgio","overall":137.0,"rating":68},{"name":"tommaso.derosa_","nation":"Belgio","overall":152.0,"rating":76},{"name":"gabriele___galante","nation":"Belgio","overall":140.0,"rating":70},{"name":"gabrielecosta237","nation":"Belgio","overall":139.0,"rating":70},{"name":"alessiocesareo","nation":"Belgio","overall":150.0,"rating":75},{"name":"marco.urbanii12","nation":"Belgio","overall":138.0,"rating":69},{"name":"biafrigerio_09","nation":"Brasile","overall":176.0,"rating":88,"role":"P"},{"name":"alessandro_dilecce","nation":"Brasile","overall":145.0,"rating":72},{"name":"dimarzio_manuel","nation":"Brasile","overall":165.0,"rating":82},{"name":"Jacopezz","nation":"Brasile","overall":154.0,"rating":77},{"name":"damiano_onepablo","nation":"Brasile","overall":169.0,"rating":84},{"name":"bruno.ceck","nation":"Brasile","overall":176.0,"rating":88},{"name":"Domy19.7","nation":"Brasile","overall":162.0,"rating":81},{"name":"emanuele_z_","nation":"Brasile","overall":159.0,"rating":80},{"name":"dany.heerous","nation":"Brasile","overall":168.0,"rating":84},{"name":"claudio_cola05","nation":"Brasile","overall":176.0,"rating":88},{"name":"halland_pio","nation":"Brasile","overall":156.0,"rating":78},{"name":"leooo4206","nation":"Brasile","overall":152.0,"rating":76},{"name":"1908nico_","nation":"Brasile","overall":147.0,"rating":74},{"name":"follochristian","nation":"Brasile","overall":158.0,"rating":79},{"name":"Marco gioffredi","nation":"Brasile","overall":149.0,"rating":74},{"name":"cloud88c","nation":"Brasile","overall":144.0,"rating":72},{"name":"filippo.gnemmi","nation":"Canada","overall":134.0,"rating":67},{"name":"flavio_mammola1","nation":"Canada","overall":134.0,"rating":67},{"name":"franci.iedà💎👑","nation":"Canada","overall":129.0,"rating":64},{"name":"lollogulag","nation":"Canada","overall":121.0,"rating":60},{"name":"F1 passion and love","nation":"Canada","overall":152.0,"rating":76},{"name":"Giosal2.0","nation":"Canada","overall":125.0,"rating":62},{"name":"ermattialaghi2011","nation":"Canada","overall":158.0,"rating":79},{"name":"federico11365","nation":"Canada","overall":141.0,"rating":70},{"name":"L.C.414","nation":"Canada","overall":124.0,"rating":62},{"name":"Gabriel_Fraddosio","nation":"Canada","overall":129.0,"rating":64},{"name":"giok","nation":"Canada","overall":126.0,"rating":63},{"name":"jacopo5760","nation":"Canada","overall":124.0,"rating":62},{"name":"Hwillowh","nation":"Canada","overall":123.0,"rating":62,"role":"P"},{"name":"filippo_real4646","nation":"Canada","overall":140.0,"rating":70},{"name":"Fra&Ale","nation":"Canada","overall":133.0,"rating":66},{"name":"La famiglia Vinciguerra","nation":"Canada","overall":121.0,"rating":60},{"name":"Piergiorgio","nation":"Cechia","overall":138.0,"rating":69,"role":"P"},{"name":"Portiere3","nation":"Cechia","overall":134.0,"rating":67,"role":"P"},{"name":"XX_kejuve_XX","nation":"Cechia","overall":132.0,"rating":66},{"name":"zlo_spencer","nation":"Cechia","overall":135.0,"rating":68},{"name":"Portiere","nation":"Cechia","overall":135.0,"rating":68,"role":"P"},{"name":"Manu","nation":"Cechia","overall":140.0,"rating":70},{"name":"Micheee","nation":"Cechia","overall":143.0,"rating":72},{"name":"valeriocarus","nation":"Cechia","overall":131.0,"rating":66},{"name":"IlJuly","nation":"Cechia","overall":133.0,"rating":66},{"name":"Valerlo.montatore","nation":"Cechia","overall":132.0,"rating":66},{"name":"miky","nation":"Cechia","overall":153.0,"rating":76,"role":"A"},{"name":"Lorenzo Pappalardo","nation":"Cechia","overall":142.0,"rating":71},{"name":"alduc","nation":"Cechia","overall":137.0,"rating":68},{"name":"sardina90","nation":"Cechia","overall":142.0,"rating":71,"role":"A"},{"name":"V A L E","nation":"Cechia","overall":130.0,"rating":65},{"name":"zanlu_","nation":"Cechia","overall":134.0,"rating":67,"role":"A"},{"name":"Venu","nation":"Cechia","overall":133.0,"rating":66},{"name":"zertobomber12","nation":"Cechia","overall":135.0,"rating":68},{"name":"walterilprofeta21","nation":"Colombia","overall":140.0,"rating":70},{"name":"🌒ANDRE_y3p🌔","nation":"Colombia","overall":137.0,"rating":68},{"name":"carbo._21","nation":"Colombia","overall":139.0,"rating":70},{"name":"steefanovignati","nation":"Colombia","overall":147.0,"rating":74},{"name":"_rendox08_","nation":"Colombia","overall":138.0,"rating":69},{"name":"themasterofreddead","nation":"Colombia","overall":142.0,"rating":71},{"name":"samu_c_23","nation":"Colombia","overall":168.0,"rating":84},{"name":"a.o.b.j.l","nation":"Colombia","overall":136.0,"rating":68,"role":"P"},{"name":"5amu.dn","nation":"Colombia","overall":136.0,"rating":68},{"name":"ste_fa_nello","nation":"Colombia","overall":147.0,"rating":74},{"name":"faustino_colanera00","nation":"Colombia","overall":139.0,"rating":70},{"name":"xiao_monte44","nation":"Colombia","overall":139.0,"rating":70},{"name":"giuseppe.lorusso","nation":"Colombia","overall":139.0,"rating":70,"role":"A"},{"name":"z.a.n.huf","nation":"Colombia","overall":139.0,"rating":70},{"name":"sconosciuto","nation":"Colombia","overall":150.0,"rating":75},{"name":"simo.cola_9","nation":"Colombia","overall":153.0,"rating":76,"role":"A"},{"name":"truci98","nation":"Colombia","overall":141.0,"rating":70},{"name":"_marazzo5_","nation":"Corea del Sud","overall":133.0,"rating":66},{"name":"_samuxz__013__","nation":"Corea del Sud","overall":130.0,"rating":65,"role":"P"},{"name":"ale.canevari","nation":"Corea del Sud","overall":123.0,"rating":62},{"name":"adam.salah12","nation":"Corea del Sud","overall":127.0,"rating":64},{"name":"17","nation":"Corea del Sud","overall":134.0,"rating":67},{"name":"0ttavo","nation":"Corea del Sud","overall":143.0,"rating":72},{"name":"ale 💎","nation":"Corea del Sud","overall":124.0,"rating":62},{"name":"14-3🩸⚽️","nation":"Corea del Sud","overall":128.0,"rating":64},{"name":"furzotu","nation":"Corea del Sud","overall":122.0,"rating":61},{"name":"💎Seby💎","nation":"Corea del Sud","overall":129.0,"rating":64},{"name":"Achille_coveri","nation":"Corea del Sud","overall":127.0,"rating":64,"role":"A"},{"name":"williamsantarossa","nation":"Corea del Sud","overall":155.0,"rating":78},{"name":"zanella16577","nation":"Corea del Sud","overall":153.0,"rating":76},{"name":"adninho","nation":"Corea del Sud","overall":126.0,"rating":63},{"name":"Rooster","nation":"Corea del Sud","overall":151.0,"rating":76},{"name":"Adry96","nation":"Corea del Sud","overall":125.0,"rating":62},{"name":"Angelo131313","nation":"Costa d'Avorio","overall":154.0,"rating":77},{"name":"chris05_02","nation":"Costa d'Avorio","overall":147.0,"rating":74},{"name":"davidde784","nation":"Costa d'Avorio","overall":130.0,"rating":65},{"name":"ema.rotella","nation":"Costa d'Avorio","overall":125.0,"rating":62,"role":"P"},{"name":"el_magu09","nation":"Costa d'Avorio","overall":140.0,"rating":70},{"name":"Cruci96","nation":"Costa d'Avorio","overall":132.0,"rating":66},{"name":"DODIO","nation":"Costa d'Avorio","overall":145.0,"rating":72},{"name":"deste067","nation":"Costa d'Avorio","overall":128.0,"rating":64},{"name":"davidsamarelli2011","nation":"Costa d'Avorio","overall":129.0,"rating":64},{"name":"DomenicoFrizziero-h1p","nation":"Costa d'Avorio","overall":144.0,"rating":72},{"name":"dami_an3007","nation":"Costa d'Avorio","overall":132.0,"rating":66},{"name":"cristiano.vadala","nation":"Costa d'Avorio","overall":133.0,"rating":66},{"name":"Jokoxo","nation":"Costa d'Avorio","overall":124.0,"rating":62},{"name":"Costagliola","nation":"Costa d'Avorio","overall":136.0,"rating":68},{"name":"ciro_n4tale","nation":"Costa d'Avorio","overall":136.0,"rating":68},{"name":"chriaura","nation":"Costa d'Avorio","overall":149.0,"rating":74},{"name":"Anto_12","nation":"Costa d'Avorio","overall":150.0,"rating":75},{"name":"Donny","nation":"Costa d'Avorio","overall":144.0,"rating":72},{"name":"demeyor","nation":"Costa d'Avorio","overall":129.0,"rating":64},{"name":"julio11c","nation":"Croazia","overall":164.0,"rating":82},{"name":"marcozanu01","nation":"Croazia","overall":147.0,"rating":74,"role":"A"},{"name":"micaeldp12","nation":"Croazia","overall":144.0,"rating":72},{"name":"lorenzo_favaro_kb","nation":"Croazia","overall":147.0,"rating":74},{"name":"leandrosantiagomunez","nation":"Croazia","overall":151.0,"rating":76},{"name":"sali.leo7","nation":"Croazia","overall":132.0,"rating":66},{"name":"nicoangelozzii._","nation":"Croazia","overall":143.0,"rating":72},{"name":"ros9740","nation":"Croazia","overall":132.0,"rating":66},{"name":"Riky_cavaliere02","nation":"Croazia","overall":135.0,"rating":68,"role":"P"},{"name":"rick25","nation":"Croazia","overall":138.0,"rating":69,"role":"A"},{"name":"samu_c_23","nation":"Croazia","overall":131.0,"rating":66},{"name":"Kledi","nation":"Croazia","overall":159.0,"rating":80},{"name":"raffyagnese11","nation":"Croazia","overall":140.0,"rating":70},{"name":"Matt_011","nation":"Croazia","overall":145.0,"rating":72},{"name":"patriziocaldoro07","nation":"Croazia","overall":142.0,"rating":71},{"name":"lor_en_zo","nation":"Croazia","overall":148.0,"rating":74},{"name":"Dc22","nation":"Danimarca","overall":149.0,"rating":74},{"name":"dvdrom29","nation":"Danimarca","overall":143.0,"rating":72},{"name":"emanuele.goliuso_08","nation":"Danimarca","overall":138.0,"rating":69,"role":"A"},{"name":"dav_imperatore","nation":"Danimarca","overall":152.0,"rating":76},{"name":"Diego Piacentino","nation":"Danimarca","overall":146.0,"rating":73},{"name":"feder_cava","nation":"Danimarca","overall":136.0,"rating":68},{"name":"gabrieleebadia","nation":"Danimarca","overall":132.0,"rating":66,"role":"P"},{"name":"friggy2024","nation":"Danimarca","overall":134.0,"rating":67},{"name":"fravstheworld","nation":"Danimarca","overall":134.0,"rating":67},{"name":"Dinho","nation":"Danimarca","overall":143.0,"rating":72},{"name":"Dybale","nation":"Danimarca","overall":142.0,"rating":71},{"name":"ema.crocetta_","nation":"Danimarca","overall":139.0,"rating":70},{"name":"fil_lap_","nation":"Danimarca","overall":136.0,"rating":68},{"name":"Ettorezio","nation":"Danimarca","overall":138.0,"rating":69},{"name":"flautorobb","nation":"Danimarca","overall":135.0,"rating":68},{"name":"dica_007","nation":"Danimarca","overall":148.0,"rating":74,"role":"A"},{"name":"davi_tiri11","nation":"Danimarca","overall":151.0,"rating":76},{"name":"emanuele_tedeschi92","nation":"Danimarca","overall":139.0,"rating":70},{"name":"francescopio_sant","nation":"Danimarca","overall":135.0,"rating":68},{"name":"Il_Mega","nation":"Ecuador","overall":125.0,"rating":62},{"name":"vi_marmo_04","nation":"Ecuador","overall":126.0,"rating":63},{"name":"user471226998","nation":"Ecuador","overall":127.0,"rating":64,"role":"P"},{"name":"valerio.tricoci","nation":"Ecuador","overall":127.0,"rating":64},{"name":"sto_fatto_al_mare","nation":"Ecuador","overall":133.0,"rating":66},{"name":"Tito","nation":"Ecuador","overall":131.0,"rating":66,"role":"A"},{"name":"vincenzo.ambrosio.26 ","nation":"Ecuador","overall":125.0,"rating":62},{"name":"Venezia_Fc_Official","nation":"Ecuador","overall":126.0,"rating":63},{"name":"stan_alessio","nation":"Ecuador","overall":142.0,"rating":71},{"name":"Tofiore","nation":"Ecuador","overall":128.0,"rating":64},{"name":"thomas.fonville","nation":"Ecuador","overall":133.0,"rating":66},{"name":"Sorre_013","nation":"Ecuador","overall":152.0,"rating":76},{"name":"tonycorda10","nation":"Ecuador","overall":127.0,"rating":64},{"name":"sono.il.massimo","nation":"Ecuador","overall":162.0,"rating":81},{"name":"sesko.ok","nation":"Ecuador","overall":168.0,"rating":84},{"name":"tommy_codecasa_","nation":"Ecuador","overall":127.0,"rating":64},{"name":"barba_dave14","nation":"Egitto","overall":130.0,"rating":65},{"name":"annah","nation":"Egitto","overall":131.0,"rating":66},{"name":"andrea121212121212_","nation":"Egitto","overall":132.0,"rating":66},{"name":"dan._.ceres","nation":"Egitto","overall":120.0,"rating":60},{"name":"caro014","nation":"Egitto","overall":125.0,"rating":62},{"name":"Anonimo","nation":"Egitto","overall":130.0,"rating":65},{"name":"Champions Cup","nation":"Egitto","overall":125.0,"rating":62},{"name":"cerinxviii","nation":"Egitto","overall":125.0,"rating":62},{"name":"crzl1818","nation":"Egitto","overall":120.0,"rating":60},{"name":"CRI•🖤💙","nation":"Egitto","overall":123.0,"rating":62},{"name":"claudio.pollara_","nation":"Egitto","overall":125.0,"rating":62},{"name":"Andrea💎","nation":"Egitto","overall":135.0,"rating":68},{"name":"bus","nation":"Egitto","overall":127.0,"rating":64,"role":"A"},{"name":"Chri⚪⚫","nation":"Egitto","overall":125.0,"rating":62},{"name":"Eneaa012","nation":"Egitto","overall":120.0,"rating":60,"role":"P"},{"name":"Angelo","nation":"Egitto","overall":132.0,"rating":66},{"name":"Amin Veapi","nation":"Egitto","overall":163.0,"rating":82},{"name":"friggy2024","nation":"Egitto","overall":181.0,"rating":90},{"name":"pizzaboyr0w","nation":"Francia","overall":165.0,"rating":82},{"name":"alessiodrinkteam","nation":"Francia","overall":160.0,"rating":80},{"name":"FireLuk29","nation":"Francia","overall":167.0,"rating":84},{"name":"anto_gra22","nation":"Francia","overall":158.0,"rating":79},{"name":"marcoprogame4","nation":"Francia","overall":166.0,"rating":83},{"name":"Samuel","nation":"Francia","overall":159.0,"rating":80},{"name":"Marioski","nation":"Francia","overall":160.0,"rating":80},{"name":"deathwing1986","nation":"Francia","overall":176.0,"rating":88},{"name":"raphaelaex","nation":"Francia","overall":162.0,"rating":81,"role":"P"},{"name":"Fantaballa","nation":"Francia","overall":158.0,"rating":79},{"name":"diggodog30","nation":"Francia","overall":175.0,"rating":88},{"name":"antonio__77777","nation":"Francia","overall":195.0,"rating":98},{"name":"Attilio","nation":"Francia","overall":186.0,"rating":93},{"name":"Marinosky","nation":"Francia","overall":153.0,"rating":76},{"name":"MisterFM","nation":"Francia","overall":153.0,"rating":76},{"name":"black_diam0nd","nation":"Francia","overall":150.0,"rating":75},{"name":"rxr_kz95gianluca","nation":"Francia","overall":165.0,"rating":82},{"name":"billyboss2012","nation":"Francia","overall":160.0,"rating":80},{"name":"bananaiper44","nation":"Francia","overall":157.0,"rating":78},{"name":"Balasco","nation":"Francia","overall":161.0,"rating":80},{"name":"daniele_ibba_new","nation":"Germania","overall":157.0,"rating":78},{"name":"jacopo.gabrieli","nation":"Germania","overall":150.0,"rating":75,"role":"P"},{"name":"falcogranta","nation":"Germania","overall":153.0,"rating":76},{"name":"giuseppe_olimpio116","nation":"Germania","overall":150.0,"rating":75},{"name":"emanueleakasium","nation":"Germania","overall":155.0,"rating":78},{"name":"demis27_","nation":"Germania","overall":157.0,"rating":78},{"name":"Enricosa89","nation":"Germania","overall":154.0,"rating":77},{"name":"giacconn","nation":"Germania","overall":152.0,"rating":76},{"name":"caouriki100","nation":"Germania","overall":170.0,"rating":85},{"name":"diaf.11","nation":"Germania","overall":157.0,"rating":78},{"name":"canala_max6","nation":"Germania","overall":178.0,"rating":89},{"name":"claudio__tondo","nation":"Germania","overall":160.0,"rating":80},{"name":"giorgioconti12","nation":"Germania","overall":150.0,"rating":75},{"name":"jimmygbucketss22","nation":"Germania","overall":148.0,"rating":74},{"name":"flips_1020","nation":"Germania","overall":152.0,"rating":76},{"name":"Geofri074","nation":"Germania","overall":152.0,"rating":76},{"name":"tepic85","nation":"Inghilterra","overall":181.0,"rating":90},{"name":"erikcrispoldi","nation":"Inghilterra","overall":152.0,"rating":76},{"name":"Pacchoo","nation":"Inghilterra","overall":155.0,"rating":78},{"name":"Flavio","nation":"Inghilterra","overall":150.0,"rating":75},{"name":"sololeveling80","nation":"Inghilterra","overall":149.0,"rating":74},{"name":"TommasoM","nation":"Inghilterra","overall":177.0,"rating":88},{"name":"RushErPazzo","nation":"Inghilterra","overall":187.0,"rating":94},{"name":"andrea_zanzibar","nation":"Inghilterra","overall":156.0,"rating":78,"role":"P"},{"name":"sebasalatii","nation":"Inghilterra","overall":162.0,"rating":81},{"name":"Ciuly","nation":"Inghilterra","overall":156.0,"rating":78},{"name":"secondo.mattia","nation":"Inghilterra","overall":160.0,"rating":80},{"name":"Frazx","nation":"Inghilterra","overall":151.0,"rating":76},{"name":"Piuz","nation":"Inghilterra","overall":182.0,"rating":91},{"name":"pippolisa05","nation":"Inghilterra","overall":165.0,"rating":82},{"name":"Stefano_lovero","nation":"Inghilterra","overall":173.0,"rating":86},{"name":"pippofromibiza88","nation":"Inghilterra","overall":169.0,"rating":84},{"name":"er.tommy.10","nation":"Inghilterra","overall":173.0,"rating":86},{"name":"Ciccarelli","nation":"Inghilterra","overall":153.0,"rating":76},{"name":"Checco","nation":"Inghilterra","overall":147.0,"rating":74},{"name":"gianlucacitarella11","nation":"Iran","overall":125.0,"rating":62,"role":"A"},{"name":"gianluca_bum_","nation":"Iran","overall":125.0,"rating":62},{"name":"Gerardo Crispo","nation":"Iran","overall":135.0,"rating":68},{"name":"Giulio valbo","nation":"Iran","overall":120.0,"rating":60},{"name":"giaaaaniiiiiii","nation":"Iran","overall":125.0,"rating":62,"role":"P"},{"name":"giulio_.simone","nation":"Iran","overall":120.0,"rating":60},{"name":"giusepperuspantini","nation":"Iran","overall":120.0,"rating":60,"role":"A"},{"name":"gilbertoni_al_sugo","nation":"Iran","overall":125.0,"rating":62},{"name":"ginoimalcazoo twitch","nation":"Iran","overall":123.0,"rating":62},{"name":"hellomynameismc","nation":"Iran","overall":120.0,"rating":60},{"name":"_ar_roti_no","nation":"Marocco","overall":148.0,"rating":74},{"name":"Nello","nation":"Marocco","overall":150.0,"rating":75,"role":"P"},{"name":"alessanidro","nation":"Marocco","overall":140.0,"rating":70,"role":"A"},{"name":"Antonio di Mario","nation":"Marocco","overall":134.0,"rating":67},{"name":"alberto_58_stevan","nation":"Marocco","overall":142.0,"rating":71},{"name":"alee_priv._._","nation":"Marocco","overall":141.0,"rating":70},{"name":"adrianesen","nation":"Marocco","overall":143.0,"rating":72},{"name":"89jimbo89","nation":"Marocco","overall":146.0,"rating":73},{"name":"andrea.cozza","nation":"Marocco","overall":138.0,"rating":69},{"name":"andyrabe51","nation":"Marocco","overall":137.0,"rating":68},{"name":"Mlogiudice","nation":"Marocco","overall":176.0,"rating":88},{"name":"amdde_13","nation":"Marocco","overall":140.0,"rating":70,"role":"A"},{"name":"Bianconero_1975","nation":"Marocco","overall":134.0,"rating":67},{"name":"un_bambino_in_viaggio","nation":"Marocco","overall":148.0,"rating":74},{"name":"andrewgroove_music","nation":"Marocco","overall":138.0,"rating":69},{"name":"blind_memory10","nation":"Marocco","overall":131.0,"rating":66},{"name":"r1ck_crilinnn","nation":"Marocco","overall":149.0,"rating":74},{"name":"Alisio_5","nation":"Marocco","overall":140.0,"rating":70},{"name":"lorenzo franco","nation":"Messico","overall":134.0,"rating":67,"role":"A"},{"name":"emanuelebossio12","nation":"Messico","overall":144.0,"rating":72},{"name":"Luca Luciani","nation":"Messico","overall":134.0,"rating":67},{"name":"gluseppemagrelll","nation":"Messico","overall":137.0,"rating":68,"role":"A"},{"name":"il.giomi","nation":"Messico","overall":136.0,"rating":68,"role":"A"},{"name":"Marco Mancini","nation":"Messico","overall":136.0,"rating":68},{"name":"gen_matt1x1","nation":"Messico","overall":133.0,"rating":66},{"name":"Luke","nation":"Messico","overall":134.0,"rating":67},{"name":"leo_mozzii","nation":"Messico","overall":135.0,"rating":68},{"name":"enio_aps.7","nation":"Messico","overall":143.0,"rating":72},{"name":"gigi","nation":"Messico","overall":139.0,"rating":70},{"name":"kaito993","nation":"Messico","overall":135.0,"rating":68},{"name":"marco.gilardi2004","nation":"Messico","overall":133.0,"rating":66},{"name":"FRANCESCO","nation":"Messico","overall":139.0,"rating":70},{"name":"il_dipo23","nation":"Messico","overall":136.0,"rating":68,"role":"P"},{"name":"leo_anti02","nation":"Messico","overall":136.0,"rating":68},{"name":"Gabri21","nation":"Messico","overall":130.0,"rating":65},{"name":"mancuso9421","nation":"Messico","overall":133.0,"rating":66},{"name":"fed_pass","nation":"Messico","overall":141.0,"rating":70,"role":"A"},{"name":"liveonapool","nation":"Messico","overall":135.0,"rating":68},{"name":"_aldi_ch","nation":"Norvegia","overall":138.0,"rating":69},{"name":"Riccardo Ulivi","nation":"Norvegia","overall":184.0,"rating":92,"role":"A"},{"name":"acetfotografia","nation":"Norvegia","overall":131.0,"rating":66},{"name":"ale","nation":"Norvegia","overall":130.0,"rating":65},{"name":"vincenzozucchetto","nation":"Norvegia","overall":148.0,"rating":74},{"name":"_simply.aiikoin4k","nation":"Norvegia","overall":134.0,"rating":67},{"name":"22","nation":"Norvegia","overall":139.0,"rating":70},{"name":"_antoscu_","nation":"Norvegia","overall":138.0,"rating":69},{"name":"alebet","nation":"Norvegia","overall":131.0,"rating":66,"role":"P"},{"name":"viper_5012","nation":"Norvegia","overall":146.0,"rating":73},{"name":"_leonardos_oliveris_","nation":"Norvegia","overall":136.0,"rating":68},{"name":"kamagla","nation":"Norvegia","overall":128.0,"rating":64},{"name":"tommy_1009","nation":"Norvegia","overall":150.0,"rating":75,"role":"A"},{"name":"Xx_ale_xX","nation":"Norvegia","overall":142.0,"rating":71},{"name":"💎-C-💎","nation":"Norvegia","overall":133.0,"rating":66},{"name":"$h3z_","nation":"Norvegia","overall":133.0,"rating":66},{"name":"simoneee_.","nation":"Norvegia","overall":176.0,"rating":88},{"name":"marcobbruno","nation":"Norvegia","overall":141.0,"rating":70},{"name":"11manu11","nation":"Norvegia","overall":133.0,"rating":66},{"name":"vuxuir9","nation":"Norvegia","overall":143.0,"rating":72},{"name":"Myke","nation":"Olanda","overall":150.0,"rating":75},{"name":"lu_fucacciu","nation":"Olanda","overall":155.0,"rating":78},{"name":"mattia_villa_vmi","nation":"Olanda","overall":153.0,"rating":76},{"name":"gioiquellovero","nation":"Olanda","overall":165.0,"rating":82},{"name":"natigno00","nation":"Olanda","overall":148.0,"rating":74},{"name":"paky.oprivat","nation":"Olanda","overall":148.0,"rating":74},{"name":"pummarolaelvetica","nation":"Olanda","overall":145.0,"rating":72},{"name":"Lemming","nation":"Olanda","overall":158.0,"rating":79},{"name":"jonden3402","nation":"Olanda","overall":158.0,"rating":79},{"name":"Lilolder","nation":"Olanda","overall":156.0,"rating":78},{"name":"lore_dema_95","nation":"Olanda","overall":156.0,"rating":78},{"name":"game_of_lambs","nation":"Olanda","overall":178.0,"rating":89},{"name":"lucera_davide","nation":"Olanda","overall":155.0,"rating":78},{"name":"Gobbiio","nation":"Olanda","overall":158.0,"rating":79},{"name":"lapo2301","nation":"Olanda","overall":158.0,"rating":79},{"name":"FraX","nation":"Panama","overall":133.0,"rating":66},{"name":"Il Dispix","nation":"Panama","overall":123.0,"rating":62},{"name":"Balzano","nation":"Panama","overall":117.0,"rating":58},{"name":"Scuotto","nation":"Panama","overall":123.0,"rating":62,"role":"A"},{"name":"Legendary","nation":"Panama","overall":117.0,"rating":58},{"name":"Cristiano vadalà","nation":"Panama","overall":126.0,"rating":63},{"name":"CooperingWelkin","nation":"Panama","overall":121.0,"rating":60},{"name":"Valentino Sideri","nation":"Panama","overall":126.0,"rating":63},{"name":"Gabibbo O'Neal","nation":"Panama","overall":121.0,"rating":60},{"name":"Foggiano91","nation":"Panama","overall":117.0,"rating":58},{"name":"Zac","nation":"Panama","overall":125.0,"rating":62,"role":"P"},{"name":"Bruno Ceck","nation":"Paraguay","overall":138.0,"rating":69},{"name":"Scorpion22q","nation":"Paraguay","overall":129.0,"rating":64},{"name":"Caro14","nation":"Paraguay","overall":136.0,"rating":68},{"name":"Veledinovski","nation":"Paraguay","overall":150.0,"rating":75},{"name":"Merdonedì","nation":"Paraguay","overall":134.0,"rating":67},{"name":"Tommaso Mangiarotti","nation":"Paraguay","overall":126.0,"rating":63,"role":"A"},{"name":"Tiago Bulgarini","nation":"Paraguay","overall":127.0,"rating":64,"role":"A"},{"name":"Emanuel Dottore","nation":"Paraguay","overall":129.0,"rating":64,"role":"A"},{"name":"Francesco Caruso","nation":"Paraguay","overall":139.0,"rating":70},{"name":"Nicocordo","nation":"Paraguay","overall":127.0,"rating":64,"role":"P"},{"name":"Antonio Gervasio","nation":"Paraguay","overall":132.0,"rating":66},{"name":"giiiovi","nation":"Paraguay","overall":124.0,"rating":62},{"name":"Perryxdux","nation":"Paraguay","overall":127.0,"rating":64,"role":"A"},{"name":"Cla","nation":"Paraguay","overall":133.0,"rating":66},{"name":"aleee_658","nation":"Polonia","overall":160.0,"rating":80,"role":"A"},{"name":"alex456gx","nation":"Polonia","overall":148.0,"rating":74},{"name":"alesslo bltto","nation":"Polonia","overall":148.0,"rating":74},{"name":"Andre","nation":"Polonia","overall":141.0,"rating":70},{"name":"Joker","nation":"Polonia","overall":125.0,"rating":62,"role":"A"},{"name":"andrebrracc","nation":"Polonia","overall":136.0,"rating":68},{"name":"aless.fuskkk","nation":"Polonia","overall":152.0,"rating":76},{"name":"Cast_Prissy14🇦🇷","nation":"Polonia","overall":129.0,"rating":64},{"name":"jacoporavazzoli2015","nation":"Polonia","overall":124.0,"rating":62},{"name":"altobello.leonardo","nation":"Polonia","overall":142.0,"rating":71,"role":"P"},{"name":"Andrea Mazza","nation":"Polonia","overall":137.0,"rating":68},{"name":"C A R M E L O💎🪄","nation":"Polonia","overall":130.0,"rating":65},{"name":"Alo sotto coperta","nation":"Polonia","overall":146.0,"rating":73},{"name":"Bollito kawed","nation":"Polonia","overall":135.0,"rating":68,"role":"A"},{"name":"Scibet","nation":"Portogallo","overall":150.0,"rating":75},{"name":"Fork","nation":"Portogallo","overall":164.0,"rating":82},{"name":"fruci_alessandro_","nation":"Portogallo","overall":150.0,"rating":75},{"name":"Fra","nation":"Portogallo","overall":168.0,"rating":84},{"name":"Salex","nation":"Portogallo","overall":150.0,"rating":75},{"name":"Gigabyte","nation":"Portogallo","overall":164.0,"rating":82},{"name":"Markus","nation":"Portogallo","overall":154.0,"rating":77,"role":"A"},{"name":"tieppogabriele","nation":"Portogallo","overall":144.0,"rating":72},{"name":"i.m_tendaman98","nation":"Portogallo","overall":160.0,"rating":80},{"name":"Maks","nation":"Portogallo","overall":156.0,"rating":78},{"name":"Gabriel Mancini","nation":"Portogallo","overall":162.0,"rating":81,"role":"P"},{"name":"emadk_","nation":"Portogallo","overall":150.0,"rating":75},{"name":"Andrea Perrone","nation":"Portogallo","overall":177.0,"rating":88},{"name":"lorenzobitontii","nation":"Portogallo","overall":157.0,"rating":78},{"name":"Ronny","nation":"Portogallo","overall":152.0,"rating":76,"role":"A"},{"name":"Ildanix","nation":"Portogallo","overall":153.0,"rating":76},{"name":"Diego.p07","nation":"Portogallo","overall":168.0,"rating":84},{"name":"Arthur","nation":"Portogallo","overall":175.0,"rating":88},{"name":"Lucertola","nation":"Portogallo","overall":146.0,"rating":73},{"name":"laduski","nation":"Qatar","overall":110.0,"rating":55},{"name":"Luca.lentinll","nation":"Qatar","overall":125.0,"rating":62},{"name":"Lu","nation":"Qatar","overall":120.0,"rating":60},{"name":"Lud","nation":"Qatar","overall":140.0,"rating":70},{"name":"lollox","nation":"Qatar","overall":120.0,"rating":60},{"name":"Lu_gaming_clt","nation":"Qatar","overall":120.0,"rating":60},{"name":"lollo","nation":"Qatar","overall":119.0,"rating":60},{"name":"libero_.010","nation":"Qatar","overall":110.0,"rating":55},{"name":"Kolunio","nation":"Qatar","overall":110.0,"rating":55},{"name":"lampetto13","nation":"Qatar","overall":110.0,"rating":55},{"name":"Leo.Giuliani","nation":"Qatar","overall":115.0,"rating":58},{"name":"lillo","nation":"Qatar","overall":115.0,"rating":58,"role":"P"},{"name":"Lorlllo11","nation":"Qatar","overall":120.0,"rating":60},{"name":"Pattacci","nation":"Repubblica Democratica del Congo","overall":133.0,"rating":66},{"name":"NIckbop4","nation":"Repubblica Democratica del Congo","overall":131.0,"rating":66},{"name":"Mattia Plscoltta","nation":"Repubblica Democratica del Congo","overall":125.0,"rating":62},{"name":"mattesenza_o.12","nation":"Repubblica Democratica del Congo","overall":125.0,"rating":62,"role":"A"},{"name":"prlv.sa","nation":"Repubblica Democratica del Congo","overall":139.0,"rating":70},{"name":"michaelcazzani","nation":"Repubblica Democratica del Congo","overall":127.0,"rating":64},{"name":"Nikolail bomber","nation":"Repubblica Democratica del Congo","overall":131.0,"rating":66},{"name":"Proteste Italiane","nation":"Repubblica Democratica del Congo","overall":144.0,"rating":72},{"name":"matte02","nation":"Repubblica Democratica del Congo","overall":117.0,"rating":58,"role":"P"},{"name":"Nasta__20","nation":"Repubblica Democratica del Congo","overall":130.0,"rating":65},{"name":"Pippo","nation":"Repubblica Democratica del Congo","overall":138.0,"rating":69},{"name":"Mr calclo","nation":"Repubblica Democratica del Congo","overall":128.0,"rating":64},{"name":"Napoli1926💙🤍","nation":"Repubblica Democratica del Congo","overall":129.0,"rating":64,"role":"A"},{"name":"mauri._luca7","nation":"Repubblica Democratica del Congo","overall":125.0,"rating":62},{"name":"steven_benincasa","nation":"Scozia","overall":125.0,"rating":62},{"name":"Thomas_11_trava","nation":"Scozia","overall":133.0,"rating":66,"role":"A"},{"name":"tommaso_ceccarini_","nation":"Scozia","overall":136.0,"rating":68},{"name":"TTMMatteo","nation":"Scozia","overall":144.0,"rating":72},{"name":"Umberto lovino","nation":"Scozia","overall":147.0,"rating":74},{"name":"unknown171717","nation":"Scozia","overall":152.0,"rating":76},{"name":"tabe","nation":"Scozia","overall":126.0,"rating":63},{"name":"teodorcalciano","nation":"Scozia","overall":127.0,"rating":64},{"name":"Userwthnoname","nation":"Scozia","overall":165.0,"rating":82},{"name":"totl","nation":"Scozia","overall":142.0,"rating":71},{"name":"Tur","nation":"Scozia","overall":145.0,"rating":72},{"name":"thebarrons05","nation":"Scozia","overall":131.0,"rating":66,"role":"A"},{"name":"the_martox_17","nation":"Scozia","overall":127.0,"rating":64},{"name":"Tommy_Grlgss_013","nation":"Scozia","overall":141.0,"rating":70},{"name":"splderjockey02","nation":"Scozia","overall":124.0,"rating":62},{"name":"stefanolorini","nation":"Scozia","overall":120.0,"rating":60,"role":"P"},{"name":"Thomas_lagro11","nation":"Scozia","overall":134.0,"rating":67},{"name":"Tiz💕","nation":"Scozia","overall":136.0,"rating":68},{"name":"conty_94","nation":"Senegal","overall":139.0,"rating":70},{"name":"alessio.pal01","nation":"Senegal","overall":148.0,"rating":74},{"name":"Alessio.russo09","nation":"Senegal","overall":147.0,"rating":74},{"name":"biagioli.leonardo","nation":"Senegal","overall":141.0,"rating":70},{"name":"andry_aurnia","nation":"Senegal","overall":145.0,"rating":72},{"name":"dieguito4l","nation":"Senegal","overall":136.0,"rating":68},{"name":"chriiii__011","nation":"Senegal","overall":140.0,"rating":70},{"name":"barbantino17","nation":"Senegal","overall":141.0,"rating":70},{"name":"Alessandro Sandoli","nation":"Senegal","overall":150.0,"rating":75},{"name":"antoniodimaio_11","nation":"Senegal","overall":144.0,"rating":72},{"name":"angerranux","nation":"Senegal","overall":144.0,"rating":72,"role":"P"},{"name":"chietiandrea","nation":"Senegal","overall":140.0,"rating":70},{"name":"adri_strax","nation":"Senegal","overall":155.0,"rating":78},{"name":"Cosneso","nation":"Senegal","overall":138.0,"rating":69},{"name":"andreatarulli","nation":"Spagna","overall":157.0,"rating":78},{"name":"Ilbhobhobho","nation":"Spagna","overall":153.0,"rating":76},{"name":"nickfochi","nation":"Spagna","overall":159.0,"rating":80},{"name":"Johnny","nation":"Spagna","overall":177.0,"rating":88},{"name":"justmario01","nation":"Spagna","overall":162.0,"rating":81},{"name":"Frank Lubros","nation":"Spagna","overall":152.0,"rating":76},{"name":"Edo_falcone","nation":"Spagna","overall":162.0,"rating":81},{"name":"bboy_fili_","nation":"Spagna","overall":160.0,"rating":80,"role":"P"},{"name":"Luca dp","nation":"Spagna","overall":150.0,"rating":75},{"name":"Kingus Bla","nation":"Spagna","overall":160.0,"rating":80},{"name":"Ciolasalsa","nation":"Spagna","overall":180.0,"rating":90},{"name":"fra_maffo10_","nation":"Spagna","overall":155.0,"rating":78},{"name":"Vettel","nation":"Spagna","overall":161.0,"rating":80},{"name":"brun0_scarso","nation":"Spagna","overall":163.0,"rating":82},{"name":"watengakazz1m","nation":"Spagna","overall":158.0,"rating":79},{"name":"bandolero__22","nation":"Spagna","overall":177.0,"rating":88},{"name":"Gabriele","nation":"Spagna","overall":155.0,"rating":78},{"name":"klajdi_bossi","nation":"Spagna","overall":160.0,"rating":80},{"name":"PTH_DM13","nation":"Stati Uniti d'America","overall":140.0,"rating":70},{"name":"pietro_grano","nation":"Stati Uniti d'America","overall":143.0,"rating":72},{"name":"oran✝️🇨🇮🥷🏿","nation":"Stati Uniti d'America","overall":150.0,"rating":75},{"name":"tommaso_colaciuri","nation":"Stati Uniti d'America","overall":131.0,"rating":66},{"name":"genna_bln","nation":"Stati Uniti d'America","overall":129.0,"rating":64},{"name":"thomaspuron","nation":"Stati Uniti d'America","overall":133.0,"rating":66},{"name":"riccardo","nation":"Stati Uniti d'America","overall":139.0,"rating":70,"role":"A"},{"name":"Sergio Renita","nation":"Stati Uniti d'America","overall":136.0,"rating":68},{"name":"simonemeledandri","nation":"Stati Uniti d'America","overall":135.0,"rating":68,"role":"A"},{"name":"risamarco","nation":"Stati Uniti d'America","overall":138.0,"rating":69},{"name":"Nick_","nation":"Stati Uniti d'America","overall":151.0,"rating":76},{"name":"nicco.bellandi","nation":"Stati Uniti d'America","overall":151.0,"rating":76},{"name":"temp_dario","nation":"Stati Uniti d'America","overall":134.0,"rating":67},{"name":"matteo.mecca01","nation":"Stati Uniti d'America","overall":153.0,"rating":76},{"name":"pietrooo.0.9","nation":"Stati Uniti d'America","overall":142.0,"rating":71},{"name":"Therealodi86","nation":"Stati Uniti d'America","overall":130.0,"rating":65,"role":"P"},{"name":"mat49333","nation":"Stati Uniti d'America","overall":160.0,"rating":80},{"name":"paul._.cler","nation":"Stati Uniti d'America","overall":147.0,"rating":74},{"name":"Supermatty","nation":"Stati Uniti d'America","overall":135.0,"rating":68},{"name":"Er pupone10","nation":"Svezia","overall":164.0,"rating":82},{"name":"fra...45","nation":"Svezia","overall":137.0,"rating":68},{"name":"federicogalizia7746","nation":"Svezia","overall":144.0,"rating":72},{"name":"Franco27","nation":"Svezia","overall":134.0,"rating":67},{"name":"fralagna","nation":"Svezia","overall":136.0,"rating":68},{"name":"Frans Esposito","nation":"Svezia","overall":130.0,"rating":65,"role":"P"},{"name":"flavio_di_salvo10","nation":"Svezia","overall":140.0,"rating":70},{"name":"Enl","nation":"Svezia","overall":170.0,"rating":85},{"name":"F.N3","nation":"Svezia","overall":145.0,"rating":72},{"name":"francescodimola14_","nation":"Svezia","overall":136.0,"rating":68},{"name":"football","nation":"Svezia","overall":138.0,"rating":69},{"name":"federicopor12","nation":"Svezia","overall":142.0,"rating":71},{"name":"fillo_sotti","nation":"Svezia","overall":140.0,"rating":70},{"name":"fcaboni","nation":"Svezia","overall":144.0,"rating":72},{"name":"ettorecentinaro","nation":"Svezia","overall":153.0,"rating":76,"role":"A"},{"name":"francodi23_12","nation":"Svezia","overall":134.0,"rating":67},{"name":"francy_carl_best10","nation":"Svezia","overall":134.0,"rating":67},{"name":"caggy_","nation":"Svizzera","overall":136.0,"rating":68},{"name":"baliscianokekko_12","nation":"Svizzera","overall":144.0,"rating":72},{"name":"csalvatore925","nation":"Svizzera","overall":130.0,"rating":65},{"name":"dabalafilippo","nation":"Svizzera","overall":130.0,"rating":65},{"name":"cannnnnnnne","nation":"Svizzera","overall":134.0,"rating":67},{"name":"chrisshish_","nation":"Svizzera","overall":133.0,"rating":66},{"name":"bizio","nation":"Svizzera","overall":137.0,"rating":68},{"name":"gennaroferro","nation":"Svizzera","overall":130.0,"rating":65},{"name":"andreaesposito00","nation":"Svizzera","overall":155.0,"rating":78},{"name":"bens95","nation":"Svizzera","overall":137.0,"rating":68},{"name":"Antoniopiodesena","nation":"Svizzera","overall":126.0,"rating":63,"role":"A"},{"name":"animadavatar","nation":"Svizzera","overall":147.0,"rating":74},{"name":"Christian Montanin","nation":"Svizzera","overall":132.0,"rating":66},{"name":"andrea.walker.ita","nation":"Svizzera","overall":162.0,"rating":81,"role":"P"},{"name":"boh","nation":"Svizzera","overall":137.0,"rating":68},{"name":"andreaaimoni","nation":"Svizzera","overall":160.0,"rating":80},{"name":"Arturo Esposito","nation":"Svizzera","overall":146.0,"rating":73},{"name":"attilio.guglielmo","nation":"Svizzera","overall":145.0,"rating":72},{"name":"ciccarema","nation":"Svizzera","overall":132.0,"rating":66},{"name":"Bart","nation":"Svizzera","overall":138.0,"rating":69},{"name":"shaqash","nation":"Tunisia","overall":130.0,"rating":65},{"name":"simo_angiulo","nation":"Tunisia","overall":132.0,"rating":66},{"name":"sarna","nation":"Tunisia","overall":125.0,"rating":62},{"name":"Sante962","nation":"Tunisia","overall":125.0,"rating":62},{"name":"sasyl💯💯","nation":"Tunisia","overall":125.0,"rating":62},{"name":"Simone Colaci","nation":"Tunisia","overall":132.0,"rating":66},{"name":"re13andrea2","nation":"Tunisia","overall":122.0,"rating":61},{"name":"Pupo","nation":"Tunisia","overall":120.0,"rating":60,"role":"P"},{"name":"Spiderm4n_l2","nation":"Tunisia","overall":138.0,"rating":69},{"name":"sean_4.20","nation":"Tunisia","overall":126.0,"rating":63},{"name":"RealOryx","nation":"Tunisia","overall":124.0,"rating":62},{"name":"Spagno","nation":"Tunisia","overall":137.0,"rating":68},{"name":"romeocalonao","nation":"Tunisia","overall":125.0,"rating":62},{"name":"MANUTV23","nation":"Turchia","overall":136.0,"rating":68},{"name":"ippo_555","nation":"Turchia","overall":158.0,"rating":79},{"name":"Italiamemme","nation":"Turchia","overall":146.0,"rating":73},{"name":"marco_delpins","nation":"Turchia","overall":135.0,"rating":68},{"name":"jac0p0pi09","nation":"Turchia","overall":145.0,"rating":72},{"name":"lucafuma02","nation":"Turchia","overall":142.0,"rating":71},{"name":"Marcello","nation":"Turchia","overall":135.0,"rating":68,"role":"P"},{"name":"justcaggia","nation":"Turchia","overall":144.0,"rating":72},{"name":"Manuel Paolini","nation":"Turchia","overall":140.0,"rating":70},{"name":"marco_borghi_23","nation":"Turchia","overall":135.0,"rating":68},{"name":"Manu_12","nation":"Turchia","overall":141.0,"rating":70},{"name":"jacomino03","nation":"Turchia","overall":145.0,"rating":72},{"name":"Il damo","nation":"Turchia","overall":130.0,"rating":65},{"name":"mariogargiulo2012","nation":"Turchia","overall":132.0,"rating":66},{"name":"H²O","nation":"Turchia","overall":127.0,"rating":64},{"name":"il_pulcino_dio","nation":"Turchia","overall":162.0,"rating":81},{"name":"marcoizzo12","nation":"Turchia","overall":135.0,"rating":68},{"name":"⚽️_ROCCO_⚽️","nation":"Uruguay","overall":136.0,"rating":68},{"name":"Colante","nation":"Uruguay","overall":150.0,"rating":75},{"name":"_giando18_","nation":"Uruguay","overall":143.0,"rating":72},{"name":"__pista.11_","nation":"Uruguay","overall":147.0,"rating":74},{"name":"alex.brains_34","nation":"Uruguay","overall":131.0,"rating":66},{"name":"Aiiko","nation":"Uruguay","overall":130.0,"rating":65,"role":"P"},{"name":"samueleletizia","nation":"Uruguay","overall":140.0,"rating":70},{"name":"WI_PadrePio","nation":"Uruguay","overall":153.0,"rating":76},{"name":"karoldenti","nation":"Uruguay","overall":148.0,"rating":74},{"name":"ale_tremari","nation":"Uruguay","overall":132.0,"rating":66},{"name":"alberto_brando","nation":"Uruguay","overall":132.0,"rating":66},{"name":"EE","nation":"Uruguay","overall":134.0,"rating":67},{"name":"_lore.dossi","nation":"Uruguay","overall":150.0,"rating":75},{"name":"_.loweeeee._","nation":"Uruguay","overall":146.0,"rating":73},{"name":"_michael_7791","nation":"Uruguay","overall":143.0,"rating":72},{"name":"Uragano","nation":"Uruguay","overall":133.0,"rating":66},{"name":"Villa_mattia","nation":"Uruguay","overall":175.0,"rating":88},{"name":"_capu08","nation":"Uruguay","overall":146.0,"rating":73},{"name":"Alex","nation":"Uruguay","overall":131.0,"rating":66,"role":"A"},{"name":"santos.festuccia","nation":"Uruguay","overall":147.0,"rating":74},{"name":"_tanuu27","nation":"Uruguay","overall":142.0,"rating":71},{"name":"marco00_7","nation":"Uzbekistan","overall":118.0,"rating":59,"role":"P"},{"name":"marik_munteanu","nation":"Uzbekistan","overall":120.0,"rating":60,"role":"A"},{"name":"marco_pedicone","nation":"Uzbekistan","overall":118.0,"rating":59},{"name":"matla.gloml","nation":"Uzbekistan","overall":130.0,"rating":65},{"name":"Marco💎💫","nation":"Uzbekistan","overall":115.0,"rating":58},{"name":"mastro","nation":"Uzbekistan","overall":122.0,"rating":61},{"name":"manu 30","nation":"Uzbekistan","overall":115.0,"rating":58},{"name":"Marai","nation":"Uzbekistan","overall":118.0,"rating":59},{"name":"MARNACHO","nation":"Uzbekistan","overall":120.0,"rating":60},{"name":"matt.cast","nation":"Uzbekistan","overall":150.0,"rating":75},{"name":"masulli.m","nation":"Uzbekistan","overall":125.0,"rating":62}];
+const NATIONAL_TEAMS = ["Algeria","Argentina","Australia","Austria","Belgio","Brasile","Canada","Cechia","Colombia","Corea del Sud","Costa d'Avorio","Croazia","Danimarca","Ecuador","Egitto","Francia","Germania","Inghilterra","Iran","Marocco","Messico","Norvegia","Olanda","Panama","Paraguay","Polonia","Portogallo","Qatar","Repubblica Democratica del Congo","Scozia","Senegal","Spagna","Stati Uniti d'America","Svezia","Svizzera","Tunisia","Turchia","Uruguay","Uzbekistan"];
+const FLAGS = ["","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""];
 const ROLE_LABEL = { P: 'POR', D: 'DIF', C: 'CEN', A: 'ATT', J: 'ALL' };
 const BUDGET = 250;
 const FORMATIONS = { '442': { A: 2, C: 4, D: 4, P: 1 }, '433': { A: 3, C: 3, D: 4, P: 1 }, '343': { A: 3, C: 4, D: 3, P: 1 }, '352': { A: 2, C: 5, D: 3, P: 1 } };
@@ -837,21 +688,44 @@ const BENCH = ['P','D','C','A','J'];
 
 function hashCode(str) { let hash = 0; for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i) | 0; return Math.abs(hash); }
 function buildPlayers() {
-  const names = RAW_NAMES.split('\n').map(x => x.trim()).filter(Boolean);
   const rolesCycle = ['P','D','D','C','C','C','A','A'];
-  return names.map((name, idx) => {
-    const h = hashCode(name + idx);
-    const role = rolesCycle[(idx + h) % rolesCycle.length];
-    const nIdx = (idx + h) % NATIONAL_TEAMS.length;
-    const rating = 56 + (h % 40);
+  return OFFICIAL_PLAYERS.map((item, idx) => {
+    const name = String(item.name || '').trim();
+    const nation = String(item.nation || '').trim();
+    const h = hashCode(name + nation + idx);
+    const role = item.role || rolesCycle[(idx + h) % rolesCycle.length];
+    const overall = Number(item.overall || 0);
+    const rating = Number(item.rating || Math.round(overall / 2) || 1);
+
+    // Costo proporzionato a overall/forza e ruolo:
+    // a parità di forza: ATT > CEN > DIF > POR
     const roleMultiplier = role === 'A' ? 0.62 : role === 'C' ? 0.50 : role === 'D' ? 0.38 : 0.30;
     const rolePremium = role === 'A' ? 6 : role === 'C' ? 4 : role === 'D' ? 2 : 0;
     const rawCost = ((rating - 50) * roleMultiplier) + rolePremium;
     const cost = Math.max(3, Math.min(45, Math.round(rawCost)));
+
     const popularity = ((h % 500) / 10).toFixed(1);
     const fpm = (9 + ((h % 1150) / 100)).toFixed(2).replace('.', ',');
-    return { id: idx + 1, name, role, nation: NATIONAL_TEAMS[nIdx], flag: FLAGS[nIdx], rating, cost: Number(cost.toFixed(1)), popularity, fpm, games: 0, totalPoints: 0, avgPoints: 0, goals: 0, assists: 0, yellows: 0, reds: 0 };
-  }).sort((a,b) => b.cost - a.cost);
+    return {
+      id: idx + 1,
+      name,
+      role,
+      nation,
+      flag: '',
+      overall,
+      rating,
+      cost,
+      popularity,
+      fpm,
+      games: 0,
+      totalPoints: 0,
+      avgPoints: 0,
+      goals: 0,
+      assists: 0,
+      yellows: 0,
+      reds: 0
+    };
+  }).sort((a,b) => b.cost - a.cost || b.rating - a.rating || a.name.localeCompare(b.name));
 }
 
 let players = buildPlayers();
@@ -867,7 +741,7 @@ function newState(module) {
 }
 
 const els = {
-  formation: document.getElementById('formation'), bench: document.getElementById('bench'), playersList: document.getElementById('playersList'),
+  formation: document.getElementById('formation'), bench: document.getElementById('bench'), playersList: document.getElementById('playersList'), officialCount: document.getElementById('officialCount'),
   searchInput: document.getElementById('searchInput'), nationFilter: document.getElementById('nationFilter'), sortSelect: document.getElementById('sortSelect'),
   moduleSelect: document.getElementById('moduleSelect'), capNumber: document.getElementById('capNumber'), creditsText: document.getElementById('creditsText'),
   benchInfo: document.getElementById('benchInfo'), sendBtn: document.getElementById('sendBtn'), managerInput: document.getElementById('managerInput'),
@@ -965,10 +839,15 @@ function renderPlayers() {
     return true;
   });
   list = sortPlayers(list);
+  const totalMatches = list.length;
+  const shownList = list.slice(0, 350);
+  if (els.officialCount) {
+    els.officialCount.textContent = `${totalMatches} giocatori trovati · visualizzati ${shownList.length}. Usa ricerca e filtri per restringere.`;
+  }
 
-  els.playersList.innerHTML = list.map(p => {
+  els.playersList.innerHTML = shownList.map(p => {
     const canAfford = remaining() >= p.cost;
-    return `<button class="player-card ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'} onclick="pickPlayer(${p.id})"><div class="shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, false)}</div><div><div class="pname"><span class="role-mini">${p.role}</span>${p.name}</div><div class="pmeta"><span>${p.nation}</span><span class="stat-tag">MED ${formatOneDecimal(playerExpectedPoints(p))}</span><span class="stat-tag">PRES ${p.games || 0}</span><span class="stat-tag">TOT ${formatOneDecimal(p.totalPoints || 0)}</span><span>FOR ${p.rating}</span></div></div><div class="price">${p.cost}</div></button>`;
+    return `<button class="player-card ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'} onclick="pickPlayer(${p.id})"><div class="shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, false)}</div><div><div class="pname"><span class="role-mini">${p.role}</span>${p.name}</div><div class="pmeta"><span>${p.nation}</span><span class="stat-tag">MED ${formatOneDecimal(playerExpectedPoints(p))}</span><span class="stat-tag">PRES ${p.games || 0}</span><span class="stat-tag">TOT ${formatOneDecimal(p.totalPoints || 0)}</span><span>OVR ${p.overall || p.rating * 2}</span><span>FOR ${p.rating}</span></div></div><div class="price">${p.cost}</div></button>`;
   }).join('') || '<div style="color:#555;font-weight:900;text-align:center;padding:30px">Nessun giocatore disponibile</div>';
 }
 
@@ -1158,6 +1037,54 @@ function drawPlayerCard(ctx, cx, cy, p) {
   ctx.fillText(nation.length > 18 ? nation.slice(0, 17) + '…' : nation, cx, y + 140);
 }
 
+
+function drawBenchSlot(ctx, cx, cy, slot) {
+  const w = 182;
+  const h = 116;
+  const x = cx - w / 2;
+  const y = cy - h / 2;
+  const p = slot && slot.playerId ? player(slot.playerId) : null;
+
+  drawRoundedRect(ctx, x, y, w, h, 16, '#ffffff', 'rgba(0,0,0,.10)', 2);
+
+  drawRoundedRect(ctx, x + 10, y + 10, 54, 24, 8, '#111111');
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '1000 11px Inter, Arial';
+  ctx.fillText(ROLE_LABEL[slot.role] || slot.role || '', x + 37, y + 22);
+
+  if (!p) {
+    ctx.fillStyle = '#8a8a8a';
+    ctx.font = '900 18px Inter, Arial';
+    ctx.fillText('[VUOTO]', cx, y + 64);
+    ctx.font = '800 12px Inter, Arial';
+    ctx.fillText('Slot panchina', cx, y + 88);
+    return;
+  }
+
+  drawShirt(ctx, x + 12, y + 40, 52, 46, p);
+
+  ctx.fillStyle = '#111111';
+  ctx.font = '1000 12px Inter, Arial';
+  const cleanName = String(p.name || '').toUpperCase();
+  const shortName = cleanName.length > 18 ? cleanName.slice(0, 17) + '…' : cleanName;
+  ctx.textAlign = 'left';
+  ctx.fillText(shortName, x + 76, y + 56);
+
+  ctx.fillStyle = '#606060';
+  ctx.font = '900 10px Inter, Arial';
+  const nation = String(p.nation || '');
+  const shortNation = nation.length > 18 ? nation.slice(0, 17) + '…' : nation;
+  ctx.fillText(shortNation, x + 76, y + 76);
+
+  drawRoundedRect(ctx, x + 76, y + 84, 92, 20, 6, '#f2f2f2', '#d8d8d8', 1);
+  ctx.fillStyle = '#111111';
+  ctx.textAlign = 'center';
+  ctx.font = '900 10px Inter, Arial';
+  ctx.fillText(`MED ${formatOneDecimal(playerExpectedPoints(p))}`, x + 122, y + 94);
+}
+
 function drawPitch(ctx, x, y, w, h) {
   const grad = ctx.createLinearGradient(0, y, 0, y + h);
   grad.addColorStop(0, '#03bf6a');
@@ -1206,10 +1133,10 @@ function drawCenteredText(ctx, text, x, y, maxWidth, font, fill) {
 async function createRosterCanvas() {
   const canvas = document.createElement('canvas');
   canvas.width = 1080;
-  canvas.height = 1600;
+  canvas.height = 1840;
   const ctx = canvas.getContext('2d');
 
-  const bg = ctx.createRadialGradient(540, 0, 120, 540, 300, 1100);
+  const bg = ctx.createRadialGradient(540, 0, 120, 540, 300, 1250);
   bg.addColorStop(0, '#2d2d2d');
   bg.addColorStop(.45, '#171717');
   bg.addColorStop(1, '#0d0d0d');
@@ -1217,7 +1144,7 @@ async function createRosterCanvas() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const teamName = els.managerInput.value.trim() || 'La mia rosa';
-  const moduleText = state.module.replace(/^(\\d)(\\d)(\\d)$/, '$1-$2-$3');
+  const moduleText = state.module.replace(/^(\d)(\d)(\d)$/, '$1-$2-$3');
 
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'center';
@@ -1253,7 +1180,7 @@ async function createRosterCanvas() {
   const pitchX = 90;
   const pitchY = 375;
   const pitchW = 900;
-  const pitchH = 1060;
+  const pitchH = 960;
   drawPitch(ctx, pitchX, pitchY, pitchW, pitchH);
 
   const groups = { A: [], C: [], D: [], P: [] };
@@ -1262,10 +1189,10 @@ async function createRosterCanvas() {
   });
 
   const rows = [
-    { players: groups.A, y: pitchY + 150 },
-    { players: groups.C, y: pitchY + 405 },
-    { players: groups.D, y: pitchY + 675 },
-    { players: groups.P, y: pitchY + 900 }
+    { players: groups.A, y: pitchY + 145 },
+    { players: groups.C, y: pitchY + 370 },
+    { players: groups.D, y: pitchY + 605 },
+    { players: groups.P, y: pitchY + 825 }
   ];
 
   rows.forEach(row => {
@@ -1276,9 +1203,36 @@ async function createRosterCanvas() {
     });
   });
 
+  // Panchina
+  const benchTitleY = pitchY + pitchH + 62;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '1000 30px Inter, Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('PANCHINA', 540, benchTitleY);
+
+  const benchPanelX = 70;
+  const benchPanelY = benchTitleY + 28;
+  const benchPanelW = 940;
+  const benchPanelH = 250;
+  drawRoundedRect(ctx, benchPanelX, benchPanelY, benchPanelW, benchPanelH, 24, 'rgba(255,255,255,.06)', 'rgba(255,255,255,.12)', 2);
+
+  const benchSlots = state.bench;
+  const benchRow1 = benchSlots.slice(0, 3);
+  const benchRow2 = benchSlots.slice(3, 5);
+
+  benchRow1.forEach((slot, idx) => {
+    const cx = benchPanelX + benchPanelW * ((idx + 1) / (benchRow1.length + 1));
+    drawBenchSlot(ctx, cx, benchPanelY + 78, slot);
+  });
+  benchRow2.forEach((slot, idx) => {
+    const cx = benchPanelX + benchPanelW * ((idx + 1) / (benchRow2.length + 1));
+    drawBenchSlot(ctx, cx, benchPanelY + 192, slot);
+  });
+
   ctx.fillStyle = '#bdbdbd';
   ctx.font = '800 20px Inter, Arial';
-  ctx.fillText('Gli 11 titolari · Generato con Fanta mondiale Fantaballa', 540, 1505);
+  ctx.textAlign = 'center';
+  ctx.fillText('Titolari e panchina · Generato con Fanta mondiale Fantaballa', 540, 1790);
 
   return canvas;
 }
@@ -1327,7 +1281,6 @@ async function shareRoster() {
 
 function buildFormationText() {
   const teamName = els.managerInput.value.trim() || 'Senza nome';
-  const moduleText = state.module.replace(/^(\d)(\d)(\d)$/, '$1-$2-$3');
 
   const starters = state.starters.map(s => ({
     slot: ROLE_LABEL[s.role],
@@ -1340,37 +1293,29 @@ function buildFormationText() {
   }));
 
   const lines = [];
-  lines.push('🏆 FANTA MONDIALE FANTABALLA');
-  lines.push('');
-  lines.push(`Squadra: ${teamName}`);
-  lines.push(`Modulo: ${moduleText}`);
-  lines.push(`Crediti residui: ${remaining()}/${BUDGET}`);
-  lines.push(`Previsto titolari: ${formatOneDecimal(startersProjection())}`);
-  lines.push(`Previsto rosa: ${formatOneDecimal(rosterProjection())}`);
-  lines.push('');
+  lines.push(teamName);
   lines.push('TITOLARI');
+
   starters.forEach((item, index) => {
     if (!item.player) {
       lines.push(`${index + 1}. ${item.slot} - [VUOTO]`);
       return;
     }
     const p = item.player;
-    lines.push(`${index + 1}. ${item.slot} - ${p.name} - ${p.nation} - FOR ${p.rating} - MED ${formatOneDecimal(playerExpectedPoints(p))} - ${p.cost} cr`);
+    lines.push(`${index + 1}. ${item.slot} - ${p.name} - ${p.nation}`);
   });
 
-  lines.push('');
   lines.push('PANCHINA');
+
   benchPlayers.forEach((item, index) => {
     if (!item.player) {
       lines.push(`${index + 1}. ${item.slot} - [VUOTO]`);
       return;
     }
     const p = item.player;
-    lines.push(`${index + 1}. ${item.slot} - ${p.name} - ${p.nation} - FOR ${p.rating} - MED ${formatOneDecimal(playerExpectedPoints(p))} - ${p.cost} cr`);
+    lines.push(`${index + 1}. ${item.slot} - ${p.name} - ${p.nation}`);
   });
 
-  lines.push('');
-  lines.push('Istruzioni: copia questo testo e invialo privatamente a Fantaballa.');
   return lines.join('\n');
 }
 
