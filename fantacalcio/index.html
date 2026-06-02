@@ -594,6 +594,40 @@
       .send-modal-actions { grid-template-columns: 1fr; }
     }
 
+  
+    .stats-import-box {
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(0,0,0,.12);
+      border-radius: 12px;
+      padding: 10px;
+      margin: -4px 0 12px;
+      display: grid;
+      gap: 7px;
+    }
+    .stats-import-box label {
+      font-size: 11px;
+      font-weight: 1000;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #111;
+    }
+    .stats-import-box input {
+      width: 100%;
+      font-size: 11px;
+      font-weight: 800;
+      color: #111;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 7px;
+    }
+    .stats-import-help {
+      color: #555;
+      font-size: 10px;
+      line-height: 1.3;
+      font-weight: 750;
+    }
+
   </style>
 </head>
 <body>
@@ -651,7 +685,14 @@
         <select class="sort-select" id="sortSelect"><option value="cost_desc">Costo ↓</option><option value="cost_asc">Costo ↑</option><option value="rating_desc">Forza ↓</option><option value="rating_asc">Forza ↑</option><option value="name_asc">Nome A-Z</option></select>
       </div>
 
-      <div class="official-count" id="officialCount"></div><div class="players-list" id="playersList"></div>
+      <div class="official-count" id="officialCount"></div>
+      <div class="stats-import-box">
+        <label for="statsImportInput">Aggiorna statistiche</label>
+        <input type="file" id="statsImportInput" accept=".json,application/json" />
+        <div class="stats-import-help">Carica il <strong>players_stats.json</strong> generato dal file admin.</div>
+      </div>
+
+      <div class="players-list" id="playersList"></div>
       <div class="export-box" id="exportBoxWrap"><textarea id="exportBox"></textarea></div>
     </aside>
   </div>
@@ -685,6 +726,15 @@ const ROLE_LABEL = { P: 'POR', D: 'DIF', C: 'CEN', A: 'ATT', J: 'ALL' };
 const BUDGET = 250;
 const FORMATIONS = { '442': { A: 2, C: 4, D: 4, P: 1 }, '433': { A: 3, C: 3, D: 4, P: 1 }, '343': { A: 3, C: 4, D: 3, P: 1 }, '352': { A: 2, C: 5, D: 3, P: 1 } };
 const BENCH = ['P','D','C','A','J'];
+
+function normalizeName(name) {
+  return String(name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\.\.\.$/, '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9_\.]+/g, '');
+}
 
 function hashCode(str) { let hash = 0; for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i) | 0; return Math.abs(hash); }
 function buildPlayers() {
@@ -741,7 +791,7 @@ function newState(module) {
 }
 
 const els = {
-  formation: document.getElementById('formation'), bench: document.getElementById('bench'), playersList: document.getElementById('playersList'), officialCount: document.getElementById('officialCount'),
+  formation: document.getElementById('formation'), bench: document.getElementById('bench'), playersList: document.getElementById('playersList'), statsImportInput: document.getElementById('statsImportInput'), officialCount: document.getElementById('officialCount'),
   searchInput: document.getElementById('searchInput'), nationFilter: document.getElementById('nationFilter'), sortSelect: document.getElementById('sortSelect'),
   moduleSelect: document.getElementById('moduleSelect'), capNumber: document.getElementById('capNumber'), creditsText: document.getElementById('creditsText'),
   benchInfo: document.getElementById('benchInfo'), sendBtn: document.getElementById('sendBtn'), managerInput: document.getElementById('managerInput'),
@@ -1353,6 +1403,62 @@ function selectSendText() {
 }
 
 
+
+function mergeImportedStats(importedPlayers) {
+  if (!Array.isArray(importedPlayers)) {
+    throw new Error('Il file statistiche deve contenere un array di giocatori');
+  }
+
+  const statsByKey = new Map();
+  importedPlayers.forEach(item => {
+    const key = item.key || normalizeName(item.name);
+    if (!key) return;
+    statsByKey.set(key, item);
+  });
+
+  let updated = 0;
+  players = players.map(p => {
+    const key = p.key || normalizeName(p.name);
+    const stats = statsByKey.get(key);
+    if (!stats) return p;
+
+    updated++;
+    return {
+      ...p,
+      key,
+      games: Number(stats.games || 0),
+      totalPoints: Number(stats.totalPoints || 0),
+      avgPoints: Number(stats.avgPoints || 0),
+      goals: Number(stats.goals || 0),
+      assists: Number(stats.assists || 0),
+      yellows: Number(stats.yellows || 0),
+      reds: Number(stats.reds || 0)
+    };
+  });
+
+  // Se qualche giocatore già selezionato resta uguale, basta ridisegnare tutto:
+  render();
+  return updated;
+}
+
+async function importStatsFile(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  try {
+    const raw = await file.text();
+    const imported = JSON.parse(raw);
+    const updated = mergeImportedStats(imported);
+    showToast(`Statistiche aggiornate: ${updated} giocatori`);
+  } catch (err) {
+    console.error(err);
+    showToast('File statistiche non valido');
+  } finally {
+    event.target.value = '';
+  }
+}
+
+
 function exportRoster() {
   const data = {
     competizione: 'FantaMondiale FM',
@@ -1388,6 +1494,7 @@ els.nationFilter.addEventListener('change', renderPlayers);
 els.sortSelect.addEventListener('change', renderPlayers);
 els.moduleSelect.addEventListener('change', e => changeModule(e.target.value));
 els.managerInput.addEventListener('input', saveLocal);
+if (els.statsImportInput) els.statsImportInput.addEventListener('change', importStatsFile);
 document.getElementById('randomBtn').addEventListener('click', randomTeam);
 document.getElementById('cancelBtn').addEventListener('click', () => { if (!confirm('Vuoi davvero svuotare tutta la rosa?')) return; state = newState(state.module); state.manager = els.managerInput.value.trim(); activeSlot = null; saveLocal(); render(); });
 els.sendBtn.addEventListener('click', openSendModal);
