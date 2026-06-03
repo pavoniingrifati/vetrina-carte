@@ -852,7 +852,19 @@ function shirtMarkup(p, pitch = false) {
   return `<span class="${codeClass}">${nationCode(p.nation)}</span><span class="${numClass}">${num}</span>`;
 }
 
-function populateNations() { NATIONAL_TEAMS.forEach(n => { const opt = document.createElement('option'); opt.value = n; opt.textContent = n; els.nationFilter.appendChild(opt); }); }
+function populateNations(reset = false) {
+  if (reset) {
+    els.nationFilter.innerHTML = '<option value="all">Nazioni</option>';
+  }
+  const existing = new Set(Array.from(els.nationFilter.options).map(o => o.value));
+  NATIONAL_TEAMS.forEach(n => {
+    if (existing.has(n)) return;
+    const opt = document.createElement('option');
+    opt.value = n;
+    opt.textContent = n;
+    els.nationFilter.appendChild(opt);
+  });
+}); }
 
 function slotHTML(slot) {
   const p = slot.playerId ? player(slot.playerId) : null;
@@ -1414,6 +1426,46 @@ async function shareRoster() {
 
 
 
+function normalizeImportedPlayer(item, nextId) {
+  const name = String(item.name || '').trim();
+  const nation = String(item.nation || '').trim();
+  const roleRaw = String(item.role || '').trim().toUpperCase();
+  const role = ['P', 'D', 'C', 'A'].includes(roleRaw) ? roleRaw : 'C';
+  const overall = Number(item.overall || 0);
+  const rating = Number(item.rating || Math.round(overall / 2) || 1);
+  const cost = Number(item.cost || calculateImportedPlayerCost(rating, role));
+  const h = hashCode(name + nation + nextId);
+
+  return {
+    id: nextId,
+    key: item.key || normalizeName(name),
+    name,
+    role,
+    nation,
+    flag: '',
+    overall,
+    position: item.position || role,
+    rating,
+    cost,
+    popularity: item.popularity || ((h % 500) / 10).toFixed(1),
+    fpm: item.fpm || (9 + ((h % 1150) / 100)).toFixed(2).replace('.', ','),
+    games: Number(item.games || 0),
+    totalPoints: Number(item.totalPoints || 0),
+    avgPoints: Number(item.avgPoints || 0),
+    goals: Number(item.goals || 0),
+    assists: Number(item.assists || 0),
+    yellows: Number(item.yellows || 0),
+    reds: Number(item.reds || 0)
+  };
+}
+
+function calculateImportedPlayerCost(rating, role) {
+  const coeff = role === 'A' ? 0.78 : role === 'C' ? 0.62 : role === 'D' ? 0.50 : 0.42;
+  const premium = role === 'A' ? 11 : role === 'C' ? 7 : role === 'D' ? 4 : 2;
+  const raw = ((Number(rating || 0) - 50) * coeff) + premium;
+  return Math.max(3, Math.min(70, Math.round(raw)));
+}
+
 function mergeOfficialStats(importedPlayers) {
   if (!Array.isArray(importedPlayers)) {
     throw new Error('players_stats.json deve contenere un array di giocatori');
@@ -1426,12 +1478,14 @@ function mergeOfficialStats(importedPlayers) {
     statsByKey.set(key, item);
   });
 
+  const existingKeys = new Set(players.map(p => p.key || normalizeName(p.name)));
   let updated = 0;
+  let added = 0;
 
   players = players.map(p => {
     const key = p.key || normalizeName(p.name);
     const stats = statsByKey.get(key);
-    if (!stats) return p;
+    if (!stats) return { ...p, key };
 
     updated++;
     return {
@@ -1447,8 +1501,29 @@ function mergeOfficialStats(importedPlayers) {
     };
   });
 
+  importedPlayers.forEach(item => {
+    const key = item.key || normalizeName(item.name);
+    if (!key || existingKeys.has(key)) return;
+
+    const name = String(item.name || '').trim();
+    const nation = String(item.nation || '').trim();
+    if (!name || !nation) return;
+
+    const newPlayer = normalizeImportedPlayer(item, players.length + 1);
+    players.push(newPlayer);
+    existingKeys.add(key);
+    added++;
+
+    if (!NATIONAL_TEAMS.includes(newPlayer.nation)) {
+      NATIONAL_TEAMS.push(newPlayer.nation);
+      NATIONAL_TEAMS.sort();
+      populateNations(true);
+    }
+  });
+
+  players.sort((a,b) => b.cost - a.cost || b.rating - a.rating || a.name.localeCompare(b.name));
   render();
-  return updated;
+  return { updated, added };
 }
 
 async function loadRemoteOfficialStats() {
