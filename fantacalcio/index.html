@@ -1581,7 +1581,33 @@ function buildFormationText() {
   return lines.join('\n');
 }
 
+
+function missingRosterParts() {
+  const missing = [];
+
+  const emptyStarters = state.starters.filter(s => !s.playerId).length;
+  const emptyBench = state.bench.filter(s => !s.playerId).length;
+
+  if (emptyStarters > 0) {
+    missing.push(`Completa tutti gli 11 titolari: mancano ${emptyStarters} giocatori.`);
+  }
+
+  if (emptyBench > 0) {
+    missing.push(`Completa tutta la panchina: mancano ${emptyBench} giocatori.`);
+  }
+
+  return missing;
+}
+
 function openSendModal() {
+  const missing = missingRosterParts();
+
+  if (missing.length) {
+    alert('Prima di inviare la formazione:\n\n' + missing.join('\n'));
+    showToast('Completa rosa e panchina');
+    return;
+  }
+
   els.sendText.value = buildFormationText();
   els.sendModal.classList.add('open');
   els.sendModal.setAttribute('aria-hidden', 'false');
