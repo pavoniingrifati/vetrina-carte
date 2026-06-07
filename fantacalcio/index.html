@@ -648,7 +648,7 @@
       <div class="filters">
         <button class="chip active" data-role="all">T1</button><button class="chip" data-role="P">P</button><button class="chip" data-role="D">D</button><button class="chip" data-role="C">C</button><button class="chip" data-role="A">A</button>
         <select class="nation-select" id="nationFilter"><option value="all">Nazionali</option></select>
-        <select class="sort-select" id="sortSelect"><option value="cost_desc">Costo ↓</option><option value="cost_asc">Costo ↑</option><option value="rating_desc">Forza ↓</option><option value="rating_asc">Forza ↑</option><option value="name_asc">Nome A-Z</option></select>
+        <select class="sort-select" id="sortSelect"><option value="cost_desc">Costo ↓</option><option value="cost_asc">Costo ↑</option><option value="rating_desc">Forza ↓</option><option value="rating_asc">Forza ↑</option><option value="avg_desc">MV ↓</option><option value="avg_asc">MV ↑</option><option value="name_asc">Nome A-Z</option></select>
       </div>
 
       <div class="official-count" id="officialCount"></div><div class="players-list" id="playersList"></div>
@@ -895,9 +895,13 @@ function renderBench() { els.bench.innerHTML = state.bench.map(slotHTML).join(''
 function sortPlayers(list) {
   const sort = els.sortSelect.value;
   const sorted = [...list];
+  const mv = p => Number(p.avgPoints || 0);
+
   if (sort === 'cost_asc') sorted.sort((a,b) => a.cost - b.cost || b.rating - a.rating);
   else if (sort === 'rating_desc') sorted.sort((a,b) => b.rating - a.rating || b.cost - a.cost);
   else if (sort === 'rating_asc') sorted.sort((a,b) => a.rating - b.rating || a.cost - b.cost);
+  else if (sort === 'avg_desc') sorted.sort((a,b) => mv(b) - mv(a) || b.games - a.games || b.rating - a.rating || b.cost - a.cost);
+  else if (sort === 'avg_asc') sorted.sort((a,b) => mv(a) - mv(b) || b.games - a.games || b.rating - a.rating || b.cost - a.cost);
   else if (sort === 'name_asc') sorted.sort((a,b) => a.name.localeCompare(b.name));
   else sorted.sort((a,b) => b.cost - a.cost || b.rating - a.rating);
   return sorted;
