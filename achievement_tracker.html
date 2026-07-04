@@ -121,7 +121,8 @@
       text-transform:uppercase;
       color:var(--muted);
     }
-    .achievement-form input{
+    .achievement-form input,
+    .achievement-form textarea{
       width:100%;
       padding:11px 12px;
       border-radius:11px;
@@ -131,7 +132,13 @@
       font:inherit;
       text-transform:none;
     }
-    .achievement-form input:focus{
+    .achievement-form textarea{
+      min-height:96px;
+      resize:vertical;
+      line-height:1.45;
+    }
+    .achievement-form input:focus,
+    .achievement-form textarea:focus{
       outline:none;
       box-shadow:var(--ring);
       border-color:rgba(103,176,255,.55);
@@ -641,7 +648,7 @@
 <dialog id="achievementRequestModal" class="achievement-modal">
   <form id="achievementRequestForm" class="achievement-form">
     <h2>Richiesta sblocco</h2>
-    <p class="form-help">Compila i dati del pilota. L'achievement viene inserito automaticamente dal pulsante che hai cliccato.</p>
+    <p class="form-help">Compila i dati del pilota. Achievement, rarità e punti XP vengono inseriti automaticamente dal pulsante che hai cliccato.</p>
 
     <input type="hidden" name="access_key" value="953aef17-2106-446a-8818-caa999aaabc6">
     <input type="hidden" name="subject" value="Nuova richiesta sblocco achievement">
@@ -656,8 +663,13 @@
     </label>
 
     <label>
-      Quando è stato sbloccato:
-      <input type="datetime-local" name="quando_sbloccato" id="requestUnlockedAt" required>
+      In che gara è stato sbloccato:
+      <input type="text" name="gara_sblocco" id="requestRaceName" required placeholder="Es. GP Monza, Gara F1 #3, Live del 12/07">
+    </label>
+
+    <label>
+      Frase / nota del pilota:
+      <textarea name="frase_pilota" id="requestPilotPhrase" required placeholder="Scrivi una frase o una breve spiegazione dello sblocco"></textarea>
     </label>
 
     <label>
@@ -668,6 +680,11 @@
     <label>
       Rarità:
       <input type="text" name="rarita" id="requestAchievementRarity" readonly>
+    </label>
+
+    <label>
+      Punti sbloccati:
+      <input type="text" name="punti_sbloccati" id="requestAchievementXp" readonly>
     </label>
 
     <div class="achievement-modal-actions">
@@ -768,15 +785,8 @@
     const requestAchievementName = document.querySelector('#requestAchievementName');
     const requestAchievementDescription = document.querySelector('#requestAchievementDescription');
     const requestAchievementRarity = document.querySelector('#requestAchievementRarity');
-    const requestUnlockedAt = document.querySelector('#requestUnlockedAt');
-
+    const requestAchievementXp = document.querySelector('#requestAchievementXp');
     let currentRequestCard = null;
-
-    function getLocalDateTimeValue(){
-      const now = new Date();
-      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-      return now.toISOString().slice(0,16);
-    }
 
     function openAchievementRequest(card){
       currentRequestCard = card;
@@ -784,11 +794,12 @@
       const title = (card.querySelector('.ach-title')?.textContent || 'Achievement sconosciuto').trim();
       const description = (card.querySelector('.meta')?.textContent || '').trim();
       const rarity = card.dataset.rarity || '';
+      const xp = Number(card.dataset.xp || XP_REWARD[rarity] || 0);
 
       requestAchievementName.value = title;
       requestAchievementDescription.value = description;
       requestAchievementRarity.value = rarity.charAt(0).toUpperCase() + rarity.slice(1);
-      requestUnlockedAt.value = getLocalDateTimeValue();
+      requestAchievementXp.value = `${xp} XP`;
       requestStatus.textContent = '';
 
       requestModal.showModal();
