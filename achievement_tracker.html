@@ -77,6 +77,99 @@
     footer{opacity:.75;text-align:center;font-size:12px;margin:26px 0}
 
     .glow{position:absolute;inset:auto -20% -40% -20%;height:300px;background:radial-gradient(70% 60% at 50% 90%,rgba(79,140,255,.18),transparent 60%)}
+
+    /* === Popup richiesta sblocco achievement === */
+    .achievement-modal{
+      border:none;
+      border-radius:18px;
+      padding:0;
+      max-width:460px;
+      width:min(92vw,460px);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)), var(--panel);
+      color:var(--text);
+      box-shadow:0 22px 70px rgba(0,0,0,.65);
+      border:2px solid rgba(255,255,255,.16);
+    }
+    .achievement-modal::backdrop{
+      background:rgba(0,0,0,.72);
+      backdrop-filter:blur(3px);
+    }
+    .achievement-form{
+      display:flex;
+      flex-direction:column;
+      gap:13px;
+      padding:22px;
+    }
+    .achievement-form h2{
+      margin:0 0 4px 0;
+      font-size:20px;
+      text-transform:uppercase;
+      letter-spacing:.4px;
+    }
+    .achievement-form .form-help{
+      margin:0 0 4px 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+    }
+    .achievement-form label{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-size:13px;
+      font-weight:800;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .achievement-form input{
+      width:100%;
+      padding:11px 12px;
+      border-radius:11px;
+      border:2px solid rgba(255,255,255,.13);
+      background:rgba(8,10,15,.7);
+      color:var(--text);
+      font:inherit;
+      text-transform:none;
+    }
+    .achievement-form input:focus{
+      outline:none;
+      box-shadow:var(--ring);
+      border-color:rgba(103,176,255,.55);
+    }
+    .achievement-form input[readonly]{
+      opacity:.9;
+      cursor:not-allowed;
+    }
+    .achievement-modal-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      margin-top:4px;
+    }
+    .achievement-modal-actions button{
+      appearance:none;
+      border:2px solid rgba(255,255,255,.14);
+      border-radius:11px;
+      padding:10px 12px;
+      cursor:pointer;
+      font-weight:900;
+      text-transform:uppercase;
+      color:var(--text);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+    }
+    .achievement-modal-actions button[type="submit"]{
+      color:#06120b;
+      border-color:rgba(44,255,136,.5);
+      background:linear-gradient(180deg, rgba(44,255,136,.95), rgba(44,255,136,.7));
+    }
+    #achievementRequestStatus{
+      min-height:18px;
+      margin:0;
+      font-size:13px;
+      font-weight:800;
+      color:var(--accent);
+    }
+
   </style>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet"/>
 </head>
@@ -544,6 +637,48 @@
 <article class="card" data-rarity="leggendario"> <div class="rarity"><span class="dot leggendario"></span>Leggendario</div> <h3 class="ach-title">Potenza massima</h3> <p class="meta">Vinci con ballast 100</p> </article>
 <article class="card" data-rarity="leggendario"> <div class="rarity"><span class="dot leggendario"></span>Leggendario</div> <h3 class="ach-title">Costanza e Vittorio</h3> <p class="meta">Partecipa e concludi tutte le gare di F1 almeno nei primi 10</p> </article>
 
+
+<dialog id="achievementRequestModal" class="achievement-modal">
+  <form id="achievementRequestForm" class="achievement-form">
+    <h2>Richiesta sblocco</h2>
+    <p class="form-help">Compila i dati del pilota. L'achievement viene inserito automaticamente dal pulsante che hai cliccato.</p>
+
+    <input type="hidden" name="access_key" value="953aef17-2106-446a-8818-caa999aaabc6">
+    <input type="hidden" name="subject" value="Nuova richiesta sblocco achievement">
+    <input type="hidden" name="from_name" value="Achievement Progetto F1">
+    <input type="hidden" name="sito" value="Achievement Progetto F1">
+    <input type="hidden" name="descrizione_achievement" id="requestAchievementDescription">
+    <input type="checkbox" name="botcheck" style="display:none">
+
+    <label>
+      Nome Pilota:
+      <input type="text" name="nome_pilota" id="requestPilotName" required placeholder="Es. Mario Rossi">
+    </label>
+
+    <label>
+      Quando è stato sbloccato:
+      <input type="datetime-local" name="quando_sbloccato" id="requestUnlockedAt" required>
+    </label>
+
+    <label>
+      Achievement da sbloccare:
+      <input type="text" name="achievement" id="requestAchievementName" readonly>
+    </label>
+
+    <label>
+      Rarità:
+      <input type="text" name="rarita" id="requestAchievementRarity" readonly>
+    </label>
+
+    <div class="achievement-modal-actions">
+      <button type="button" id="closeAchievementRequest">Annulla</button>
+      <button type="submit">Invia richiesta</button>
+    </div>
+
+    <p id="achievementRequestStatus" aria-live="polite"></p>
+  </form>
+</dialog>
+
     <script>
     // === Configurazione XP ===
     const XP_REWARD = { comune: 60, raro: 150, epico: 350, leggendario: 600 };
@@ -625,18 +760,112 @@
       });
     });
 
-    // Toggle sblocco
+    // Richiesta sblocco tramite Web3Forms
+    const requestModal = document.querySelector('#achievementRequestModal');
+    const requestForm = document.querySelector('#achievementRequestForm');
+    const closeAchievementRequest = document.querySelector('#closeAchievementRequest');
+    const requestStatus = document.querySelector('#achievementRequestStatus');
+    const requestAchievementName = document.querySelector('#requestAchievementName');
+    const requestAchievementDescription = document.querySelector('#requestAchievementDescription');
+    const requestAchievementRarity = document.querySelector('#requestAchievementRarity');
+    const requestUnlockedAt = document.querySelector('#requestUnlockedAt');
+
+    let currentRequestCard = null;
+
+    function getLocalDateTimeValue(){
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      return now.toISOString().slice(0,16);
+    }
+
+    function openAchievementRequest(card){
+      currentRequestCard = card;
+
+      const title = (card.querySelector('.ach-title')?.textContent || 'Achievement sconosciuto').trim();
+      const description = (card.querySelector('.meta')?.textContent || '').trim();
+      const rarity = card.dataset.rarity || '';
+
+      requestAchievementName.value = title;
+      requestAchievementDescription.value = description;
+      requestAchievementRarity.value = rarity.charAt(0).toUpperCase() + rarity.slice(1);
+      requestUnlockedAt.value = getLocalDateTimeValue();
+      requestStatus.textContent = '';
+
+      requestModal.showModal();
+    }
+
+    closeAchievementRequest.addEventListener('click', ()=>{
+      requestModal.close();
+    });
+
+    requestModal.addEventListener('click', (e)=>{
+      if (e.target === requestModal) requestModal.close();
+    });
+
     document.addEventListener('click', (e)=>{
       const t = e.target;
+
       if (t.matches('.toggle')){
         const card = t.closest('.card');
-        const key = card.dataset.key || makeKey(card);
-        card.classList.toggle('unlocked');
-        const isOn = card.classList.contains('unlocked');
-        saved[key] = isOn;
-        localStorage.setItem(storageKey, JSON.stringify(saved));
-        t.textContent = isOn ? 'Blocca' : 'Sblocca';
-        updateCounters();
+
+        // Se è già sbloccato sul browser, permetto ancora di bloccarlo localmente
+        if (card.classList.contains('unlocked')){
+          const key = card.dataset.key || makeKey(card);
+          card.classList.remove('unlocked');
+          saved[key] = false;
+          localStorage.setItem(storageKey, JSON.stringify(saved));
+          t.textContent = 'Sblocca';
+          updateCounters();
+          return;
+        }
+
+        // Se non è sbloccato, apro il form di richiesta
+        openAchievementRequest(card);
+      }
+    });
+
+    requestForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+
+      requestStatus.textContent = 'Invio richiesta in corso...';
+
+      const formData = new FormData(requestForm);
+
+      try{
+        const response = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          body: formData,
+          headers: { 'Accept': 'application/json' }
+        });
+
+        const result = await response.json();
+
+        if (result.success){
+          requestStatus.textContent = 'Richiesta inviata correttamente!';
+
+          // Dopo l'invio segno l'achievement come sbloccato solo su questo browser
+          if (currentRequestCard){
+            const key = currentRequestCard.dataset.key || makeKey(currentRequestCard);
+            currentRequestCard.classList.add('unlocked');
+            saved[key] = true;
+            localStorage.setItem(storageKey, JSON.stringify(saved));
+
+            const btn = currentRequestCard.querySelector('.toggle');
+            if (btn) btn.textContent = 'Blocca';
+
+            updateCounters();
+          }
+
+          requestForm.reset();
+
+          setTimeout(()=>{
+            requestModal.close();
+          }, 1200);
+        } else {
+          requestStatus.textContent = 'Errore nell’invio. Controlla i dati e riprova.';
+        }
+      } catch(error){
+        requestStatus.textContent = 'Errore di connessione. Riprova tra poco.';
       }
     });
 
