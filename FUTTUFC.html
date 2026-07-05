@@ -3258,5 +3258,232 @@ window.renderPacksStrip = function(){
 </script>
 <!-- === Fine UT STORE MENU CONTROLLER === -->
 
+
+
+<!-- === Patch: ripristino pacchetto grande selezionato e cliccabile === -->
+<style id="ut-selected-pack-large-preview-style">
+/* Ripristina l'area del pack grande sotto il menu store, senza toccare la logica di apertura. */
+#packArea.ut-selected-pack-preview{
+  display:flex!important;
+  height:auto!important;
+  min-height:clamp(430px,48vh,660px)!important;
+  opacity:1!important;
+  overflow:visible!important;
+  pointer-events:auto!important;
+  position:relative!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin:8px auto 34px!important;
+  padding:58px 20px 72px!important;
+  max-width:min(1120px,100%)!important;
+  border:1px solid rgba(255,255,255,.10)!important;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(78,229,216,.14), transparent 42%),
+    radial-gradient(ellipse at 50% 74%, rgba(255,255,255,.08), transparent 36%),
+    linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.012))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 24px 66px rgba(0,0,0,.42)!important;
+  isolation:isolate!important;
+}
+#packArea.ut-selected-pack-preview::before{
+  content:attr(data-pack-name);
+  position:absolute;
+  left:26px;top:20px;z-index:2;
+  color:rgba(238,243,247,.92);
+  font-family:Rajdhani,Impact,"Arial Narrow",system-ui,sans-serif;
+  font-size:clamp(24px,3vw,42px);
+  line-height:.9;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.02em;
+  text-shadow:0 8px 26px rgba(0,0,0,.72);
+}
+#packArea.ut-selected-pack-preview::after{
+  content:"Clicca il pacchetto per aprirlo";
+  position:absolute;
+  left:50%;bottom:22px;z-index:2;
+  transform:translateX(-50%);
+  color:rgba(207,217,226,.74);
+  font-family:Rajdhani,Impact,"Arial Narrow",system-ui,sans-serif;
+  font-size:20px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  text-shadow:0 4px 16px rgba(0,0,0,.75);
+  white-space:nowrap;
+}
+#packArea.ut-selected-pack-preview #pack{
+  display:block!important;
+  width:min(380px,38vw)!important;
+  min-width:240px!important;
+  max-width:430px!important;
+  height:auto!important;
+  aspect-ratio:690/987!important;
+  border-radius:0!important;
+  background-position:center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+  transform:translateY(0) scale(1);
+  opacity:1;
+  filter:drop-shadow(0 34px 54px rgba(0,0,0,.62));
+  box-shadow:0 0 0 1px rgba(255,255,255,.12), 0 0 40px rgba(78,229,216,.10)!important;
+  transition:transform .18s ease, filter .18s ease, box-shadow .18s ease!important;
+  will-change:transform,filter!important;
+}
+#packArea.ut-selected-pack-preview #pack::before{
+  content:"";
+  position:absolute;inset:0;pointer-events:none;z-index:3;
+  background:linear-gradient(110deg, transparent 0 42%, rgba(255,255,255,.16) 48%, transparent 56% 100%);
+  transform:translateX(-130%);
+  transition:transform .65s ease;
+}
+#packArea.ut-selected-pack-preview #pack:hover{
+  transform:translateY(-8px) scale(1.018);
+  filter:brightness(1.07) drop-shadow(0 40px 62px rgba(0,0,0,.68));
+  box-shadow:0 0 0 2px rgba(78,229,216,.70), 0 0 34px rgba(78,229,216,.20)!important;
+}
+#packArea.ut-selected-pack-preview #pack:hover::before{transform:translateX(130%);}
+#packArea.ut-pack-opening #pack{pointer-events:none!important;}
+#packArea.ut-selected-pack-preview .pack.opening{
+  animation:packOpen .9s cubic-bezier(.16,.84,.29,1) forwards!important;
+}
+@media(max-width:980px){
+  #packArea.ut-selected-pack-preview{
+    min-height:460px!important;
+    padding:54px 14px 66px!important;
+  }
+  #packArea.ut-selected-pack-preview #pack{
+    width:min(320px,68vw)!important;
+  }
+  #packArea.ut-selected-pack-preview::before{left:18px;top:16px;}
+}
+@media(max-width:560px){
+  #packArea.ut-selected-pack-preview{
+    min-height:390px!important;
+    padding:50px 10px 58px!important;
+  }
+  #packArea.ut-selected-pack-preview #pack{
+    width:min(260px,78vw)!important;
+    min-width:0!important;
+  }
+  #packArea.ut-selected-pack-preview::after{
+    font-size:15px;
+    bottom:18px;
+  }
+}
+</style>
+<script id="ut-selected-pack-large-preview-js">
+(function(){
+  if (window.__utSelectedPackLargePreview) return;
+  window.__utSelectedPackLargePreview = true;
+
+  function selectedGame(){
+    return (window.GAME_STATE && window.GAME_STATE.selected) || 'Patatine';
+  }
+  function packBack(game){
+    return (window.PACK_BACK_BY_GAME && window.PACK_BACK_BY_GAME[game]) || 'patatrine.png';
+  }
+  function clearResults(){
+    const wrap = document.getElementById('stageWrap');
+    const stage = document.getElementById('stage');
+    if (wrap) wrap.classList.remove('show');
+    if (stage) stage.innerHTML = '';
+  }
+  function showSelectedPack(options){
+    const area = document.getElementById('packArea');
+    const pack = document.getElementById('pack');
+    if (!area || !pack) return;
+    const game = selectedGame();
+    if (options && options.clearResults) clearResults();
+    area.classList.add('ut-selected-pack-preview');
+    area.classList.remove('ut-pack-opening');
+    area.dataset.packName = game;
+    area.removeAttribute('aria-hidden');
+    pack.style.backgroundImage = "url('" + packBack(game) + "')";
+    pack.setAttribute('role','button');
+    pack.setAttribute('tabindex','0');
+    pack.setAttribute('aria-label','Apri pacchetto ' + game);
+  }
+  function hideSelectedPack(delay){
+    window.setTimeout(function(){
+      const area = document.getElementById('packArea');
+      if (!area) return;
+      area.classList.remove('ut-selected-pack-preview');
+      area.classList.remove('ut-pack-opening');
+    }, delay || 0);
+  }
+  function bindPackClick(){
+    const pack = document.getElementById('pack');
+    if (!pack || pack.dataset.utLargePreviewBound === '1') return;
+    pack.dataset.utLargePreviewBound = '1';
+    function openSelected(){
+      const btn = document.getElementById('openBtn');
+      if (btn && !btn.disabled) btn.click();
+    }
+    pack.addEventListener('click', function(ev){
+      ev.preventDefault();
+      openSelected();
+    });
+    pack.addEventListener('keydown', function(ev){
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        openSelected();
+      }
+    });
+  }
+  function bindOpenButton(){
+    const btn = document.getElementById('openBtn');
+    if (!btn || btn.dataset.utLargePreviewOpenBound === '1') return;
+    btn.dataset.utLargePreviewOpenBound = '1';
+    btn.addEventListener('click', function(){
+      const pack = document.getElementById('pack');
+      const area = document.getElementById('packArea');
+      const startedAt = Date.now();
+      const watcher = window.setInterval(function(){
+        if (pack && pack.classList.contains('opening')) {
+          if (area) area.classList.add('ut-pack-opening');
+          // Lascia visibile il pacchetto durante l'animazione originale, poi lo nasconde quando arrivano le carte.
+          hideSelectedPack(1050);
+          window.clearInterval(watcher);
+        } else if (Date.now() - startedAt > 5500) {
+          // Se l'apertura viene annullata da login/errore, non nascondere il pacchetto grande.
+          window.clearInterval(watcher);
+        }
+      }, 50);
+    }, true);
+  }
+  function patchApplyPackVisual(){
+    const oldApply = window.applyPackVisual;
+    if (typeof oldApply !== 'function' || oldApply.__utLargePreviewWrapped) return;
+    function wrappedApplyPackVisual(){
+      const result = oldApply.apply(this, arguments);
+      showSelectedPack();
+      return result;
+    }
+    wrappedApplyPackVisual.__utLargePreviewWrapped = true;
+    window.applyPackVisual = wrappedApplyPackVisual;
+    try { applyPackVisual = wrappedApplyPackVisual; } catch(e) {}
+  }
+  function init(){
+    bindPackClick();
+    bindOpenButton();
+    patchApplyPackVisual();
+    showSelectedPack();
+  }
+  document.addEventListener('click', function(ev){
+    const trigger = ev.target.closest && ev.target.closest('.ut-pack-card, .featured-card[data-game], #gamePicker .choice[data-game]');
+    if (trigger) {
+      window.setTimeout(function(){ showSelectedPack({clearResults:true}); }, 0);
+      window.setTimeout(function(){ showSelectedPack({clearResults:true}); }, 80);
+    }
+  }, true);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+  window.addEventListener('load', function(){ window.setTimeout(init, 250); window.setTimeout(showSelectedPack, 900); });
+})();
+</script>
+<!-- === Fine patch pacchetto grande selezionato === -->
+
 </body>
 </html>
