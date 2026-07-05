@@ -3999,5 +3999,193 @@ main.wrap:has(.stageWrap.show) .stageWrap{
 }
 </style>
 
+
+<style id="fix-crediti-piu-grandi">
+/* Crediti più grandi e più evidenti */
+#balanceCenter{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  justify-content:flex-start!important;
+  align-items:stretch!important;
+  gap:18px!important;
+  margin:18px 0 6px!important;
+}
+#balanceCenter .fc-balance{
+  min-width:250px!important;
+  padding:18px 24px!important;
+  gap:16px!important;
+  align-items:center!important;
+  box-shadow:
+    0 0 0 1px rgba(32,247,255,.18),
+    0 0 26px rgba(32,247,255,.10),
+    inset 0 0 28px rgba(32,247,255,.05)!important;
+}
+#balanceCenter .fc-ico{
+  width:40px!important;
+  height:40px!important;
+  flex:0 0 40px!important;
+  box-shadow:0 0 18px currentColor!important;
+}
+#balanceCenter b{
+  font-size:2.05rem!important;
+  line-height:1!important;
+  font-weight:900!important;
+  letter-spacing:.02em!important;
+}
+#balanceCenter #fc-coins{
+  color:#ffffff!important;
+  text-shadow:0 0 16px rgba(255,224,80,.42), 0 0 30px rgba(32,247,255,.22)!important;
+}
+@media(max-width:780px){
+  #balanceCenter{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:10px!important;
+  }
+  #balanceCenter .fc-balance{
+    min-width:0!important;
+    padding:12px 14px!important;
+    gap:10px!important;
+  }
+  #balanceCenter .fc-ico{
+    width:28px!important;
+    height:28px!important;
+    flex-basis:28px!important;
+  }
+  #balanceCenter b{
+    font-size:1.45rem!important;
+  }
+}
+</style>
+
+
+<style id="fix-risultati-3-carte-e-bottone-apri">
+/* ===== Fix richiesto: 3 carte per riga + carte più grandi + bottone Apri funzionante ===== */
+
+/* Il blocco principale resta verticale: pack sopra, risultati sotto */
+main.wrap{
+  display:block!important;
+}
+
+/* Rendi il pulsante sempre cliccabile e in primo piano */
+#openBtn{
+  position:relative!important;
+  z-index:999!important;
+  pointer-events:auto!important;
+}
+header .title,
+header .title *{
+  pointer-events:auto!important;
+}
+
+/* Risultati pack: 3 carte per riga, più grandi */
+#stageWrap,
+.stageWrap,
+.stageWrap.show{
+  width:100%!important;
+  max-width:1480px!important;
+  margin:0 auto!important;
+}
+
+#stage,
+.stage{
+  display:grid!important;
+  width:100%!important;
+  grid-template-columns:repeat(3, minmax(0, 1fr))!important;
+  gap:30px!important;
+  align-items:start!important;
+  justify-items:stretch!important;
+  padding:24px 0 0!important;
+}
+
+#stage .cCard,
+.stage .cCard{
+  width:100%!important;
+  max-width:460px!important;
+  margin:0 auto!important;
+  transform:none!important;
+}
+#stage .cCard:nth-child(even),
+#stage .cCard:nth-child(3n),
+.stage .cCard:nth-child(even),
+.stage .cCard:nth-child(3n){
+  transform:none!important;
+}
+#stage .scene,
+.stage .scene{
+  box-shadow:0 18px 46px rgba(0,0,0,.54)!important;
+}
+
+/* Header risultato più pulito e largo */
+.futtu-result-head{
+  max-width:1480px!important;
+  margin:12px auto 18px!important;
+}
+
+/* Tablet */
+@media (max-width: 1100px){
+  #stage,
+  .stage{
+    grid-template-columns:repeat(2, minmax(0, 1fr))!important;
+    gap:22px!important;
+  }
+  #stage .cCard,
+  .stage .cCard{
+    max-width:420px!important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 680px){
+  #stage,
+  .stage{
+    grid-template-columns:1fr!important;
+    gap:18px!important;
+  }
+  #stage .cCard,
+  .stage .cCard{
+    max-width:420px!important;
+  }
+}
+</style>
+
+<script id="fix-fallback-bottone-apri">
+(function(){
+  function armOpenBtnFallback(){
+    var btn = document.getElementById('openBtn');
+    if (!btn || btn.dataset.openFallbackBound === '1') return;
+    btn.dataset.openFallbackBound = '1';
+
+    /* Se per qualche motivo il click normale non parte,
+       il pointerup forza il click reale del bottone. */
+    btn.addEventListener('pointerup', function(e){
+      if (btn.disabled) return;
+      if (btn.dataset.syntheticOpening === '1') return;
+      btn.dataset.syntheticOpening = '1';
+      try{
+        e.preventDefault();
+        e.stopPropagation();
+      }catch(_e){}
+      setTimeout(function(){
+        try{ HTMLElement.prototype.click.call(btn); }catch(_err){}
+      }, 0);
+      setTimeout(function(){ btn.dataset.syntheticOpening = '0'; }, 900);
+    }, true);
+
+    /* Rinforzo UI: il pulsante deve stare sempre sopra */
+    btn.style.position = 'relative';
+    btn.style.zIndex = '999';
+    btn.style.pointerEvents = 'auto';
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', armOpenBtnFallback);
+  } else {
+    armOpenBtnFallback();
+  }
+  window.addEventListener('load', armOpenBtnFallback);
+})();
+</script>
+
 </body>
 </html>
