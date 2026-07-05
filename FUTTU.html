@@ -3791,5 +3791,213 @@ main.wrap:has(.stageWrap.show) .stageWrap{
 })();
 </script>
 
+
+
+<style id="fix-definitivo-anteprime-pacchetti-v3-chatgpt">
+/* =========================================================
+   FIX DEFINITIVO CAROSELLO PACCHETTI
+   Obiettivo: pack ben visibili, niente overlay sopra le immagini.
+   Va lasciato DOPO tutti gli altri style, quindi qui in fondo.
+   ========================================================= */
+
+/* Barra carosello più solida */
+.packs-sticky{
+  background:#030711!important;
+  border-top:1px solid rgba(255,255,255,.10)!important;
+  border-bottom:1px solid rgba(239,255,74,.30)!important;
+  box-shadow:0 22px 62px rgba(0,0,0,.60)!important;
+  backdrop-filter:none!important;
+}
+.packs-sticky .wrap{
+  background:transparent!important;
+}
+#packsStrip.featured-carousel,
+#packsStrip{
+  background:linear-gradient(180deg,#070d18 0%,#030711 100%)!important;
+  border:1px solid rgba(255,255,255,.14)!important;
+  border-radius:16px!important;
+  box-shadow:inset 0 0 0 1px rgba(239,255,74,.06),0 18px 46px rgba(0,0,0,.45)!important;
+  padding:18px 14px 34px!important;
+  gap:18px!important;
+  overflow-y:hidden!important;
+}
+
+/* Card opaca e pulita */
+#packsStrip .featured-card{
+  position:relative!important;
+  isolation:isolate!important;
+  box-sizing:border-box!important;
+  flex:0 0 auto!important;
+  width:190px!important;
+  min-height:270px!important;
+  padding:12px!important;
+  overflow:hidden!important;
+
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-end!important;
+  align-items:stretch!important;
+
+  background:
+    radial-gradient(circle at 50% 8%, rgba(239,255,74,.16), transparent 43%),
+    linear-gradient(180deg,#151d2a 0%,#080d17 62%,#03060c 100%)!important;
+  border:2px solid rgba(233,243,255,.88)!important;
+  border-radius:20px!important;
+  color:#fff!important;
+  text-align:left!important;
+
+  box-shadow:
+    0 18px 42px rgba(0,0,0,.70),
+    inset 0 0 0 1px rgba(255,255,255,.08)!important;
+
+  opacity:1!important;
+  transform:none!important;
+  filter:none!important;
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, filter .18s ease!important;
+}
+#packsStrip .featured-card:nth-child(even),
+#packsStrip .featured-card:nth-child(3n){
+  transform:none!important;
+}
+
+/* RIMOSSO: era il livello che copriva/velava l'immagine del pacchetto */
+#packsStrip .featured-card::before,
+#packsStrip .featured-card.is-selected::before,
+#packsStrip .featured-card[aria-current="true"]::before,
+#packsStrip .featured-card[data-selected="true"]::before{
+  content:none!important;
+  display:none!important;
+}
+
+/* Gradiente solo in basso per leggere il testo: non copre il pack */
+#packsStrip .featured-card::after,
+#packsStrip .featured-card.is-selected::after,
+#packsStrip .featured-card[aria-current="true"]::after,
+#packsStrip .featured-card[data-selected="true"]::after{
+  content:""!important;
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  top:auto!important;
+  height:44%!important;
+  z-index:2!important;
+  pointer-events:none!important;
+  transform:none!important;
+  opacity:1!important;
+  background:linear-gradient(180deg, rgba(3,7,17,0) 0%, rgba(3,7,17,.70) 58%, rgba(3,7,17,.98) 100%)!important;
+}
+
+/* Immagine sempre piena, contrastata e sopra lo sfondo */
+#packsStrip .featured-card img{
+  position:absolute!important;
+  z-index:1!important;
+  top:14px!important;
+  left:10px!important;
+  right:10px!important;
+  bottom:66px!important;
+
+  width:calc(100% - 20px)!important;
+  height:calc(100% - 82px)!important;
+  max-width:none!important;
+  max-height:none!important;
+  object-fit:contain!important;
+
+  opacity:1!important;
+  mix-blend-mode:normal!important;
+  transform:none!important;
+
+  /* fondino dietro al PNG: aiuta anche se il pack ha trasparenze sue */
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255,255,255,.18), rgba(255,255,255,.06) 42%, rgba(0,0,0,.20) 100%)!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:14px!important;
+  padding:6px!important;
+  box-shadow:inset 0 0 28px rgba(255,255,255,.05),0 16px 26px rgba(0,0,0,.48)!important;
+
+  filter:brightness(1.22) contrast(1.34) saturate(1.18) drop-shadow(0 14px 16px rgba(0,0,0,.78))!important;
+}
+
+/* Testo sopra al gradiente, mai sopra l'immagine */
+#packsStrip .featured-card > div,
+#packsStrip .featured-card .featured-cost,
+#packsStrip .featured-card .featured-sub{
+  position:relative!important;
+  z-index:3!important;
+}
+
+#packsStrip .featured-card .featured-cost{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin-top:8px!important;
+  padding:8px 9px!important;
+  border-radius:10px!important;
+  background:rgba(0,0,0,.76)!important;
+  border:1px solid rgba(239,255,74,.45)!important;
+  color:#ffffff!important;
+  font-weight:950!important;
+  line-height:1.15!important;
+  text-transform:none!important;
+  transform:none!important;
+  box-shadow:none!important;
+}
+
+/* Stato selezionato evidente ma senza coprire il pack */
+#packsStrip .featured-card.is-selected,
+#packsStrip .featured-card[aria-current="true"],
+#packsStrip .featured-card[data-selected="true"]{
+  border-color:#efff4a!important;
+  box-shadow:
+    0 20px 48px rgba(0,0,0,.76),
+    0 0 0 2px rgba(239,255,74,.36),
+    0 0 30px rgba(239,255,74,.22)!important;
+}
+#packsStrip .featured-card.is-selected .featured-cost,
+#packsStrip .featured-card[aria-current="true"] .featured-cost,
+#packsStrip .featured-card[data-selected="true"] .featured-cost{
+  color:#071018!important;
+  background:#efff4a!important;
+  border-color:#efff4a!important;
+}
+
+#packsStrip .featured-card:hover{
+  transform:translateY(-7px) scale(1.025)!important;
+  border-color:#efff4a!important;
+  filter:brightness(1.06)!important;
+  box-shadow:
+    0 24px 58px rgba(0,0,0,.78),
+    0 0 0 2px rgba(239,255,74,.24),
+    0 0 28px rgba(239,255,74,.16)!important;
+}
+
+@media(max-width:780px){
+  #packsStrip.featured-carousel,
+  #packsStrip{
+    padding:14px 10px 26px!important;
+    gap:12px!important;
+  }
+  #packsStrip .featured-card{
+    width:155px!important;
+    min-height:225px!important;
+    border-radius:17px!important;
+    padding:10px!important;
+  }
+  #packsStrip .featured-card img{
+    top:12px!important;
+    left:8px!important;
+    right:8px!important;
+    bottom:58px!important;
+    width:calc(100% - 16px)!important;
+    height:calc(100% - 70px)!important;
+    padding:5px!important;
+  }
+  #packsStrip .featured-card .featured-cost{
+    font-size:12px!important;
+    padding:7px 8px!important;
+  }
+}
+</style>
+
 </body>
 </html>
