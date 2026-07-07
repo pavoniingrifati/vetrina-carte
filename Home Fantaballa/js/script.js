@@ -421,6 +421,37 @@ function subscriberTierClass(tier) {
   return clean || 'sub';
 }
 
+function primeExpiryStatus(subscriber) {
+  if (String(subscriber?.type || '').toLowerCase() !== 'prime') return null;
+  const sinceValue = subscriber.since || subscriber.subscribeDate || subscriber.subscribedAt;
+  if (!sinceValue) return null;
+  const since = new Date(sinceValue);
+  if (Number.isNaN(since.getTime())) return null;
+
+  const expiresAt = new Date(since.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const now = new Date();
+  const msLeft = expiresAt.getTime() - now.getTime();
+  const daysLeft = Math.ceil(msLeft / (24 * 60 * 60 * 1000));
+
+  if (daysLeft < 0) {
+    return {
+      className: ' is-prime-expired',
+      label: 'Scaduto',
+      title: `Prime scaduto da ${Math.abs(daysLeft)}g`
+    };
+  }
+
+  if (daysLeft <= 5) {
+    return {
+      className: ' is-prime-expiring',
+      label: daysLeft === 0 ? 'Scade oggi' : `Scade tra ${daysLeft}g`,
+      title: daysLeft === 0 ? 'Prime in scadenza oggi' : `Prime in scadenza tra ${daysLeft} giorni`
+    };
+  }
+
+  return null;
+}
+
 const formationPlans = {
   11: [
     {
@@ -549,9 +580,14 @@ function renderSubscriberPitch(squad, squadIndex) {
     const info = [tier, type, tenure].filter(Boolean).join(' • ');
     const founderClass = subscriber.founder ? ' is-founder' : '';
     const nameSizeClass = subscriberNameSizeClass(name);
+    const primeStatus = primeExpiryStatus(subscriber);
+    const primeClass = primeStatus?.className || '';
+    const primeAlert = primeStatus ? `<span class="player-prime-alert" aria-label="${escapeHtml(primeStatus.title)}">!</span><span class="player-expiry">${escapeHtml(primeStatus.label)}</span>` : '';
+    const titleParts = [info, streak, primeStatus?.title].filter(Boolean).join(' • ');
 
     return `
-      <article class="player-token ${escapeHtml(subscriberTierClass(tier))}${founderClass}${nameSizeClass}" style="--x:${pos.x}; --y:${pos.y};" title="${escapeHtml(name)} • ${escapeHtml([info, streak].filter(Boolean).join(' • '))}">
+      <article class="player-token ${escapeHtml(subscriberTierClass(tier))}${founderClass}${nameSizeClass}${primeClass}" style="--x:${pos.x}; --y:${pos.y};" title="${escapeHtml(name)} • ${escapeHtml(titleParts)}">
+        ${primeAlert}
         <span class="player-role">${escapeHtml(pos.role)}</span>
         <strong class="player-name">${escapeHtml(name)}</strong>
         <span class="player-info">${escapeHtml(info)}</span>

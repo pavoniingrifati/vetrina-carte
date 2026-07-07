@@ -75,3 +75,8 @@ Cliccando sul box si apre il database carte completo.
 - Aggiunta una vetrina libera sopra i box FUT con testo: **Diventa una carta!** e **!ruolo + il tuo ruolo in live**.
 - Le carte casuali appaiono grandi, non tagliate, affiancate e leggermente sovrapposte.
 - I tre box FUT rimasti sono Database Carte, Spacchetto e Obiettivi.
+
+## Aggiornamento v20
+- Nella sezione Abbonati l'alert di scadenza viene mostrato solo per le sub Prime.
+- Se una Prime scade entro 5 giorni o è già scaduta, il giocatore riceve cornice rossa e simbolo `!`.
+- Le sub recurring/gift non vengono evidenziate.
