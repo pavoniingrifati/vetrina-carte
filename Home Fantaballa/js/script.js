@@ -11,6 +11,8 @@ const objectivesList = document.getElementById('objectivesList');
 const generateAllObjectives = document.getElementById('generateAllObjectives');
 const clearSavedObjectives = document.getElementById('clearSavedObjectives');
 const objectivesSaveStatus = document.getElementById('objectivesSaveStatus');
+const subscribersList = document.getElementById('subscribersList');
+const subscribersStatus = document.getElementById('subscribersStatus');
 
 const newsSlides = [
   {
@@ -97,6 +99,7 @@ const worldCupCountries = [
 ];
 
 const storageKey = 'fantaballa.objectives.saved.v1';
+const subscribersEndpoint = 'data/abbonati.json';
 let activePanelId = 'giocaPanel';
 let currentNews = 0;
 let newsTimer;
@@ -374,6 +377,81 @@ async function loadObjectives() {
   }
 }
 
+
+function formatSubscriberDate(value) {
+  if (!value) return '';
+  try {
+    return new Intl.DateTimeFormat('it-IT', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(new Date(value));
+  } catch {
+    return String(value);
+  }
+}
+
+function renderSubscribers(payload) {
+  if (!subscribersList) return;
+
+  const subscribers = Array.isArray(payload?.subscribers) ? payload.subscribers : [];
+  const channel = payload?.channel || 'fantaballa';
+  const source = payload?.source || 'manuale';
+  const updated = payload?.updatedAt ? formatDateTime(payload.updatedAt) : '';
+
+  if (subscribersStatus) {
+    const suffix = updated ? ` • aggiornato ${updated}` : '';
+    subscribersStatus.textContent = `${subscribers.length} abbonati caricati • fonte ${source} • twitch.tv/${channel}${suffix}`;
+  }
+
+  if (!subscribers.length) {
+    subscribersList.innerHTML = `
+      <div class="subscribers-empty">
+        Nessun abbonato caricato per ora. La sezione è pronta: puoi aggiungere nomi manualmente in <strong>data/abbonati.json</strong> oppure collegarla più avanti a un backend Twitch.
+      </div>
+    `;
+    return;
+  }
+
+  subscribersList.innerHTML = subscribers.map((subscriber, index) => {
+    const name = subscriber.name || subscriber.login || `Abbonato ${index + 1}`;
+    const tier = subscriber.tier || 'Sub';
+    const since = formatSubscriberDate(subscriber.since);
+    const giftedBy = subscriber.giftedBy ? `Gift di ${subscriber.giftedBy}` : '';
+    const meta = [giftedBy, since ? `Dal ${since}` : '', subscriber.note || ''].filter(Boolean).join(' • ');
+
+    return `
+      <article class="subscriber-row">
+        <span class="subscriber-rank">${String(index + 1).padStart(2, '0')}</span>
+        <span class="subscriber-main">
+          <strong class="subscriber-name">${escapeHtml(name)}</strong>
+          <span class="subscriber-meta">${escapeHtml(meta || 'Abbonamento attivo')}</span>
+        </span>
+        <span class="subscriber-tier">${escapeHtml(tier)}</span>
+      </article>
+    `;
+  }).join('');
+}
+
+async function loadSubscribers() {
+  if (!subscribersList) return;
+
+  try {
+    const res = await fetch(subscribersEndpoint, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const payload = await res.json();
+    renderSubscribers(payload);
+  } catch (error) {
+    console.error(error);
+    if (subscribersStatus) subscribersStatus.textContent = 'Lista abbonati non disponibile.';
+    subscribersList.innerHTML = `
+      <div class="subscribers-empty">
+        Non riesco a caricare <strong>data/abbonati.json</strong>. Controlla che il file sia presente nella cartella data.
+      </div>
+    `;
+  }
+}
+
 document.addEventListener('mouseenter', event => {
   const tile = event.target.closest('.tile');
   if (!tile || !getActivePanel().contains(tile)) return;
@@ -446,3 +524,4 @@ applyRandomWorldCupFlags();
 updateNews(0);
 restartNewsTimer();
 loadObjectives();
+loadSubscribers();
