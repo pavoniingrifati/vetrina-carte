@@ -45,6 +45,57 @@ const categoryFallback = {
   cursed: { label: 'Obiettivi Cursed', kicker: 'Cursed' }
 };
 
+const worldCupCountries = [
+  { code: 'mx', name: 'Messico' },
+  { code: 'za', name: 'Sudafrica' },
+  { code: 'kr', name: 'Corea del Sud' },
+  { code: 'cz', name: 'Cechia' },
+  { code: 'ca', name: 'Canada' },
+  { code: 'ba', name: 'Bosnia Erzegovina' },
+  { code: 'qa', name: 'Qatar' },
+  { code: 'ch', name: 'Svizzera' },
+  { code: 'br', name: 'Brasile' },
+  { code: 'ma', name: 'Marocco' },
+  { code: 'ht', name: 'Haiti' },
+  { code: 'gb-sct', name: 'Scozia' },
+  { code: 'us', name: 'Stati Uniti' },
+  { code: 'py', name: 'Paraguay' },
+  { code: 'au', name: 'Australia' },
+  { code: 'tr', name: 'Turchia' },
+  { code: 'de', name: 'Germania' },
+  { code: 'cw', name: 'Curaçao' },
+  { code: 'ci', name: "Costa d'Avorio" },
+  { code: 'ec', name: 'Ecuador' },
+  { code: 'nl', name: 'Paesi Bassi' },
+  { code: 'jp', name: 'Giappone' },
+  { code: 'se', name: 'Svezia' },
+  { code: 'tn', name: 'Tunisia' },
+  { code: 'be', name: 'Belgio' },
+  { code: 'eg', name: 'Egitto' },
+  { code: 'ir', name: 'Iran' },
+  { code: 'nz', name: 'Nuova Zelanda' },
+  { code: 'es', name: 'Spagna' },
+  { code: 'cv', name: 'Capo Verde' },
+  { code: 'sa', name: 'Arabia Saudita' },
+  { code: 'uy', name: 'Uruguay' },
+  { code: 'fr', name: 'Francia' },
+  { code: 'sn', name: 'Senegal' },
+  { code: 'iq', name: 'Iraq' },
+  { code: 'no', name: 'Norvegia' },
+  { code: 'ar', name: 'Argentina' },
+  { code: 'dz', name: 'Algeria' },
+  { code: 'at', name: 'Austria' },
+  { code: 'jo', name: 'Giordania' },
+  { code: 'pt', name: 'Portogallo' },
+  { code: 'cd', name: 'RD Congo' },
+  { code: 'uz', name: 'Uzbekistan' },
+  { code: 'co', name: 'Colombia' },
+  { code: 'gb-eng', name: 'Inghilterra' },
+  { code: 'hr', name: 'Croazia' },
+  { code: 'gh', name: 'Ghana' },
+  { code: 'pa', name: 'Panama' }
+];
+
 const storageKey = 'fantaballa.objectives.saved.v1';
 let activePanelId = 'giocaPanel';
 let currentNews = 0;
@@ -114,7 +165,10 @@ function moveSelection(direction) {
   if (!tiles.length) return;
 
   const selectedIndex = getSelectedIndex();
-  const columns = window.matchMedia('(max-width: 980px)').matches ? 1 : 2;
+  let columns = window.matchMedia('(max-width: 980px)').matches ? 1 : 2;
+  if (activePanelId === 'worldCupPanel') {
+    columns = window.matchMedia('(max-width: 980px)').matches ? 1 : 2;
+  }
   let nextIndex = selectedIndex;
 
   if (direction === 'left') nextIndex -= 1;
@@ -148,6 +202,36 @@ function prevSlide() {
 function restartNewsTimer() {
   window.clearInterval(newsTimer);
   newsTimer = window.setInterval(nextSlide, 5200);
+}
+
+function shuffleArray(values) {
+  const copy = [...values];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function applyRandomWorldCupFlags() {
+  const worldCupTiles = Array.from(document.querySelectorAll('[data-random-flag="true"]'));
+  if (!worldCupTiles.length) return;
+
+  const flags = shuffleArray(worldCupCountries);
+
+  worldCupTiles.forEach((tile, index) => {
+    const country = flags[index % flags.length];
+    const media = tile.querySelector('.flag-media');
+    const label = tile.querySelector('.world-flag-label');
+
+    if (media) {
+      media.style.backgroundImage = `url("https://flagcdn.com/w640/${country.code}.png")`;
+    }
+
+    if (label) {
+      label.textContent = country.name;
+    }
+  });
 }
 
 function pickRandom(arr) {
@@ -358,6 +442,7 @@ window.addEventListener('keydown', event => {
   }
 });
 
+applyRandomWorldCupFlags();
 updateNews(0);
 restartNewsTimer();
 loadObjectives();

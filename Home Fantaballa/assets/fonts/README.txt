@@ -1,6 +1,7 @@
-Metti qui il file MODERNIZ.OTF per attivare il font personalizzato.
+Metti qui i font locali del sito.
 
-Percorso richiesto dal CSS:
-assets/fonts/MODERNIZ.OTF
+Richiesti:
+- MODERNIZ.OTF -> usato da Home e Obiettivi
+- INLANDERS DEMO.OTF -> usato solo dalla sezione World Cup
 
-Il file del font non e' incluso nel pacchetto: copialo tu in questa cartella prima di pubblicare su GitHub Pages.
+I file font non sono inclusi nello ZIP: copiali manualmente in questa cartella.
