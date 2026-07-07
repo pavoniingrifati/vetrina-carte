@@ -133,10 +133,15 @@ function resetPanelSelection(panel) {
   if (tiles[0]) tiles[0].classList.add('is-selected');
 }
 
+function updateSectionBackground(targetId) {
+  document.body.classList.toggle('is-world-cup-active', targetId === 'worldCupPanel');
+}
+
 function switchPanel(targetId) {
   if (!document.getElementById(targetId) || targetId === activePanelId) return;
 
   activePanelId = targetId;
+  updateSectionBackground(targetId);
 
   tabs.forEach(tab => {
     const isActive = tab.dataset.target === targetId;
@@ -391,6 +396,168 @@ function formatSubscriberDate(value) {
   }
 }
 
+function subscriberTypeLabel(value) {
+  const map = {
+    prime: 'Prime',
+    recurring: 'Ricorrente',
+    gift: 'Gift'
+  };
+  return map[value] || value || 'Sub';
+}
+
+function subscriberTierClass(tier) {
+  const clean = String(tier || '').toLowerCase().replace(/\s+/g, '-');
+  return clean || 'sub';
+}
+
+const formationPlans = {
+  11: [
+    {
+      name: '4-3-3',
+      positions: [
+        { role: 'POR', x: 50, y: 90 },
+        { role: 'TD', x: 18, y: 74 }, { role: 'DC', x: 39, y: 73 }, { role: 'DC', x: 61, y: 73 }, { role: 'TS', x: 82, y: 74 },
+        { role: 'CC', x: 28, y: 55 }, { role: 'MED', x: 50, y: 58 }, { role: 'CC', x: 72, y: 55 },
+        { role: 'AD', x: 22, y: 34 }, { role: 'ATT', x: 50, y: 28 }, { role: 'AS', x: 78, y: 34 }
+      ]
+    },
+    {
+      name: '4-4-2',
+      positions: [
+        { role: 'POR', x: 50, y: 90 },
+        { role: 'TD', x: 18, y: 74 }, { role: 'DC', x: 39, y: 73 }, { role: 'DC', x: 61, y: 73 }, { role: 'TS', x: 82, y: 74 },
+        { role: 'ED', x: 18, y: 55 }, { role: 'CC', x: 39, y: 55 }, { role: 'CC', x: 61, y: 55 }, { role: 'ES', x: 82, y: 55 },
+        { role: 'ATT', x: 38, y: 32 }, { role: 'ATT', x: 62, y: 32 }
+      ]
+    },
+    {
+      name: '3-5-2',
+      positions: [
+        { role: 'POR', x: 50, y: 90 },
+        { role: 'DC', x: 28, y: 73 }, { role: 'DC', x: 50, y: 75 }, { role: 'DC', x: 72, y: 73 },
+        { role: 'EST', x: 16, y: 54 }, { role: 'CC', x: 35, y: 55 }, { role: 'MED', x: 50, y: 59 }, { role: 'CC', x: 65, y: 55 }, { role: 'EST', x: 84, y: 54 },
+        { role: 'ATT', x: 39, y: 32 }, { role: 'ATT', x: 61, y: 32 }
+      ]
+    }
+  ],
+  10: [
+    { name: '4-3-2', positions: [
+      { role: 'POR', x: 50, y: 90 },
+      { role: 'TD', x: 18, y: 74 }, { role: 'DC', x: 39, y: 73 }, { role: 'DC', x: 61, y: 73 }, { role: 'TS', x: 82, y: 74 },
+      { role: 'CC', x: 30, y: 55 }, { role: 'MED', x: 50, y: 58 }, { role: 'CC', x: 70, y: 55 },
+      { role: 'ATT', x: 39, y: 32 }, { role: 'ATT', x: 61, y: 32 }
+    ]}
+  ],
+  9: [
+    { name: '3-3-2', positions: [
+      { role: 'POR', x: 50, y: 90 },
+      { role: 'DC', x: 30, y: 74 }, { role: 'DC', x: 50, y: 76 }, { role: 'DC', x: 70, y: 74 },
+      { role: 'CC', x: 30, y: 55 }, { role: 'MED', x: 50, y: 58 }, { role: 'CC', x: 70, y: 55 },
+      { role: 'ATT', x: 39, y: 32 }, { role: 'ATT', x: 61, y: 32 }
+    ]},
+    { name: '4-3-1', positions: [
+      { role: 'POR', x: 50, y: 90 },
+      { role: 'TD', x: 18, y: 74 }, { role: 'DC', x: 39, y: 73 }, { role: 'DC', x: 61, y: 73 }, { role: 'TS', x: 82, y: 74 },
+      { role: 'CC', x: 30, y: 55 }, { role: 'MED', x: 50, y: 58 }, { role: 'CC', x: 70, y: 55 },
+      { role: 'ATT', x: 50, y: 31 }
+    ]}
+  ],
+  8: [
+    { name: '3-3-1', positions: [
+      { role: 'POR', x: 50, y: 90 },
+      { role: 'DC', x: 30, y: 74 }, { role: 'DC', x: 50, y: 76 }, { role: 'DC', x: 70, y: 74 },
+      { role: 'CC', x: 30, y: 55 }, { role: 'MED', x: 50, y: 58 }, { role: 'CC', x: 70, y: 55 },
+      { role: 'ATT', x: 50, y: 31 }
+    ]}
+  ],
+  7: [
+    { name: '2-3-1', positions: [
+      { role: 'POR', x: 50, y: 90 },
+      { role: 'DC', x: 38, y: 73 }, { role: 'DC', x: 62, y: 73 },
+      { role: 'CC', x: 30, y: 55 }, { role: 'MED', x: 50, y: 58 }, { role: 'CC', x: 70, y: 55 },
+      { role: 'ATT', x: 50, y: 31 }
+    ]}
+  ],
+  6: [
+    { name: '2-2-1', positions: [
+      { role: 'POR', x: 50, y: 90 },
+      { role: 'DC', x: 38, y: 73 }, { role: 'DC', x: 62, y: 73 },
+      { role: 'CC', x: 38, y: 55 }, { role: 'CC', x: 62, y: 55 },
+      { role: 'ATT', x: 50, y: 31 }
+    ]}
+  ],
+  5: [
+    { name: '2-1-1', positions: [
+      { role: 'POR', x: 50, y: 90 },
+      { role: 'DC', x: 38, y: 73 }, { role: 'DC', x: 62, y: 73 },
+      { role: 'CC', x: 50, y: 56 },
+      { role: 'ATT', x: 50, y: 31 }
+    ]}
+  ]
+};
+
+function chooseFormation(count) {
+  const exact = formationPlans[count];
+  if (exact?.length) return exact[Math.floor(Math.random() * exact.length)];
+
+  const base = formationPlans[Math.min(Math.max(count, 5), 11)]?.[0] || formationPlans[11][0];
+  return {
+    name: `${count} giocatori`,
+    positions: base.positions.slice(0, count)
+  };
+}
+
+function splitIntoSubscriberSquads(subscribers) {
+  const shuffled = shuffleArray(subscribers);
+  const squads = [];
+  for (let i = 0; i < shuffled.length; i += 11) {
+    squads.push(shuffled.slice(i, i + 11));
+  }
+  return squads;
+}
+
+function renderSubscriberPitch(squad, squadIndex) {
+  const formation = chooseFormation(squad.length);
+  const positions = shuffleArray(formation.positions).slice(0, squad.length);
+
+  const players = squad.map((subscriber, index) => {
+    const pos = positions[index];
+    const name = subscriber.name || subscriber.login || `Abbonato ${index + 1}`;
+    const tier = subscriber.tier || 'Sub';
+    const type = subscriberTypeLabel(subscriber.type);
+    const tenure = Number.isFinite(Number(subscriber.tenure)) ? `${subscriber.tenure}m` : '';
+    const streak = Number.isFinite(Number(subscriber.streak)) ? `streak ${subscriber.streak}` : '';
+    const info = [tier, type, tenure].filter(Boolean).join(' • ');
+    const founderClass = subscriber.founder ? ' is-founder' : '';
+
+    return `
+      <article class="player-token ${escapeHtml(subscriberTierClass(tier))}${founderClass}" style="--x:${pos.x}; --y:${pos.y};" title="${escapeHtml(name)} • ${escapeHtml([info, streak].filter(Boolean).join(' • '))}">
+        <span class="player-role">${escapeHtml(pos.role)}</span>
+        <strong class="player-name">${escapeHtml(name)}</strong>
+        <span class="player-info">${escapeHtml(info)}</span>
+      </article>
+    `;
+  }).join('');
+
+  const label = squad.length === 11 ? 'XI completo' : `${squad.length} in campo`;
+
+  return `
+    <section class="subscriber-pitch-card" aria-label="Campo abbonati ${squadIndex + 1}">
+      <div class="subscriber-pitch">
+        <div class="subscriber-pitch-head">
+          <span>Campo ${String(squadIndex + 1).padStart(2, '0')}</span>
+          <strong>${escapeHtml(label)} • ${escapeHtml(formation.name)}</strong>
+        </div>
+        ${players}
+        <div class="subscriber-legend">
+          <span>Ruoli random a ogni refresh</span>
+          <span>★ Founder</span>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
 function renderSubscribers(payload) {
   if (!subscribersList) return;
 
@@ -398,13 +565,15 @@ function renderSubscribers(payload) {
   const channel = payload?.channel || 'fantaballa';
   const source = payload?.source || 'manuale';
   const updated = payload?.updatedAt ? formatDateTime(payload.updatedAt) : '';
+  const fieldsCount = Math.max(1, Math.ceil(subscribers.length / 11));
 
   if (subscribersStatus) {
     const suffix = updated ? ` • aggiornato ${updated}` : '';
-    subscribersStatus.textContent = `${subscribers.length} abbonati caricati • fonte ${source} • twitch.tv/${channel}${suffix}`;
+    subscribersStatus.textContent = `${subscribers.length} abbonati caricati • ${fieldsCount} campi generati • fonte ${source} • twitch.tv/${channel}${suffix}`;
   }
 
   if (!subscribers.length) {
+    subscribersList.classList.remove('subscriber-fields');
     subscribersList.innerHTML = `
       <div class="subscribers-empty">
         Nessun abbonato caricato per ora. La sezione è pronta: puoi aggiungere nomi manualmente in <strong>data/abbonati.json</strong> oppure collegarla più avanti a un backend Twitch.
@@ -413,24 +582,9 @@ function renderSubscribers(payload) {
     return;
   }
 
-  subscribersList.innerHTML = subscribers.map((subscriber, index) => {
-    const name = subscriber.name || subscriber.login || `Abbonato ${index + 1}`;
-    const tier = subscriber.tier || 'Sub';
-    const since = formatSubscriberDate(subscriber.since);
-    const giftedBy = subscriber.giftedBy ? `Gift di ${subscriber.giftedBy}` : '';
-    const meta = [giftedBy, since ? `Dal ${since}` : '', subscriber.note || ''].filter(Boolean).join(' • ');
-
-    return `
-      <article class="subscriber-row">
-        <span class="subscriber-rank">${String(index + 1).padStart(2, '0')}</span>
-        <span class="subscriber-main">
-          <strong class="subscriber-name">${escapeHtml(name)}</strong>
-          <span class="subscriber-meta">${escapeHtml(meta || 'Abbonamento attivo')}</span>
-        </span>
-        <span class="subscriber-tier">${escapeHtml(tier)}</span>
-      </article>
-    `;
-  }).join('');
+  const squads = splitIntoSubscriberSquads(subscribers);
+  subscribersList.classList.add('subscriber-fields');
+  subscribersList.innerHTML = squads.map(renderSubscriberPitch).join('');
 }
 
 async function loadSubscribers() {

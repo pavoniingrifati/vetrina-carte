@@ -150,3 +150,21 @@ Poi abilita GitHub Pages da `Settings > Pages`.
 - Creata lista abbonati predisposta per Twitch.
 - Aggiunti i box vantaggi abbonato richiesti.
 - La lista abbonati può essere gestita manualmente con `data/abbonati.json` oppure collegata più avanti a un backend Twitch.
+
+
+## Versione v12
+
+- Aggiunto lo sfondo dedicato `assets/world-cup-background.webp`.
+- Lo sfondo compare solo quando è attiva la sezione **World Cup**.
+- Le sezioni Gioca, Obiettivi e Abbonati mantengono lo sfondo originale.
+
+
+## Aggiornamento v13 - Abbonati in formazione
+
+La sezione Abbonati ora mostra gli abbonati Twitch come formazioni su uno o più campi da calcio.
+
+- Ogni campo contiene al massimo 11 abbonati.
+- Se gli abbonati superano 11, vengono creati automaticamente più campi.
+- A ogni refresh gli abbonati vengono rimescolati e assegnati a ruoli/posizioni diverse.
+- La lista si modifica manualmente in `data/abbonati.json`.
+- Lo sfondo dei campi è `assets/subscriber-field.png`.
