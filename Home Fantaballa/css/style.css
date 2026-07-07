@@ -201,9 +201,11 @@ body.is-world-cup-active .site-bg::after {
   height: 74px;
   display: flex;
   align-items: end;
-  gap: clamp(26px, 8vw, 106px);
+  gap: clamp(16px, 4.8vw, 72px);
   padding: 0 30px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .tab {
@@ -312,6 +314,15 @@ body.is-world-cup-active .site-bg::after {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035);
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, filter 180ms ease;
   cursor: pointer;
+}
+
+button.tile {
+  appearance: none;
+  -webkit-appearance: none;
+  width: auto;
+  padding: 0;
+  font: inherit;
+  text-align: left;
 }
 
 .tile-large {
@@ -1369,7 +1380,131 @@ body.is-world-cup-active .site-bg::after {
   }
 }
 
+
+/* === FUT === */
+.fut-panel {
+  align-content: start;
+  padding-top: 26px;
+}
+
+.fut-section-title h1 {
+  font-size: clamp(2.2rem, 4.2vw, 5.6rem);
+}
+
+.fut-tiles {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.fut-tiles .fut-tile {
+  grid-column: span 6;
+  min-height: clamp(210px, 30vh, 320px);
+}
+
+.fut-tile .tile-content {
+  justify-content: flex-end;
+}
+
+.fut-tile .tile-title {
+  max-width: 100%;
+  font-size: clamp(1.55rem, 3vw, 3.9rem);
+}
+
+.fut-subtitle {
+  display: block;
+  max-width: min(620px, 94%);
+  color: rgba(255, 255, 255, 0.78);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(0.78rem, 1.05vw, 0.98rem);
+  line-height: 1.32;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.72);
+  transition: color 160ms ease, text-shadow 160ms ease;
+}
+
+.fut-tile:hover .fut-subtitle,
+.fut-tile.is-selected .fut-subtitle,
+.fut-tile:focus-visible .fut-subtitle {
+  color: rgba(0, 0, 0, 0.78);
+  text-shadow: none;
+}
+
+.fut-tile.is-disabled {
+  cursor: not-allowed;
+}
+
+.fut-tile.is-disabled::before {
+  background: linear-gradient(90deg, rgba(255,255,255,0.20), rgba(255,255,255,0.10));
+}
+
+.fut-tile.is-disabled:hover,
+.fut-tile.is-disabled.is-selected,
+.fut-tile.is-disabled:focus-visible {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+@media (max-width: 980px) {
+  .fut-tiles .fut-tile {
+    grid-column: span 12;
+  }
+}
+
 /* Abbonati */
+
+/* === Altri progetti === */
+.projects-panel {
+  align-content: start;
+  padding-top: 26px;
+}
+
+.projects-section-title h1 {
+  font-size: clamp(2.1rem, 4vw, 5.4rem);
+}
+
+.projects-tiles {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.projects-tiles .project-tile {
+  grid-column: span 6;
+  min-height: clamp(220px, 31vh, 330px);
+}
+
+.project-tile .tile-content {
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.project-tile .tile-title {
+  max-width: 100%;
+  font-size: clamp(1.65rem, 3.1vw, 4rem);
+}
+
+.project-subtitle {
+  display: block;
+  max-width: min(620px, 92%);
+  color: rgba(255, 255, 255, 0.78);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(0.82rem, 1.1vw, 1rem);
+  line-height: 1.32;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.72);
+}
+
+.project-tile:hover .project-subtitle,
+.project-tile.is-selected .project-subtitle,
+.project-tile:focus-visible .project-subtitle {
+  color: rgba(0, 0, 0, 0.78);
+  text-shadow: none;
+}
+
+@media (max-width: 980px) {
+  .projects-tiles .project-tile {
+    grid-column: span 12;
+  }
+}
+
 .subscribers-panel {
   --twitch: #9146ff;
   --twitch-soft: rgba(145, 70, 255, 0.22);
@@ -1765,9 +1900,9 @@ body.is-world-cup-active .site-bg::after {
   left: calc(var(--x) * 1%);
   top: calc(var(--y) * 1%);
   transform: translate(-50%, -50%);
-  width: clamp(82px, 10vw, 126px);
+  width: clamp(98px, 9.2vw, 136px);
   min-height: 52px;
-  padding: 7px 8px 6px;
+  padding: 6px 7px 6px;
   color: #fff;
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.20);
@@ -1803,12 +1938,13 @@ body.is-world-cup-active .site-bg::after {
 .player-name {
   display: block;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: clamp(0.62rem, 0.95vw, 0.88rem);
-  line-height: 1.05;
-  letter-spacing: 0.02em;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: clamp(0.54rem, 0.78vw, 0.74rem);
+  line-height: 0.98;
+  letter-spacing: 0.01em;
   text-shadow: 0 2px 10px rgba(0,0,0,0.45);
 }
 
@@ -1817,10 +1953,27 @@ body.is-world-cup-active .site-bg::after {
   margin-top: 3px;
   color: rgba(255, 255, 255, 0.70);
   font-family: Arial, Helvetica, sans-serif;
-  font-size: clamp(0.52rem, 0.72vw, 0.66rem);
-  line-height: 1.1;
+  font-size: clamp(0.46rem, 0.62vw, 0.58rem);
+  line-height: 1.05;
   letter-spacing: 0.02em;
   text-transform: none;
+}
+
+
+.player-token.name-medium .player-name {
+  font-size: clamp(0.50rem, 0.70vw, 0.66rem);
+  letter-spacing: 0;
+}
+
+.player-token.name-long .player-name {
+  font-size: clamp(0.46rem, 0.62vw, 0.58rem);
+  letter-spacing: -0.01em;
+}
+
+.player-token.name-xl .player-name {
+  font-size: clamp(0.40rem, 0.56vw, 0.52rem);
+  letter-spacing: -0.018em;
+  line-height: 0.95;
 }
 
 .player-token.tier-3,
@@ -1911,5 +2064,497 @@ body.is-world-cup-active .site-bg::after {
 
   .player-info {
     font-size: 0.5rem;
+  }
+}
+
+
+/* Header più compatto: evita che le sezioni del menu vengano tagliate. */
+@media (max-width: 1100px) {
+  .main-tabs {
+    gap: 18px;
+    padding-inline: 12px;
+  }
+
+  .tab {
+    font-size: 0.84rem;
+    letter-spacing: 0.075em;
+  }
+}
+
+@media (max-width: 760px) {
+  .top-hud {
+    min-height: auto;
+  }
+
+  .main-tabs {
+    min-height: 56px;
+    gap: 14px;
+    padding: 10px 8px 12px;
+  }
+
+  .tab {
+    font-size: 0.78rem;
+  }
+}
+
+/* Override v15: header/menu compatto su tutte le dimensioni. */
+.main-tabs {
+  min-height: 64px;
+  height: auto;
+  align-items: center;
+  gap: clamp(10px, 2.7vw, 34px);
+  padding: 12px 18px 14px;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.tab {
+  flex: 0 0 auto;
+  padding: 8px 0 10px;
+  font-size: clamp(0.82rem, 1.28vw, 1.18rem);
+  line-height: 1.08;
+  letter-spacing: 0.095em;
+  white-space: nowrap;
+}
+
+.tab::after {
+  bottom: 0;
+}
+
+/* === FUT v17: Vetrina carte casuali === */
+.fut-card-showcase-tile {
+  overflow: hidden;
+}
+
+.fut-showcase-content {
+  justify-content: space-between;
+}
+
+.fut-random-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(7px, 1vw, 12px);
+  width: min(560px, 96%);
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.fut-random-card,
+.fut-card-placeholder {
+  position: relative;
+  display: block;
+  min-height: clamp(92px, 16vh, 150px);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+}
+
+.fut-card-placeholder {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.02)),
+    rgba(0, 0, 0, 0.38);
+}
+
+.fut-random-card img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transform: scale(1.02);
+  filter: saturate(1.08) contrast(1.05);
+}
+
+.fut-random-card::after {
+  content: "";
+  position: absolute;
+  inset: 46% 0 0;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.88), transparent);
+}
+
+.fut-random-card-meta {
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  bottom: 7px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-family: Arial, Helvetica, sans-serif;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.90);
+}
+
+.fut-random-card-meta strong {
+  font-size: clamp(0.58rem, 0.9vw, 0.78rem);
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fut-random-card-meta small {
+  font-size: clamp(0.50rem, 0.75vw, 0.64rem);
+  line-height: 1.1;
+  opacity: 0.78;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fut-random-card.is-broken {
+  display: none;
+}
+
+.fut-cards-error {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 92px;
+  padding: 12px;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.86);
+  background: rgba(0, 0, 0, 0.44);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: 0.04em;
+}
+
+.fut-card-showcase-tile:hover .fut-random-card,
+.fut-card-showcase-tile.is-selected .fut-random-card,
+.fut-card-showcase-tile:focus-visible .fut-random-card {
+  border-color: rgba(0, 0, 0, 0.42);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
+}
+
+@media (max-width: 720px) {
+  .fut-random-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fut-random-card,
+  .fut-card-placeholder {
+    min-height: 118px;
+  }
+}
+
+
+/* === FUT v18: box separati e vetrina carte senza sovrapposizioni === */
+.fut-tiles {
+  grid-auto-rows: clamp(230px, 28vh, 310px);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.fut-tiles .fut-tile {
+  min-height: 0;
+  height: 100%;
+}
+
+.fut-tile .tile-content {
+  min-height: 100%;
+  gap: 7px;
+  padding: clamp(16px, 1.8vw, 24px);
+}
+
+.fut-tile .tile-title {
+  font-size: clamp(1.35rem, 2.45vw, 3.25rem);
+  line-height: .96;
+  overflow-wrap: anywhere;
+}
+
+.fut-card-showcase-tile .tile-content {
+  position: relative;
+  justify-content: flex-end;
+  padding-right: clamp(210px, 43%, 470px);
+}
+
+.fut-card-showcase-tile .tile-title {
+  max-width: 100%;
+  font-size: clamp(1.25rem, 2.05vw, 2.75rem);
+}
+
+.fut-card-showcase-tile .fut-subtitle {
+  max-width: 100%;
+}
+
+.fut-card-showcase-tile .fut-random-cards {
+  position: absolute;
+  right: clamp(14px, 1.8vw, 26px);
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  width: min(40%, 420px);
+  height: min(78%, 245px);
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  gap: clamp(6px, .8vw, 10px);
+}
+
+.fut-card-showcase-tile .fut-random-card,
+.fut-card-showcase-tile .fut-card-placeholder {
+  min-height: 0;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.fut-card-showcase-tile .fut-random-card-meta {
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+}
+
+.fut-card-showcase-tile .fut-random-card-meta strong {
+  font-size: clamp(.52rem, .72vw, .68rem);
+}
+
+.fut-card-showcase-tile .fut-random-card-meta small {
+  font-size: clamp(.46rem, .62vw, .58rem);
+}
+
+@media (max-width: 980px) {
+  .fut-tiles {
+    grid-auto-rows: auto;
+  }
+
+  .fut-tiles .fut-tile {
+    min-height: clamp(220px, 33vh, 320px);
+  }
+}
+
+@media (max-width: 760px) {
+  .fut-card-showcase-tile .tile-content {
+    padding-right: clamp(16px, 1.8vw, 24px);
+    padding-bottom: clamp(142px, 33vw, 185px);
+  }
+
+  .fut-card-showcase-tile .fut-random-cards {
+    left: clamp(16px, 1.8vw, 24px);
+    right: clamp(16px, 1.8vw, 24px);
+    top: auto;
+    bottom: clamp(14px, 1.8vw, 24px);
+    transform: none;
+    width: auto;
+    height: clamp(110px, 27vw, 150px);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .fut-card-showcase-tile .fut-random-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    height: 210px;
+  }
+
+  .fut-card-showcase-tile .tile-content {
+    padding-bottom: 250px;
+  }
+}
+
+/* === FUT v19: vetrina carte libera, fuori dai box === */
+.fut-panel {
+  overflow: visible;
+  align-content: start;
+}
+
+.fut-intro-showcase {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(18px, 4vw, 64px);
+  min-height: clamp(250px, 35vh, 420px);
+  margin: clamp(-8px, -1vw, 0px) 0 clamp(14px, 2vw, 28px);
+  padding: 0 clamp(10px, 2vw, 30px);
+  overflow: visible;
+  filter: drop-shadow(0 26px 45px rgba(0, 0, 0, 0.50));
+}
+
+.fut-intro-copy {
+  position: relative;
+  z-index: 4;
+  flex: 0 0 min(44%, 560px);
+  text-transform: uppercase;
+  text-shadow: 0 8px 34px rgba(0, 0, 0, 0.82);
+}
+
+.fut-intro-copy span {
+  display: block;
+  color: var(--yellow);
+  font-size: clamp(2.35rem, 5.2vw, 7rem);
+  line-height: 0.90;
+  letter-spacing: 0.05em;
+}
+
+.fut-intro-copy strong {
+  display: block;
+  margin-top: clamp(8px, 1.2vw, 18px);
+  color: #ffffff;
+  font-size: clamp(1.05rem, 2.05vw, 2.7rem);
+  line-height: 1.02;
+  letter-spacing: 0.07em;
+}
+
+.fut-card-stack {
+  position: relative;
+  z-index: 3;
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  width: auto !important;
+  max-width: none;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.fut-card-stack .fut-random-card,
+.fut-card-stack .fut-card-placeholder {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(132px, 13.2vw, 230px);
+  height: clamp(190px, 25.5vw, 365px);
+  min-height: 0;
+  margin-left: clamp(-46px, -3.1vw, -20px);
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.fut-card-stack .fut-random-card:first-child,
+.fut-card-stack .fut-card-placeholder:first-child {
+  margin-left: 0;
+}
+
+.fut-card-stack .fut-random-card:nth-child(1) { transform: rotate(-8deg) translateY(16px); z-index: 1; }
+.fut-card-stack .fut-random-card:nth-child(2) { transform: rotate(-2deg) translateY(-8px); z-index: 3; }
+.fut-card-stack .fut-random-card:nth-child(3) { transform: rotate(5deg) translateY(12px); z-index: 2; }
+.fut-card-stack .fut-random-card:nth-child(4) { transform: rotate(10deg) translateY(-4px); z-index: 1; }
+
+.fut-card-stack .fut-card-placeholder {
+  border-radius: 22px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02)),
+    rgba(0, 0, 0, 0.24);
+}
+
+.fut-card-stack .fut-random-card img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  transform: none;
+  opacity: 1;
+  filter:
+    saturate(1.08)
+    contrast(1.05)
+    drop-shadow(0 28px 34px rgba(0, 0, 0, 0.55));
+}
+
+.fut-card-stack .fut-random-card::after,
+.fut-card-stack .fut-random-card-meta {
+  display: none;
+}
+
+.fut-card-stack .fut-cards-error {
+  min-height: auto;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.50);
+  border-radius: 12px;
+}
+
+.fut-tiles {
+  grid-auto-rows: clamp(210px, 25vh, 290px);
+}
+
+.fut-tiles .fut-tile {
+  grid-column: span 4;
+}
+
+@media (max-width: 1100px) {
+  .fut-intro-showcase {
+    min-height: clamp(230px, 32vh, 360px);
+  }
+
+  .fut-intro-copy {
+    flex-basis: min(40%, 460px);
+  }
+
+  .fut-card-stack .fut-random-card,
+  .fut-card-stack .fut-card-placeholder {
+    width: clamp(112px, 15vw, 185px);
+    height: clamp(165px, 28vw, 285px);
+  }
+}
+
+@media (max-width: 860px) {
+  .fut-intro-showcase {
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: auto;
+    gap: 14px;
+    padding: 0 12px;
+  }
+
+  .fut-intro-copy {
+    flex: none;
+    max-width: 100%;
+  }
+
+  .fut-card-stack {
+    width: 100% !important;
+    justify-content: center;
+    padding: 8px 0 16px;
+  }
+
+  .fut-card-stack .fut-random-card,
+  .fut-card-stack .fut-card-placeholder {
+    width: clamp(92px, 24vw, 150px);
+    height: clamp(140px, 36vw, 225px);
+    margin-left: clamp(-34px, -7vw, -18px);
+  }
+
+  .fut-tiles .fut-tile {
+    grid-column: span 12;
+  }
+}
+
+@media (max-width: 520px) {
+  .fut-intro-copy span {
+    font-size: clamp(2rem, 13vw, 4.4rem);
+  }
+
+  .fut-intro-copy strong {
+    font-size: clamp(0.95rem, 5vw, 1.5rem);
+  }
+
+  .fut-card-stack .fut-random-card,
+  .fut-card-stack .fut-card-placeholder {
+    width: clamp(78px, 25vw, 112px);
+    height: clamp(120px, 39vw, 170px);
+    margin-left: clamp(-28px, -8vw, -15px);
   }
 }

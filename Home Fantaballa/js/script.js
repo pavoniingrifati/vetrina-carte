@@ -13,6 +13,7 @@ const clearSavedObjectives = document.getElementById('clearSavedObjectives');
 const objectivesSaveStatus = document.getElementById('objectivesSaveStatus');
 const subscribersList = document.getElementById('subscribersList');
 const subscribersStatus = document.getElementById('subscribersStatus');
+const futRandomCards = document.getElementById('futRandomCards');
 
 const newsSlides = [
   {
@@ -100,6 +101,8 @@ const worldCupCountries = [
 
 const storageKey = 'fantaballa.objectives.saved.v1';
 const subscribersEndpoint = 'data/abbonati.json';
+const cardsEndpoint = 'data/cards.json';
+const cardsBaseUrl = 'https://pavoniingrifati.github.io/vetrina-carte/';
 let activePanelId = 'giocaPanel';
 let currentNews = 0;
 let newsTimer;
@@ -143,8 +146,10 @@ function switchPanel(targetId) {
   activePanelId = targetId;
   updateSectionBackground(targetId);
 
+  const activeTabTarget = targetId === 'obiettiviPanel' ? 'futPanel' : targetId;
+
   tabs.forEach(tab => {
-    const isActive = tab.dataset.target === targetId;
+    const isActive = tab.dataset.target === activeTabTarget;
     tab.classList.toggle('is-active', isActive);
     if (isActive) {
       tab.setAttribute('aria-current', 'page');
@@ -164,8 +169,14 @@ function switchPanel(targetId) {
 function openSelected() {
   const tiles = getActiveTiles();
   const selected = tiles[getSelectedIndex()];
-  if (!selected || !selected.matches('a')) return;
-  selected.click();
+  if (!selected) return;
+
+  if (selected.dataset.panelTarget) {
+    switchPanel(selected.dataset.panelTarget);
+    return;
+  }
+
+  if (selected.matches('a, button')) selected.click();
 }
 
 function moveSelection(direction) {
@@ -516,6 +527,14 @@ function splitIntoSubscriberSquads(subscribers) {
   return squads;
 }
 
+function subscriberNameSizeClass(name) {
+  const len = String(name || '').length;
+  if (len >= 16) return ' name-xl';
+  if (len >= 13) return ' name-long';
+  if (len >= 10) return ' name-medium';
+  return ' name-short';
+}
+
 function renderSubscriberPitch(squad, squadIndex) {
   const formation = chooseFormation(squad.length);
   const positions = shuffleArray(formation.positions).slice(0, squad.length);
@@ -529,9 +548,10 @@ function renderSubscriberPitch(squad, squadIndex) {
     const streak = Number.isFinite(Number(subscriber.streak)) ? `streak ${subscriber.streak}` : '';
     const info = [tier, type, tenure].filter(Boolean).join(' • ');
     const founderClass = subscriber.founder ? ' is-founder' : '';
+    const nameSizeClass = subscriberNameSizeClass(name);
 
     return `
-      <article class="player-token ${escapeHtml(subscriberTierClass(tier))}${founderClass}" style="--x:${pos.x}; --y:${pos.y};" title="${escapeHtml(name)} • ${escapeHtml([info, streak].filter(Boolean).join(' • '))}">
+      <article class="player-token ${escapeHtml(subscriberTierClass(tier))}${founderClass}${nameSizeClass}" style="--x:${pos.x}; --y:${pos.y};" title="${escapeHtml(name)} • ${escapeHtml([info, streak].filter(Boolean).join(' • '))}">
         <span class="player-role">${escapeHtml(pos.role)}</span>
         <strong class="player-name">${escapeHtml(name)}</strong>
         <span class="player-info">${escapeHtml(info)}</span>
@@ -606,6 +626,65 @@ async function loadSubscribers() {
   }
 }
 
+function normalizeCardImageUrl(src) {
+  const value = String(src || '').trim();
+  if (!value) return '';
+  if (/^https?:\/\//i.test(value)) return value;
+  return `${cardsBaseUrl}${value.replace(/^\.\//, '')}`;
+}
+
+function cardSubtitle(card) {
+  return [card.role, card.series || card.rarity].filter(Boolean).join(' • ');
+}
+
+function renderFutRandomCards(cards) {
+  if (!futRandomCards) return;
+
+  const usable = Array.isArray(cards)
+    ? cards.filter(card => card && card.name && card.img)
+    : [];
+
+  if (!usable.length) {
+    futRandomCards.innerHTML = '<span class="fut-cards-error">Carte non disponibili</span>';
+    return;
+  }
+
+  const selected = shuffleArray(usable).slice(0, 4);
+  futRandomCards.innerHTML = selected.map(card => {
+    const img = normalizeCardImageUrl(card.img);
+    const name = escapeHtml(card.name || 'Carta');
+    const subtitle = escapeHtml(cardSubtitle(card));
+    return `
+      <span class="fut-random-card" title="${name}">
+        <img src="${escapeHtml(img)}" alt="${name}" loading="lazy" onerror="this.closest('.fut-random-card')?.classList.add('is-broken')">
+        <span class="fut-random-card-meta">
+          <strong>${name}</strong>
+          <small>${subtitle}</small>
+        </span>
+      </span>
+    `;
+  }).join('');
+}
+
+async function loadFutCards() {
+  if (!futRandomCards) return;
+
+  if (Array.isArray(window.FANTABALLA_CARDS) && window.FANTABALLA_CARDS.length) {
+    renderFutRandomCards(window.FANTABALLA_CARDS);
+    return;
+  }
+
+  try {
+    const res = await fetch(cardsEndpoint, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const cards = await res.json();
+    renderFutRandomCards(cards);
+  } catch (error) {
+    console.error(error);
+    futRandomCards.innerHTML = '<span class="fut-cards-error">Errore cards.json</span>';
+  }
+}
+
 document.addEventListener('mouseenter', event => {
   const tile = event.target.closest('.tile');
   if (!tile || !getActivePanel().contains(tile)) return;
@@ -623,8 +702,15 @@ document.addEventListener('focusin', event => {
 document.addEventListener('click', event => {
   const tile = event.target.closest('.tile');
   if (!tile) return;
+
   if (tile.classList.contains('is-disabled')) {
     event.preventDefault();
+    return;
+  }
+
+  if (tile.dataset.panelTarget) {
+    event.preventDefault();
+    switchPanel(tile.dataset.panelTarget);
   }
 });
 
@@ -679,3 +765,4 @@ updateNews(0);
 restartNewsTimer();
 loadObjectives();
 loadSubscribers();
+loadFutCards();

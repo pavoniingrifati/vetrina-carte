@@ -1,170 +1,77 @@
-# Fantaballa Home v11
+# Fantaballa Home v17
 
-Home page statica in HTML, CSS e JavaScript puro, pronta per GitHub Pages.
+Versione aggiornata del sito Fantaballa in HTML, CSS e JavaScript puro.
 
-## Cosa contiene
+## Novità v14
 
-- Menu principale in stile videogame: `Gioca`, `Obiettivi`, `World Cup`, `Abbonati`.
-- Box `Gioca` con immagini visibili tramite tag `<img>`.
-- News come slider, non come bottone.
-- Sezione `Obiettivi` interna alla stessa pagina.
-- Bottone `Crea nuovi obiettivi` che genera 3 obiettivi per ogni categoria:
-  - Obiettivi Live
-  - Obiettivi Stagionali
-  - Obiettivi Match
-  - Obiettivi Cursed
-- Salvataggio automatico degli obiettivi generati con `localStorage`.
-- File JSON modificabile manualmente: `data/obiettivi.json`.
-- Sezione `World Cup` dopo `Obiettivi`, con box in stile Home, link esterni e bandiere casuali di paesi World Cup come sfondo.
-- Nuova sezione `Abbonati` con lista abbonati e box vantaggi.
+- La card **Altri progetti** nella Home ora apre una sezione interna dedicata.
+- Nuova sezione **Altri progetti** nel menu principale.
+- Box aggiunti:
+  - **Fantaballa-0** — Vinci il mondiale con una squadra casuale composta dagli utenti della World Cup 2026.
+  - **Wrestling** — Diventa un wrestling e affronta gli altri utenti per la cintura!
+- Nella sezione **Abbonati**, i nomi degli utenti vengono adattati automaticamente in base alla lunghezza, così si leggono meglio nelle formazioni.
 
-## Font Moderniz
-
-Il CSS è già predisposto per il font Moderniz, ma il file font non è incluso nello ZIP.
-
-Copia manualmente il tuo file:
-
-```text
-MODERNIZ.OTF
-```
-
-in:
-
-```text
-assets/fonts/MODERNIZ.OTF
-```
-
-## Font World Cup
-
-La sezione `World Cup` usa il font Inlanders Demo, separato dal resto del sito. Home, Obiettivi e Abbonati continuano a usare Moderniz.
-
-Copia manualmente il tuo file:
-
-```text
-INLANDERS DEMO.OTF
-```
-
-in:
-
-```text
-assets/fonts/INLANDERS DEMO.OTF
-```
-
-## Sezione World Cup
-
-I box World Cup aprono i link in una nuova scheda:
-
-- Probabili Convocati
-- I Convocati
-- Fantacalcio
-- Live partite
-- Seguici
-
-Le bandiere vengono caricate casualmente a ogni refresh da una lista modificabile dentro `js/script.js`, nella costante `worldCupCountries`. Le immagini delle bandiere arrivano da `flagcdn.com`, quindi serve connessione internet per visualizzarle.
-
-## Sezione Abbonati
-
-La sezione `Abbonati` contiene:
-
-- lista abbonati;
-- link al canale Twitch `fantaballa`;
-- 4 vantaggi abbonato:
-  - Presenza nelle simulazioni;
-  - Carta speciale FUT;
-  - Coro personalizzato;
-  - Badge ed emoticon.
-
-Per ora la lista è pronta in modalità manuale tramite:
-
-```text
-data/abbonati.json
-```
-
-Esempio per aggiungere un abbonato manualmente:
-
-```json
-{
-  "channel": "fantaballa",
-  "source": "manuale",
-  "updatedAt": "2026-07-07T10:00:00+02:00",
-  "subscribers": [
-    {
-      "name": "NomeUtente",
-      "tier": "Tier 1",
-      "since": "2026-07-07"
-    }
-  ]
-}
-```
-
-Per collegarla davvero a Twitch, servirà un piccolo backend con OAuth Twitch. A quel punto basterà cambiare in `js/script.js` la costante:
-
-```js
-const subscribersEndpoint = 'data/abbonati.json';
-```
-
-con l'URL della tua API privata.
-
-## Come modificare gli obiettivi
-
-Apri:
-
-```text
-data/obiettivi.json
-```
-
-Ogni categoria ha tre liste:
-
-```json
-"bronze": ["Obiettivo facile"],
-"silver": ["Obiettivo medio"],
-"gold": ["Obiettivo difficile"]
-```
-
-Aggiungi o togli frasi dentro le liste. Il sito pesca casualmente un obiettivo bronzo, uno argento e uno oro per ogni categoria.
-
-## Salvataggio
-
-Quando premi `Crea nuovi obiettivi`, il sito salva la generazione nel browser. Se ricarichi la pagina, rimangono gli stessi obiettivi.
-
-Per cancellare il salvataggio e generare di nuovo, premi `Reset salvataggio`.
-
-## Pubblicazione su GitHub Pages
-
-Carica l'intera cartella nella repository, mantenendo questa struttura:
+## Struttura
 
 ```text
 index.html
 css/style.css
 js/script.js
-data/obiettivi.json
-data/abbonati.json
 assets/
+data/
 ```
 
-Poi abilita GitHub Pages da `Settings > Pages`.
+## File modificabili
 
-## Aggiornamento v11
+- `data/abbonati.json`: lista abbonati mostrata nei campi.
+- `data/obiettivi.json`: obiettivi generati casualmente.
+- `js/script.js`: lista paesi World Cup per le bandiere casuali.
 
-- Aggiunta la sezione `Abbonati` al menu.
-- Creata lista abbonati predisposta per Twitch.
-- Aggiunti i box vantaggi abbonato richiesti.
-- La lista abbonati può essere gestita manualmente con `data/abbonati.json` oppure collegata più avanti a un backend Twitch.
+## Font
+
+Inserisci manualmente, se non già presenti:
+
+```text
+assets/fonts/MODERNIZ.OTF
+assets/fonts/INLANDERS DEMO.OTF
+```
+
+## Pubblicazione GitHub Pages
+
+Carica tutti i file nella root della repository, non dentro una sottocartella.
 
 
-## Versione v12
-
-- Aggiunto lo sfondo dedicato `assets/world-cup-background.webp`.
-- Lo sfondo compare solo quando è attiva la sezione **World Cup**.
-- Le sezioni Gioca, Obiettivi e Abbonati mantengono lo sfondo originale.
+## Aggiornamento v15
+- Header/menu reso più compatto per evitare testi tagliati.
+- Voce di menu 'Altri progetti' rinominata in 'Minigame'.
 
 
-## Aggiornamento v13 - Abbonati in formazione
+## Versione v16
+- La voce Obiettivi nel menu è stata sostituita da FUT.
+- La sezione FUT contiene Database Carte, Spacchetto, Obiettivi e Prossimamente.
+- Il box Obiettivi apre la sezione degli obiettivi random nella stessa pagina.
 
-La sezione Abbonati ora mostra gli abbonati Twitch come formazioni su uno o più campi da calcio.
 
-- Ogni campo contiene al massimo 11 abbonati.
-- Se gli abbonati superano 11, vengono creati automaticamente più campi.
-- A ogni refresh gli abbonati vengono rimescolati e assegnati a ruoli/posizioni diverse.
-- La lista si modifica manualmente in `data/abbonati.json`.
-- Lo sfondo dei campi è `assets/subscriber-field.png`.
+## Versione v17
+- Il box 4 della sezione FUT è diventato **Vetrina Carte**.
+- La vetrina mostra 4 carte casuali lette da `data/cards.json`.
+- Le immagini relative `img/...` vengono risolte automaticamente sul sito carte.
+
+## FUT - Vetrina Carte
+
+Il quarto box della sezione FUT mostra carte casuali prese da `data/cards.json`.
+Le immagini con link completi vengono usate direttamente; quelle relative tipo `img/nome.png` vengono risolte sul sito `https://pavoniingrifati.github.io/vetrina-carte/`.
+Cliccando sul box si apre il database carte completo.
+
+
+## Aggiornamento v18
+- Corretto il layout della sezione FUT: i box non si sovrappongono più.
+- Ridotta la dimensione dei titoli FUT.
+- La Vetrina Carte ora usa una griglia interna più compatta.
+- Aggiunto `data/cards.js` come fallback locale per mostrare le carte anche aprendo il sito senza server.
+
+## Aggiornamento v19
+- Rimosso il quarto box della sezione FUT.
+- Aggiunta una vetrina libera sopra i box FUT con testo: **Diventa una carta!** e **!ruolo + il tuo ruolo in live**.
+- Le carte casuali appaiono grandi, non tagliate, affiancate e leggermente sovrapposte.
+- I tre box FUT rimasti sono Database Carte, Spacchetto e Obiettivi.
