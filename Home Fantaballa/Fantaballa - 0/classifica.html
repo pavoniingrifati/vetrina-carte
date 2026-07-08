@@ -177,7 +177,7 @@
       width:100%;
       border-collapse:separate;
       border-spacing:0;
-      min-width:520px;
+      min-width:980px;
     }
     th, td {
       padding:14px 16px;
@@ -192,8 +192,14 @@
       text-transform:uppercase;
       background:#fff7df;
     }
-    th:first-child, td:first-child { width:80px; text-align:center; }
-    th:last-child, td:last-child { width:220px; text-align:center; }
+    th:first-child, td:first-child { width:66px; text-align:center; }
+    th:nth-child(2), td:nth-child(2) { min-width:190px; }
+    th:nth-child(3), td:nth-child(3),
+    th:nth-child(4), td:nth-child(4),
+    th:nth-child(5), td:nth-child(5),
+    th:nth-child(7), td:nth-child(7),
+    th:nth-child(8), td:nth-child(8) { text-align:center; }
+    th:last-child, td:last-child { min-width:190px; }
     tr:last-child td { border-bottom:0; }
     .rank {
       display:inline-grid;
@@ -219,6 +225,22 @@
       font-weight:900;
       padding:5px 10px;
     }
+    .stat-pill {
+      display:inline-flex;
+      min-height:32px;
+      align-items:center;
+      justify-content:center;
+      border-radius:999px;
+      padding:5px 10px;
+      background:#fff7df;
+      border:1px solid #ead093;
+      color:#6d5418;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .team-cell strong { display:block; font-size:17px; }
+    .team-cell small { display:block; color:#8a8170; font-size:11px; margin-top:3px; text-transform:uppercase; letter-spacing:.08em; }
+    .scorer-cell { max-width:230px; white-space:normal; line-height:1.25; }
     .empty {
       color:#8a8170;
     }
@@ -258,7 +280,7 @@
       p,li { font-size:15px; line-height:1.45; }
       .updated { display:inline-block; white-space:normal; margin-top:10px; line-height:1.15; }
       .table-wrap { border-radius:16px; }
-      table { min-width:430px; }
+      table { min-width:900px; }
       th,td { padding:10px 8px; }
     }
 
@@ -295,7 +317,7 @@
           <img class="logo" src="assets/fantaballa-logo.png" alt="Fantaballa" />
           <div class="label">Classifica</div>
           <h1>Campioni del mondo</h1>
-          <p class="sub">Classifica completa aggiornata dopo la verifica delle vittorie inviate.</p>
+          <p class="sub">Classifica ufficiale con risultati, modulo, OVR e miglior marcatore.</p>
         </div>
         <div id="leaderboardUpdated" class="updated">Caricamento classifica...</div>
       </div>
@@ -305,21 +327,24 @@
           <thead>
             <tr>
               <th>Pos</th>
-              <th>Nome squadra</th>
-              <th>N. campione del mondo</th>
+              <th>Squadra</th>
+              <th>Vittorie</th>
+              <th>Pareggi</th>
+              <th>Sconfitte</th>
+              <th>Gol fatti/subiti</th>
+              <th>Modulo</th>
+              <th>OVR medio</th>
+              <th>Capocannoniere</th>
             </tr>
           </thead>
           <tbody id="leaderboardBody">
             <tr>
               <td><span class="rank">-</span></td>
-              <td class="empty">In attesa del primo campione</td>
-              <td><span class="count">0</span></td>
+              <td class="empty" colspan="8">In attesa del primo campione</td>
             </tr>
           </tbody>
         </table>
       </div>
-
-      <p class="note">Per modificare questa classifica aggiorna il file <strong>data/classifica.json</strong>, salva e ricarica questa pagina.</p>
     </section>
   </main>
 
@@ -334,24 +359,80 @@
         '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '"':'&quot;'
       }[ch]));
 
-      const countOf = row => Number(row.campione_del_mondo ?? row.campioni_del_mondo ?? row.vittorie ?? row.count ?? 0) || 0;
-      const nameOf = row => String(row.nome_squadra ?? row.teamName ?? row.squadra ?? '').trim();
+      const valueOf = (row, keys, fallback = '') => {
+        for (const key of keys) {
+          if (row && row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== '') return row[key];
+        }
+        return fallback;
+      };
+      const numberOf = (row, keys, fallback = 0) => {
+        const raw = valueOf(row, keys, fallback);
+        const value = Number(raw);
+        return Number.isFinite(value) ? value : fallback;
+      };
+      const nameOf = row => String(valueOf(row, ['squadra','nome_squadra','teamName','team_name','name'], '')).trim();
+      const winsOf = row => numberOf(row, ['vittorie','wins','campione_del_mondo','campioni_del_mondo','count'], 0);
+      const drawsOf = row => numberOf(row, ['pareggi','draws'], 0);
+      const lossesOf = row => numberOf(row, ['sconfitte','losses'], 0);
+      const goalsTextOf = row => {
+        const combined = valueOf(row, ['gol_fatti_subiti','golFattiSubiti','goals'], '');
+        if (combined) return String(combined);
+        const gf = valueOf(row, ['gol_fatti','golFatti','goalsFor','gf'], '');
+        const ga = valueOf(row, ['gol_subiti','golSubiti','goalsAgainst','ga'], '');
+        return gf !== '' || ga !== '' ? `${gf || 0}/${ga || 0}` : '—';
+      };
+      const ovrOf = row => {
+        const value = valueOf(row, ['ovr_medio','OVR medio','avgOvr','averageOvr','overall'], '');
+        if (value === '') return '—';
+        const num = Number(value);
+        return Number.isFinite(num) ? num.toLocaleString('it-IT', { maximumFractionDigits:1 }) : String(value);
+      };
+      const scorerOf = row => {
+        const value = valueOf(row, ['capocannoniere','topScorer','top_scorer','miglior_marcatore'], '');
+        if (!value) return '—';
+        if (typeof value === 'object') {
+          const name = value.nome || value.name || value.player || value.playerName || '—';
+          const goals = value.gol ?? value.goals ?? value.reti;
+          return goals !== undefined ? `${name} (${goals})` : String(name);
+        }
+        return String(value);
+      };
+      const moduleOf = row => String(valueOf(row, ['modulo','formation'], '—'));
 
       function renderLeaderboard(data) {
         const rows = Array.isArray(data) ? data : Array.isArray(data.classifica) ? data.classifica : [];
         const validRows = rows
-          .map(row => ({ name:nameOf(row), count:countOf(row) }))
+          .map(row => ({
+            name:nameOf(row),
+            wins:winsOf(row),
+            draws:drawsOf(row),
+            losses:lossesOf(row),
+            goals:goalsTextOf(row),
+            module:moduleOf(row),
+            ovr:ovrOf(row),
+            scorer:scorerOf(row)
+          }))
           .filter(row => row.name)
-          .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'it'));
+          .sort((a, b) => b.wins - a.wins || a.losses - b.losses || a.name.localeCompare(b.name, 'it'));
 
         if (!validRows.length) {
-          body.innerHTML = '<tr><td><span class="rank">-</span></td><td class="empty">In attesa del primo campione</td><td><span class="count">0</span></td></tr>';
+          body.innerHTML = '<tr><td><span class="rank">-</span></td><td class="empty" colspan="8">In attesa del primo campione</td></tr>';
         } else {
-          body.innerHTML = validRows.map((row, index) => `<tr><td><span class="rank">${index + 1}</span></td><td>${escape(row.name)}</td><td><span class="count">${escape(row.count)}</span></td></tr>`).join('');
+          body.innerHTML = validRows.map((row, index) => `<tr>
+            <td><span class="rank">${index + 1}</span></td>
+            <td class="team-cell"><strong>${escape(row.name)}</strong><small>Fantaballa XI</small></td>
+            <td><span class="count">${escape(row.wins)}</span></td>
+            <td><span class="stat-pill">${escape(row.draws)}</span></td>
+            <td><span class="stat-pill">${escape(row.losses)}</span></td>
+            <td><span class="stat-pill">${escape(row.goals)}</span></td>
+            <td><span class="stat-pill">${escape(row.module)}</span></td>
+            <td><span class="stat-pill">${escape(row.ovr)}</span></td>
+            <td class="scorer-cell">${escape(row.scorer)}</td>
+          </tr>`).join('');
         }
 
         if (updated) {
-          const updatedText = data && data.aggiornato_il ? `Aggiornata: ${data.aggiornato_il}` : 'Da data/classifica.json';
+          const updatedText = data && data.aggiornato_il ? `Aggiornata: ${data.aggiornato_il}` : 'Classifica aggiornata';
           updated.textContent = updatedText;
         }
       }
@@ -365,8 +446,8 @@
           })
           .then(renderLeaderboard)
           .catch(() => {
-            if (updated) updated.textContent = 'Modifica data/classifica.json';
-            body.innerHTML = '<tr><td><span class="rank">-</span></td><td class="empty">Classifica non caricata</td><td><span class="count">0</span></td></tr>';
+            if (updated) updated.textContent = 'Classifica non disponibile';
+            body.innerHTML = '<tr><td><span class="rank">-</span></td><td class="empty" colspan="8">Classifica non disponibile</td></tr>';
           });
       }
 

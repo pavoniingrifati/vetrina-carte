@@ -40,6 +40,8 @@
     .team-name-input { width:100%; border:2px solid var(--strong); background:#f8f6ef; color:var(--ink); font-weight:900; font-size:18px; padding:12px 12px; outline:none; box-shadow:3px 3px 0 rgba(20,20,20,.14); }
     .team-name-input:focus { border-color:var(--red); box-shadow:3px 3px 0 rgba(239,67,43,.22); }
     .team-name-input:disabled { opacity:.78; cursor:not-allowed; background:#eee5d0; }
+    .team-name-input.needs-name { animation:teamNameShake .18s linear 3; border-color:var(--red); }
+    @keyframes teamNameShake { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-4px); } 75% { transform:translateX(4px); } }
     .team-name-note { margin-top:10px; color:#716a5d; font-size:13px; font-weight:800; line-height:1.35; }
     .draw-card .code-row { display:flex; align-items:flex-end; gap:8px; line-height:.9; margin-bottom:8px; }
     .draw-card .code { font-size:24px; font-weight:700; letter-spacing:.02em; }
@@ -4780,8 +4782,8 @@
       <aside class="left-col">
         <section class="card" id="teamNamePanel">
           <div class="label">Nome squadra</div>
-          <input id="teamNameInput" class="team-name-input" type="text" maxlength="24" value="La tua XI" autocomplete="off" />
-          <div class="team-name-note" id="teamNameNote">Scegli il nome prima di premere Roll: restera' bloccato per tutto il draft. Se coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa.
+          <input id="teamNameInput" class="team-name-input" type="text" maxlength="24" value="" placeholder="Scrivi il nome della squadra" autocomplete="off" />
+          <div class="team-name-note" id="teamNameNote">Scrivi il nome della squadra prima di premere Roll: e' obbligatorio e restera' bloccato per tutto il draft. Se coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa.
 </div>
         </section>
 
@@ -4850,7 +4852,7 @@
         <div class="scorebars"><span class="bar red"></span><span class="metric">ATT <b id="attackScore">0</b></span><span class="bar yellow"></span><span class="metric">MID <b id="midfieldScore">0</b></span><span class="bar"></span><span class="metric">DEF <b id="defenseScore">0</b></span></div>
         <div id="teamList" class="boxscore-list"></div>
         <div class="summary-card">
-          <div class="summary-row"><span>Squadra</span><b id="teamNameSummary">La tua XI</b></div>
+          <div class="summary-row"><span>Squadra</span><b id="teamNameSummary">—</b></div>
           <div class="summary-row"><span>Modulo</span><b id="formationSummary">4-3-3</b></div>
           <div class="summary-row"><span>Average OVR</span><b id="avgOvr">—</b></div>
           <div class="summary-row"><span>Intesa</span><b id="chemistryScore">0</b></div>
@@ -4889,7 +4891,7 @@
         <div class="broadcast-scoreboard">
           <div class="broadcast-team broadcast-team-home">
             <span id="broadcastHomeCode" class="broadcast-team-code">XI</span>
-            <strong id="broadcastHomeName">La tua XI</strong>
+            <strong id="broadcastHomeName">—</strong>
           </div>
           <div class="broadcast-center">
             <div id="broadcastScore" class="broadcast-score">VS</div>
@@ -5014,7 +5016,7 @@
     let selectedFormation = safeGet(FORMATION_KEY, '4-3-3') || '4-3-3';
     if (!FORMATIONS[selectedFormation]) selectedFormation = '4-3-3';
     let formationConfirmed = safeGet(FORMATION_CONFIRMED_KEY, '0') === '1' || selected.length > 0;
-    let teamName = cleanTeamName(safeGet(TEAM_NAME_KEY, 'La tua XI')) || 'La tua XI';
+    let teamName = cleanTeamName(safeGet(TEAM_NAME_KEY, ''));
     let rerollsLeft = clampNumber(Number(safeGet(REROLL_KEY, String(REROLL_LIMIT))), 0, REROLL_LIMIT);
     selected = migrateSelectedSlots(selected);
     let currentNation = null;
@@ -5232,6 +5234,28 @@
     }
     function ratingOf(player) { return Number(player.effectiveOvr ?? player.ovr ?? 0); }
     function cleanTeamName(value) { return String(value || '').replace(/\s+/g, ' ').trim().slice(0, 24); }
+    function isValidTeamName(value = teamName) {
+      const clean = cleanTeamName(value);
+      return Boolean(clean) && normalizePlayerName(clean) !== normalizePlayerName('La tua XI');
+    }
+    function requireTeamNameBeforeRoll() {
+      const clean = cleanTeamName(els.teamNameInput ? els.teamNameInput.value : teamName);
+      teamName = clean;
+      if (els.teamNameInput) els.teamNameInput.value = clean;
+      if (!isValidTeamName(clean)) {
+        setNotice("Prima di iniziare devi scrivere un nome squadra diverso da 'La tua XI'.");
+        showToast("Inserisci il nome della squadra prima di rollare.");
+        if (els.teamNameInput) {
+          els.teamNameInput.focus();
+          els.teamNameInput.classList.add('needs-name');
+          window.setTimeout(() => els.teamNameInput && els.teamNameInput.classList.remove('needs-name'), 900);
+        }
+        return false;
+      }
+      safeSet(TEAM_NAME_KEY, clean);
+      return true;
+    }
+    function displayTeamName(value = teamName) { return isValidTeamName(value) ? cleanTeamName(value) : '—'; }
     function isTeamNameLocked() {
       return formationConfirmed || selected.length > 0 || Boolean(currentNation) || Boolean(pendingPlayer) || isSpinning || Boolean(tournamentState);
     }
@@ -5245,7 +5269,7 @@
       if (els.teamNameNote) {
         els.teamNameNote.textContent = locked
           ? 'Nome bloccato per questo draft. Se coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa.'
-          : "Scegli il nome prima di premere Roll: restera' bloccato per tutto il draft. Se coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa.";
+          : "Scrivi il nome della squadra prima di premere Roll: e' obbligatorio e restera' bloccato per tutto il draft. Se coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa.";
       }
     }
 
@@ -5255,8 +5279,9 @@
         showToast("Nome squadra gia' bloccato per questo draft. Premi Reset per ricominciare.");
         return;
       }
-      teamName = cleanTeamName(els.teamNameInput.value) || 'La tua XI';
-      safeSet(TEAM_NAME_KEY, teamName);
+      teamName = cleanTeamName(els.teamNameInput.value);
+      if (teamName) safeSet(TEAM_NAME_KEY, teamName);
+      else safeRemove(TEAM_NAME_KEY);
       renderCandidates();
       renderPitch();
       renderScoreboard();
@@ -5321,9 +5346,7 @@
     async function spinNation() {
       if (isSpinning) return;
       if (!formationConfirmed) {
-        teamName = cleanTeamName(els.teamNameInput.value) || 'La tua XI';
-        els.teamNameInput.value = teamName;
-        safeSet(TEAM_NAME_KEY, teamName);
+        if (!requireTeamNameBeforeRoll()) { render(); return; }
         formationConfirmed = true;
         safeSet(FORMATION_CONFIRMED_KEY, '1');
         renderTeamNameLock();
@@ -5477,7 +5500,7 @@
       clearLiveSimulation();
       if (lastPlacedTimer) { clearTimeout(lastPlacedTimer); lastPlacedTimer = null; }
       lastPlacedSlotId = null;
-      selected = []; currentNation = null; currentCandidates = []; pendingPlayer = null; isSpinning = false; tournamentState = null; selectedFormation = '4-3-3'; teamName = 'La tua XI'; rerollsLeft = REROLL_LIMIT; formationConfirmed = false; els.appRoot.classList.remove('tournament-mode');
+      selected = []; currentNation = null; currentCandidates = []; pendingPlayer = null; isSpinning = false; tournamentState = null; selectedFormation = '4-3-3'; teamName = ''; rerollsLeft = REROLL_LIMIT; formationConfirmed = false; els.appRoot.classList.remove('tournament-mode');
       clearRunStorage();
       els.teamNameInput.value = teamName;
       render();
@@ -5488,9 +5511,10 @@
       renderTeamNameLock(); renderFormations(); renderDrawCard(); renderCandidates(); renderPitch(); renderScoreboard(); renderPlacementModal(); renderFinal(); renderTournament();
       const mustChoose = currentNation && currentCandidates.length > 0;
       const canReroll = mustChoose && rerollsLeft > 0 && selected.length < MAX_PICKS;
-      els.bigRollBtn.disabled = isSpinning || selected.length >= MAX_PICKS || mustChoose;
-      els.spinBtn.disabled = isSpinning || selected.length >= MAX_PICKS || (mustChoose && !canReroll);
-      els.spinBtn.textContent = pendingPlayer ? `Annulla e re-roll (${rerollsLeft})` : mustChoose ? `Re-roll (${rerollsLeft})` : '↺ Altra nazionale';
+      const needsTeamName = !formationConfirmed && !isValidTeamName();
+      els.bigRollBtn.disabled = isSpinning || selected.length >= MAX_PICKS || mustChoose || needsTeamName;
+      els.spinBtn.disabled = isSpinning || selected.length >= MAX_PICKS || (mustChoose && !canReroll) || needsTeamName;
+      els.spinBtn.textContent = pendingPlayer ? `Annulla e re-roll (${rerollsLeft})` : mustChoose ? `Re-roll (${rerollsLeft})` : (needsTeamName ? 'Scrivi nome squadra' : '↺ Altra nazionale');
       els.rerollInfo.textContent = `Re-roll disponibili: ${rerollsLeft}/${REROLL_LIMIT}`;
     }
 
@@ -5504,7 +5528,7 @@
       els.formationNote.textContent = locked ? `Modulo bloccato: ${selectedFormation} · P${counts.P} D${counts.D} C${counts.C} A${counts.A}. Per cambiarlo premi Reset Draft.` : `Modulo selezionato: ${selectedFormation} · P${counts.P} D${counts.D} C${counts.C} A${counts.A}. Premi Roll per iniziare e bloccarlo.`;
       if (els.formationActions) els.formationActions.style.display = 'none';
       els.formationSummary.textContent = selectedFormation;
-      els.teamNameSummary.textContent = teamName;
+      els.teamNameSummary.textContent = displayTeamName();
     }
 
     function renderDrawCard() {
@@ -5523,7 +5547,11 @@
         els.statusLine.textContent = 'Team completed'; els.rollCta.innerHTML = 'Draft completo'; els.afterRollActions.style.display = 'grid'; setNotice('');
       } else if (!isSpinning) {
         els.nationCode.textContent = '--'; els.nationName.textContent = picks ? 'Ready?' : 'Roll'; els.drawSubtitle.textContent = selectedFormation;
-        els.statusLine.textContent = picks ? 'Roll another team' : (formationConfirmed ? 'Roll a team to start' : 'Choose formation preview'); els.rollCta.innerHTML = picks ? "Rolla per sorteggiare un'altra nazionale" : (formationConfirmed ? 'Gira una nazionale' : `Modulo ${escapeHtml(selectedFormation)} pronto: premi Roll per iniziare`); els.afterRollActions.style.display = (picks || formationConfirmed) ? 'grid' : 'none'; setNotice('');
+        const needsTeamName = !formationConfirmed && !isValidTeamName();
+        els.statusLine.textContent = picks ? 'Roll another team' : (needsTeamName ? 'Scrivi il nome squadra' : (formationConfirmed ? 'Roll a team to start' : 'Choose formation preview'));
+        els.rollCta.innerHTML = picks ? "Rolla per sorteggiare un'altra nazionale" : (needsTeamName ? 'Scrivi il nome della squadra, poi premi Roll' : (formationConfirmed ? 'Gira una nazionale' : `Modulo ${escapeHtml(selectedFormation)} pronto: premi Roll per iniziare`));
+        els.afterRollActions.style.display = (picks || formationConfirmed) ? 'grid' : 'none';
+        setNotice(needsTeamName ? "Nome squadra obbligatorio: non usare 'La tua XI'." : '');
       }
     }
 
@@ -5643,7 +5671,7 @@
     function renderFinal() {
       const complete = selected.length >= MAX_PICKS;
       els.final.classList.toggle('show', complete);
-      els.finalText.textContent = complete ? `${teamName} e' pronta per la World Cup.` : 'Hai chiuso il draft rispettando modulo e ruoli.';
+      els.finalText.textContent = complete ? `${displayTeamName()} e' pronta per la World Cup.` : 'Hai chiuso il draft rispettando modulo e ruoli.';
       els.startTournamentBtn.disabled = !complete || Boolean(tournamentState);
       els.startTournamentBtn.textContent = tournamentState ? 'World Cup in corso' : 'Start World Cup';
     }
@@ -5651,6 +5679,7 @@
 
     function startTournament(options = {}) {
       if (selected.length < MAX_PICKS) { showToast('Completa prima gli 11 giocatori.'); return; }
+      if (!isValidTeamName()) { showToast('Inserisci il nome della squadra prima di iniziare il torneo.'); return; }
       els.teamNameInput.value = teamName;
       safeSet(TEAM_NAME_KEY, teamName);
       clearLiveSimulation();
@@ -5907,7 +5936,7 @@
     }
 
     function teamFromUser() {
-      const name = teamName || 'La tua XI';
+      const name = displayTeamName();
       const boostedPlayers = withUserChemistry(selected);
       const stats = calcTeamStats(boostedPlayers, name);
       const chemistry = calcChemistry(selected);
@@ -6074,8 +6103,8 @@
       if (!state) {
         els.broadcastSignal.textContent = 'PRE MATCH';
         els.broadcastPhase.textContent = 'WORLD CUP';
-        els.broadcastHomeCode.textContent = nationCode(teamName || 'La tua XI');
-        els.broadcastHomeName.textContent = teamName || 'La tua XI';
+        els.broadcastHomeCode.textContent = nationCode(displayTeamName());
+        els.broadcastHomeName.textContent = displayTeamName();
         els.broadcastAwayCode.textContent = '---';
         els.broadcastAwayName.textContent = 'Prossimo avversario';
         els.broadcastScore.textContent = 'VS';
@@ -6254,11 +6283,17 @@
       if (!state) return 'FB-WIN';
       if (!state.victoryCode) {
         const day = new Date().toISOString().slice(0,10).replace(/-/g,'');
-        const teamPart = normalizePlayerName(teamName || 'XI').slice(0,10).toUpperCase() || 'XI';
+        const teamPart = normalizePlayerName(displayTeamName()).slice(0,10).toUpperCase() || 'XI';
         const randomPart = Math.random().toString(36).slice(2,6).toUpperCase();
         state.victoryCode = `FB-WIN-${day}-${teamPart}-${randomPart}`;
       }
       return state.victoryCode;
+    }
+
+    function topUserScorerForState(state) {
+      const awards = state ? tournamentAwardStats(state) : { scorers:[] };
+      const scorer = (awards.scorers || []).find(row => row.teamId === USER_TEAM_ID);
+      return scorer ? `${scorer.playerName} (${scorer.goals})` : '—';
     }
 
     function buildVictoryPayload(state) {
@@ -6269,11 +6304,14 @@
       const opponent = finalMatch ? opponentOfUser(finalMatch).name : 'Avversario finale';
       const finalScore = finalMatch ? resultTextForUser(finalMatch) : 'N/D';
       const summary = userTournamentSummary(state);
+      const topScorer = topUserScorerForState(state);
       const dateText = new Date().toLocaleString('it-IT');
       return {
         victoryCode:victoryCodeForState(state),
-        teamName:teamName || 'La tua XI',
+        teamName:displayTeamName(),
+        squadra:displayTeamName(),
         formation:selectedFormation,
+        modulo:selectedFormation,
         avgOvr,
         chemistryScore:chem.score,
         chemistryBonus:chem.totalBonus,
@@ -6282,8 +6320,20 @@
         defense:segmentStrengths.defense || 0,
         finalScore,
         finalOpponent:opponent,
+        capocannoniere:topScorer,
+        capocannoniereSquadra:topScorer,
+        topScorer,
+        migliorMarcatore:topScorer,
         dateText,
-        ...summary
+        ...summary,
+        vittorie:summary.wins,
+        pareggi:summary.draws,
+        sconfitte:summary.losses,
+        golFatti:summary.goalsFor,
+        golSubiti:summary.goalsAgainst,
+        gol_fatti:summary.goalsFor,
+        gol_subiti:summary.goalsAgainst,
+        ovr_medio:avgOvr
       };
     }
 
@@ -6365,7 +6415,7 @@
         <div class="awards-kicker">Coppa alzata</div>
         <h3 class="victory-submit-title">Hai vinto il Mondiale!</h3>
         <p class="victory-submit-text">Invia la vittoria a Fantaballa. Il risultato verra' verificato prima di aggiornare la classifica campioni del mondo.</p>
-        <div class="victory-privacy-note">Cliccando su "Invia vittoria" autorizzi l'invio a Fantaballa dei soli dati necessari: nome squadra, risultato finale, OVR medio, intesa, modulo, statistiche torneo, data e codice vittoria. Non vengono richiesti login, email o password. <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a></div>
+        <div class="victory-privacy-note">Cliccando su "Invia vittoria" autorizzi l'invio a Fantaballa dei soli dati necessari: nome squadra, risultato finale, OVR medio, intesa, modulo, statistiche torneo, capocannoniere squadra, data e codice vittoria. Non vengono richiesti login, email o password. <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a></div>
         <div class="victory-submit-meta">
           <div class="victory-submit-pill"><span>Finale</span>${escapeHtml(payload.finalScore)} vs ${escapeHtml(payload.finalOpponent)}</div>
           <div class="victory-submit-pill"><span>OVR medio</span>${escapeHtml(payload.avgOvr)}</div>
@@ -6466,7 +6516,7 @@
     function exportTeam() {
       const chem = calcChemistry(selected);
       const segmentStrengths = calcSegmentStrengths(selected, chem);
-      const payload = { createdAt:new Date().toISOString(), teamName, formation:selectedFormation, chemistry:chem, segmentStrengths, averageOvr:selected.length ? Number((selected.reduce((sum,p)=>sum+effectiveOvr(p,chem),0)/selected.length).toFixed(2)) : 0, players:withUserChemistry(selected) };
+      const payload = { createdAt:new Date().toISOString(), teamName:displayTeamName(), formation:selectedFormation, chemistry:chem, segmentStrengths, averageOvr:selected.length ? Number((selected.reduce((sum,p)=>sum+effectiveOvr(p,chem),0)/selected.length).toFixed(2)) : 0, players:withUserChemistry(selected) };
       const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' });
       const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'squadra-ruota-nazionali.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showToast('Squadra esportata.');
     }
@@ -6475,7 +6525,7 @@
       const avg = selected.length ? (selected.reduce((sum,p)=>sum+effectiveOvr(p,chem),0)/selected.length).toFixed(1) : '—';
       const strength = calcSegmentStrengths(selected, chem);
       const slots = assignedMap();
-      return ['La mia squadra - Ruota Nazionali', `Nome: ${teamName}`, `Modulo: ${selectedFormation}`, `OVR medio con intesa: ${avg}`, `OVR reparti: ATT ${strength.attack || "—"} · MID ${strength.midfield || "—"} · DEF ${strength.defense || "—"}`, `Intesa: ${chem.score}/100 (+${chem.totalBonus})`, `Bonus nome squadra = nome calciatore: +${chem.teamNameTotalBonus || 0}`, `Bonus abbonati: ${chem.subscriberCount || 0} in campo · ${chem.subscriberNationPairs || 0} nazionalita' con almeno 2 abbonati`, '', ...scoreRows().map(slot => {
+      return ['La mia squadra - Ruota Nazionali', `Nome: ${displayTeamName()}`, `Modulo: ${selectedFormation}`, `OVR medio con intesa: ${avg}`, `OVR reparti: ATT ${strength.attack || "—"} · MID ${strength.midfield || "—"} · DEF ${strength.defense || "—"}`, `Intesa: ${chem.score}/100 (+${chem.totalBonus})`, `Bonus nome squadra = nome calciatore: +${chem.teamNameTotalBonus || 0}`, `Bonus abbonati: ${chem.subscriberCount || 0} in campo · ${chem.subscriberNationPairs || 0} nazionalita' con almeno 2 abbonati`, '', ...scoreRows().map(slot => {
         const p = slots.get(slot.instanceId);
         const bonus = p ? bonusForPlayer(p, chem) : 0;
         const teamBonus = p ? (chem.playerTeamNameBonus[p.id] || 0) : 0;

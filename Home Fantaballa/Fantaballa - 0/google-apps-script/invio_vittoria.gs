@@ -36,7 +36,7 @@ function doPost(e) {
     }
     cache.put(cacheKey, '1', 21600); // 6 ore anti doppio click
 
-    const teamName = cleanText(data.teamName || 'La tua XI');
+    const teamName = cleanText(data.teamName || data.squadra || 'N/D');
     const subject = 'Vittoria Mondiale Fantaballa - ' + teamName;
     const body = buildEmailBody(data);
 
@@ -54,7 +54,7 @@ function doPost(e) {
 }
 
 function buildEmailBody(data) {
-  const teamName = cleanText(data.teamName || 'La tua XI');
+  const teamName = cleanText(data.teamName || data.squadra || 'N/D');
   const rows = [
     'Nuova vittoria Mondiale Fantaballa!',
     '',
@@ -62,12 +62,13 @@ function buildEmailBody(data) {
     'Codice vittoria: ' + cleanText(data.victoryCode),
     'Finale: ' + teamName + ' ' + cleanText(data.finalScore || 'N/D') + ' vs ' + cleanText(data.finalOpponent || 'N/D'),
     'Partite giocate: ' + cleanText(data.matches || '0'),
-    'Vittorie: ' + cleanText(data.wins || '0'),
-    'Pareggi: ' + cleanText(data.draws || '0'),
-    'Sconfitte: ' + cleanText(data.losses || '0'),
-    'Gol fatti/subiti: ' + cleanText(data.goalsFor || '0') + '-' + cleanText(data.goalsAgainst || '0'),
-    'Modulo: ' + cleanText(data.formation || 'N/D'),
-    'OVR medio: ' + cleanText(data.avgOvr || '0'),
+    'Vittorie: ' + cleanText(data.vittorie || data.wins || '0'),
+    'Pareggi: ' + cleanText(data.pareggi || data.draws || '0'),
+    'Sconfitte: ' + cleanText(data.sconfitte || data.losses || '0'),
+    'Gol fatti/subiti: ' + cleanText(data.golFatti || data.goalsFor || '0') + '/' + cleanText(data.golSubiti || data.goalsAgainst || '0'),
+    'Modulo: ' + cleanText(data.modulo || data.formation || 'N/D'),
+    'OVR medio: ' + cleanText(data.ovr_medio || data.avgOvr || '0'),
+    'Capocannoniere squadra: ' + cleanText(data.capocannoniereSquadra || data.capocannoniere || data.topScorer || data.migliorMarcatore || 'N/D'),
     'Reparti: ATT ' + cleanText(data.attack || '0') + ' / MID ' + cleanText(data.midfield || '0') + ' / DEF ' + cleanText(data.defense || '0'),
     'Intesa: ' + cleanText(data.chemistryScore || '0') + '/100 (+' + cleanText(data.chemistryBonus || '0') + ')',
     'Data gioco: ' + cleanText(data.dateText || 'N/D'),
