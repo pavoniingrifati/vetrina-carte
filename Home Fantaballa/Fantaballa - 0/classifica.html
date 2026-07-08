@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Classifica Fantaballa</title>
+  <style>
+    :root {
+      --paper:#efe4c9;
+      --paper-2:#f7f0de;
+      --ink:#2a2419;
+      --muted:#7d745f;
+      --line:#cdbf9f;
+      --strong:#231d15;
+      --gold:#e8c95d;
+      --red:#d94b35;
+      --shadow-soft:0 10px 30px rgba(69,51,20,.12);
+    }
+    * { box-sizing:border-box; }
+    html, body { min-height:100%; }
+    body {
+      margin:0;
+      background:
+        radial-gradient(circle at 12% 14%, rgba(255,255,255,.26), transparent 18%),
+        radial-gradient(circle at 86% 9%, rgba(255,255,255,.2), transparent 16%),
+        linear-gradient(135deg, #eadbb9 0%, #efe4c9 38%, #f6efdd 100%);
+      color:var(--ink);
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body:before {
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      opacity:.17;
+      background-image:
+        repeating-linear-gradient(0deg, rgba(123,104,62,.08) 0 1px, transparent 1px 7px),
+        repeating-linear-gradient(90deg, rgba(123,104,62,.05) 0 1px, transparent 1px 9px);
+      mix-blend-mode:multiply;
+    }
+    .page {
+      position:relative;
+      width:min(980px, calc(100% - 24px));
+      margin:0 auto;
+      padding:18px 0 32px;
+    }
+    .masthead {
+      min-height:48px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      background:linear-gradient(180deg, #e4c14e 0%, #d9b449 100%);
+      border:2px solid rgba(35,29,21,.35);
+      border-top-width:4px;
+      box-shadow:var(--shadow-soft);
+      border-radius:16px 16px 10px 10px;
+      margin-bottom:18px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      transform:rotate(-.35deg);
+    }
+    .dot { color:var(--red); margin-right:8px; font-size:18px; }
+    .actions {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+    .back-btn, .refresh-btn {
+      appearance:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:46px;
+      padding:12px 18px;
+      border-radius:16px;
+      border:2px solid #ccb580;
+      background:linear-gradient(180deg,#fffef9,#f1e7cf);
+      color:#2a2419;
+      text-decoration:none;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      box-shadow:0 4px 0 rgba(128,108,64,.14);
+      cursor:pointer;
+    }
+    .refresh-btn {
+      border-color:#a83220;
+      background:linear-gradient(180deg,#e25b43,#c8402b);
+      color:#fff;
+      box-shadow:0 4px 0 rgba(153,46,29,.22);
+    }
+    .leaderboard {
+      position:relative;
+      background:linear-gradient(180deg,#fffefb,#f4ead6);
+      border:2px solid rgba(99,84,56,.22);
+      box-shadow:var(--shadow-soft);
+      border-radius:24px;
+      padding:20px;
+      overflow:hidden;
+    }
+    .leaderboard:before {
+      content:"";
+      position:absolute;
+      top:-8px;
+      right:24px;
+      width:72px;
+      height:18px;
+      border-radius:3px;
+      background:rgba(239,230,176,.9);
+      border:1px solid rgba(143,126,77,.18);
+      transform:rotate(4deg);
+      opacity:.92;
+    }
+    .leaderboard-head {
+      display:flex;
+      justify-content:space-between;
+      gap:18px;
+      align-items:flex-start;
+      margin-bottom:16px;
+    }
+    .logo {
+      width:min(150px, 42vw);
+      height:auto;
+      display:block;
+      margin-bottom:10px;
+      filter:drop-shadow(0 8px 14px rgba(0,0,0,.12));
+    }
+    .label {
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.24em;
+      color:#8a7446;
+      text-transform:uppercase;
+      margin-bottom:8px;
+    }
+    h1 {
+      margin:0;
+      font-size:clamp(34px, 6vw, 62px);
+      line-height:.9;
+      letter-spacing:-.05em;
+      text-transform:uppercase;
+    }
+    .sub {
+      margin:10px 0 0;
+      color:#6d675b;
+      font-weight:900;
+      line-height:1.35;
+    }
+    .updated {
+      align-self:flex-start;
+      white-space:nowrap;
+      border:1px solid #e2d2ac;
+      background:#fff7df;
+      color:#6d5418;
+      border-radius:999px;
+      padding:8px 11px;
+      font-size:12px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .table-wrap {
+      overflow:auto;
+      border-radius:18px;
+      border:1px solid #e2d2ac;
+      background:rgba(255,255,255,.58);
+    }
+    table {
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      min-width:520px;
+    }
+    th, td {
+      padding:14px 16px;
+      border-bottom:1px dashed #ddcfaf;
+      text-align:left;
+      font-weight:900;
+    }
+    th {
+      color:#8a7446;
+      font-size:12px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      background:#fff7df;
+    }
+    th:first-child, td:first-child { width:80px; text-align:center; }
+    th:last-child, td:last-child { width:220px; text-align:center; }
+    tr:last-child td { border-bottom:0; }
+    .rank {
+      display:inline-grid;
+      place-items:center;
+      width:38px;
+      height:38px;
+      border-radius:999px;
+      background:#fff7df;
+      border:1px solid #ead093;
+      color:#8a6210;
+      font-weight:900;
+    }
+    .count {
+      display:inline-flex;
+      min-width:48px;
+      min-height:36px;
+      align-items:center;
+      justify-content:center;
+      border-radius:14px;
+      background:#2f2619;
+      color:#fff;
+      font-size:18px;
+      font-weight:900;
+      padding:5px 10px;
+    }
+    .empty {
+      color:#8a8170;
+    }
+    .note {
+      margin:14px 0 0;
+      padding:12px 14px;
+      border:1px solid #e2d2ac;
+      background:#fff7df;
+      border-radius:16px;
+      color:#6d5418;
+      font-weight:900;
+      line-height:1.35;
+    }
+    @media (max-width:680px) {
+      .page { width:min(100% - 12px, 980px); padding-top:8px; }
+      .masthead { transform:none; }
+      .leaderboard { padding:14px 10px; }
+      .leaderboard-head { display:block; }
+      .updated { display:inline-block; margin-top:10px; white-space:normal; }
+      th, td { padding:11px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="masthead"><span class="dot">●</span> Fantaballa World Cup</div>
+
+    <div class="actions">
+      <a class="back-btn" href="index.html">Torna al gioco</a>
+      <button class="refresh-btn" id="refreshBtn" type="button">Aggiorna</button>
+    </div>
+
+    <section class="leaderboard" aria-label="Classifica completa">
+      <div class="leaderboard-head">
+        <div>
+          <img class="logo" src="assets/fantaballa-logo.png" alt="Fantaballa" />
+          <div class="label">Classifica</div>
+          <h1>Campioni del mondo</h1>
+          <p class="sub">Classifica completa aggiornata manualmente con le email vittoria ricevute.</p>
+        </div>
+        <div id="leaderboardUpdated" class="updated">Caricamento classifica...</div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Pos</th>
+              <th>Nome squadra</th>
+              <th>N. campione del mondo</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody">
+            <tr>
+              <td><span class="rank">-</span></td>
+              <td class="empty">In attesa del primo campione</td>
+              <td><span class="count">0</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="note">Per modificare questa classifica aggiorna il file <strong>data/classifica.json</strong>, salva e ricarica questa pagina.</p>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const body = document.getElementById('leaderboardBody');
+      const updated = document.getElementById('leaderboardUpdated');
+      const refreshBtn = document.getElementById('refreshBtn');
+      if (!body) return;
+
+      const escape = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({
+        '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '"':'&quot;'
+      }[ch]));
+
+      const countOf = row => Number(row.campione_del_mondo ?? row.campioni_del_mondo ?? row.vittorie ?? row.count ?? 0) || 0;
+      const nameOf = row => String(row.nome_squadra ?? row.teamName ?? row.squadra ?? '').trim();
+
+      function renderLeaderboard(data) {
+        const rows = Array.isArray(data) ? data : Array.isArray(data.classifica) ? data.classifica : [];
+        const validRows = rows
+          .map(row => ({ name:nameOf(row), count:countOf(row) }))
+          .filter(row => row.name)
+          .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'it'));
+
+        if (!validRows.length) {
+          body.innerHTML = '<tr><td><span class="rank">-</span></td><td class="empty">In attesa del primo campione</td><td><span class="count">0</span></td></tr>';
+        } else {
+          body.innerHTML = validRows.map((row, index) => `<tr><td><span class="rank">${index + 1}</span></td><td>${escape(row.name)}</td><td><span class="count">${escape(row.count)}</span></td></tr>`).join('');
+        }
+
+        if (updated) {
+          const updatedText = data && data.aggiornato_il ? `Aggiornata: ${data.aggiornato_il}` : 'Da data/classifica.json';
+          updated.textContent = updatedText;
+        }
+      }
+
+      function loadLeaderboard() {
+        if (updated) updated.textContent = 'Caricamento classifica...';
+        fetch('data/classifica.json', { cache:'no-store' })
+          .then(response => {
+            if (!response.ok) throw new Error('classifica non trovata');
+            return response.json();
+          })
+          .then(renderLeaderboard)
+          .catch(() => {
+            if (updated) updated.textContent = 'Modifica data/classifica.json';
+            body.innerHTML = '<tr><td><span class="rank">-</span></td><td class="empty">Classifica non caricata</td><td><span class="count">0</span></td></tr>';
+          });
+      }
+
+      refreshBtn.addEventListener('click', loadLeaderboard);
+      loadLeaderboard();
+    })();
+  </script>
+</body>
+</html>
