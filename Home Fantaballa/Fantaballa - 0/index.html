@@ -3965,6 +3965,23 @@
     }
     .victory-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .victory-mail-btn { text-decoration:none; display:inline-flex; align-items:center; justify-content:center; }
+    .victory-mail-btn.is-loading { opacity:.72; cursor:wait; }
+    .victory-mail-btn.sent { background:linear-gradient(180deg,#4d8c56,#3d7745); border-color:#2f6f39; }
+    .victory-send-status {
+      display:none;
+      width:100%;
+      margin-top:8px;
+      padding:9px 11px;
+      border-radius:14px;
+      border:1px solid #e2d2ac;
+      background:#fff7df;
+      color:#6d5418;
+      font-weight:900;
+      line-height:1.35;
+    }
+    .victory-send-status.show { display:block; }
+    .victory-send-status.ok { background:#e9f6df; border-color:#b8d89e; color:#2f6f39; }
+    .victory-send-status.error { background:#fff0ea; border-color:#e1ad9b; color:#9e321f; }
     .victory-code {
       font-weight:900;
       color:#6d5418;
@@ -4204,6 +4221,8 @@
     const MAX_PICKS = 11;
     const STORAGE_KEY = 'ruota-nazionali-draft-v6-worldcup';
     const VICTORY_EMAIL = 'pavoniingrifati@gmail.com';
+    const VICTORY_ENDPOINT = 'INCOLLA_QUI_URL_WEB_APP_GOOGLE_APPS_SCRIPT';
+    const VICTORY_ENDPOINT_PLACEHOLDER = 'INCOLLA_QUI_URL_WEB_APP_GOOGLE_APPS_SCRIPT';
     const FORMATION_KEY = STORAGE_KEY + '-formation';
     const FORMATION_CONFIRMED_KEY = STORAGE_KEY + '-formation-confirmed';
     const TEAM_NAME_KEY = STORAGE_KEY + '-team-name';
@@ -4289,6 +4308,7 @@
     els.nextMatchBtn.addEventListener('click', revealNextMatch);
     els.instantResultBtn.addEventListener('click', instantResult);
     els.resetTournamentBtn.addEventListener('click', startTournament);
+    els.tournamentMatches.addEventListener('click', handleTournamentMatchesClick);
     els.cancelPlacementBtn.addEventListener('click', cancelPlacement);
     els.placementOverlay.addEventListener('click', event => { if (event.target === els.placementOverlay) cancelPlacement(); });
     els.teamNameInput.value = teamName;
@@ -5514,47 +5534,91 @@
       };
     }
 
-    function buildVictoryMailto(state) {
-      const p = buildVictoryPayload(state);
-      const subject = `Vittoria Mondiale Fantaballa - ${p.teamName}`;
-      const body = [
-        'Ciao Fantaballa, ho vinto il Mondiale!',
-        '',
-        `Squadra: ${p.teamName}`,
-        `Codice vittoria: ${p.victoryCode}`,
-        `Finale: ${p.teamName} ${p.finalScore} vs ${p.finalOpponent}`,
-        `Partite giocate: ${p.matches}`,
-        `Vittorie: ${p.wins}`,
-        `Pareggi: ${p.draws}`,
-        `Sconfitte: ${p.losses}`,
-        `Gol fatti/subiti: ${p.goalsFor}-${p.goalsAgainst}`,
-        `Modulo: ${p.formation}`,
-        `OVR medio: ${p.avgOvr}`,
-        `Reparti: ATT ${p.attack} / MID ${p.midfield} / DEF ${p.defense}`,
-        `Intesa: ${p.chemistryScore}/100 (+${p.chemistryBonus})`,
-        `Data: ${p.dateText}`,
-        '',
-        'Nota: email generata automaticamente dal bottone vittoria.'
-      ].join('\n');
-      return `mailto:${VICTORY_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    function isVictoryEndpointConfigured() {
+      const endpoint = String(VICTORY_ENDPOINT || '').trim();
+      return Boolean(endpoint) && endpoint !== VICTORY_ENDPOINT_PLACEHOLDER && endpoint.startsWith('https://script.google.com/');
+    }
+
+    function victorySentKey(code) {
+      return STORAGE_KEY + '-victory-sent-' + String(code || 'unknown');
+    }
+
+    function setVictorySendStatus(message, type) {
+      const status = document.getElementById('victorySendStatus');
+      if (!status) return;
+      status.textContent = message;
+      status.className = 'victory-send-status show' + (type ? ' ' + type : '');
+    }
+
+    function handleTournamentMatchesClick(event) {
+      const button = event.target.closest('[data-victory-send]');
+      if (!button) return;
+      event.preventDefault();
+      sendVictoryAutomatic(button);
+    }
+
+    async function sendVictoryAutomatic(button) {
+      if (!tournamentState || !isUserChampion(tournamentState)) {
+        setVictorySendStatus('Puoi inviare la vittoria solo dopo aver vinto il Mondiale.', 'error');
+        return;
+      }
+      if (!isVictoryEndpointConfigured()) {
+        setVictorySendStatus('Manca il link Google Apps Script. Incolla il link /exec dentro VICTORY_ENDPOINT in index.html.', 'error');
+        return;
+      }
+
+      const payload = buildVictoryPayload(tournamentState);
+      payload.cupWon = true;
+      payload.source = 'fantaballa-world-cup';
+      payload.sentAtIso = new Date().toISOString();
+
+      button.disabled = true;
+      button.classList.add('is-loading');
+      button.textContent = 'Invio in corso...';
+      setVictorySendStatus('Invio automatico in corso...', '');
+
+      try {
+        await fetch(VICTORY_ENDPOINT.trim(), {
+          method:'POST',
+          mode:'no-cors',
+          headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+          body:JSON.stringify(payload)
+        });
+        safeSet(victorySentKey(payload.victoryCode), '1');
+        button.classList.remove('is-loading');
+        button.classList.add('sent');
+        button.textContent = 'Vittoria inviata';
+        setVictorySendStatus('Vittoria inviata! Se Google Apps Script e\' configurato, riceverai subito la mail.', 'ok');
+      } catch (error) {
+        button.disabled = false;
+        button.classList.remove('is-loading');
+        button.textContent = 'Invia vittoria automatica';
+        setVictorySendStatus('Invio non riuscito. Controlla il link dello script e riprova.', 'error');
+      }
     }
 
     function renderVictorySubmitCard(state) {
       if (!isUserChampion(state)) return '';
       const payload = buildVictoryPayload(state);
-      const mailto = buildVictoryMailto(state);
+      const sent = safeGet(victorySentKey(payload.victoryCode), '0') === '1';
+      const endpointReady = isVictoryEndpointConfigured();
+      const disabledAttr = sent ? ' disabled' : '';
+      const buttonText = sent ? 'Vittoria inviata' : 'Invia vittoria automatica';
+      const statusText = sent ? 'Vittoria gia\' inviata da questo browser.' : (endpointReady ? 'Clicca una volta: la mail parte senza aprire la posta dell\'utente.' : 'Prima incolla il link Google Apps Script dentro VICTORY_ENDPOINT.');
+      const statusClass = sent ? ' ok' : (endpointReady ? '' : ' error');
       return `<article class="match-card tv-match victory-submit-card">
         <div class="awards-kicker">Coppa alzata</div>
         <h3 class="victory-submit-title">Hai vinto il Mondiale!</h3>
-        <p class="victory-submit-text">Invia la vittoria a Fantaballa con email precompilata. La classifica campioni del mondo verra' aggiornata manualmente dopo il controllo dei risultati.</p>
+        <p class="victory-submit-text">Invia la vittoria a Fantaballa in automatico. La classifica campioni del mondo verra' aggiornata manualmente dopo il controllo dei risultati.</p>
         <div class="victory-submit-meta">
           <div class="victory-submit-pill"><span>Finale</span>${escapeHtml(payload.finalScore)} vs ${escapeHtml(payload.finalOpponent)}</div>
           <div class="victory-submit-pill"><span>OVR medio</span>${escapeHtml(payload.avgOvr)}</div>
           <div class="victory-submit-pill"><span>Intesa</span>${escapeHtml(payload.chemistryScore)}/100 (+${escapeHtml(payload.chemistryBonus)})</div>
         </div>
         <div class="victory-actions">
-          <a class="btn dark victory-mail-btn" href="${escapeAttr(mailto)}">Invia vittoria via email</a>
+          <button class="btn dark victory-mail-btn${sent ? ' sent' : ''}" type="button" data-victory-send${disabledAttr}>${escapeHtml(buttonText)}</button>
           <span class="victory-code">${escapeHtml(payload.victoryCode)}</span>
+          <div id="victorySendStatus" class="victory-send-status show${statusClass}">${escapeHtml(statusText)}</div>
         </div>
       </article>`;
     }

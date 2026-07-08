@@ -1,32 +1,59 @@
-FANTABALLA WORLD CUP - VERSIONE CLASSIFICA CON BOTTONE
+FANTABALLA - VERSIONE CON INVIO VITTORIA AUTOMATICO
 
-Apri index.html per usare il gioco.
+COSA C'E' DENTRO
+- index.html: gioco aggiornato.
+- classifica.html: pagina classifica completa.
+- data/classifica.json: file da modificare manualmente per aggiornare la classifica.
+- assets/fantaballa-logo.png: logo.
+- google-apps-script/invio_vittoria.gs: script da incollare su Google Apps Script per ricevere le email automatiche.
 
-Cosa e' stato modificato:
-- In home ora c'e' solo il bottone "Classifica".
-- Cliccando il bottone si apre classifica.html con la classifica completa.
-- La classifica viene caricata dal file data/classifica.json.
-- Il bottone vittoria via email resta attivo solo in caso di vittoria finale.
-- Email vittoria: pavoniingrifati@gmail.com
+COME FUNZIONA L'INVIO AUTOMATICO
+Quando un utente vince il Mondiale, appare il bottone:
+Invia vittoria automatica
 
-Come aggiornare manualmente la classifica:
-1. Apri data/classifica.json.
-2. Modifica o aggiungi righe dentro la lista "classifica".
-3. Ogni riga deve avere:
-   - "nome_squadra"
-   - "campione_del_mondo"
-4. Salva il file.
-5. Apri classifica.html oppure clicca "Classifica" dalla home e premi "Aggiorna".
+Cliccando, il sito manda i dati della vittoria a Google Apps Script.
+Google Apps Script invia subito una email a:
+pavoniingrifati@gmail.com
+
+Non si apre la casella email dell'utente.
+
+PASSAGGI DA FARE UNA SOLA VOLTA
+1. Vai su https://script.google.com
+2. Crea un nuovo progetto.
+3. Cancella il codice presente.
+4. Incolla il contenuto del file:
+   google-apps-script/invio_vittoria.gs
+5. Premi Deploy > New deployment.
+6. Scegli tipo: Web app.
+7. Esegui come: Me.
+8. Chi ha accesso: Anyone.
+9. Autorizza lo script.
+10. Copia il link finale della Web App, quello che finisce con /exec.
+11. Apri index.html e cerca:
+    INCOLLA_QUI_URL_WEB_APP_GOOGLE_APPS_SCRIPT
+12. Sostituiscilo con il link /exec di Google Apps Script.
+
+ESEMPIO
+Prima:
+const VICTORY_ENDPOINT = 'INCOLLA_QUI_URL_WEB_APP_GOOGLE_APPS_SCRIPT';
+
+Dopo:
+const VICTORY_ENDPOINT = 'https://script.google.com/macros/s/XXXX/exec';
+
+CLASSIFICA MANUALE
+Per aggiornare la classifica, modifica il file:
+data/classifica.json
 
 Esempio:
 {
   "aggiornato_il": "2026-07-08",
   "classifica": [
-    { "nome_squadra": "Pavoni Ingrifati", "campione_del_mondo": 3 },
-    { "nome_squadra": "Fantaballa XI", "campione_del_mondo": 1 }
+    {
+      "nome_squadra": "Pavoni Ingrifati",
+      "campione_del_mondo": 3
+    }
   ]
 }
 
-Nota:
-Se apri index.html direttamente dal computer, alcuni browser possono bloccare il caricamento del file JSON.
-Quando carichi la cartella su un sito/hosting, il caricamento funziona normalmente.
+NOTA
+Il bottone automatico funziona solo dopo aver pubblicato Google Apps Script e incollato il link /exec dentro index.html.
