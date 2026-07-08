@@ -3785,6 +3785,92 @@
       pointer-events:none;
     }
     .intro-content-card .intro-text { color:#4c4436; position:relative; z-index:1; }
+    .intro-content-card.intro-card-dynamic {
+      padding:16px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.88), rgba(255,247,220,.72)),
+        radial-gradient(circle at 12% 10%, rgba(255,240,122,.45), transparent 30%);
+      border:1px solid rgba(205,191,159,.88);
+      box-shadow:0 12px 28px rgba(74,55,20,.09);
+    }
+    .intro-content-card.intro-card-dynamic::after {
+      content:"";
+      position:absolute;
+      inset:0 0 auto auto;
+      width:44%;
+      height:100%;
+      background:linear-gradient(110deg, transparent, rgba(255,255,255,.42), transparent);
+      transform:translateX(36%) skewX(-14deg);
+      pointer-events:none;
+    }
+    .intro-mini-grid,
+    .intro-bonus-grid {
+      display:grid;
+      gap:10px;
+      position:relative;
+      z-index:1;
+    }
+    .intro-mini-card,
+    .intro-bonus-card {
+      position:relative;
+      display:grid;
+      grid-template-columns:auto minmax(0,1fr);
+      align-items:center;
+      gap:12px;
+      min-height:58px;
+      padding:12px 13px;
+      border-radius:18px;
+      background:linear-gradient(135deg, rgba(255,255,255,.95), rgba(255,249,232,.78));
+      border:1px solid rgba(205,191,159,.72);
+      box-shadow:0 7px 16px rgba(74,55,20,.07);
+      overflow:hidden;
+    }
+    .intro-mini-card::before,
+    .intro-bonus-card::before {
+      content:attr(data-mark);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:42px;
+      height:42px;
+      border-radius:14px;
+      background:#10243a;
+      color:#fff07a;
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:.03em;
+      box-shadow:inset 0 -3px 0 rgba(255,255,255,.08), 0 5px 11px rgba(16,36,58,.16);
+    }
+    .intro-mini-card .intro-text,
+    .intro-bonus-card .intro-text { margin:0; }
+    .intro-mini-card:nth-child(2)::before { background:#d94b35; color:#fff; }
+    .intro-mini-card:nth-child(3)::before { background:#4d8c56; color:#fff; }
+    .intro-bonus-grid { grid-template-columns:1fr; }
+    .intro-bonus-card {
+      align-items:start;
+      min-height:0;
+      padding:11px 12px;
+    }
+    .intro-bonus-card::before {
+      content:attr(data-bonus);
+      background:#d94b35;
+      color:#fff;
+      width:54px;
+      height:40px;
+      border-radius:999px;
+      font-size:14px;
+    }
+    .intro-bonus-card:nth-child(2)::before { background:#5f3cc8; }
+    .intro-bonus-card:nth-child(3)::before { background:#4d8c56; }
+    .intro-bonus-card:nth-child(4)::before { background:#10243a; color:#fff07a; }
+    .intro-bonus-card:nth-child(5)::before { background:#c08a10; color:#fff; }
+    @media (max-width:680px) {
+      .intro-content-card.intro-card-dynamic { padding:12px; }
+      .intro-mini-card,
+      .intro-bonus-card { grid-template-columns:40px minmax(0,1fr); gap:9px; padding:10px; border-radius:16px; }
+      .intro-mini-card::before { width:36px; height:36px; border-radius:12px; font-size:12px; }
+      .intro-bonus-card::before { width:44px; height:34px; font-size:12px; }
+    }
     .intro-playbook {
       display:grid;
       gap:10px;
@@ -4261,14 +4347,14 @@
   <div id="introOverlay" class="intro-overlay show" aria-hidden="false">
     <div class="intro-modal" role="dialog" aria-modal="true" aria-labelledby="introTitle">
       <div class="intro-topline">
-        <span id="introStep" class="intro-step">1/3</span>
+        <span id="introStep" class="intro-step">1/4</span>
         <button id="introCloseBtn" class="intro-close" type="button" aria-label="Chiudi introduzione">&times;</button>
       </div>
 
       <section class="intro-slide active" data-intro-slide="0">
         <div class="intro-kicker">Come si gioca</div>
         <h1 class="intro-title" id="introTitle">Diventa campione del mondo!</h1>
-        <div class="intro-content-card">
+        <div class="intro-content-card intro-card-dynamic">
           <p class="intro-text intro-playbook"><span>Costruisci il miglior XI usando te stesso come giocatore!</span><span>Poi gioca il Mondiale e prova ad alzare la Coppa del Mondo.</span><span>Non serve una run perfetta: l'obiettivo e' arrivare in finale e vincerla!</span></p>
         </div>
         <div class="intro-actions">
@@ -4279,11 +4365,13 @@
 
       <section class="intro-slide" data-intro-slide="1">
         <div class="intro-kicker">Aggiungi il tuo giocatore</div>
-        <h2 class="intro-title">Aggiungi il tuo giocatore</h2>
-        <div class="intro-content-card">
-          <p class="intro-text">Vuoi essere aggiunto come giocatore?</p>
-          <p class="intro-text">Compila il form o abbonati al canale <a href="https://www.twitch.tv/fantaballa" target="_blank" rel="noopener noreferrer">Twitch</a> di Fantaballa (col Prime e' gratis!)</p>
-          <p class="intro-text">Entro pochi giorni verrai aggiunto se idoneo.</p>
+        <h2 class="intro-title">Diventa un calciatore!</h2>
+        <div class="intro-content-card intro-card-dynamic">
+          <div class="intro-mini-grid">
+            <div class="intro-mini-card" data-mark="01"><p class="intro-text">Vuoi essere aggiunto come giocatore?</p></div>
+            <div class="intro-mini-card" data-mark="02"><p class="intro-text">Compila il form o abbonati al canale <a href="https://www.twitch.tv/fantaballa" target="_blank" rel="noopener noreferrer">Twitch</a> di Fantaballa (col Prime e' gratis!)</p></div>
+            <div class="intro-mini-card" data-mark="03"><p class="intro-text">Entro pochi giorni verrai aggiunto se idoneo.</p></div>
+          </div>
         </div>
         <div class="intro-actions">
           <button class="intro-btn" type="button" data-intro-close>Salta</button>
@@ -4293,12 +4381,32 @@
 
       <section class="intro-slide" data-intro-slide="2">
         <div class="intro-kicker">Aumenta l'overall</div>
-        <h2 class="intro-title">Aumenta l'overall</h2>
-        <div class="intro-content-card">
-          <p class="intro-text">Come posso aumentare il mio overall?</p>
-          <p class="intro-text">Ogni mese gli utenti piu' vittoriosi riceveranno un aumento dell'overall.</p>
-          <p class="intro-text">Se sei abbonato aumenterai il doppio.</p>
-          <p class="intro-text">Appena abbonato avrai immediatamente un +5 di intesa.</p>
+        <h2 class="intro-title">Diventa più forte!</h2>
+        <div class="intro-content-card intro-card-dynamic">
+          <div class="intro-mini-grid">
+            <div class="intro-mini-card" data-mark="01"><p class="intro-text">Come posso aumentare il mio overall?</p></div>
+            <div class="intro-mini-card" data-mark="02"><p class="intro-text">Ogni mese gli utenti piu' vittoriosi riceveranno un aumento dell'overall.</p></div>
+            <div class="intro-mini-card" data-mark="03"><p class="intro-text">Se sei abbonato aumenterai il doppio.</p></div>
+            <div class="intro-mini-card" data-mark="+5"><p class="intro-text">Appena abbonato avrai immediatamente un +5 di intesa.</p></div>
+          </div>
+        </div>
+        <div class="intro-actions">
+          <button class="intro-btn" type="button" data-intro-close>Salta</button>
+          <button class="intro-btn primary" type="button" data-intro-next>Intesa di squadra</button>
+        </div>
+      </section>
+
+      <section class="intro-slide" data-intro-slide="3">
+        <div class="intro-kicker">Intesa di squadra</div>
+        <h2 class="intro-title">Aumenta l'intesa!</h2>
+        <div class="intro-content-card intro-card-dynamic">
+          <div class="intro-bonus-grid">
+            <div class="intro-bonus-card" data-bonus="+1"><p class="intro-text">Se i giocatori fanno parte della stessa squadra, entrambi i giocatori guadagnano +1 OVR</p></div>
+            <div class="intro-bonus-card" data-bonus="+2"><p class="intro-text">Se fanno parte della stessa squadra e sono dello stesso ruolo.  entrambi guadagnano +2 OVR.</p></div>
+            <div class="intro-bonus-card" data-bonus="+5"><p class="intro-text">Se abbonato ha +5 di OVR</p></div>
+            <div class="intro-bonus-card" data-bonus="+5"><p class="intro-text">Se sono abbonati della stessa squadra ,entrambi i giocatori guadagnano +5 di OVR</p></div>
+            <div class="intro-bonus-card" data-bonus="+10"><p class="intro-text">Se schieri te stesso +10 di OVR</p></div>
+          </div>
         </div>
         <div class="intro-actions single">
           <button class="intro-btn primary" type="button" data-intro-close>Inizia a giocare!</button>
@@ -4309,6 +4417,7 @@
         <button class="intro-dot active" type="button" data-intro-go="0" aria-label="Scheda 1"></button>
         <button class="intro-dot" type="button" data-intro-go="1" aria-label="Scheda 2"></button>
         <button class="intro-dot" type="button" data-intro-go="2" aria-label="Scheda 3"></button>
+        <button class="intro-dot" type="button" data-intro-go="3" aria-label="Scheda 4"></button>
       </div>
 
       <div class="intro-bottom-note">
