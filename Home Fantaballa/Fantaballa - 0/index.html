@@ -3638,7 +3638,7 @@
 
   
 
-    /* Intro rules popup */
+    /* Intro onboarding a schede */
     body.intro-open { overflow:hidden; }
     .intro-overlay {
       position:fixed;
@@ -3649,125 +3649,239 @@
       justify-content:center;
       padding:18px;
       background:
-        radial-gradient(circle at 50% 18%, rgba(232,201,93,.22), transparent 0 28%),
-        rgba(24,21,18,.76);
-      backdrop-filter:blur(5px);
+        radial-gradient(circle at 50% 18%, rgba(232,201,93,.25), transparent 0 28%),
+        radial-gradient(circle at 10% 70%, rgba(217,75,53,.16), transparent 0 24%),
+        rgba(24,21,18,.78);
+      backdrop-filter:blur(6px);
     }
     .intro-overlay.show { display:flex; }
     .intro-modal {
-      width:min(680px, calc(100vw - 24px));
+      width:min(620px, calc(100vw - 24px));
       max-height:calc(100vh - 28px);
       overflow:auto;
       color:#2a2419;
       background:
-        linear-gradient(180deg, rgba(255,255,255,.88), rgba(247,240,222,.98)),
-        #f7f0de;
-      border:4px solid rgba(35,29,21,.86);
-      border-radius:28px;
+        radial-gradient(circle at top right, rgba(255,255,255,.72), transparent 0 30%),
+        linear-gradient(180deg, #fff8e8 0%, #f4ead7 100%);
+      border:3px solid rgba(35,29,21,.86);
+      border-radius:26px;
       box-shadow:0 24px 70px rgba(0,0,0,.36), 9px 9px 0 rgba(20,20,20,.22);
-      padding:24px;
-      text-align:center;
+      padding:22px 24px 18px;
       position:relative;
     }
     .intro-modal::before,
     .intro-modal::after {
       content:"";
       position:absolute;
-      top:-10px;
-      width:86px;
-      height:22px;
+      top:-9px;
+      width:78px;
+      height:20px;
       border-radius:4px;
       background:rgba(239,230,176,.95);
       border:1px solid rgba(143,126,77,.24);
       box-shadow:0 2px 8px rgba(0,0,0,.1);
+      pointer-events:none;
     }
-    .intro-modal::before { left:28px; transform:rotate(-5deg); }
-    .intro-modal::after { right:28px; transform:rotate(6deg); }
-    .intro-logo {
-      width:min(180px, 48vw);
-      height:auto;
-      display:block;
-      margin:0 auto 14px;
-      filter:drop-shadow(0 8px 18px rgba(0,0,0,.18));
+    .intro-modal::before { left:24px; transform:rotate(-5deg); }
+    .intro-modal::after { right:24px; transform:rotate(6deg); }
+    .intro-topline {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:16px;
     }
+    .intro-step {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:48px;
+      min-height:30px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:#fff07a;
+      color:#10243a;
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:.04em;
+      border:1px solid rgba(16,36,58,.12);
+      box-shadow:0 4px 10px rgba(0,0,0,.08);
+    }
+    .intro-close {
+      width:36px;
+      height:36px;
+      border-radius:50%;
+      border:1px solid rgba(35,29,21,.18);
+      background:rgba(255,255,255,.55);
+      color:#10243a;
+      cursor:pointer;
+      font-size:24px;
+      line-height:1;
+      display:grid;
+      place-items:center;
+      box-shadow:0 4px 12px rgba(0,0,0,.08);
+    }
+    .intro-close:hover { background:#fff07a; }
+    .intro-slide { display:none; }
+    .intro-slide.active { display:block; animation:introSlideIn .18s ease-out; }
+    @keyframes introSlideIn { from { opacity:.35; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     .intro-kicker {
       display:inline-flex;
       align-items:center;
       gap:8px;
       padding:7px 12px;
       border-radius:999px;
-      background:#fff7df;
-      border:1px solid #ead093;
-      color:#8a6210;
+      background:#fff07a;
+      border:1px solid rgba(16,36,58,.12);
+      color:#10243a;
       font-size:12px;
       font-weight:900;
-      letter-spacing:.18em;
+      letter-spacing:.13em;
       text-transform:uppercase;
-      margin-bottom:10px;
+      margin-bottom:12px;
     }
     .intro-title {
       margin:0 0 14px;
-      font-size:clamp(32px, 6vw, 54px);
+      font-size:clamp(34px, 7vw, 58px);
       line-height:.92;
       letter-spacing:-.05em;
       text-transform:uppercase;
-      color:#d94b35;
-      text-shadow:0 2px 0 rgba(255,255,255,.45);
+      color:#10243a;
+      text-shadow:0 2px 0 rgba(255,255,255,.55);
     }
-    .intro-copy {
-      display:grid;
-      gap:12px;
-      text-align:left;
-      margin:0 auto 18px;
-      max-width:560px;
+    .intro-text {
+      margin:0;
+      color:#5b5142;
+      font-size:clamp(15px, 2.4vw, 18px);
+      line-height:1.45;
+      font-weight:900;
     }
-    .intro-block {
-      background:rgba(255,255,255,.64);
-      border:1px dashed #d8c79f;
-      border-radius:18px;
-      padding:14px 16px;
-      box-shadow:0 4px 12px rgba(74,55,20,.06);
-    }
-    .intro-block p { margin:0; color:#4c4436; font-size:16px; line-height:1.42; font-weight:800; }
-    .intro-block p + p { margin-top:8px; }
-    .intro-block strong {
-      display:block;
-      margin-bottom:6px;
-      color:#2f2619;
-      font-size:15px;
-      line-height:1.15;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-    }
-    .intro-block a {
+    .intro-text + .intro-text { margin-top:10px; }
+    .intro-text a {
       color:#5f3cc8;
       text-decoration:none;
       font-weight:900;
       border-bottom:2px solid rgba(95,60,200,.28);
     }
-    .intro-block a:hover { border-bottom-color:#5f3cc8; }
-    .intro-start-btn {
-      width:min(360px,100%);
-      min-height:54px;
-      border:2px solid #a83220;
+    .intro-text a:hover { border-bottom-color:#5f3cc8; }
+    .intro-content-card {
+      background:rgba(255,255,255,.56);
+      border:1px solid rgba(205,191,159,.75);
       border-radius:18px;
-      background:linear-gradient(180deg,#e25b43,#c8402b);
-      color:#fff;
+      padding:15px 16px;
+      box-shadow:0 8px 18px rgba(74,55,20,.07);
+      margin:12px 0 18px;
+      position:relative;
+      overflow:hidden;
+    }
+    .intro-content-card::before {
+      content:"";
+      position:absolute;
+      inset:-38px auto auto -42px;
+      width:150px;
+      height:150px;
+      border-radius:999px;
+      background:radial-gradient(circle, rgba(255,240,122,.42), rgba(255,240,122,0) 68%);
+      pointer-events:none;
+    }
+    .intro-content-card .intro-text { color:#4c4436; position:relative; z-index:1; }
+    .intro-playbook {
+      display:grid;
+      gap:10px;
+    }
+    .intro-playbook span {
+      display:grid;
+      grid-template-columns:18px minmax(0,1fr);
+      align-items:start;
+      gap:10px;
+      padding:12px 12px;
+      border-radius:16px;
+      background:linear-gradient(135deg, rgba(255,255,255,.88), rgba(255,248,228,.64));
+      border:1px solid rgba(205,191,159,.68);
+      box-shadow:0 6px 14px rgba(74,55,20,.07);
+    }
+    .intro-playbook span::before {
+      content:"";
+      width:12px;
+      height:12px;
+      margin-top:.35em;
+      border-radius:999px;
+      background:#d94b35;
+      box-shadow:0 0 0 4px rgba(217,75,53,.12), 0 0 0 7px rgba(232,201,93,.16);
+    }
+    .intro-playbook span:nth-child(2)::before { background:#4d79cf; box-shadow:0 0 0 4px rgba(77,121,207,.12), 0 0 0 7px rgba(232,201,93,.16); }
+    .intro-playbook span:nth-child(3)::before { background:#4d8c56; box-shadow:0 0 0 4px rgba(77,140,86,.12), 0 0 0 7px rgba(232,201,93,.16); }
+    @media (max-width:680px) {
+      .intro-playbook { gap:8px; }
+      .intro-playbook span { padding:10px 11px; gap:8px; grid-template-columns:16px minmax(0,1fr); }
+    }
+    .intro-actions {
+      display:grid;
+      grid-template-columns:1fr 1.7fr;
+      gap:10px;
+      margin-top:20px;
+    }
+    .intro-actions.single { grid-template-columns:1fr; }
+    .intro-btn {
+      min-height:52px;
+      border:2px solid #cdb885;
+      border-radius:16px;
+      background:linear-gradient(180deg,#fffef9,#f1e7cf);
+      color:#10243a;
       cursor:pointer;
       font-weight:900;
-      font-size:18px;
+      font-size:15px;
       text-transform:uppercase;
       letter-spacing:.04em;
+      box-shadow:0 4px 0 rgba(128,108,64,.14);
+    }
+    .intro-btn.primary {
+      border-color:#a83220;
+      background:linear-gradient(180deg,#e25b43,#c8402b);
+      color:#fff;
       box-shadow:0 6px 0 rgba(153,46,29,.22);
     }
-    .intro-start-btn:hover { transform:translateY(-1px); }
-    .intro-start-btn:active { transform:translateY(2px); box-shadow:0 3px 0 rgba(153,46,29,.22); }
+    .intro-btn:hover { transform:translateY(-1px); }
+    .intro-btn:active { transform:translateY(2px); box-shadow:0 2px 0 rgba(128,108,64,.14); }
+    .intro-btn.primary:active { box-shadow:0 3px 0 rgba(153,46,29,.22); }
+    .intro-bottom-note {
+      margin:16px 2px 0;
+      padding-top:12px;
+      border-top:1px dashed rgba(205,191,159,.9);
+      color:#7d745f;
+      font-size:12px;
+      font-weight:900;
+      line-height:1.35;
+      text-align:center;
+    }
+    .intro-bottom-note a {
+      color:#5f3cc8;
+      text-decoration:none;
+      border-bottom:2px solid rgba(95,60,200,.22);
+      font-weight:900;
+    }
+    .intro-progress-dots {
+      display:flex;
+      justify-content:center;
+      gap:7px;
+      margin-top:14px;
+    }
+    .intro-dot {
+      width:9px;
+      height:9px;
+      border-radius:999px;
+      background:#d8c79f;
+      border:0;
+      padding:0;
+      cursor:pointer;
+    }
+    .intro-dot.active { width:28px; background:#d94b35; }
     @media (max-width:680px) {
-      .intro-modal { padding:20px 14px 16px; border-radius:22px; }
+      .intro-modal { padding:18px 14px 14px; border-radius:22px; }
       .intro-title { margin-bottom:10px; }
-      .intro-block { padding:12px; }
-      .intro-block p { font-size:14px; }
-      .intro-logo { width:min(140px, 42vw); }
+      .intro-content-card { padding:13px; }
+      .intro-actions { grid-template-columns:1fr; }
+      .intro-btn { min-height:48px; }
     }
 
 
@@ -3990,6 +4104,155 @@
       border-radius:999px;
       padding:8px 10px;
     }
+    .victory-privacy-note {
+      margin:10px 0 12px;
+      padding:11px 12px;
+      border:1px solid rgba(181,150,93,.34);
+      border-radius:14px;
+      background:rgba(255,255,255,.62);
+      color:#5f4b18;
+      font-size:13px;
+      font-weight:900;
+      line-height:1.38;
+    }
+    .victory-privacy-note a, .site-footer a {
+      color:#5f3cc8;
+      text-decoration:none;
+      border-bottom:2px solid rgba(95,60,200,.22);
+      font-weight:900;
+    }
+    .victory-privacy-note a:hover, .site-footer a:hover { border-bottom-color:#5f3cc8; }
+    .site-footer {
+      display:flex;
+      justify-content:center;
+      gap:12px;
+      flex-wrap:wrap;
+      margin:20px 0 0;
+      color:#7d745f;
+      font-size:12px;
+      font-weight:900;
+      text-align:center;
+    }
+    .app.tournament-mode .site-footer { margin-top:14px; }
+
+
+
+    /* Fix leggibilita' broadcast, risultato partita e rigori */
+    .broadcast-team {
+      background:#fffdf4 !important;
+      border-color:rgba(255,230,70,.72) !important;
+    }
+    .broadcast-team strong,
+    .broadcast-team small {
+      color:#10243a !important;
+      text-shadow:none !important;
+    }
+    .broadcast-team-code,
+    .tv-team-code {
+      color:#10243a !important;
+      background:#fff07a !important;
+      border-color:rgba(16,36,58,.16) !important;
+    }
+    .broadcast-ticker {
+      background:#fff07a !important;
+      color:#10243a !important;
+      border:1px solid rgba(16,36,58,.16) !important;
+      box-shadow:none !important;
+      white-space:normal !important;
+      line-height:1.25 !important;
+    }
+    .broadcast-meta { color:#10243a !important; }
+    .broadcast-center {
+      background:#fffdf4 !important;
+      color:#10243a !important;
+      border-color:rgba(255,230,70,.72) !important;
+    }
+    .broadcast-score { color:#10243a !important; text-shadow:none !important; }
+    .broadcast-score.penalty-score {
+      font-size:clamp(20px,3vw,38px) !important;
+      line-height:1.05 !important;
+      letter-spacing:-.02em !important;
+      text-align:center !important;
+      overflow-wrap:anywhere !important;
+    }
+    .tv-score-big.penalty-score {
+      font-size:clamp(17px,2.1vw,28px) !important;
+      line-height:1.05 !important;
+      letter-spacing:-.015em !important;
+      padding:8px 10px !important;
+      text-align:center !important;
+      overflow-wrap:anywhere !important;
+    }
+    .match-finished-banner {
+      display:grid;
+      gap:6px;
+      margin:0 0 10px;
+      padding:12px 14px;
+      border-radius:16px;
+      background:#fffdf4;
+      color:#10243a;
+      border:2px solid rgba(255,230,70,.7);
+      box-shadow:0 10px 22px rgba(0,0,0,.16);
+    }
+    .match-finished-banner span {
+      width:max-content;
+      padding:5px 8px;
+      border-radius:999px;
+      background:#fff07a;
+      color:#10243a;
+      font-size:clamp(8px,.66vw,10px);
+      font-weight:900;
+      letter-spacing:.08em;
+    }
+    .match-finished-banner b {
+      font-size:clamp(18px,2.2vw,30px);
+      line-height:1;
+      letter-spacing:.02em;
+      color:#10243a;
+    }
+    .match-finished-banner strong {
+      color:#10243a;
+      font-size:clamp(12px,1.05vw,16px);
+      line-height:1.18;
+      overflow-wrap:anywhere;
+    }
+    .match-finished-banner.win b { color:#1c6b3b; }
+    .match-finished-banner.loss b { color:#d82d24; }
+    .match-finished-banner.draw b { color:#8a6b00; }
+    .tv-goal-summary > div {
+      color:#10243a !important;
+      background:#fffdf4 !important;
+      border:1px solid rgba(255,230,70,.55) !important;
+    }
+    .tv-goal-summary > div span {
+      display:block;
+      color:#10243a !important;
+      background:#fff07a;
+      width:max-content;
+      padding:4px 7px;
+      border-radius:999px;
+      margin-bottom:6px;
+    }
+    .tv-live-log .event {
+      background:#fffdf4 !important;
+      border-color:rgba(255,230,70,.45) !important;
+    }
+    .tv-live-log .event .min,
+    .tv-live-log .event .ball,
+    .tv-live-log .event .player {
+      color:#10243a !important;
+    }
+    .tv-live-log .event.conceded .player { color:#d82d24 !important; }
+    .tv-live-log .event .player small {
+      color:#4f6580 !important;
+      opacity:1 !important;
+    }
+    .placement-subtitle .reroll-hint {
+      display:block;
+      margin-top:6px;
+      color:#fff07a;
+      text-transform:none;
+    }
 
   </style>
 </head>
@@ -3997,44 +4260,122 @@
 
   <div id="introOverlay" class="intro-overlay show" aria-hidden="false">
     <div class="intro-modal" role="dialog" aria-modal="true" aria-labelledby="introTitle">
-      <img class="intro-logo" src="assets/fantaballa-logo.png" alt="Logo Fantaballa Approved" />
-      <div class="intro-kicker">Fantaballa World Cup</div>
-      <h1 class="intro-title" id="introTitle">Regole del gioco</h1>
-      <div class="intro-copy">
-        <section class="intro-block">
-          <p>Costruisci il miglior XI dove pero' i giocatori siete voi stessi! Poi gioca il Mondiale e prova ad alzare la coppa del mondo! Niente run perfetta basta arrivare in finale e vincere!</p>
-        </section>
-        <section class="intro-block">
-          <strong>Vuoi essere aggiunto come giocatore?</strong>
-          <p>Compila il form o abbonati al canale <a href="https://www.twitch.tv/fantaballa" target="_blank" rel="noopener noreferrer">Twitch</a> di Fantaballa (col Prime e' gratis!)</p>
-        </section>
-        <section class="intro-block">
-          <strong>Come posso aumentare il mio overall?</strong>
-          <p>Ogni mese gli utenti piu' vittoriosi riceveranno un aumento dell'overall.</p>
-          <p>Se sei abbonato aumenterai il doppio.</p>
-          <p>Appena abbonato avrai immediatamente un +5 di intesa.</p>
-        </section>
+      <div class="intro-topline">
+        <span id="introStep" class="intro-step">1/3</span>
+        <button id="introCloseBtn" class="intro-close" type="button" aria-label="Chiudi introduzione">&times;</button>
       </div>
-      <button id="introStartBtn" class="intro-start-btn" type="button">Ho capito, inizia</button>
+
+      <section class="intro-slide active" data-intro-slide="0">
+        <div class="intro-kicker">Come si gioca</div>
+        <h1 class="intro-title" id="introTitle">Diventa campione del mondo!</h1>
+        <div class="intro-content-card">
+          <p class="intro-text intro-playbook"><span>Costruisci il miglior XI usando te stesso come giocatore!</span><span>Poi gioca il Mondiale e prova ad alzare la Coppa del Mondo.</span><span>Non serve una run perfetta: l'obiettivo e' arrivare in finale e vincerla!</span></p>
+        </div>
+        <div class="intro-actions">
+          <button class="intro-btn" type="button" data-intro-close>Salta</button>
+          <button class="intro-btn primary" type="button" data-intro-next>Aggiungi il tuo giocatore</button>
+        </div>
+      </section>
+
+      <section class="intro-slide" data-intro-slide="1">
+        <div class="intro-kicker">Aggiungi il tuo giocatore</div>
+        <h2 class="intro-title">Aggiungi il tuo giocatore</h2>
+        <div class="intro-content-card">
+          <p class="intro-text">Vuoi essere aggiunto come giocatore?</p>
+          <p class="intro-text">Compila il form o abbonati al canale <a href="https://www.twitch.tv/fantaballa" target="_blank" rel="noopener noreferrer">Twitch</a> di Fantaballa (col Prime e' gratis!)</p>
+          <p class="intro-text">Entro pochi giorni verrai aggiunto se idoneo.</p>
+        </div>
+        <div class="intro-actions">
+          <button class="intro-btn" type="button" data-intro-close>Salta</button>
+          <button class="intro-btn primary" type="button" data-intro-next>Aumentare l'overall</button>
+        </div>
+      </section>
+
+      <section class="intro-slide" data-intro-slide="2">
+        <div class="intro-kicker">Aumenta l'overall</div>
+        <h2 class="intro-title">Aumenta l'overall</h2>
+        <div class="intro-content-card">
+          <p class="intro-text">Come posso aumentare il mio overall?</p>
+          <p class="intro-text">Ogni mese gli utenti piu' vittoriosi riceveranno un aumento dell'overall.</p>
+          <p class="intro-text">Se sei abbonato aumenterai il doppio.</p>
+          <p class="intro-text">Appena abbonato avrai immediatamente un +5 di intesa.</p>
+        </div>
+        <div class="intro-actions single">
+          <button class="intro-btn primary" type="button" data-intro-close>Inizia a giocare!</button>
+        </div>
+      </section>
+
+      <div class="intro-progress-dots" aria-label="Avanzamento introduzione">
+        <button class="intro-dot active" type="button" data-intro-go="0" aria-label="Scheda 1"></button>
+        <button class="intro-dot" type="button" data-intro-go="1" aria-label="Scheda 2"></button>
+        <button class="intro-dot" type="button" data-intro-go="2" aria-label="Scheda 3"></button>
+      </div>
+
+      <div class="intro-bottom-note">
+        Il gioco non richiede login. Solo se vinci e scegli di inviare la vittoria, Fantaballa ricevera' solo i dati necessari per verificare il risultato. <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a>
+      </div>
     </div>
   </div>
 
   <script>
     (function () {
       const overlay = document.getElementById('introOverlay');
-      const startBtn = document.getElementById('introStartBtn');
-      if (!overlay || !startBtn) return;
+      if (!overlay) return;
+      const slides = Array.from(overlay.querySelectorAll('[data-intro-slide]'));
+      const dots = Array.from(overlay.querySelectorAll('[data-intro-go]'));
+      const step = document.getElementById('introStep');
+      const closeBtn = document.getElementById('introCloseBtn');
+      let current = 0;
+
       document.body.classList.add('intro-open');
+
+      const render = () => {
+        slides.forEach((slide, index) => slide.classList.toggle('active', index === current));
+        dots.forEach((dot, index) => dot.classList.toggle('active', index === current));
+        if (step) step.textContent = `${current + 1}/${slides.length}`;
+      };
+
       const closeIntro = () => {
         overlay.classList.remove('show');
         overlay.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('intro-open');
       };
-      startBtn.addEventListener('click', closeIntro);
-      window.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && overlay.classList.contains('show')) closeIntro();
+
+      overlay.querySelectorAll('[data-intro-next]').forEach((button) => {
+        button.addEventListener('click', () => {
+          current = Math.min(current + 1, slides.length - 1);
+          render();
+        });
       });
-      window.setTimeout(() => startBtn.focus(), 100);
+
+      overlay.querySelectorAll('[data-intro-close]').forEach((button) => {
+        button.addEventListener('click', closeIntro);
+      });
+
+      dots.forEach((dot) => {
+        dot.addEventListener('click', () => {
+          current = Number(dot.dataset.introGo) || 0;
+          render();
+        });
+      });
+
+      if (closeBtn) closeBtn.addEventListener('click', closeIntro);
+
+      window.addEventListener('keydown', (event) => {
+        if (!overlay.classList.contains('show')) return;
+        if (event.key === 'Escape') closeIntro();
+        if (event.key === 'ArrowRight') {
+          current = Math.min(current + 1, slides.length - 1);
+          render();
+        }
+        if (event.key === 'ArrowLeft') {
+          current = Math.max(current - 1, 0);
+          render();
+        }
+      });
+
+      render();
+      window.setTimeout(() => overlay.querySelector('.intro-btn.primary')?.focus(), 100);
     })();
   </script>
 
@@ -4178,6 +4519,10 @@
         </aside>
       </div>
     </section>
+    <div class="site-footer" aria-label="Link privacy">
+      <a href="privacy.html">Privacy</a>
+      <span>Contatto: pavoniingrifati@gmail.com</span>
+    </div>
   </div>
 
   <div id="packReveal" class="pack-reveal" aria-hidden="true">
@@ -4210,9 +4555,9 @@
     <div class="placement-modal" role="dialog" aria-modal="true" aria-labelledby="placementTitle">
       <div class="label">Posiziona giocatore</div>
       <div class="placement-title" id="placementTitle">Scegli posizione</div>
-      <div class="placement-subtitle" id="placementSubtitle">Puoi usare solo gli slot del ruolo corretto.</div>
+      <div class="placement-subtitle" id="placementSubtitle">Puoi usare solo gli slot del ruolo corretto. <span class="reroll-hint">Hai cambiato idea? Chiudi questo box e premi re-roll.</span></div>
       <div class="slot-options" id="placementOptions"></div>
-      <div class="modal-actions"><button id="cancelPlacementBtn" class="btn" type="button">Cambia giocatore</button></div>
+      <div class="modal-actions"><button id="cancelPlacementBtn" class="btn" type="button">Annulla scelta</button></div>
     </div>
   </div>
   <script id="players-data" type="application/json">[{"id":"467","name":"ricvy21","role":"P","roleLabel":"Portiere","nation":"Belgio","ovr":90,"overallRaw":181,"cost":19,"avgPoints":7.0},{"id":"468","name":"biafrigerio_09","role":"P","roleLabel":"Portiere","nation":"Brasile","ovr":88,"overallRaw":176,"cost":18,"avgPoints":7.0},{"id":"498","name":"andrea.walker.ita","role":"P","roleLabel":"Portiere","nation":"Svizzera","ovr":81,"overallRaw":162,"cost":15,"avgPoints":7.0},{"id":"490","name":"Gabriel Mancini","role":"P","roleLabel":"Portiere","nation":"Portogallo","ovr":81,"overallRaw":162,"cost":15,"avgPoints":8.2},{"id":"480","name":"raphaelaex","role":"P","roleLabel":"Portiere","nation":"Francia","ovr":81,"overallRaw":162,"cost":15,"avgPoints":6.6},{"id":"495","name":"bboy_fili_","role":"P","roleLabel":"Portiere","nation":"Spagna","ovr":80,"overallRaw":160,"cost":15,"avgPoints":7.6},{"id":"464","name":"nathan2290","role":"P","roleLabel":"Portiere","nation":"Argentina","ovr":78,"overallRaw":157,"cost":14,"avgPoints":5.8},{"id":"482","name":"andrea_zanzibar","role":"P","roleLabel":"Portiere","nation":"Inghilterra","ovr":78,"overallRaw":156,"cost":14,"avgPoints":7.6},{"id":"481","name":"jacopo.gabrieli","role":"P","roleLabel":"Portiere","nation":"Germania","ovr":75,"overallRaw":150,"cost":12,"avgPoints":7.0},{"id":"484","name":"Nello","role":"P","roleLabel":"Portiere","nation":"Marocco","ovr":75,"overallRaw":150,"cost":12,"avgPoints":4.9},{"id":"494","name":"angerranux","role":"P","roleLabel":"Portiere","nation":"Senegal","ovr":72,"overallRaw":144,"cost":11,"avgPoints":5.7},{"id":"489","name":"altobello.leonardo","role":"P","roleLabel":"Portiere","nation":"Polonia","ovr":71,"overallRaw":142,"cost":11,"avgPoints":0.0},{"id":"660","name":"Baidalone","role":"P","roleLabel":"Portiere","nation":"Sudafrica","ovr":70,"overallRaw":139,"cost":10,"avgPoints":4.4},{"id":"470","name":"Piergiorgio","role":"P","roleLabel":"Portiere","nation":"Cechia","ovr":69,"overallRaw":138,"cost":10,"avgPoints":6.4},{"id":"473","name":"a.o.b.j.l","role":"P","roleLabel":"Portiere","nation":"Colombia","ovr":68,"overallRaw":136,"cost":10,"avgPoints":7.6},{"id":"485","name":"il_dipo23","role":"P","roleLabel":"Portiere","nation":"Messico","ovr":68,"overallRaw":136,"cost":10,"avgPoints":5.8},{"id":"500","name":"Marcello","role":"P","roleLabel":"Portiere","nation":"Turchia","ovr":68,"overallRaw":135,"cost":10,"avgPoints":5.0},{"id":"472","name":"Portiere","role":"P","roleLabel":"Portiere","nation":"Cechia","ovr":68,"overallRaw":135,"cost":10,"avgPoints":0.0},{"id":"476","name":"Riky_cavaliere02","role":"P","roleLabel":"Portiere","nation":"Croazia","ovr":68,"overallRaw":135,"cost":10,"avgPoints":4.5},{"id":"471","name":"Portiere3","role":"P","roleLabel":"Portiere","nation":"Cechia","ovr":67,"overallRaw":134,"cost":9,"avgPoints":0.0},{"id":"477","name":"gabrieleebadia","role":"P","roleLabel":"Portiere","nation":"Danimarca","ovr":66,"overallRaw":132,"cost":9,"avgPoints":0.0},{"id":"486","name":"alebet","role":"P","roleLabel":"Portiere","nation":"Norvegia","ovr":66,"overallRaw":131,"cost":9,"avgPoints":6.4},{"id":"474","name":"_samuxz__013__","role":"P","roleLabel":"Portiere","nation":"Corea del Sud","ovr":65,"overallRaw":130,"cost":8,"avgPoints":5.7},{"id":"501","name":"Aiiko","role":"P","roleLabel":"Portiere","nation":"Uruguay","ovr":65,"overallRaw":130,"cost":8,"avgPoints":5.7},{"id":"497","name":"Frans Esposito","role":"P","roleLabel":"Portiere","nation":"Svezia","ovr":65,"overallRaw":130,"cost":8,"avgPoints":3.8},{"id":"496","name":"Therealodi86","role":"P","roleLabel":"Portiere","nation":"Stati Uniti d'America","ovr":65,"overallRaw":130,"cost":8,"avgPoints":9.2},{"id":"466","name":"samu.biato","role":"P","roleLabel":"Portiere","nation":"Austria","ovr":64,"overallRaw":129,"cost":8,"avgPoints":6.1},{"id":"488","name":"Nicocordo","role":"P","roleLabel":"Portiere","nation":"Paraguay","ovr":64,"overallRaw":127,"cost":8,"avgPoints":4.6},{"id":"478","name":"user471226998","role":"P","roleLabel":"Portiere","nation":"Ecuador","ovr":64,"overallRaw":127,"cost":8,"avgPoints":0.0},{"id":"463","name":"P I E T R O 🌟","role":"P","roleLabel":"Portiere","nation":"Algeria","ovr":63,"overallRaw":126,"cost":7,"avgPoints":6.2},{"id":"475","name":"ema.rotella","role":"P","roleLabel":"Portiere","nation":"Costa d'Avorio","ovr":62,"overallRaw":125,"cost":7,"avgPoints":6.7},{"id":"483","name":"giaaaaniiiiiii","role":"P","roleLabel":"Portiere","nation":"Iran","ovr":62,"overallRaw":125,"cost":7,"avgPoints":1.9},{"id":"487","name":"Zac","role":"P","roleLabel":"Portiere","nation":"Panama","ovr":62,"overallRaw":125,"cost":7,"avgPoints":3.5},{"id":"469","name":"Hwillowh","role":"P","roleLabel":"Portiere","nation":"Canada","ovr":62,"overallRaw":123,"cost":7,"avgPoints":7.8},{"id":"479","name":"Eneaa012","role":"P","roleLabel":"Portiere","nation":"Egitto","ovr":60,"overallRaw":120,"cost":6,"avgPoints":6.2},{"id":"499","name":"Pupo","role":"P","roleLabel":"Portiere","nation":"Tunisia","ovr":60,"overallRaw":120,"cost":6,"avgPoints":5.0},{"id":"493","name":"stefanolorini","role":"P","roleLabel":"Portiere","nation":"Scozia","ovr":60,"overallRaw":120,"cost":6,"avgPoints":4.9},{"id":"502","name":"marco00_7","role":"P","roleLabel":"Portiere","nation":"Uzbekistan","ovr":59,"overallRaw":118,"cost":6,"avgPoints":3.3},{"id":"492","name":"matte02","role":"P","roleLabel":"Portiere","nation":"Repubblica Democratica del Congo","ovr":58,"overallRaw":117,"cost":5,"avgPoints":3.5},{"id":"491","name":"lillo","role":"P","roleLabel":"Portiere","nation":"Qatar","ovr":58,"overallRaw":115,"cost":5,"avgPoints":6.6},{"id":"667","name":"D'Angelo","role":"P","roleLabel":"Portiere","nation":"Olanda","ovr":72,"overallRaw":145,"cost":11,"avgPoints":6.8},{"id":"668","name":"Valle","role":"P","roleLabel":"Portiere","nation":"Ecuador","ovr":63,"overallRaw":126,"cost":7,"avgPoints":7.5},{"id":"256","name":"canala_max6","role":"D","roleLabel":"Difensore","nation":"Germania","ovr":89,"overallRaw":178,"cost":24,"avgPoints":8.3},{"id":"171","name":"game_of_lambs","role":"D","roleLabel":"Difensore","nation":"Olanda","ovr":89,"overallRaw":178,"cost":24,"avgPoints":7.2},{"id":"160","name":"deathwing1986","role":"D","roleLabel":"Difensore","nation":"Francia","ovr":88,"overallRaw":176,"cost":23,"avgPoints":8.0},{"id":"290","name":"Mlogiudice","role":"D","roleLabel":"Difensore","nation":"Marocco","ovr":88,"overallRaw":176,"cost":23,"avgPoints":7.9},{"id":"297","name":"Stefano_lovero","role":"D","roleLabel":"Difensore","nation":"Inghilterra","ovr":86,"overallRaw":173,"cost":22,"avgPoints":7.3},{"id":"130","name":"damiano_onepablo","role":"D","roleLabel":"Difensore","nation":"Brasile","ovr":84,"overallRaw":169,"cost":21,"avgPoints":7.0},{"id":"267","name":"Diego.p07","role":"D","roleLabel":"Difensore","nation":"Portogallo","ovr":84,"overallRaw":168,"cost":21,"avgPoints":8.1},{"id":"177","name":"Fra","role":"D","roleLabel":"Difensore","nation":"Portogallo","ovr":84,"overallRaw":168,"cost":21,"avgPoints":7.2},{"id":"242","name":"dimarzio_manuel","role":"D","roleLabel":"Difensore","nation":"Brasile","ovr":82,"overallRaw":165,"cost":20,"avgPoints":7.8},{"id":"163","name":"pippolisa05","role":"D","roleLabel":"Difensore","nation":"Inghilterra","ovr":82,"overallRaw":165,"cost":20,"avgPoints":7.0},{"id":"157","name":"pizzaboyr0w","role":"D","roleLabel":"Difensore","nation":"Francia","ovr":82,"overallRaw":165,"cost":20,"avgPoints":7.3},{"id":"131","name":"Domy19.7","role":"D","roleLabel":"Difensore","nation":"Brasile","ovr":81,"overallRaw":162,"cost":20,"avgPoints":6.8},{"id":"270","name":"Edo_falcone","role":"D","roleLabel":"Difensore","nation":"Spagna","ovr":81,"overallRaw":162,"cost":20,"avgPoints":6.6},{"id":"248","name":"sebasalatii","role":"D","roleLabel":"Difensore","nation":"Inghilterra","ovr":81,"overallRaw":162,"cost":20,"avgPoints":6.8},{"id":"206","name":"sono.il.massimo","role":"D","roleLabel":"Difensore","nation":"Ecuador","ovr":81,"overallRaw":162,"cost":20,"avgPoints":9.2},{"id":"296","name":"alessiodrinkteam","role":"D","roleLabel":"Difensore","nation":"Francia","ovr":80,"overallRaw":160,"cost":19,"avgPoints":7.2},{"id":"208","name":"claudio__tondo","role":"D","roleLabel":"Difensore","nation":"Germania","ovr":80,"overallRaw":160,"cost":19,"avgPoints":7.1},{"id":"159","name":"Marioski","role":"D","roleLabel":"Difensore","nation":"Francia","ovr":80,"overallRaw":160,"cost":19,"avgPoints":6.8},{"id":"314","name":"secondo.mattia","role":"D","roleLabel":"Difensore","nation":"Inghilterra","ovr":80,"overallRaw":160,"cost":19,"avgPoints":8.2},{"id":"132","name":"emanuele_z_","role":"D","roleLabel":"Difensore","nation":"Brasile","ovr":80,"overallRaw":159,"cost":19,"avgPoints":7.0},{"id":"205","name":"Kledi","role":"D","roleLabel":"Difensore","nation":"Croazia","ovr":80,"overallRaw":159,"cost":19,"avgPoints":5.7},{"id":"158","name":"anto_gra22","role":"D","roleLabel":"Difensore","nation":"Francia","ovr":79,"overallRaw":158,"cost":18,"avgPoints":0.0},{"id":"259","name":"ermattialaghi2011","role":"D","roleLabel":"Difensore","nation":"Canada","ovr":79,"overallRaw":158,"cost":18,"avgPoints":7.2},{"id":"326","name":"Gobbiio","role":"D","roleLabel":"Difensore","nation":"Olanda","ovr":79,"overallRaw":158,"cost":18,"avgPoints":6.8},{"id":"240","name":"lapo2301","role":"D","roleLabel":"Difensore","nation":"Olanda","ovr":79,"overallRaw":158,"cost":18,"avgPoints":6.9},{"id":"161","name":"diaf.11","role":"D","roleLabel":"Difensore","nation":"Germania","ovr":78,"overallRaw":157,"cost":18,"avgPoints":6.8},{"id":"121","name":"flashyt_11","role":"D","roleLabel":"Difensore","nation":"Argentina","ovr":78,"overallRaw":156,"cost":18,"avgPoints":6.9},{"id":"280","name":"Lilolder","role":"D","roleLabel":"Difensore","nation":"Olanda","ovr":78,"overallRaw":156,"cost":18,"avgPoints":0.0},{"id":"170","name":"lore_dema_95","role":"D","roleLabel":"Difensore","nation":"Olanda","ovr":78,"overallRaw":156,"cost":18,"avgPoints":6.7},{"id":"230","name":"andreaesposito00","role":"D","roleLabel":"Difensore","nation":"Svizzera","ovr":78,"overallRaw":155,"cost":18,"avgPoints":7.0},{"id":"249","name":"Gabriele","role":"D","roleLabel":"Difensore","nation":"Spagna","ovr":78,"overallRaw":155,"cost":18,"avgPoints":6.9},{"id":"144","name":"Angelo131313","role":"D","roleLabel":"Difensore","nation":"Costa d'Avorio","ovr":77,"overallRaw":154,"cost":18,"avgPoints":7.1},{"id":"35","name":"er.tommy.10","role":"D","roleLabel":"Difensore","nation":"Inghilterra","ovr":76,"overallRaw":153,"cost":17,"avgPoints":7.0},{"id":"184","name":"Ilbhobhobho","role":"D","roleLabel":"Difensore","nation":"Spagna","ovr":76,"overallRaw":153,"cost":17,"avgPoints":7.0},{"id":"207","name":"Marinosky","role":"D","roleLabel":"Difensore","nation":"Francia","ovr":76,"overallRaw":153,"cost":17,"avgPoints":6.9},{"id":"255","name":"marz_6317","role":"D","roleLabel":"Difensore","nation":"Austria","ovr":76,"overallRaw":153,"cost":17,"avgPoints":6.8},{"id":"211","name":"mattia_villa_vmi","role":"D","roleLabel":"Difensore","nation":"Olanda","ovr":76,"overallRaw":153,"cost":17,"avgPoints":6.9},{"id":"143","name":"zanella16577","role":"D","roleLabel":"Difensore","nation":"Corea del Sud","ovr":76,"overallRaw":153,"cost":17,"avgPoints":6.0},{"id":"214","name":"aless.fuskkk","role":"D","roleLabel":"Difensore","nation":"Polonia","ovr":76,"overallRaw":152,"cost":17,"avgPoints":0.0},{"id":"149","name":"dav_imperatore","role":"D","roleLabel":"Difensore","nation":"Danimarca","ovr":76,"overallRaw":152,"cost":17,"avgPoints":0.0},{"id":"209","name":"erikcrispoldi","role":"D","roleLabel":"Difensore","nation":"Inghilterra","ovr":76,"overallRaw":152,"cost":17,"avgPoints":7.4},{"id":"294","name":"Frank Lubros","role":"D","roleLabel":"Difensore","nation":"Spagna","ovr":76,"overallRaw":152,"cost":17,"avgPoints":7.0},{"id":"200","name":"gabrielfwz","role":"D","roleLabel":"Difensore","nation":"Argentina","ovr":76,"overallRaw":152,"cost":17,"avgPoints":7.2},{"id":"265","name":"giacconn","role":"D","roleLabel":"Difensore","nation":"Germania","ovr":76,"overallRaw":152,"cost":17,"avgPoints":6.8},{"id":"278","name":"Sorre_013","role":"D","roleLabel":"Difensore","nation":"Ecuador","ovr":76,"overallRaw":152,"cost":17,"avgPoints":6.7},{"id":"269","name":"unknown171717","role":"D","roleLabel":"Difensore","nation":"Scozia","ovr":76,"overallRaw":152,"cost":17,"avgPoints":6.9},{"id":"223","name":"Frazx","role":"D","roleLabel":"Difensore","nation":"Inghilterra","ovr":76,"overallRaw":151,"cost":17,"avgPoints":7.0},{"id":"198","name":"_lore.dossi","role":"D","roleLabel":"Difensore","nation":"Uruguay","ovr":75,"overallRaw":150,"cost":16,"avgPoints":7.0},{"id":"183","name":"Alessandro Sandoli","role":"D","roleLabel":"Difensore","nation":"Senegal","ovr":75,"overallRaw":150,"cost":16,"avgPoints":6.6},{"id":"674","name":"Biagio","role":"D","roleLabel":"Difensore","nation":"Spagna","ovr":75,"overallRaw":150,"cost":16,"avgPoints":6.7},{"id":"264","name":"black_diam0nd","role":"D","roleLabel":"Difensore","nation":"Francia","ovr":75,"overallRaw":150,"cost":16,"avgPoints":6.6},{"id":"222","name":"giuseppe_olimpio116","role":"D","roleLabel":"Difensore","nation":"Germania","ovr":75,"overallRaw":150,"cost":16,"avgPoints":7.3},{"id":"281","name":"Luca dp","role":"D","roleLabel":"Difensore","nation":"Spagna","ovr":75,"overallRaw":150,"cost":16,"avgPoints":7.5},{"id":"235","name":"matt.cast","role":"D","roleLabel":"Difensore","nation":"Uzbekistan","ovr":75,"overallRaw":150,"cost":16,"avgPoints":6.4},{"id":"271","name":"oran✝️🇨🇮🥷🏿","role":"D","roleLabel":"Difensore","nation":"Stati Uniti d'America","ovr":75,"overallRaw":150,"cost":16,"avgPoints":7.0},{"id":"307","name":"Scibet","role":"D","roleLabel":"Difensore","nation":"Portogallo","ovr":75,"overallRaw":150,"cost":16,"avgPoints":6.8},{"id":"141","name":"Sedia Creatore","role":"D","roleLabel":"Difensore","nation":"Colombia","ovr":75,"overallRaw":150,"cost":16,"avgPoints":7.8},{"id":"202","name":"valetap9o","role":"D","roleLabel":"Difensore","nation":"Belgio","ovr":75,"overallRaw":150,"cost":16,"avgPoints":7.4},{"id":"174","name":"Veledinovski","role":"D","roleLabel":"Difensore","nation":"Paraguay","ovr":75,"overallRaw":150,"cost":16,"avgPoints":6.5},{"id":"145","name":"chriaura","role":"D","roleLabel":"Difensore","nation":"Costa d'Avorio","ovr":74,"overallRaw":149,"cost":16,"avgPoints":7.0},{"id":"239","name":"r1ck_crilinnn","role":"D","roleLabel":"Difensore","nation":"Marocco","ovr":74,"overallRaw":149,"cost":16,"avgPoints":6.6},{"id":"238","name":"sololeveling80","role":"D","roleLabel":"Difensore","nation":"Inghilterra","ovr":74,"overallRaw":149,"cost":16,"avgPoints":0.0},{"id":"292","name":"alesslo bltto","role":"D","roleLabel":"Difensore","nation":"Polonia","ovr":74,"overallRaw":148,"cost":16,"avgPoints":0.0},{"id":"162","name":"jimmygbucketss22","role":"D","roleLabel":"Difensore","nation":"Germania","ovr":74,"overallRaw":148,"cost":16,"avgPoints":7.0},{"id":"321","name":"karoldenti","role":"D","roleLabel":"Difensore","nation":"Uruguay","ovr":74,"overallRaw":148,"cost":16,"avgPoints":6.9},{"id":"237","name":"lor_en_zo","role":"D","roleLabel":"Difensore","nation":"Croazia","ovr":74,"overallRaw":148,"cost":16,"avgPoints":8.5},{"id":"322","name":"1908nico_","role":"D","roleLabel":"Difensore","nation":"Brasile","ovr":74,"overallRaw":147,"cost":16,"avgPoints":6.7},{"id":"266","name":"Checco","role":"D","roleLabel":"Difensore","nation":"Inghilterra","ovr":74,"overallRaw":147,"cost":16,"avgPoints":7.4},{"id":"276","name":"mirk0_pad0","role":"D","roleLabel":"Difensore","nation":"Austria","ovr":74,"overallRaw":147,"cost":16,"avgPoints":7.0},{"id":"199","name":"santos.festuccia","role":"D","roleLabel":"Difensore","nation":"Uruguay","ovr":74,"overallRaw":147,"cost":16,"avgPoints":7.0},{"id":"324","name":"ste_fa_nello","role":"D","roleLabel":"Difensore","nation":"Colombia","ovr":74,"overallRaw":147,"cost":16,"avgPoints":7.4},{"id":"139","name":"steefanovignati","role":"D","roleLabel":"Difensore","nation":"Colombia","ovr":74,"overallRaw":147,"cost":16,"avgPoints":7.9},{"id":"323","name":"_capu08","role":"D","roleLabel":"Difensore","nation":"Uruguay","ovr":73,"overallRaw":146,"cost":16,"avgPoints":7.2},{"id":"176","name":"Alo sotto coperta","role":"D","roleLabel":"Difensore","nation":"Polonia","ovr":73,"overallRaw":146,"cost":16,"avgPoints":0.0},{"id":"150","name":"Diego Piacentino","role":"D","roleLabel":"Difensore","nation":"Danimarca","ovr":73,"overallRaw":146,"cost":16,"avgPoints":0.0},{"id":"312","name":"Italiamemme","role":"D","roleLabel":"Difensore","nation":"Turchia","ovr":73,"overallRaw":146,"cost":16,"avgPoints":7.0},{"id":"275","name":"lucafiore090","role":"D","roleLabel":"Difensore","nation":"Algeria","ovr":73,"overallRaw":146,"cost":16,"avgPoints":7.0},{"id":"215","name":"Lucertola","role":"D","roleLabel":"Difensore","nation":"Portogallo","ovr":73,"overallRaw":146,"cost":16,"avgPoints":7.6},{"id":"306","name":"viper_5012","role":"D","roleLabel":"Difensore","nation":"Norvegia","ovr":73,"overallRaw":146,"cost":16,"avgPoints":7.9},{"id":"188","name":"F.N3","role":"D","roleLabel":"Difensore","nation":"Svezia","ovr":72,"overallRaw":145,"cost":15,"avgPoints":6.6},{"id":"127","name":"mirkomastrocinque","role":"D","roleLabel":"Difensore","nation":"Austria","ovr":72,"overallRaw":145,"cost":15,"avgPoints":7.3},{"id":"221","name":"Donny","role":"D","roleLabel":"Difensore","nation":"Costa d'Avorio","ovr":72,"overallRaw":144,"cost":15,"avgPoints":0.0},{"id":"190","name":"fcaboni","role":"D","roleLabel":"Difensore","nation":"Svezia","ovr":72,"overallRaw":144,"cost":15,"avgPoints":7.1},{"id":"187","name":"federicogalizia7746","role":"D","roleLabel":"Difensore","nation":"Svezia","ovr":72,"overallRaw":144,"cost":15,"avgPoints":6.3},{"id":"120","name":"hbotte1990","role":"D","roleLabel":"Difensore","nation":"Argentina","ovr":72,"overallRaw":144,"cost":15,"avgPoints":6.5},{"id":"308","name":"tieppogabriele","role":"D","roleLabel":"Difensore","nation":"Portogallo","ovr":72,"overallRaw":144,"cost":15,"avgPoints":6.9},{"id":"298","name":"adrianesen","role":"D","roleLabel":"Difensore","nation":"Marocco","ovr":72,"overallRaw":143,"cost":15,"avgPoints":6.6},{"id":"285","name":"mino_zip","role":"D","roleLabel":"Difensore","nation":"Argentina","ovr":72,"overallRaw":143,"cost":15,"avgPoints":6.7},{"id":"164","name":"alberto_58_stevan","role":"D","roleLabel":"Difensore","nation":"Marocco","ovr":71,"overallRaw":142,"cost":14,"avgPoints":6.3},{"id":"233","name":"andyrabe51","role":"D","roleLabel":"Difensore","nation":"Uruguay","ovr":71,"overallRaw":142,"cost":14,"avgPoints":6.6},{"id":"295","name":"Dybale","role":"D","roleLabel":"Difensore","nation":"Danimarca","ovr":71,"overallRaw":142,"cost":14,"avgPoints":0.0},{"id":"282","name":"federicopor12","role":"D","roleLabel":"Difensore","nation":"Svezia","ovr":71,"overallRaw":142,"cost":14,"avgPoints":7.3},{"id":"136","name":"Lorenzo Pappalardo","role":"D","roleLabel":"Difensore","nation":"Cechia","ovr":71,"overallRaw":142,"cost":14,"avgPoints":6.7},{"id":"300","name":"lucafuma02","role":"D","roleLabel":"Difensore","nation":"Turchia","ovr":71,"overallRaw":142,"cost":14,"avgPoints":6.8},{"id":"126","name":"P E P P E","role":"D","roleLabel":"Difensore","nation":"Austria","ovr":71,"overallRaw":142,"cost":14,"avgPoints":0.0},{"id":"241","name":"pietrooo.0.9","role":"D","roleLabel":"Difensore","nation":"Stati Uniti d'America","ovr":71,"overallRaw":142,"cost":14,"avgPoints":7.2},{"id":"317","name":"stan_alessio","role":"D","roleLabel":"Difensore","nation":"Ecuador","ovr":71,"overallRaw":142,"cost":14,"avgPoints":6.0},{"id":"257","name":"masaneomatteo25","role":"D","roleLabel":"Difensore","nation":"Algeria","ovr":70,"overallRaw":141,"cost":14,"avgPoints":7.0},{"id":"309","name":"Tommy_Grlgss_013","role":"D","roleLabel":"Difensore","nation":"Scozia","ovr":70,"overallRaw":141,"cost":14,"avgPoints":8.1},{"id":"148","name":"raffyagnese11","role":"D","roleLabel":"Difensore","nation":"Croazia","ovr":70,"overallRaw":140,"cost":14,"avgPoints":6.7},{"id":"224","name":"22","role":"D","roleLabel":"Difensore","nation":"Norvegia","ovr":70,"overallRaw":139,"cost":14,"avgPoints":6.7},{"id":"673","name":"Foggiano","role":"D","roleLabel":"Difensore","nation":"Norvegia","ovr":70,"overallRaw":139,"cost":14,"avgPoints":6.6},{"id":"129","name":"gabrielecosta237","role":"D","roleLabel":"Difensore","nation":"Belgio","ovr":70,"overallRaw":139,"cost":14,"avgPoints":6.7},{"id":"182","name":"Sv5","role":"D","roleLabel":"Difensore","nation":"Senegal","ovr":70,"overallRaw":139,"cost":14,"avgPoints":6.3},{"id":"277","name":"xiao_monte44","role":"D","roleLabel":"Difensore","nation":"Colombia","ovr":70,"overallRaw":139,"cost":14,"avgPoints":6.7},{"id":"260","name":"z.a.n.huf","role":"D","roleLabel":"Difensore","nation":"Colombia","ovr":70,"overallRaw":139,"cost":14,"avgPoints":0.0},{"id":"251","name":"_rendox08_","role":"D","roleLabel":"Difensore","nation":"Colombia","ovr":69,"overallRaw":138,"cost":14,"avgPoints":6.8},{"id":"173","name":"Bruno Ceck","role":"D","roleLabel":"Difensore","nation":"Paraguay","ovr":69,"overallRaw":138,"cost":14,"avgPoints":6.7},{"id":"327","name":"football","role":"D","roleLabel":"Difensore","nation":"Svezia","ovr":69,"overallRaw":138,"cost":14,"avgPoints":6.7},{"id":"128","name":"lorenzo_marmoni","role":"D","roleLabel":"Difensore","nation":"Belgio","ovr":69,"overallRaw":138,"cost":14,"avgPoints":6.9},{"id":"302","name":"luk.e1110","role":"D","roleLabel":"Difensore","nation":"Belgio","ovr":69,"overallRaw":138,"cost":14,"avgPoints":7.0},{"id":"201","name":"pino_palombino","role":"D","roleLabel":"Difensore","nation":"Austria","ovr":69,"overallRaw":138,"cost":14,"avgPoints":6.8},{"id":"218","name":"Pippo","role":"D","roleLabel":"Difensore","nation":"Repubblica Democratica del Congo","ovr":69,"overallRaw":138,"cost":14,"avgPoints":6.5},{"id":"310","name":"risamarco","role":"D","roleLabel":"Difensore","nation":"Stati Uniti d'America","ovr":69,"overallRaw":138,"cost":14,"avgPoints":6.6},{"id":"231","name":"bens95","role":"D","roleLabel":"Difensore","nation":"Svizzera","ovr":68,"overallRaw":137,"cost":13,"avgPoints":6.7},{"id":"217","name":"boh","role":"D","roleLabel":"Difensore","nation":"Svizzera","ovr":68,"overallRaw":137,"cost":13,"avgPoints":6.8},{"id":"315","name":"marcosal","role":"D","roleLabel":"Difensore","nation":"Belgio","ovr":68,"overallRaw":137,"cost":13,"avgPoints":7.2},{"id":"125","name":"pirox_11","role":"D","roleLabel":"Difensore","nation":"Austria","ovr":68,"overallRaw":137,"cost":13,"avgPoints":0.0},{"id":"140","name":"5amu.dn","role":"D","roleLabel":"Difensore","nation":"Colombia","ovr":68,"overallRaw":136,"cost":13,"avgPoints":0.0},{"id":"169","name":"_leonardos_oliveris_","role":"D","roleLabel":"Difensore","nation":"Norvegia","ovr":68,"overallRaw":136,"cost":13,"avgPoints":7.4},{"id":"232","name":"⚽️_ROCCO_⚽️","role":"D","roleLabel":"Difensore","nation":"Uruguay","ovr":68,"overallRaw":136,"cost":13,"avgPoints":6.8},{"id":"325","name":"fil_lap_","role":"D","roleLabel":"Difensore","nation":"Danimarca","ovr":68,"overallRaw":136,"cost":13,"avgPoints":0.0},{"id":"189","name":"francescodimola14_","role":"D","roleLabel":"Difensore","nation":"Svezia","ovr":68,"overallRaw":136,"cost":13,"avgPoints":0.0},{"id":"210","name":"leo_anti02","role":"D","roleLabel":"Difensore","nation":"Messico","ovr":68,"overallRaw":136,"cost":13,"avgPoints":6.8},{"id":"194","name":"MANUTV23","role":"D","roleLabel":"Difensore","nation":"Turchia","ovr":68,"overallRaw":136,"cost":13,"avgPoints":6.7},{"id":"252","name":"Marco Mancini","role":"D","roleLabel":"Difensore","nation":"Messico","ovr":68,"overallRaw":136,"cost":13,"avgPoints":6.6},{"id":"220","name":"renatomarini_","role":"D","roleLabel":"Difensore","nation":"Austria","ovr":68,"overallRaw":136,"cost":13,"avgPoints":6.7},{"id":"185","name":"Sergio Renita","role":"D","roleLabel":"Difensore","nation":"Stati Uniti d'America","ovr":68,"overallRaw":136,"cost":13,"avgPoints":7.2},{"id":"245","name":"kaito993","role":"D","roleLabel":"Difensore","nation":"Messico","ovr":68,"overallRaw":135,"cost":13,"avgPoints":6.7},{"id":"253","name":"leo_mozzii","role":"D","roleLabel":"Difensore","nation":"Messico","ovr":68,"overallRaw":135,"cost":13,"avgPoints":6.8},{"id":"196","name":"marco_borghi_23","role":"D","roleLabel":"Difensore","nation":"Turchia","ovr":68,"overallRaw":135,"cost":13,"avgPoints":0.0},{"id":"195","name":"marco_delpins","role":"D","roleLabel":"Difensore","nation":"Turchia","ovr":68,"overallRaw":135,"cost":13,"avgPoints":6.9},{"id":"138","name":"zertobomber12","role":"D","roleLabel":"Difensore","nation":"Cechia","ovr":68,"overallRaw":135,"cost":13,"avgPoints":0.0},{"id":"134","name":"zlo_spencer","role":"D","roleLabel":"Difensore","nation":"Cechia","ovr":68,"overallRaw":135,"cost":13,"avgPoints":0.0},{"id":"168","name":"_simply.aiikoin4k","role":"D","roleLabel":"Difensore","nation":"Norvegia","ovr":67,"overallRaw":134,"cost":12,"avgPoints":7.3},{"id":"165","name":"Bianconero_1975","role":"D","roleLabel":"Difensore","nation":"Marocco","ovr":67,"overallRaw":134,"cost":12,"avgPoints":6.5},{"id":"197","name":"EE","role":"D","roleLabel":"Difensore","nation":"Uruguay","ovr":67,"overallRaw":134,"cost":12,"avgPoints":0.0},{"id":"133","name":"filippo.gnemmi","role":"D","roleLabel":"Difensore","nation":"Canada","ovr":67,"overallRaw":134,"cost":12,"avgPoints":6.5},{"id":"229","name":"Franco27","role":"D","roleLabel":"Difensore","nation":"Svezia","ovr":67,"overallRaw":134,"cost":12,"avgPoints":6.8},{"id":"250","name":"roggi.27","role":"D","roleLabel":"Difensore","nation":"Austria","ovr":67,"overallRaw":134,"cost":12,"avgPoints":7.6},{"id":"186","name":"temp_dario","role":"D","roleLabel":"Difensore","nation":"Stati Uniti d'America","ovr":67,"overallRaw":134,"cost":12,"avgPoints":0.0},{"id":"225","name":"11manu11","role":"D","roleLabel":"Difensore","nation":"Norvegia","ovr":66,"overallRaw":133,"cost":12,"avgPoints":0.0},{"id":"283","name":"chrisshish_","role":"D","roleLabel":"Difensore","nation":"Svizzera","ovr":66,"overallRaw":133,"cost":12,"avgPoints":6.6},{"id":"663","name":"D A V I D","role":"D","roleLabel":"Difensore","nation":"Sudafrica","ovr":66,"overallRaw":133,"cost":12,"avgPoints":6.6},{"id":"286","name":"Fra&Ale","role":"D","roleLabel":"Difensore","nation":"Canada","ovr":66,"overallRaw":133,"cost":12,"avgPoints":6.8},{"id":"299","name":"FraX","role":"D","roleLabel":"Difensore","nation":"Panama","ovr":66,"overallRaw":133,"cost":12,"avgPoints":6.2},{"id":"279","name":"gen_matt1x1","role":"D","roleLabel":"Difensore","nation":"Messico","ovr":66,"overallRaw":133,"cost":12,"avgPoints":6.7},{"id":"167","name":"mancuso9421","role":"D","roleLabel":"Difensore","nation":"Messico","ovr":66,"overallRaw":133,"cost":12,"avgPoints":6.5},{"id":"227","name":"Pattacci","role":"D","roleLabel":"Difensore","nation":"Repubblica Democratica del Congo","ovr":66,"overallRaw":133,"cost":12,"avgPoints":6.6},{"id":"153","name":"sto_fatto_al_mare","role":"D","roleLabel":"Difensore","nation":"Ecuador","ovr":66,"overallRaw":133,"cost":12,"avgPoints":0.0},{"id":"156","name":"Angelo","role":"D","roleLabel":"Difensore","nation":"Egitto","ovr":66,"overallRaw":132,"cost":12,"avgPoints":6.8},{"id":"216","name":"Christian Montanin","role":"D","roleLabel":"Difensore","nation":"Svizzera","ovr":66,"overallRaw":132,"cost":12,"avgPoints":0.0},{"id":"301","name":"rubenporcelli","role":"D","roleLabel":"Difensore","nation":"Austria","ovr":66,"overallRaw":132,"cost":12,"avgPoints":0.0},{"id":"146","name":"sali.leo7","role":"D","roleLabel":"Difensore","nation":"Croazia","ovr":66,"overallRaw":132,"cost":12,"avgPoints":6.9},{"id":"192","name":"Simone Colaci","role":"D","roleLabel":"Difensore","nation":"Tunisia","ovr":66,"overallRaw":132,"cost":12,"avgPoints":6.8},{"id":"135","name":"Valerlo.montatore","role":"D","roleLabel":"Difensore","nation":"Cechia","ovr":66,"overallRaw":132,"cost":12,"avgPoints":7.7},{"id":"328","name":"acetfotografia","role":"D","roleLabel":"Difensore","nation":"Norvegia","ovr":66,"overallRaw":131,"cost":12,"avgPoints":6.8},{"id":"318","name":"blind_memory10","role":"D","roleLabel":"Difensore","nation":"Marocco","ovr":66,"overallRaw":131,"cost":12,"avgPoints":6.7},{"id":"288","name":"valeriocarus","role":"D","roleLabel":"Difensore","nation":"Cechia","ovr":66,"overallRaw":131,"cost":12,"avgPoints":6.8},{"id":"191","name":"dabalafilippo","role":"D","roleLabel":"Difensore","nation":"Svizzera","ovr":65,"overallRaw":130,"cost":12,"avgPoints":0.0},{"id":"166","name":"Gabri21","role":"D","roleLabel":"Difensore","nation":"Messico","ovr":65,"overallRaw":130,"cost":12,"avgPoints":6.4},{"id":"311","name":"gennaroferro","role":"D","roleLabel":"Difensore","nation":"Svizzera","ovr":65,"overallRaw":130,"cost":12,"avgPoints":6.9},{"id":"273","name":"Il damo","role":"D","roleLabel":"Difensore","nation":"Turchia","ovr":65,"overallRaw":130,"cost":12,"avgPoints":6.7},{"id":"137","name":"V A L E","role":"D","roleLabel":"Difensore","nation":"Cechia","ovr":65,"overallRaw":130,"cost":12,"avgPoints":0.0},{"id":"175","name":"Cast_Prissy14🇦🇷","role":"D","roleLabel":"Difensore","nation":"Polonia","ovr":64,"overallRaw":129,"cost":11,"avgPoints":0.0},{"id":"316","name":"davidsamarelli2011","role":"D","roleLabel":"Difensore","nation":"Costa d'Avorio","ovr":64,"overallRaw":129,"cost":11,"avgPoints":7.0},{"id":"213","name":"Scorpion22q","role":"D","roleLabel":"Difensore","nation":"Paraguay","ovr":64,"overallRaw":129,"cost":11,"avgPoints":6.3},{"id":"289","name":"Tofiore","role":"D","roleLabel":"Difensore","nation":"Ecuador","ovr":64,"overallRaw":129,"cost":11,"avgPoints":9.3},{"id":"228","name":"Mr calclo","role":"D","roleLabel":"Difensore","nation":"Repubblica Democratica del Congo","ovr":64,"overallRaw":128,"cost":11,"avgPoints":0.0},{"id":"261","name":"adam.salah12","role":"D","roleLabel":"Difensore","nation":"Corea del Sud","ovr":64,"overallRaw":127,"cost":11,"avgPoints":6.8},{"id":"204","name":"el_magu09","role":"D","roleLabel":"Difensore","nation":"Costa d'Avorio","ovr":64,"overallRaw":127,"cost":11,"avgPoints":7.8},{"id":"664","name":"Erosburro","role":"D","roleLabel":"Difensore","nation":"Sudafrica","ovr":64,"overallRaw":127,"cost":11,"avgPoints":6.5},{"id":"329","name":"nunziata_francesco12","role":"D","roleLabel":"Difensore","nation":"Algeria","ovr":64,"overallRaw":127,"cost":11,"avgPoints":6.8},{"id":"247","name":"omarmazielli","role":"D","roleLabel":"Difensore","nation":"Algeria","ovr":64,"overallRaw":127,"cost":11,"avgPoints":7.7},{"id":"181","name":"teodorcalciano","role":"D","roleLabel":"Difensore","nation":"Scozia","ovr":64,"overallRaw":127,"cost":11,"avgPoints":6.6},{"id":"293","name":"the_martox_17","role":"D","roleLabel":"Difensore","nation":"Scozia","ovr":64,"overallRaw":127,"cost":11,"avgPoints":7.8},{"id":"305","name":"tommy_codecasa_","role":"D","roleLabel":"Difensore","nation":"Ecuador","ovr":64,"overallRaw":127,"cost":11,"avgPoints":0.0},{"id":"155","name":"cerinxviii","role":"D","roleLabel":"Difensore","nation":"Egitto","ovr":62,"overallRaw":125,"cost":10,"avgPoints":6.9},{"id":"203","name":"Giosal2.0","role":"D","roleLabel":"Difensore","nation":"Canada","ovr":62,"overallRaw":125,"cost":10,"avgPoints":6.7},{"id":"152","name":"Il_Mega","role":"D","roleLabel":"Difensore","nation":"Ecuador","ovr":62,"overallRaw":125,"cost":10,"avgPoints":0.0},{"id":"119","name":"P. T. 1","role":"D","roleLabel":"Difensore","nation":"Algeria","ovr":62,"overallRaw":125,"cost":10,"avgPoints":6.7},{"id":"320","name":"sarna","role":"D","roleLabel":"Difensore","nation":"Tunisia","ovr":62,"overallRaw":125,"cost":10,"avgPoints":6.1},{"id":"272","name":"sasyl💯💯","role":"D","roleLabel":"Difensore","nation":"Tunisia","ovr":62,"overallRaw":125,"cost":10,"avgPoints":6.7},{"id":"180","name":"steven_benincasa","role":"D","roleLabel":"Difensore","nation":"Scozia","ovr":62,"overallRaw":125,"cost":10,"avgPoints":0.0},{"id":"303","name":"jacopo5760","role":"D","roleLabel":"Difensore","nation":"Canada","ovr":62,"overallRaw":124,"cost":10,"avgPoints":0.0},{"id":"243","name":"L.C.414","role":"D","roleLabel":"Difensore","nation":"Canada","ovr":62,"overallRaw":124,"cost":10,"avgPoints":0.0},{"id":"236","name":"Pulisic.ftbl","role":"D","roleLabel":"Difensore","nation":"Algeria","ovr":62,"overallRaw":124,"cost":10,"avgPoints":0.0},{"id":"142","name":"ale.canevari","role":"D","roleLabel":"Difensore","nation":"Corea del Sud","ovr":62,"overallRaw":123,"cost":10,"avgPoints":7.0},{"id":"263","name":"CRI•🖤💙","role":"D","roleLabel":"Difensore","nation":"Egitto","ovr":62,"overallRaw":123,"cost":10,"avgPoints":7.7},{"id":"212","name":"Il Dispix","role":"D","roleLabel":"Difensore","nation":"Panama","ovr":62,"overallRaw":123,"cost":10,"avgPoints":6.5},{"id":"284","name":"ra","role":"D","roleLabel":"Difensore","nation":"Algeria","ovr":62,"overallRaw":123,"cost":10,"avgPoints":6.9},{"id":"313","name":"mastro","role":"D","roleLabel":"Difensore","nation":"Uzbekistan","ovr":61,"overallRaw":122,"cost":10,"avgPoints":0.0},{"id":"193","name":"re13andrea2","role":"D","roleLabel":"Difensore","nation":"Tunisia","ovr":61,"overallRaw":122,"cost":10,"avgPoints":0.0},{"id":"658","name":"Conte","role":"D","roleLabel":"Difensore","nation":"Sudafrica","ovr":60,"overallRaw":120,"cost":9,"avgPoints":6.3},{"id":"262","name":"crzl1818","role":"D","roleLabel":"Difensore","nation":"Egitto","ovr":60,"overallRaw":120,"cost":9,"avgPoints":6.6},{"id":"154","name":"dan._.ceres","role":"D","roleLabel":"Difensore","nation":"Egitto","ovr":60,"overallRaw":120,"cost":9,"avgPoints":0.0},{"id":"254","name":"giulio_.simone","role":"D","roleLabel":"Difensore","nation":"Iran","ovr":60,"overallRaw":120,"cost":9,"avgPoints":6.8},{"id":"244","name":"Giulio valbo","role":"D","roleLabel":"Difensore","nation":"Iran","ovr":60,"overallRaw":120,"cost":9,"avgPoints":0.0},{"id":"118","name":"IoVisal","role":"D","roleLabel":"Difensore","nation":"Algeria","ovr":60,"overallRaw":120,"cost":9,"avgPoints":0.0},{"id":"178","name":"lollox","role":"D","roleLabel":"Difensore","nation":"Qatar","ovr":60,"overallRaw":120,"cost":9,"avgPoints":7.0},{"id":"179","name":"Lorlllo11","role":"D","roleLabel":"Difensore","nation":"Qatar","ovr":60,"overallRaw":120,"cost":9,"avgPoints":6.9},{"id":"246","name":"Lu_gaming_clt","role":"D","roleLabel":"Difensore","nation":"Qatar","ovr":60,"overallRaw":120,"cost":9,"avgPoints":0.0},{"id":"234","name":"MARNACHO","role":"D","roleLabel":"Difensore","nation":"Uzbekistan","ovr":60,"overallRaw":120,"cost":9,"avgPoints":6.3},{"id":"274","name":"Marai","role":"D","roleLabel":"Difensore","nation":"Uzbekistan","ovr":59,"overallRaw":118,"cost":8,"avgPoints":5.9},{"id":"291","name":"Balzano","role":"D","roleLabel":"Difensore","nation":"Panama","ovr":58,"overallRaw":117,"cost":8,"avgPoints":0.0},{"id":"172","name":"Foggiano91","role":"D","roleLabel":"Difensore","nation":"Panama","ovr":58,"overallRaw":117,"cost":8,"avgPoints":6.5},{"id":"676","name":"Giulio Valbo","role":"D","roleLabel":"Difensore","nation":"Corea del Sud","ovr":59,"overallRaw":117,"cost":8,"avgPoints":0.0},{"id":"226","name":"Leo.Giuliani","role":"D","roleLabel":"Difensore","nation":"Qatar","ovr":58,"overallRaw":115,"cost":8,"avgPoints":6.8},{"id":"268","name":"lampetto13","role":"D","roleLabel":"Difensore","nation":"Qatar","ovr":55,"overallRaw":110,"cost":6,"avgPoints":6.7},{"id":"387","name":"Piuz","role":"C","roleLabel":"Centrocampista","nation":"Inghilterra","ovr":91,"overallRaw":182,"cost":32,"avgPoints":8.2},{"id":"340","name":"Ciolasalsa","role":"C","roleLabel":"Centrocampista","nation":"Spagna","ovr":90,"overallRaw":180,"cost":32,"avgPoints":9.2},{"id":"400","name":"Andrea Perrone","role":"C","roleLabel":"Centrocampista","nation":"Portogallo","ovr":88,"overallRaw":177,"cost":31,"avgPoints":7.0},{"id":"414","name":"bandolero__22","role":"C","roleLabel":"Centrocampista","nation":"Spagna","ovr":88,"overallRaw":177,"cost":31,"avgPoints":10.5},{"id":"529","name":"Johnny","role":"C","roleLabel":"Centrocampista","nation":"Spagna","ovr":88,"overallRaw":177,"cost":31,"avgPoints":9.3},{"id":"522","name":"TommasoM","role":"C","roleLabel":"Centrocampista","nation":"Inghilterra","ovr":88,"overallRaw":177,"cost":31,"avgPoints":8.6},{"id":"560","name":"bruno.ceck","role":"C","roleLabel":"Centrocampista","nation":"Brasile","ovr":88,"overallRaw":176,"cost":31,"avgPoints":12.1},{"id":"513","name":"simoneee_.","role":"C","roleLabel":"Centrocampista","nation":"Norvegia","ovr":88,"overallRaw":176,"cost":31,"avgPoints":8.3},{"id":"453","name":"Arthur","role":"C","roleLabel":"Centrocampista","nation":"Portogallo","ovr":88,"overallRaw":175,"cost":31,"avgPoints":9.1},{"id":"532","name":"diggodog30","role":"C","roleLabel":"Centrocampista","nation":"Francia","ovr":88,"overallRaw":175,"cost":31,"avgPoints":9.6},{"id":"438","name":"PTH","role":"C","roleLabel":"Centrocampista","nation":"Uruguay","ovr":88,"overallRaw":175,"cost":31,"avgPoints":9.6},{"id":"566","name":"caouriki100","role":"C","roleLabel":"Centrocampista","nation":"Germania","ovr":85,"overallRaw":170,"cost":29,"avgPoints":8.5},{"id":"510","name":"rikiii","role":"C","roleLabel":"Centrocampista","nation":"Belgio","ovr":85,"overallRaw":170,"cost":29,"avgPoints":11.6},{"id":"568","name":"pippofromibiza88","role":"C","roleLabel":"Centrocampista","nation":"Inghilterra","ovr":84,"overallRaw":169,"cost":28,"avgPoints":8.1},{"id":"357","name":"dany.heerous","role":"C","roleLabel":"Centrocampista","nation":"Brasile","ovr":84,"overallRaw":168,"cost":28,"avgPoints":8.8},{"id":"441","name":"Martinico","role":"C","roleLabel":"Centrocampista","nation":"Argentina","ovr":84,"overallRaw":168,"cost":28,"avgPoints":7.9},{"id":"546","name":"samu_c_23","role":"C","roleLabel":"Centrocampista","nation":"Colombia","ovr":84,"overallRaw":168,"cost":28,"avgPoints":8.1},{"id":"670","name":"sesko.ok","role":"C","roleLabel":"Centrocampista","nation":"Ecuador","ovr":84,"overallRaw":168,"cost":28,"avgPoints":6.8},{"id":"339","name":"marcoprogame4","role":"C","roleLabel":"Centrocampista","nation":"Francia","ovr":83,"overallRaw":166,"cost":27,"avgPoints":8.3},{"id":"393","name":"gioiquellovero","role":"C","roleLabel":"Centrocampista","nation":"Olanda","ovr":82,"overallRaw":165,"cost":27,"avgPoints":7.3},{"id":"436","name":"rxr_kz95gianluca","role":"C","roleLabel":"Centrocampista","nation":"Francia","ovr":82,"overallRaw":165,"cost":27,"avgPoints":7.8},{"id":"525","name":"Userwthnoname","role":"C","roleLabel":"Centrocampista","nation":"Scozia","ovr":82,"overallRaw":165,"cost":27,"avgPoints":12.0},{"id":"539","name":"Er pupone10","role":"C","roleLabel":"Centrocampista","nation":"Svezia","ovr":82,"overallRaw":164,"cost":27,"avgPoints":9.9},{"id":"537","name":"Fork","role":"C","roleLabel":"Centrocampista","nation":"Portogallo","ovr":82,"overallRaw":164,"cost":27,"avgPoints":9.2},{"id":"399","name":"Gigabyte","role":"C","roleLabel":"Centrocampista","nation":"Portogallo","ovr":82,"overallRaw":164,"cost":27,"avgPoints":6.9},{"id":"369","name":"julio11c","role":"C","roleLabel":"Centrocampista","nation":"Croazia","ovr":82,"overallRaw":164,"cost":27,"avgPoints":6.7},{"id":"555","name":"brun0_scarso","role":"C","roleLabel":"Centrocampista","nation":"Spagna","ovr":82,"overallRaw":163,"cost":27,"avgPoints":11.2},{"id":"430","name":"il_pulcino_dio","role":"C","roleLabel":"Centrocampista","nation":"Turchia","ovr":81,"overallRaw":162,"cost":26,"avgPoints":7.5},{"id":"515","name":"justmario01","role":"C","roleLabel":"Centrocampista","nation":"Spagna","ovr":81,"overallRaw":162,"cost":26,"avgPoints":9.9},{"id":"413","name":"Vettel","role":"C","roleLabel":"Centrocampista","nation":"Spagna","ovr":80,"overallRaw":161,"cost":26,"avgPoints":6.8},{"id":"423","name":"andreaaimoni","role":"C","roleLabel":"Centrocampista","nation":"Svizzera","ovr":80,"overallRaw":160,"cost":26,"avgPoints":7.9},{"id":"456","name":"Kingus Bla","role":"C","roleLabel":"Centrocampista","nation":"Spagna","ovr":80,"overallRaw":160,"cost":26,"avgPoints":6.4},{"id":"440","name":"Mr Mello","role":"C","roleLabel":"Centrocampista","nation":"Argentina","ovr":80,"overallRaw":159,"cost":26,"avgPoints":8.8},{"id":"574","name":"nickfochi","role":"C","roleLabel":"Centrocampista","nation":"Spagna","ovr":80,"overallRaw":159,"cost":26,"avgPoints":7.2},{"id":"383","name":"Samuel","role":"C","roleLabel":"Centrocampista","nation":"Francia","ovr":80,"overallRaw":159,"cost":26,"avgPoints":7.4},{"id":"442","name":"thomas_popolizio","role":"C","roleLabel":"Centrocampista","nation":"Belgio","ovr":80,"overallRaw":159,"cost":26,"avgPoints":9.2},{"id":"669","name":"yuridigius","role":"C","roleLabel":"Centrocampista","nation":"Inghilterra","ovr":80,"overallRaw":159,"cost":26,"avgPoints":8.7},{"id":"384","name":"Fantaballa","role":"C","roleLabel":"Centrocampista","nation":"Francia","ovr":79,"overallRaw":158,"cost":25,"avgPoints":6.8},{"id":"451","name":"jonden3402","role":"C","roleLabel":"Centrocampista","nation":"Olanda","ovr":79,"overallRaw":158,"cost":25,"avgPoints":7.9},{"id":"450","name":"Lemming","role":"C","roleLabel":"Centrocampista","nation":"Olanda","ovr":79,"overallRaw":158,"cost":25,"avgPoints":8.3},{"id":"575","name":"watengakazz1m","role":"C","roleLabel":"Centrocampista","nation":"Spagna","ovr":79,"overallRaw":158,"cost":25,"avgPoints":0.0},{"id":"412","name":"andreatarulli","role":"C","roleLabel":"Centrocampista","nation":"Spagna","ovr":78,"overallRaw":157,"cost":24,"avgPoints":0.0},{"id":"584","name":"demis27_","role":"C","roleLabel":"Centrocampista","nation":"Germania","ovr":78,"overallRaw":157,"cost":24,"avgPoints":9.1},{"id":"334","name":"lorenzobitontii","role":"C","roleLabel":"Centrocampista","nation":"Portogallo","ovr":78,"overallRaw":157,"cost":24,"avgPoints":6.9},{"id":"347","name":"Damians","role":"C","roleLabel":"Centrocampista","nation":"Argentina","ovr":78,"overallRaw":156,"cost":24,"avgPoints":6.7},{"id":"358","name":"halland_pio","role":"C","roleLabel":"Centrocampista","nation":"Brasile","ovr":78,"overallRaw":156,"cost":24,"avgPoints":8.7},{"id":"538","name":"Maks","role":"C","roleLabel":"Centrocampista","nation":"Portogallo","ovr":78,"overallRaw":156,"cost":24,"avgPoints":0.0},{"id":"333","name":"lu_fucacciu","role":"C","roleLabel":"Centrocampista","nation":"Olanda","ovr":78,"overallRaw":155,"cost":24,"avgPoints":8.5},{"id":"567","name":"Pacchoo","role":"C","roleLabel":"Centrocampista","nation":"Inghilterra","ovr":78,"overallRaw":155,"cost":24,"avgPoints":7.0},{"id":"562","name":"williamsantarossa","role":"C","roleLabel":"Centrocampista","nation":"Corea del Sud","ovr":78,"overallRaw":155,"cost":24,"avgPoints":7.6},{"id":"460","name":"Ciccarelli","role":"C","roleLabel":"Centrocampista","nation":"Inghilterra","ovr":76,"overallRaw":153,"cost":23,"avgPoints":7.3},{"id":"385","name":"falcogranta","role":"C","roleLabel":"Centrocampista","nation":"Germania","ovr":76,"overallRaw":153,"cost":23,"avgPoints":6.8},{"id":"462","name":"matteo.mecca01","role":"C","roleLabel":"Centrocampista","nation":"Stati Uniti d'America","ovr":76,"overallRaw":153,"cost":23,"avgPoints":7.3},{"id":"583","name":"nickgulmoxxiv","role":"C","roleLabel":"Centrocampista","nation":"Portogallo","ovr":76,"overallRaw":153,"cost":23,"avgPoints":6.7},{"id":"434","name":"WI_PadrePio","role":"C","roleLabel":"Centrocampista","nation":"Uruguay","ovr":76,"overallRaw":153,"cost":23,"avgPoints":6.5},{"id":"446","name":"flips_1020","role":"C","roleLabel":"Centrocampista","nation":"Germania","ovr":76,"overallRaw":152,"cost":23,"avgPoints":6.6},{"id":"376","name":"davi_tiri11","role":"C","roleLabel":"Centrocampista","nation":"Danimarca","ovr":76,"overallRaw":151,"cost":23,"avgPoints":3.8},{"id":"370","name":"leandrosantiagomunez","role":"C","roleLabel":"Centrocampista","nation":"Croazia","ovr":76,"overallRaw":151,"cost":23,"avgPoints":6.9},{"id":"416","name":"nicco.bellandi","role":"C","roleLabel":"Centrocampista","nation":"Stati Uniti d'America","ovr":76,"overallRaw":151,"cost":23,"avgPoints":6.7},{"id":"415","name":"Nick_","role":"C","roleLabel":"Centrocampista","nation":"Stati Uniti d'America","ovr":76,"overallRaw":151,"cost":23,"avgPoints":6.7},{"id":"355","name":"alessiocesareo","role":"C","roleLabel":"Centrocampista","nation":"Belgio","ovr":75,"overallRaw":150,"cost":22,"avgPoints":7.7},{"id":"654","name":"Anto_12","role":"C","roleLabel":"Centrocampista","nation":"Costa d'Avorio","ovr":75,"overallRaw":150,"cost":22,"avgPoints":10.4},{"id":"432","name":"Colante","role":"C","roleLabel":"Centrocampista","nation":"Uruguay","ovr":75,"overallRaw":150,"cost":22,"avgPoints":6.7},{"id":"533","name":"Flavio","role":"C","roleLabel":"Centrocampista","nation":"Inghilterra","ovr":75,"overallRaw":150,"cost":22,"avgPoints":8.5},{"id":"397","name":"fruci_alessandro_","role":"C","roleLabel":"Centrocampista","nation":"Portogallo","ovr":75,"overallRaw":150,"cost":22,"avgPoints":0.0},{"id":"386","name":"giorgioconti12","role":"C","roleLabel":"Centrocampista","nation":"Germania","ovr":75,"overallRaw":150,"cost":22,"avgPoints":6.7},{"id":"353","name":"mattiabonifazi_","role":"C","roleLabel":"Centrocampista","nation":"Austria","ovr":75,"overallRaw":150,"cost":22,"avgPoints":6.7},{"id":"571","name":"Myke","role":"C","roleLabel":"Centrocampista","nation":"Olanda","ovr":75,"overallRaw":150,"cost":22,"avgPoints":6.6},{"id":"398","name":"Salex","role":"C","roleLabel":"Centrocampista","nation":"Portogallo","ovr":75,"overallRaw":150,"cost":22,"avgPoints":0.0},{"id":"373","name":"Dc22","role":"C","roleLabel":"Centrocampista","nation":"Danimarca","ovr":74,"overallRaw":149,"cost":22,"avgPoints":0.0},{"id":"655","name":"edoardo_ambrosino","role":"C","roleLabel":"Centrocampista","nation":"Belgio","ovr":74,"overallRaw":149,"cost":22,"avgPoints":6.5},{"id":"542","name":"gigachad345667","role":"C","roleLabel":"Centrocampista","nation":"Argentina","ovr":74,"overallRaw":149,"cost":22,"avgPoints":6.7},{"id":"592","name":"_ar_roti_no","role":"C","roleLabel":"Centrocampista","nation":"Marocco","ovr":74,"overallRaw":148,"cost":22,"avgPoints":6.5},{"id":"593","name":"alessio.pal01","role":"C","roleLabel":"Centrocampista","nation":"Senegal","ovr":74,"overallRaw":148,"cost":22,"avgPoints":8.2},{"id":"514","name":"alex456gx","role":"C","roleLabel":"Centrocampista","nation":"Polonia","ovr":74,"overallRaw":148,"cost":22,"avgPoints":0.0},{"id":"519","name":"Lele","role":"C","roleLabel":"Centrocampista","nation":"Argentina","ovr":74,"overallRaw":148,"cost":22,"avgPoints":6.7},{"id":"541","name":"Los","role":"C","roleLabel":"Centrocampista","nation":"Argentina","ovr":74,"overallRaw":148,"cost":22,"avgPoints":6.7},{"id":"558","name":"mauroservodio","role":"C","roleLabel":"Centrocampista","nation":"Austria","ovr":74,"overallRaw":148,"cost":22,"avgPoints":7.2},{"id":"535","name":"vincenzozucchetto","role":"C","roleLabel":"Centrocampista","nation":"Norvegia","ovr":74,"overallRaw":148,"cost":22,"avgPoints":8.3},{"id":"581","name":"__pista.11_","role":"C","roleLabel":"Centrocampista","nation":"Uruguay","ovr":74,"overallRaw":147,"cost":22,"avgPoints":7.7},{"id":"408","name":"Alessio.russo09","role":"C","roleLabel":"Centrocampista","nation":"Senegal","ovr":74,"overallRaw":147,"cost":22,"avgPoints":6.9},{"id":"422","name":"animadavatar","role":"C","roleLabel":"Centrocampista","nation":"Svizzera","ovr":74,"overallRaw":147,"cost":22,"avgPoints":6.9},{"id":"364","name":"chris05_02","role":"C","roleLabel":"Centrocampista","nation":"Costa d'Avorio","ovr":74,"overallRaw":147,"cost":22,"avgPoints":7.4},{"id":"578","name":"Emadk","role":"C","roleLabel":"Centrocampista","nation":"Stati Uniti d'America","ovr":74,"overallRaw":147,"cost":22,"avgPoints":0.0},{"id":"512","name":"lorenzo_favaro_kb","role":"C","roleLabel":"Centrocampista","nation":"Croazia","ovr":74,"overallRaw":147,"cost":22,"avgPoints":7.7},{"id":"573","name":"Umberto lovino","role":"C","roleLabel":"Centrocampista","nation":"Scozia","ovr":74,"overallRaw":147,"cost":22,"avgPoints":6.1},{"id":"588","name":"89jimbo89","role":"C","roleLabel":"Centrocampista","nation":"Marocco","ovr":73,"overallRaw":146,"cost":21,"avgPoints":7.0},{"id":"424","name":"Arturo Esposito","role":"C","roleLabel":"Centrocampista","nation":"Svizzera","ovr":73,"overallRaw":146,"cost":21,"avgPoints":7.6},{"id":"342","name":"luigi79","role":"C","roleLabel":"Centrocampista","nation":"Algeria","ovr":73,"overallRaw":146,"cost":21,"avgPoints":7.0},{"id":"346","name":"xavieeeeer_","role":"C","roleLabel":"Centrocampista","nation":"Argentina","ovr":73,"overallRaw":146,"cost":21,"avgPoints":6.7},{"id":"579","name":"attilio.guglielmo","role":"C","roleLabel":"Centrocampista","nation":"Svizzera","ovr":72,"overallRaw":145,"cost":21,"avgPoints":8.1},{"id":"356","name":"Beretta","role":"C","roleLabel":"Centrocampista","nation":"Brasile","ovr":72,"overallRaw":145,"cost":21,"avgPoints":7.1},{"id":"366","name":"DODIO","role":"C","roleLabel":"Centrocampista","nation":"Costa d'Avorio","ovr":72,"overallRaw":145,"cost":21,"avgPoints":7.6},{"id":"458","name":"jac0p0pi09","role":"C","roleLabel":"Centrocampista","nation":"Turchia","ovr":72,"overallRaw":145,"cost":21,"avgPoints":6.6},{"id":"548","name":"Matt_011","role":"C","roleLabel":"Centrocampista","nation":"Croazia","ovr":72,"overallRaw":145,"cost":21,"avgPoints":7.0},{"id":"449","name":"pummarolaelvetica","role":"C","roleLabel":"Centrocampista","nation":"Olanda","ovr":72,"overallRaw":145,"cost":21,"avgPoints":10.8},{"id":"407","name":"Tur","role":"C","roleLabel":"Centrocampista","nation":"Scozia","ovr":72,"overallRaw":145,"cost":21,"avgPoints":6.9},{"id":"672","name":"Alecolla","role":"C","roleLabel":"Centrocampista","nation":"Germania","ovr":72,"overallRaw":144,"cost":21,"avgPoints":6.6},{"id":"590","name":"DomenicoFrizziero-h1p","role":"C","roleLabel":"Centrocampista","nation":"Costa d'Avorio","ovr":72,"overallRaw":144,"cost":21,"avgPoints":8.4},{"id":"523","name":"emanuelebossio12","role":"C","roleLabel":"Centrocampista","nation":"Messico","ovr":72,"overallRaw":144,"cost":21,"avgPoints":6.5},{"id":"540","name":"justcaggia","role":"C","roleLabel":"Centrocampista","nation":"Turchia","ovr":72,"overallRaw":144,"cost":21,"avgPoints":6.3},{"id":"527","name":"manu","role":"C","roleLabel":"Centrocampista","nation":"Algeria","ovr":72,"overallRaw":144,"cost":21,"avgPoints":6.8},{"id":"591","name":"micaeldp12","role":"C","roleLabel":"Centrocampista","nation":"Croazia","ovr":72,"overallRaw":144,"cost":21,"avgPoints":6.4},{"id":"585","name":"Proteste Italiane","role":"C","roleLabel":"Centrocampista","nation":"Repubblica Democratica del Congo","ovr":72,"overallRaw":144,"cost":21,"avgPoints":6.8},{"id":"461","name":"TTMMatteo","role":"C","roleLabel":"Centrocampista","nation":"Scozia","ovr":72,"overallRaw":144,"cost":21,"avgPoints":6.8},{"id":"444","name":"0ttavo","role":"C","roleLabel":"Centrocampista","nation":"Corea del Sud","ovr":72,"overallRaw":143,"cost":21,"avgPoints":0.0},{"id":"526","name":"_michael_7791","role":"C","roleLabel":"Centrocampista","nation":"Uruguay","ovr":72,"overallRaw":143,"cost":21,"avgPoints":0.0},{"id":"565","name":"Dinho","role":"C","roleLabel":"Centrocampista","nation":"Danimarca","ovr":72,"overallRaw":143,"cost":21,"avgPoints":0.0},{"id":"374","name":"dvdrom29","role":"C","roleLabel":"Centrocampista","nation":"Danimarca","ovr":72,"overallRaw":143,"cost":21,"avgPoints":0.0},{"id":"433","name":"Nico","role":"C","roleLabel":"Centrocampista","nation":"Uruguay","ovr":72,"overallRaw":143,"cost":21,"avgPoints":6.7},{"id":"563","name":"nicoangelozzii._","role":"C","roleLabel":"Centrocampista","nation":"Croazia","ovr":72,"overallRaw":143,"cost":21,"avgPoints":6.5},{"id":"336","name":"pietro_grano","role":"C","roleLabel":"Centrocampista","nation":"Stati Uniti d'America","ovr":72,"overallRaw":143,"cost":21,"avgPoints":6.9},{"id":"372","name":"patriziocaldoro07","role":"C","roleLabel":"Centrocampista","nation":"Croazia","ovr":71,"overallRaw":142,"cost":20,"avgPoints":7.3},{"id":"354","name":"Pice","role":"C","roleLabel":"Centrocampista","nation":"Austria","ovr":71,"overallRaw":142,"cost":20,"avgPoints":8.2},{"id":"454","name":"totl","role":"C","roleLabel":"Centrocampista","nation":"Scozia","ovr":71,"overallRaw":142,"cost":20,"avgPoints":6.7},{"id":"392","name":"Xx_ale_xX","role":"C","roleLabel":"Centrocampista","nation":"Norvegia","ovr":71,"overallRaw":142,"cost":20,"avgPoints":6.7},{"id":"332","name":"Andre","role":"C","roleLabel":"Centrocampista","nation":"Polonia","ovr":70,"overallRaw":141,"cost":19,"avgPoints":0.0},{"id":"411","name":"barbantino17","role":"C","roleLabel":"Centrocampista","nation":"Senegal","ovr":70,"overallRaw":141,"cost":19,"avgPoints":6.7},{"id":"455","name":"biagioli.leonardo","role":"C","roleLabel":"Centrocampista","nation":"Senegal","ovr":70,"overallRaw":141,"cost":19,"avgPoints":6.7},{"id":"448","name":"marcobbruno","role":"C","roleLabel":"Centrocampista","nation":"Norvegia","ovr":70,"overallRaw":141,"cost":19,"avgPoints":6.7},{"id":"547","name":"truci98","role":"C","roleLabel":"Centrocampista","nation":"Colombia","ovr":70,"overallRaw":141,"cost":19,"avgPoints":6.9},{"id":"551","name":"Alisio_5","role":"C","roleLabel":"Centrocampista","nation":"Marocco","ovr":70,"overallRaw":140,"cost":19,"avgPoints":0.0},{"id":"410","name":"chriiii__011","role":"C","roleLabel":"Centrocampista","nation":"Senegal","ovr":70,"overallRaw":140,"cost":19,"avgPoints":6.7},{"id":"653","name":"davedede163","role":"C","roleLabel":"Centrocampista","nation":"Canada","ovr":70,"overallRaw":140,"cost":19,"avgPoints":8.0},{"id":"419","name":"fillo_sotti","role":"C","roleLabel":"Centrocampista","nation":"Svezia","ovr":70,"overallRaw":140,"cost":19,"avgPoints":7.7},{"id":"331","name":"flavio_di_salvo10","role":"C","roleLabel":"Centrocampista","nation":"Svezia","ovr":70,"overallRaw":140,"cost":19,"avgPoints":6.7},{"id":"545","name":"gabriele___galante","role":"C","roleLabel":"Centrocampista","nation":"Belgio","ovr":70,"overallRaw":140,"cost":19,"avgPoints":10.5},{"id":"439","name":"matt_priv💞","role":"C","roleLabel":"Centrocampista","nation":"Algeria","ovr":70,"overallRaw":140,"cost":19,"avgPoints":6.8},{"id":"508","name":"matte.paolini","role":"C","roleLabel":"Centrocampista","nation":"Algeria","ovr":70,"overallRaw":140,"cost":19,"avgPoints":8.8},{"id":"559","name":"pietro_fresu12","role":"C","roleLabel":"Centrocampista","nation":"Austria","ovr":70,"overallRaw":140,"cost":19,"avgPoints":7.2},{"id":"437","name":"PTH_DM13","role":"C","roleLabel":"Centrocampista","nation":"Stati Uniti d'America","ovr":70,"overallRaw":140,"cost":19,"avgPoints":6.7},{"id":"652","name":"samueleletizia","role":"C","roleLabel":"Centrocampista","nation":"Uruguay","ovr":70,"overallRaw":140,"cost":19,"avgPoints":8.8},{"id":"361","name":"walterilprofeta21","role":"C","roleLabel":"Centrocampista","nation":"Colombia","ovr":70,"overallRaw":140,"cost":19,"avgPoints":14.3},{"id":"338","name":"carbo._21","role":"C","roleLabel":"Centrocampista","nation":"Colombia","ovr":70,"overallRaw":139,"cost":19,"avgPoints":6.3},{"id":"528","name":"ema.crocetta_","role":"C","roleLabel":"Centrocampista","nation":"Danimarca","ovr":70,"overallRaw":139,"cost":19,"avgPoints":0.0},{"id":"335","name":"emanuele_tedeschi92","role":"C","roleLabel":"Centrocampista","nation":"Danimarca","ovr":70,"overallRaw":139,"cost":19,"avgPoints":0.0},{"id":"505","name":"gigi","role":"C","roleLabel":"Centrocampista","nation":"Messico","ovr":70,"overallRaw":139,"cost":19,"avgPoints":6.7},{"id":"404","name":"prlv.sa","role":"C","roleLabel":"Centrocampista","nation":"Repubblica Democratica del Congo","ovr":70,"overallRaw":139,"cost":19,"avgPoints":6.6},{"id":"534","name":"andrea.cozza","role":"C","roleLabel":"Centrocampista","nation":"Marocco","ovr":69,"overallRaw":138,"cost":19,"avgPoints":6.8},{"id":"389","name":"andrewgroove_music","role":"C","roleLabel":"Centrocampista","nation":"Marocco","ovr":69,"overallRaw":138,"cost":19,"avgPoints":6.5},{"id":"375","name":"Ettorezio","role":"C","roleLabel":"Centrocampista","nation":"Danimarca","ovr":69,"overallRaw":138,"cost":19,"avgPoints":0.0},{"id":"570","name":"Jaco","role":"C","roleLabel":"Centrocampista","nation":"Norvegia","ovr":69,"overallRaw":138,"cost":19,"avgPoints":7.0},{"id":"427","name":"Spiderm4n_l2","role":"C","roleLabel":"Centrocampista","nation":"Tunisia","ovr":69,"overallRaw":138,"cost":19,"avgPoints":6.8},{"id":"503","name":"🌒ANDRE_y3p🌔","role":"C","roleLabel":"Centrocampista","nation":"Colombia","ovr":68,"overallRaw":137,"cost":18,"avgPoints":6.6},{"id":"452","name":"Andrea Mazza","role":"C","roleLabel":"Centrocampista","nation":"Polonia","ovr":68,"overallRaw":137,"cost":18,"avgPoints":0.0},{"id":"447","name":"andyrabe51","role":"C","roleLabel":"Centrocampista","nation":"Marocco","ovr":68,"overallRaw":137,"cost":18,"avgPoints":6.8},{"id":"428","name":"Spagno","role":"C","roleLabel":"Centrocampista","nation":"Tunisia","ovr":68,"overallRaw":137,"cost":18,"avgPoints":6.9},{"id":"457","name":"caggy_","role":"C","roleLabel":"Centrocampista","nation":"Svizzera","ovr":68,"overallRaw":136,"cost":18,"avgPoints":6.6},{"id":"572","name":"Caro14","role":"C","roleLabel":"Centrocampista","nation":"Paraguay","ovr":68,"overallRaw":136,"cost":18,"avgPoints":6.2},{"id":"409","name":"dieguito4l","role":"C","roleLabel":"Centrocampista","nation":"Senegal","ovr":68,"overallRaw":136,"cost":18,"avgPoints":6.6},{"id":"418","name":"fralagna","role":"C","roleLabel":"Centrocampista","nation":"Svezia","ovr":68,"overallRaw":136,"cost":18,"avgPoints":7.2},{"id":"524","name":"tommaso_ceccarini_","role":"C","roleLabel":"Centrocampista","nation":"Scozia","ovr":68,"overallRaw":136,"cost":18,"avgPoints":7.8},{"id":"445","name":"Andrea💎","role":"C","roleLabel":"Centrocampista","nation":"Egitto","ovr":68,"overallRaw":135,"cost":18,"avgPoints":6.7},{"id":"330","name":"liveonapool","role":"C","roleLabel":"Centrocampista","nation":"Messico","ovr":68,"overallRaw":135,"cost":18,"avgPoints":6.5},{"id":"431","name":"marcoizzo12","role":"C","roleLabel":"Centrocampista","nation":"Turchia","ovr":68,"overallRaw":135,"cost":18,"avgPoints":6.8},{"id":"344","name":"mattia.giomi","role":"C","roleLabel":"Centrocampista","nation":"Algeria","ovr":68,"overallRaw":135,"cost":18,"avgPoints":6.7},{"id":"417","name":"Supermatty","role":"C","roleLabel":"Centrocampista","nation":"Stati Uniti d'America","ovr":68,"overallRaw":135,"cost":18,"avgPoints":0.0},{"id":"511","name":"17","role":"C","roleLabel":"Centrocampista","nation":"Corea del Sud","ovr":67,"overallRaw":134,"cost":18,"avgPoints":6.5},{"id":"388","name":"Antonio di Mario","role":"C","roleLabel":"Centrocampista","nation":"Marocco","ovr":67,"overallRaw":134,"cost":18,"avgPoints":6.7},{"id":"421","name":"cannnnnnnne","role":"C","roleLabel":"Centrocampista","nation":"Svizzera","ovr":67,"overallRaw":134,"cost":18,"avgPoints":0.0},{"id":"359","name":"flavio_mammola1","role":"C","roleLabel":"Centrocampista","nation":"Canada","ovr":67,"overallRaw":134,"cost":18,"avgPoints":6.0},{"id":"530","name":"francodi23_12","role":"C","roleLabel":"Centrocampista","nation":"Svezia","ovr":67,"overallRaw":134,"cost":18,"avgPoints":6.5},{"id":"420","name":"francy_carl_best10","role":"C","roleLabel":"Centrocampista","nation":"Svezia","ovr":67,"overallRaw":134,"cost":18,"avgPoints":6.7},{"id":"564","name":"fravstheworld","role":"C","roleLabel":"Centrocampista","nation":"Danimarca","ovr":67,"overallRaw":134,"cost":18,"avgPoints":0.0},{"id":"657","name":"Luca Luciani","role":"C","roleLabel":"Centrocampista","nation":"Messico","ovr":67,"overallRaw":134,"cost":18,"avgPoints":5.8},{"id":"459","name":"mauro🇮🇹","role":"C","roleLabel":"Centrocampista","nation":"Algeria","ovr":67,"overallRaw":134,"cost":18,"avgPoints":0.0},{"id":"345","name":"MCTOMINAY.","role":"C","roleLabel":"Centrocampista","nation":"Algeria","ovr":67,"overallRaw":134,"cost":18,"avgPoints":6.8},{"id":"394","name":"Merdonedi'","role":"C","roleLabel":"Centrocampista","nation":"Paraguay","ovr":67,"overallRaw":134,"cost":18,"avgPoints":5.8},{"id":"552","name":"💎-C-💎","role":"C","roleLabel":"Centrocampista","nation":"Norvegia","ovr":66,"overallRaw":133,"cost":17,"avgPoints":6.7},{"id":"367","name":"cristiano.vadala","role":"C","roleLabel":"Centrocampista","nation":"Costa d'Avorio","ovr":66,"overallRaw":133,"cost":17,"avgPoints":7.4},{"id":"360","name":"IlJuly","role":"C","roleLabel":"Centrocampista","nation":"Cechia","ovr":66,"overallRaw":133,"cost":17,"avgPoints":6.8},{"id":"390","name":"marco.gilardi2004","role":"C","roleLabel":"Centrocampista","nation":"Messico","ovr":66,"overallRaw":133,"cost":17,"avgPoints":7.5},{"id":"577","name":"thomaspuron","role":"C","roleLabel":"Centrocampista","nation":"Stati Uniti d'America","ovr":66,"overallRaw":133,"cost":17,"avgPoints":6.8},{"id":"557","name":"ale_tremari","role":"C","roleLabel":"Centrocampista","nation":"Uruguay","ovr":66,"overallRaw":132,"cost":17,"avgPoints":8.6},{"id":"516","name":"ciccarema","role":"C","roleLabel":"Centrocampista","nation":"Svizzera","ovr":66,"overallRaw":132,"cost":17,"avgPoints":0.0},{"id":"429","name":"mariogargiulo2012","role":"C","roleLabel":"Centrocampista","nation":"Turchia","ovr":66,"overallRaw":132,"cost":17,"avgPoints":6.7},{"id":"371","name":"ros9740","role":"C","roleLabel":"Centrocampista","nation":"Croazia","ovr":66,"overallRaw":132,"cost":17,"avgPoints":0.0},{"id":"556","name":"simo_angiulo","role":"C","roleLabel":"Centrocampista","nation":"Tunisia","ovr":66,"overallRaw":132,"cost":17,"avgPoints":6.3},{"id":"381","name":"annah","role":"C","roleLabel":"Centrocampista","nation":"Egitto","ovr":66,"overallRaw":131,"cost":17,"avgPoints":6.7},{"id":"343","name":"michele_5790","role":"C","roleLabel":"Centrocampista","nation":"Algeria","ovr":66,"overallRaw":131,"cost":17,"avgPoints":6.8},{"id":"554","name":"NIckbop4","role":"C","roleLabel":"Centrocampista","nation":"Repubblica Democratica del Congo","ovr":66,"overallRaw":131,"cost":17,"avgPoints":6.6},{"id":"405","name":"Nikolail bomber","role":"C","roleLabel":"Centrocampista","nation":"Repubblica Democratica del Congo","ovr":66,"overallRaw":131,"cost":17,"avgPoints":6.7},{"id":"576","name":"tommaso_colaciuri","role":"C","roleLabel":"Centrocampista","nation":"Stati Uniti d'America","ovr":66,"overallRaw":131,"cost":17,"avgPoints":6.5},{"id":"549","name":"Anonimo","role":"C","roleLabel":"Centrocampista","nation":"Egitto","ovr":65,"overallRaw":130,"cost":16,"avgPoints":6.8},{"id":"380","name":"barba_dave14","role":"C","roleLabel":"Centrocampista","nation":"Egitto","ovr":65,"overallRaw":130,"cost":16,"avgPoints":7.8},{"id":"396","name":"C A R M E L O💎🪄","role":"C","roleLabel":"Centrocampista","nation":"Polonia","ovr":65,"overallRaw":130,"cost":16,"avgPoints":0.0},{"id":"365","name":"davidde784","role":"C","roleLabel":"Centrocampista","nation":"Costa d'Avorio","ovr":65,"overallRaw":130,"cost":16,"avgPoints":6.5},{"id":"659","name":"Flavio Cacone","role":"C","roleLabel":"Centrocampista","nation":"Sudafrica","ovr":65,"overallRaw":130,"cost":16,"avgPoints":7.4},{"id":"589","name":"Nasta__20","role":"C","roleLabel":"Centrocampista","nation":"Repubblica Democratica del Congo","ovr":65,"overallRaw":130,"cost":16,"avgPoints":7.6},{"id":"425","name":"shaqash","role":"C","roleLabel":"Centrocampista","nation":"Tunisia","ovr":65,"overallRaw":130,"cost":16,"avgPoints":6.8},{"id":"507","name":"demeyor","role":"C","roleLabel":"Centrocampista","nation":"Costa d'Avorio","ovr":64,"overallRaw":129,"cost":16,"avgPoints":6.7},{"id":"443","name":"franci.ieda'💎👑","role":"C","roleLabel":"Centrocampista","nation":"Canada","ovr":64,"overallRaw":129,"cost":16,"avgPoints":6.8},{"id":"561","name":"14-3🩸⚽️","role":"C","roleLabel":"Centrocampista","nation":"Corea del Sud","ovr":64,"overallRaw":128,"cost":16,"avgPoints":0.0},{"id":"521","name":"deste067","role":"C","roleLabel":"Centrocampista","nation":"Costa d'Avorio","ovr":64,"overallRaw":128,"cost":16,"avgPoints":0.0},{"id":"379","name":"Forza Ferrari","role":"C","roleLabel":"Centrocampista","nation":"Ecuador","ovr":64,"overallRaw":128,"cost":16,"avgPoints":6.8},{"id":"391","name":"kamagla","role":"C","roleLabel":"Centrocampista","nation":"Norvegia","ovr":64,"overallRaw":128,"cost":16,"avgPoints":6.8},{"id":"662","name":"Matteo.Ferrari","role":"C","roleLabel":"Centrocampista","nation":"Sudafrica","ovr":64,"overallRaw":128,"cost":16,"avgPoints":6.4},{"id":"531","name":"giancarlo_fabbrini","role":"C","roleLabel":"Centrocampista","nation":"Austria","ovr":64,"overallRaw":127,"cost":16,"avgPoints":6.7},{"id":"337","name":"nicolascompassi","role":"C","roleLabel":"Centrocampista","nation":"Algeria","ovr":64,"overallRaw":127,"cost":16,"avgPoints":7.4},{"id":"378","name":"tonycorda10","role":"C","roleLabel":"Centrocampista","nation":"Ecuador","ovr":64,"overallRaw":127,"cost":16,"avgPoints":6.8},{"id":"504","name":"valerio.tricoci","role":"C","roleLabel":"Centrocampista","nation":"Ecuador","ovr":64,"overallRaw":127,"cost":16,"avgPoints":7.0},{"id":"363","name":"adninho","role":"C","roleLabel":"Centrocampista","nation":"Corea del Sud","ovr":63,"overallRaw":126,"cost":15,"avgPoints":6.8},{"id":"536","name":"Cristiano vadala'","role":"C","roleLabel":"Centrocampista","nation":"Panama","ovr":63,"overallRaw":126,"cost":15,"avgPoints":6.3},{"id":"518","name":"giok","role":"C","roleLabel":"Centrocampista","nation":"Canada","ovr":63,"overallRaw":126,"cost":15,"avgPoints":6.8},{"id":"517","name":"sean_4.20","role":"C","roleLabel":"Centrocampista","nation":"Tunisia","ovr":63,"overallRaw":126,"cost":15,"avgPoints":8.3},{"id":"341","name":"Adry96","role":"C","roleLabel":"Centrocampista","nation":"Corea del Sud","ovr":62,"overallRaw":125,"cost":14,"avgPoints":6.6},{"id":"550","name":"Champions Cup","role":"C","roleLabel":"Centrocampista","nation":"Egitto","ovr":62,"overallRaw":125,"cost":14,"avgPoints":0.0},{"id":"382","name":"claudio.pollara_","role":"C","roleLabel":"Centrocampista","nation":"Egitto","ovr":62,"overallRaw":125,"cost":14,"avgPoints":6.8},{"id":"586","name":"Mattia Plscoltta","role":"C","roleLabel":"Centrocampista","nation":"Repubblica Democratica del Congo","ovr":62,"overallRaw":125,"cost":14,"avgPoints":6.5},{"id":"406","name":"mauri._luca7","role":"C","roleLabel":"Centrocampista","nation":"Repubblica Democratica del Congo","ovr":62,"overallRaw":125,"cost":14,"avgPoints":5.9},{"id":"580","name":"romeocalonao","role":"C","roleLabel":"Centrocampista","nation":"Tunisia","ovr":62,"overallRaw":125,"cost":14,"avgPoints":6.7},{"id":"426","name":"Sante962","role":"C","roleLabel":"Centrocampista","nation":"Tunisia","ovr":62,"overallRaw":125,"cost":14,"avgPoints":0.0},{"id":"377","name":"vincenzo.ambrosio.26 ","role":"C","roleLabel":"Centrocampista","nation":"Ecuador","ovr":62,"overallRaw":125,"cost":14,"avgPoints":8.6},{"id":"395","name":"giiiovi","role":"C","roleLabel":"Centrocampista","nation":"Paraguay","ovr":62,"overallRaw":124,"cost":14,"avgPoints":6.9},{"id":"587","name":"jacoporavazzoli2015","role":"C","roleLabel":"Centrocampista","nation":"Polonia","ovr":62,"overallRaw":124,"cost":14,"avgPoints":0.0},{"id":"368","name":"Jokoxo","role":"C","roleLabel":"Centrocampista","nation":"Costa d'Avorio","ovr":62,"overallRaw":124,"cost":14,"avgPoints":6.8},{"id":"661","name":"Beretta","role":"C","roleLabel":"Centrocampista","nation":"Sudafrica","ovr":62,"overallRaw":123,"cost":14,"avgPoints":6.3},{"id":"362","name":"furzotu","role":"C","roleLabel":"Centrocampista","nation":"Corea del Sud","ovr":61,"overallRaw":122,"cost":14,"avgPoints":6.7},{"id":"553","name":"CooperingWelkin","role":"C","roleLabel":"Centrocampista","nation":"Panama","ovr":60,"overallRaw":121,"cost":13,"avgPoints":6.7},{"id":"656","name":"La famiglia Vinciguerra","role":"C","roleLabel":"Centrocampista","nation":"Canada","ovr":60,"overallRaw":121,"cost":13,"avgPoints":0.0},{"id":"569","name":"hellomynameismc","role":"C","roleLabel":"Centrocampista","nation":"Iran","ovr":60,"overallRaw":120,"cost":13,"avgPoints":9.8},{"id":"402","name":"Lob","role":"C","roleLabel":"Centrocampista","nation":"Qatar","ovr":60,"overallRaw":119,"cost":13,"avgPoints":6.8},{"id":"403","name":"lollo","role":"C","roleLabel":"Centrocampista","nation":"Qatar","ovr":60,"overallRaw":119,"cost":13,"avgPoints":6.7},{"id":"435","name":"marco_pedicone","role":"C","roleLabel":"Centrocampista","nation":"Uzbekistan","ovr":59,"overallRaw":118,"cost":13,"avgPoints":6.4},{"id":"506","name":"manu 30","role":"C","roleLabel":"Centrocampista","nation":"Uzbekistan","ovr":58,"overallRaw":115,"cost":12,"avgPoints":6.8},{"id":"582","name":"Marco💎💫","role":"C","roleLabel":"Centrocampista","nation":"Uzbekistan","ovr":58,"overallRaw":115,"cost":12,"avgPoints":6.5},{"id":"401","name":"laduski","role":"C","roleLabel":"Centrocampista","nation":"Qatar","ovr":55,"overallRaw":110,"cost":10,"avgPoints":6.8},{"id":"87","name":"antonio__77777","role":"A","roleLabel":"Attaccante","nation":"Francia","ovr":98,"overallRaw":195,"cost":48,"avgPoints":9.2},{"id":"642","name":"RushErPazzo","role":"A","roleLabel":"Attaccante","nation":"Inghilterra","ovr":94,"overallRaw":187,"cost":45,"avgPoints":11.8},{"id":"88","name":"Attilio","role":"A","roleLabel":"Attaccante","nation":"Francia","ovr":93,"overallRaw":186,"cost":45,"avgPoints":9.3},{"id":"620","name":"Riccardo Ulivi","role":"A","roleLabel":"Attaccante","nation":"Norvegia","ovr":92,"overallRaw":184,"cost":44,"avgPoints":13.3},{"id":"86","name":"friggy2024","role":"A","roleLabel":"Attaccante","nation":"Egitto","ovr":90,"overallRaw":181,"cost":42,"avgPoints":10.8},{"id":"13","name":"tepic85","role":"A","roleLabel":"Attaccante","nation":"Inghilterra","ovr":90,"overallRaw":181,"cost":42,"avgPoints":10.1},{"id":"58","name":"claudio_cola05","role":"A","roleLabel":"Attaccante","nation":"Brasile","ovr":88,"overallRaw":176,"cost":41,"avgPoints":9.3},{"id":"73","name":"Blaze","role":"A","roleLabel":"Attaccante","nation":"Argentina","ovr":86,"overallRaw":172,"cost":39,"avgPoints":14.3},{"id":"595","name":"d4rkn3s5xx","role":"A","roleLabel":"Attaccante","nation":"Argentina","ovr":85,"overallRaw":170,"cost":38,"avgPoints":7.9},{"id":"65","name":"Enl","role":"A","roleLabel":"Attaccante","nation":"Svezia","ovr":85,"overallRaw":170,"cost":38,"avgPoints":10.6},{"id":"99","name":"joel73xyz","role":"A","roleLabel":"Attaccante","nation":"Argentina","ovr":85,"overallRaw":170,"cost":38,"avgPoints":7.5},{"id":"645","name":"FireLuk29","role":"A","roleLabel":"Attaccante","nation":"Francia","ovr":84,"overallRaw":167,"cost":38,"avgPoints":7.6},{"id":"79","name":"roberto683194","role":"A","roleLabel":"Attaccante","nation":"Belgio","ovr":83,"overallRaw":166,"cost":37,"avgPoints":7.9},{"id":"106","name":"Amin Veapi","role":"A","roleLabel":"Attaccante","nation":"Egitto","ovr":82,"overallRaw":163,"cost":36,"avgPoints":11.6},{"id":"32","name":"Balasco","role":"A","roleLabel":"Attaccante","nation":"Francia","ovr":80,"overallRaw":161,"cost":34,"avgPoints":0.0},{"id":"627","name":"aleee_658","role":"A","roleLabel":"Attaccante","nation":"Polonia","ovr":80,"overallRaw":160,"cost":34,"avgPoints":0.0},{"id":"108","name":"billyboss2012","role":"A","roleLabel":"Attaccante","nation":"Francia","ovr":80,"overallRaw":160,"cost":34,"avgPoints":6.7},{"id":"63","name":"i.m_tendaman98","role":"A","roleLabel":"Attaccante","nation":"Portogallo","ovr":80,"overallRaw":160,"cost":34,"avgPoints":7.9},{"id":"95","name":"klajdi_bossi","role":"A","roleLabel":"Attaccante","nation":"Spagna","ovr":80,"overallRaw":160,"cost":34,"avgPoints":7.7},{"id":"115","name":"mat49333","role":"A","roleLabel":"Attaccante","nation":"Stati Uniti d'America","ovr":80,"overallRaw":160,"cost":34,"avgPoints":12.0},{"id":"9","name":"follochristian","role":"A","roleLabel":"Attaccante","nation":"Brasile","ovr":79,"overallRaw":158,"cost":34,"avgPoints":8.8},{"id":"45","name":"ippo_555","role":"A","roleLabel":"Attaccante","nation":"Turchia","ovr":79,"overallRaw":158,"cost":34,"avgPoints":8.6},{"id":"599","name":"tieppog","role":"A","roleLabel":"Attaccante","nation":"Belgio","ovr":79,"overallRaw":158,"cost":34,"avgPoints":7.4},{"id":"61","name":"bananaiper44","role":"A","roleLabel":"Attaccante","nation":"Francia","ovr":78,"overallRaw":157,"cost":33,"avgPoints":0.0},{"id":"33","name":"daniele_ibba_new","role":"A","roleLabel":"Attaccante","nation":"Germania","ovr":78,"overallRaw":157,"cost":33,"avgPoints":6.7},{"id":"14","name":"Ciuly","role":"A","roleLabel":"Attaccante","nation":"Inghilterra","ovr":78,"overallRaw":156,"cost":33,"avgPoints":6.7},{"id":"113","name":"adri_strax","role":"A","roleLabel":"Attaccante","nation":"Senegal","ovr":78,"overallRaw":155,"cost":33,"avgPoints":7.9},{"id":"26","name":"aesse27","role":"A","roleLabel":"Attaccante","nation":"Belgio","ovr":78,"overallRaw":155,"cost":33,"avgPoints":7.5},{"id":"34","name":"emanueleakasium","role":"A","roleLabel":"Attaccante","nation":"Germania","ovr":78,"overallRaw":155,"cost":33,"avgPoints":7.9},{"id":"114","name":"fra_maffo10_","role":"A","roleLabel":"Attaccante","nation":"Spagna","ovr":78,"overallRaw":155,"cost":33,"avgPoints":6.6},{"id":"111","name":"lucera_davide","role":"A","roleLabel":"Attaccante","nation":"Olanda","ovr":78,"overallRaw":155,"cost":33,"avgPoints":6.9},{"id":"51","name":"Enricosa89","role":"A","roleLabel":"Attaccante","nation":"Germania","ovr":77,"overallRaw":154,"cost":32,"avgPoints":0.0},{"id":"80","name":"Jacopezz","role":"A","roleLabel":"Attaccante","nation":"Brasile","ovr":77,"overallRaw":154,"cost":32,"avgPoints":6.5},{"id":"630","name":"Markus","role":"A","roleLabel":"Attaccante","nation":"Portogallo","ovr":77,"overallRaw":154,"cost":32,"avgPoints":8.3},{"id":"107","name":"Anto_gra","role":"A","roleLabel":"Attaccante","nation":"Francia","ovr":76,"overallRaw":153,"cost":31,"avgPoints":9.1},{"id":"638","name":"ettorecentinaro","role":"A","roleLabel":"Attaccante","nation":"Svezia","ovr":76,"overallRaw":153,"cost":31,"avgPoints":6.3},{"id":"5","name":"Ildanix","role":"A","roleLabel":"Attaccante","nation":"Portogallo","ovr":76,"overallRaw":153,"cost":31,"avgPoints":6.7},{"id":"600","name":"miky","role":"A","roleLabel":"Attaccante","nation":"Cechia","ovr":76,"overallRaw":153,"cost":31,"avgPoints":6.5},{"id":"604","name":"simo.cola_9","role":"A","roleLabel":"Attaccante","nation":"Colombia","ovr":76,"overallRaw":153,"cost":31,"avgPoints":8.8},{"id":"49","name":"Calcio edit","role":"A","roleLabel":"Attaccante","nation":"Argentina","ovr":76,"overallRaw":152,"cost":31,"avgPoints":8.0},{"id":"104","name":"F1 passion and love","role":"A","roleLabel":"Attaccante","nation":"Canada","ovr":76,"overallRaw":152,"cost":31,"avgPoints":10.0},{"id":"52","name":"Geofri074","role":"A","roleLabel":"Attaccante","nation":"Germania","ovr":76,"overallRaw":152,"cost":31,"avgPoints":8.1},{"id":"102","name":"leooo4206","role":"A","roleLabel":"Attaccante","nation":"Brasile","ovr":76,"overallRaw":152,"cost":31,"avgPoints":0.0},{"id":"631","name":"Ronny","role":"A","roleLabel":"Attaccante","nation":"Portogallo","ovr":76,"overallRaw":152,"cost":31,"avgPoints":6.6},{"id":"75","name":"tommaso.derosa_","role":"A","roleLabel":"Attaccante","nation":"Belgio","ovr":76,"overallRaw":152,"cost":31,"avgPoints":0.0},{"id":"59","name":"Rooster","role":"A","roleLabel":"Attaccante","nation":"Corea del Sud","ovr":76,"overallRaw":151,"cost":31,"avgPoints":7.8},{"id":"70","name":"emadk_","role":"A","roleLabel":"Attaccante","nation":"Portogallo","ovr":75,"overallRaw":150,"cost":30,"avgPoints":6.6},{"id":"621","name":"tommy_1009","role":"A","roleLabel":"Attaccante","nation":"Norvegia","ovr":75,"overallRaw":150,"cost":30,"avgPoints":0.0},{"id":"103","name":"Marco gioffredi","role":"A","roleLabel":"Attaccante","nation":"Brasile","ovr":74,"overallRaw":149,"cost":30,"avgPoints":6.7},{"id":"609","name":"dica_007","role":"A","roleLabel":"Attaccante","nation":"Danimarca","ovr":74,"overallRaw":148,"cost":30,"avgPoints":0.0},{"id":"67","name":"france_sco.cairo","role":"A","roleLabel":"Attaccante","nation":"Belgio","ovr":74,"overallRaw":148,"cost":30,"avgPoints":0.0},{"id":"40","name":"natigno00","role":"A","roleLabel":"Attaccante","nation":"Olanda","ovr":74,"overallRaw":148,"cost":30,"avgPoints":6.5},{"id":"91","name":"paky.oprivat","role":"A","roleLabel":"Attaccante","nation":"Olanda","ovr":74,"overallRaw":148,"cost":30,"avgPoints":10.0},{"id":"37","name":"un_bambino_in_viaggio","role":"A","roleLabel":"Attaccante","nation":"Marocco","ovr":74,"overallRaw":148,"cost":30,"avgPoints":7.4},{"id":"606","name":"marcozanu01","role":"A","roleLabel":"Attaccante","nation":"Croazia","ovr":74,"overallRaw":147,"cost":30,"avgPoints":9.0},{"id":"646","name":"_.loweeeee._","role":"A","roleLabel":"Attaccante","nation":"Uruguay","ovr":73,"overallRaw":146,"cost":29,"avgPoints":6.4},{"id":"57","name":"lollogulag","role":"A","roleLabel":"Attaccante","nation":"Algeria","ovr":73,"overallRaw":146,"cost":29,"avgPoints":9.3},{"id":"651","name":"andry_aurnia","role":"A","roleLabel":"Attaccante","nation":"Senegal","ovr":72,"overallRaw":145,"cost":28,"avgPoints":6.7},{"id":"671","name":"Blind_memory","role":"A","roleLabel":"Attaccante","nation":"Olanda","ovr":73,"overallRaw":145,"cost":28,"avgPoints":6.5},{"id":"98","name":"jacomino03","role":"A","roleLabel":"Attaccante","nation":"Turchia","ovr":72,"overallRaw":145,"cost":28,"avgPoints":6.7},{"id":"21","name":"antoniodimaio_11","role":"A","roleLabel":"Attaccante","nation":"Senegal","ovr":72,"overallRaw":144,"cost":28,"avgPoints":6.4},{"id":"22","name":"baliscianokekko_12","role":"A","roleLabel":"Attaccante","nation":"Svizzera","ovr":72,"overallRaw":144,"cost":28,"avgPoints":7.2},{"id":"648","name":"cloud88c","role":"A","roleLabel":"Attaccante","nation":"Brasile","ovr":72,"overallRaw":144,"cost":28,"avgPoints":6.8},{"id":"74","name":"Tore","role":"A","roleLabel":"Attaccante","nation":"Argentina","ovr":72,"overallRaw":144,"cost":28,"avgPoints":0.0},{"id":"110","name":"enio_aps.7","role":"A","roleLabel":"Attaccante","nation":"Messico","ovr":72,"overallRaw":143,"cost":28,"avgPoints":6.3},{"id":"2","name":"Micheee","role":"A","roleLabel":"Attaccante","nation":"Cechia","ovr":72,"overallRaw":143,"cost":28,"avgPoints":6.8},{"id":"17","name":"vuxuir9","role":"A","roleLabel":"Attaccante","nation":"Norvegia","ovr":72,"overallRaw":143,"cost":28,"avgPoints":7.4},{"id":"56","name":"mario lancione","role":"A","roleLabel":"Attaccante","nation":"Algeria","ovr":71,"overallRaw":142,"cost":27,"avgPoints":8.5},{"id":"601","name":"sardina90","role":"A","roleLabel":"Attaccante","nation":"Cechia","ovr":71,"overallRaw":142,"cost":27,"avgPoints":0.0},{"id":"81","name":"themasterofreddead","role":"A","roleLabel":"Attaccante","nation":"Colombia","ovr":71,"overallRaw":142,"cost":27,"avgPoints":6.7},{"id":"36","name":"alee_priv._._","role":"A","roleLabel":"Attaccante","nation":"Marocco","ovr":70,"overallRaw":141,"cost":27,"avgPoints":6.7},{"id":"619","name":"fed_pass","role":"A","roleLabel":"Attaccante","nation":"Messico","ovr":70,"overallRaw":141,"cost":27,"avgPoints":7.3},{"id":"68","name":"federico11365","role":"A","roleLabel":"Attaccante","nation":"Canada","ovr":70,"overallRaw":141,"cost":27,"avgPoints":9.3},{"id":"46","name":"Manu_12","role":"A","roleLabel":"Attaccante","nation":"Turchia","ovr":70,"overallRaw":141,"cost":27,"avgPoints":8.5},{"id":"614","name":"alessanidro","role":"A","roleLabel":"Attaccante","nation":"Marocco","ovr":70,"overallRaw":140,"cost":27,"avgPoints":0.0},{"id":"615","name":"amdde_13","role":"A","roleLabel":"Attaccante","nation":"Marocco","ovr":70,"overallRaw":140,"cost":27,"avgPoints":9.3},{"id":"94","name":"chietiandrea","role":"A","roleLabel":"Attaccante","nation":"Senegal","ovr":70,"overallRaw":140,"cost":27,"avgPoints":10.4},{"id":"1","name":"Lud","role":"A","roleLabel":"Attaccante","nation":"Qatar","ovr":70,"overallRaw":140,"cost":27,"avgPoints":8.3},{"id":"116","name":"Manuel Paolini","role":"A","roleLabel":"Attaccante","nation":"Turchia","ovr":70,"overallRaw":140,"cost":27,"avgPoints":7.0},{"id":"27","name":"faustino_colanera00","role":"A","roleLabel":"Attaccante","nation":"Colombia","ovr":70,"overallRaw":139,"cost":27,"avgPoints":0.0},{"id":"16","name":"FRANCESCO","role":"A","roleLabel":"Attaccante","nation":"Messico","ovr":70,"overallRaw":139,"cost":27,"avgPoints":6.7},{"id":"41","name":"Francesco Caruso","role":"A","roleLabel":"Attaccante","nation":"Paraguay","ovr":70,"overallRaw":139,"cost":27,"avgPoints":7.3},{"id":"603","name":"giuseppe.lorusso","role":"A","roleLabel":"Attaccante","nation":"Colombia","ovr":70,"overallRaw":139,"cost":27,"avgPoints":0.0},{"id":"636","name":"riccardo","role":"A","roleLabel":"Attaccante","nation":"Stati Uniti d'America","ovr":70,"overallRaw":139,"cost":27,"avgPoints":7.1},{"id":"38","name":"_antoscu_","role":"A","roleLabel":"Attaccante","nation":"Norvegia","ovr":69,"overallRaw":138,"cost":26,"avgPoints":8.5},{"id":"97","name":"Bart","role":"A","roleLabel":"Attaccante","nation":"Svizzera","ovr":69,"overallRaw":138,"cost":26,"avgPoints":7.2},{"id":"55","name":"Cosneso","role":"A","roleLabel":"Attaccante","nation":"Senegal","ovr":69,"overallRaw":138,"cost":26,"avgPoints":6.5},{"id":"608","name":"emanuele.goliuso_08","role":"A","roleLabel":"Attaccante","nation":"Danimarca","ovr":69,"overallRaw":138,"cost":26,"avgPoints":0.0},{"id":"8","name":"marco.urbanii12","role":"A","roleLabel":"Attaccante","nation":"Belgio","ovr":69,"overallRaw":138,"cost":26,"avgPoints":6.7},{"id":"607","name":"rick25","role":"A","roleLabel":"Attaccante","nation":"Croazia","ovr":69,"overallRaw":138,"cost":26,"avgPoints":6.7},{"id":"3","name":"alduc","role":"A","roleLabel":"Attaccante","nation":"Cechia","ovr":68,"overallRaw":137,"cost":25,"avgPoints":6.7},{"id":"77","name":"bizio","role":"A","roleLabel":"Attaccante","nation":"Svizzera","ovr":68,"overallRaw":137,"cost":25,"avgPoints":6.5},{"id":"44","name":"fra...45","role":"A","roleLabel":"Attaccante","nation":"Svezia","ovr":68,"overallRaw":137,"cost":25,"avgPoints":6.5},{"id":"617","name":"gluseppemagrelll","role":"A","roleLabel":"Attaccante","nation":"Messico","ovr":68,"overallRaw":137,"cost":25,"avgPoints":0.0},{"id":"43","name":"andrebrracc","role":"A","roleLabel":"Attaccante","nation":"Polonia","ovr":68,"overallRaw":136,"cost":25,"avgPoints":0.0},{"id":"84","name":"ciro_n4tale","role":"A","roleLabel":"Attaccante","nation":"Costa d'Avorio","ovr":68,"overallRaw":136,"cost":25,"avgPoints":9.6},{"id":"4","name":"Costagliola","role":"A","roleLabel":"Attaccante","nation":"Costa d'Avorio","ovr":68,"overallRaw":136,"cost":25,"avgPoints":6.7},{"id":"618","name":"il.giomi","role":"A","roleLabel":"Attaccante","nation":"Messico","ovr":68,"overallRaw":136,"cost":25,"avgPoints":6.4},{"id":"25","name":"redha_chaoui11","role":"A","roleLabel":"Attaccante","nation":"Austria","ovr":68,"overallRaw":136,"cost":25,"avgPoints":8.4},{"id":"54","name":"Tiz💕","role":"A","roleLabel":"Attaccante","nation":"Scozia","ovr":68,"overallRaw":136,"cost":25,"avgPoints":8.3},{"id":"629","name":"Bollito kawed","role":"A","roleLabel":"Attaccante","nation":"Polonia","ovr":68,"overallRaw":135,"cost":25,"avgPoints":0.0},{"id":"12","name":"flautorobb","role":"A","roleLabel":"Attaccante","nation":"Danimarca","ovr":68,"overallRaw":135,"cost":25,"avgPoints":0.0},{"id":"643","name":"Gerardo Crispo","role":"A","roleLabel":"Attaccante","nation":"Iran","ovr":68,"overallRaw":135,"cost":25,"avgPoints":7.1},{"id":"598","name":"Richardmille.15","role":"A","roleLabel":"Attaccante","nation":"Austria","ovr":68,"overallRaw":135,"cost":25,"avgPoints":7.2},{"id":"637","name":"simonemeledandri","role":"A","roleLabel":"Attaccante","nation":"Stati Uniti d'America","ovr":68,"overallRaw":135,"cost":25,"avgPoints":8.5},{"id":"616","name":"lorenzo franco","role":"A","roleLabel":"Attaccante","nation":"Messico","ovr":67,"overallRaw":134,"cost":24,"avgPoints":6.4},{"id":"90","name":"Luke","role":"A","roleLabel":"Attaccante","nation":"Messico","ovr":67,"overallRaw":134,"cost":24,"avgPoints":8.8},{"id":"20","name":"Thomas_lagro11","role":"A","roleLabel":"Attaccante","nation":"Scozia","ovr":67,"overallRaw":134,"cost":24,"avgPoints":0.0},{"id":"602","name":"zanlu_","role":"A","roleLabel":"Attaccante","nation":"Cechia","ovr":67,"overallRaw":134,"cost":24,"avgPoints":0.0},{"id":"82","name":"_marazzo5_","role":"A","roleLabel":"Attaccante","nation":"Corea del Sud","ovr":66,"overallRaw":133,"cost":23,"avgPoints":6.5},{"id":"18","name":"Cla","role":"A","roleLabel":"Attaccante","nation":"Paraguay","ovr":66,"overallRaw":133,"cost":23,"avgPoints":8.8},{"id":"39","name":"$h3z_","role":"A","roleLabel":"Attaccante","nation":"Norvegia","ovr":66,"overallRaw":133,"cost":23,"avgPoints":6.6},{"id":"85","name":"thomas.fonville","role":"A","roleLabel":"Attaccante","nation":"Ecuador","ovr":66,"overallRaw":133,"cost":23,"avgPoints":7.7},{"id":"634","name":"Thomas_11_trava","role":"A","roleLabel":"Attaccante","nation":"Scozia","ovr":66,"overallRaw":133,"cost":23,"avgPoints":0.0},{"id":"117","name":"Uragano","role":"A","roleLabel":"Attaccante","nation":"Uruguay","ovr":66,"overallRaw":133,"cost":23,"avgPoints":6.6},{"id":"105","name":"Venu","role":"A","roleLabel":"Attaccante","nation":"Cechia","ovr":66,"overallRaw":133,"cost":23,"avgPoints":7.9},{"id":"47","name":"alberto_brando","role":"A","roleLabel":"Attaccante","nation":"Uruguay","ovr":66,"overallRaw":132,"cost":23,"avgPoints":6.8},{"id":"30","name":"andrea121212121212_","role":"A","roleLabel":"Attaccante","nation":"Egitto","ovr":66,"overallRaw":132,"cost":23,"avgPoints":0.0},{"id":"42","name":"Antonio Gervasio","role":"A","roleLabel":"Attaccante","nation":"Paraguay","ovr":66,"overallRaw":132,"cost":23,"avgPoints":7.7},{"id":"28","name":"Cruci96","role":"A","roleLabel":"Attaccante","nation":"Costa d'Avorio","ovr":66,"overallRaw":132,"cost":23,"avgPoints":0.0},{"id":"649","name":"dami_an3007","role":"A","roleLabel":"Attaccante","nation":"Costa d'Avorio","ovr":66,"overallRaw":132,"cost":23,"avgPoints":6.4},{"id":"69","name":"XX_kejuve_XX","role":"A","roleLabel":"Attaccante","nation":"Cechia","ovr":66,"overallRaw":132,"cost":23,"avgPoints":0.0},{"id":"640","name":"Alex","role":"A","roleLabel":"Attaccante","nation":"Uruguay","ovr":66,"overallRaw":131,"cost":23,"avgPoints":6.6},{"id":"66","name":"alex.brains_34","role":"A","roleLabel":"Attaccante","nation":"Uruguay","ovr":66,"overallRaw":131,"cost":23,"avgPoints":0.0},{"id":"635","name":"thebarrons05","role":"A","roleLabel":"Attaccante","nation":"Scozia","ovr":66,"overallRaw":131,"cost":23,"avgPoints":6.6},{"id":"610","name":"Tito","role":"A","roleLabel":"Attaccante","nation":"Ecuador","ovr":66,"overallRaw":131,"cost":23,"avgPoints":7.8},{"id":"71","name":"csalvatore925","role":"A","roleLabel":"Attaccante","nation":"Svizzera","ovr":65,"overallRaw":130,"cost":23,"avgPoints":3.9},{"id":"647","name":"matla.gloml","role":"A","roleLabel":"Attaccante","nation":"Uzbekistan","ovr":65,"overallRaw":130,"cost":23,"avgPoints":6.2},{"id":"24","name":"salvatoretalaricogiuseppe","role":"A","roleLabel":"Attaccante","nation":"Austria","ovr":65,"overallRaw":130,"cost":23,"avgPoints":9.1},{"id":"625","name":"Emanuel Dottore","role":"A","roleLabel":"Attaccante","nation":"Paraguay","ovr":64,"overallRaw":129,"cost":22,"avgPoints":12.4},{"id":"76","name":"Gabriel_Fraddosio","role":"A","roleLabel":"Attaccante","nation":"Canada","ovr":64,"overallRaw":129,"cost":22,"avgPoints":6.7},{"id":"96","name":"genna_bln","role":"A","roleLabel":"Attaccante","nation":"Stati Uniti d'America","ovr":64,"overallRaw":129,"cost":22,"avgPoints":0.0},{"id":"633","name":"Napoli1926💙🤍","role":"A","roleLabel":"Attaccante","nation":"Repubblica Democratica del Congo","ovr":64,"overallRaw":129,"cost":22,"avgPoints":0.0},{"id":"594","name":"Nicola Marinelli","role":"A","roleLabel":"Attaccante","nation":"Algeria","ovr":64,"overallRaw":129,"cost":22,"avgPoints":7.7},{"id":"11","name":"💎Seby💎","role":"A","roleLabel":"Attaccante","nation":"Corea del Sud","ovr":64,"overallRaw":129,"cost":22,"avgPoints":6.5},{"id":"78","name":"Giuseppe.restaino07","role":"A","roleLabel":"Attaccante","nation":"Austria","ovr":64,"overallRaw":128,"cost":22,"avgPoints":6.5},{"id":"605","name":"Achille_coveri","role":"A","roleLabel":"Attaccante","nation":"Corea del Sud","ovr":64,"overallRaw":127,"cost":22,"avgPoints":0.0},{"id":"611","name":"bus","role":"A","roleLabel":"Attaccante","nation":"Egitto","ovr":64,"overallRaw":127,"cost":22,"avgPoints":0.0},{"id":"7","name":"H²O","role":"A","roleLabel":"Attaccante","nation":"Turchia","ovr":64,"overallRaw":127,"cost":22,"avgPoints":6.8},{"id":"64","name":"michaelcazzani","role":"A","roleLabel":"Attaccante","nation":"Repubblica Democratica del Congo","ovr":64,"overallRaw":127,"cost":22,"avgPoints":0.0},{"id":"626","name":"Perryxdux","role":"A","roleLabel":"Attaccante","nation":"Paraguay","ovr":64,"overallRaw":127,"cost":22,"avgPoints":6.6},{"id":"624","name":"Tiago Bulgarini","role":"A","roleLabel":"Attaccante","nation":"Paraguay","ovr":64,"overallRaw":127,"cost":22,"avgPoints":6.5},{"id":"639","name":"Antoniopiodesena","role":"A","roleLabel":"Attaccante","nation":"Svizzera","ovr":63,"overallRaw":126,"cost":21,"avgPoints":0.0},{"id":"53","name":"tabe","role":"A","roleLabel":"Attaccante","nation":"Scozia","ovr":63,"overallRaw":126,"cost":21,"avgPoints":0.0},{"id":"623","name":"Tommaso Mangiarotti","role":"A","roleLabel":"Attaccante","nation":"Paraguay","ovr":63,"overallRaw":126,"cost":21,"avgPoints":0.0},{"id":"62","name":"Valentino Sideri","role":"A","roleLabel":"Attaccante","nation":"Panama","ovr":63,"overallRaw":126,"cost":21,"avgPoints":6.4},{"id":"644","name":"Venezia_Fc_Official","role":"A","roleLabel":"Attaccante","nation":"Ecuador","ovr":63,"overallRaw":126,"cost":21,"avgPoints":7.8},{"id":"29","name":"vi_marmo_04","role":"A","roleLabel":"Attaccante","nation":"Ecuador","ovr":63,"overallRaw":126,"cost":21,"avgPoints":6.5},{"id":"31","name":"caro014","role":"A","roleLabel":"Attaccante","nation":"Egitto","ovr":62,"overallRaw":125,"cost":20,"avgPoints":7.2},{"id":"60","name":"Chri⚪⚫","role":"A","roleLabel":"Attaccante","nation":"Egitto","ovr":62,"overallRaw":125,"cost":20,"avgPoints":6.9},{"id":"666","name":"Danyy","role":"A","roleLabel":"Attaccante","nation":"Sudafrica","ovr":62,"overallRaw":125,"cost":20,"avgPoints":6.7},{"id":"109","name":"gianluca_bum_","role":"A","roleLabel":"Attaccante","nation":"Iran","ovr":62,"overallRaw":125,"cost":20,"avgPoints":6.3},{"id":"612","name":"gianlucacitarella11","role":"A","roleLabel":"Attaccante","nation":"Iran","ovr":62,"overallRaw":125,"cost":20,"avgPoints":0.0},{"id":"89","name":"gilbertoni_al_sugo","role":"A","roleLabel":"Attaccante","nation":"Iran","ovr":62,"overallRaw":125,"cost":20,"avgPoints":6.5},{"id":"628","name":"Joker","role":"A","roleLabel":"Attaccante","nation":"Polonia","ovr":62,"overallRaw":125,"cost":20,"avgPoints":0.0},{"id":"93","name":"Luca.lentinll","role":"A","roleLabel":"Attaccante","nation":"Qatar","ovr":62,"overallRaw":125,"cost":20,"avgPoints":6.1},{"id":"48","name":"masulli.m","role":"A","roleLabel":"Attaccante","nation":"Uzbekistan","ovr":62,"overallRaw":125,"cost":20,"avgPoints":6.2},{"id":"632","name":"mattesenza_o.12","role":"A","roleLabel":"Attaccante","nation":"Repubblica Democratica del Congo","ovr":62,"overallRaw":125,"cost":20,"avgPoints":0.0},{"id":"665","name":"Nico","role":"A","roleLabel":"Attaccante","nation":"Sudafrica","ovr":62,"overallRaw":125,"cost":20,"avgPoints":7.4},{"id":"83","name":"ale 💎","role":"A","roleLabel":"Attaccante","nation":"Corea del Sud","ovr":62,"overallRaw":124,"cost":20,"avgPoints":10.2},{"id":"675","name":"Dexlyy","role":"A","roleLabel":"Attaccante","nation":"Costa d'Avorio","ovr":62,"overallRaw":124,"cost":20,"avgPoints":0.0},{"id":"23","name":"RealOryx","role":"A","roleLabel":"Attaccante","nation":"Tunisia","ovr":62,"overallRaw":124,"cost":20,"avgPoints":6.5},{"id":"112","name":"splderjockey02","role":"A","roleLabel":"Attaccante","nation":"Scozia","ovr":62,"overallRaw":124,"cost":20,"avgPoints":0.0},{"id":"15","name":"ginoimalcazoo twitch","role":"A","roleLabel":"Attaccante","nation":"Iran","ovr":62,"overallRaw":123,"cost":20,"avgPoints":6.4},{"id":"622","name":"Scuotto","role":"A","roleLabel":"Attaccante","nation":"Panama","ovr":62,"overallRaw":123,"cost":20,"avgPoints":6.5},{"id":"650","name":"Gabibbo O'Neal","role":"A","roleLabel":"Attaccante","nation":"Panama","ovr":60,"overallRaw":121,"cost":19,"avgPoints":0.0},{"id":"613","name":"giusepperuspantini","role":"A","roleLabel":"Attaccante","nation":"Iran","ovr":60,"overallRaw":120,"cost":19,"avgPoints":0.0},{"id":"19","name":"Lu","role":"A","roleLabel":"Attaccante","nation":"Qatar","ovr":60,"overallRaw":120,"cost":19,"avgPoints":7.6},{"id":"641","name":"marik_munteanu","role":"A","roleLabel":"Attaccante","nation":"Uzbekistan","ovr":60,"overallRaw":120,"cost":19,"avgPoints":0.0},{"id":"597","name":"feder_cava","role":"A","roleLabel":"Attaccante","nation":"Australia","ovr":59,"overallRaw":118,"cost":18,"avgPoints":6.2},{"id":"92","name":"Legendary","role":"A","roleLabel":"Attaccante","nation":"Panama","ovr":58,"overallRaw":117,"cost":17,"avgPoints":6.6},{"id":"101","name":"fraad_","role":"A","roleLabel":"Attaccante","nation":"Australia","ovr":58,"overallRaw":115,"cost":17,"avgPoints":6.5},{"id":"100","name":"francescopio_sant","role":"A","roleLabel":"Attaccante","nation":"Australia","ovr":57,"overallRaw":114,"cost":16,"avgPoints":9.2},{"id":"6","name":"Kolunio","role":"A","roleLabel":"Attaccante","nation":"Qatar","ovr":55,"overallRaw":110,"cost":15,"avgPoints":6.6},{"id":"72","name":"libero_.010","role":"A","roleLabel":"Attaccante","nation":"Qatar","ovr":55,"overallRaw":110,"cost":15,"avgPoints":7.3}]</script>
@@ -4589,8 +4934,8 @@
         if (els.formationPanel) els.formationPanel.style.display = 'none';
       }
       if (selected.length >= MAX_PICKS) { showToast("Squadra gia' completata. Premi Reset per ricominciare."); return; }
-      if (pendingPlayer) { showToast('Prima piazza il giocatore sul campo.'); return; }
       const isReroll = Boolean(currentNation && currentCandidates.length > 0);
+      if (pendingPlayer && !isReroll) { showToast('Prima piazza il giocatore sul campo.'); return; }
       if (isReroll && rerollsLeft <= 0) { showToast('Hai finito i 3 re-roll disponibili. Devi scegliere un giocatore.'); return; }
       const possibleNationsBase = NATIONS.filter(n => validCandidatesForNation(n).length > 0);
       const possibleNations = isReroll && possibleNationsBase.length > 1 ? possibleNationsBase.filter(n => n !== currentNation) : possibleNationsBase;
@@ -4740,16 +5085,16 @@
       clearRunStorage();
       els.teamNameInput.value = teamName;
       render();
-      showToast("Sei tornato all'inizio: nuova run da zero.");
+      showToast("Sei tornato all'inizio: nuova partita da zero.");
     }
 
     function render() {
       renderTeamNameLock(); renderFormations(); renderDrawCard(); renderCandidates(); renderPitch(); renderScoreboard(); renderPlacementModal(); renderFinal(); renderTournament();
       const mustChoose = currentNation && currentCandidates.length > 0;
-      const canReroll = mustChoose && !pendingPlayer && rerollsLeft > 0 && selected.length < MAX_PICKS;
+      const canReroll = mustChoose && rerollsLeft > 0 && selected.length < MAX_PICKS;
       els.bigRollBtn.disabled = isSpinning || selected.length >= MAX_PICKS || mustChoose;
-      els.spinBtn.disabled = isSpinning || selected.length >= MAX_PICKS || pendingPlayer || (mustChoose && !canReroll);
-      els.spinBtn.textContent = pendingPlayer ? 'Posiziona giocatore' : mustChoose ? `Re-roll (${rerollsLeft})` : '↺ Altra nazionale';
+      els.spinBtn.disabled = isSpinning || selected.length >= MAX_PICKS || (mustChoose && !canReroll);
+      els.spinBtn.textContent = pendingPlayer ? `Annulla e re-roll (${rerollsLeft})` : mustChoose ? `Re-roll (${rerollsLeft})` : '↺ Altra nazionale';
       els.rerollInfo.textContent = `Re-roll disponibili: ${rerollsLeft}/${REROLL_LIMIT}`;
     }
 
@@ -4769,12 +5114,12 @@
       if (currentNation) {
         els.nationCode.textContent = nationCode(currentNation);
         els.nationName.textContent = currentNation;
-        els.drawSubtitle.textContent = pendingPlayer ? 'Place' : `Pick ${Math.min(MAX_PICKS, picks + 1).toString().padStart(2,'0')}`;
-        els.statusLine.textContent = pendingPlayer ? 'Clicca uno slot sottolineato sul campo' : 'Devi scegliere un ruolo valido';
-        els.rollCta.innerHTML = pendingPlayer ? `Clicca uno slot illuminato per ${escapeHtml(pendingPlayer.name)}` : 'Nazionale pescata';
+        els.drawSubtitle.textContent = pendingPlayer ? 'Place / re-roll' : `Pick ${Math.min(MAX_PICKS, picks + 1).toString().padStart(2,'0')}`;
+        els.statusLine.textContent = pendingPlayer ? 'Puoi piazzarlo oppure cambiare idea' : 'Devi scegliere un ruolo valido';
+        els.rollCta.innerHTML = pendingPlayer ? `Clicca uno slot illuminato per ${escapeHtml(pendingPlayer.name)}<br><small>Oppure usa re-roll per cambiare nazionale</small>` : 'Nazionale pescata';
         els.afterRollActions.style.display = 'grid';
         const r = remainingCounts();
-        setNotice(pendingPlayer ? `Gli slot disponibili sono illuminati sul campo. Clicca uno slot ${ROLE_LABELS[pendingPlayer.role]} libero per confermare.` : `Scelta obbligatoria. Puoi fare re-roll ${rerollsLeft} volta/e. Ruoli liberi: P${r.P} · D${r.D} · C${r.C} · A${r.A}.`);
+        setNotice(pendingPlayer ? `Puoi confermare ${pendingPlayer.name} cliccando uno slot ${ROLE_LABELS[pendingPlayer.role]} libero, oppure premere Annulla e re-roll per cambiare nazionale.` : `Scelta obbligatoria. Puoi fare re-roll ${rerollsLeft} volta/e. Ruoli liberi: P${r.P} · D${r.D} · C${r.C} · A${r.A}.`);
       } else if (selected.length >= MAX_PICKS) {
         els.nationCode.textContent = '11'; els.nationName.textContent = 'Completed'; els.drawSubtitle.textContent = selectedFormation;
         els.statusLine.textContent = 'Team completed'; els.rollCta.innerHTML = 'Draft completo'; els.afterRollActions.style.display = 'grid'; setNotice('');
@@ -5327,6 +5672,7 @@
 
     function updateBroadcastPanel(state, options={}) {
       if (!els.broadcastHero) return;
+      els.broadcastScore.classList.remove('penalty-score');
       if (!state) {
         els.broadcastSignal.textContent = 'PRE MATCH';
         els.broadcastPhase.textContent = 'WORLD CUP';
@@ -5369,6 +5715,7 @@
       if (options.done) {
         const cls = resultClass(match);
         els.broadcastSignal.textContent = matchResultWord(cls);
+        els.broadcastScore.classList.toggle('penalty-score', Boolean(match.penalties));
         els.broadcastScore.textContent = resultTextForUser(match);
         els.broadcastMeta.textContent = 'Final whistle';
         els.broadcastTicker.textContent = tournamentFinalText(state);
@@ -5408,7 +5755,7 @@
       const ga = userIsHome ? sim.awayGoals : sim.homeGoals;
       const pct = Math.min(100, Math.round((sim.minute / sim.maxMinute) * 100));
       const cls = gf > ga ? 'win' : gf < ga ? 'loss' : 'draw';
-      const log = sim.log.map(e => `<div class="event ${e.teamId === USER_TEAM_ID ? '' : 'conceded'}"><span class="min">${e.minute}'</span><span class="ball">●</span><span class="player">${renderEventPlayerLine(e)}</span></div>`).join('') || '<div class="live-wait">Regia in diretta: nessun gol finora.</div>';
+      const log = sim.log.map(e => `<div class="event ${e.teamId === USER_TEAM_ID ? '' : 'conceded'}"><span class="min">${e.minute}'</span><span class="ball">●</span><span class="player">${renderEventPlayerLine(e)}<small>${e.teamId === USER_TEAM_ID ? user.name : opp.name}</small></span></div>`).join('') || '<div class="live-wait">Regia in diretta: nessun gol finora.</div>';
       const alert = sim.alert ? `<div class="live-alert">${escapeHtml(sim.alert)}</div>` : '';
       return `<article class="match-card tv-match live ${cls}">
         <div class="tv-card-top"><span class="match-stage">${stageLabel(match.stage)}</span><span class="tv-status live"><i></i>${sim.phase === 'penalties' ? 'RIGORI' : 'LIVE ' + sim.minute + "'"}</span></div>
@@ -5423,15 +5770,17 @@
       const cls = resultClass(match);
       const goals = match.events.filter(e => e.teamId === USER_TEAM_ID).map(e => e.player);
       const conceded = match.events.filter(e => e.teamId !== USER_TEAM_ID).map(e => e.player);
-      const eventRows = match.events.map(e => `<div class="event ${e.teamId === USER_TEAM_ID ? '' : 'conceded'}"><span class="min">${e.minute}'</span><span class="ball">●</span><span class="player">${renderEventPlayerLine(e)}</span></div>`).join('') || '<div class="event"><span class="min">—</span><span class="ball">•</span><span class="player">Nessun gol</span></div>';
+      const eventRows = match.events.map(e => `<div class="event ${e.teamId === USER_TEAM_ID ? '' : 'conceded'}"><span class="min">${e.minute}'</span><span class="ball">●</span><span class="player">${renderEventPlayerLine(e)}<small>${e.teamId === USER_TEAM_ID ? user.name : opp.name}</small></span></div>`).join('') || '<div class="event"><span class="min">—</span><span class="ball">•</span><span class="player">Nessun gol</span></div>';
+      const resultWord = matchResultWord(cls);
+      const finished = `<div class="match-finished-banner ${cls}"><span>FINITA</span><b>${resultWord}</b><strong>${escapeHtml(user.name)} ${escapeHtml(resultTextForUser(match))} ${escapeHtml(opp.name)}</strong></div>`;
       const pen = match.penalties ? `<div class="tv-commentary penalty">Rigori: ${match.penalties === USER_TEAM_ID ? 'vince la tua squadra' : 'vince ' + escapeHtml(opp.name)}</div>` : '';
       const companions = match.companions && match.companions.length
         ? `<div class="tv-commentary">Altro match del gruppo: ${match.companions.map(m => `${escapeHtml(m.home.name)} ${m.homeGoals}–${m.awayGoals} ${escapeHtml(m.away.name)}`).join(' · ')}</div>`
         : '';
       return `<article class="match-card tv-match ${cls}">
-        <div class="tv-card-top"><span class="match-stage">${stageLabel(match.stage)}</span><span class="tv-status ${cls}">${matchResultWord(cls)}</span></div>
-        <div class="tv-scoreline">${renderBroadcastTeam(user, 'user')}<div class="tv-score-big">${resultTextForUser(match)}</div>${renderBroadcastTeam(opp, 'opponent')}</div>
-        <div class="match-details"><div class="goal-summary tv-goal-summary"><div><span>Fatti</span> ${escapeHtml(goals.join(', ') || '—')}</div><div><span>Subiti</span> ${escapeHtml(conceded.join(', ') || '—')}</div></div><div class="event-list tv-live-log">${eventRows}</div>${companions}${pen}</div>
+        <div class="tv-card-top"><span class="match-stage">${stageLabel(match.stage)}</span><span class="tv-status ${cls}">${resultWord}</span></div>
+        <div class="tv-scoreline">${renderBroadcastTeam(user, 'user')}<div class="tv-score-big ${match.penalties ? 'penalty-score' : ''}">${resultTextForUser(match)}</div>${renderBroadcastTeam(opp, 'opponent')}</div>
+        <div class="match-details">${finished}<div class="goal-summary tv-goal-summary"><div><span>Gol tua squadra</span> ${escapeHtml(goals.join(', ') || '—')}</div><div><span>Gol avversario</span> ${escapeHtml(conceded.join(', ') || '—')}</div></div><div class="event-list tv-live-log">${eventRows}</div>${companions}${pen}</div>
       </article>`;
     }
 
@@ -5569,19 +5918,21 @@
         return;
       }
       if (!isVictoryEndpointConfigured()) {
-        setVictorySendStatus('Manca il link Google Apps Script. Incolla il link /exec dentro VICTORY_ENDPOINT in index.html.', 'error');
+        setVictorySendStatus('Invio non disponibile al momento. Riprova piu' tardi.', 'error');
         return;
       }
 
       const payload = buildVictoryPayload(tournamentState);
       payload.cupWon = true;
       payload.source = 'fantaballa-world-cup';
+      payload.privacyNoticeAccepted = true;
+      payload.privacyVersion = '2026-07-08';
       payload.sentAtIso = new Date().toISOString();
 
       button.disabled = true;
       button.classList.add('is-loading');
       button.textContent = 'Invio in corso...';
-      setVictorySendStatus('Invio automatico in corso...', '');
+      setVictorySendStatus('Invio in corso...', '');
 
       try {
         await fetch(VICTORY_ENDPOINT.trim(), {
@@ -5594,12 +5945,12 @@
         button.classList.remove('is-loading');
         button.classList.add('sent');
         button.textContent = 'Vittoria inviata';
-        setVictorySendStatus('Vittoria inviata! Se Google Apps Script e\' configurato, riceverai subito la mail.', 'ok');
+        setVictorySendStatus('Vittoria inviata a Fantaballa!', 'ok');
       } catch (error) {
         button.disabled = false;
         button.classList.remove('is-loading');
-        button.textContent = 'Invia vittoria automatica';
-        setVictorySendStatus('Invio non riuscito. Controlla il link dello script e riprova.', 'error');
+        button.textContent = 'Invia vittoria';
+        setVictorySendStatus('Invio non riuscito. Riprova tra poco.', 'error');
       }
     }
 
@@ -5609,13 +5960,14 @@
       const sent = safeGet(victorySentKey(payload.victoryCode), '0') === '1';
       const endpointReady = isVictoryEndpointConfigured();
       const disabledAttr = sent ? ' disabled' : '';
-      const buttonText = sent ? 'Vittoria inviata' : 'Invia vittoria automatica';
-      const statusText = sent ? 'Vittoria gia\' inviata da questo browser.' : (endpointReady ? 'Clicca una volta: la mail parte senza aprire la posta dell\'utente.' : 'Prima incolla il link Google Apps Script dentro VICTORY_ENDPOINT.');
+      const buttonText = sent ? 'Vittoria inviata' : 'Invia vittoria';
+      const statusText = sent ? 'Questa vittoria e\' gia\' stata inviata.' : (endpointReady ? 'Clicca una sola volta per inviare la vittoria a Fantaballa.' : 'Invio non disponibile al momento.');
       const statusClass = sent ? ' ok' : (endpointReady ? '' : ' error');
       return `<article class="match-card tv-match victory-submit-card">
         <div class="awards-kicker">Coppa alzata</div>
         <h3 class="victory-submit-title">Hai vinto il Mondiale!</h3>
-        <p class="victory-submit-text">Invia la vittoria a Fantaballa in automatico. La classifica campioni del mondo verra' aggiornata manualmente dopo il controllo dei risultati.</p>
+        <p class="victory-submit-text">Invia la vittoria a Fantaballa. Il risultato verra' verificato prima di aggiornare la classifica campioni del mondo.</p>
+        <div class="victory-privacy-note">Cliccando su "Invia vittoria" autorizzi l'invio a Fantaballa dei soli dati necessari: nome squadra, risultato finale, OVR medio, intesa, modulo, statistiche torneo, data e codice vittoria. Non vengono richiesti login, email o password. <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a></div>
         <div class="victory-submit-meta">
           <div class="victory-submit-pill"><span>Finale</span>${escapeHtml(payload.finalScore)} vs ${escapeHtml(payload.finalOpponent)}</div>
           <div class="victory-submit-pill"><span>OVR medio</span>${escapeHtml(payload.avgOvr)}</div>

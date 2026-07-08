@@ -72,8 +72,10 @@ function buildEmailBody(data) {
     'Intesa: ' + cleanText(data.chemistryScore || '0') + '/100 (+' + cleanText(data.chemistryBonus || '0') + ')',
     'Data gioco: ' + cleanText(data.dateText || 'N/D'),
     'Data invio: ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss'),
+    'Privacy notice accettata: ' + (data.privacyNoticeAccepted === true ? 'si' : 'non indicato'),
+    'Versione privacy: ' + cleanText(data.privacyVersion || 'N/D'),
     '',
-    'Nota: email inviata automaticamente dal bottone vittoria.'
+    'Nota: email inviata automaticamente dal bottone vittoria. Non sono richiesti login, email utente o password.'
   ];
 
   return rows.join('\n');
