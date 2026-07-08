@@ -4550,6 +4550,79 @@
       text-transform:none;
     }
 
+
+
+    /* FIX DESKTOP FONT: il font display resta solo per mobile/tablet.
+       Su PC ripristina la resa precedente, piu' grande e leggibile. */
+    @media (min-width:901px) {
+      body { font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important; }
+
+      .masthead,
+      .label,
+      .box-title,
+      .formation-btn,
+      .btn,
+      .roll-btn,
+      .home-classifica-btn,
+      .team-name-input,
+      .draw-card .code,
+      .draw-card .nation-name,
+      .draw-card .subtitle,
+      .hint-line,
+      .intro-kicker,
+      .intro-title,
+      .intro-step,
+      .intro-btn,
+      .intro-text,
+      .tournament-title,
+      .match-score,
+      .victory-submit-title {
+        font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+      }
+
+      .row-name,
+      .player-row.subscriber .row-name,
+      .row-role,
+      .row-role .sub-badge,
+      .row-bonus,
+      .row-ovr,
+      .players-head strong,
+      .players-head small {
+        font-family:"Arial Narrow","Roboto Condensed","Segoe UI Condensed",Arial,sans-serif !important;
+      }
+
+      .masthead {
+        font-size:inherit !important;
+        letter-spacing:.08em !important;
+      }
+      .intro-title {
+        font-size:clamp(34px, 7vw, 58px) !important;
+        letter-spacing:-.045em !important;
+      }
+      .roll-btn {
+        font-size:26px !important;
+        letter-spacing:.02em !important;
+      }
+      .big-score {
+        font-size:64px !important;
+        letter-spacing:-.05em !important;
+      }
+      .tournament-title {
+        font-size:28px !important;
+        letter-spacing:-.04em !important;
+      }
+      .victory-submit-title {
+        font-size:clamp(28px,4vw,44px) !important;
+        letter-spacing:-.04em !important;
+      }
+      .home-classifica-btn {
+        letter-spacing:.08em !important;
+      }
+      .formation-btn {
+        font-size:inherit !important;
+      }
+    }
+
   </style>
 </head>
 <body class="intro-open">
@@ -5254,7 +5327,7 @@
         formationConfirmed = true;
         safeSet(FORMATION_CONFIRMED_KEY, '1');
         renderTeamNameLock();
-        if (els.formationPanel) els.formationPanel.style.display = '';
+        if (els.formationPanel) els.formationPanel.style.display = 'none';
       }
       if (selected.length >= MAX_PICKS) { showToast("Squadra gia' completata. Premi Reset per ricominciare."); return; }
       const isReroll = Boolean(currentNation && currentCandidates.length > 0);
@@ -5422,13 +5495,14 @@
     }
 
     function renderFormations() {
-      const locked = formationConfirmed || selected.length > 0 || currentNation || pendingPlayer;
-      if (els.formationPanel) els.formationPanel.style.display = '';
+      const locked = formationConfirmed || selected.length > 0 || currentNation || pendingPlayer || isSpinning || tournamentState;
+      const hideFormationPanel = formationConfirmed || selected.length > 0 || currentNation || pendingPlayer || isSpinning || tournamentState;
+      if (els.formationPanel) els.formationPanel.style.display = hideFormationPanel ? 'none' : '';
       els.formationGrid.innerHTML = Object.keys(FORMATIONS).map(key => `<button type="button" class="formation-btn ${key === selectedFormation ? 'active' : ''}" data-formation="${escapeAttr(key)}" ${locked ? 'disabled' : ''}>${escapeHtml(key)}</button>`).join('');
       els.formationGrid.querySelectorAll('.formation-btn').forEach(btn => btn.addEventListener('click', () => selectFormation(btn.dataset.formation)));
       const counts = formationCounts();
-      els.formationNote.textContent = locked ? `Modulo bloccato: ${selectedFormation} · P${counts.P} D${counts.D} C${counts.C} A${counts.A}. Per cambiarlo premi Cambia modulo / Reset.` : `Modulo selezionato: ${selectedFormation} · P${counts.P} D${counts.D} C${counts.C} A${counts.A}. Premi Roll per iniziare e bloccarlo.`;
-      if (els.formationActions) els.formationActions.style.display = locked ? 'grid' : 'none';
+      els.formationNote.textContent = locked ? `Modulo bloccato: ${selectedFormation} · P${counts.P} D${counts.D} C${counts.C} A${counts.A}. Per cambiarlo premi Reset Draft.` : `Modulo selezionato: ${selectedFormation} · P${counts.P} D${counts.D} C${counts.C} A${counts.A}. Premi Roll per iniziare e bloccarlo.`;
+      if (els.formationActions) els.formationActions.style.display = 'none';
       els.formationSummary.textContent = selectedFormation;
       els.teamNameSummary.textContent = teamName;
     }
