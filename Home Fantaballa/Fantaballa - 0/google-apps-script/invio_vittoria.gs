@@ -37,7 +37,8 @@ function doPost(e) {
     cache.put(cacheKey, '1', 21600); // 6 ore anti doppio click
 
     const teamName = cleanText(data.teamName || data.squadra || 'N/D');
-    const subject = 'Vittoria Mondiale Fantaballa - ' + teamName;
+    const coachName = cleanText(data.coachName || data.allenatore || 'N/D');
+    const subject = 'Vittoria Mondiale Fantaballa - ' + teamName + ' / ' + coachName;
     const body = buildEmailBody(data);
 
     MailApp.sendEmail({
@@ -55,6 +56,7 @@ function doPost(e) {
 
 function buildEmailBody(data) {
   const teamName = cleanText(firstValue(data, ['teamName', 'squadra'], 'N/D'));
+  const coachName = cleanText(firstValue(data, ['coachName', 'allenatore', 'coach_name', 'nome_allenatore', 'coach'], 'N/D'));
   const vittorie = cleanNumber(firstValue(data, ['vittorie', 'wins'], 0));
   const pareggi = cleanNumber(firstValue(data, ['pareggi', 'draws'], 0));
   const sconfitte = cleanNumber(firstValue(data, ['sconfitte', 'losses'], 0));
@@ -66,6 +68,7 @@ function buildEmailBody(data) {
 
   const classificaJson = {
     squadra: teamName,
+    allenatore: coachName,
     vittorie: vittorie,
     pareggi: pareggi,
     sconfitte: sconfitte,
@@ -80,6 +83,7 @@ function buildEmailBody(data) {
     'Nuova vittoria Mondiale Fantaballa!',
     '',
     'Squadra: ' + teamName,
+    'Allenatore: ' + coachName,
     'Codice vittoria: ' + cleanText(data.victoryCode),
     'Finale: ' + teamName + ' ' + cleanText(firstValue(data, ['finalScore'], 'N/D')) + ' vs ' + cleanText(firstValue(data, ['finalOpponent'], 'N/D')),
     'Partite giocate: ' + cleanNumber(firstValue(data, ['matches'], 0)),

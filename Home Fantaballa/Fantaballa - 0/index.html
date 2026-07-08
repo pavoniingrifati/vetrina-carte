@@ -4690,7 +4690,7 @@
             <div class="intro-bonus-card" data-bonus="+2"><p class="intro-text">Se fanno parte della stessa squadra e sono dello stesso ruolo.  entrambi guadagnano +2 OVR.</p></div>
             <div class="intro-bonus-card" data-bonus="+5"><p class="intro-text">Se abbonato ha +5 di OVR</p></div>
             <div class="intro-bonus-card" data-bonus="+5"><p class="intro-text">Se sono abbonati della stessa squadra ,entrambi i giocatori guadagnano +5 di OVR</p></div>
-            <div class="intro-bonus-card" data-bonus="+10"><p class="intro-text">Se schieri te stesso +10 di OVR</p></div>
+            <div class="intro-bonus-card" data-bonus="+10"><p class="intro-text">Se il nome allenatore coincide con un calciatore scelto, quel calciatore guadagna +10 OVR</p></div>
           </div>
         </div>
         <div class="intro-actions single">
@@ -4783,7 +4783,9 @@
         <section class="card" id="teamNamePanel">
           <div class="label">Nome squadra</div>
           <input id="teamNameInput" class="team-name-input" type="text" maxlength="24" value="" placeholder="Scrivi il nome della squadra" autocomplete="off" />
-          <div class="team-name-note" id="teamNameNote">Scrivi il nome della squadra prima di premere Roll: e' obbligatorio e restera' bloccato per tutto il draft. Se coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa.
+          <div class="label" style="margin-top:14px">Nome allenatore</div>
+          <input id="coachNameInput" class="team-name-input" type="text" maxlength="40" value="" placeholder="Scrivi il nome dell'allenatore" autocomplete="off" />
+          <div class="team-name-note" id="teamNameNote">Scrivi nome squadra e nome allenatore prima di premere Roll: resteranno bloccati per tutto il draft. Se il nome allenatore coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa.
 </div>
         </section>
 
@@ -4853,6 +4855,7 @@
         <div id="teamList" class="boxscore-list"></div>
         <div class="summary-card">
           <div class="summary-row"><span>Squadra</span><b id="teamNameSummary">—</b></div>
+          <div class="summary-row"><span>Allenatore</span><b id="coachNameSummary">—</b></div>
           <div class="summary-row"><span>Modulo</span><b id="formationSummary">4-3-3</b></div>
           <div class="summary-row"><span>Average OVR</span><b id="avgOvr">—</b></div>
           <div class="summary-row"><span>Intesa</span><b id="chemistryScore">0</b></div>
@@ -4968,10 +4971,11 @@
     const FORMATION_KEY = STORAGE_KEY + '-formation';
     const FORMATION_CONFIRMED_KEY = STORAGE_KEY + '-formation-confirmed';
     const TEAM_NAME_KEY = STORAGE_KEY + '-team-name';
+    const COACH_NAME_KEY = STORAGE_KEY + '-coach-name';
     const REROLL_KEY = STORAGE_KEY + '-rerolls-left';
     const USER_TEAM_ID = 'USER-XI';
     // Anti-cheat: ogni refresh deve ricominciare una run nuova da zero.
-    // Conserviamo solo i flag di vittoria gia' inviata, ma non draft/torneo in corso.
+    // Conserviamo solo i flag di vittoria gia' inviata e i nomi salvati, ma non draft/torneo in corso.
     clearRunStorage();
     const REROLL_LIMIT = 3;
     const GROUP_NAMES = ['A','B','C','D','E','F','G','H'];
@@ -5017,6 +5021,7 @@
     if (!FORMATIONS[selectedFormation]) selectedFormation = '4-3-3';
     let formationConfirmed = safeGet(FORMATION_CONFIRMED_KEY, '0') === '1' || selected.length > 0;
     let teamName = cleanTeamName(safeGet(TEAM_NAME_KEY, ''));
+    let coachName = cleanCoachName(safeGet(COACH_NAME_KEY, ''));
     let rerollsLeft = clampNumber(Number(safeGet(REROLL_KEY, String(REROLL_LIMIT))), 0, REROLL_LIMIT);
     selected = migrateSelectedSlots(selected);
     let currentNation = null;
@@ -5030,7 +5035,7 @@
 
     const $ = id => document.getElementById(id);
     const els = {
-      appRoot:$('appRoot'), draftLayout:$('draftLayout'), teamNameInput:$('teamNameInput'), teamNameSummary:$('teamNameSummary'), teamNameNote:$('teamNameNote'), finalText:$('finalText'), formationPanel:$('formationPanel'), formationGrid:$('formationGrid'), formationNote:$('formationNote'), formationActions:$('formationActions'), formationResetBtn:$('formationResetBtn'), formationSummary:$('formationSummary'), nationCode:$('nationCode'), nationName:$('nationName'), drawSubtitle:$('drawSubtitle'), statusLine:$('statusLine'),
+      appRoot:$('appRoot'), draftLayout:$('draftLayout'), teamNameInput:$('teamNameInput'), coachNameInput:$('coachNameInput'), teamNameSummary:$('teamNameSummary'), coachNameSummary:$('coachNameSummary'), teamNameNote:$('teamNameNote'), finalText:$('finalText'), formationPanel:$('formationPanel'), formationGrid:$('formationGrid'), formationNote:$('formationNote'), formationActions:$('formationActions'), formationResetBtn:$('formationResetBtn'), formationSummary:$('formationSummary'), nationCode:$('nationCode'), nationName:$('nationName'), drawSubtitle:$('drawSubtitle'), statusLine:$('statusLine'),
       playersCount:$('playersCount'), playersGrid:$('playersGrid'), rollCta:$('rollCta'), bigRollBtn:$('bigRollBtn'), spinBtn:$('spinBtn'), resetBtn:$('resetBtn'), afterRollActions:$('afterRollActions'), rerollInfo:$('rerollInfo'), drawCard:$('drawCard'),
       notice:$('notice'), pitchSlots:$('pitchSlots'), progressText:$('progressText'), bigScore:$('bigScore'), attackScore:$('attackScore'), midfieldScore:$('midfieldScore'), defenseScore:$('defenseScore'), teamList:$('teamList'), avgOvr:$('avgOvr'), chemistryScore:$('chemistryScore'), chemistryBonus:$('chemistryBonus'), bestOvr:$('bestOvr'), rolesSummary:$('rolesSummary'), final:$('final'), copyBtn:$('copyBtn'), exportBtn:$('exportBtn'), toast:$('toast'), goalPopup:$('goalPopup'),
       packReveal:$('packReveal'), packKicker:$('packKicker'), packCardLabel:$('packCardLabel'), packCode:$('packCode'), packName:$('packName'), packCaption:$('packCaption'),
@@ -5058,8 +5063,13 @@
     els.cancelPlacementBtn.addEventListener('click', cancelPlacement);
     els.placementOverlay.addEventListener('click', event => { if (event.target === els.placementOverlay) cancelPlacement(); });
     els.teamNameInput.value = teamName;
+    if (els.coachNameInput) els.coachNameInput.value = coachName;
     els.teamNameInput.addEventListener('input', updateTeamName);
     els.teamNameInput.addEventListener('blur', () => { els.teamNameInput.value = teamName; });
+    if (els.coachNameInput) {
+      els.coachNameInput.addEventListener('input', updateCoachName);
+      els.coachNameInput.addEventListener('blur', () => { els.coachNameInput.value = coachName; });
+    }
 
     render();
 
@@ -5067,7 +5077,7 @@
     function safeSet(key, value) { try { window.localStorage.setItem(key, value); } catch {} }
     function safeRemove(key) { try { window.localStorage.removeItem(key); } catch {} }
     function clearRunStorage() {
-      [STORAGE_KEY, FORMATION_KEY, FORMATION_CONFIRMED_KEY, TEAM_NAME_KEY, REROLL_KEY].forEach(safeRemove);
+      [STORAGE_KEY, FORMATION_KEY, FORMATION_CONFIRMED_KEY, REROLL_KEY].forEach(safeRemove);
     }
 
     function clampNumber(value, min, max) { return Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : min; }
@@ -5075,13 +5085,12 @@
     function calcChemistry(players) {
       const playerBonus = {};
       const playerSubscriberBonus = {};
-      const playerTeamNameBonus = {};
+      const playerCoachBonus = {};
       const list = Array.isArray(players) ? players : [];
-      const currentTeamKey = normalizePlayerName(teamName || '');
-      const defaultTeamKey = normalizePlayerName('La tua XI');
-      const playerMatchesTeamName = player => {
-        if (!player || !currentTeamKey || currentTeamKey === defaultTeamKey) return false;
-        return normalizePlayerName(player.name || '') === currentTeamKey;
+      const currentCoachKey = normalizePlayerName(coachName || '');
+      const playerMatchesCoachName = player => {
+        if (!player || !currentCoachKey) return false;
+        return normalizePlayerName(player.name || '') === currentCoachKey;
       };
       const fallbackSubscriberNames = [
         'blaze','d4rkn3s5xx','jhonny','marcoprogame4','patriziocaldoro','bboyfil','bboyfili','marcoytfh',
@@ -5116,18 +5125,18 @@
         const nationKey = normalizePlayerName(player.nation || '');
         const subscriberBonus = isSub ? 5 : 0;
         const sameNationSubscriberBonus = isSub && subscriberNationCounts[nationKey] >= 2 ? 10 : 0;
-        const teamNameBonus = playerMatchesTeamName(player) ? 10 : 0;
+        const coachBonus = playerMatchesCoachName(player) ? 10 : 0;
         const subTotal = subscriberBonus + sameNationSubscriberBonus;
         playerSubscriberBonus[player.id] = subTotal;
-        playerTeamNameBonus[player.id] = teamNameBonus;
-        playerBonus[player.id] = baseChemistry + subTotal + teamNameBonus;
+        playerCoachBonus[player.id] = coachBonus;
+        playerBonus[player.id] = baseChemistry + subTotal + coachBonus;
       });
 
       const totalBonus = Object.values(playerBonus).reduce((sum, value) => sum + value, 0);
       const subscriberTotalBonus = Object.values(playerSubscriberBonus).reduce((sum, value) => sum + value, 0);
-      const teamNameTotalBonus = Object.values(playerTeamNameBonus).reduce((sum, value) => sum + value, 0);
+      const coachTotalBonus = Object.values(playerCoachBonus).reduce((sum, value) => sum + value, 0);
       const averageBonus = list.length ? totalBonus / list.length : 0;
-      const maxBonusPerPlayer = 31; // 6 intesa classica +5 abbonato +10 abbonati stessa nazionale +10 nome squadra = nome calciatore
+      const maxBonusPerPlayer = 31; // 6 intesa classica +5 abbonato +10 abbonati stessa nazionale +10 allenatore = nome calciatore
       const score = list.length ? Math.min(100, Math.round((averageBonus / maxBonusPerPlayer) * 100)) : 0;
       const byNation = {};
       list.forEach(player => { byNation[player.nation] = (byNation[player.nation] || 0) + 1; });
@@ -5139,10 +5148,12 @@
       return {
         playerBonus,
         playerSubscriberBonus,
-        playerTeamNameBonus,
+        playerCoachBonus,
+        playerTeamNameBonus: playerCoachBonus,
         totalBonus,
         subscriberTotalBonus,
-        teamNameTotalBonus,
+        coachTotalBonus,
+        teamNameTotalBonus: coachTotalBonus,
         subscriberBaseBonus,
         subscriberSameNationBonus,
         averageBonus,
@@ -5234,28 +5245,40 @@
     }
     function ratingOf(player) { return Number(player.effectiveOvr ?? player.ovr ?? 0); }
     function cleanTeamName(value) { return String(value || '').replace(/\s+/g, ' ').trim().slice(0, 24); }
+    function cleanCoachName(value) { return String(value || '').replace(/\s+/g, ' ').trim().slice(0, 40); }
     function isValidTeamName(value = teamName) {
       const clean = cleanTeamName(value);
       return Boolean(clean) && normalizePlayerName(clean) !== normalizePlayerName('La tua XI');
     }
+    function isValidCoachName(value = coachName) {
+      return Boolean(cleanCoachName(value));
+    }
     function requireTeamNameBeforeRoll() {
-      const clean = cleanTeamName(els.teamNameInput ? els.teamNameInput.value : teamName);
-      teamName = clean;
-      if (els.teamNameInput) els.teamNameInput.value = clean;
-      if (!isValidTeamName(clean)) {
-        setNotice("Prima di iniziare devi scrivere un nome squadra diverso da 'La tua XI'.");
-        showToast("Inserisci il nome della squadra prima di rollare.");
-        if (els.teamNameInput) {
-          els.teamNameInput.focus();
-          els.teamNameInput.classList.add('needs-name');
-          window.setTimeout(() => els.teamNameInput && els.teamNameInput.classList.remove('needs-name'), 900);
+      const cleanTeam = cleanTeamName(els.teamNameInput ? els.teamNameInput.value : teamName);
+      const cleanCoach = cleanCoachName(els.coachNameInput ? els.coachNameInput.value : coachName);
+      teamName = cleanTeam;
+      coachName = cleanCoach;
+      if (els.teamNameInput) els.teamNameInput.value = cleanTeam;
+      if (els.coachNameInput) els.coachNameInput.value = cleanCoach;
+      const teamOk = isValidTeamName(cleanTeam);
+      const coachOk = isValidCoachName(cleanCoach);
+      if (!teamOk || !coachOk) {
+        setNotice(!teamOk ? "Prima di iniziare devi scrivere un nome squadra diverso da 'La tua XI'." : "Prima di iniziare devi scrivere il nome dell'allenatore.");
+        showToast(!teamOk ? "Inserisci il nome della squadra prima di rollare." : "Inserisci il nome dell'allenatore prima di rollare.");
+        const target = !teamOk ? els.teamNameInput : els.coachNameInput;
+        if (target) {
+          target.focus();
+          target.classList.add('needs-name');
+          window.setTimeout(() => target && target.classList.remove('needs-name'), 900);
         }
         return false;
       }
-      safeSet(TEAM_NAME_KEY, clean);
+      safeSet(TEAM_NAME_KEY, cleanTeam);
+      safeSet(COACH_NAME_KEY, cleanCoach);
       return true;
     }
     function displayTeamName(value = teamName) { return isValidTeamName(value) ? cleanTeamName(value) : '—'; }
+    function displayCoachName(value = coachName) { return isValidCoachName(value) ? cleanCoachName(value) : '—'; }
     function isTeamNameLocked() {
       return formationConfirmed || selected.length > 0 || Boolean(currentNation) || Boolean(pendingPlayer) || isSpinning || Boolean(tournamentState);
     }
@@ -5266,10 +5289,14 @@
         els.teamNameInput.disabled = locked;
         els.teamNameInput.title = locked ? 'Nome squadra bloccato per questo draft. Premi Reset per ricominciare.' : '';
       }
+      if (els.coachNameInput) {
+        els.coachNameInput.disabled = locked;
+        els.coachNameInput.title = locked ? 'Nome allenatore bloccato per questo draft. Premi Reset per ricominciare.' : '';
+      }
       if (els.teamNameNote) {
         els.teamNameNote.textContent = locked
-          ? 'Nome bloccato per questo draft. Se coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa.'
-          : "Scrivi il nome della squadra prima di premere Roll: e' obbligatorio e restera' bloccato per tutto il draft. Se coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa.";
+          ? "Nomi bloccati per questo draft. Se il nome allenatore coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa."
+          : "Scrivi nome squadra e nome allenatore prima di premere Roll: resteranno bloccati per tutto il draft. Se il nome allenatore coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa. Nome squadra e allenatore restano salvati in questo browser.";
       }
     }
 
@@ -5282,6 +5309,23 @@
       teamName = cleanTeamName(els.teamNameInput.value);
       if (teamName) safeSet(TEAM_NAME_KEY, teamName);
       else safeRemove(TEAM_NAME_KEY);
+      renderCandidates();
+      renderPitch();
+      renderScoreboard();
+      renderFinal();
+      renderTeamNameLock();
+      if (tournamentState) renderTournament();
+    }
+
+    function updateCoachName() {
+      if (isTeamNameLocked()) {
+        if (els.coachNameInput) els.coachNameInput.value = coachName;
+        showToast("Nome allenatore gia' bloccato per questo draft. Premi Reset per ricominciare.");
+        return;
+      }
+      coachName = cleanCoachName(els.coachNameInput ? els.coachNameInput.value : coachName);
+      if (coachName) safeSet(COACH_NAME_KEY, coachName);
+      else safeRemove(COACH_NAME_KEY);
       renderCandidates();
       renderPitch();
       renderScoreboard();
@@ -5500,9 +5544,10 @@
       clearLiveSimulation();
       if (lastPlacedTimer) { clearTimeout(lastPlacedTimer); lastPlacedTimer = null; }
       lastPlacedSlotId = null;
-      selected = []; currentNation = null; currentCandidates = []; pendingPlayer = null; isSpinning = false; tournamentState = null; selectedFormation = '4-3-3'; teamName = ''; rerollsLeft = REROLL_LIMIT; formationConfirmed = false; els.appRoot.classList.remove('tournament-mode');
+      selected = []; currentNation = null; currentCandidates = []; pendingPlayer = null; isSpinning = false; tournamentState = null; selectedFormation = '4-3-3'; teamName = cleanTeamName(safeGet(TEAM_NAME_KEY, teamName)); coachName = cleanCoachName(safeGet(COACH_NAME_KEY, coachName)); rerollsLeft = REROLL_LIMIT; formationConfirmed = false; els.appRoot.classList.remove('tournament-mode');
       clearRunStorage();
       els.teamNameInput.value = teamName;
+      if (els.coachNameInput) els.coachNameInput.value = coachName;
       render();
       showToast("Sei tornato all'inizio: nuova partita da zero.");
     }
@@ -5511,10 +5556,10 @@
       renderTeamNameLock(); renderFormations(); renderDrawCard(); renderCandidates(); renderPitch(); renderScoreboard(); renderPlacementModal(); renderFinal(); renderTournament();
       const mustChoose = currentNation && currentCandidates.length > 0;
       const canReroll = mustChoose && rerollsLeft > 0 && selected.length < MAX_PICKS;
-      const needsTeamName = !formationConfirmed && !isValidTeamName();
+      const needsTeamName = !formationConfirmed && (!isValidTeamName() || !isValidCoachName());
       els.bigRollBtn.disabled = isSpinning || selected.length >= MAX_PICKS || mustChoose || needsTeamName;
       els.spinBtn.disabled = isSpinning || selected.length >= MAX_PICKS || (mustChoose && !canReroll) || needsTeamName;
-      els.spinBtn.textContent = pendingPlayer ? `Annulla e re-roll (${rerollsLeft})` : mustChoose ? `Re-roll (${rerollsLeft})` : (needsTeamName ? 'Scrivi nome squadra' : '↺ Altra nazionale');
+      els.spinBtn.textContent = pendingPlayer ? `Annulla e re-roll (${rerollsLeft})` : mustChoose ? `Re-roll (${rerollsLeft})` : (needsTeamName ? 'Scrivi i nomi' : '↺ Altra nazionale');
       els.rerollInfo.textContent = `Re-roll disponibili: ${rerollsLeft}/${REROLL_LIMIT}`;
     }
 
@@ -5529,6 +5574,7 @@
       if (els.formationActions) els.formationActions.style.display = 'none';
       els.formationSummary.textContent = selectedFormation;
       els.teamNameSummary.textContent = displayTeamName();
+      if (els.coachNameSummary) els.coachNameSummary.textContent = displayCoachName();
     }
 
     function renderDrawCard() {
@@ -5547,11 +5593,11 @@
         els.statusLine.textContent = 'Team completed'; els.rollCta.innerHTML = 'Draft completo'; els.afterRollActions.style.display = 'grid'; setNotice('');
       } else if (!isSpinning) {
         els.nationCode.textContent = '--'; els.nationName.textContent = picks ? 'Ready?' : 'Roll'; els.drawSubtitle.textContent = selectedFormation;
-        const needsTeamName = !formationConfirmed && !isValidTeamName();
-        els.statusLine.textContent = picks ? 'Roll another team' : (needsTeamName ? 'Scrivi il nome squadra' : (formationConfirmed ? 'Roll a team to start' : 'Choose formation preview'));
-        els.rollCta.innerHTML = picks ? "Rolla per sorteggiare un'altra nazionale" : (needsTeamName ? 'Scrivi il nome della squadra, poi premi Roll' : (formationConfirmed ? 'Gira una nazionale' : `Modulo ${escapeHtml(selectedFormation)} pronto: premi Roll per iniziare`));
+        const needsTeamName = !formationConfirmed && (!isValidTeamName() || !isValidCoachName());
+        els.statusLine.textContent = picks ? 'Roll another team' : (needsTeamName ? 'Scrivi i nomi' : (formationConfirmed ? 'Roll a team to start' : 'Choose formation preview'));
+        els.rollCta.innerHTML = picks ? "Rolla per sorteggiare un'altra nazionale" : (needsTeamName ? 'Scrivi nome squadra e allenatore, poi premi Roll' : (formationConfirmed ? 'Gira una nazionale' : `Modulo ${escapeHtml(selectedFormation)} pronto: premi Roll per iniziare`));
         els.afterRollActions.style.display = (picks || formationConfirmed) ? 'grid' : 'none';
-        setNotice(needsTeamName ? "Nome squadra obbligatorio: non usare 'La tua XI'." : '');
+        setNotice(needsTeamName ? "Nome squadra e allenatore obbligatori prima del Roll." : '');
       }
     }
 
@@ -5649,13 +5695,13 @@
         const player = assigned.get(slot.instanceId);
         const bonus = player ? bonusForPlayer(player, chem) : 0;
         const subBonus = player ? (chem.playerSubscriberBonus[player.id] || 0) : 0;
-        const teamNameBonus = player ? (chem.playerTeamNameBonus[player.id] || 0) : 0;
-        const otherBonus = Math.max(0, bonus - subBonus - teamNameBonus);
-        return `<div class="box-row"><span class="pos">${escapeHtml(slot.key)}</span><span class="line">${player ? `${escapeHtml(displayNameShort(player.name))}${subBonus ? `<span class="row-bonus sub-bonus">ABB +${subBonus}</span>` : ''}${teamNameBonus ? `<span class="row-bonus">NOME +${teamNameBonus}</span>` : ''}${otherBonus ? `<span class="row-bonus">+${otherBonus} INT</span>` : ''}` : '—'}</span><span class="ovr">${player ? effectiveOvr(player, chem) : ''}</span></div>`;
+        const coachBonus = player ? (chem.playerCoachBonus[player.id] || 0) : 0;
+        const otherBonus = Math.max(0, bonus - subBonus - coachBonus);
+        return `<div class="box-row"><span class="pos">${escapeHtml(slot.key)}</span><span class="line">${player ? `${escapeHtml(displayNameShort(player.name))}${subBonus ? `<span class="row-bonus sub-bonus">ABB +${subBonus}</span>` : ''}${coachBonus ? `<span class="row-bonus">ALL +${coachBonus}</span>` : ''}${otherBonus ? `<span class="row-bonus">+${otherBonus} INT</span>` : ''}` : '—'}</span><span class="ovr">${player ? effectiveOvr(player, chem) : ''}</span></div>`;
       }).join('');
       els.avgOvr.textContent = selected.length ? `${avg.toFixed(1)}${avgBoost > 0 ? ` (+${avgBoost.toFixed(1)})` : ''}` : '—';
       els.chemistryScore.textContent = selected.length ? `${chem.score}/100` : '0';
-      els.chemistryBonus.textContent = `+${chem.totalBonus}${chem.teamNameTotalBonus ? ` · NOME +${chem.teamNameTotalBonus}` : ''}${chem.subscriberTotalBonus ? ` · ABB +${chem.subscriberTotalBonus}` : ''}`;
+      els.chemistryBonus.textContent = `+${chem.totalBonus}${chem.coachTotalBonus ? ` · ALL +${chem.coachTotalBonus}` : ''}${chem.subscriberTotalBonus ? ` · ABB +${chem.subscriberTotalBonus}` : ''}`;
       els.bestOvr.textContent = selected.length ? best : '—';
       const r = remainingCounts();
       els.rolesSummary.textContent = `P${r.P} · D${r.D} · C${r.C} · A${r.A}`;
@@ -5680,8 +5726,11 @@
     function startTournament(options = {}) {
       if (selected.length < MAX_PICKS) { showToast('Completa prima gli 11 giocatori.'); return; }
       if (!isValidTeamName()) { showToast('Inserisci il nome della squadra prima di iniziare il torneo.'); return; }
+      if (!isValidCoachName()) { showToast("Inserisci il nome dell'allenatore prima di iniziare il torneo."); return; }
       els.teamNameInput.value = teamName;
+      if (els.coachNameInput) els.coachNameInput.value = coachName;
       safeSet(TEAM_NAME_KEY, teamName);
+      safeSet(COACH_NAME_KEY, coachName);
       clearLiveSimulation();
       tournamentState = buildTournament();
       renderTournament();
@@ -6310,6 +6359,8 @@
         victoryCode:victoryCodeForState(state),
         teamName:displayTeamName(),
         squadra:displayTeamName(),
+        coachName:displayCoachName(),
+        allenatore:displayCoachName(),
         formation:selectedFormation,
         modulo:selectedFormation,
         avgOvr,
@@ -6415,9 +6466,10 @@
         <div class="awards-kicker">Coppa alzata</div>
         <h3 class="victory-submit-title">Hai vinto il Mondiale!</h3>
         <p class="victory-submit-text">Invia la vittoria a Fantaballa. Il risultato verra' verificato prima di aggiornare la classifica campioni del mondo.</p>
-        <div class="victory-privacy-note">Cliccando su "Invia vittoria" autorizzi l'invio a Fantaballa dei soli dati necessari: nome squadra, risultato finale, OVR medio, intesa, modulo, statistiche torneo, capocannoniere squadra, data e codice vittoria. Non vengono richiesti login, email o password. <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a></div>
+        <div class="victory-privacy-note">Cliccando su "Invia vittoria" autorizzi l'invio a Fantaballa dei soli dati necessari: nome squadra, nome allenatore, risultato finale, OVR medio, intesa, modulo, statistiche torneo, capocannoniere squadra, data e codice vittoria. Non vengono richiesti login, email o password. <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a></div>
         <div class="victory-submit-meta">
           <div class="victory-submit-pill"><span>Finale</span>${escapeHtml(payload.finalScore)} vs ${escapeHtml(payload.finalOpponent)}</div>
+          <div class="victory-submit-pill"><span>Allenatore</span>${escapeHtml(payload.coachName)}</div>
           <div class="victory-submit-pill"><span>OVR medio</span>${escapeHtml(payload.avgOvr)}</div>
           <div class="victory-submit-pill"><span>Intesa</span>${escapeHtml(payload.chemistryScore)}/100 (+${escapeHtml(payload.chemistryBonus)})</div>
         </div>
@@ -6516,7 +6568,7 @@
     function exportTeam() {
       const chem = calcChemistry(selected);
       const segmentStrengths = calcSegmentStrengths(selected, chem);
-      const payload = { createdAt:new Date().toISOString(), teamName:displayTeamName(), formation:selectedFormation, chemistry:chem, segmentStrengths, averageOvr:selected.length ? Number((selected.reduce((sum,p)=>sum+effectiveOvr(p,chem),0)/selected.length).toFixed(2)) : 0, players:withUserChemistry(selected) };
+      const payload = { createdAt:new Date().toISOString(), teamName:displayTeamName(), coachName:displayCoachName(), allenatore:displayCoachName(), formation:selectedFormation, chemistry:chem, segmentStrengths, averageOvr:selected.length ? Number((selected.reduce((sum,p)=>sum+effectiveOvr(p,chem),0)/selected.length).toFixed(2)) : 0, players:withUserChemistry(selected) };
       const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' });
       const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'squadra-ruota-nazionali.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showToast('Squadra esportata.');
     }
@@ -6525,11 +6577,11 @@
       const avg = selected.length ? (selected.reduce((sum,p)=>sum+effectiveOvr(p,chem),0)/selected.length).toFixed(1) : '—';
       const strength = calcSegmentStrengths(selected, chem);
       const slots = assignedMap();
-      return ['La mia squadra - Ruota Nazionali', `Nome: ${displayTeamName()}`, `Modulo: ${selectedFormation}`, `OVR medio con intesa: ${avg}`, `OVR reparti: ATT ${strength.attack || "—"} · MID ${strength.midfield || "—"} · DEF ${strength.defense || "—"}`, `Intesa: ${chem.score}/100 (+${chem.totalBonus})`, `Bonus nome squadra = nome calciatore: +${chem.teamNameTotalBonus || 0}`, `Bonus abbonati: ${chem.subscriberCount || 0} in campo · ${chem.subscriberNationPairs || 0} nazionalita' con almeno 2 abbonati`, '', ...scoreRows().map(slot => {
+      return ['La mia squadra - Ruota Nazionali', `Nome squadra: ${displayTeamName()}`, `Allenatore: ${displayCoachName()}`, `Modulo: ${selectedFormation}`, `OVR medio con intesa: ${avg}`, `OVR reparti: ATT ${strength.attack || "—"} · MID ${strength.midfield || "—"} · DEF ${strength.defense || "—"}`, `Intesa: ${chem.score}/100 (+${chem.totalBonus})`, `Bonus allenatore = nome calciatore: +${chem.coachTotalBonus || 0}`, `Bonus abbonati: ${chem.subscriberCount || 0} in campo · ${chem.subscriberNationPairs || 0} nazionalita' con almeno 2 abbonati`, '', ...scoreRows().map(slot => {
         const p = slots.get(slot.instanceId);
         const bonus = p ? bonusForPlayer(p, chem) : 0;
-        const teamBonus = p ? (chem.playerTeamNameBonus[p.id] || 0) : 0;
-        return `${slot.key}. ${p ? `${p.name} — ${p.roleLabel} — ${p.nation} — OVR ${p.ovr}${bonus ? ` +${bonus} INT` : ''}${teamBonus ? ` (NOME +${teamBonus})` : ''}` : '—'}`;
+        const coachBonus = p ? (chem.playerCoachBonus[p.id] || 0) : 0;
+        return `${slot.key}. ${p ? `${p.name} — ${p.roleLabel} — ${p.nation} — OVR ${p.ovr}${bonus ? ` +${bonus} INT` : ''}${coachBonus ? ` (ALL +${coachBonus})` : ''}` : '—'}`;
       })].join('\n');
     }
 
