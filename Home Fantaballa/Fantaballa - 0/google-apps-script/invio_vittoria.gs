@@ -54,32 +54,74 @@ function doPost(e) {
 }
 
 function buildEmailBody(data) {
-  const teamName = cleanText(data.teamName || data.squadra || 'N/D');
+  const teamName = cleanText(firstValue(data, ['teamName', 'squadra'], 'N/D'));
+  const vittorie = cleanNumber(firstValue(data, ['vittorie', 'wins'], 0));
+  const pareggi = cleanNumber(firstValue(data, ['pareggi', 'draws'], 0));
+  const sconfitte = cleanNumber(firstValue(data, ['sconfitte', 'losses'], 0));
+  const golFatti = cleanNumber(firstValue(data, ['gol_fatti', 'golFatti', 'goalsFor'], 0));
+  const golSubiti = cleanNumber(firstValue(data, ['gol_subiti', 'golSubiti', 'goalsAgainst'], 0));
+  const modulo = cleanText(firstValue(data, ['modulo', 'formation'], 'N/D'));
+  const ovrMedio = cleanNumber(firstValue(data, ['ovr_medio', 'avgOvr'], 0));
+  const capocannoniere = cleanText(firstValue(data, ['capocannoniereSquadra', 'capocannoniere', 'topScorer', 'migliorMarcatore'], 'N/D'));
+
+  const classificaJson = {
+    squadra: teamName,
+    vittorie: vittorie,
+    pareggi: pareggi,
+    sconfitte: sconfitte,
+    gol_fatti: golFatti,
+    gol_subiti: golSubiti,
+    modulo: modulo,
+    ovr_medio: ovrMedio,
+    capocannoniere: capocannoniere
+  };
+
   const rows = [
     'Nuova vittoria Mondiale Fantaballa!',
     '',
     'Squadra: ' + teamName,
     'Codice vittoria: ' + cleanText(data.victoryCode),
-    'Finale: ' + teamName + ' ' + cleanText(data.finalScore || 'N/D') + ' vs ' + cleanText(data.finalOpponent || 'N/D'),
-    'Partite giocate: ' + cleanText(data.matches || '0'),
-    'Vittorie: ' + cleanText(data.vittorie || data.wins || '0'),
-    'Pareggi: ' + cleanText(data.pareggi || data.draws || '0'),
-    'Sconfitte: ' + cleanText(data.sconfitte || data.losses || '0'),
-    'Gol fatti/subiti: ' + cleanText(data.golFatti || data.goalsFor || '0') + '/' + cleanText(data.golSubiti || data.goalsAgainst || '0'),
-    'Modulo: ' + cleanText(data.modulo || data.formation || 'N/D'),
-    'OVR medio: ' + cleanText(data.ovr_medio || data.avgOvr || '0'),
-    'Capocannoniere squadra: ' + cleanText(data.capocannoniereSquadra || data.capocannoniere || data.topScorer || data.migliorMarcatore || 'N/D'),
-    'Reparti: ATT ' + cleanText(data.attack || '0') + ' / MID ' + cleanText(data.midfield || '0') + ' / DEF ' + cleanText(data.defense || '0'),
-    'Intesa: ' + cleanText(data.chemistryScore || '0') + '/100 (+' + cleanText(data.chemistryBonus || '0') + ')',
-    'Data gioco: ' + cleanText(data.dateText || 'N/D'),
+    'Finale: ' + teamName + ' ' + cleanText(firstValue(data, ['finalScore'], 'N/D')) + ' vs ' + cleanText(firstValue(data, ['finalOpponent'], 'N/D')),
+    'Partite giocate: ' + cleanNumber(firstValue(data, ['matches'], 0)),
+    'Vittorie: ' + vittorie,
+    'Pareggi: ' + pareggi,
+    'Sconfitte: ' + sconfitte,
+    'Gol fatti/subiti: ' + golFatti + '/' + golSubiti,
+    'Modulo: ' + modulo,
+    'OVR medio: ' + ovrMedio,
+    'Capocannoniere squadra: ' + capocannoniere,
+    'Reparti: ATT ' + cleanNumber(firstValue(data, ['attack'], 0)) + ' / MID ' + cleanNumber(firstValue(data, ['midfield'], 0)) + ' / DEF ' + cleanNumber(firstValue(data, ['defense'], 0)),
+    'Intesa: ' + cleanNumber(firstValue(data, ['chemistryScore'], 0)) + '/100 (+' + cleanNumber(firstValue(data, ['chemistryBonus'], 0)) + ')',
+    'Data gioco: ' + cleanText(firstValue(data, ['dateText'], 'N/D')),
     'Data invio: ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss'),
     'Privacy notice accettata: ' + (data.privacyNoticeAccepted === true ? 'si' : 'non indicato'),
-    'Versione privacy: ' + cleanText(data.privacyVersion || 'N/D'),
+    'Versione privacy: ' + cleanText(firstValue(data, ['privacyVersion'], 'N/D')),
+    '',
+    'COPIA QUESTO BLOCCO IN data/classifica.json dentro la lista "classifica":',
+    '',
+    JSON.stringify(classificaJson, null, 2),
+    '',
+    "Nota: se nel file classifica.json ci sono gia altre squadre, aggiungi una virgola tra un blocco squadra e l altro.",
     '',
     'Nota: email inviata automaticamente dal bottone vittoria. Non sono richiesti login, email utente o password.'
   ];
 
   return rows.join('\n');
+}
+
+function firstValue(data, keys, fallback) {
+  for (var i = 0; i < keys.length; i++) {
+    var value = data[keys[i]];
+    if (value !== undefined && value !== null && value !== '') {
+      return value;
+    }
+  }
+  return fallback;
+}
+
+function cleanNumber(value) {
+  var number = Number(value);
+  return isNaN(number) ? 0 : number;
 }
 
 function cleanText(value) {
