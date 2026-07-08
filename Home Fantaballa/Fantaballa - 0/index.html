@@ -4140,7 +4140,7 @@
         <div class="tournament-actions">
           <button id="nextMatchBtn" class="btn dark" type="button">Next Match →</button>
           <button id="instantResultBtn" class="btn" type="button">Risultato istantaneo</button>
-          <button id="resetTournamentBtn" class="btn" type="button">Nuovo torneo</button>
+          <button id="resetTournamentBtn" class="btn" type="button">Torna all'inizio</button>
         </div>
       </div>
 
@@ -4228,6 +4228,9 @@
     const TEAM_NAME_KEY = STORAGE_KEY + '-team-name';
     const REROLL_KEY = STORAGE_KEY + '-rerolls-left';
     const USER_TEAM_ID = 'USER-XI';
+    // Anti-cheat: ogni refresh deve ricominciare una run nuova da zero.
+    // Conserviamo solo i flag di vittoria gia' inviata, ma non draft/torneo in corso.
+    clearRunStorage();
     const REROLL_LIMIT = 3;
     const GROUP_NAMES = ['A','B','C','D','E','F','G','H'];
     const ROLE_LABELS = { P:'Portiere', D:'Difensore', C:'Centrocampista', A:'Attaccante' };
@@ -4307,7 +4310,7 @@
     els.startTournamentBtn.addEventListener('click', startTournament);
     els.nextMatchBtn.addEventListener('click', revealNextMatch);
     els.instantResultBtn.addEventListener('click', instantResult);
-    els.resetTournamentBtn.addEventListener('click', startTournament);
+    els.resetTournamentBtn.addEventListener('click', resetGame);
     els.tournamentMatches.addEventListener('click', handleTournamentMatchesClick);
     els.cancelPlacementBtn.addEventListener('click', cancelPlacement);
     els.placementOverlay.addEventListener('click', event => { if (event.target === els.placementOverlay) cancelPlacement(); });
@@ -4320,6 +4323,9 @@
     function safeGet(key, fallback) { try { return window.localStorage.getItem(key) ?? fallback; } catch { return fallback; } }
     function safeSet(key, value) { try { window.localStorage.setItem(key, value); } catch {} }
     function safeRemove(key) { try { window.localStorage.removeItem(key); } catch {} }
+    function clearRunStorage() {
+      [STORAGE_KEY, FORMATION_KEY, FORMATION_CONFIRMED_KEY, TEAM_NAME_KEY, REROLL_KEY].forEach(safeRemove);
+    }
 
     function clampNumber(value, min, max) { return Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : min; }
     function saveRerolls() { safeSet(REROLL_KEY, String(rerollsLeft)); }
@@ -4730,12 +4736,11 @@
       clearLiveSimulation();
       if (lastPlacedTimer) { clearTimeout(lastPlacedTimer); lastPlacedTimer = null; }
       lastPlacedSlotId = null;
-      selected = []; currentNation = null; currentCandidates = []; pendingPlayer = null; isSpinning = false; tournamentState = null; rerollsLeft = REROLL_LIMIT; formationConfirmed = false; els.appRoot.classList.remove('tournament-mode');
-      safeRemove(STORAGE_KEY);
-      safeRemove(FORMATION_CONFIRMED_KEY);
-      safeSet(REROLL_KEY, String(rerollsLeft));
+      selected = []; currentNation = null; currentCandidates = []; pendingPlayer = null; isSpinning = false; tournamentState = null; selectedFormation = '4-3-3'; teamName = 'La tua XI'; rerollsLeft = REROLL_LIMIT; formationConfirmed = false; els.appRoot.classList.remove('tournament-mode');
+      clearRunStorage();
+      els.teamNameInput.value = teamName;
       render();
-      showToast('Nuova partita iniziata. Puoi cambiare modulo e nome squadra.');
+      showToast("Sei tornato all'inizio: nuova run da zero.");
     }
 
     function render() {
@@ -4896,8 +4901,8 @@
       const complete = selected.length >= MAX_PICKS;
       els.final.classList.toggle('show', complete);
       els.finalText.textContent = complete ? `${teamName} e' pronta per la World Cup.` : 'Hai chiuso il draft rispettando modulo e ruoli.';
-      els.startTournamentBtn.disabled = !complete;
-      els.startTournamentBtn.textContent = tournamentState ? 'Restart World Cup' : 'Start World Cup';
+      els.startTournamentBtn.disabled = !complete || Boolean(tournamentState);
+      els.startTournamentBtn.textContent = tournamentState ? 'World Cup in corso' : 'Start World Cup';
     }
 
 
@@ -5043,8 +5048,8 @@
         els.nextMatchBtn.textContent = complete ? 'Start World Cup →' : 'Next Match →';
         els.instantResultBtn.disabled = true;
         els.instantResultBtn.textContent = 'Risultato istantaneo';
-        els.resetTournamentBtn.disabled = !complete;
-        els.resetTournamentBtn.textContent = 'Genera torneo';
+        els.resetTournamentBtn.disabled = true;
+        els.resetTournamentBtn.textContent = "Torna all'inizio";
         return;
       }
       const state = tournamentState;
@@ -5058,6 +5063,7 @@
         els.instantResultBtn.disabled = false;
         els.instantResultBtn.textContent = 'Salta al risultato';
         els.resetTournamentBtn.disabled = true;
+        els.resetTournamentBtn.textContent = "Torna all'inizio";
         els.tournamentStatus.textContent = `${stageLabel(sim.match.stage)} live vs ${opp.name}`;
         updateBroadcastPanel(state, { mode:'live', match:sim.match, sim });
         els.stageNote.textContent = sim.phase === 'penalties' ? "Rigori in corso: il risultato finale arrivera' tra poco." : `Minuto ${sim.minute}'/${sim.maxMinute}. Il risultato cambia solo quando arriva un gol.`;
@@ -5071,11 +5077,11 @@
       els.instantResultBtn.disabled = done;
       els.instantResultBtn.textContent = done ? 'Torneo concluso' : 'Risultato istantaneo';
       els.resetTournamentBtn.disabled = false;
-      els.resetTournamentBtn.textContent = 'Nuovo torneo';
+      els.resetTournamentBtn.textContent = "Torna all'inizio";
       const last = state.revealed > 0 ? state.userPath[state.revealed - 1] : null;
       updateBroadcastPanel(state, { mode:done ? 'done' : 'upcoming', match:done ? last : next, last, done });
       els.tournamentStatus.textContent = done ? tournamentFinalText(state) : `Prossima partita: ${stageLabel(next.stage)} vs ${opponentOfUser(next).name}`;
-      els.stageNote.textContent = done ? tournamentFinalText(state) : (last ? `Ultima partita: ${stageLabel(last.stage)} vs ${opponentOfUser(last).name} ${resultTextForUser(last)}. Ora prepara la prossima.` : 'Premi Next Match per avviare la simulazione live della prossima partita.');
+      els.stageNote.textContent = done ? `${tournamentFinalText(state)} Per giocare ancora devi tornare all'inizio e rifare draft e torneo da zero.` : (last ? `Ultima partita: ${stageLabel(last.stage)} vs ${opponentOfUser(last).name} ${resultTextForUser(last)}. Ora prepara la prossima.` : 'Premi Next Match per avviare la simulazione live della prossima partita.');
       if (done) {
         const finalCard = last ? renderMatchCard(last) : `<div class="empty-box">${escapeHtml(tournamentFinalText(state))}</div>`;
         els.tournamentMatches.innerHTML = renderVictorySubmitCard(state) + finalCard + renderTournamentAwards(state);
