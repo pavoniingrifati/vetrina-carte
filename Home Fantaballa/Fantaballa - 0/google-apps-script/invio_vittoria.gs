@@ -1,151 +1,166 @@
 /*
-  Fantaballa - Invio automatico vittoria via email
+  Fantaballa - Classifica automatica su Google Sheets
 
   Come usarlo:
-  1. Vai su https://script.google.com e crea un nuovo progetto.
-  2. Cancella il codice presente e incolla tutto questo file.
-  3. Premi Deploy > New deployment > Web app.
-  4. Esegui come: Me.
-  5. Chi ha accesso: Anyone.
-  6. Autorizza lo script.
-  7. Copia il link finale che finisce con /exec.
-  8. Incolla quel link in index.html al posto di:
-     INCOLLA_QUI_URL_WEB_APP_GOOGLE_APPS_SCRIPT
+  1. Crea un Google Sheet e apri Estensioni > Apps Script dal foglio.
+  2. Incolla questo codice.
+  3. Deploy > New deployment > Web app.
+  4. Execute as: Me.
+  5. Who has access: Anyone.
+  6. Copia il link /exec e incollalo in index.html e classifica.html.
+
+  Questo script:
+  - riceve le vittorie dal sito con doPost(e)
+  - salva una riga nel foglio "Classifica"
+  - restituisce la classifica con doGet(e), anche in JSONP per il sito statico
 */
 
-const DESTINATARIO = 'pavoniingrifati@gmail.com';
-const NOME_MITTENTE = 'Fantaballa World Cup';
+const SHEET_NAME = 'Classifica';
 
-function doGet() {
-  return jsonOutput({ ok: true, message: 'Endpoint Fantaballa attivo' });
-}
+const HEADERS = [
+  'data_invio',
+  'codice_vittoria',
+  'squadra',
+  'allenatore',
+  'modalita',
+  'vittorie',
+  'pareggi',
+  'sconfitte',
+  'gol_fatti',
+  'gol_subiti',
+  'modulo',
+  'ovr_medio',
+  'capocannoniere'
+];
 
-function doPost(e) {
-  try {
-    const raw = e && e.postData && e.postData.contents ? e.postData.contents : '{}';
-    const data = JSON.parse(raw);
+function getSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) throw new Error('Apri questo Apps Script dal Google Sheet: Estensioni > Apps Script.');
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
 
-    if (!data || data.cupWon !== true || !data.victoryCode) {
-      return jsonOutput({ ok: false, error: 'Risultato non valido' });
-    }
-
-    const cache = CacheService.getScriptCache();
-    const cacheKey = 'victory_' + String(data.victoryCode).slice(0, 90);
-    if (cache.get(cacheKey)) {
-      return jsonOutput({ ok: true, duplicate: true });
-    }
-    cache.put(cacheKey, '1', 21600); // 6 ore anti doppio click
-
-    const teamName = cleanText(data.teamName || data.squadra || 'N/D');
-    const coachName = cleanText(data.coachName || data.allenatore || 'N/D');
-    const subject = 'Vittoria Mondiale Fantaballa - ' + teamName + ' / ' + coachName;
-    const body = buildEmailBody(data);
-
-    MailApp.sendEmail({
-      to: DESTINATARIO,
-      subject: subject,
-      body: body,
-      name: NOME_MITTENTE
-    });
-
-    return jsonOutput({ ok: true });
-  } catch (error) {
-    return jsonOutput({ ok: false, error: String(error) });
+  const firstRow = sheet.getRange(1, 1, 1, HEADERS.length).getValues()[0];
+  const hasHeaders = firstRow.some(value => String(value || '').trim() !== '');
+  if (!hasHeaders) {
+    sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
   }
+  return sheet;
 }
 
-function buildEmailBody(data) {
-  const teamName = cleanText(firstValue(data, ['teamName', 'squadra'], 'N/D'));
-  const coachName = cleanText(firstValue(data, ['coachName', 'allenatore', 'coach_name', 'nome_allenatore', 'coach'], 'N/D'));
-  const vittorie = cleanNumber(firstValue(data, ['vittorie', 'wins'], 0));
-  const pareggi = cleanNumber(firstValue(data, ['pareggi', 'draws'], 0));
-  const sconfitte = cleanNumber(firstValue(data, ['sconfitte', 'losses'], 0));
-  const golFatti = cleanNumber(firstValue(data, ['gol_fatti', 'golFatti', 'goalsFor'], 0));
-  const golSubiti = cleanNumber(firstValue(data, ['gol_subiti', 'golSubiti', 'goalsAgainst'], 0));
-  const modulo = cleanText(firstValue(data, ['modulo', 'formation'], 'N/D'));
-  const modalita = cleanText(firstValue(data, ['modalita', 'gameMode', 'mode'], 'Classica'));
-  const ovrMedio = cleanNumber(firstValue(data, ['ovr_medio', 'avgOvr'], 0));
-  const capocannoniere = cleanText(firstValue(data, ['capocannoniereSquadra', 'capocannoniere', 'topScorer', 'migliorMarcatore'], 'N/D'));
-
-  const classificaJson = {
-    squadra: teamName,
-    allenatore: coachName,
-    vittorie: vittorie,
-    pareggi: pareggi,
-    sconfitte: sconfitte,
-    gol_fatti: golFatti,
-    gol_subiti: golSubiti,
-    modulo: modulo,
-    modalita: modalita,
-    ovr_medio: ovrMedio,
-    capocannoniere: capocannoniere
-  };
-
-  const rows = [
-    'Nuova vittoria Mondiale Fantaballa!',
-    '',
-    'Squadra: ' + teamName,
-    'Allenatore: ' + coachName,
-    'Codice vittoria: ' + cleanText(data.victoryCode),
-    'Finale: ' + teamName + ' ' + cleanText(firstValue(data, ['finalScore'], 'N/D')) + ' vs ' + cleanText(firstValue(data, ['finalOpponent'], 'N/D')),
-    'Partite giocate: ' + cleanNumber(firstValue(data, ['matches'], 0)),
-    'Vittorie: ' + vittorie,
-    'Pareggi: ' + pareggi,
-    'Sconfitte: ' + sconfitte,
-    'Gol fatti/subiti: ' + golFatti + '/' + golSubiti,
-    'Modulo: ' + modulo,
-    'Modalita: ' + modalita,
-    'OVR medio: ' + ovrMedio,
-    'Capocannoniere squadra: ' + capocannoniere,
-    'Reparti: ATT ' + cleanNumber(firstValue(data, ['attack'], 0)) + ' / MID ' + cleanNumber(firstValue(data, ['midfield'], 0)) + ' / DEF ' + cleanNumber(firstValue(data, ['defense'], 0)),
-    'Intesa: ' + cleanNumber(firstValue(data, ['chemistryScore'], 0)) + '/100 (' + formatSigned(cleanNumber(firstValue(data, ['chemistryBonus'], 0))) + ')',
-    'Data gioco: ' + cleanText(firstValue(data, ['dateText'], 'N/D')),
-    'Data invio: ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss'),
-    'Privacy notice accettata: ' + (data.privacyNoticeAccepted === true ? 'si' : 'non indicato'),
-    'Versione privacy: ' + cleanText(firstValue(data, ['privacyVersion'], 'N/D')),
-    '',
-    'COPIA QUESTO BLOCCO IN data/classifica.json dentro la lista "classifica":',
-    '',
-    JSON.stringify(classificaJson, null, 2),
-    '',
-    "Nota: se nel file classifica.json ci sono gia altre squadre, aggiungi una virgola tra un blocco squadra e l altro.",
-    '',
-    'Nota: email inviata automaticamente dal bottone vittoria. Non sono richiesti login, email utente o password.'
-  ];
-
-  return rows.join('\n');
+function safeNumber_(value, fallback) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
 }
 
-
-function firstValue(data, keys, fallback) {
-  for (var i = 0; i < keys.length; i++) {
-    var value = data[keys[i]];
-    if (value !== undefined && value !== null && value !== '') {
-      return value;
-    }
+function firstValue_(payload, keys, fallback) {
+  for (let i = 0; i < keys.length; i++) {
+    const value = payload[keys[i]];
+    if (value !== undefined && value !== null && String(value).trim() !== '') return value;
   }
   return fallback;
 }
 
-function cleanNumber(value) {
-  var number = Number(value);
-  return isNaN(number) ? 0 : number;
+function normalizePayload_(payload) {
+  return {
+    data_invio: new Date(),
+    codice_vittoria: String(firstValue_(payload, ['victoryCode', 'codice_vittoria'], '')).trim(),
+    squadra: String(firstValue_(payload, ['squadra', 'nome_squadra', 'teamName', 'team_name'], '')).trim(),
+    allenatore: String(firstValue_(payload, ['allenatore', 'coachName', 'coach_name', 'nome_allenatore', 'coach'], '')).trim(),
+    modalita: String(firstValue_(payload, ['modalita', 'gameMode', 'mode'], 'Classica')).trim(),
+    vittorie: safeNumber_(firstValue_(payload, ['vittorie', 'wins'], 0), 0),
+    pareggi: safeNumber_(firstValue_(payload, ['pareggi', 'draws'], 0), 0),
+    sconfitte: safeNumber_(firstValue_(payload, ['sconfitte', 'losses'], 0), 0),
+    gol_fatti: safeNumber_(firstValue_(payload, ['gol_fatti', 'golFatti', 'goalsFor', 'gf'], 0), 0),
+    gol_subiti: safeNumber_(firstValue_(payload, ['gol_subiti', 'golSubiti', 'goalsAgainst', 'ga'], 0), 0),
+    modulo: String(firstValue_(payload, ['modulo', 'formation'], '')).trim(),
+    ovr_medio: safeNumber_(firstValue_(payload, ['ovr_medio', 'avgOvr', 'averageOvr'], ''), ''),
+    capocannoniere: String(firstValue_(payload, ['capocannoniere', 'capocannoniereSquadra', 'topScorer', 'migliorMarcatore'], '')).trim()
+  };
 }
 
-function formatSigned(value) {
-  var number = Number(value);
-  if (isNaN(number)) number = 0;
-  return number > 0 ? '+' + number : String(number);
+function parseRequest_(e) {
+  if (e && e.postData && e.postData.contents) {
+    try { return JSON.parse(e.postData.contents); } catch (err) {}
+  }
+  if (e && e.parameter && e.parameter.payload) {
+    try { return JSON.parse(e.parameter.payload); } catch (err) {}
+  }
+  return e && e.parameter ? e.parameter : {};
 }
 
-function cleanText(value) {
-  return String(value)
-    .replace(/[<>]/g, '')
-    .slice(0, 500);
-}
-
-function jsonOutput(obj) {
+function jsonOutput_(data) {
   return ContentService
-    .createTextOutput(JSON.stringify(obj))
+    .createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function jsOutput_(callback, data) {
+  return ContentService
+    .createTextOutput(String(callback).replace(/[^a-zA-Z0-9_$\.]/g, '') + '(' + JSON.stringify(data) + ');')
+    .setMimeType(ContentService.MimeType.JAVASCRIPT);
+}
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const payload = parseRequest_(e);
+    const row = normalizePayload_(payload);
+    if (!row.squadra || !row.allenatore) {
+      return jsonOutput_({ ok:false, error:'Squadra o allenatore mancanti' });
+    }
+
+    const sheet = getSheet_();
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0].map(String);
+    const codeIndex = headers.indexOf('codice_vittoria');
+    if (row.codice_vittoria && codeIndex >= 0) {
+      for (let i = 1; i < values.length; i++) {
+        if (String(values[i][codeIndex] || '') === row.codice_vittoria) {
+          return jsonOutput_({ ok:true, duplicate:true, saved:row });
+        }
+      }
+    }
+
+    sheet.appendRow(HEADERS.map(header => row[header]));
+    return jsonOutput_({ ok:true, saved:row });
+  } catch (err) {
+    return jsonOutput_({ ok:false, error:String(err && err.message ? err.message : err) });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function doGet(e) {
+  const sheet = getSheet_();
+  const values = sheet.getDataRange().getValues();
+  const headers = values.shift().map(String);
+
+  const classifica = values
+    .filter(row => row.some(cell => String(cell || '').trim() !== ''))
+    .map(row => {
+      const item = {};
+      headers.forEach((header, index) => item[header] = row[index]);
+      return {
+        squadra: item.squadra || '',
+        allenatore: item.allenatore || '',
+        modalita: item.modalita || 'Classica',
+        vittorie: Number(item.vittorie || 0),
+        pareggi: Number(item.pareggi || 0),
+        sconfitte: Number(item.sconfitte || 0),
+        gol_fatti: Number(item.gol_fatti || 0),
+        gol_subiti: Number(item.gol_subiti || 0),
+        modulo: item.modulo || '',
+        ovr_medio: item.ovr_medio || '',
+        capocannoniere: item.capocannoniere || ''
+      };
+    });
+
+  const data = {
+    aggiornato_il: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm'),
+    classifica: classifica
+  };
+  const callback = e && e.parameter && e.parameter.callback;
+  return callback ? jsOutput_(callback, data) : jsonOutput_(data);
 }

@@ -5321,7 +5321,7 @@
     const MAX_PICKS = 11;
     const STORAGE_KEY = 'ruota-nazionali-draft-v6-worldcup';
     const VICTORY_EMAIL = 'pavoniingrifati@gmail.com';
-    const VICTORY_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyNraBLRCMZg2KDPWw5jcLGMiWMJreYwhcMJvkBzwjcgIFFdq9RNQHrhKfVbPl5bDJomg/exec';
+    const VICTORY_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
     const VICTORY_ENDPOINT_PLACEHOLDER = 'INCOLLA_QUI_URL_WEB_APP_GOOGLE_APPS_SCRIPT';
     const FORMATION_KEY = STORAGE_KEY + '-formation';
     const FORMATION_CONFIRMED_KEY = STORAGE_KEY + '-formation-confirmed';
@@ -6874,6 +6874,7 @@
       const payload = buildVictoryPayload(tournamentState);
       payload.cupWon = true;
       payload.source = 'fantaballa-world-cup';
+      payload.saveTarget = 'google-sheets-classifica';
       payload.privacyNoticeAccepted = true;
       payload.privacyVersion = '2026-07-08';
       payload.sentAtIso = new Date().toISOString();
@@ -6881,7 +6882,7 @@
       button.disabled = true;
       button.classList.add('is-loading');
       button.textContent = 'Invio in corso...';
-      setVictorySendStatus('Invio in corso...', '');
+      setVictorySendStatus('Salvataggio in classifica in corso...', '');
 
       try {
         await fetch(VICTORY_ENDPOINT.trim(), {
@@ -6893,8 +6894,8 @@
         safeSet(victorySentKey(payload.victoryCode), '1');
         button.classList.remove('is-loading');
         button.classList.add('sent');
-        button.textContent = 'Vittoria inviata';
-        setVictorySendStatus('Vittoria inviata a Fantaballa!', 'ok');
+        button.textContent = 'Vittoria salvata';
+        setVictorySendStatus('Vittoria salvata nella classifica!', 'ok');
       } catch (error) {
         button.disabled = false;
         button.classList.remove('is-loading');
@@ -6909,13 +6910,13 @@
       const sent = safeGet(victorySentKey(payload.victoryCode), '0') === '1';
       const endpointReady = isVictoryEndpointConfigured();
       const disabledAttr = sent ? ' disabled' : '';
-      const buttonText = sent ? 'Vittoria inviata' : 'Invia vittoria';
+      const buttonText = sent ? 'Vittoria salvata' : 'Invia vittoria';
       const statusText = sent ? 'Questa vittoria e\' gia\' stata inviata.' : (endpointReady ? 'Clicca una sola volta per inviare la vittoria a Fantaballa.' : 'Invio non disponibile al momento.');
       const statusClass = sent ? ' ok' : (endpointReady ? '' : ' error');
       return `<article class="match-card tv-match victory-submit-card">
         <div class="awards-kicker">Coppa alzata</div>
         <h3 class="victory-submit-title">Hai vinto il Mondiale!</h3>
-        <p class="victory-submit-text">Invia la vittoria a Fantaballa. Il risultato verra' verificato prima di aggiornare la classifica campioni del mondo.</p>
+        <p class="victory-submit-text">Invia la vittoria: verra' salvata automaticamente nella classifica ufficiale.</p>
         <div class="victory-privacy-note">Cliccando su "Invia vittoria" autorizzi l'invio a Fantaballa dei soli dati necessari: nome squadra, nome allenatore, modalità, risultato finale, OVR medio, intesa, modulo, statistiche torneo, capocannoniere squadra, data e codice vittoria. Non vengono richiesti login, email o password. <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a></div>
         <div class="victory-submit-meta">
           <div class="victory-submit-pill"><span>Finale</span>${escapeHtml(payload.finalScore)} vs ${escapeHtml(payload.finalOpponent)}</div>

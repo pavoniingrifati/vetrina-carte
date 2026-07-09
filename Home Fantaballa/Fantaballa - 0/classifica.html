@@ -372,6 +372,8 @@
       const scorersBody = document.getElementById('scorersBody');
       const updated = document.getElementById('leaderboardUpdated');
       const refreshBtn = document.getElementById('refreshBtn');
+      const CLASSIFICA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
+      const LOCAL_CLASSIFICA_FALLBACK = 'data/classifica.json';
       if (!classicBody || !hardBody || !scorersBody) return;
 
       const escape = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({
@@ -608,19 +610,57 @@
         if (updated) updated.textContent = data && data.aggiornato_il ? `Aggiornata: ${data.aggiornato_il}` : 'Classifiche aggiornate';
       }
 
+      function loadLocalFallback() {
+        return fetch(LOCAL_CLASSIFICA_FALLBACK, { cache:'no-store' })
+          .then(response => {
+            if (!response.ok) throw new Error('classifica locale non trovata');
+            return response.json();
+          });
+      }
+
+      function loadFromAppsScriptJsonp() {
+        return new Promise((resolve, reject) => {
+          if (!CLASSIFICA_ENDPOINT || !/^https:\/\/script\.google\.com\//.test(CLASSIFICA_ENDPOINT)) {
+            reject(new Error('endpoint classifica non configurato'));
+            return;
+          }
+          const callbackName = 'fantaballaClassificaCallback_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+          const script = document.createElement('script');
+          const cleanup = () => {
+            try { delete window[callbackName]; } catch (error) { window[callbackName] = undefined; }
+            script.remove();
+          };
+          const timer = window.setTimeout(() => {
+            cleanup();
+            reject(new Error('timeout classifica'));
+          }, 12000);
+          window[callbackName] = data => {
+            window.clearTimeout(timer);
+            cleanup();
+            resolve(data);
+          };
+          script.onerror = () => {
+            window.clearTimeout(timer);
+            cleanup();
+            reject(new Error('errore caricamento classifica'));
+          };
+          const separator = CLASSIFICA_ENDPOINT.includes('?') ? '&' : '?';
+          script.src = CLASSIFICA_ENDPOINT + separator + 'callback=' + encodeURIComponent(callbackName) + '&_=' + Date.now();
+          document.head.appendChild(script);
+        });
+      }
+
       function loadLeaderboard() {
         if (updated) updated.textContent = 'Caricamento classifica...';
-        fetch('data/classifica.json', { cache:'no-store' })
-          .then(response => {
-            if (!response.ok) throw new Error('classifica non trovata');
-            return response.json();
-          })
+        loadFromAppsScriptJsonp()
+          .catch(() => loadLocalFallback())
           .then(renderLeaderboards)
           .catch(() => {
             if (updated) updated.textContent = 'Classifica non disponibile';
             renderModeTable(classicBody, [], 'Classifica non disponibile', 'classic');
             renderModeTable(hardBody, [], 'Classifica non disponibile', 'hard');
             renderScorers([]);
+            updateSortButtons();
           });
       }
 
