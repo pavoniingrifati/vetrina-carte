@@ -66,6 +66,7 @@ function buildEmailBody(data) {
   const modalita = cleanText(firstValue(data, ['modalita', 'gameMode', 'mode'], 'Classica'));
   const ovrMedio = cleanNumber(firstValue(data, ['ovr_medio', 'avgOvr'], 0));
   const capocannoniere = cleanText(firstValue(data, ['capocannoniereSquadra', 'capocannoniere', 'topScorer', 'migliorMarcatore'], 'N/D'));
+  const capocannonieri = cleanScorers(firstValue(data, ['capocannonieri', 'scorers', 'marcatori'], []));
 
   const classificaJson = {
     squadra: teamName,
@@ -78,7 +79,8 @@ function buildEmailBody(data) {
     modulo: modulo,
     modalita: modalita,
     ovr_medio: ovrMedio,
-    capocannoniere: capocannoniere
+    capocannoniere: capocannoniere,
+    capocannonieri: capocannonieri
   };
 
   const rows = [
@@ -97,6 +99,7 @@ function buildEmailBody(data) {
     'Modalita: ' + modalita,
     'OVR medio: ' + ovrMedio,
     'Capocannoniere squadra: ' + capocannoniere,
+    'Lista marcatori squadra: ' + formatScorers(capocannonieri),
     'Reparti: ATT ' + cleanNumber(firstValue(data, ['attack'], 0)) + ' / MID ' + cleanNumber(firstValue(data, ['midfield'], 0)) + ' / DEF ' + cleanNumber(firstValue(data, ['defense'], 0)),
     'Intesa: ' + cleanNumber(firstValue(data, ['chemistryScore'], 0)) + '/100 (' + formatSigned(cleanNumber(firstValue(data, ['chemistryBonus'], 0))) + ')',
     'Data gioco: ' + cleanText(firstValue(data, ['dateText'], 'N/D')),
@@ -114,6 +117,28 @@ function buildEmailBody(data) {
   ];
 
   return rows.join('\n');
+}
+
+
+function cleanScorers(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map(function(item) {
+    return {
+      nome: cleanText(item.nome || item.name || item.playerName || item.player || 'N/D'),
+      gol: cleanNumber(item.gol || item.goals || item.reti || 0),
+      assist: cleanNumber(item.assist || item.assists || 0),
+      ruolo: cleanText(item.ruolo || item.role || '')
+    };
+  }).filter(function(item) {
+    return item.nome !== 'N/D' && item.gol > 0;
+  }).slice(0, 20);
+}
+
+function formatScorers(list) {
+  if (!Array.isArray(list) || !list.length) return 'N/D';
+  return list.map(function(item) {
+    return item.nome + ' (' + item.gol + ')';
+  }).join(', ');
 }
 
 function firstValue(data, keys, fallback) {

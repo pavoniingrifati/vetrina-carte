@@ -6767,9 +6767,29 @@
       return state.victoryCode;
     }
 
-    function topUserScorerForState(state) {
+    function userScorersForState(state) {
       const awards = state ? tournamentAwardStats(state) : { scorers:[] };
-      const scorer = (awards.scorers || []).find(row => row.teamId === USER_TEAM_ID);
+      return (awards.scorers || [])
+        .filter(row => row.teamId === USER_TEAM_ID && Number(row.goals) > 0)
+        .map(row => ({
+          nome:row.playerName,
+          name:row.playerName,
+          playerName:row.playerName,
+          gol:row.goals,
+          goals:row.goals,
+          assist:row.assists || 0,
+          assists:row.assists || 0,
+          ruolo:row.role || '',
+          role:row.role || '',
+          squadra:displayTeamName(),
+          teamName:displayTeamName(),
+          allenatore:displayCoachName(),
+          coachName:displayCoachName()
+        }));
+    }
+
+    function topUserScorerForState(state) {
+      const scorer = userScorersForState(state)[0];
       return scorer ? `${scorer.playerName} (${scorer.goals})` : '—';
     }
 
@@ -6781,6 +6801,7 @@
       const opponent = finalMatch ? opponentOfUser(finalMatch).name : 'Avversario finale';
       const finalScore = finalMatch ? resultTextForUser(finalMatch) : 'N/D';
       const summary = userTournamentSummary(state);
+      const userScorers = userScorersForState(state);
       const topScorer = topUserScorerForState(state);
       const dateText = new Date().toLocaleString('it-IT');
       return {
@@ -6805,6 +6826,9 @@
         capocannoniereSquadra:topScorer,
         topScorer,
         migliorMarcatore:topScorer,
+        capocannonieri:userScorers,
+        scorers:userScorers,
+        marcatori:userScorers,
         dateText,
         ...summary,
         vittorie:summary.wins,

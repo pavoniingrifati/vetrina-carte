@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Classifica Fantaballa</title>
+  <title>Classifiche Fantaballa</title>
   <link rel="icon" href="favicon.ico?v=2" sizes="any" />
   <link rel="icon" type="image/png" sizes="192x192" href="site-icon-192.png?v=2" />
   <link rel="icon" type="image/png" sizes="512x512" href="site-icon-512.png?v=2" />
@@ -17,25 +17,29 @@
   <style>
     :root {
       --paper:#efe4c9;
-      --paper-2:#f7f0de;
       --ink:#2a2419;
       --muted:#7d745f;
       --line:#cdbf9f;
       --strong:#231d15;
       --gold:#e8c95d;
       --red:#d94b35;
+      --blue:#10243a;
+      --violet:#6c43df;
       --shadow-soft:0 10px 30px rgba(69,51,20,.12);
+      --display-font:"Bebas Neue","Arial Black",Impact,"Roboto Condensed","Arial Narrow",system-ui,sans-serif;
+      --body-font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
     }
     * { box-sizing:border-box; }
-    html, body { min-height:100%; }
+    html, body { min-height:100%; -webkit-text-size-adjust:100%; text-size-adjust:100%; }
     body {
       margin:0;
+      color:var(--ink);
+      font-family:var(--body-font);
       background:
         radial-gradient(circle at 12% 14%, rgba(255,255,255,.26), transparent 18%),
         radial-gradient(circle at 86% 9%, rgba(255,255,255,.2), transparent 16%),
         linear-gradient(135deg, #eadbb9 0%, #efe4c9 38%, #f6efdd 100%);
-      color:var(--ink);
-      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow-x:hidden;
     }
     body:before {
       content:"";
@@ -48,14 +52,9 @@
         repeating-linear-gradient(90deg, rgba(123,104,62,.05) 0 1px, transparent 1px 9px);
       mix-blend-mode:multiply;
     }
-    .page {
-      position:relative;
-      width:min(1420px, calc(100% - 48px));
-      margin:0 auto;
-      padding:18px 0 32px;
-    }
+    .page { position:relative; width:min(1420px, calc(100% - 48px)); margin:0 auto; padding:18px 0 32px; }
     .masthead {
-      min-height:48px;
+      min-height:54px;
       display:flex;
       justify-content:center;
       align-items:center;
@@ -69,18 +68,10 @@
       font-weight:900;
       letter-spacing:.08em;
       text-transform:uppercase;
-      transform:rotate(-.35deg);
     }
     .dot { color:var(--red); margin-right:8px; font-size:18px; }
-    .actions {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      margin-bottom:14px;
-      flex-wrap:wrap;
-    }
-    .back-btn, .refresh-btn {
+    .actions { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+    .back-btn, .refresh-btn, .expand-btn {
       appearance:none;
       display:inline-flex;
       align-items:center;
@@ -112,8 +103,9 @@
       border-radius:24px;
       padding:24px;
       overflow:hidden;
+      margin-bottom:18px;
     }
-    .leaderboard:before {
+    .leaderboard:before, .mode-board:before, .scorers-board:before {
       content:"";
       position:absolute;
       top:-8px;
@@ -126,41 +118,18 @@
       transform:rotate(4deg);
       opacity:.92;
     }
-    .leaderboard-head {
+    .leaderboard-head, .board-head {
       display:flex;
       justify-content:space-between;
       gap:18px;
       align-items:flex-start;
       margin-bottom:16px;
     }
-    .logo {
-      width:min(150px, 42vw);
-      height:auto;
-      display:block;
-      margin-bottom:10px;
-      filter:drop-shadow(0 8px 14px rgba(0,0,0,.12));
-    }
-    .label {
-      font-size:12px;
-      font-weight:900;
-      letter-spacing:.24em;
-      color:#8a7446;
-      text-transform:uppercase;
-      margin-bottom:8px;
-    }
-    h1 {
-      margin:0;
-      font-size:clamp(34px, 6vw, 62px);
-      line-height:.9;
-      letter-spacing:-.05em;
-      text-transform:uppercase;
-    }
-    .sub {
-      margin:10px 0 0;
-      color:#6d675b;
-      font-weight:900;
-      line-height:1.35;
-    }
+    .logo { width:min(150px, 42vw); height:auto; display:block; margin-bottom:10px; filter:drop-shadow(0 8px 14px rgba(0,0,0,.12)); }
+    .label { font-size:12px; font-weight:900; letter-spacing:.24em; color:#8a7446; text-transform:uppercase; margin-bottom:8px; }
+    h1 { margin:0; font-size:clamp(34px, 6vw, 62px); line-height:.9; letter-spacing:-.05em; text-transform:uppercase; }
+    h2 { margin:0; font-size:clamp(24px, 3.2vw, 42px); line-height:.95; letter-spacing:-.035em; text-transform:uppercase; }
+    .sub { margin:10px 0 0; color:#6d675b; font-weight:900; line-height:1.35; }
     .updated {
       align-self:flex-start;
       white-space:nowrap;
@@ -174,156 +143,90 @@
       text-transform:uppercase;
       letter-spacing:.08em;
     }
-    .table-wrap {
-      overflow:auto;
-      border-radius:18px;
-      border:1px solid #e2d2ac;
-      background:rgba(255,255,255,.58);
+    .boards { display:grid; gap:18px; }
+    .mode-board, .scorers-board {
+      position:relative;
+      background:linear-gradient(180deg,#fffefb,#f4ead6);
+      border:2px solid rgba(99,84,56,.22);
+      border-radius:24px;
+      box-shadow:var(--shadow-soft);
+      padding:18px;
+      overflow:hidden;
+      transition:box-shadow .18s ease, transform .18s ease, border-color .18s ease;
     }
-    table {
-      width:100%;
-      border-collapse:separate;
-      border-spacing:0;
-      min-width:0;
+    .mode-board.expanded {
+      border-color:rgba(216,75,53,.55);
+      box-shadow:0 18px 46px rgba(69,51,20,.18), 0 0 0 4px rgba(216,75,53,.08);
     }
-    th, td {
-      padding:14px 13px;
-      border-bottom:1px dashed #ddcfaf;
-      text-align:left;
-      font-weight:900;
-    }
-    th {
-      color:#8a7446;
-      font-size:12px;
-      letter-spacing:.14em;
-      text-transform:uppercase;
-      background:#fff7df;
-    }
-    th:first-child, td:first-child { width:64px; text-align:center; }
-    th:nth-child(2), td:nth-child(2) { min-width:220px; }
-    th:nth-child(3), td:nth-child(3),
-    th:nth-child(4), td:nth-child(4),
-    th:nth-child(5), td:nth-child(5),
-    th:nth-child(7), td:nth-child(7),
-    th:nth-child(8), td:nth-child(8) { text-align:center; }
-    th:last-child, td:last-child { min-width:210px; }
+    .board-head { position:relative; z-index:1; align-items:center; margin-bottom:12px; }
+    .board-title-wrap { min-width:0; }
+    .expand-btn { min-width:160px; background:linear-gradient(180deg,#10243a,#183a5c); border-color:#10243a; color:#fff; box-shadow:0 4px 0 rgba(16,36,58,.24); }
+    .mode-board.expanded .expand-btn { background:linear-gradient(180deg,#e25b43,#c8402b); border-color:#a83220; box-shadow:0 4px 0 rgba(153,46,29,.22); }
+    .table-wrap { overflow:auto; border-radius:18px; border:1px solid #e2d2ac; background:rgba(255,255,255,.58); }
+    table { width:100%; border-collapse:separate; border-spacing:0; min-width:0; }
+    th, td { padding:14px 13px; border-bottom:1px dashed #ddcfaf; text-align:left; font-weight:900; vertical-align:middle; }
+    th { color:#8a7446; font-size:12px; letter-spacing:.14em; text-transform:uppercase; background:#fff7df; }
     tr:last-child td { border-bottom:0; }
-    .rank {
-      display:inline-grid;
-      place-items:center;
-      width:38px;
-      height:38px;
-      border-radius:999px;
-      background:#fff7df;
-      border:1px solid #ead093;
-      color:#8a6210;
-      font-weight:900;
-    }
-    .count {
-      display:inline-flex;
-      min-width:48px;
-      min-height:36px;
-      align-items:center;
-      justify-content:center;
-      border-radius:14px;
-      background:#2f2619;
-      color:#fff;
-      font-size:18px;
-      font-weight:900;
-      padding:5px 10px;
-    }
-    .stat-pill {
-      display:inline-flex;
-      min-height:32px;
-      align-items:center;
-      justify-content:center;
-      border-radius:999px;
-      padding:5px 10px;
-      background:#fff7df;
-      border:1px solid #ead093;
-      color:#6d5418;
-      font-weight:900;
-      white-space:nowrap;
-    }
-    .team-cell strong { display:block; font-size:17px; }
-    .team-cell small { display:block; color:#8a8170; font-size:11px; margin-top:3px; text-transform:uppercase; letter-spacing:.08em; }
-    .scorer-cell { max-width:260px; white-space:normal; line-height:1.25; }
-    .empty {
-      color:#8a8170;
-    }
-    .note {
-      margin:14px 0 0;
-      padding:12px 14px;
-      border:1px solid #e2d2ac;
-      background:#fff7df;
-      border-radius:16px;
-      color:#6d5418;
-      font-weight:900;
-      line-height:1.35;
-    }
+    th:first-child, td:first-child { width:64px; text-align:center; }
+    .mode-table th:nth-child(3), .mode-table td:nth-child(3),
+    .mode-table th:nth-child(4), .mode-table td:nth-child(4),
+    .mode-table th:nth-child(5), .mode-table td:nth-child(5),
+    .mode-table th:nth-child(6), .mode-table td:nth-child(6),
+    .mode-table th:nth-child(7), .mode-table td:nth-child(7),
+    .mode-table th:nth-child(8), .mode-table td:nth-child(8) { text-align:center; }
+    .mode-board:not(.expanded) .full-col { display:none; }
+    .rank { display:inline-grid; place-items:center; width:38px; height:38px; border-radius:999px; background:#fff7df; border:1px solid #ead093; color:#8a6210; font-weight:900; }
+    .count { display:inline-flex; min-width:48px; min-height:36px; align-items:center; justify-content:center; border-radius:14px; background:#2f2619; color:#fff; font-size:18px; font-weight:900; padding:5px 10px; }
+    .stat-pill { display:inline-flex; min-height:32px; align-items:center; justify-content:center; border-radius:999px; padding:5px 10px; background:#fff7df; border:1px solid #ead093; color:#6d5418; font-weight:900; white-space:nowrap; }
+    .team-cell strong, .player-cell strong { display:block; font-size:17px; }
+    .team-cell small, .player-cell small { display:block; color:#8a8170; font-size:11px; margin-top:3px; text-transform:uppercase; letter-spacing:.08em; line-height:1.25; }
+    .scorer-cell { max-width:320px; white-space:normal; line-height:1.25; }
+    .empty { color:#8a8170; }
+    .note { margin:14px 0 0; padding:12px 14px; border:1px solid #e2d2ac; background:#fff7df; border-radius:16px; color:#6d5418; font-weight:900; line-height:1.35; }
+    .mode-chip { display:inline-flex; align-items:center; min-height:28px; border-radius:999px; padding:5px 10px; color:#fff; background:#10243a; font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
+    .mode-chip.hard { background:#6c43df; }
 
     @media (min-width:901px) {
+      body, .masthead, h1, h2, .label, .back-btn, .refresh-btn, .expand-btn, .updated, .rank, .count { font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important; }
       .table-wrap { overflow-x:visible; }
       table { min-width:0; table-layout:fixed; }
       th, td { min-width:0; padding:12px 10px; white-space:normal; overflow-wrap:anywhere; }
-      th:first-child, td:first-child { width:64px; }
-      th:nth-child(2), td:nth-child(2) { width:22%; }
-      th:nth-child(3), td:nth-child(3),
-      th:nth-child(4), td:nth-child(4),
-      th:nth-child(5), td:nth-child(5) { width:7.5%; }
-      th:nth-child(6), td:nth-child(6) { width:12%; text-align:center; }
-      th:nth-child(7), td:nth-child(7) { width:9%; }
-      th:nth-child(8), td:nth-child(8) { width:9%; }
-      th:nth-child(9), td:nth-child(9) { width:18%; }
+      .mode-table th:first-child, .mode-table td:first-child { width:64px; }
+      .mode-table th:nth-child(2), .mode-table td:nth-child(2) { width:30%; }
+      .mode-table th:nth-child(6), .mode-table td:nth-child(6) { width:14%; }
+      .mode-table th:nth-child(8), .mode-table td:nth-child(8) { width:12%; }
+      .mode-table th:nth-child(9), .mode-table td:nth-child(9) { width:24%; }
+      .mode-board.expanded .mode-table th:nth-child(2), .mode-board.expanded .mode-table td:nth-child(2) { width:22%; }
+      .mode-board.expanded .mode-table th:nth-child(3), .mode-board.expanded .mode-table td:nth-child(3),
+      .mode-board.expanded .mode-table th:nth-child(4), .mode-board.expanded .mode-table td:nth-child(4),
+      .mode-board.expanded .mode-table th:nth-child(5), .mode-board.expanded .mode-table td:nth-child(5) { width:7.5%; }
+      .mode-board.expanded .mode-table th:nth-child(7), .mode-board.expanded .mode-table td:nth-child(7) { width:10%; }
+      .scorers-table th:first-child, .scorers-table td:first-child { width:64px; }
+      .scorers-table th:nth-child(2), .scorers-table td:nth-child(2) { width:35%; }
+      .scorers-table th:nth-child(3), .scorers-table td:nth-child(3) { width:10%; text-align:center; }
+      .scorers-table th:nth-child(4), .scorers-table td:nth-child(4) { width:35%; }
+      .scorers-table th:nth-child(5), .scorers-table td:nth-child(5) { width:20%; text-align:center; }
       .count,.stat-pill { white-space:nowrap; }
-      .team-cell strong, .team-cell small, .scorer-cell { white-space:normal; overflow-wrap:anywhere; }
     }
 
-    @media (max-width:680px) {
-      .page { width:min(100% - 12px, 980px); padding-top:8px; }
-      .masthead { transform:none; }
-      .leaderboard { padding:14px 10px; }
-      .leaderboard-head { display:block; }
-      .updated { display:inline-block; margin-top:10px; white-space:normal; }
-      th, td { padding:11px 10px; }
-    }
-
-    /* FIX MOBILE + FONT coerente con il gioco */
-    :root { --display-font:"Bebas Neue","Arial Black",Impact,"Roboto Condensed","Arial Narrow",system-ui,sans-serif; --body-font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; }
-    html { -webkit-text-size-adjust:100%; text-size-adjust:100%; overflow-x:hidden; }
-    body { font-family:var(--body-font); overflow-x:hidden; }
-    .masthead,h1,h2,.label,.back-btn,.refresh-btn,.btn,.updated,.rank,.count { font-family:var(--display-font); letter-spacing:.01em; }
     @media (max-width:680px) {
       .page { width:100%; padding:10px 10px calc(24px + env(safe-area-inset-bottom)); }
-      .masthead { margin:0 -10px 12px; border-radius:0 0 18px 18px; min-height:52px; padding:12px 10px; font-size:clamp(24px,9vw,38px); line-height:1; letter-spacing:.015em; transform:none; }
+      .masthead { margin:0 -10px 12px; border-radius:0 0 18px 18px; min-height:52px; padding:12px 10px; font-size:clamp(24px,9vw,38px); line-height:1; letter-spacing:.015em; }
       .actions { display:grid; grid-template-columns:1fr; gap:8px; }
-      .back-btn,.refresh-btn,.btn { width:100%; min-height:46px; border-radius:15px; }
-      .leaderboard,.card { border-radius:22px; padding:15px 12px; }
-      .leaderboard-head { display:block; }
+      .back-btn,.refresh-btn,.expand-btn { width:100%; min-height:46px; border-radius:15px; }
+      .leaderboard,.mode-board,.scorers-board { border-radius:22px; padding:15px 12px; }
+      .leaderboard-head,.board-head { display:block; }
+      .expand-btn { margin-top:10px; }
       h1 { font-size:clamp(34px,13vw,52px); letter-spacing:.005em; }
-      h2 { font-size:17px; letter-spacing:.04em; }
-      p,li { font-size:15px; line-height:1.45; }
+      h2 { font-size:clamp(25px,10vw,38px); letter-spacing:.005em; }
+      .sub { font-size:15px; line-height:1.35; }
       .updated { display:inline-block; white-space:normal; margin-top:10px; line-height:1.15; }
-      .table-wrap { border-radius:16px; }
-      table { min-width:920px; }
+      .table-wrap { border-radius:16px; overflow:auto; }
+      .mode-table { min-width:720px; }
+      .mode-board.expanded .mode-table { min-width:980px; }
+      .scorers-table { min-width:760px; }
       th,td { padding:10px 8px; }
     }
-
-
-
-    /* FIX DESKTOP FONT: mantieni il look precedente su PC, usa il display solo su mobile. */
-    @media (min-width:901px) {
-      body, .masthead, h1, h2, .label, .back-btn, .refresh-btn, .btn, .updated, .rank, .count {
-        font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-      }
-      .masthead { letter-spacing:.08em !important; }
-      .label { letter-spacing:.24em !important; }
-      h1 { letter-spacing:-.05em !important; }
-      h2 { letter-spacing:.08em !important; }
-      .back-btn, .refresh-btn, .btn { letter-spacing:.04em !important; }
-      .updated { letter-spacing:.08em !important; }
-    }
-
   </style>
 </head>
 <body>
@@ -336,49 +239,112 @@
       <button class="refresh-btn" id="refreshBtn" type="button">Aggiorna</button>
     </div>
 
-    <section class="leaderboard" aria-label="Classifica completa">
+    <section class="leaderboard" aria-label="Classifiche Fantaballa">
       <div class="leaderboard-head">
         <div>
           <img class="logo" src="assets/fantaballa-logo.png" alt="Fantaballa" />
-          <div class="label">Classifica</div>
-          <h1>Campioni del mondo</h1>
-          <p class="sub">Classifica ufficiale con risultati, modulo, OVR e miglior marcatore.</p>
+          <div class="label">Classifiche</div>
+          <h1>Campioni e bomber</h1>
+          <p class="sub">Tre classifiche separate: modalità Classica, modalità HARDa Turan e capocannonieri aggregati da entrambe.</p>
         </div>
         <div id="leaderboardUpdated" class="updated">Caricamento classifica...</div>
       </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Pos</th>
-              <th>Squadra</th>
-              <th>Vittorie</th>
-              <th>Pareggi</th>
-              <th>Sconfitte</th>
-              <th>Gol fatti/subiti</th>
-              <th>Modulo</th>
-              <th>OVR medio</th>
-              <th>Capocannoniere</th>
-            </tr>
-          </thead>
-          <tbody id="leaderboardBody">
-            <tr>
-              <td><span class="rank">-</span></td>
-              <td class="empty" colspan="8">In attesa del primo campione</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="note">Le classifiche modalità partono compatte. Clicca su “Vedi tutti i dati” per espanderle e mostrare vittorie, pareggi, sconfitte e modulo.</div>
     </section>
+
+    <div class="boards">
+      <section class="mode-board" id="classicBoard" aria-label="Classifica modalità Classica">
+        <div class="board-head">
+          <div class="board-title-wrap">
+            <div class="label">Classifica modalità</div>
+            <h2>Classica</h2>
+            <p class="sub">Vista rapida con colonne essenziali.</p>
+          </div>
+          <button class="expand-btn" type="button" data-toggle-board="classicBoard" aria-expanded="false">Vedi tutti i dati</button>
+        </div>
+        <div class="table-wrap">
+          <table class="mode-table">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th>Squadra</th>
+                <th class="full-col">Vittorie</th>
+                <th class="full-col">Pareggi</th>
+                <th class="full-col">Sconfitte</th>
+                <th>Gol fatti/subiti</th>
+                <th class="full-col">Modulo</th>
+                <th>OVR medio</th>
+                <th>Capocannoniere</th>
+              </tr>
+            </thead>
+            <tbody id="classicBody"><tr><td><span class="rank">-</span></td><td class="empty" colspan="9">In attesa del primo campione Classica</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="mode-board" id="hardBoard" aria-label="Classifica modalità HARDa Turan">
+        <div class="board-head">
+          <div class="board-title-wrap">
+            <div class="label">Classifica modalità</div>
+            <h2>HARDa Turan</h2>
+            <p class="sub">OVR e ruoli nascosti nel draft, fuori ruolo = -10 Intesa.</p>
+          </div>
+          <button class="expand-btn" type="button" data-toggle-board="hardBoard" aria-expanded="false">Vedi tutti i dati</button>
+        </div>
+        <div class="table-wrap">
+          <table class="mode-table">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th>Squadra</th>
+                <th class="full-col">Vittorie</th>
+                <th class="full-col">Pareggi</th>
+                <th class="full-col">Sconfitte</th>
+                <th>Gol fatti/subiti</th>
+                <th class="full-col">Modulo</th>
+                <th>OVR medio</th>
+                <th>Capocannoniere</th>
+              </tr>
+            </thead>
+            <tbody id="hardBody"><tr><td><span class="rank">-</span></td><td class="empty" colspan="9">In attesa del primo campione HARDa Turan</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="scorers-board" aria-label="Classifica capocannonieri">
+        <div class="board-head">
+          <div class="board-title-wrap">
+            <div class="label">Classifica</div>
+            <h2>Capocannonieri</h2>
+            <p class="sub">Somma i gol dei giocatori presenti nelle classifiche Classica e HARDa Turan.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="scorers-table">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th>Giocatore</th>
+                <th>Gol</th>
+                <th>Squadre</th>
+                <th>Modalità</th>
+              </tr>
+            </thead>
+            <tbody id="scorersBody"><tr><td><span class="rank">-</span></td><td class="empty" colspan="4">In attesa dei primi gol</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
   </main>
 
   <script>
     (function () {
-      const body = document.getElementById('leaderboardBody');
+      const classicBody = document.getElementById('classicBody');
+      const hardBody = document.getElementById('hardBody');
+      const scorersBody = document.getElementById('scorersBody');
       const updated = document.getElementById('leaderboardUpdated');
       const refreshBtn = document.getElementById('refreshBtn');
-      if (!body) return;
+      if (!classicBody || !hardBody || !scorersBody) return;
 
       const escape = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({
         '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '"':'&quot;'
@@ -395,27 +361,32 @@
         const value = Number(raw);
         return Number.isFinite(value) ? value : fallback;
       };
+      const normalizeName = value => String(value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
       const nameOf = row => String(valueOf(row, ['squadra','nome_squadra','teamName','team_name','name'], '')).trim();
       const coachOf = row => String(valueOf(row, ['allenatore','coachName','coach_name','nome_allenatore','coach'], '')).trim();
-      const modeOf = row => String(valueOf(row, ['modalita','gameMode','mode'], '')).trim();
+      const rawModeOf = row => String(valueOf(row, ['modalita','gameMode','mode'], 'Classica')).trim();
+      const modeKindOf = row => /hard|turan/i.test(rawModeOf(row)) ? 'hard' : 'classic';
+      const modeLabelOf = row => modeKindOf(row) === 'hard' ? 'HARDa Turan' : 'Classica';
       const winsOf = row => numberOf(row, ['vittorie','wins','campione_del_mondo','campioni_del_mondo','count'], 0);
       const drawsOf = row => numberOf(row, ['pareggi','draws'], 0);
       const lossesOf = row => numberOf(row, ['sconfitte','losses'], 0);
       const goalsTextOf = row => {
         const combined = valueOf(row, ['gol_fatti_subiti','golFattiSubiti','goals'], '');
-        if (combined) return String(combined);
+        if (combined && typeof combined !== 'object') return String(combined);
         const gf = valueOf(row, ['gol_fatti','golFatti','goalsFor','gf'], '');
         const ga = valueOf(row, ['gol_subiti','golSubiti','goalsAgainst','ga'], '');
         return gf !== '' || ga !== '' ? `${gf || 0}/${ga || 0}` : '—';
       };
+      const goalDiffOf = row => numberOf(row, ['gol_fatti','golFatti','goalsFor','gf'], 0) - numberOf(row, ['gol_subiti','golSubiti','goalsAgainst','ga'], 0);
+      const goalsForOf = row => numberOf(row, ['gol_fatti','golFatti','goalsFor','gf'], 0);
       const ovrOf = row => {
         const value = valueOf(row, ['ovr_medio','OVR medio','avgOvr','averageOvr','overall'], '');
         if (value === '') return '—';
         const num = Number(value);
         return Number.isFinite(num) ? num.toLocaleString('it-IT', { maximumFractionDigits:1 }) : String(value);
       };
-      const scorerOf = row => {
-        const value = valueOf(row, ['capocannoniere','topScorer','top_scorer','miglior_marcatore'], '');
+      const scorerTextOf = row => {
+        const value = valueOf(row, ['capocannoniere','capocannoniereSquadra','topScorer','top_scorer','miglior_marcatore','migliorMarcatore'], '');
         if (!value) return '—';
         if (typeof value === 'object') {
           const name = value.nome || value.name || value.player || value.playerName || '—';
@@ -426,44 +397,133 @@
       };
       const moduleOf = row => String(valueOf(row, ['modulo','formation'], '—'));
 
-      function renderLeaderboard(data) {
-        const rows = Array.isArray(data) ? data : Array.isArray(data.classifica) ? data.classifica : [];
-        const validRows = rows
-          .map(row => ({
-            name:nameOf(row),
-            wins:winsOf(row),
-            draws:drawsOf(row),
-            losses:lossesOf(row),
-            goals:goalsTextOf(row),
-            module:moduleOf(row),
-            ovr:ovrOf(row),
-            scorer:scorerOf(row),
-            coach:coachOf(row),
-            mode:modeOf(row)
-          }))
-          .filter(row => row.name)
-          .sort((a, b) => b.wins - a.wins || a.losses - b.losses || a.name.localeCompare(b.name, 'it'));
+      function parseScorerString(value) {
+        const text = String(value || '').trim();
+        if (!text || text === '—') return null;
+        const match = text.match(/^(.*?)\s*\((\d+)\)\s*$/);
+        if (match) return { name:match[1].trim(), goals:Number(match[2]) || 0 };
+        return { name:text, goals:0 };
+      }
 
+      function scorerEntriesFromRow(row) {
+        const rawList = valueOf(row, ['capocannonieri','scorers','marcatori','topScorers'], null);
+        const teamName = nameOf(row);
+        const coach = coachOf(row);
+        const modeKind = modeKindOf(row);
+        const modeLabel = modeLabelOf(row);
+        const entries = [];
+        if (Array.isArray(rawList)) {
+          rawList.forEach(item => {
+            if (!item) return;
+            const playerName = String(item.nome || item.name || item.player || item.playerName || '').trim();
+            const goals = Number(item.gol ?? item.goals ?? item.reti ?? 0);
+            if (!playerName || !Number.isFinite(goals) || goals <= 0) return;
+            entries.push({ playerName, goals, teamName, coach, modeKind, modeLabel });
+          });
+        }
+        if (!entries.length) {
+          const fallback = parseScorerString(scorerTextOf(row));
+          if (fallback && fallback.name && fallback.goals > 0) {
+            entries.push({ playerName:fallback.name, goals:fallback.goals, teamName, coach, modeKind, modeLabel });
+          }
+        }
+        return entries;
+      }
+
+      function rowView(row) {
+        return {
+          original:row,
+          name:nameOf(row),
+          wins:winsOf(row),
+          draws:drawsOf(row),
+          losses:lossesOf(row),
+          goals:goalsTextOf(row),
+          goalDiff:goalDiffOf(row),
+          goalsFor:goalsForOf(row),
+          module:moduleOf(row),
+          ovr:ovrOf(row),
+          scorer:scorerTextOf(row),
+          coach:coachOf(row),
+          modeKind:modeKindOf(row),
+          modeLabel:modeLabelOf(row)
+        };
+      }
+
+      function sortRows(rows) {
+        return rows.sort((a, b) =>
+          b.wins - a.wins ||
+          b.goalDiff - a.goalDiff ||
+          b.goalsFor - a.goalsFor ||
+          a.losses - b.losses ||
+          a.name.localeCompare(b.name, 'it')
+        );
+      }
+
+      function renderModeTable(tbody, rows, emptyText) {
+        const validRows = sortRows(rows.map(rowView).filter(row => row.name));
         if (!validRows.length) {
-          body.innerHTML = '<tr><td><span class="rank">-</span></td><td class="empty" colspan="8">In attesa del primo campione</td></tr>';
-        } else {
-          body.innerHTML = validRows.map((row, index) => `<tr>
-            <td><span class="rank">${index + 1}</span></td>
-            <td class="team-cell"><strong>${escape(row.name)}</strong><small>${escape(row.coach || 'Allenatore non indicato')}${row.mode ? ' · ' + escape(row.mode) : ''}</small></td>
-            <td><span class="count">${escape(row.wins)}</span></td>
-            <td><span class="stat-pill">${escape(row.draws)}</span></td>
-            <td><span class="stat-pill">${escape(row.losses)}</span></td>
-            <td><span class="stat-pill">${escape(row.goals)}</span></td>
-            <td><span class="stat-pill">${escape(row.module)}</span></td>
-            <td><span class="stat-pill">${escape(row.ovr)}</span></td>
-            <td class="scorer-cell">${escape(row.scorer)}</td>
-          </tr>`).join('');
+          tbody.innerHTML = `<tr><td><span class="rank">-</span></td><td class="empty" colspan="9">${escape(emptyText)}</td></tr>`;
+          return;
         }
+        tbody.innerHTML = validRows.map((row, index) => `<tr>
+          <td><span class="rank">${index + 1}</span></td>
+          <td class="team-cell"><strong>${escape(row.name)}</strong><small>${escape(row.coach || 'Allenatore non indicato')} · ${escape(row.modeLabel)}</small></td>
+          <td class="full-col"><span class="count">${escape(row.wins)}</span></td>
+          <td class="full-col"><span class="stat-pill">${escape(row.draws)}</span></td>
+          <td class="full-col"><span class="stat-pill">${escape(row.losses)}</span></td>
+          <td><span class="stat-pill">${escape(row.goals)}</span></td>
+          <td class="full-col"><span class="stat-pill">${escape(row.module)}</span></td>
+          <td><span class="stat-pill">${escape(row.ovr)}</span></td>
+          <td class="scorer-cell">${escape(row.scorer)}</td>
+        </tr>`).join('');
+      }
 
-        if (updated) {
-          const updatedText = data && data.aggiornato_il ? `Aggiornata: ${data.aggiornato_il}` : 'Classifica aggiornata';
-          updated.textContent = updatedText;
+      function buildScorers(rows) {
+        const map = new Map();
+        rows.forEach(row => {
+          scorerEntriesFromRow(row).forEach(entry => {
+            const key = normalizeName(entry.playerName);
+            if (!key) return;
+            if (!map.has(key)) {
+              map.set(key, { playerName:entry.playerName, goals:0, teams:new Map(), modes:new Set() });
+            }
+            const target = map.get(key);
+            target.goals += entry.goals;
+            target.modes.add(entry.modeLabel);
+            const teamKey = `${entry.teamName}|${entry.coach}`;
+            if (entry.teamName && !target.teams.has(teamKey)) target.teams.set(teamKey, { teamName:entry.teamName, coach:entry.coach });
+          });
+        });
+        return [...map.values()].sort((a, b) => b.goals - a.goals || a.playerName.localeCompare(b.playerName, 'it'));
+      }
+
+      function renderScorers(rows) {
+        const scorers = buildScorers(rows);
+        if (!scorers.length) {
+          scorersBody.innerHTML = '<tr><td><span class="rank">-</span></td><td class="empty" colspan="4">In attesa dei primi gol</td></tr>';
+          return;
         }
+        scorersBody.innerHTML = scorers.map((row, index) => {
+          const teams = [...row.teams.values()].map(item => `${item.teamName}${item.coach ? ' / ' + item.coach : ''}`).join(' · ') || '—';
+          const modes = [...row.modes].sort((a,b) => a.localeCompare(b, 'it'));
+          return `<tr>
+            <td><span class="rank">${index + 1}</span></td>
+            <td class="player-cell"><strong>${escape(row.playerName)}</strong><small>Gol totali nelle classifiche</small></td>
+            <td><span class="count">${escape(row.goals)}</span></td>
+            <td>${escape(teams)}</td>
+            <td>${modes.map(mode => `<span class="mode-chip ${/hard/i.test(mode) ? 'hard' : ''}">${escape(mode)}</span>`).join(' ')}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      function renderLeaderboards(data) {
+        const rows = Array.isArray(data) ? data : Array.isArray(data.classifica) ? data.classifica : [];
+        const classicRows = rows.filter(row => modeKindOf(row) === 'classic');
+        const hardRows = rows.filter(row => modeKindOf(row) === 'hard');
+        renderModeTable(classicBody, classicRows, 'In attesa del primo campione Classica');
+        renderModeTable(hardBody, hardRows, 'In attesa del primo campione HARDa Turan');
+        renderScorers(rows);
+        if (updated) updated.textContent = data && data.aggiornato_il ? `Aggiornata: ${data.aggiornato_il}` : 'Classifiche aggiornate';
       }
 
       function loadLeaderboard() {
@@ -473,12 +533,25 @@
             if (!response.ok) throw new Error('classifica non trovata');
             return response.json();
           })
-          .then(renderLeaderboard)
+          .then(renderLeaderboards)
           .catch(() => {
             if (updated) updated.textContent = 'Classifica non disponibile';
-            body.innerHTML = '<tr><td><span class="rank">-</span></td><td class="empty" colspan="8">Classifica non disponibile</td></tr>';
+            renderModeTable(classicBody, [], 'Classifica non disponibile');
+            renderModeTable(hardBody, [], 'Classifica non disponibile');
+            renderScorers([]);
           });
       }
+
+      document.querySelectorAll('[data-toggle-board]').forEach(button => {
+        button.addEventListener('click', () => {
+          const board = document.getElementById(button.dataset.toggleBoard);
+          if (!board) return;
+          const expanded = !board.classList.contains('expanded');
+          board.classList.toggle('expanded', expanded);
+          button.setAttribute('aria-expanded', String(expanded));
+          button.textContent = expanded ? 'Vista compatta' : 'Vedi tutti i dati';
+        });
+      });
 
       refreshBtn.addEventListener('click', loadLeaderboard);
       loadLeaderboard();
