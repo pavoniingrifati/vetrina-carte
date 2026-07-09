@@ -5332,7 +5332,7 @@
     const USER_TEAM_ID = 'USER-XI';
     const GAME_MODES = {
       classic:{ label:'Classica', short:'CLASSICA', description:'OVR e ruoli visibili. Puoi piazzare solo nei ruoli corretti.' },
-      hard:{ label:'HARDa Turan', short:'HARD', description:'OVR e ruoli nascosti nel draft. Se sbagli ruolo: -10 Intesa.' }
+      hard:{ label:'HARDa Turan', short:'HARD', description:'OVR e ruoli nascosti, lista casuale. Se sbagli ruolo: -10 Intesa.' }
     };
     // Anti-cheat: ogni refresh deve ricominciare una run nuova da zero.
     // Conserviamo solo i flag di vittoria gia' inviata e i nomi salvati, ma non draft/torneo in corso.
@@ -5746,6 +5746,17 @@
     function selectedIds() { return new Set(selected.map(p => String(p.id))); }
     function selectedSlotIds() { return new Set(selected.map(p => String(p.slotId))); }
     function randomItem(items) { return items[Math.floor(Math.random() * items.length)]; }
+    function shuffleCopy(items) {
+      const copy = [...items];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+    function draftDisplayCandidates(candidates) {
+      return isHardMode() ? shuffleCopy(candidates) : candidates;
+    }
     function wait(ms) { return new Promise(resolve => window.setTimeout(resolve, ms)); }
     function currentSlots() { return FORMATIONS[selectedFormation]; }
     function formationCounts() { return currentSlots().reduce((acc,s) => (acc[s.role]=(acc[s.role]||0)+1, acc), { P:0,D:0,C:0,A:0 }); }
@@ -5819,7 +5830,7 @@
       els.rollCta.classList.add('rolling');
       await playPackOpening(possibleNations, finalNation, isReroll);
       currentNation = finalNation;
-      currentCandidates = validCandidatesForNation(finalNation);
+      currentCandidates = draftDisplayCandidates(validCandidatesForNation(finalNation));
       isSpinning = false;
       els.drawCard.classList.remove('rolling');
       els.rollCta.classList.remove('rolling');
@@ -5976,7 +5987,7 @@
       if (els.gameModeSummary) els.gameModeSummary.textContent = displayGameMode();
       if (els.gameModeNote) {
         els.gameModeNote.innerHTML = isHardMode()
-          ? "<strong>HARDa Turan:</strong> OVR e ruoli sono nascosti nel draft. Puoi usare qualsiasi slot, ma se il ruolo e' sbagliato quel giocatore prende -10 Intesa."
+          ? "<strong>HARDa Turan:</strong> OVR e ruoli sono nascosti e la lista giocatori e' casuale. Puoi usare qualsiasi slot, ma se il ruolo e' sbagliato quel giocatore prende -10 Intesa."
           : '<strong>Classica:</strong> vedi OVR e ruoli, e puoi piazzare solo nei reparti corretti.';
       }
       if (!els.gameModeGrid) return;
@@ -6005,11 +6016,11 @@
         els.nationName.textContent = currentNation;
         els.drawSubtitle.textContent = pendingPlayer ? 'Place / re-roll' : `Pick ${Math.min(MAX_PICKS, picks + 1).toString().padStart(2,'0')}`;
         els.statusLine.textContent = pendingPlayer ? 'Puoi piazzarlo oppure cambiare idea' : (isHardMode() ? 'Scegli al buio' : 'Devi scegliere un ruolo valido');
-        els.rollCta.innerHTML = pendingPlayer ? `Clicca uno slot illuminato per ${escapeHtml(pendingPlayer.name)}<br><small>${isHardMode() ? 'Se sbagli ruolo: -10 Intesa' : 'Oppure usa re-roll per cambiare nazionale'}</small>` : (isHardMode() ? 'Nazionale pescata · ruolo e OVR nascosti' : 'Nazionale pescata');
+        els.rollCta.innerHTML = pendingPlayer ? `Clicca uno slot illuminato per ${escapeHtml(pendingPlayer.name)}<br><small>${isHardMode() ? 'Se sbagli ruolo: -10 Intesa' : 'Oppure usa re-roll per cambiare nazionale'}</small>` : (isHardMode() ? 'Nazionale pescata · lista casuale' : 'Nazionale pescata');
         els.afterRollActions.style.display = 'grid';
         const r = remainingCounts();
         const slotHint = pendingPlayer ? (isHardMode() ? 'uno slot libero' : `uno slot ${ROLE_LABELS[pendingPlayer.role]} libero`) : '';
-        setNotice(pendingPlayer ? `Puoi confermare ${pendingPlayer.name} cliccando ${slotHint}, oppure premere Annulla e re-roll per cambiare nazionale.` : (isHardMode() ? `Scelta obbligatoria in HARDa Turan. Ruolo e OVR sono nascosti. Se lo metti fuori ruolo: -10 Intesa. Slot liberi: P${r.P} · D${r.D} · C${r.C} · A${r.A}.` : `Scelta obbligatoria. Puoi fare re-roll ${rerollsLeft} volta/e. Ruoli liberi: P${r.P} · D${r.D} · C${r.C} · A${r.A}.`));
+        setNotice(pendingPlayer ? `Puoi confermare ${pendingPlayer.name} cliccando ${slotHint}, oppure premere Annulla e re-roll per cambiare nazionale.` : (isHardMode() ? `Scelta obbligatoria in HARDa Turan. Ruolo e OVR sono nascosti e la lista e' casuale. Se lo metti fuori ruolo: -10 Intesa. Slot liberi: P${r.P} · D${r.D} · C${r.C} · A${r.A}.` : `Scelta obbligatoria. Puoi fare re-roll ${rerollsLeft} volta/e. Ruoli liberi: P${r.P} · D${r.D} · C${r.C} · A${r.A}.`));
       } else if (selected.length >= MAX_PICKS) {
         els.nationCode.textContent = '11'; els.nationName.textContent = 'Completed'; els.drawSubtitle.textContent = selectedFormation;
         els.statusLine.textContent = 'Team completed'; els.rollCta.innerHTML = 'Draft completo'; els.afterRollActions.style.display = 'grid'; setNotice('');
