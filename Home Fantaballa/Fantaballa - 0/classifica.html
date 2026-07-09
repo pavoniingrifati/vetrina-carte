@@ -397,6 +397,7 @@
       };
       const nameOf = row => String(valueOf(row, ['squadra','nome_squadra','teamName','team_name','name'], '')).trim();
       const coachOf = row => String(valueOf(row, ['allenatore','coachName','coach_name','nome_allenatore','coach'], '')).trim();
+      const modeOf = row => String(valueOf(row, ['modalita','gameMode','mode'], '')).trim();
       const winsOf = row => numberOf(row, ['vittorie','wins','campione_del_mondo','campioni_del_mondo','count'], 0);
       const drawsOf = row => numberOf(row, ['pareggi','draws'], 0);
       const lossesOf = row => numberOf(row, ['sconfitte','losses'], 0);
@@ -437,7 +438,8 @@
             module:moduleOf(row),
             ovr:ovrOf(row),
             scorer:scorerOf(row),
-            coach:coachOf(row)
+            coach:coachOf(row),
+            mode:modeOf(row)
           }))
           .filter(row => row.name)
           .sort((a, b) => b.wins - a.wins || a.losses - b.losses || a.name.localeCompare(b.name, 'it'));
@@ -447,7 +449,7 @@
         } else {
           body.innerHTML = validRows.map((row, index) => `<tr>
             <td><span class="rank">${index + 1}</span></td>
-            <td class="team-cell"><strong>${escape(row.name)}</strong><small>${escape(row.coach || 'Allenatore non indicato')}</small></td>
+            <td class="team-cell"><strong>${escape(row.name)}</strong><small>${escape(row.coach || 'Allenatore non indicato')}${row.mode ? ' · ' + escape(row.mode) : ''}</small></td>
             <td><span class="count">${escape(row.wins)}</span></td>
             <td><span class="stat-pill">${escape(row.draws)}</span></td>
             <td><span class="stat-pill">${escape(row.losses)}</span></td>

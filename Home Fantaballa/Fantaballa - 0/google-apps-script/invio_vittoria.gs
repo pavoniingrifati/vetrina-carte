@@ -63,6 +63,7 @@ function buildEmailBody(data) {
   const golFatti = cleanNumber(firstValue(data, ['gol_fatti', 'golFatti', 'goalsFor'], 0));
   const golSubiti = cleanNumber(firstValue(data, ['gol_subiti', 'golSubiti', 'goalsAgainst'], 0));
   const modulo = cleanText(firstValue(data, ['modulo', 'formation'], 'N/D'));
+  const modalita = cleanText(firstValue(data, ['modalita', 'gameMode', 'mode'], 'Classica'));
   const ovrMedio = cleanNumber(firstValue(data, ['ovr_medio', 'avgOvr'], 0));
   const capocannoniere = cleanText(firstValue(data, ['capocannoniereSquadra', 'capocannoniere', 'topScorer', 'migliorMarcatore'], 'N/D'));
 
@@ -75,6 +76,7 @@ function buildEmailBody(data) {
     gol_fatti: golFatti,
     gol_subiti: golSubiti,
     modulo: modulo,
+    modalita: modalita,
     ovr_medio: ovrMedio,
     capocannoniere: capocannoniere
   };
@@ -92,10 +94,11 @@ function buildEmailBody(data) {
     'Sconfitte: ' + sconfitte,
     'Gol fatti/subiti: ' + golFatti + '/' + golSubiti,
     'Modulo: ' + modulo,
+    'Modalita: ' + modalita,
     'OVR medio: ' + ovrMedio,
     'Capocannoniere squadra: ' + capocannoniere,
     'Reparti: ATT ' + cleanNumber(firstValue(data, ['attack'], 0)) + ' / MID ' + cleanNumber(firstValue(data, ['midfield'], 0)) + ' / DEF ' + cleanNumber(firstValue(data, ['defense'], 0)),
-    'Intesa: ' + cleanNumber(firstValue(data, ['chemistryScore'], 0)) + '/100 (+' + cleanNumber(firstValue(data, ['chemistryBonus'], 0)) + ')',
+    'Intesa: ' + cleanNumber(firstValue(data, ['chemistryScore'], 0)) + '/100 (' + formatSigned(cleanNumber(firstValue(data, ['chemistryBonus'], 0))) + ')',
     'Data gioco: ' + cleanText(firstValue(data, ['dateText'], 'N/D')),
     'Data invio: ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss'),
     'Privacy notice accettata: ' + (data.privacyNoticeAccepted === true ? 'si' : 'non indicato'),
@@ -126,6 +129,12 @@ function firstValue(data, keys, fallback) {
 function cleanNumber(value) {
   var number = Number(value);
   return isNaN(number) ? 0 : number;
+}
+
+function formatSigned(value) {
+  var number = Number(value);
+  if (isNaN(number)) number = 0;
+  return number > 0 ? '+' + number : String(number);
 }
 
 function cleanText(value) {
