@@ -166,6 +166,38 @@
     table { width:100%; border-collapse:separate; border-spacing:0; min-width:0; }
     th, td { padding:14px 13px; border-bottom:1px dashed #ddcfaf; text-align:left; font-weight:900; vertical-align:middle; }
     th { color:#8a7446; font-size:12px; letter-spacing:.14em; text-transform:uppercase; background:#fff7df; }
+    .sort-btn {
+      appearance:none;
+      width:100%;
+      border:0;
+      background:transparent;
+      color:inherit;
+      font:inherit;
+      font-weight:900;
+      text-align:inherit;
+      text-transform:inherit;
+      letter-spacing:inherit;
+      cursor:pointer;
+      padding:0;
+      display:inline-flex;
+      align-items:center;
+      justify-content:flex-start;
+      gap:5px;
+    }
+    th:first-child .sort-btn,
+    th.is-center .sort-btn { justify-content:center; }
+    .sort-btn:hover { color:#d94b35; }
+    .sort-btn::after {
+      content:"↕";
+      font-size:11px;
+      opacity:.45;
+      letter-spacing:0;
+    }
+    .sort-btn.active::after {
+      content:attr(data-arrow);
+      opacity:1;
+      color:#d94b35;
+    }
     tr:last-child td { border-bottom:0; }
     th:first-child, td:first-child { width:64px; text-align:center; }
     .mode-table th:nth-child(3), .mode-table td:nth-child(3),
@@ -202,10 +234,8 @@
       .mode-board.expanded .mode-table th:nth-child(5), .mode-board.expanded .mode-table td:nth-child(5) { width:7.5%; }
       .mode-board.expanded .mode-table th:nth-child(7), .mode-board.expanded .mode-table td:nth-child(7) { width:10%; }
       .scorers-table th:first-child, .scorers-table td:first-child { width:64px; }
-      .scorers-table th:nth-child(2), .scorers-table td:nth-child(2) { width:35%; }
-      .scorers-table th:nth-child(3), .scorers-table td:nth-child(3) { width:10%; text-align:center; }
-      .scorers-table th:nth-child(4), .scorers-table td:nth-child(4) { width:35%; }
-      .scorers-table th:nth-child(5), .scorers-table td:nth-child(5) { width:20%; text-align:center; }
+      .scorers-table th:nth-child(2), .scorers-table td:nth-child(2) { width:auto; }
+      .scorers-table th:nth-child(3), .scorers-table td:nth-child(3) { width:140px; text-align:center; }
       .count,.stat-pill { white-space:nowrap; }
     }
 
@@ -224,7 +254,7 @@
       .table-wrap { border-radius:16px; overflow:auto; }
       .mode-table { min-width:720px; }
       .mode-board.expanded .mode-table { min-width:980px; }
-      .scorers-table { min-width:760px; }
+      .scorers-table { min-width:420px; }
       th,td { padding:10px 8px; }
     }
   </style>
@@ -245,11 +275,11 @@
           <img class="logo" src="assets/fantaballa-logo.png" alt="Fantaballa" />
           <div class="label">Classifiche</div>
           <h1>Campioni e bomber</h1>
-          <p class="sub">Tre classifiche separate: modalità Classica, modalità HARDa Turan e capocannonieri aggregati da entrambe.</p>
+          <p class="sub">Tre classifiche separate: modalità Classica, modalità HARDa Turan e capocannonieri delle run aggregati da entrambe.</p>
         </div>
         <div id="leaderboardUpdated" class="updated">Caricamento classifica...</div>
       </div>
-      <div class="note">Le classifiche modalità partono compatte. Clicca su “Vedi tutti i dati” per espanderle e mostrare vittorie, pareggi, sconfitte e modulo.</div>
+      <div class="note">Le classifiche modalità partono compatte. Clicca su “Vedi tutti i dati” per espanderle. Puoi ordinare ogni tabella cliccando sul nome delle colonne.</div>
     </section>
 
     <div class="boards">
@@ -266,15 +296,15 @@
           <table class="mode-table">
             <thead>
               <tr>
-                <th>Pos</th>
-                <th>Squadra</th>
-                <th class="full-col">Vittorie</th>
-                <th class="full-col">Pareggi</th>
-                <th class="full-col">Sconfitte</th>
-                <th>Gol fatti/subiti</th>
-                <th class="full-col">Modulo</th>
-                <th>OVR medio</th>
-                <th>Capocannoniere</th>
+                <th><button class="sort-btn" type="button" data-board="classic" data-sort="rank">Pos</button></th>
+                <th><button class="sort-btn" type="button" data-board="classic" data-sort="name">Squadra</button></th>
+                <th class="full-col is-center"><button class="sort-btn" type="button" data-board="classic" data-sort="wins">Vittorie</button></th>
+                <th class="full-col is-center"><button class="sort-btn" type="button" data-board="classic" data-sort="draws">Pareggi</button></th>
+                <th class="full-col is-center"><button class="sort-btn" type="button" data-board="classic" data-sort="losses">Sconfitte</button></th>
+                <th class="is-center"><button class="sort-btn" type="button" data-board="classic" data-sort="goalsFor">Gol fatti/subiti</button></th>
+                <th class="full-col is-center"><button class="sort-btn" type="button" data-board="classic" data-sort="module">Modulo</button></th>
+                <th class="is-center"><button class="sort-btn" type="button" data-board="classic" data-sort="ovr">OVR medio</button></th>
+                <th><button class="sort-btn" type="button" data-board="classic" data-sort="scorer">Capocannoniere</button></th>
               </tr>
             </thead>
             <tbody id="classicBody"><tr><td><span class="rank">-</span></td><td class="empty" colspan="9">In attesa del primo campione Classica</td></tr></tbody>
@@ -295,15 +325,15 @@
           <table class="mode-table">
             <thead>
               <tr>
-                <th>Pos</th>
-                <th>Squadra</th>
-                <th class="full-col">Vittorie</th>
-                <th class="full-col">Pareggi</th>
-                <th class="full-col">Sconfitte</th>
-                <th>Gol fatti/subiti</th>
-                <th class="full-col">Modulo</th>
-                <th>OVR medio</th>
-                <th>Capocannoniere</th>
+                <th><button class="sort-btn" type="button" data-board="hard" data-sort="rank">Pos</button></th>
+                <th><button class="sort-btn" type="button" data-board="hard" data-sort="name">Squadra</button></th>
+                <th class="full-col is-center"><button class="sort-btn" type="button" data-board="hard" data-sort="wins">Vittorie</button></th>
+                <th class="full-col is-center"><button class="sort-btn" type="button" data-board="hard" data-sort="draws">Pareggi</button></th>
+                <th class="full-col is-center"><button class="sort-btn" type="button" data-board="hard" data-sort="losses">Sconfitte</button></th>
+                <th class="is-center"><button class="sort-btn" type="button" data-board="hard" data-sort="goalsFor">Gol fatti/subiti</button></th>
+                <th class="full-col is-center"><button class="sort-btn" type="button" data-board="hard" data-sort="module">Modulo</button></th>
+                <th class="is-center"><button class="sort-btn" type="button" data-board="hard" data-sort="ovr">OVR medio</button></th>
+                <th><button class="sort-btn" type="button" data-board="hard" data-sort="scorer">Capocannoniere</button></th>
               </tr>
             </thead>
             <tbody id="hardBody"><tr><td><span class="rank">-</span></td><td class="empty" colspan="9">In attesa del primo campione HARDa Turan</td></tr></tbody>
@@ -316,21 +346,19 @@
           <div class="board-title-wrap">
             <div class="label">Classifica</div>
             <h2>Capocannonieri</h2>
-            <p class="sub">Somma i gol dei giocatori presenti nelle classifiche Classica e HARDa Turan.</p>
+            <p class="sub">Somma i gol dei capocannonieri delle run Classica e HARDa Turan.</p>
           </div>
         </div>
         <div class="table-wrap">
           <table class="scorers-table">
             <thead>
               <tr>
-                <th>Pos</th>
-                <th>Giocatore</th>
-                <th>Gol</th>
-                <th>Squadre</th>
-                <th>Modalità</th>
+                <th><button class="sort-btn" type="button" data-board="scorers" data-sort="rank">Pos</button></th>
+                <th><button class="sort-btn" type="button" data-board="scorers" data-sort="playerName">Giocatore</button></th>
+                <th class="is-center"><button class="sort-btn" type="button" data-board="scorers" data-sort="goals">Gol</button></th>
               </tr>
             </thead>
-            <tbody id="scorersBody"><tr><td><span class="rank">-</span></td><td class="empty" colspan="4">In attesa dei primi gol</td></tr></tbody>
+            <tbody id="scorersBody"><tr><td><span class="rank">-</span></td><td class="empty" colspan="2">In attesa dei primi gol</td></tr></tbody>
           </table>
         </div>
       </section>
@@ -406,28 +434,13 @@
       }
 
       function scorerEntriesFromRow(row) {
-        const rawList = valueOf(row, ['capocannonieri','scorers','marcatori','topScorers'], null);
-        const teamName = nameOf(row);
-        const coach = coachOf(row);
-        const modeKind = modeKindOf(row);
-        const modeLabel = modeLabelOf(row);
-        const entries = [];
-        if (Array.isArray(rawList)) {
-          rawList.forEach(item => {
-            if (!item) return;
-            const playerName = String(item.nome || item.name || item.player || item.playerName || '').trim();
-            const goals = Number(item.gol ?? item.goals ?? item.reti ?? 0);
-            if (!playerName || !Number.isFinite(goals) || goals <= 0) return;
-            entries.push({ playerName, goals, teamName, coach, modeKind, modeLabel });
-          });
+        // La classifica Capocannonieri usa solo il capocannoniere della run,
+        // non la lista completa dei marcatori della squadra.
+        const fallback = parseScorerString(scorerTextOf(row));
+        if (fallback && fallback.name && fallback.goals > 0) {
+          return [{ playerName:fallback.name, goals:fallback.goals }];
         }
-        if (!entries.length) {
-          const fallback = parseScorerString(scorerTextOf(row));
-          if (fallback && fallback.name && fallback.goals > 0) {
-            entries.push({ playerName:fallback.name, goals:fallback.goals, teamName, coach, modeKind, modeLabel });
-          }
-        }
-        return entries;
+        return [];
       }
 
       function rowView(row) {
@@ -440,6 +453,7 @@
           goals:goalsTextOf(row),
           goalDiff:goalDiffOf(row),
           goalsFor:goalsForOf(row),
+          goalsAgainst:numberOf(row, ['gol_subiti','golSubiti','goalsAgainst','ga'], 0),
           module:moduleOf(row),
           ovr:ovrOf(row),
           scorer:scorerTextOf(row),
@@ -449,20 +463,84 @@
         };
       }
 
-      function sortRows(rows) {
-        return rows.sort((a, b) =>
-          b.wins - a.wins ||
-          b.goalDiff - a.goalDiff ||
-          b.goalsFor - a.goalsFor ||
-          a.losses - b.losses ||
-          a.name.localeCompare(b.name, 'it')
-        );
+      function numericOvr(row) {
+        const raw = valueOf(row.original || row, ['ovr_medio','OVR medio','avgOvr','averageOvr','overall'], null);
+        const num = Number(raw);
+        return Number.isFinite(num) ? num : -Infinity;
       }
 
-      function renderModeTable(tbody, rows, emptyText) {
-        const validRows = sortRows(rows.map(rowView).filter(row => row.name));
+      function parsedScorer(row) {
+        const parsed = parseScorerString(row.scorer);
+        return parsed || { name:String(row.scorer || ''), goals:0 };
+      }
+
+      const sortState = {
+        classic:{ key:'rank', dir:'asc' },
+        hard:{ key:'rank', dir:'asc' },
+        scorers:{ key:'rank', dir:'asc' }
+      };
+      let lastRows = [];
+
+      const defaultModeCompare = (a, b) =>
+        b.wins - a.wins ||
+        b.goalDiff - a.goalDiff ||
+        b.goalsFor - a.goalsFor ||
+        a.losses - b.losses ||
+        a.name.localeCompare(b.name, 'it');
+
+      const defaultScorerCompare = (a, b) =>
+        b.goals - a.goals ||
+        a.playerName.localeCompare(b.playerName, 'it');
+
+      function compareValues(a, b, dir, type = 'number') {
+        let result = 0;
+        if (type === 'text') {
+          result = String(a || '').localeCompare(String(b || ''), 'it', { sensitivity:'base', numeric:true });
+        } else {
+          const av = Number.isFinite(Number(a)) ? Number(a) : -Infinity;
+          const bv = Number.isFinite(Number(b)) ? Number(b) : -Infinity;
+          result = av - bv;
+        }
+        return dir === 'asc' ? result : -result;
+      }
+
+      function sortModeRows(rows, boardKey) {
+        const state = sortState[boardKey] || sortState.classic;
+        const key = state.key;
+        const dir = state.dir;
+        return rows.sort((a, b) => {
+          if (key === 'rank') return dir === 'asc' ? defaultModeCompare(a, b) : -defaultModeCompare(a, b);
+          if (key === 'name') return compareValues(a.name, b.name, dir, 'text') || defaultModeCompare(a, b);
+          if (key === 'wins') return compareValues(a.wins, b.wins, dir) || defaultModeCompare(a, b);
+          if (key === 'draws') return compareValues(a.draws, b.draws, dir) || defaultModeCompare(a, b);
+          if (key === 'losses') return compareValues(a.losses, b.losses, dir) || defaultModeCompare(a, b);
+          if (key === 'goalsFor') return compareValues(a.goalsFor, b.goalsFor, dir) || compareValues(a.goalDiff, b.goalDiff, dir) || defaultModeCompare(a, b);
+          if (key === 'module') return compareValues(a.module, b.module, dir, 'text') || defaultModeCompare(a, b);
+          if (key === 'ovr') return compareValues(numericOvr(a), numericOvr(b), dir) || defaultModeCompare(a, b);
+          if (key === 'scorer') {
+            const as = parsedScorer(a);
+            const bs = parsedScorer(b);
+            return compareValues(as.goals, bs.goals, dir) || compareValues(as.name, bs.name, dir, 'text') || defaultModeCompare(a, b);
+          }
+          return defaultModeCompare(a, b);
+        });
+      }
+
+      function updateSortButtons() {
+        document.querySelectorAll('.sort-btn').forEach(button => {
+          const board = button.dataset.board;
+          const state = sortState[board];
+          const active = state && state.key === button.dataset.sort;
+          button.classList.toggle('active', Boolean(active));
+          button.setAttribute('data-arrow', active ? (state.dir === 'asc' ? '▲' : '▼') : '↕');
+          button.setAttribute('aria-label', `${button.textContent.trim()} - ${active ? 'ordinamento attivo' : 'ordina'}`);
+        });
+      }
+
+      function renderModeTable(tbody, rows, emptyText, boardKey) {
+        const validRows = sortModeRows(rows.map(rowView).filter(row => row.name), boardKey);
         if (!validRows.length) {
-          tbody.innerHTML = `<tr><td><span class="rank">-</span></td><td class="empty" colspan="9">${escape(emptyText)}</td></tr>`;
+          tbody.innerHTML = `<tr><td><span class="rank">-</span></td><td class="empty" colspan="8">${escape(emptyText)}</td></tr>`;
           return;
         }
         tbody.innerHTML = validRows.map((row, index) => `<tr>
@@ -485,44 +563,48 @@
             const key = normalizeName(entry.playerName);
             if (!key) return;
             if (!map.has(key)) {
-              map.set(key, { playerName:entry.playerName, goals:0, teams:new Map(), modes:new Set() });
+              map.set(key, { playerName:entry.playerName, goals:0 });
             }
-            const target = map.get(key);
-            target.goals += entry.goals;
-            target.modes.add(entry.modeLabel);
-            const teamKey = `${entry.teamName}|${entry.coach}`;
-            if (entry.teamName && !target.teams.has(teamKey)) target.teams.set(teamKey, { teamName:entry.teamName, coach:entry.coach });
+            map.get(key).goals += entry.goals;
           });
         });
-        return [...map.values()].sort((a, b) => b.goals - a.goals || a.playerName.localeCompare(b.playerName, 'it'));
+        return [...map.values()];
+      }
+
+      function sortScorers(rows) {
+        const state = sortState.scorers;
+        const key = state.key;
+        const dir = state.dir;
+        return rows.sort((a, b) => {
+          if (key === 'rank') return dir === 'asc' ? defaultScorerCompare(a, b) : -defaultScorerCompare(a, b);
+          if (key === 'playerName') return compareValues(a.playerName, b.playerName, dir, 'text') || defaultScorerCompare(a, b);
+          if (key === 'goals') return compareValues(a.goals, b.goals, dir) || defaultScorerCompare(a, b);
+          return defaultScorerCompare(a, b);
+        });
       }
 
       function renderScorers(rows) {
-        const scorers = buildScorers(rows);
+        const scorers = sortScorers(buildScorers(rows));
         if (!scorers.length) {
-          scorersBody.innerHTML = '<tr><td><span class="rank">-</span></td><td class="empty" colspan="4">In attesa dei primi gol</td></tr>';
+          scorersBody.innerHTML = '<tr><td><span class="rank">-</span></td><td class="empty" colspan="2">In attesa dei primi gol</td></tr>';
           return;
         }
-        scorersBody.innerHTML = scorers.map((row, index) => {
-          const teams = [...row.teams.values()].map(item => `${item.teamName}${item.coach ? ' / ' + item.coach : ''}`).join(' · ') || '—';
-          const modes = [...row.modes].sort((a,b) => a.localeCompare(b, 'it'));
-          return `<tr>
-            <td><span class="rank">${index + 1}</span></td>
-            <td class="player-cell"><strong>${escape(row.playerName)}</strong><small>Gol totali nelle classifiche</small></td>
-            <td><span class="count">${escape(row.goals)}</span></td>
-            <td>${escape(teams)}</td>
-            <td>${modes.map(mode => `<span class="mode-chip ${/hard/i.test(mode) ? 'hard' : ''}">${escape(mode)}</span>`).join(' ')}</td>
-          </tr>`;
-        }).join('');
+        scorersBody.innerHTML = scorers.map((row, index) => `<tr>
+          <td><span class="rank">${index + 1}</span></td>
+          <td class="player-cell"><strong>${escape(row.playerName)}</strong></td>
+          <td><span class="count">${escape(row.goals)}</span></td>
+        </tr>`).join('');
       }
 
       function renderLeaderboards(data) {
         const rows = Array.isArray(data) ? data : Array.isArray(data.classifica) ? data.classifica : [];
+        lastRows = rows;
         const classicRows = rows.filter(row => modeKindOf(row) === 'classic');
         const hardRows = rows.filter(row => modeKindOf(row) === 'hard');
-        renderModeTable(classicBody, classicRows, 'In attesa del primo campione Classica');
-        renderModeTable(hardBody, hardRows, 'In attesa del primo campione HARDa Turan');
+        renderModeTable(classicBody, classicRows, 'In attesa del primo campione Classica', 'classic');
+        renderModeTable(hardBody, hardRows, 'In attesa del primo campione HARDa Turan', 'hard');
         renderScorers(rows);
+        updateSortButtons();
         if (updated) updated.textContent = data && data.aggiornato_il ? `Aggiornata: ${data.aggiornato_il}` : 'Classifiche aggiornate';
       }
 
@@ -536,8 +618,8 @@
           .then(renderLeaderboards)
           .catch(() => {
             if (updated) updated.textContent = 'Classifica non disponibile';
-            renderModeTable(classicBody, [], 'Classifica non disponibile');
-            renderModeTable(hardBody, [], 'Classifica non disponibile');
+            renderModeTable(classicBody, [], 'Classifica non disponibile', 'classic');
+            renderModeTable(hardBody, [], 'Classifica non disponibile', 'hard');
             renderScorers([]);
           });
       }
@@ -550,6 +632,22 @@
           board.classList.toggle('expanded', expanded);
           button.setAttribute('aria-expanded', String(expanded));
           button.textContent = expanded ? 'Vista compatta' : 'Vedi tutti i dati';
+        });
+      });
+
+      document.querySelectorAll('.sort-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          const board = button.dataset.board;
+          const key = button.dataset.sort;
+          if (!sortState[board] || !key) return;
+          const current = sortState[board];
+          if (current.key === key) {
+            current.dir = current.dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            current.key = key;
+            current.dir = ['name','module','playerName'].includes(key) ? 'asc' : 'desc';
+          }
+          renderLeaderboards({ classifica:lastRows });
         });
       });
 
