@@ -5372,6 +5372,15 @@
       return ['si','sì','yes','true','1','y','abbonato','subscriber'].includes(text);
     }
 
+    function normalizePositionValue(value, fallbackRole) {
+      const raw = value === null || value === undefined || value === '' ? fallbackRole : value;
+      const parts = Array.isArray(raw) ? raw : String(raw).split(',');
+      return parts
+        .map(part => String(part || '').trim().toUpperCase())
+        .filter(Boolean)
+        .join(', ');
+    }
+
     function hasSubscriberField(player) {
       return Boolean(player) && (
         Object.prototype.hasOwnProperty.call(player, 'subscriber') ||
@@ -5388,7 +5397,7 @@
           id:String(p.id),
           ovr:Number(p.ovr),
           subscriber: normalizeSubscriberValue(p.subscriber ?? p.abbonato ?? p.isSubscriber),
-          Position:String(p.Position ?? p.position ?? p.posizione ?? p.role ?? '').trim().toUpperCase(),
+          Position:normalizePositionValue(p.Position ?? p.position ?? p.posizione, p.role),
           roleLabel:ROLE_LABELS[p.role] || p.roleLabel || p.role || '?'
         }));
     }
