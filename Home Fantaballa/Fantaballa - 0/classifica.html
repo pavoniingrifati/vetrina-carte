@@ -372,6 +372,7 @@
       const scorersBody = document.getElementById('scorersBody');
       const updated = document.getElementById('leaderboardUpdated');
       const refreshBtn = document.getElementById('refreshBtn');
+      const SHEETS_CLASSIFICA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
       const CLASSIFICA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
       const LOCAL_CLASSIFICA_FALLBACK = 'data/classifica.json';
       if (!classicBody || !hardBody || !scorersBody) return;
@@ -650,17 +651,76 @@
         });
       }
 
+      function loadFromSheetsJsonp() {
+        return new Promise((resolve, reject) => {
+          const callbackName = 'fantaballaClassificaCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+          const script = document.createElement('script');
+          const separator = SHEETS_CLASSIFICA_ENDPOINT.includes('?') ? '&' : '?';
+          const timeout = window.setTimeout(() => {
+            cleanup();
+            reject(new Error('Timeout lettura Google Sheets'));
+          }, 12000);
+
+          function cleanup() {
+            window.clearTimeout(timeout);
+            try { delete window[callbackName]; } catch (error) { window[callbackName] = undefined; }
+            if (script.parentNode) script.parentNode.removeChild(script);
+          }
+
+          window[callbackName] = data => {
+            cleanup();
+            resolve(data);
+          };
+
+          script.onerror = () => {
+            cleanup();
+            reject(new Error('Impossibile leggere Google Sheets'));
+          };
+
+          script.src = SHEETS_CLASSIFICA_ENDPOINT + separator + 'callback=' + encodeURIComponent(callbackName) + '&t=' + Date.now();
+          document.body.appendChild(script);
+        });
+      }
+
+      function loadFromLocalJson() {
+        return fetch('data/classifica.json', { cache:'no-store' }).then(response => {
+          if (!response.ok) throw new Error('classifica locale non trovata');
+          return response.json();
+        });
+      }
+
       function loadLeaderboard() {
-        if (updated) updated.textContent = 'Caricamento classifica...';
-        loadFromAppsScriptJsonp()
-          .catch(() => loadLocalFallback())
-          .then(renderLeaderboards)
-          .catch(() => {
-            if (updated) updated.textContent = 'Classifica non disponibile';
-            renderModeTable(classicBody, [], 'Classifica non disponibile', 'classic');
-            renderModeTable(hardBody, [], 'Classifica non disponibile', 'hard');
-            renderScorers([]);
-            updateSortButtons();
+        if (updated) updated.textContent = 'Caricamento classifica da Google Sheets...';
+
+        loadFromSheetsJsonp()
+          .then(data => {
+            renderLeaderboards(data);
+            if (updated) {
+              updated.textContent = data && data.aggiornato_il
+                ? `Aggiornata da Google Sheets: ${data.aggiornato_il}`
+                : 'Classifica aggiornata da Google Sheets';
+            }
+          })
+          .catch(error => {
+            console.warn('Lettura Google Sheets non riuscita, provo classifica.json:', error);
+            if (updated) updated.textContent = 'Google Sheets non raggiungibile, provo backup locale...';
+
+            loadFromLocalJson()
+              .then(data => {
+                renderLeaderboards(data);
+                if (updated) {
+                  updated.textContent = data && data.aggiornato_il
+                    ? `Backup locale: ${data.aggiornato_il}`
+                    : 'Backup locale caricato';
+                }
+              })
+              .catch(() => {
+                if (updated) updated.textContent = 'Classifica non disponibile';
+                renderModeTable(classicBody, [], 'Classifica non disponibile', 'classic');
+                renderModeTable(hardBody, [], 'Classifica non disponibile', 'hard');
+                renderScorers([]);
+                updateSortButtons();
+              });
           });
       }
 
