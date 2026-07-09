@@ -3,7 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fantaballa World Cup Draft</title>
+  <title>Fantaballa 0-0-0</title>
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/site-icon-512.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/site-icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <link rel="shortcut icon" href="assets/favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -4034,7 +4038,7 @@
       .card { padding:15px 14px; margin-bottom:12px; }
       .masthead { border-radius:0 0 18px 18px; margin:-12px calc(var(--mobile-gutter) * -1) 12px; padding:13px 12px; line-height:1.05; }
       .home-actions { margin:0 0 12px; }
-      .home-classifica-btn { width:100%; justify-content:center; min-height:46px; border-radius:16px; }
+      .home-classifica-btn { width:100%; justify-content:center; min-height:46px; min-width:0; border-radius:16px; }
       .formation-grid { grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:8px; }
       .formation-btn { min-height:42px; padding:10px 5px; font-size:15px; border-radius:14px; }
       .team-name-input { min-height:48px; border-radius:15px; font-size:20px; }
@@ -4237,6 +4241,9 @@
     .home-actions {
       display:flex;
       justify-content:center;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:10px;
       margin:0 0 18px;
     }
     .app.tournament-mode .home-actions {
@@ -4246,9 +4253,9 @@
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      min-width:min(280px, 100%);
+      min-width:220px;
       min-height:54px;
-      padding:15px 26px;
+      padding:15px 22px;
       border-radius:18px;
       border:2px solid #a83220;
       background:linear-gradient(180deg,#e25b43,#c8402b);
@@ -4258,9 +4265,30 @@
       text-transform:uppercase;
       letter-spacing:.08em;
       box-shadow:0 6px 0 rgba(153,46,29,.22);
+      transition:transform .16s ease, box-shadow .16s ease, filter .16s ease;
     }
-    .home-classifica-btn:hover { transform:translateY(-1px); }
+    .home-classifica-btn:hover { transform:translateY(-1px); filter:brightness(1.03); }
     .home-classifica-btn:active { transform:translateY(2px); box-shadow:0 3px 0 rgba(153,46,29,.22); }
+    .home-classifica-btn.is-add-player {
+      border-color:#163b63;
+      background:linear-gradient(180deg,#1f6fbb,#184d84);
+      box-shadow:0 6px 0 rgba(22,59,99,.22);
+    }
+    .home-classifica-btn.is-add-player:active { box-shadow:0 3px 0 rgba(22,59,99,.22); }
+    .home-classifica-btn.is-subscribe {
+      border-color:#5f3cc8;
+      background:linear-gradient(180deg,#8a63ff,#6c43df);
+      box-shadow:0 6px 0 rgba(95,60,200,.24);
+    }
+    .home-classifica-btn.is-subscribe:active { box-shadow:0 3px 0 rgba(95,60,200,.24); }
+    .home-classifica-btn.is-instructions {
+      border-color:#10243a;
+      background:linear-gradient(180deg,#173e67,#10243a);
+      color:#fffdf4;
+      text-shadow:0 1px 0 rgba(0,0,0,.28);
+      box-shadow:0 6px 0 rgba(16,36,58,.24);
+    }
+    .home-classifica-btn.is-instructions:active { box-shadow:0 3px 0 rgba(16,36,58,.24); }
     .manual-leaderboard-json-note {
       margin:8px 0 0;
       color:#8a7446;
@@ -4732,9 +4760,9 @@
 
   </style>
 </head>
-<body class="intro-open">
+<body>
 
-  <div id="introOverlay" class="intro-overlay show" aria-hidden="false">
+  <div id="introOverlay" class="intro-overlay" aria-hidden="true">
     <div class="intro-modal" role="dialog" aria-modal="true" aria-labelledby="introTitle">
       <div class="intro-topline">
         <span id="introStep" class="intro-step">1/4</span>
@@ -4759,7 +4787,7 @@
         <div class="intro-content-card intro-card-dynamic">
           <div class="intro-mini-grid">
             <div class="intro-mini-card" data-mark="01"><p class="intro-text">Vuoi essere aggiunto come giocatore?</p></div>
-            <div class="intro-mini-card" data-mark="02"><p class="intro-text">Compila il form o abbonati al canale <a href="https://www.twitch.tv/fantaballa" target="_blank" rel="noopener noreferrer">Twitch</a> di Fantaballa (col Prime e' gratis!)</p></div>
+            <div class="intro-mini-card" data-mark="02"><p class="intro-text">Compila il <a href="https://docs.google.com/forms/d/e/1FAIpQLSeu3lteCVOm_j4lZeZEWDE0VQO1Sif5Ozs7aH_4QaPCB8HoyQ/viewform" target="_blank" rel="noopener noreferrer">form</a> o abbonati al canale <a href="https://www.twitch.tv/fantaballa" target="_blank" rel="noopener noreferrer">Twitch</a> di Fantaballa (col Prime e' gratis!)</p></div>
             <div class="intro-mini-card" data-mark="03"><p class="intro-text">Entro pochi giorni verrai aggiunto se idoneo.</p></div>
           </div>
         </div>
@@ -4824,9 +4852,24 @@
       const dots = Array.from(overlay.querySelectorAll('[data-intro-go]'));
       const step = document.getElementById('introStep');
       const closeBtn = document.getElementById('introCloseBtn');
+      const INTRO_STORAGE_KEY = 'fantaballa_intro_seen_v1';
       let current = 0;
 
-      document.body.classList.add('intro-open');
+      const readSeen = () => {
+        try {
+          return window.localStorage.getItem(INTRO_STORAGE_KEY) === '1';
+        } catch (error) {
+          return false;
+        }
+      };
+
+      const writeSeen = () => {
+        try {
+          window.localStorage.setItem(INTRO_STORAGE_KEY, '1');
+        } catch (error) {
+          /* ignore storage errors */
+        }
+      };
 
       const render = () => {
         slides.forEach((slide, index) => slide.classList.toggle('active', index === current));
@@ -4834,7 +4877,17 @@
         if (step) step.textContent = `${current + 1}/${slides.length}`;
       };
 
+      const openIntro = (startIndex = 0) => {
+        current = Math.max(0, Math.min(Number(startIndex) || 0, slides.length - 1));
+        render();
+        overlay.classList.add('show');
+        overlay.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('intro-open');
+        window.setTimeout(() => overlay.querySelector('.intro-btn.primary, .intro-btn')?.focus(), 80);
+      };
+
       const closeIntro = () => {
+        writeSeen();
         overlay.classList.remove('show');
         overlay.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('intro-open');
@@ -4860,6 +4913,13 @@
 
       if (closeBtn) closeBtn.addEventListener('click', closeIntro);
 
+      document.addEventListener('click', (event) => {
+        const trigger = event.target.closest('[data-open-intro]');
+        if (!trigger) return;
+        event.preventDefault();
+        openIntro(Number(trigger.getAttribute('data-intro-start') || 0));
+      });
+
       window.addEventListener('keydown', (event) => {
         if (!overlay.classList.contains('show')) return;
         if (event.key === 'Escape') closeIntro();
@@ -4873,19 +4933,24 @@
         }
       });
 
+      window.openFantaballaIntro = openIntro;
       render();
-      window.setTimeout(() => overlay.querySelector('.intro-btn.primary')?.focus(), 100);
+      if (!readSeen()) {
+        openIntro(0);
+      }
     })();
   </script>
 
   <div class="app" id="appRoot">
-    <div class="masthead game-title" aria-label="Fantaballa World Cup Draft">
-      <span class="game-title-kicker"><span class="dot">●</span> Live Draft</span>
-      <span class="game-title-main">Fantaballa World Cup</span>
-      <span class="game-title-sub">National Draft Challenge</span>
+    <div class="masthead game-title" aria-label="Fantaballa 0-0-0">
+      <span class="game-title-main">Fantaballa 0-0-0</span>
+      <span class="game-title-sub">Draft con te come calciatore</span>
     </div>
     <div class="home-actions" aria-label="Azioni home">
       <a class="home-classifica-btn" href="classifica.html">Classifica</a>
+      <a class="home-classifica-btn is-add-player" href="https://docs.google.com/forms/d/e/1FAIpQLSeu3lteCVOm_j4lZeZEWDE0VQO1Sif5Ozs7aH_4QaPCB8HoyQ/viewform" target="_blank" rel="noopener noreferrer">Aggiungi il tuo giocatore</a>
+      <a class="home-classifica-btn is-subscribe" href="https://www.twitch.tv/fantaballa" target="_blank" rel="noopener noreferrer">Abbonati</a>
+      <button class="home-classifica-btn is-instructions" type="button" data-open-intro>Istruzioni</button>
     </div>
     <div class="layout" id="draftLayout">
       <aside class="left-col">
@@ -4894,8 +4959,7 @@
           <input id="teamNameInput" class="team-name-input" type="text" maxlength="24" value="" placeholder="Scrivi il nome della squadra" autocomplete="off" />
           <div class="label" style="margin-top:14px">Nome allenatore</div>
           <input id="coachNameInput" class="team-name-input" type="text" maxlength="40" value="" placeholder="Scrivi il nome dell'allenatore" autocomplete="off" />
-          <div class="team-name-note" id="teamNameNote">Scrivi nome squadra e nome allenatore prima di premere Roll: resteranno bloccati per tutto il draft. Se il nome allenatore coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa.
-</div>
+          <div class="team-name-note" id="teamNameNote">Se il nome allenatore coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa.</div>
         </section>
 
         <section class="card" id="formationPanel">
@@ -5403,9 +5467,7 @@
         els.coachNameInput.title = locked ? 'Nome allenatore bloccato per questo draft. Premi Reset per ricominciare.' : '';
       }
       if (els.teamNameNote) {
-        els.teamNameNote.textContent = locked
-          ? "Nomi bloccati per questo draft. Se il nome allenatore coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa."
-          : "Scrivi nome squadra e nome allenatore prima di premere Roll: resteranno bloccati per tutto il draft. Se il nome allenatore coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa. Nome squadra e allenatore restano salvati in questo browser.";
+        els.teamNameNote.textContent = "Se il nome allenatore coincide con il nome di uno dei calciatori scelti, quel calciatore prende +10 OVR bonus di Intesa.";
       }
     }
 
