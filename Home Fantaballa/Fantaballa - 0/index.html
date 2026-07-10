@@ -5115,32 +5115,7 @@
     }
 
   
-    /* Cronaca azioni: prima l'azione, poi l'annuncio del gol */
-    .goal-popup.action {
-      background:linear-gradient(180deg,#f5d84e,#e0aa24);
-      color:#10243a;
-      border-color:#fffdf4;
-      max-width:min(720px,calc(100vw - 24px));
-    }
-    .goal-popup.action.conceded {
-      background:linear-gradient(180deg,#d9e8f5,#92b7d8);
-      color:#10243a;
-    }
-    .goal-popup .goal-action-label {
-      margin:9px 0 6px;
-      font-size:clamp(11px,1vw,14px);
-      font-weight:1000;
-      letter-spacing:.18em;
-      text-transform:uppercase;
-    }
-    .goal-popup .goal-action-text {
-      max-width:660px;
-      margin:0 auto;
-      font-size:clamp(17px,2.2vw,27px);
-      line-height:1.25;
-      font-weight:950;
-      text-transform:none;
-    }
+    /* Cronaca azioni: avviso piccolo prima del gol, popup grande solo al gol */
     .goal-popup .goal-context {
       max-width:620px;
       margin:10px auto 0;
@@ -5154,6 +5129,9 @@
       background:#fff7c8;
       border-color:#d7a628;
       animation:none;
+      font-size:14px;
+      line-height:1.25;
+      padding:10px 14px;
     }
     .event .player {
       display:grid;
@@ -6782,16 +6760,15 @@
         sim.eventIndex += 1;
         sim.pendingGoal = event;
         sim.alertType = 'action';
-        sim.alert = `${event.minute}' · ${event.description || 'Azione pericolosa...'}`;
+        sim.alert = `${event.minute}' · Azione: ${event.description || 'Azione pericolosa...'}`;
 
         const userIsHome = match.home.id === USER_TEAM_ID;
         const gf = userIsHome ? sim.homeGoals : sim.awayGoals;
         const ga = userIsHome ? sim.awayGoals : sim.homeGoals;
 
-        showGoalActionPopup(event, match, `${gf}–${ga}`);
         renderTournament();
 
-        sim.pendingGoalTimer = window.setTimeout(() => completeGoalPresentation(event), 2700);
+        sim.pendingGoalTimer = window.setTimeout(() => completeGoalPresentation(event), 2200);
         return;
       }
 
@@ -7743,21 +7720,6 @@
         const roleMalus = p ? (chem.playerRoleMalus[p.id] || 0) : 0;
         return `${slot.key}. ${p ? `${p.name} — ${p.roleLabel} — ${p.nation} — OVR ${p.ovr}${bonus ? ` ${formatSigned(bonus)} INT` : ''}${coachBonus ? ` (ALL ${formatSigned(coachBonus)})` : ''}${roleMalus ? ` (FUORI ${formatSigned(roleMalus)})` : ''}` : '—'}`;
       })].join('\n');
-    }
-
-    function showGoalActionPopup(event, match, scoreText) {
-      const isOurGoal = event.teamId === USER_TEAM_ID;
-      const teamName = event.teamName || (isOurGoal ? 'La tua squadra' : opponentOfUser(match).name);
-
-      window.clearTimeout(showGoalPopup.timer);
-      els.goalPopup.className = `goal-popup action ${isOurGoal ? 'scored' : 'conceded'} show`;
-      els.goalPopup.setAttribute('aria-hidden', 'false');
-      els.goalPopup.innerHTML = `
-        <div class="goal-kicker">${escapeHtml(event.minute + "'")} · ${escapeHtml(teamName)}</div>
-        <div class="goal-action-label">L'AZIONE</div>
-        <div class="goal-action-text">${escapeHtml(event.description || 'Azione pericolosa...')}</div>
-        <div class="goal-score">${escapeHtml(scoreText)}</div>
-      `;
     }
 
     function showGoalPopup(event, match, scoreText) {
