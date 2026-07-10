@@ -5126,12 +5126,19 @@
     .live-alert.action {
       text-transform:none;
       letter-spacing:.01em;
-      background:#fff7c8;
+      background:#fff2b3;
       border-color:#d7a628;
+      color:#10243a;
       animation:none;
       font-size:14px;
       line-height:1.25;
       padding:10px 14px;
+      font-weight:1000;
+      text-shadow:none;
+    }
+    .live-alert.action strong {
+      color:#0a1c31;
+      font-weight:1000;
     }
     .event .player {
       display:grid;
@@ -7077,6 +7084,29 @@
       return String(template || '').replace(/\{(marcatore|assist|squadra|avversario)\}/g, (_, key) => values[key] || '');
     }
 
+
+    function emphasizePlayerNames(text, event) {
+      let output = String(text || '');
+      const names = [event && event.player, event && event.assist]
+        .filter(Boolean)
+        .map(name => String(name).trim())
+        .filter(Boolean)
+        .sort((a, b) => b.length - a.length);
+      names.forEach(name => {
+        const escapedName = name.replace(/[.*+?^${}()|[\]\]/g, '\$&');
+        output = output.replace(new RegExp(escapedName, 'g'), `<strong>${name}</strong>`);
+      });
+      return output;
+    }
+
+    function formatLiveAlert(sim) {
+      if (!sim || !sim.alert) return '';
+      if (sim.alertType === 'action' && sim.pendingGoal) {
+        return emphasizePlayerNames(escapeHtml(sim.alert), sim.pendingGoal);
+      }
+      return escapeHtml(sim.alert);
+    }
+
     function selectActionPool(position) {
       if (position === 'P') return phrasePool('positions', 'P');
 
@@ -7327,11 +7357,12 @@
     }
 
     function renderEventPlayerLine(event) {
-      const assist = event.assist ? `<small>Assist: ${escapeHtml(event.assist)}</small>` : '';
-      const action = event.description ? `<small class="event-action">${escapeHtml(event.description)}</small>` : '';
+      const player = `<strong>${escapeHtml(event.player)}</strong>`;
+      const assist = event.assist ? `<small>Assist: <strong>${escapeHtml(event.assist)}</strong></small>` : '';
+      const action = event.description ? `<small class="event-action">${emphasizePlayerNames(escapeHtml(event.description), event)}</small>` : '';
       const contextText = [event.resultDescription, event.milestoneDescription].filter(Boolean).join(' ');
-      const context = contextText ? `<small class="event-context">${escapeHtml(contextText)}</small>` : '';
-      return `${escapeHtml(event.player)}${assist}${action}${context}`;
+      const context = contextText ? `<small class="event-context">${emphasizePlayerNames(escapeHtml(contextText), event)}</small>` : '';
+      return `${player}${assist}${action}${context}`;
     }
 
     function renderLiveMatchCard(sim) {
@@ -7344,7 +7375,7 @@
       const pct = Math.min(100, Math.round((sim.minute / sim.maxMinute) * 100));
       const cls = gf > ga ? 'win' : gf < ga ? 'loss' : 'draw';
       const log = sim.log.map(e => `<div class="event ${e.teamId === USER_TEAM_ID ? '' : 'conceded'}"><span class="min">${e.minute}'</span><span class="ball">●</span><span class="player">${renderEventPlayerLine(e)}<small>${e.teamId === USER_TEAM_ID ? user.name : opp.name}</small></span></div>`).join('') || '<div class="live-wait">Regia in diretta: nessun gol finora.</div>';
-      const alert = sim.alert ? `<div class="live-alert ${escapeHtml(sim.alertType || '')}">${escapeHtml(sim.alert)}</div>` : '';
+      const alert = sim.alert ? `<div class="live-alert ${escapeHtml(sim.alertType || '')}">${formatLiveAlert(sim)}</div>` : '';
       return `<article class="match-card tv-match live ${cls}">
         <div class="tv-card-top"><span class="match-stage">${stageLabel(match.stage)}</span><span class="tv-status live"><i></i>${sim.phase === 'penalties' ? 'RIGORI' : 'LIVE ' + sim.minute + "'"}</span></div>
         <div class="tv-scoreline">${renderBroadcastTeam(user, 'user')}<div class="tv-score-big">${gf}–${ga}</div>${renderBroadcastTeam(opp, 'opponent')}</div>
