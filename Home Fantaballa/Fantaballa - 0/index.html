@@ -5360,7 +5360,7 @@
       <h1 class="macro-mode-title" id="macroModeTitle">Due modi di vivere Fantaballa</h1>
       <p class="macro-mode-lead">La Coppa del Mondo è già disponibile. Il campionato da 38 giornate arriverà in un prossimo aggiornamento.</p>
       <div class="macro-mode-grid">
-        <button class="macro-mode-card world-cup" id="worldCupMacroBtn" type="button">
+        <button class="macro-mode-card world-cup" id="worldCupMacroBtn" type="button" onclick="enterWorldCupMode()">
           <span class="macro-mode-card-label">Disponibile ora</span>
           <h2>World Cup 2026</h2>
           <p>Draft, fase a gironi ed eliminazione diretta nelle modalità Classica, Gary MEDel e HARDa Turan.</p>
@@ -5801,6 +5801,17 @@
       broadcastScore:$('broadcastScore'), broadcastMeta:$('broadcastMeta'), broadcastTicker:$('broadcastTicker')
     });
 
+    function attachImmediateMacroMenuHandlers() {
+      if (els.worldCupMacroBtn) {
+        els.worldCupMacroBtn.onclick = enterWorldCupMode;
+      }
+
+      document.querySelectorAll('[data-open-macro-menu]').forEach(button => {
+        button.onclick = openMacroModeMenu;
+      });
+    }
+
+    attachImmediateMacroMenuHandlers();
     boot();
 
     async function boot() {
@@ -5834,8 +5845,7 @@
     }
 
     function attachEventHandlers() {
-      if (els.worldCupMacroBtn) els.worldCupMacroBtn.addEventListener('click', enterWorldCupMode);
-      document.querySelectorAll('[data-open-macro-menu]').forEach(button => button.addEventListener('click', openMacroModeMenu));
+      attachImmediateMacroMenuHandlers();
       els.bigRollBtn.addEventListener('click', spinNation);
       els.spinBtn.addEventListener('click', spinNation);
       els.resetBtn.addEventListener('click', resetGame);
@@ -7092,10 +7102,12 @@
         .map(name => String(name).trim())
         .filter(Boolean)
         .sort((a, b) => b.length - a.length);
+
       names.forEach(name => {
-        const escapedName = name.replace(/[.*+?^${}()|[\]\]/g, '\$&');
-        output = output.replace(new RegExp(escapedName, 'g'), `<strong>${name}</strong>`);
+        const safeName = escapeHtml(name);
+        output = output.split(safeName).join(`<strong>${safeName}</strong>`);
       });
+
       return output;
     }
 
