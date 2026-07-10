@@ -5114,6 +5114,73 @@
       text-transform:uppercase;
     }
 
+  
+    /* Cronaca azioni: prima l'azione, poi l'annuncio del gol */
+    .goal-popup.action {
+      background:linear-gradient(180deg,#f5d84e,#e0aa24);
+      color:#10243a;
+      border-color:#fffdf4;
+      max-width:min(720px,calc(100vw - 24px));
+    }
+    .goal-popup.action.conceded {
+      background:linear-gradient(180deg,#d9e8f5,#92b7d8);
+      color:#10243a;
+    }
+    .goal-popup .goal-action-label {
+      margin:9px 0 6px;
+      font-size:clamp(11px,1vw,14px);
+      font-weight:1000;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+    }
+    .goal-popup .goal-action-text {
+      max-width:660px;
+      margin:0 auto;
+      font-size:clamp(17px,2.2vw,27px);
+      line-height:1.25;
+      font-weight:950;
+      text-transform:none;
+    }
+    .goal-popup .goal-context {
+      max-width:620px;
+      margin:10px auto 0;
+      font-size:clamp(12px,1.3vw,16px);
+      line-height:1.25;
+      font-weight:900;
+    }
+    .live-alert.action {
+      text-transform:none;
+      letter-spacing:.01em;
+      background:#fff7c8;
+      border-color:#d7a628;
+      animation:none;
+    }
+    .event .player {
+      display:grid;
+      gap:2px;
+      min-width:0;
+    }
+    .event .player > small {
+      display:block;
+    }
+    .event .event-action {
+      margin-top:4px;
+      color:#233d57;
+      font-size:11px;
+      line-height:1.3;
+      font-weight:800;
+      text-transform:none;
+    }
+    .event.conceded .event-action {
+      color:#7f2c27;
+    }
+    .event .event-context {
+      color:#80611c;
+      font-size:10px;
+      line-height:1.25;
+      font-weight:900;
+    }
+
   </style>
 </head>
 <body>
@@ -5581,6 +5648,54 @@
     let PLAYERS = [];
     let NATIONS = [];
 
+
+    const DEFAULT_GOAL_COMMENTARY = {
+      positions:{
+        ATT:['{marcatore} attacca la profondità e conclude con precisione.'],
+        AS:['{marcatore} rientra dalla sinistra e calcia verso il secondo palo.'],
+        AD:['{marcatore} parte dalla destra e conclude nell’angolo.'],
+        COC:['{marcatore} riceve tra le linee e trova lo spazio per calciare.'],
+        CC:['{marcatore} si inserisce da dietro e conclude di prima.'],
+        CDC:['{marcatore} recupera palla e lascia partire il tiro.'],
+        DC:['{marcatore} svetta sul calcio d’angolo.'],
+        TS:['{marcatore} accompagna l’azione sulla sinistra e conclude.'],
+        TD:['{marcatore} si sovrappone sulla destra e calcia.'],
+        P:['Nel finale sale anche {marcatore} e colpisce di testa.']
+      },
+      special:{
+        penalty:['{marcatore} si presenta sul dischetto e calcia.'],
+        freeKick:['{marcatore} supera la barriera con una conclusione a giro.'],
+        longShot:['{marcatore} lascia partire il tiro dalla distanza.'],
+        lucky:['Il tiro di {marcatore} viene deviato e cambia traiettoria.'],
+        spectacular:['Conclusione spettacolare di {marcatore}.']
+      },
+      result:{
+        lead:['{marcatore} porta avanti {squadra}.'],
+        equalizer:['{marcatore} riporta la partita in equilibrio.'],
+        comeback:['{marcatore} completa la rimonta di {squadra}.'],
+        secure:['{marcatore} mette il risultato al sicuro.'],
+        late:['{marcatore} trova un gol pesantissimo nel finale.']
+      },
+      milestones:{
+        brace:['Secondo gol della partita per {marcatore}.'],
+        hatTrick:['Tripletta di {marcatore}.'],
+        fourPlus:['{marcatore} è ancora una volta in rete.']
+      },
+      assists:['Assist di {assist}.']
+    };
+    let GOAL_COMMENTARY = DEFAULT_GOAL_COMMENTARY;
+
+    async function loadGoalCommentary() {
+      const response = await fetch('data/cronaca-gol.json', { cache:'no-store' });
+      if (!response.ok) throw new Error(`Impossibile caricare data/cronaca-gol.json (${response.status})`);
+      const data = await response.json();
+      if (!data || !data.positions || !data.special || !data.result || !data.milestones) {
+        throw new Error('Formato data/cronaca-gol.json non valido');
+      }
+      return data;
+    }
+
+
     async function loadPlayersDatabase() {
       const response = await fetch('data/giocatori.json', { cache:'no-store' });
       if (!response.ok) throw new Error(`Impossibile caricare data/giocatori.json (${response.status})`);
@@ -5714,6 +5829,13 @@
         PLAYERS = [];
         NATIONS = [];
         selected = [];
+      }
+
+      try {
+        GOAL_COMMENTARY = await loadGoalCommentary();
+      } catch (err) {
+        console.warn('Libreria cronaca non disponibile: uso le frasi di emergenza.', err);
+        GOAL_COMMENTARY = DEFAULT_GOAL_COMMENTARY;
       }
 
       attachEventHandlers();
@@ -6589,6 +6711,9 @@
         const match = liveSimulation.match;
         if (liveSimulation.timer) window.clearInterval(liveSimulation.timer);
         if (liveSimulation.finishTimer) window.clearTimeout(liveSimulation.finishTimer);
+        if (liveSimulation.pendingGoalTimer) window.clearTimeout(liveSimulation.pendingGoalTimer);
+        liveSimulation.pendingGoal = null;
+        liveSimulation.pendingGoalTimer = null;
         liveSimulation.homeGoals = match.homeGoals;
         liveSimulation.awayGoals = match.awayGoals;
         liveSimulation.minute = liveSimulation.maxMinute;
@@ -6611,6 +6736,7 @@
     function clearLiveSimulation() {
       if (liveSimulation && liveSimulation.timer) window.clearInterval(liveSimulation.timer);
       if (liveSimulation && liveSimulation.finishTimer) window.clearTimeout(liveSimulation.finishTimer);
+      if (liveSimulation && liveSimulation.pendingGoalTimer) window.clearTimeout(liveSimulation.pendingGoalTimer);
       liveSimulation = null;
     }
 
@@ -6628,6 +6754,9 @@
         phase:'live',
         timer:null,
         finishTimer:null,
+        pendingGoal:null,
+        pendingGoalTimer:null,
+        alertType:'',
         pausedUntil:0
       };
       renderTournament();
@@ -6638,43 +6767,78 @@
     function tickLiveMatch() {
       if (!liveSimulation) return;
       const sim = liveSimulation;
+      if (sim.pendingGoal) return;
+
       const now = Date.now();
       if (sim.pausedUntil && now < sim.pausedUntil) return;
+
       const match = sim.match;
       sim.minute += 1;
       sim.alert = '';
+      sim.alertType = '';
+
       while (sim.eventIndex < match.events.length && match.events[sim.eventIndex].minute <= sim.minute) {
         const event = match.events[sim.eventIndex];
-        if (event.teamId === match.home.id) sim.homeGoals += 1;
-        else sim.awayGoals += 1;
-        sim.log.push(event);
-        sim.alert = `${event.teamId === USER_TEAM_ID ? 'GOOOOL!' : 'Gol subito'} ${event.minute}' · ${event.player}`;
+        sim.eventIndex += 1;
+        sim.pendingGoal = event;
+        sim.alertType = 'action';
+        sim.alert = `${event.minute}' · ${event.description || 'Azione pericolosa...'}`;
+
         const userIsHome = match.home.id === USER_TEAM_ID;
         const gf = userIsHome ? sim.homeGoals : sim.awayGoals;
         const ga = userIsHome ? sim.awayGoals : sim.homeGoals;
-        showGoalPopup(event, match, `${gf}–${ga}`);
-        showToast(sim.alert);
-        sim.eventIndex += 1;
-        sim.pausedUntil = Date.now() + 1700;
+
+        showGoalActionPopup(event, match, `${gf}–${ga}`);
         renderTournament();
+
+        sim.pendingGoalTimer = window.setTimeout(() => completeGoalPresentation(event), 2700);
         return;
       }
+
       renderTournament();
+
       if (sim.minute >= sim.maxMinute) {
         window.clearInterval(sim.timer);
         sim.timer = null;
         if (match.penalties) {
           sim.phase = 'penalties';
           sim.alert = 'Si va ai rigori...';
+          sim.alertType = '';
           renderTournament();
           sim.finishTimer = window.setTimeout(completeLiveMatch, 1400);
         } else {
           sim.phase = 'finished';
           sim.alert = 'Triplice fischio';
+          sim.alertType = '';
           renderTournament();
           sim.finishTimer = window.setTimeout(completeLiveMatch, 850);
         }
       }
+    }
+
+    function completeGoalPresentation(event) {
+      if (!liveSimulation || liveSimulation.pendingGoal !== event) return;
+
+      const sim = liveSimulation;
+      const match = sim.match;
+
+      if (event.teamId === match.home.id) sim.homeGoals += 1;
+      else sim.awayGoals += 1;
+
+      sim.log.push(event);
+      sim.pendingGoal = null;
+      sim.pendingGoalTimer = null;
+      sim.alertType = 'goal';
+      sim.alert = `${event.teamId === USER_TEAM_ID ? 'GOOOOL!' : 'Gol subito'} ${event.minute}' · ${event.player}`;
+
+      const userIsHome = match.home.id === USER_TEAM_ID;
+      const gf = userIsHome ? sim.homeGoals : sim.awayGoals;
+      const ga = userIsHome ? sim.awayGoals : sim.homeGoals;
+
+      showGoalPopup(event, match, `${gf}–${ga}`);
+      showToast(sim.alert);
+      sim.pausedUntil = Date.now() + 1900;
+      renderTournament();
     }
 
     function completeLiveMatch() {
@@ -6873,25 +7037,160 @@
 
     function createGoalEvents(home, away, hg, ag, extra) {
       const events = [];
-      for (let i = 0; i < hg; i += 1) events.push(goalEvent(home, randomMinute(extra)));
-      for (let i = 0; i < ag; i += 1) events.push(goalEvent(away, randomMinute(extra)));
-      return events.sort((a,b) => a.minute - b.minute);
+      for (let i = 0; i < hg; i += 1) events.push(goalEvent(home, away, randomMinute(extra)));
+      for (let i = 0; i < ag; i += 1) events.push(goalEvent(away, home, randomMinute(extra)));
+      events.sort((a,b) => a.minute - b.minute);
+      decorateGoalEvents(events, home, away);
+      return events;
     }
-    function goalEvent(team, minute) {
+
+    function goalEvent(team, opponent, minute) {
       const scorer = randomGoalScorer(team);
       const assist = randomAssistProvider(team, scorer);
-      return {
+      const position = randomScoringPosition(scorer);
+      const event = {
         teamId:team.id,
         teamName:team.name,
+        opponentId:opponent.id,
+        opponentName:opponent.name,
         minute,
         player:scorer.name || scorer,
         playerId:playerStatId(team, scorer),
         role:scorer.role || '',
+        position,
         assist:assist ? (assist.name || assist) : '',
         assistId:assist ? playerStatId(team, assist) : '',
         assistRole:assist ? (assist.role || '') : ''
       };
+      event.description = buildGoalActionDescription(event);
+      return event;
     }
+
+    function randomScoringPosition(player) {
+      const codes = playerPositionCodes(player);
+      if (codes.length) return randomItem(codes);
+      return player && player.role === 'P' ? 'P'
+        : player && player.role === 'D' ? 'DC'
+        : player && player.role === 'C' ? 'CC'
+        : 'ATT';
+    }
+
+    function phrasePool(section, key) {
+      const source = GOAL_COMMENTARY && GOAL_COMMENTARY[section];
+      const pool = source && source[key];
+      if (Array.isArray(pool) && pool.length) return pool;
+
+      const fallbackSource = DEFAULT_GOAL_COMMENTARY[section];
+      const fallback = fallbackSource && fallbackSource[key];
+      return Array.isArray(fallback) ? fallback : [];
+    }
+
+    function pickUsableTemplate(pool, hasAssist) {
+      const usable = hasAssist ? pool : pool.filter(text => !String(text).includes('{assist}'));
+      return randomItem(usable.length ? usable : pool) || '';
+    }
+
+    function fillGoalTemplate(template, event) {
+      const values = {
+        marcatore:event.player || '',
+        assist:event.assist || '',
+        squadra:event.teamName || '',
+        avversario:event.opponentName || ''
+      };
+      return String(template || '').replace(/\{(marcatore|assist|squadra|avversario)\}/g, (_, key) => values[key] || '');
+    }
+
+    function selectActionPool(position) {
+      if (position === 'P') return phrasePool('positions', 'P');
+
+      const roll = Math.random();
+      if (roll < .07) return phrasePool('special', 'penalty');
+      if (roll < .15) return phrasePool('special', 'freeKick');
+      if (roll < .24) return phrasePool('special', 'longShot');
+      if (roll < .32) return phrasePool('special', 'lucky');
+      if (roll < .40) return phrasePool('special', 'spectacular');
+
+      return phrasePool('positions', position).length
+        ? phrasePool('positions', position)
+        : phrasePool('positions', 'ATT');
+    }
+
+    function buildGoalActionDescription(event) {
+      const pool = selectActionPool(event.position);
+      const template = pickUsableTemplate(pool, Boolean(event.assist));
+      let text = fillGoalTemplate(template, event).trim();
+
+      if (
+        event.assist &&
+        !String(template).includes('{assist}') &&
+        Math.random() < .38
+      ) {
+        const assistPool = Array.isArray(GOAL_COMMENTARY.assists) && GOAL_COMMENTARY.assists.length
+          ? GOAL_COMMENTARY.assists
+          : DEFAULT_GOAL_COMMENTARY.assists;
+        const assistTemplate = randomItem(assistPool);
+        const assistText = fillGoalTemplate(assistTemplate, event).trim();
+        text = `${assistText} ${text}`.trim();
+      }
+
+      return text || `${event.player} conclude verso la porta.`;
+    }
+
+    function decorateGoalEvents(events, home, away) {
+      const scores = { [home.id]:0, [away.id]:0 };
+      const hadTrailed = { [home.id]:false, [away.id]:false };
+      const scorerCounts = new Map();
+
+      events.forEach(event => {
+        const opponentId = event.teamId === home.id ? away.id : home.id;
+        const beforeTeam = scores[event.teamId];
+        const beforeOpponent = scores[opponentId];
+
+        if (beforeTeam < beforeOpponent) hadTrailed[event.teamId] = true;
+
+        scores[event.teamId] += 1;
+
+        const afterTeam = scores[event.teamId];
+        const afterOpponent = scores[opponentId];
+        let resultKey = '';
+
+        if (event.minute >= 85 && afterTeam >= afterOpponent) {
+          resultKey = 'late';
+        } else if (hadTrailed[event.teamId] && beforeTeam <= beforeOpponent && afterTeam > afterOpponent) {
+          resultKey = 'comeback';
+        } else if (beforeTeam < beforeOpponent && afterTeam === afterOpponent) {
+          resultKey = 'equalizer';
+        } else if (beforeTeam <= beforeOpponent && afterTeam > afterOpponent) {
+          resultKey = 'lead';
+        } else if (afterTeam - afterOpponent >= 2 && event.minute >= 60) {
+          resultKey = 'secure';
+        }
+
+        if (resultKey) {
+          const pool = phrasePool('result', resultKey);
+          event.resultDescription = fillGoalTemplate(randomItem(pool), event);
+        } else {
+          event.resultDescription = '';
+        }
+
+        const scorerKey = `${event.teamId}|${event.playerId || event.player}`;
+        const count = (scorerCounts.get(scorerKey) || 0) + 1;
+        scorerCounts.set(scorerKey, count);
+
+        let milestoneKey = '';
+        if (count === 2) milestoneKey = 'brace';
+        else if (count === 3) milestoneKey = 'hatTrick';
+        else if (count >= 4) milestoneKey = 'fourPlus';
+
+        if (milestoneKey) {
+          const pool = phrasePool('milestones', milestoneKey);
+          event.milestoneDescription = fillGoalTemplate(randomItem(pool), event);
+        } else {
+          event.milestoneDescription = '';
+        }
+      });
+    }
+
     function randomGoalScorer(team) {
       const pool = team.goalPool && team.goalPool.length ? team.goalPool : team.players || [];
       if (!pool.length) return { name:team.name, role:'' };
@@ -7052,7 +7351,10 @@
 
     function renderEventPlayerLine(event) {
       const assist = event.assist ? `<small>Assist: ${escapeHtml(event.assist)}</small>` : '';
-      return `${escapeHtml(event.player)}${assist}`;
+      const action = event.description ? `<small class="event-action">${escapeHtml(event.description)}</small>` : '';
+      const contextText = [event.resultDescription, event.milestoneDescription].filter(Boolean).join(' ');
+      const context = contextText ? `<small class="event-context">${escapeHtml(contextText)}</small>` : '';
+      return `${escapeHtml(event.player)}${assist}${action}${context}`;
     }
 
     function renderLiveMatchCard(sim) {
@@ -7065,7 +7367,7 @@
       const pct = Math.min(100, Math.round((sim.minute / sim.maxMinute) * 100));
       const cls = gf > ga ? 'win' : gf < ga ? 'loss' : 'draw';
       const log = sim.log.map(e => `<div class="event ${e.teamId === USER_TEAM_ID ? '' : 'conceded'}"><span class="min">${e.minute}'</span><span class="ball">●</span><span class="player">${renderEventPlayerLine(e)}<small>${e.teamId === USER_TEAM_ID ? user.name : opp.name}</small></span></div>`).join('') || '<div class="live-wait">Regia in diretta: nessun gol finora.</div>';
-      const alert = sim.alert ? `<div class="live-alert">${escapeHtml(sim.alert)}</div>` : '';
+      const alert = sim.alert ? `<div class="live-alert ${escapeHtml(sim.alertType || '')}">${escapeHtml(sim.alert)}</div>` : '';
       return `<article class="match-card tv-match live ${cls}">
         <div class="tv-card-top"><span class="match-stage">${stageLabel(match.stage)}</span><span class="tv-status live"><i></i>${sim.phase === 'penalties' ? 'RIGORI' : 'LIVE ' + sim.minute + "'"}</span></div>
         <div class="tv-scoreline">${renderBroadcastTeam(user, 'user')}<div class="tv-score-big">${gf}–${ga}</div>${renderBroadcastTeam(opp, 'opponent')}</div>
@@ -7443,19 +7745,43 @@
       })].join('\n');
     }
 
+    function showGoalActionPopup(event, match, scoreText) {
+      const isOurGoal = event.teamId === USER_TEAM_ID;
+      const teamName = event.teamName || (isOurGoal ? 'La tua squadra' : opponentOfUser(match).name);
+
+      window.clearTimeout(showGoalPopup.timer);
+      els.goalPopup.className = `goal-popup action ${isOurGoal ? 'scored' : 'conceded'} show`;
+      els.goalPopup.setAttribute('aria-hidden', 'false');
+      els.goalPopup.innerHTML = `
+        <div class="goal-kicker">${escapeHtml(event.minute + "'")} · ${escapeHtml(teamName)}</div>
+        <div class="goal-action-label">L'AZIONE</div>
+        <div class="goal-action-text">${escapeHtml(event.description || 'Azione pericolosa...')}</div>
+        <div class="goal-score">${escapeHtml(scoreText)}</div>
+      `;
+    }
+
     function showGoalPopup(event, match, scoreText) {
       const isOurGoal = event.teamId === USER_TEAM_ID;
       const title = isOurGoal ? 'GOOOOL!' : 'GOL SUBITO';
       const teamName = event.teamName || (isOurGoal ? 'La tua squadra' : opponentOfUser(match).name);
+      const assistText = event.assist ? ` · Assist ${escapeHtml(event.assist)}` : '';
+      const contextText = [event.resultDescription, event.milestoneDescription].filter(Boolean).join(' ');
+
+      window.clearTimeout(showGoalPopup.timer);
       els.goalPopup.className = `goal-popup ${isOurGoal ? 'scored' : 'conceded'} show`;
       els.goalPopup.setAttribute('aria-hidden', 'false');
-      const assistText = event.assist ? ` · Assist ${escapeHtml(event.assist)}` : '';
-      els.goalPopup.innerHTML = `<div class="goal-kicker">${escapeHtml(stageLabel(match.stage))} · ${escapeHtml(teamName)}</div><div class="goal-title">${title}</div><div class="goal-meta">${event.minute}' · ${escapeHtml(event.player)}${assistText}</div><div class="goal-score">${escapeHtml(scoreText)}</div>`;
-      window.clearTimeout(showGoalPopup.timer);
+      els.goalPopup.innerHTML = `
+        <div class="goal-kicker">${escapeHtml(stageLabel(match.stage))} · ${escapeHtml(teamName)}</div>
+        <div class="goal-title">${title}</div>
+        <div class="goal-meta">${event.minute}' · ${escapeHtml(event.player)}${assistText}</div>
+        ${contextText ? `<div class="goal-context">${escapeHtml(contextText)}</div>` : ''}
+        <div class="goal-score">${escapeHtml(scoreText)}</div>
+      `;
+
       showGoalPopup.timer = window.setTimeout(() => {
         els.goalPopup.classList.remove('show');
         els.goalPopup.setAttribute('aria-hidden', 'true');
-      }, 1500);
+      }, 1800);
     }
 
     function showToast(message) { els.toast.textContent = message; els.toast.classList.add('show'); window.clearTimeout(showToast.timer); showToast.timer = window.setTimeout(() => els.toast.classList.remove('show'), 2200); }
