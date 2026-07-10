@@ -5124,17 +5124,7 @@
       font-weight:900;
     }
     .live-alert.action {
-      text-transform:none;
-      letter-spacing:.01em;
-      background:#fff2b3;
-      border-color:#d7a628;
-      color:#10243a;
-      animation:none;
-      font-size:14px;
-      line-height:1.25;
-      padding:10px 14px;
-      font-weight:1000;
-      text-shadow:none;
+      display:none;
     }
     .live-alert.action strong {
       color:#0a1c31;
@@ -5272,6 +5262,116 @@
       .goal-popup .goal-meta { font-size:21px !important; }
       .goal-popup .goal-context { font-size:17px !important; }
       .goal-popup .goal-score { font-size:32px !important; }
+    }
+
+  
+    /* BOX HIGHLIGHT LIVE GRANDE */
+    .live-highlight-box {
+      margin:12px 0 14px;
+      padding:18px 20px;
+      border-radius:22px;
+      border:3px solid #e0c749;
+      background:linear-gradient(180deg,#fff8d5,#f5e7a4);
+      color:#10243a;
+      box-shadow:0 10px 28px rgba(0,0,0,.16);
+      text-align:center;
+    }
+    .live-highlight-box.action {
+      background:linear-gradient(180deg,#fff4bf,#ecd36a);
+    }
+    .live-highlight-box.goal {
+      background:linear-gradient(180deg,#ffe4db,#f7b7a4);
+      border-color:#d94b35;
+    }
+    .live-highlight-box.conceded {
+      background:linear-gradient(180deg,#eef3f9,#cddced);
+      border-color:#7ca1c5;
+    }
+    .live-highlight-head {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+      font-size:12px;
+      font-weight:1000;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+    }
+    .live-highlight-pill {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:7px 12px;
+      border-radius:999px;
+      background:#10243a;
+      color:#fff8e6;
+      box-shadow:0 4px 10px rgba(16,36,58,.18);
+    }
+    .live-highlight-box.goal .live-highlight-pill {
+      background:#d94b35;
+      color:#fff;
+    }
+    .live-highlight-box.conceded .live-highlight-pill {
+      background:#5f7f9e;
+      color:#fff;
+    }
+    .live-highlight-minute {
+      color:#10243a;
+      font-weight:1000;
+    }
+    .live-highlight-title {
+      margin:0 0 8px;
+      font-size:clamp(18px, 2vw, 26px);
+      line-height:1.05;
+      font-weight:1000;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+      color:#10243a;
+    }
+    .live-highlight-text {
+      max-width:880px;
+      margin:0 auto;
+      font-size:clamp(21px, 2.45vw, 34px);
+      line-height:1.18;
+      font-weight:950;
+      color:#10243a;
+      text-transform:none;
+    }
+    .live-highlight-text strong {
+      font-weight:1000;
+      color:#0a1c31;
+    }
+    .live-highlight-sub {
+      margin-top:10px;
+      font-size:14px;
+      line-height:1.25;
+      font-weight:900;
+      color:#3f5974;
+      text-transform:none;
+    }
+    .live-highlight-sub strong {
+      color:#10243a;
+      font-weight:1000;
+    }
+    @media (max-width: 680px) {
+      .live-highlight-box {
+        padding:14px 14px;
+        border-radius:18px;
+      }
+      .live-highlight-head {
+        font-size:11px;
+        gap:8px;
+      }
+      .live-highlight-title {
+        font-size:16px;
+      }
+      .live-highlight-text {
+        font-size:20px;
+      }
+      .live-highlight-sub {
+        font-size:13px;
+      }
     }
 
   </style>
@@ -7485,6 +7585,57 @@
       return `${player}${assist}${action}${context}`;
     }
 
+    function getLiveHighlightState(sim, user, opp) {
+      if (sim && sim.alertType === 'action' && sim.pendingGoal) {
+        return {
+          type:'action',
+          minute:sim.pendingGoal.minute,
+          label:'Highlight live',
+          title:"L'azione",
+          text:emphasizePlayerNames(escapeHtml(sim.pendingGoal.description || 'Azione pericolosa in sviluppo.'), sim.pendingGoal),
+          sub:`Possibile occasione per <strong>${escapeHtml(sim.pendingGoal.teamId === USER_TEAM_ID ? user.name : opp.name)}</strong>.`
+        };
+      }
+
+      const lastGoal = sim && sim.log && sim.log.length ? sim.log[sim.log.length - 1] : null;
+      if (lastGoal) {
+        const isOurGoal = lastGoal.teamId === USER_TEAM_ID;
+        const summaryParts = [lastGoal.description, lastGoal.resultDescription, lastGoal.milestoneDescription].filter(Boolean).join(' ');
+        const fallbackSummary = `${lastGoal.player} trova la rete.`;
+        const scorerLine = `Marcatore: <strong>${escapeHtml(lastGoal.player)}</strong>${lastGoal.assist ? ` · Assist: <strong>${escapeHtml(lastGoal.assist)}</strong>` : ''}`;
+        return {
+          type:isOurGoal ? 'goal' : 'conceded',
+          minute:lastGoal.minute,
+          label:isOurGoal ? 'Ultimo gol' : 'Ultimo gol subito',
+          title:isOurGoal ? 'Highlight gol' : 'Highlight gol subito',
+          text:emphasizePlayerNames(escapeHtml(summaryParts || fallbackSummary), lastGoal),
+          sub:scorerLine
+        };
+      }
+
+      return {
+        type:'neutral',
+        minute:sim ? sim.minute : 0,
+        label:'Highlight live',
+        title:'Partita in corso',
+        text:'Per ora nessuna occasione decisiva. Segui la telecronaca per i prossimi highlights.',
+        sub:'Il risultato cambia solo quando arriva un gol.'
+      };
+    }
+
+    function renderLiveHighlightBox(sim, user, opp) {
+      const data = getLiveHighlightState(sim, user, opp);
+      return `<div class="live-highlight-box ${escapeHtml(data.type || 'neutral')}">
+        <div class="live-highlight-head">
+          <span class="live-highlight-pill">${escapeHtml(data.label || 'Highlight')}</span>
+          <span class="live-highlight-minute">${escapeHtml(String(data.minute || 0))}'</span>
+        </div>
+        <div class="live-highlight-title">${escapeHtml(data.title || 'Highlight')}</div>
+        <div class="live-highlight-text">${data.text || ''}</div>
+        <div class="live-highlight-sub">${data.sub || ''}</div>
+      </div>`;
+    }
+
     function renderLiveMatchCard(sim) {
       const match = sim.match;
       const opp = opponentOfUser(match);
@@ -7495,11 +7646,11 @@
       const pct = Math.min(100, Math.round((sim.minute / sim.maxMinute) * 100));
       const cls = gf > ga ? 'win' : gf < ga ? 'loss' : 'draw';
       const log = sim.log.map(e => `<div class="event ${e.teamId === USER_TEAM_ID ? '' : 'conceded'}"><span class="min">${e.minute}'</span><span class="ball">●</span><span class="player">${renderEventPlayerLine(e)}<small>${e.teamId === USER_TEAM_ID ? user.name : opp.name}</small></span></div>`).join('') || '<div class="live-wait">Regia in diretta: nessun gol finora.</div>';
-      const alert = sim.alert ? `<div class="live-alert ${escapeHtml(sim.alertType || '')}">${formatLiveAlert(sim)}</div>` : '';
+      const highlightBox = renderLiveHighlightBox(sim, user, opp);
       return `<article class="match-card tv-match live ${cls}">
         <div class="tv-card-top"><span class="match-stage">${stageLabel(match.stage)}</span><span class="tv-status live"><i></i>${sim.phase === 'penalties' ? 'RIGORI' : 'LIVE ' + sim.minute + "'"}</span></div>
         <div class="tv-scoreline">${renderBroadcastTeam(user, 'user')}<div class="tv-score-big">${gf}–${ga}</div>${renderBroadcastTeam(opp, 'opponent')}</div>
-        <div class="match-details"><div class="live-progress broadcast-progress"><span style="width:${pct}%"></span></div>${alert}<div class="event-list live-log tv-live-log">${log}</div></div>
+        <div class="match-details"><div class="live-progress broadcast-progress"><span style="width:${pct}%"></span></div>${highlightBox}<div class="event-list live-log tv-live-log">${log}</div></div>
       </article>`;
     }
 
