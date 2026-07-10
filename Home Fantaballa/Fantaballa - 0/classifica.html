@@ -279,7 +279,7 @@
           <img class="logo" src="assets/fantaballa-logo.png" alt="Fantaballa" />
           <div class="label">Classifiche</div>
           <h1>Campioni e bomber</h1>
-          <p class="sub">Tre classifiche separate: modalità Classica, modalità HARDa Turan e capocannonieri delle run aggregati da entrambe.</p>
+          <p class="sub">Tre modalità separate — Classica, Gary MEDel e HARDa Turan — più la classifica capocannonieri aggregata.</p>
         </div>
         <div id="leaderboardUpdated" class="updated">Caricamento classifica...</div>
       </div>
@@ -317,6 +317,39 @@
         <div class="load-more-wrap" data-load-wrap="classic">
           <button class="load-more-btn" type="button" data-load-more="classic">Carica altre</button>
           <span class="load-more-status" id="classicLoadStatus"></span>
+        </div>
+      </section>
+
+      <section class="mode-board" id="garyBoard" aria-label="Classifica modalità Gary MEDel">
+        <div class="board-head">
+          <div class="board-title-wrap">
+            <div class="label">Classifica modalità</div>
+            <h2>Gary MEDel</h2>
+            <p class="sub">Posizioni precise obbligatorie: AS, AD, COC, DC, TS, TD e altre.</p>
+          </div>
+          <button class="expand-btn" type="button" data-toggle-board="garyBoard" aria-expanded="false">Vedi tutti i dati</button>
+        </div>
+        <div class="table-wrap">
+          <table class="mode-table">
+            <thead>
+              <tr>
+                <th><button class="sort-btn" type="button" data-board="gary" data-sort="rank">Pos</button></th>
+                <th><button class="sort-btn" type="button" data-board="gary" data-sort="name">Squadra</button></th>
+                <th class="full-col is-center"><button class="sort-btn" type="button" data-board="gary" data-sort="wins">Vittorie</button></th>
+                <th class="full-col is-center"><button class="sort-btn" type="button" data-board="gary" data-sort="draws">Pareggi</button></th>
+                <th class="full-col is-center"><button class="sort-btn" type="button" data-board="gary" data-sort="losses">Sconfitte</button></th>
+                <th class="is-center"><button class="sort-btn" type="button" data-board="gary" data-sort="goalsFor">Gol fatti/subiti</button></th>
+                <th class="full-col is-center"><button class="sort-btn" type="button" data-board="gary" data-sort="module">Modulo</button></th>
+                <th class="is-center"><button class="sort-btn" type="button" data-board="gary" data-sort="ovr">OVR medio</button></th>
+                <th><button class="sort-btn" type="button" data-board="gary" data-sort="scorer">Capocannoniere</button></th>
+              </tr>
+            </thead>
+            <tbody id="garyBody"><tr><td><span class="rank">-</span></td><td class="empty" colspan="9">In attesa del primo campione Gary MEDel</td></tr></tbody>
+          </table>
+        </div>
+        <div class="load-more-wrap" data-load-wrap="gary">
+          <button class="load-more-btn" type="button" data-load-more="gary">Carica altre</button>
+          <span class="load-more-status" id="garyLoadStatus"></span>
         </div>
       </section>
 
@@ -358,7 +391,7 @@
           <div class="board-title-wrap">
             <div class="label">Classifica</div>
             <h2>Capocannonieri</h2>
-            <p class="sub">Somma i gol dei capocannonieri delle run Classica e HARDa Turan.</p>
+            <p class="sub">Somma i gol dei capocannonieri delle run Classica, Gary MEDel e HARDa Turan.</p>
           </div>
         </div>
         <div class="table-wrap">
@@ -384,6 +417,7 @@
   <script>
     (function () {
       const classicBody = document.getElementById('classicBody');
+      const garyBody = document.getElementById('garyBody');
       const hardBody = document.getElementById('hardBody');
       const scorersBody = document.getElementById('scorersBody');
       const updated = document.getElementById('leaderboardUpdated');
@@ -391,7 +425,7 @@
       const SHEETS_CLASSIFICA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
       const CLASSIFICA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
       const LOCAL_CLASSIFICA_FALLBACK = 'data/classifica.json';
-      if (!classicBody || !hardBody || !scorersBody) return;
+      if (!classicBody || !garyBody || !hardBody || !scorersBody) return;
 
       const escape = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({
         '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '"':'&quot;'
@@ -412,8 +446,13 @@
       const nameOf = row => String(valueOf(row, ['squadra','nome_squadra','teamName','team_name','name'], '')).trim();
       const coachOf = row => String(valueOf(row, ['allenatore','coachName','coach_name','nome_allenatore','coach'], '')).trim();
       const rawModeOf = row => String(valueOf(row, ['modalita','gameMode','mode'], 'Classica')).trim();
-      const modeKindOf = row => /hard|turan/i.test(rawModeOf(row)) ? 'hard' : 'classic';
-      const modeLabelOf = row => modeKindOf(row) === 'hard' ? 'HARDa Turan' : 'Classica';
+      const modeKindOf = row => {
+        const raw = rawModeOf(row);
+        if (/hard|turan/i.test(raw)) return 'hard';
+        if (/gary|medel/i.test(raw)) return 'gary';
+        return 'classic';
+      };
+      const modeLabelOf = row => modeKindOf(row) === 'hard' ? 'HARDa Turan' : (modeKindOf(row) === 'gary' ? 'Gary MEDel' : 'Classica');
       const winsOf = row => numberOf(row, ['vittorie','wins','campione_del_mondo','campioni_del_mondo','count'], 0);
       const drawsOf = row => numberOf(row, ['pareggi','draws'], 0);
       const lossesOf = row => numberOf(row, ['sconfitte','losses'], 0);
@@ -495,6 +534,7 @@
 
       const sortState = {
         classic:{ key:'rank', dir:'asc' },
+        gary:{ key:'rank', dir:'asc' },
         hard:{ key:'rank', dir:'asc' },
         scorers:{ key:'rank', dir:'asc' }
       };
@@ -502,7 +542,7 @@
 
       const PAGE_SIZE = 10;
       const MAX_VISIBLE_ROWS = 100;
-      const visibleState = { classic:PAGE_SIZE, hard:PAGE_SIZE, scorers:PAGE_SIZE };
+      const visibleState = { classic:PAGE_SIZE, gary:PAGE_SIZE, hard:PAGE_SIZE, scorers:PAGE_SIZE };
 
       const defaultModeCompare = (a, b) =>
         b.wins - a.wins ||
@@ -649,8 +689,10 @@
         const rows = Array.isArray(data) ? data : Array.isArray(data.classifica) ? data.classifica : [];
         lastRows = rows;
         const classicRows = rows.filter(row => modeKindOf(row) === 'classic');
+        const garyRows = rows.filter(row => modeKindOf(row) === 'gary');
         const hardRows = rows.filter(row => modeKindOf(row) === 'hard');
         renderModeTable(classicBody, classicRows, 'In attesa del primo campione Classica', 'classic');
+        renderModeTable(garyBody, garyRows, 'In attesa del primo campione Gary MEDel', 'gary');
         renderModeTable(hardBody, hardRows, 'In attesa del primo campione HARDa Turan', 'hard');
         renderScorers(rows);
         updateSortButtons();
@@ -763,6 +805,7 @@
               .catch(() => {
                 if (updated) updated.textContent = 'Classifica non disponibile';
                 renderModeTable(classicBody, [], 'Classifica non disponibile', 'classic');
+                renderModeTable(garyBody, [], 'Classifica non disponibile', 'gary');
                 renderModeTable(hardBody, [], 'Classifica non disponibile', 'hard');
                 renderScorers([]);
                 updateSortButtons();

@@ -4917,6 +4917,21 @@
     .slot.filled.role-malus .badge {
       box-shadow:0 0 0 4px rgba(217,75,53,.42), 0 0 24px rgba(217,75,53,.30), 0 8px 16px rgba(0,0,0,.18) !important;
     }
+    .gary-mode-pill {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      margin-left:6px;
+      padding:2px 7px;
+      border-radius:999px;
+      background:#d9a514;
+      color:#10243a;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.08em;
+      vertical-align:middle;
+      text-transform:uppercase;
+    }
     .hard-mode-pill {
       display:inline-flex;
       align-items:center;
@@ -4948,7 +4963,7 @@
         <div class="intro-kicker">Come si gioca</div>
         <h1 class="intro-title" id="introTitle">Diventa campione del mondo!</h1>
         <div class="intro-content-card intro-card-dynamic">
-          <p class="intro-text intro-playbook"><span>Costruisci il miglior XI usando te stesso come giocatore!</span><span>Poi gioca il Mondiale e prova ad alzare la Coppa del Mondo.</span><span>Puoi giocare Classica oppure HARDa Turan: ruoli e OVR nascosti, fuori ruolo = -10 Intesa.</span></p>
+          <p class="intro-text intro-playbook"><span>Costruisci il miglior XI usando te stesso come giocatore!</span><span>Poi gioca il Mondiale e prova ad alzare la Coppa del Mondo.</span><span>Tre modalità: Classica, Gary MEDel con posizioni precise, oppure HARDa Turan con ruoli e OVR nascosti.</span></p>
         </div>
         <div class="intro-actions">
           <button class="intro-btn" type="button" data-intro-close>Salta</button>
@@ -5199,7 +5214,7 @@
             </svg>
             <div class="slots" id="pitchSlots"></div>
           </div>
-          <div class="tap-hint">Dopo aver scelto un giocatore, clicca uno slot illuminato sul campo. In HARDa Turan un fuori ruolo vale -10 Intesa.</div>
+          <div class="tap-hint">Dopo aver scelto un giocatore, clicca uno slot illuminato. In Gary MEDel valgono solo le posizioni precise; in HARDa Turan un fuori ruolo vale -10 Intesa.</div>
         </section>
       </main>
 
@@ -5310,7 +5325,7 @@
     <div class="placement-modal" role="dialog" aria-modal="true" aria-labelledby="placementTitle">
       <div class="label">Posiziona giocatore</div>
       <div class="placement-title" id="placementTitle">Scegli posizione</div>
-      <div class="placement-subtitle" id="placementSubtitle">Puoi usare solo gli slot del ruolo corretto. <span class="reroll-hint">Hai cambiato idea? Chiudi questo box e premi re-roll.</span></div>
+      <div class="placement-subtitle" id="placementSubtitle">Puoi usare solo gli slot compatibili con la modalità scelta. <span class="reroll-hint">Hai cambiato idea? Chiudi questo box e premi re-roll.</span></div>
       <div class="slot-options" id="placementOptions"></div>
       <div class="modal-actions"><button id="cancelPlacementBtn" class="btn" type="button">Annulla scelta</button></div>
     </div>
@@ -5330,7 +5345,8 @@
     const GAME_MODE_KEY = STORAGE_KEY + '-game-mode';
     const USER_TEAM_ID = 'USER-XI';
     const GAME_MODES = {
-      classic:{ label:'Classica', short:'CLASSICA', description:'OVR e ruoli visibili. Puoi piazzare solo nei ruoli corretti.' },
+      classic:{ label:'Classica', short:'CLASSICA', description:'OVR e macro-ruoli visibili. Puoi piazzare nel reparto corretto.' },
+      gary:{ label:'Gary MEDel', short:'MEDEL', description:'OVR e posizioni precise visibili. Ogni giocatore entra solo negli slot compatibili.' },
       hard:{ label:'HARDa Turan', short:'HARD', description:'OVR e ruoli nascosti, lista casuale. Se sbagli ruolo: -10 Intesa.' }
     };
     // Anti-cheat: ogni refresh deve ricominciare una run nuova da zero.
@@ -5341,6 +5357,26 @@
     const ROLE_LABELS = { P:'Portiere', D:'Difensore', C:'Centrocampista', A:'Attaccante' };
     const ROLE_SHORT = { P:'GK', D:'DEF', C:'MID', A:'ATT' };
     const ROLE_SORT = { P:0, D:1, C:2, A:3 };
+    const SLOT_POSITION_BY_KEY = {
+      GK:'P',
+      CB:'DC', LB:'TS', LWB:'TS', RB:'TD', RWB:'TD',
+      CM:'CC', DM:'CDC', AM:'COC',
+      LM:'AS', LW:'AS', RM:'AD', RW:'AD',
+      ST:'ATT'
+    };
+    const POSITION_ALIASES = {
+      GK:'P', PORTIERE:'P', P:'P',
+      CB:'DC', D:'DC', DC:'DC',
+      LB:'TS', LWB:'TS', TS:'TS',
+      RB:'TD', RWB:'TD', TD:'TD',
+      CM:'CC', C:'CC', CC:'CC',
+      DM:'CDC', CDM:'CDC', CDC:'CDC',
+      AM:'COC', CAM:'COC', COC:'COC',
+      LM:'AS', LW:'AS', AS:'AS',
+      RM:'AD', RW:'AD', AD:'AD',
+      ST:'ATT', CF:'ATT', A:'ATT', ATT:'ATT'
+    };
+    const POSITION_SORT = { P:0, DC:1, TS:2, TD:3, CDC:4, CC:5, COC:6, AS:7, AD:8, ATT:9 };
     const NATION_COLORS = {
       'Argentina':['#75aadb','#ffffff','#f6b40e'], 'Australia':['#00843d','#ffcd00','#012169'], 'Austria':['#ed2939','#ffffff','#ed2939'], 'Belgio':['#000000','#fae042','#ed2939'],
       'Brasile':['#009b3a','#ffdf00','#002776'], 'Canada':['#ff0000','#ffffff','#ff0000'], 'Cechia':['#11457e','#ffffff','#d7141a'], 'Colombia':['#fcd116','#003893','#ce1126'],
@@ -5372,13 +5408,37 @@
       return ['si','sì','yes','true','1','y','abbonato','subscriber'].includes(text);
     }
 
+    function canonicalPositionCode(value) {
+      const code = String(value || '').trim().toUpperCase();
+      return POSITION_ALIASES[code] || code;
+    }
+
     function normalizePositionValue(value, fallbackRole) {
       const raw = value === null || value === undefined || value === '' ? fallbackRole : value;
       const parts = Array.isArray(raw) ? raw : String(raw).split(',');
-      return parts
-        .map(part => String(part || '').trim().toUpperCase())
-        .filter(Boolean)
+      return [...new Set(parts
+        .map(canonicalPositionCode)
+        .filter(Boolean))]
         .join(', ');
+    }
+
+    function playerPositionCodes(player) {
+      return normalizePositionValue(player && player.Position, player && player.role)
+        .split(',')
+        .map(code => code.trim())
+        .filter(Boolean);
+    }
+
+    function playerPositionLabel(player) {
+      return playerPositionCodes(player).join(' / ') || '?';
+    }
+
+    function slotPositionCode(slot) {
+      return canonicalPositionCode(slot && (slot.position || SLOT_POSITION_BY_KEY[slot.key] || slot.key));
+    }
+
+    function playerFitsSpecificSlot(player, slot) {
+      return playerPositionCodes(player).includes(slotPositionCode(slot));
     }
 
     function hasSubscriberField(player) {
@@ -5515,6 +5575,7 @@
     function clampNumber(value, min, max) { return Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : min; }
     function saveRerolls() { safeSet(REROLL_KEY, String(rerollsLeft)); }
     function isHardMode() { return gameMode === 'hard'; }
+    function isGaryMode() { return gameMode === 'gary'; }
     function displayGameMode(mode = gameMode) { return (GAME_MODES[mode] && GAME_MODES[mode].label) || GAME_MODES.classic.label; }
     function gameModeShort(mode = gameMode) { return (GAME_MODES[mode] && GAME_MODES[mode].short) || GAME_MODES.classic.short; }
     function formatSigned(value) {
@@ -5822,6 +5883,26 @@
     }
     function wait(ms) { return new Promise(resolve => window.setTimeout(resolve, ms)); }
     function currentSlots() { return FORMATIONS[selectedFormation]; }
+    function specificPositionCounts(slots = currentSlots()) {
+      return slots.reduce((acc, currentSlot) => {
+        const code = slotPositionCode(currentSlot);
+        acc[code] = (acc[code] || 0) + 1;
+        return acc;
+      }, {});
+    }
+    function formatSpecificPositionCounts(counts) {
+      return Object.entries(counts)
+        .sort((a,b) => (POSITION_SORT[a[0]] ?? 99) - (POSITION_SORT[b[0]] ?? 99) || a[0].localeCompare(b[0], 'it'))
+        .map(([code, count]) => count > 1 ? `${code}×${count}` : code)
+        .join(' · ');
+    }
+    function remainingSpecificPositionSummary() {
+      const used = selectedSlotIds();
+      return formatSpecificPositionCounts(specificPositionCounts(currentSlots().filter(currentSlot => !used.has(currentSlot.instanceId))));
+    }
+    function slotDisplayLabel(currentSlot) {
+      return isGaryMode() ? slotPositionCode(currentSlot) : currentSlot.key;
+    }
     function formationCounts() { return currentSlots().reduce((acc,s) => (acc[s.role]=(acc[s.role]||0)+1, acc), { P:0,D:0,C:0,A:0 }); }
     function selectedCounts() {
       const slots = new Map(currentSlots().map(s => [s.instanceId, s]));
@@ -5836,16 +5917,28 @@
     function availableSlotsForRole(role) { const used = selectedSlotIds(); return currentSlots().filter(s => s.role === role && !used.has(s.instanceId)); }
     function availableSlotsForPlayer(player) {
       const used = selectedSlotIds();
-      return isHardMode() ? currentSlots().filter(s => !used.has(s.instanceId)) : availableSlotsForRole(player.role);
+      if (isHardMode()) return currentSlots().filter(s => !used.has(s.instanceId));
+      if (isGaryMode()) return currentSlots().filter(s => !used.has(s.instanceId) && playerFitsSpecificSlot(player, s));
+      return availableSlotsForRole(player.role);
     }
     function canTakeRole(role) { return availableSlotsForRole(role).length > 0; }
-    function isPlayerValidForFormation(p) { return isHardMode() ? selectedSlotIds().size < MAX_PICKS : canTakeRole(p.role); }
+    function isPlayerValidForFormation(p) {
+      if (isHardMode()) return selectedSlotIds().size < MAX_PICKS;
+      if (isGaryMode()) return availableSlotsForPlayer(p).length > 0;
+      return canTakeRole(p.role);
+    }
     function validCandidatesForNation(nation) {
       const ids = selectedIds();
       const list = PLAYERS.filter(p => p.nation === nation && !ids.has(p.id) && isPlayerValidForFormation(p));
-      return isHardMode()
-        ? list.sort((a,b) => a.name.localeCompare(b.name,'it'))
-        : list.sort((a,b) => (ROLE_SORT[a.role] ?? 9) - (ROLE_SORT[b.role] ?? 9) || b.ovr - a.ovr || a.name.localeCompare(b.name,'it'));
+      if (isHardMode()) return list.sort((a,b) => a.name.localeCompare(b.name,'it'));
+      if (isGaryMode()) {
+        return list.sort((a,b) => {
+          const aCode = playerPositionCodes(a)[0] || '';
+          const bCode = playerPositionCodes(b)[0] || '';
+          return (POSITION_SORT[aCode] ?? 99) - (POSITION_SORT[bCode] ?? 99) || b.ovr - a.ovr || a.name.localeCompare(b.name,'it');
+        });
+      }
+      return list.sort((a,b) => (ROLE_SORT[a.role] ?? 9) - (ROLE_SORT[b.role] ?? 9) || b.ovr - a.ovr || a.name.localeCompare(b.name,'it'));
     }
 
     function selectFormation(key) {
@@ -5983,10 +6076,17 @@
     function startPlacement(playerId) {
       if (!currentNation) return;
       const player = currentCandidates.find(p => p.id === String(playerId));
-      if (!player || !isPlayerValidForFormation(player)) { showToast(isHardMode() ? "Non ci sono slot liberi." : "Questo ruolo e' gia' pieno nel modulo scelto."); return; }
+      if (!player || !isPlayerValidForFormation(player)) {
+        showToast(isHardMode() ? "Non ci sono slot liberi." : (isGaryMode() ? `Nessuno slot libero compatibile con ${player ? playerPositionLabel(player) : 'questa posizione'}.` : "Questo ruolo e' gia' pieno nel modulo scelto."));
+        return;
+      }
       pendingPlayer = player;
       render();
-      showToast(isHardMode() ? `HARDa Turan: scegli uno slot per ${player.name}. Se e' fuori ruolo: -10 Intesa.` : `Slot disponibili illuminati: clicca sul campo per mettere ${player.name}`);
+      showToast(isHardMode()
+        ? `HARDa Turan: scegli uno slot per ${player.name}. Se e' fuori ruolo: -10 Intesa.`
+        : (isGaryMode()
+          ? `Gary MEDel: ${player.name} può giocare ${playerPositionLabel(player)}. Scegli uno slot illuminato.`
+          : `Slot disponibili illuminati: clicca sul campo per mettere ${player.name}`));
     }
 
     function cancelPlacement() {
@@ -5999,16 +6099,18 @@
       const slot = currentSlots().find(s => s.instanceId === slotId);
       const allowed = slot && availableSlotsForPlayer(pendingPlayer).some(s => s.instanceId === slot.instanceId);
       if (!slot || !allowed || selectedSlotIds().has(slot.instanceId)) {
-        showToast(isHardMode() ? 'Puoi scegliere solo uno slot libero.' : 'Puoi scegliere solo uno slot libero del suo reparto.');
+        showToast(isHardMode()
+          ? 'Puoi scegliere solo uno slot libero.'
+          : (isGaryMode() ? `Puoi scegliere solo uno slot libero compatibile con ${playerPositionLabel(pendingPlayer)}.` : 'Puoi scegliere solo uno slot libero del suo reparto.'));
         return;
       }
       const roleMismatch = isHardMode() && slot.role !== pendingPlayer.role;
       lastPlacedSlotId = slot.instanceId;
       if (lastPlacedTimer) { clearTimeout(lastPlacedTimer); lastPlacedTimer = null; }
-      selected.push({ ...pendingPlayer, slotId: slot.instanceId, slotKey: slot.key, slotRole: slot.role, hardRoleMismatch: roleMismatch });
+      selected.push({ ...pendingPlayer, slotId: slot.instanceId, slotKey: slot.key, slotRole: slot.role, slotPosition:slotPositionCode(slot), hardRoleMismatch: roleMismatch });
       tournamentState = null;
       saveSelected();
-      showToast(roleMismatch ? `${pendingPlayer.name} fuori ruolo in ${slot.key}: -10 Intesa` : `${pendingPlayer.name} posizionato in ${slot.key}`);
+      showToast(roleMismatch ? `${pendingPlayer.name} fuori ruolo in ${slot.key}: -10 Intesa` : `${pendingPlayer.name} posizionato in ${slotDisplayLabel(slot)}`);
       pendingPlayer = null;
       currentNation = null;
       currentCandidates = [];
@@ -6051,7 +6153,9 @@
       if (els.gameModeNote) {
         els.gameModeNote.innerHTML = isHardMode()
           ? "<strong>HARDa Turan:</strong> OVR e ruoli sono nascosti e la lista giocatori e' casuale. Puoi usare qualsiasi slot, ma se il ruolo e' sbagliato quel giocatore prende -10 Intesa."
-          : '<strong>Classica:</strong> vedi OVR e ruoli, e puoi piazzare solo nei reparti corretti.';
+          : (isGaryMode()
+            ? '<strong>Gary MEDel:</strong> vedi OVR e posizioni precise. Un giocatore AS / COC può entrare soltanto negli slot AS o COC ancora liberi.'
+            : '<strong>Classica:</strong> vedi OVR e macro-ruoli, e puoi piazzare nei reparti corretti.');
       }
       if (!els.gameModeGrid) return;
       els.gameModeGrid.innerHTML = Object.entries(GAME_MODES).map(([key, mode]) => `<button type="button" class="mode-btn ${key === gameMode ? 'active' : ''}" data-game-mode="${escapeAttr(key)}" ${locked ? 'disabled' : ''}><strong>${escapeHtml(mode.label)}</strong><span>${escapeHtml(mode.description)}</span></button>`).join('');
@@ -6065,7 +6169,12 @@
       els.formationGrid.innerHTML = Object.keys(FORMATIONS).map(key => `<button type="button" class="formation-btn ${key === selectedFormation ? 'active' : ''}" data-formation="${escapeAttr(key)}" ${locked ? 'disabled' : ''}>${escapeHtml(key)}</button>`).join('');
       els.formationGrid.querySelectorAll('.formation-btn').forEach(btn => btn.addEventListener('click', () => selectFormation(btn.dataset.formation)));
       const counts = formationCounts();
-      els.formationNote.textContent = locked ? `Modulo bloccato: ${selectedFormation} · P${counts.P} D${counts.D} C${counts.C} A${counts.A}. Per cambiarlo premi Reset Draft.` : `Modulo selezionato: ${selectedFormation} · P${counts.P} D${counts.D} C${counts.C} A${counts.A}. Premi Roll per iniziare e bloccarlo.`;
+      const formationRoles = isGaryMode()
+        ? formatSpecificPositionCounts(specificPositionCounts())
+        : `P${counts.P} D${counts.D} C${counts.C} A${counts.A}`;
+      els.formationNote.textContent = locked
+        ? `Modulo bloccato: ${selectedFormation} · ${formationRoles}. Per cambiarlo premi Reset Draft.`
+        : `Modulo selezionato: ${selectedFormation} · ${formationRoles}. Premi Roll per iniziare e bloccarlo.`;
       if (els.formationActions) els.formationActions.style.display = 'none';
       els.formationSummary.textContent = selectedFormation;
       els.teamNameSummary.textContent = displayTeamName();
@@ -6078,12 +6187,24 @@
         els.nationCode.textContent = nationCode(currentNation);
         els.nationName.textContent = currentNation;
         els.drawSubtitle.textContent = pendingPlayer ? 'Place / re-roll' : `Pick ${Math.min(MAX_PICKS, picks + 1).toString().padStart(2,'0')}`;
-        els.statusLine.textContent = pendingPlayer ? 'Puoi piazzarlo oppure cambiare idea' : (isHardMode() ? 'Scegli al buio' : 'Devi scegliere un ruolo valido');
-        els.rollCta.innerHTML = pendingPlayer ? `Clicca uno slot illuminato per ${escapeHtml(pendingPlayer.name)}<br><small>${isHardMode() ? 'Se sbagli ruolo: -10 Intesa' : 'Oppure usa re-roll per cambiare nazionale'}</small>` : (isHardMode() ? 'Nazionale pescata · lista casuale' : 'Nazionale pescata');
+        els.statusLine.textContent = pendingPlayer
+          ? 'Puoi piazzarlo oppure cambiare idea'
+          : (isHardMode() ? 'Scegli al buio' : (isGaryMode() ? 'Scegli una posizione precisa' : 'Devi scegliere un ruolo valido'));
+        els.rollCta.innerHTML = pendingPlayer
+          ? `Clicca uno slot illuminato per ${escapeHtml(pendingPlayer.name)}<br><small>${isHardMode() ? 'Se sbagli ruolo: -10 Intesa' : (isGaryMode() ? `Compatibile: ${escapeHtml(playerPositionLabel(pendingPlayer))}` : 'Oppure usa re-roll per cambiare nazionale')}</small>`
+          : (isHardMode() ? 'Nazionale pescata · lista casuale' : (isGaryMode() ? 'Nazionale pescata · posizioni precise' : 'Nazionale pescata'));
         els.afterRollActions.style.display = 'grid';
         const r = remainingCounts();
-        const slotHint = pendingPlayer ? (isHardMode() ? 'uno slot libero' : `uno slot ${ROLE_LABELS[pendingPlayer.role]} libero`) : '';
-        setNotice(pendingPlayer ? `Puoi confermare ${pendingPlayer.name} cliccando ${slotHint}, oppure premere Annulla e re-roll per cambiare nazionale.` : (isHardMode() ? `Scelta obbligatoria in HARDa Turan. Ruolo e OVR sono nascosti e la lista e' casuale. Se lo metti fuori ruolo: -10 Intesa. Slot liberi: P${r.P} · D${r.D} · C${r.C} · A${r.A}.` : `Scelta obbligatoria. Puoi fare re-roll ${rerollsLeft} volta/e. Ruoli liberi: P${r.P} · D${r.D} · C${r.C} · A${r.A}.`));
+        const slotHint = pendingPlayer
+          ? (isHardMode() ? 'uno slot libero' : (isGaryMode() ? `uno slot ${playerPositionLabel(pendingPlayer)} compatibile` : `uno slot ${ROLE_LABELS[pendingPlayer.role]} libero`))
+          : '';
+        setNotice(pendingPlayer
+          ? `Puoi confermare ${pendingPlayer.name} cliccando ${slotHint}, oppure premere Annulla e re-roll per cambiare nazionale.`
+          : (isHardMode()
+            ? `Scelta obbligatoria in HARDa Turan. Ruolo e OVR sono nascosti e la lista e' casuale. Se lo metti fuori ruolo: -10 Intesa. Slot liberi: P${r.P} · D${r.D} · C${r.C} · A${r.A}.`
+            : (isGaryMode()
+              ? `Scelta obbligatoria in Gary MEDel. Ogni giocatore può entrare soltanto nelle sue posizioni precise. Slot liberi: ${remainingSpecificPositionSummary()}. Re-roll disponibili: ${rerollsLeft}.`
+              : `Scelta obbligatoria. Puoi fare re-roll ${rerollsLeft} volta/e. Ruoli liberi: P${r.P} · D${r.D} · C${r.C} · A${r.A}.`)));
       } else if (selected.length >= MAX_PICKS) {
         els.nationCode.textContent = '11'; els.nationName.textContent = 'Completed'; els.drawSubtitle.textContent = selectedFormation;
         els.statusLine.textContent = 'Team completed'; els.rollCta.innerHTML = 'Draft completo'; els.afterRollActions.style.display = 'grid'; setNotice('');
@@ -6124,13 +6245,15 @@
         els.playersGrid.innerHTML = '<div class="empty-box">Nessun giocatore disponibile per i ruoli rimasti. Usa re-roll o reset.</div>';
         return;
       }
-      els.playersCount.textContent = pendingPlayer ? 'Click highlighted slot' : (isHardMode() ? `${currentCandidates.length} giocatori · HARD` : `${currentCandidates.length} giocatori validi`);
+      els.playersCount.textContent = pendingPlayer
+        ? 'Click highlighted slot'
+        : (isHardMode() ? `${currentCandidates.length} giocatori · HARD` : (isGaryMode() ? `${currentCandidates.length} giocatori · GARY MEDEL` : `${currentCandidates.length} giocatori validi`));
       try {
         els.playersGrid.innerHTML = currentCandidates.map((player,index) => {
           const isPending = pendingPlayer && pendingPlayer.id === player.id;
           const previewBonus = candidateChemPreview(player);
           const subscriber = isChannelSubscriber(player);
-          const roleText = isHardMode() ? 'RUOLO ?' : escapeHtml(ROLE_SHORT[player.role] || player.role);
+          const roleText = isHardMode() ? 'RUOLO ?' : escapeHtml(isGaryMode() ? playerPositionLabel(player) : (ROLE_SHORT[player.role] || player.role));
           const ovrText = isHardMode() ? '??' : String(player.ovr);
           const ovrClass = isHardMode() ? 'row-ovr hard-secret' : 'row-ovr';
           const ovrStyle = isHardMode() ? '' : ovrVisualStyle(player.ovr);
@@ -6138,7 +6261,7 @@
             <span class="row-no">#${index + 1}</span>
             <span class="row-face" title="${escapeAttr(player.name)}">${safePlayerFace(player)}</span>
             <span class="row-main">
-              <span class="row-name">${escapeHtml(player.name)}${isHardMode() ? '<span class="hard-mode-pill">HARD</span>' : ''}</span>
+              <span class="row-name">${escapeHtml(player.name)}${isHardMode() ? '<span class="hard-mode-pill">HARD</span>' : (isGaryMode() ? '<span class="gary-mode-pill">MEDEL</span>' : '')}</span>
               <span class="row-role ${isHardMode() ? 'hard-secret' : ''}">${roleText}${subscriber ? `<span class="sub-badge">ABBONATO</span>` : ''}${previewBonus ? `<span class="row-bonus">+${previewBonus} INT</span>` : ''}</span>
             </span>
             <span class="${ovrClass}" style="${ovrStyle}">${ovrText}</span>
@@ -6146,7 +6269,7 @@
         }).join('');
       } catch (err) {
         console.error('Errore lista giocatori', err);
-        els.playersGrid.innerHTML = currentCandidates.map((player,index) => `<button class="player-row" type="button" data-id="${escapeAttr(player.id)}"><span class="row-no">#${index + 1}</span><span class="row-main"><span class="row-name">${escapeHtml(player.name)}</span><span class="row-role ${isHardMode() ? 'hard-secret' : ''}">${isHardMode() ? 'RUOLO ?' : escapeHtml(ROLE_SHORT[player.role] || player.role)}</span></span><span class="row-ovr ${isHardMode() ? 'hard-secret' : ''}" style="${isHardMode() ? '' : ovrVisualStyle(player.ovr)}">${isHardMode() ? '??' : player.ovr}</span></button>`).join('');
+        els.playersGrid.innerHTML = currentCandidates.map((player,index) => `<button class="player-row" type="button" data-id="${escapeAttr(player.id)}"><span class="row-no">#${index + 1}</span><span class="row-main"><span class="row-name">${escapeHtml(player.name)}</span><span class="row-role ${isHardMode() ? 'hard-secret' : ''}">${isHardMode() ? 'RUOLO ?' : escapeHtml(isGaryMode() ? playerPositionLabel(player) : (ROLE_SHORT[player.role] || player.role))}</span></span><span class="row-ovr ${isHardMode() ? 'hard-secret' : ''}" style="${isHardMode() ? '' : ovrVisualStyle(player.ovr)}">${isHardMode() ? '??' : player.ovr}</span></button>`).join('');
       }
       els.playersGrid.querySelectorAll('.player-row').forEach(btn => btn.addEventListener('click', () => startPlacement(btn.dataset.id)));
     }
@@ -6163,8 +6286,8 @@
         const roleMalus = filled ? (chem.playerRoleMalus[player.id] || 0) : 0;
         const style = filled ? `left:${slot.x}%; top:${slot.y}%; ${nationStyle(player.nation)}` : `left:${slot.x}%; top:${slot.y}%`;
         return `<div class="slot ${filled ? 'filled role-' + player.role : ''} ${filled && isChannelSubscriber(player) ? 'subscriber-player' : ''} ${bonus > 0 ? 'chem-boost' : ''} ${roleMalus ? 'role-malus' : ''} ${slot.instanceId === lastPlacedSlotId ? 'just-placed' : ''} ${available ? 'available pending-target' : ''}" data-slot-id="${escapeAttr(slot.instanceId)}" style="${style}">
-          ${filled ? `<div class="jersey-wrap">${isChannelSubscriber(player) ? '<span class="jersey-sub-star">★</span>' : ''}<div class="jersey"><span class="jersey-number">${effectiveOvr(player, chem)}</span></div></div>` : `<div class="badge">${escapeHtml(slot.key)}</div>`}
-          <div class="tag">${filled ? `${isChannelSubscriber(player) ? '<span class="sub-star">★</span>' : ''}${escapeHtml(displayNameShort(player.name))}${bonus ? `<span class="chem-chip ${bonus < 0 ? 'malus' : ''}">${formatSigned(bonus)}</span>` : ''}` : escapeHtml(slot.key)}</div>
+          ${filled ? `<div class="jersey-wrap">${isChannelSubscriber(player) ? '<span class="jersey-sub-star">★</span>' : ''}<div class="jersey"><span class="jersey-number">${effectiveOvr(player, chem)}</span></div></div>` : `<div class="badge">${escapeHtml(slotDisplayLabel(slot))}</div>`}
+          <div class="tag">${filled ? `${isChannelSubscriber(player) ? '<span class="sub-star">★</span>' : ''}${escapeHtml(displayNameShort(player.name))}${bonus ? `<span class="chem-chip ${bonus < 0 ? 'malus' : ''}">${formatSigned(bonus)}</span>` : ''}` : escapeHtml(slotDisplayLabel(slot))}</div>
         </div>`;
       }).join('');
       els.pitchSlots.querySelectorAll('.slot.available').forEach(el => el.addEventListener('click', () => confirmPlacement(el.dataset.slotId)));
@@ -6199,14 +6322,14 @@
         const coachBonus = player ? (chem.playerCoachBonus[player.id] || 0) : 0;
         const roleMalus = player ? (chem.playerRoleMalus[player.id] || 0) : 0;
         const otherBonus = Math.max(0, bonus - subBonus - coachBonus - roleMalus);
-        return `<div class="box-row"><span class="pos">${escapeHtml(slot.key)}</span><span class="line">${player ? `${escapeHtml(displayNameShort(player.name))}${subBonus ? `<span class="row-bonus sub-bonus">ABB ${formatSigned(subBonus)}</span>` : ''}${coachBonus ? `<span class="row-bonus">ALL ${formatSigned(coachBonus)}</span>` : ''}${otherBonus ? `<span class="row-bonus">+${otherBonus} INT</span>` : ''}${roleMalus ? `<span class="row-bonus malus">FUORI ${formatSigned(roleMalus)}</span>` : ''}` : '—'}</span><span class="ovr">${player ? effectiveOvr(player, chem) : ''}</span></div>`;
+        return `<div class="box-row"><span class="pos">${escapeHtml(slotDisplayLabel(slot))}</span><span class="line">${player ? `${escapeHtml(displayNameShort(player.name))}${subBonus ? `<span class="row-bonus sub-bonus">ABB ${formatSigned(subBonus)}</span>` : ''}${coachBonus ? `<span class="row-bonus">ALL ${formatSigned(coachBonus)}</span>` : ''}${otherBonus ? `<span class="row-bonus">+${otherBonus} INT</span>` : ''}${roleMalus ? `<span class="row-bonus malus">FUORI ${formatSigned(roleMalus)}</span>` : ''}` : '—'}</span><span class="ovr">${player ? effectiveOvr(player, chem) : ''}</span></div>`;
       }).join('');
       els.avgOvr.textContent = selected.length ? `${avg.toFixed(1)}${avgBoost ? ` (${formatSigned(avgBoost.toFixed(1))})` : ''}` : '—';
       els.chemistryScore.textContent = selected.length ? `${chem.score}/100` : '0';
       els.chemistryBonus.textContent = `${formatSigned(chem.totalBonus)}${chem.coachTotalBonus ? ` · ALL ${formatSigned(chem.coachTotalBonus)}` : ''}${chem.subscriberTotalBonus ? ` · ABB ${formatSigned(chem.subscriberTotalBonus)}` : ''}${chem.roleMalusTotal ? ` · FUORI ${formatSigned(chem.roleMalusTotal)}` : ''}`;
       els.bestOvr.textContent = selected.length ? best : '—';
       const r = remainingCounts();
-      els.rolesSummary.textContent = `P${r.P} · D${r.D} · C${r.C} · A${r.A}`;
+      els.rolesSummary.textContent = isGaryMode() ? remainingSpecificPositionSummary() : `P${r.P} · D${r.D} · C${r.C} · A${r.A}`;
     }
 
     function renderPlacementModal() {
