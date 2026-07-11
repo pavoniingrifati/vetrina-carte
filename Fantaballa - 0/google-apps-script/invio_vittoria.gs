@@ -11,7 +11,7 @@
   - Classica
   - Gary MEDel
   - HARDa Turan
-  - Campionato del Ca*** con piazzamento finale e punti
+  - Campionato del Ca***: vengono accettate soltanto le stagioni vinte
 */
 
 const SHEET_NAME = 'Classifica';
@@ -130,6 +130,10 @@ function doPost(e) {
     const row = normalizePayload_(payload);
     if (!row.squadra || !row.allenatore) {
       return jsonOutput_({ ok:false, error:'Squadra o allenatore mancanti' });
+    }
+    const isCampionato = /campionato|stagione/i.test(String(row.modalita || ''));
+    if (isCampionato && Number(row.posizione_finale) !== 1) {
+      return jsonOutput_({ ok:false, error:'Il risultato del Campionato può essere salvato solo con posizione finale 1.' });
     }
 
     const sheet = getSheet_();

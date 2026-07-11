@@ -441,7 +441,7 @@
           <div class="board-title-wrap">
             <div class="label">Risultati finali</div>
             <h2>Campionato del Ca***</h2>
-            <p class="sub">Stagioni concluse: piazzamento finale, punti, rendimento e capocannoniere.</p>
+            <p class="sub">Solo stagioni vinte: punti, rendimento e miglior marcatore della squadra campione.</p>
           </div>
           <button class="expand-btn" type="button" data-toggle-board="campionatoBoard" aria-expanded="false">Vedi tutti i dati</button>
         </div>
@@ -477,7 +477,7 @@
           <div class="board-title-wrap">
             <div class="label">Classifica</div>
             <h2>Capocannonieri</h2>
-            <p class="sub">Somma i gol dei capocannonieri delle run World Cup e aggiunge il Campionato solo quando il capocannoniere appartiene alla squadra del giocatore.</p>
+            <p class="sub">Somma i gol dei capocannonieri delle run World Cup e il miglior marcatore della squadra del giocatore nelle stagioni di Campionato vinte.</p>
           </div>
         </div>
         <div class="table-wrap">
@@ -598,9 +598,11 @@
       }
 
       function scorerEntriesFromRow(row) {
-        // Per il Campionato entra nella classifica generale soltanto un
-        // capocannoniere appartenente alla squadra controllata dal giocatore.
-        const source = modeKindOf(row) === 'campionato'
+        // Per il Campionato entra nella classifica generale il miglior marcatore
+        // della squadra controllata dal giocatore, salvato soltanto nelle stagioni vinte.
+        const isCampionato = modeKindOf(row) === 'campionato';
+        if (isCampionato && finalPositionOf(row) !== 1) return [];
+        const source = isCampionato
           ? valueOf(row, ['capocannoniere_giocatore','capocannoniereGiocatore','userTopScorer','playerOwnedTopScorer'], '')
           : scorerTextOf(row);
         const parsed = parseScorerString(source);
@@ -862,7 +864,7 @@
         const classicRows = rows.filter(row => modeKindOf(row) === 'classic');
         const garyRows = rows.filter(row => modeKindOf(row) === 'gary');
         const hardRows = rows.filter(row => modeKindOf(row) === 'hard');
-        const campionatoRows = rows.filter(row => modeKindOf(row) === 'campionato');
+        const campionatoRows = rows.filter(row => modeKindOf(row) === 'campionato' && finalPositionOf(row) === 1);
         renderModeTable(classicBody, classicRows, 'In attesa del primo campione Classica', 'classic');
         renderModeTable(garyBody, garyRows, 'In attesa del primo campione Gary MEDel', 'gary');
         renderModeTable(hardBody, hardRows, 'In attesa del primo campione HARDa Turan', 'hard');
