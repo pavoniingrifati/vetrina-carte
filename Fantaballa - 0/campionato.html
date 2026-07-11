@@ -1640,6 +1640,45 @@
       .season-candidate .season-chip.chemistry{font-size:9.5px!important;padding:5px 7px!important}
     }
 
+  
+    /* UI CLEANUP DRAFT CAMPIONATO */
+    .hero.hero-season{min-height:210px}
+    .hero-season-inner{grid-template-columns:minmax(0,1fr)!important;padding:28px!important}
+    .hero-season-copy{max-width:840px}
+    .hero-season-highlights,.hero-season-side{display:none!important}
+    .season-draft-quick-actions{display:none!important}
+    .season-draft-panel-right .season-summary-card{display:none!important}
+    .season-box-score-head{border-bottom:0!important;padding-bottom:0!important;margin-bottom:10px}
+    .season-box-score-head strong{font-size:18px!important}
+    .season-box-score-number{color:#ffe96c!important;text-shadow:0 3px 0 rgba(0,0,0,.18)}
+    .season-draw-card{background:linear-gradient(135deg,var(--draw-a,#245786),var(--draw-b,#10243a))!important;color:var(--draw-c,#fff)!important;border:2px solid rgba(255,255,255,.2)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 10px 24px rgba(0,0,0,.26)!important}
+    .season-draw-row{display:block!important}
+    .season-draw-copy{min-width:0}
+    .season-draw-code,.season-draw-sub{display:none!important}
+    .season-draw-head{margin-bottom:10px!important}
+    .season-draw-nation{display:block!important;margin:0!important;max-width:100%!important;font-size:clamp(22px,3vw,36px)!important;line-height:.98!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;letter-spacing:-.03em;text-transform:uppercase}
+    .season-draw-mini{background:rgba(255,255,255,.18)!important;color:#fff7cf!important}
+    .season-draw-pick{background:rgba(255,255,255,.92)!important;color:var(--draw-ink,#10243a)!important}
+    .season-draft-identity>div{background:rgba(255,255,255,.08)!important}
+    .season-candidates-head{margin-top:16px!important}
+    .season-candidate-list{max-height:720px!important;overflow-y:auto!important;overflow-x:hidden!important;padding-right:8px!important}
+    .season-candidate{min-height:70px!important;grid-template-columns:42px 40px minmax(0,1fr) auto!important}
+    .season-candidate-rank{width:30px!important;min-width:30px!important;height:30px!important;padding:0!important;font-size:10px!important;border-radius:999px!important}
+    .season-candidate-name{font-size:16px!important;line-height:1.04!important}
+    .season-candidate-meta{margin-top:6px!important;gap:6px!important;align-items:center!important;flex-wrap:wrap}
+    .season-candidate .season-chip.position,.season-candidate .season-chip.chemistry{padding:6px 9px!important;font-size:11px!important;line-height:1!important;min-height:25px;align-items:center}
+    .season-candidate .season-chip.sub{padding:6px 8px!important;font-size:9px!important;min-height:25px;align-items:center}
+    .season-candidate .season-chip.position{background:#efe6ff!important;color:#5d3a92!important}
+    .season-candidate .season-chip.chemistry{background:#ffe96c!important;color:#10243a!important}
+    .season-roster-mini{margin-top:12px!important;max-height:none!important}
+    @media(max-width:860px){
+      .hero.hero-season{min-height:0}
+      .hero-season-inner{padding:20px!important}
+      .season-draw-nation{font-size:clamp(18px,8vw,30px)!important}
+      .season-roll-actions{grid-template-columns:1fr 1fr!important}
+      .season-candidate-list{max-height:720px!important}
+    }
+
   </style>
 </head>
 <body>
@@ -1648,7 +1687,7 @@
     <div class="brand"><img src="assets/fantaballa-logo.png" alt="Fantaballa"><div><b>Campionato del Ca***</b><span>Una stagione · 38 giornate · Regole Gary MEDel</span></div></div>
     <div class="top-actions"><a class="btn" href="index.html">Menu modalità</a><button id="resetBtn" class="btn red" type="button">Azzera stagione</button></div>
   </header>
-  <section class="hero hero-season"><div class="hero-season-inner"><div class="hero-season-copy"><div class="hero-kicker">Modalità stagione</div><h1>Campionato del Ca***</h1><p>Draft iniziale, 11 titolari e 3 panchinari. Posizioni precise, infortuni, squalifiche, eventi e decisioni casuali. Dopo la giornata 19 il draft permette da 1 a 3 cambi, in base agli eventi della stagione.</p><div class="hero-season-highlights"><span class="hero-season-pill"><em>11</em> titolari</span><span class="hero-season-pill"><em>3</em> panchinari</span><span class="hero-season-pill">Posizioni precise</span><span class="hero-season-pill">Eventi & decisioni</span><span class="hero-season-pill">Draft di metà stagione</span></div></div><div class="hero-season-side"><div class="hero-season-card"><b>Dentro il box</b><ul><li>Infortuni e squalifiche</li><li>Bonus e malus casuali</li><li>Cambi di mercato alla 19ª</li><li>Stagione completa da vivere</li></ul></div></div></div></section>
+  <section class="hero hero-season"><div class="hero-season-inner"><div class="hero-season-copy"><div class="hero-kicker">Modalità stagione</div><h1>Campionato del Ca***</h1><p>Draft iniziale, 11 titolari e 3 panchinari. Posizioni precise, infortuni, squalifiche, eventi e decisioni casuali. Dopo la giornata 19 il draft permette da 1 a 3 cambi, in base agli eventi della stagione.</p></div></div></section>
   <main id="screen"></main>
 </div>
 <div id="modalRoot"></div><div id="toast" class="toast"></div>
@@ -2084,14 +2123,13 @@ function showDraft(){
  const canReroll=hasPack&&state.draft.rerolls>0&&!draftComplete();
  const chemistry=draftChemistry();
  const effectiveAverage=draftEffectiveAverageOvr(chemistry);
- const benchLeft=Math.max(0,3-bench);
- const starterSlots=remainingSlotSummary();
- const freeSlots=`${starterSlots}${benchLeft?` · PAN×${benchLeft}`:''}`;
  const rollDisabled=draftRolling||draftComplete()||(hasPack&&!canReroll);
  const rerollWord=state.draft.rerolls===1?'RE-ROLL DISPONIBILE':'RE-ROLL DISPONIBILI';
  const rollText=draftRolling?'Apertura pack…':!hasPack?'Rolla la nazionale 🎲':state.draft.rerolls>0?`Re-rolla · ${state.draft.rerolls} rimasti 🎲`:'Re-roll terminati';
  const centerRollTitle=draftRolling?'APERTURA PACK…':!hasPack?'ROLLA LA NAZIONALE':state.draft.rerolls>0?'RE-ROLLA LA NAZIONALE':'RE-ROLL TERMINATI';
  const centerRollSub=draftRolling?'Sto aprendo il pacchetto nazionale':!hasPack?'Estrai una nazionale casuale':state.draft.rerolls>0?`${state.draft.rerolls} ${rerollWord}`:'Scegli uno dei giocatori già estratti';
+ const drawPal=state.draft.nation?nationPalette(state.draft.nation):{a:'#1d4c78',b:'#10243a',c:'#f7f1dc',ink:'#10243a'};
+ const drawStyle=`--draw-a:${drawPal.a};--draw-b:${drawPal.b};--draw-c:${drawPal.c};--draw-ink:${drawPal.ink}`;
  screen.innerHTML=`<div class="season-draft-page">
    <nav class="season-mobile-tabs" id="seasonMobileTabs" role="tablist" aria-label="Sezioni draft">
      <button type="button" class="season-mobile-tab ${mobileDraftTab==='players'?'active':''}" id="seasonMobilePlayers" data-mobile-tab="players" role="tab" aria-controls="seasonPlayersPane" aria-selected="${mobileDraftTab==='players'?'true':'false'}"><span class="season-mobile-tab-icon" aria-hidden="true">👥</span><span>Giocatori</span><b>${state.draft.candidates.length||0}</b></button>
@@ -2100,9 +2138,8 @@ function showDraft(){
    </nav>
    <div class="season-draft-shell">
      <aside id="seasonPlayersPane" class="season-draft-panel season-draft-panel-left season-mobile-pane ${mobileDraftTab==='players'?'mobile-active':''}" data-mobile-pane="players" role="tabpanel" aria-labelledby="seasonMobilePlayers">
-       <div class="season-draft-quick-actions"><button id="backSetupBtn" class="btn">Modulo</button><button id="resetDraftBtn" class="btn red">Reset draft</button></div>
        <div class="season-draft-identity"><div><span>Squadra</span><b>${esc(state.teamName)}</b></div><div><span>Allenatore</span><b>${esc(state.coachName)}</b></div></div>
-       <div class="season-draw-card"><div class="season-draw-head"><span class="season-draw-mini">Drawn</span><span class="season-draw-pick">Pick ${String(Math.min(14,total+1)).padStart(2,'0')}</span></div><div class="season-draw-row"><span class="season-draw-code">${state.draft.nation?esc(state.draft.nation.slice(0,1).toUpperCase()):'N'}</span><div><div class="season-draw-nation">${state.draft.nation?esc(state.draft.nation):'Apri il pack'}</div><div class="season-draw-sub">${hasPack?'Scegli il calciatore e poi mettilo in campo o in panchina':'Pesca una nazionale casuale'}</div></div></div></div>
+       <div class="season-draw-card" style="${drawStyle}"><div class="season-draw-head"><span class="season-draw-mini">Drawn</span><span class="season-draw-pick">Pick ${String(Math.min(14,total+1)).padStart(2,'0')}</span></div><div class="season-draw-row"><div class="season-draw-copy"><div class="season-draw-nation" title="${state.draft.nation?esc(state.draft.nation):'Apri il pack'}">${state.draft.nation?esc(state.draft.nation):'Apri il pack'}</div></div></div></div>
        <div class="season-roll-actions"><button id="draftRollBtn" class="season-roll-btn" ${rollDisabled?'disabled':''}>${rollText}</button><button id="resetDraftBtnDesktop" class="season-roll-reset" type="button">↺ Reset draft</button></div>
        <div class="season-reroll-note ${hasPack?'active-reroll':'first-roll'}">${hasPack?(state.draft.rerolls>0?`Ti restano ${state.draft.rerolls} re-roll su 3. · `:'Hai terminato i re-roll. · '):''}Le riserve possono essere scelte in qualsiasi momento.</div>
        <div class="season-candidates-head"><span>Scegli un giocatore</span><span>${state.draft.candidates.length||0} validi</span></div>
@@ -2115,19 +2152,6 @@ function showDraft(){
      <aside id="seasonRosterPane" aria-labelledby="seasonMobileRoster" class="season-draft-panel season-draft-panel-right season-mobile-pane ${mobileDraftTab==='roster'?'mobile-active':''}" data-mobile-pane="roster" role="tabpanel">
        <div class="season-box-score-head"><div><strong>Box score · ${starters}/11</strong><small class="season-box-score-label">Overall medio titolari</small></div><span class="season-box-score-number">${starters?Math.round(effectiveAverage):0}</span></div>
        ${renderRosterMini()}
-       <div class="season-summary-card"><div class="season-summary-title">Riepilogo squadra</div><div class="season-summary-grid">
-         <div class="season-summary-row"><span>Squadra</span><b>${esc(state.teamName)}</b></div>
-         <div class="season-summary-row"><span>Allenatore</span><b>${esc(state.coachName)}</b></div>
-         <div class="season-summary-row"><span>Modulo</span><b>${esc(state.formation)}</b></div>
-         <div class="season-summary-row"><span>Titolari</span><b>${starters}/11</b></div>
-         <div class="season-summary-row"><span>Riserve</span><b>${bench}/3</b></div>
-         <div class="season-summary-row"><span>OVR rosa base</span><b>${total?draftAverageOvr().toFixed(1):'—'}</b></div>
-         <div class="season-summary-row intesa"><span>OVR titolari + intesa</span><b>${starters?effectiveAverage.toFixed(1):'—'}</b></div>
-         <div class="season-summary-row intesa"><span>Intesa</span><b>${chemistry.score}/100</b></div>
-         <div class="season-summary-row intesa"><span>Bonus intesa</span><b>${formatSignedIntesa(chemistry.totalBonus)}</b></div>
-         <div class="season-summary-row"><span>Abbonati</span><b>${draftSubscriberCount()}</b></div>
-         <div class="season-summary-row"><span>Slot rimasti</span><b>${esc(freeSlots)}</b></div>
-       </div></div>
        ${draftComplete()?`<div class="season-draft-complete"><h3>Rosa pronta</h3><div>11 titolari e 3 riserve selezionati con regole Gary MEDel.</div><button id="startSeasonBtn" class="btn primary">Inizia il campionato</button></div>`:''}
      </aside>
    </div>
@@ -2138,10 +2162,15 @@ function showDraft(){
  document.querySelectorAll('.season-bench-slot.available').forEach(button=>button.onclick=()=>placeDraftBench(button.dataset.benchSlot));
  const roll=document.getElementById('draftRollBtn');if(roll)roll.onclick=()=>drawDraft(hasPack);
  const rollCenter=document.getElementById('draftRollBtnCenter');if(rollCenter)rollCenter.onclick=()=>drawDraft(hasPack);
- const reset=document.getElementById('resetDraftBtn');if(reset)reset.onclick=resetSeasonDraft;
- const back=document.getElementById('backSetupBtn');if(back)back.onclick=backToSeasonSetup;
- const resetDesktop=document.getElementById('resetDraftBtnDesktop');if(resetDesktop)resetDesktop.onclick=resetSeasonDraft;
- const start=document.getElementById('startSeasonBtn');if(start)start.onclick=finalizeDraft;
+ const reset=document.getElementById('resetDraftBtn');if(reset)reset.onclick=resetDraft;
+ const resetDesktop=document.getElementById('resetDraftBtnDesktop');if(resetDesktop)resetDesktop.onclick=resetDraft;
+ const back=document.getElementById('backSetupBtn');if(back)back.onclick=()=>{state.phase='setup';save();render()};
+ const start=document.getElementById('startSeasonBtn');if(start)start.onclick=startSeason;
+ if(draftComplete())setMobileDraftTab('roster',false);
+ else if(state.draft.pendingPlayerId&&window.matchMedia('(max-width:860px)').matches)setMobileDraftTab('field',false);
+ else if(!window.matchMedia('(max-width:860px)').matches){
+   mobileDraftTab='players';
+ }
 }
 
 function buildNationRoster(nation){
