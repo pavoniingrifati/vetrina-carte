@@ -1224,6 +1224,27 @@
       .season-field-slot.filled .season-slot-name{max-width:106px!important;font-size:10px!important}
     }
 
+    /* DRAFT: toolbar ridondante rimossa e posizione pagina stabile */
+    .season-draft-toolbar{display:none!important}
+    .season-draft-quick-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      margin-bottom:10px;
+    }
+    .season-draft-quick-actions .btn{
+      padding:8px 11px;
+      font-size:11px;
+      min-height:38px;
+    }
+    @media(max-width:860px){
+      .season-draft-quick-actions{
+        position:static;
+        justify-content:stretch;
+      }
+      .season-draft-quick-actions .btn{flex:1}
+    }
+
   </style>
 </head>
 <body>
@@ -1434,6 +1455,7 @@ async function playSeasonPackReveal(possibleNations,finalNation,isReroll){
 }
 async function drawDraft(useReroll=false){
  if(draftRolling||draftComplete())return;
+ const savedScrollY=window.scrollY;
  if(useReroll){
    if(state.draft.rerolls<=0)return toast('Re-roll terminati');
    if(state.draft.rerolls===1&&!confirm('Questo è l’ultimo re-roll disponibile. Vuoi cambiare davvero la nazionale?'))return;
@@ -1447,28 +1469,32 @@ async function drawDraft(useReroll=false){
  state.draft.pendingPlayerId='';
  state.draft.candidates=[];
  save();
- render();
+ document.querySelectorAll('#draftRollBtn,#draftRollBtnCenter').forEach(button=>{
+   button.disabled=true;
+   button.setAttribute('aria-busy','true');
+ });
  try{
    await playSeasonPackReveal(possible,finalNation,useReroll);
    const drawn=draftCandidatesForNation(finalNation);
    state.draft.nation=finalNation;
-   state.draft.candidates=drawn.map(p=>String(p.id));
+   state.draft.candidates=drawn.map(player=>String(player.id));
    if(!state.draft.candidates.length)throw new Error(`Nessun giocatore disponibile per ${finalNation}`);
    mobileDraftTab='players';
+   draftRolling=false;
    save();
    render();
-   requestAnimationFrame(()=>document.querySelector('.season-candidate-list')?.scrollIntoView({behavior:'smooth',block:'start'}));
+   requestAnimationFrame(()=>window.scrollTo({top:savedScrollY,left:0,behavior:'auto'}));
  }catch(error){
    console.error('Errore apertura pack campionato',error);
    modalRoot.innerHTML='';
    state.draft.nation='';
    state.draft.candidates=[];
    if(useReroll)state.draft.rerolls=Math.min(3,state.draft.rerolls+1);
-   toast('Errore durante il pack. Riprova senza perdere il re-roll.');
- }finally{
    draftRolling=false;
    save();
    render();
+   requestAnimationFrame(()=>window.scrollTo({top:savedScrollY,left:0,behavior:'auto'}));
+   toast('Errore durante il pack. Riprova senza perdere il re-roll.');
  }
 }
 function selectDraftCandidate(id){if(draftRolling||draftComplete())return;const p=playerById(id);if(!draftPlayerIsValid(p))return toast('Giocatore non compatibile con gli slot rimasti.');const selecting=state.draft.pendingPlayerId!==String(id);state.draft.pendingPlayerId=selecting?String(id):'';if(selecting)mobileDraftTab='field';save();render()}
@@ -1584,7 +1610,6 @@ function showDraft(){
  const starters=starterEntries().length;
  const bench=benchEntries().length;
  const total=starters+bench;
- const pct=Math.round(total/14*100);
  const hasPack=state.draft.candidates.length>0;
  const canReroll=hasPack&&state.draft.rerolls>0&&!draftComplete();
  const chemistry=draftChemistry();
@@ -1592,23 +1617,12 @@ function showDraft(){
  const benchLeft=Math.max(0,3-bench);
  const starterSlots=remainingSlotSummary();
  const freeSlots=`${starterSlots}${benchLeft?` · PAN×${benchLeft}`:''}`;
- const stepTitle=draftComplete()?'Rosa completata':'Costruisci la rosa';
- const stepSubtitle=draftComplete()?'11 titolari e 3 riserve pronti per il campionato.':'Regole Gary MEDel con 11 titolari e 3 riserve selezionabili anche subito.';
  const rollDisabled=draftRolling||draftComplete()||(hasPack&&!canReroll);
  const rerollWord=state.draft.rerolls===1?'RE-ROLL DISPONIBILE':'RE-ROLL DISPONIBILI';
  const rollText=draftRolling?'Apertura pack…':!hasPack?'Rolla la nazionale 🎲':state.draft.rerolls>0?`Re-rolla · ${state.draft.rerolls} rimasti 🎲`:'Re-roll terminati';
  const centerRollTitle=draftRolling?'APERTURA PACK…':!hasPack?'ROLLA LA NAZIONALE':state.draft.rerolls>0?'RE-ROLLA LA NAZIONALE':'RE-ROLL TERMINATI';
- const centerRollSub=draftRolling?'Sto aprendo il pacchetto nazionale':!hasPack?'Primo sorteggio gratuito':state.draft.rerolls>0?`${state.draft.rerolls} ${rerollWord}`:'Scegli uno dei giocatori già estratti';
+ const centerRollSub=draftRolling?'Sto aprendo il pacchetto nazionale':!hasPack?'Estrai una nazionale casuale':state.draft.rerolls>0?`${state.draft.rerolls} ${rerollWord}`:'Scegli uno dei giocatori già estratti';
  screen.innerHTML=`<div class="season-draft-page">
-   <div class="season-draft-toolbar">
-     <div class="season-draft-toolbar-copy">
-       <div class="season-draft-kicker">Draft Campionato · Gary MEDel</div>
-       <h2>${stepTitle}</h2>
-       <div class="season-draft-sub">${stepSubtitle}</div>
-       <div class="season-draft-progress-wrap"><div class="season-draft-progress"><span style="width:${pct}%"></span></div><span class="season-draft-progress-text">${total}/14 completati</span></div>
-     </div>
-     <div class="season-draft-toolbar-actions"><button id="backSetupBtn" class="btn">Modulo</button><button id="resetDraftBtn" class="btn red">Reset draft</button></div>
-   </div>
    <nav class="season-mobile-tabs" id="seasonMobileTabs" role="tablist" aria-label="Sezioni draft">
      <button type="button" class="season-mobile-tab ${mobileDraftTab==='players'?'active':''}" id="seasonMobilePlayers" data-mobile-tab="players" role="tab" aria-controls="seasonPlayersPane" aria-selected="${mobileDraftTab==='players'?'true':'false'}"><span class="season-mobile-tab-icon" aria-hidden="true">👥</span><span>Giocatori</span><b>${state.draft.candidates.length||0}</b></button>
      <button type="button" class="season-mobile-tab ${mobileDraftTab==='field'?'active':''}" id="seasonMobileField" data-mobile-tab="field" role="tab" aria-controls="seasonFieldPane" aria-selected="${mobileDraftTab==='field'?'true':'false'}"><span class="season-mobile-tab-icon" aria-hidden="true">⚽</span><span>Campo</span><b>${starters}/11</b>${state.draft.pendingPlayerId?'<i class="season-mobile-tab-alert" aria-label="Giocatore da posizionare"></i>':''}</button>
@@ -1616,10 +1630,11 @@ function showDraft(){
    </nav>
    <div class="season-draft-shell">
      <aside id="seasonPlayersPane" class="season-draft-panel season-draft-panel-left season-mobile-pane ${mobileDraftTab==='players'?'mobile-active':''}" data-mobile-pane="players" role="tabpanel" aria-labelledby="seasonMobilePlayers">
+       <div class="season-draft-quick-actions"><button id="backSetupBtn" class="btn">Modulo</button><button id="resetDraftBtn" class="btn red">Reset draft</button></div>
        <div class="season-draft-identity"><div><span>Squadra</span><b>${esc(state.teamName)}</b></div><div><span>Allenatore</span><b>${esc(state.coachName)}</b></div></div>
        <div class="season-draw-card"><div class="season-draw-head"><span class="season-draw-mini">Drawn</span><span class="season-draw-pick">Pick ${String(Math.min(14,total+1)).padStart(2,'0')}</span></div><div class="season-draw-row"><span class="season-draw-code">${state.draft.nation?esc(state.draft.nation.slice(0,1).toUpperCase()):'N'}</span><div><div class="season-draw-nation">${state.draft.nation?esc(state.draft.nation):'Apri il pack'}</div><div class="season-draw-sub">${hasPack?'Scegli il calciatore e poi mettilo in campo o in panchina':'Pesca una nazionale casuale'}</div></div></div></div>
        <div class="season-roll-actions"><button id="draftRollBtn" class="season-roll-btn" ${rollDisabled?'disabled':''}>${rollText}</button><button id="resetDraftBtnDesktop" class="season-roll-reset" type="button">↺ Reset draft</button></div>
-       <div class="season-reroll-note ${hasPack?'active-reroll':'first-roll'}">${!hasPack?'Il primo roll non consuma tentativi.':state.draft.rerolls>0?`Ti restano ${state.draft.rerolls} re-roll su 3.`:'Hai terminato i re-roll: scegli dalla nazionale attuale.'} · Le riserve possono essere scelte in qualsiasi momento.</div>
+       <div class="season-reroll-note ${hasPack?'active-reroll':'first-roll'}">${hasPack?(state.draft.rerolls>0?`Ti restano ${state.draft.rerolls} re-roll su 3. · `:'Hai terminato i re-roll. · '):''}Le riserve possono essere scelte in qualsiasi momento.</div>
        <div class="season-candidates-head"><span>Scegli un giocatore</span><span>${state.draft.candidates.length||0} validi</span></div>
        <div class="season-candidate-list">${renderDraftCandidates()}</div>
      </aside>
