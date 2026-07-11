@@ -1695,6 +1695,50 @@
     .opponent-roster-details summary{display:flex;align-items:center;gap:8px}.opponent-roster-details summary .team-color-dot{width:16px;height:16px}
     @media(max-width:700px){.next-match{grid-template-columns:1fr}.versus{font-size:24px}.next-team-card{width:100%}.calendar-clubs{font-size:11px}}
 
+  
+    /* DRAFT DI META STAGIONE: AVATAR E OVR ATTUALE */
+    .midseason-player-row{
+      display:grid!important;
+      grid-template-columns:40px minmax(0,1fr) auto!important;
+      align-items:center!important;
+      gap:10px!important;
+      min-height:68px;
+    }
+    .midseason-player-copy{display:block;min-width:0;text-align:left}
+    .midseason-player-copy b,.midseason-player-copy .name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;font-weight:1000;color:#10243a}
+    .midseason-player-copy small{display:block;color:#6b593d;font-weight:850;margin-top:4px}
+    .midseason-current-ovr{display:grid;justify-items:center;align-content:center;min-width:66px;padding:7px 8px;border-radius:13px;background:#10243a;color:#fff;line-height:1}
+    .midseason-current-ovr strong{font-size:22px;color:#ffe96c}
+    .midseason-current-ovr small{margin-top:4px!important;color:#dfe9f2!important;font-size:7px!important;font-weight:1000!important;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+    .midseason-sub-star{color:#7b4cb8;margin-right:4px}
+    .outgoing.subscriber{border-color:#a77bd3;background:linear-gradient(180deg,#f3ebff,#fff)}
+    .midseason-candidate-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+    .midseason-market-player{display:grid!important;grid-template-columns:40px minmax(0,1fr) auto!important;align-items:center!important;gap:10px!important;min-height:76px;padding:11px!important}
+    .midseason-market-player .meta{margin-top:5px!important}
+    .midseason-market-player.subscriber{border-color:#a77bd3;background:linear-gradient(180deg,#f3ebff,#fffdf7)}
+    @media(max-width:760px){
+      .midseason-candidate-grid{grid-template-columns:1fr!important}
+      .midseason-current-ovr{min-width:58px;padding:7px 6px}
+      .midseason-current-ovr strong{font-size:20px}
+    }
+
+  
+    .season-finished-view,.season-finished-view *{color:#10243a;}
+    .season-finished-view .label{color:#ab5a1f!important;}
+    .season-finished-view .final-hero h2{color:#10243a!important;}
+    .season-finished-view .final-hero p,.season-finished-view .panel p{color:#4b5563!important;}
+    .season-finished-view .final-position{color:#10243a!important;}
+    .season-finished-view .final-grid .stat{background:#fff;border:1px solid #d8ccb1;}
+    .season-finished-view .final-grid .stat b{color:#10243a!important;}
+    .season-finished-view .final-grid .stat span{color:#6b5f4d!important;}
+    .season-finished-view .season-finished-table{margin-top:12px;}
+    .season-finished-view table{background:#ffffff;color:#10243a;border:1px solid #d8ccb1;}
+    .season-finished-view th{background:#10243a;color:#fff!important;}
+    .season-finished-view td{color:#2f3a46!important;background:#ffffff;}
+    .season-finished-view tbody tr:nth-child(even) td{background:#faf7ef;}
+    .season-finished-view .us-row td{background:#fff0a8!important;color:#10243a!important;font-weight:1000;}
+    .season-finished-view .standing-team span{color:#10243a!important;}
+
   </style>
 </head>
 <body>
@@ -2703,6 +2747,15 @@ function continueAfterBotMarket(){
  render();
  toast('Draft automatico completato')
 }
+function midseasonDisplayedOvr(player,entry=null){
+ const base=Math.round(Number(player?.ovr)||0);
+ let bonus=Math.round(activeEffectBonus(player)||0);
+ if(entry&&!entry.bench){
+   const starters=starterEntries().map(item=>item.player).filter(Boolean);
+   bonus+=Math.round(chemistryBase(player,starters)||0);
+ }
+ return Math.max(1,base+bonus);
+}
 function showMidseason(){
  const ms=state.midseason;
  ms.target=clamp(Number(ms.target)||midseasonTarget(),1,3);
@@ -2715,7 +2768,7 @@ function showMidseason(){
  }
  const selected=ms.outgoingId?rosterEntry(ms.outgoingId):null;
  const remaining=Math.max(0,ms.target-ms.step);
- screen.innerHTML=`<section class="panel"><div class="label">Giro di boa</div><h2 class="midseason-title">Draft di metà campionato</h2><p class="midseason-copy">${flexible?`Puoi scegliere liberamente se fare <b>0, 1 o 2 cambi</b>.`:`In questa stagione devi effettuare <b>${ms.target}</b> ${ms.target===1?'cambio':'cambi'} per effetto degli eventi.`} Se sostituisci un titolare, il nuovo giocatore deve essere compatibile con il suo slot preciso.</p><div class="midseason-shell"><div class="midseason-panel"><div class="midseason-tip">1. scegli chi lascia la rosa</div><div class="midseason-count"><span class="chip">Fatti: ${ms.step}</span><span class="chip">Disponibili: ${remaining}</span>${flexible?'<span class="chip">Scelta libera 0–2</span>':''}</div><div class="outgoing-list">${rosterPlayers().map(entry=>`<button class="outgoing ${ms.outgoingId===entry.playerId?'active':''}" data-out="${esc(entry.playerId)}"><b>${esc(entry.player.name)}</b><small>${esc(entry.slot)} · ${esc(entry.player.Position)}${entry.bench?' · Panchina':''}</small></button>`).join('')}</div></div><div class="midseason-panel"><div class="midseason-tip">2. nuovo draft ${ms.target>1?`(${Math.min(ms.step+1,ms.target)}/${ms.target})`:''}</div><div class="midseason-choice-note">${selected?`Stai sostituendo <b>${esc(selected.player.name)}</b> nello slot <b>${esc(selected.slot)}</b>.`:flexible?'Se vuoi, puoi anche chiudere il draft senza fare cambi oppure fermarti dopo il primo.':'Seleziona un giocatore dalla rosa per iniziare il cambio.'}</div>${selected?`<div class="midseason-draw-actions"><button id="drawMarket" class="btn gold">${ms.clubId?'Cambia club':'Estrai club'}</button>${flexible||ms.step>0?'<button id="finishMidseasonNow" class="btn secondary-strong">Chiudi il draft</button>':''}</div>${ms.clubId?`<div class="midseason-summary-card" style="${teamCssVars({colors:marketClub()?.colorClub})}"><div class="need">Club estratto</div><div class="nation-name">${esc(marketClub()?.name||ms.clubId)}</div></div><div class="candidate-grid">${ms.candidates.map(id=>{const player=playerById(id);return `<button class="candidate" data-market="${id}"><div class="name">${esc(player.name)}</div><div class="meta"><span class="chip">${esc(player.Position)}</span><span class="chip ovr">OVR ${player.ovr}</span>${isSubscriber(player)?'<span class="chip sub">ABB</span>':''}</div></button>`}).join('')}</div>`:''}`:`<div class="midseason-actions">${flexible?'<button id="finishMidseasonNow" class="btn secondary-strong">Nessun cambio, continua</button>':''}</div>`}${flexible&&ms.step===1?'<div class="midseason-actions"><button id="finishAfterOne" class="btn primary">Conferma 1 cambio e continua</button></div>':''}</div></div></section>`;
+ screen.innerHTML=`<section class="panel"><div class="label">Giro di boa</div><h2 class="midseason-title">Draft di metà campionato</h2><p class="midseason-copy">${flexible?`Puoi scegliere liberamente se fare <b>0, 1 o 2 cambi</b>.`:`In questa stagione devi effettuare <b>${ms.target}</b> ${ms.target===1?'cambio':'cambi'} per effetto degli eventi.`} Se sostituisci un titolare, il nuovo giocatore deve essere compatibile con il suo slot preciso.</p><div class="midseason-shell"><div class="midseason-panel"><div class="midseason-tip">1. scegli chi lascia la rosa</div><div class="midseason-count"><span class="chip">Fatti: ${ms.step}</span><span class="chip">Disponibili: ${remaining}</span>${flexible?'<span class="chip">Scelta libera 0–2</span>':''}</div><div class="outgoing-list">${rosterPlayers().map(entry=>{const currentOvr=midseasonDisplayedOvr(entry.player,entry);const sub=isSubscriber(entry.player);return `<button class="outgoing midseason-player-row ${ms.outgoingId===entry.playerId?'active':''} ${sub?'subscriber':''}" data-out="${esc(entry.playerId)}">${renderMiniAvatar(entry.player,'small')}<span class="midseason-player-copy"><b>${sub?'<span class="midseason-sub-star">★</span>':''}${esc(entry.player.name)}</b><small>${esc(entry.slot)} · ${esc(entry.player.Position)}${entry.bench?' · Panchina':''}</small></span><span class="midseason-current-ovr"><strong>${currentOvr}</strong><small>OVR attuale</small></span></button>`}).join('')}</div></div><div class="midseason-panel"><div class="midseason-tip">2. nuovo draft ${ms.target>1?`(${Math.min(ms.step+1,ms.target)}/${ms.target})`:''}</div><div class="midseason-choice-note">${selected?`Stai sostituendo <b>${esc(selected.player.name)}</b> nello slot <b>${esc(selected.slot)}</b>.`:flexible?'Se vuoi, puoi anche chiudere il draft senza fare cambi oppure fermarti dopo il primo.':'Seleziona un giocatore dalla rosa per iniziare il cambio.'}</div>${selected?`<div class="midseason-draw-actions"><button id="drawMarket" class="btn gold">${ms.clubId?'Cambia club':'Estrai club'}</button>${flexible||ms.step>0?'<button id="finishMidseasonNow" class="btn secondary-strong">Chiudi il draft</button>':''}</div>${ms.clubId?`<div class="midseason-summary-card" style="${teamCssVars({colors:marketClub()?.colorClub})}"><div class="need">Club estratto</div><div class="nation-name">${esc(marketClub()?.name||ms.clubId)}</div></div><div class="candidate-grid midseason-candidate-grid">${ms.candidates.map(id=>{const player=playerById(id);if(!player)return'';const currentOvr=midseasonDisplayedOvr(player);const sub=isSubscriber(player);return `<button class="candidate midseason-market-player ${sub?'subscriber':''}" data-market="${id}">${renderMiniAvatar(player,'small')}<span class="midseason-player-copy"><span class="name">${sub?'<span class="midseason-sub-star">★</span>':''}${esc(player.name)}</span><span class="meta"><span class="chip">${esc(player.Position)}</span>${sub?'<span class="chip sub">ABB</span>':''}</span></span><span class="midseason-current-ovr"><strong>${currentOvr}</strong><small>OVR attuale</small></span></button>`}).join('')}</div>`:''}`:`<div class="midseason-actions">${flexible?'<button id="finishMidseasonNow" class="btn secondary-strong">Nessun cambio, continua</button>':''}</div>`}${flexible&&ms.step===1?'<div class="midseason-actions"><button id="finishAfterOne" class="btn primary">Conferma 1 cambio e continua</button></div>':''}</div></div></section>`;
  document.querySelectorAll('[data-out]').forEach(button=>button.onclick=()=>{
    ms.outgoingId=button.dataset.out;
    ms.clubId='';
@@ -2769,7 +2822,7 @@ function completeMarket(id){
  render();
  if(flexible&&ms.step<ms.target)toast(`Cambio ${ms.step} completato. Puoi fermarti qui oppure farne un altro.`)
 }
-function showFinished(){const table=sortedTable(),rank=table.findIndex(x=>x.id===USER_ID)+1,s=userStanding(),top=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1])[0],topPlayer=top?playerById(top[0]):null;screen.innerHTML=`<section class="panel"><div class="final-hero"><div class="label" style="color:#ffe96c">Stagione conclusa</div><h2>${rank===1?'Campioni!':'Campionato terminato'}</h2><div class="final-position">${rank}°</div><p>${esc(state.teamName)} chiude la stagione dopo 38 giornate.</p></div><div class="final-grid"><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div></div><section class="panel"><h3>Capocannoniere</h3><p>${topPlayer?`<b>${esc(topPlayer.name)}</b> — ${top[1]} gol`:'Nessun marcatore'}</p><div class="top-actions"><button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultati inviati':'Invia risultati'}</button><button id="exportSeason" class="btn gold">Esporta risultati JSON</button></div></section>${renderTable()}</section>`;document.getElementById('sendSeason').onclick=sendSeason;document.getElementById('exportSeason').onclick=exportSeason}
+function showFinished(){const table=sortedTable(),rank=table.findIndex(x=>x.id===USER_ID)+1,s=userStanding(),top=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1])[0],topPlayer=top?playerById(top[0]):null;screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Stagione conclusa</div><h2>${rank===1?'Campioni!':'Campionato terminato'}</h2><div class="final-position">${rank}°</div><p>${esc(state.teamName)} chiude la stagione dopo 38 giornate.</p></div><div class="final-grid"><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div></div><section class="panel"><h3>Capocannoniere</h3><p>${topPlayer?`<b>${esc(topPlayer.name)}</b> — ${top[1]} gol`:'Nessun marcatore'}</p><div class="top-actions"><button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultati inviati':'Invia risultati'}</button><button id="exportSeason" class="btn gold">Esporta risultati JSON</button></div></section><div class="season-finished-table">${renderTable()}</div></section>`;document.getElementById('sendSeason').onclick=sendSeason;document.getElementById('exportSeason').onclick=exportSeason}
 async function sendSeason(){const s=userStanding(),top=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1])[0],p=top?playerById(top[0]):null;const payload={squadra:state.teamName,allenatore:state.coachName,modalita:'Campionato del Ca***',vittorie:s.w,pareggi:s.d,sconfitte:s.l,gol_fatti:s.gf,gol_subiti:s.ga,modulo:state.formation,ovr_medio:Math.round(teamPowerBase()*10)/10,capocannoniere:p?`${p.name} (${top[1]})`:''};const fd=new FormData();fd.append('payload',JSON.stringify(payload));try{await fetch(VICTORY_ENDPOINT,{method:'POST',mode:'no-cors',body:fd});state.submitted=true;save();render();toast('Risultati inviati')}catch{toast('Invio non riuscito')}}
 function exportSeason(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fantaballa-campionato-risultati.json';a.click();URL.revokeObjectURL(a.href)}
 function render(){if(!PLAYERS.length||!CLUBS.length){screen.innerHTML='<section class="panel"><h2>Caricamento database giocatori...</h2></section>';return}if(state.phase==='setup')showSetup();else if(state.phase==='draft')showDraft();else if(state.phase==='season')showSeason();else if(state.phase==='midseason')showMidseason();else if(state.phase==='finished')showFinished()}
