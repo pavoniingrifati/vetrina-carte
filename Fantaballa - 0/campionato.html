@@ -1679,6 +1679,22 @@
       .season-candidate-list{max-height:720px!important}
     }
 
+  
+    /* CLUB CAMPIONATO */
+    .season-club-preview{display:flex;align-items:center;gap:12px;margin:14px 0 18px;padding:12px 14px;border-radius:18px;background:linear-gradient(135deg,var(--club-primary),var(--club-secondary));color:var(--club-text);border:2px solid var(--club-accent);box-shadow:0 8px 20px rgba(16,36,58,.18)}
+    .season-club-preview-badge{display:grid;place-items:center;min-width:58px;height:46px;padding:0 10px;border-radius:14px;background:var(--club-accent);color:#10243a;font-size:13px;font-weight:1000;letter-spacing:.12em}
+    .season-club-preview small{display:block;font-size:9px;font-weight:1000;letter-spacing:.14em;text-transform:uppercase;opacity:.8}.season-club-preview b{display:block;font-size:20px;line-height:1.05}
+    .team-color-dot{display:inline-block;flex:0 0 auto;width:18px;height:18px;border-radius:6px;background:linear-gradient(135deg,var(--team-primary) 0 49%,var(--team-secondary) 51% 100%);border:2px solid var(--team-accent);box-shadow:0 2px 5px rgba(0,0,0,.2);vertical-align:middle}
+    .standing-team{display:inline-flex;align-items:center;gap:8px;min-width:0}.standing-team>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .next-team-card{position:relative;min-width:0;padding:14px 12px;border-radius:18px;background:linear-gradient(145deg,var(--team-primary),var(--team-secondary));color:var(--team-text);border:2px solid var(--team-accent);overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 7px 18px rgba(0,0,0,.18)}
+    .next-team-card .team-name{position:relative;z-index:1;overflow-wrap:anywhere;text-shadow:0 2px 4px rgba(0,0,0,.34)}
+    .next-team-card .subline{position:relative;z-index:1;color:inherit;opacity:.85}
+    .next-team-colors{position:absolute;right:-25px;bottom:-35px;width:105px;height:105px;border-radius:50%;background:var(--team-accent);opacity:.16}
+    .calendar-clubs{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap}.calendar-clubs em{font-style:normal;font-weight:1000}.calendar-clubs .team-color-dot{width:14px;height:14px;border-radius:4px}
+    .opponent-club-panel{border-color:var(--team-accent)!important;box-shadow:inset 0 5px 0 var(--team-primary),var(--shadow)!important}.opponent-club-panel h3{display:flex;align-items:center;gap:9px}
+    .opponent-roster-details summary{display:flex;align-items:center;gap:8px}.opponent-roster-details summary .team-color-dot{width:16px;height:16px}
+    @media(max-width:700px){.next-match{grid-template-columns:1fr}.versus{font-size:24px}.next-team-card{width:100%}.calendar-clubs{font-size:11px}}
+
   </style>
 </head>
 <body>
@@ -1717,9 +1733,9 @@ const FORMATION_LAYOUTS={
  '4-3-1-2':[['ATT',34,13],['ATT',66,13],['COC',50,31],['CC',27,50],['CDC',50,58],['CC',73,50],['TS',12,68],['DC',32,78],['DC',68,78],['TD',88,68],['P',50,90]]
 };
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
-let PLAYERS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;
+let PLAYERS=[];let CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:2,phase:'setup',teamName:'',coachName:'',formation:'4-3-3',draft:{roster:[],nation:'',candidates:[],rerolls:3,pendingPlayerId:''},teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,activeEffects:[],seasonRules:{midseasonPickDelta:0,autoDecisions:false,autoMidseason:false,botMidseason:false},stats:{goals:{},assists:{}},midseason:{step:0,target:2,outgoingId:'',nation:'',candidates:[],auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
+function freshState(){return{version:3,phase:'setup',userClubId:'fantaballa-fc',teamName:'Fantaballa FC',coachName:'',formation:'4-3-3',draft:{roster:[],nation:'',candidates:[],rerolls:3,pendingPlayerId:''},teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,activeEffects:[],seasonRules:{midseasonPickDelta:0,autoDecisions:false,autoMidseason:false,botMidseason:false},stats:{goals:{},assists:{}},midseason:{step:0,target:2,outgoingId:'',nation:'',candidates:[],auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
 function loadState(){try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null')}catch{return null}}
 function save(){localStorage.setItem(SAVE_KEY,JSON.stringify(state))}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -1729,6 +1745,13 @@ function positions(p){return String(p.Position||p.position||p.role||'').split(',
 function compatible(p,code){return positions(p).includes(code)}
 function roleOf(p){return p.role||POSITION_ROLE[positions(p)[0]]||'C'}
 function playerById(id){return PLAYERS.find(p=>String(p.id)===String(id))}
+function clubById(id){return CLUBS.find(club=>String(club.id)===String(id))||null}
+function activeUserClub(){return clubById(state.userClubId)||CLUBS[0]||{id:'fantaballa-fc',name:'Fantaballa FC',shortName:'FAN',colorClub:{primary:'#1769AA',secondary:'#FFFFFF',accent:'#E4C84E',text:'#FFFFFF'}}}
+function normalizeClubColors(source={}){return{primary:source.primary||'#245786',secondary:source.secondary||'#10243A',accent:source.accent||'#FFE96C',text:source.text||'#FFFFFF'}}
+function clubPalette(clubOrId){const club=typeof clubOrId==='string'?clubById(clubOrId):clubOrId;const colors=normalizeClubColors(club?.colorClub||club?.colors||{});return{a:colors.primary,b:colors.secondary,c:colors.accent,ink:colors.text,primary:colors.primary,secondary:colors.secondary,accent:colors.accent,text:colors.text}}
+function teamPalette(team){if(!team)return clubPalette(activeUserClub());const configured=team.colors||clubById(team.clubId||team.id)?.colorClub;if(configured)return clubPalette({colorClub:configured});const legacy=nationPalette(team.name||'club');return{a:legacy.a,b:legacy.b,c:legacy.c,ink:legacy.ink,primary:legacy.a,secondary:legacy.b,accent:legacy.c,text:'#FFFFFF'}}
+function teamCssVars(team){const pal=teamPalette(team);return `--team-primary:${pal.primary};--team-secondary:${pal.secondary};--team-accent:${pal.accent};--team-text:${pal.text}`}
+function teamColorDot(team){return `<span class="team-color-dot" style="${teamCssVars(team)}" aria-hidden="true"></span>`}
 function rosterEntry(id){return state.draft.roster.find(r=>String(r.playerId)===String(id))}
 function rosterPlayers(){return state.draft.roster.map(r=>({...r,player:r.player||playerById(r.playerId)})).filter(r=>r.player)}
 function avg(arr){return arr.length?arr.reduce((s,n)=>s+n,0)/arr.length:0}
@@ -1737,6 +1760,8 @@ function statusOf(id){if(!state.statuses[id])state.statuses[id]={injury:0,suspen
 
 function normalizeCampionatoState(input){
  const next=input&&typeof input==='object'?input:freshState();
+ next.userClubId=String(next.userClubId||'fantaballa-fc');
+ if(!next.teamName)next.teamName=clubById(next.userClubId)?.name||'Fantaballa FC';
  if(!next.draft||typeof next.draft!=='object')next.draft=freshState().draft;
  next.draft.roster=Array.isArray(next.draft.roster)?next.draft.roster:[];
  next.draft.nation=String(next.draft.nation||'');
@@ -1773,16 +1798,24 @@ function normalizeCampionatoState(input){
  next.midseason.changes=Array.isArray(next.midseason.changes)?next.midseason.changes:[];
  next.teams=Array.isArray(next.teams)?next.teams:[];
  next.teams.forEach(team=>{
-   if(!team||team.id===USER_ID)return;
-   team.roster=Array.isArray(team.roster)&&team.roster.length?team.roster.map(String):buildNationRoster(team.name);
+   if(!team)return;
+   const config=team.id===USER_ID?clubById(next.userClubId):clubById(team.clubId||team.id);
+   if(config){
+     team.clubId=config.id;
+     team.shortName=team.shortName||config.shortName;
+     team.colors=team.colors||config.colorClub;
+     if(team.id!==USER_ID)team.name=config.name;
+   }
+   if(team.id===USER_ID)return;
+   team.roster=Array.isArray(team.roster)&&team.roster.length?team.roster.map(String):(config?buildClubRoster(config.id):buildNationRoster(team.name));
    team.statuses=team.statuses&&typeof team.statuses==='object'?team.statuses:{};
    if(team.mascot&&typeof team.mascot==='object'){
      team.mascot.id=String(team.mascot.id||`mascot-${team.id}`);
      team.mascot.ovr=99;
    }
-   team.strength=Number(team.strength)||nationalStrength(team.name);
+   team.strength=Number(team.strength)||(config?clubStrength(config.id):nationalStrength(team.name));
  });
- next.version=2;
+ next.version=3;
  return next;
 }
 function formationSlots(key=state.formation){return (FORMATION_LAYOUTS[key]||FORMATION_LAYOUTS['4-3-3']).map((row,index)=>({code:row[0],x:row[1],y:row[2],instanceId:`starter-${index}`}))}
@@ -1879,11 +1912,11 @@ function nationPalette(name){
  return {a,b,c,ink}
 }
 function renderPlayerJersey(player,extra='',chemistryBonus=0){
- const pal=nationPalette(player?.nation||''); const sub=isSubscriber(player); const shownOvr=Math.round((Number(player?.ovr)||0)+(Number(chemistryBonus)||0));
+ const pal=clubPalette(activeUserClub()); const sub=isSubscriber(player); const shownOvr=Math.round((Number(player?.ovr)||0)+(Number(chemistryBonus)||0));
  return `<span class="season-jersey-wrap ${sub?'subscriber':''} ${extra}" style="--nation-a:${pal.a};--nation-b:${pal.b};--nation-c:${pal.c};--nation-ink:${pal.ink}" title="OVR base ${Math.round(Number(player?.ovr)||0)} · Intesa ${formatSignedIntesa(chemistryBonus)}"><span class="season-jersey"><span class="season-jersey-number">${shownOvr}</span></span>${sub?'<span class="season-jersey-sub-star">★</span>':''}</span>`
 }
 
-function showSetup(){screen.innerHTML=`<section class="panel season-setup-card"><div class="season-setup-kicker">Campionato del Ca***</div><h2>Crea la tua squadra</h2><p class="season-setup-copy">Stesso feeling grafico di Gary MEDel, ma con tutte le meccaniche del campionato: 11 titolari, 3 riserve, eventi, infortuni, squalifiche e draft di metà stagione.</p><div class="setup-grid"><div class="field"><label>Nome squadra</label><input id="teamName" maxlength="32" value="${esc(state.teamName)}" placeholder="Fantaballa FC"></div><div class="field"><label>Allenatore</label><input id="coachName" maxlength="32" value="${esc(state.coachName)}" placeholder="Il tuo nome"></div></div><div class="season-setup-tip">Se il nome allenatore coincide con quello di un calciatore scelto, quel giocatore ottiene +10 OVR bonus di intesa.</div><h3 style="margin-top:20px">Scegli il modulo</h3><div class="season-formation-grid">${Object.keys(FORMATIONS).map(f=>`<button class="season-formation-btn ${state.formation===f?'active':''}" data-form="${f}">${f}<small>${esc(formationPositionSummary(f))}</small></button>`).join('')}</div><div class="season-setup-tip secondary"><b>Meccanica Gary MEDel:</b> estrai una nazionale, scegli un giocatore e piazzalo esclusivamente in uno slot compatibile con la sua <code>Position</code>. Dopo gli 11 titolari drafterai anche 3 riserve.</div><button id="startDraft" class="btn primary season-start-btn">Inizia il draft Gary MEDel</button></section>`;
+function showSetup(){const userClub=activeUserClub(),userPal=clubPalette(userClub);screen.innerHTML=`<section class="panel season-setup-card"><div class="season-setup-kicker">Campionato del Ca***</div><h2>Crea la tua squadra</h2><div class="season-club-preview" style="--club-primary:${userPal.primary};--club-secondary:${userPal.secondary};--club-accent:${userPal.accent};--club-text:${userPal.text}"><span class="season-club-preview-badge">${esc(userClub.shortName||'FAN')}</span><div><small>Club controllato</small><b>${esc(userClub.name)}</b></div></div><p class="season-setup-copy">Stesso feeling grafico di Gary MEDel, ma con tutte le meccaniche del campionato: 11 titolari, 3 riserve, eventi, infortuni, squalifiche e draft di metà stagione.</p><div class="setup-grid"><div class="field"><label>Nome squadra</label><input id="teamName" maxlength="32" value="${esc(state.teamName||userClub.name)}" placeholder="Fantaballa FC"></div><div class="field"><label>Allenatore</label><input id="coachName" maxlength="32" value="${esc(state.coachName)}" placeholder="Il tuo nome"></div></div><div class="season-setup-tip">Se il nome allenatore coincide con quello di un calciatore scelto, quel giocatore ottiene +10 OVR bonus di intesa.</div><h3 style="margin-top:20px">Scegli il modulo</h3><div class="season-formation-grid">${Object.keys(FORMATIONS).map(f=>`<button class="season-formation-btn ${state.formation===f?'active':''}" data-form="${f}">${f}<small>${esc(formationPositionSummary(f))}</small></button>`).join('')}</div><div class="season-setup-tip secondary"><b>Meccanica Gary MEDel:</b> estrai una nazionale, scegli un giocatore e piazzalo esclusivamente in uno slot compatibile con la sua <code>Position</code>. Dopo gli 11 titolari drafterai anche 3 riserve.</div><button id="startDraft" class="btn primary season-start-btn">Inizia il draft Gary MEDel</button></section>`;
  document.querySelectorAll('[data-form]').forEach(b=>b.onclick=()=>{state.formation=b.dataset.form;save();showSetup()});
  document.getElementById('startDraft').onclick=()=>{state.teamName=document.getElementById('teamName').value.trim()||'Fantaballa FC';state.coachName=document.getElementById('coachName').value.trim()||'Mister';state.phase='draft';state.draft=freshState().draft;save();render()}
 }
@@ -2128,7 +2161,7 @@ function showDraft(){
  const rollText=draftRolling?'Apertura pack…':!hasPack?'Rolla la nazionale 🎲':state.draft.rerolls>0?`Re-rolla · ${state.draft.rerolls} rimasti 🎲`:'Re-roll terminati';
  const centerRollTitle=draftRolling?'APERTURA PACK…':!hasPack?'ROLLA LA NAZIONALE':state.draft.rerolls>0?'RE-ROLLA LA NAZIONALE':'RE-ROLL TERMINATI';
  const centerRollSub=draftRolling?'Sto aprendo il pacchetto nazionale':!hasPack?'Estrai una nazionale casuale':state.draft.rerolls>0?`${state.draft.rerolls} ${rerollWord}`:'Scegli uno dei giocatori già estratti';
- const drawPal=state.draft.nation?nationPalette(state.draft.nation):{a:'#1d4c78',b:'#10243a',c:'#f7f1dc',ink:'#10243a'};
+ const drawPal=clubPalette(activeUserClub());
  const drawStyle=`--draw-a:${drawPal.a};--draw-b:${drawPal.b};--draw-c:${drawPal.c};--draw-ink:${drawPal.ink}`;
  screen.innerHTML=`<div class="season-draft-page">
    <nav class="season-mobile-tabs" id="seasonMobileTabs" role="tablist" aria-label="Sezioni draft">
@@ -2173,6 +2206,31 @@ function showDraft(){
  }
 }
 
+function buildClubRoster(clubId,excludedIds=[]){
+ const excluded=new Set((excludedIds||[]).map(String));
+ const pool=PLAYERS.filter(player=>String(player.club)===String(clubId)&&!excluded.has(String(player.id))).sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0)||String(a.name).localeCompare(String(b.name),'it'));
+ const selected=[];const used=new Set();
+ [['P',2],['D',5],['C',4],['A',3]].forEach(([role,count])=>{
+   pool.filter(player=>roleOf(player)===role).slice(0,count).forEach(player=>{selected.push(player);used.add(String(player.id))});
+ });
+ pool.filter(player=>!used.has(String(player.id))).slice(0,Math.max(0,14-selected.length)).forEach(player=>selected.push(player));
+ return selected.slice(0,14).map(player=>String(player.id));
+}
+function clubStrength(clubId,excludedIds=[]){
+ const ids=buildClubRoster(clubId,excludedIds);
+ const values=ids.slice().sort((a,b)=>(Number(playerById(b)?.ovr)||0)-(Number(playerById(a)?.ovr)||0)).slice(0,11).map(id=>Number(playerById(id)?.ovr)||60);
+ while(values.length<11)values.push(60);
+ return Math.round(avg(values)*10)/10;
+}
+function currentUserPlayerIds(){return state?.draft?.roster?.map(entry=>String(entry.playerId))||[]}
+function refreshOpponentClubRosters(){
+ const excluded=currentUserPlayerIds();
+ (state.teams||[]).forEach(team=>{
+   if(!team||team.id===USER_ID||!team.clubId)return;
+   team.roster=buildClubRoster(team.clubId,excluded);
+   team.strength=clubStrength(team.clubId,excluded);
+ });
+}
 function buildNationRoster(nation){
  const pool=PLAYERS.filter(player=>player.nation===nation).sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0)||String(a.name).localeCompare(String(b.name),'it'));
  return pool.slice(0,14).map(player=>String(player.id));
@@ -2185,7 +2243,7 @@ function opponentStatusOf(team,id){
 }
 function opponentRosterPlayers(team){
  if(!team||team.id===USER_ID)return[];
- if(!Array.isArray(team.roster)||!team.roster.length)team.roster=buildNationRoster(team.name);
+ if(!Array.isArray(team.roster)||!team.roster.length)team.roster=team.clubId?buildClubRoster(team.clubId,currentUserPlayerIds()):buildNationRoster(team.name);
  const players=team.roster.map(playerById).filter(Boolean);
  if(team.mascot)players.push({...team.mascot,role:'A',Position:'ATT',nation:team.name,subscriber:'no',isMascot:true});
  return players;
@@ -2211,14 +2269,26 @@ function nationalStrength(nation){
 function finalizeDraft(){
  if(!draftComplete())return toast('Completa 11 titolari e 3 riserve.');
  state.draft.pendingPlayerId='';
- const counts={};
- PLAYERS.forEach(player=>counts[player.nation]=(counts[player.nation]||0)+1);
- const nations=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]).slice(0,19);
- state.teams=[{id:USER_ID,name:state.teamName,strength:teamPowerBase()}].concat(nations.map((nation,index)=>({
-   id:`nat-${index}`,
-   name:nation,
-   strength:nationalStrength(nation),
-   roster:buildNationRoster(nation),
+ const userClub=activeUserClub();
+ state.userClubId=userClub.id;
+ state.teamName=String(state.teamName||userClub.name).trim()||userClub.name;
+ const draftedIds=currentUserPlayerIds();
+ const opponents=CLUBS.filter(club=>club.id!==userClub.id).slice(0,19);
+ state.teams=[{
+   id:USER_ID,
+   clubId:userClub.id,
+   name:state.teamName,
+   shortName:userClub.shortName,
+   colors:userClub.colorClub,
+   strength:teamPowerBase()
+ }].concat(opponents.map(club=>({
+   id:club.id,
+   clubId:club.id,
+   name:club.name,
+   shortName:club.shortName,
+   colors:club.colorClub,
+   strength:clubStrength(club.id,draftedIds),
+   roster:buildClubRoster(club.id,draftedIds),
    statuses:{},
    mascot:null
  })));
@@ -2422,10 +2492,17 @@ function renderOpponentRoster(team){
    const statusText=status.injury>0?`Infortunato: ${status.injury}`:status.suspension>0?`Squalificato: ${status.suspension}`:`${player.Position||roleOf(player)} · OVR ${player.ovr}`;
    return `<div class="opponent-roster-row ${unavailable?'is-out':''} ${player.isMascot?'is-mascot':''}"><div><b>${player.isMascot?'⭐ ':''}${esc(player.name)}</b><small>${esc(statusText)}</small></div><span class="chip ovr">${esc(player.ovr)}</span></div>`;
  }).join('');
- return `<details class="opponent-roster-details"><summary>Rosa di ${esc(team.name)} · ${players.length} giocatori</summary><div class="opponent-roster-list">${rows}</div></details>`;
+ return `<details class="opponent-roster-details"><summary>${teamColorDot(team)}<span>Rosa di ${esc(team.name)} · ${players.length} giocatori</span></summary><div class="opponent-roster-list">${rows}</div></details>`;
 }
-function showSeason(){prepareEvent();const fx=userFixture(),opp=teamById(fx.home===USER_ID?fx.away:fx.home),standing=userStanding(),rank=sortedTable().findIndex(x=>x.id===USER_ID)+1;screen.innerHTML=`<section class="panel"><div class="season-strip"><div class="stat"><b>${state.matchday+1}</b><span>Giornata</span></div><div class="stat"><b>${rank}°</b><span>Posizione</span></div><div class="stat"><b>${standing.pts}</b><span>Punti</span></div><div class="stat"><b>${standing.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${standing.ga}</b><span>Gol subiti</span></div></div></section><div class="dashboard-grid"><div><section class="panel"><div class="label">Prossima partita</div><div class="next-match"><div><div class="team-name" style="font-size:${teamNameFontSize(fx.home===USER_ID?state.teamName:opp.name)}px" title="${esc(fx.home===USER_ID?state.teamName:opp.name)}">${esc(fx.home===USER_ID?state.teamName:opp.name)}</div><div class="subline">${fx.home===USER_ID?'Casa':'Avversario'}</div></div><div class="versus">VS</div><div><div class="team-name" style="font-size:${teamNameFontSize(fx.away===USER_ID?state.teamName:opp.name)}px" title="${esc(fx.away===USER_ID?state.teamName:opp.name)}">${esc(fx.away===USER_ID?state.teamName:opp.name)}</div><div class="subline">${fx.away===USER_ID?'Trasferta':'Avversario'}</div></div></div><div style="margin-top:14px">${renderEvent()}</div><div style="margin-top:14px"><button id="playRound" class="btn primary" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>Gioca la giornata ${state.matchday+1}</button></div></section><section class="panel"><div class="tabs"><button class="tab active" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="roster">Rosa</button><button class="tab" data-tab="stats">Statistiche</button></div><div id="tab-table" class="tab-view active">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-roster" class="tab-view">${renderSeasonRosterField()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div></section></div><aside><section class="panel"><div class="label">Indisponibili</div><h3>Gestione formazione</h3>${renderAvailability()}<p style="font-size:12px"><b>Squalificato:</b> sostituzione automatica. <b>Infortunato:</b> può giocare con -20 Intesa oppure essere sostituito. Panchinaro fuori ruolo: -10 Intesa.</p></section><section class="panel"><div class="label">Formazione effettiva</div>${renderResolvedLineup()}</section><section class="panel"><div class="label">Avversario reale</div><h3>${esc(opp.name)}</h3>${seasonRuleSummary()}${renderOpponentRoster(opp)}</section></aside></div>`;
- document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>resolveDecision(Number(b.dataset.choice)));document.querySelectorAll('[data-injured]').forEach(b=>b.onclick=()=>{const id=b.dataset.injured;state.playInjured[id]=!state.playInjured[id];save();render()});document.getElementById('playRound').onclick=playRound;document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-view').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active')})}
+function showSeason(){
+ prepareEvent();
+ const fx=userFixture(),opp=teamById(fx.home===USER_ID?fx.away:fx.home),userTeam=teamById(USER_ID)||{id:USER_ID,name:state.teamName,clubId:state.userClubId,colors:activeUserClub().colorClub},homeTeam=teamById(fx.home),awayTeam=teamById(fx.away),standing=userStanding(),rank=sortedTable().findIndex(x=>x.id===USER_ID)+1;
+ screen.innerHTML=`<section class="panel"><div class="season-strip"><div class="stat"><b>${state.matchday+1}</b><span>Giornata</span></div><div class="stat"><b>${rank}°</b><span>Posizione</span></div><div class="stat"><b>${standing.pts}</b><span>Punti</span></div><div class="stat"><b>${standing.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${standing.ga}</b><span>Gol subiti</span></div></div></section><div class="dashboard-grid"><div><section class="panel"><div class="label">Prossima partita</div><div class="next-match"><div class="next-team-card" style="${teamCssVars(homeTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(homeTeam?.name||state.teamName)}px" title="${esc(homeTeam?.name||state.teamName)}">${esc(homeTeam?.name||state.teamName)}</div><div class="subline">${fx.home===USER_ID?'Casa':'Avversario'}</div></div><div class="versus">VS</div><div class="next-team-card" style="${teamCssVars(awayTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(awayTeam?.name||state.teamName)}px" title="${esc(awayTeam?.name||state.teamName)}">${esc(awayTeam?.name||state.teamName)}</div><div class="subline">${fx.away===USER_ID?'Trasferta':'Avversario'}</div></div></div><div style="margin-top:14px">${renderEvent()}</div><div style="margin-top:14px"><button id="playRound" class="btn primary" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>Gioca la giornata ${state.matchday+1}</button></div></section><section class="panel"><div class="tabs"><button class="tab active" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="roster">Rosa</button><button class="tab" data-tab="stats">Statistiche</button></div><div id="tab-table" class="tab-view active">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-roster" class="tab-view">${renderSeasonRosterField()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div></section></div><aside><section class="panel"><div class="label">Indisponibili</div><h3>Gestione formazione</h3>${renderAvailability()}<p style="font-size:12px"><b>Squalificato:</b> sostituzione automatica. <b>Infortunato:</b> può giocare con -20 Intesa oppure essere sostituito. Panchinaro fuori ruolo: -10 Intesa.</p></section><section class="panel"><div class="label">Formazione effettiva</div>${renderResolvedLineup()}</section><section class="panel opponent-club-panel" style="${teamCssVars(opp)}"><div class="label">Avversario reale</div><h3>${teamColorDot(opp)}${esc(opp.name)}</h3>${seasonRuleSummary()}${renderOpponentRoster(opp)}</section></aside></div>`;
+ document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>resolveDecision(Number(b.dataset.choice)));
+ document.querySelectorAll('[data-injured]').forEach(b=>b.onclick=()=>{const id=b.dataset.injured;state.playInjured[id]=!state.playInjured[id];save();render()});
+ document.getElementById('playRound').onclick=playRound;
+ document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-view').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active')})
+}
 function lineupEffects(entry,lineup){
  const player=entry.player||{};
  const players=(lineup||resolveLineup()).map(item=>item.player).filter(Boolean);
@@ -2446,8 +2523,8 @@ function renderResolvedLineup(){
  const lineup=resolveLineup();
  return `<div class="resolved-lineup-list">${lineup.map(entry=>{const player=entry.player||{};const fx=lineupEffects(entry,lineup);const sub=isSubscriber(player);const finalOvr=Math.max(1,Math.round((Number(player.ovr)||0)+fx.total));return `<div class="resolved-player-card ${sub?'subscriber-card':''}"><span class="slot-code">${esc(entry.slot)}</span>${renderMiniAvatar(player,'small')}<div class="resolved-main"><div class="resolved-name-line"><b>${esc(player.name)}</b>${sub?'<span class="resolved-tag-sub">★ ABB</span>':''}</div><span class="resolved-meta">${entry.replaces?`Al posto di ${esc(entry.replaces)}`:`${esc(player.nation)} · ${esc(player.Position)}`}</span>${fx.effects.length?`<div class="resolved-effects">${fx.effects.map(effect=>`<span class="resolved-effect ${effect.type}">${esc(effect.label)}</span>`).join('')}</div>`:'<div class="resolved-effects"><span class="resolved-effect neutral">Nessun bonus o malus</span></div>'}</div><div class="resolved-ovr-col"><span class="chip ovr">${finalOvr}</span><span class="resolved-total">OVR finale</span></div></div>`}).join('')}</div>`
 }
-function renderTable(){const rows=sortedTable();return `<table><thead><tr><th>Squadra</th><th>PG</th><th>V</th><th>N</th><th>P</th><th>GF</th><th>GS</th><th>DR</th><th>Pt</th></tr></thead><tbody>${rows.map((r,i)=>`<tr class="${r.id===USER_ID?'us-row':''}"><td>${i+1}. ${esc(r.name)}</td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}</td><td>${r.ga}</td><td>${r.gf-r.ga}</td><td>${r.pts}</td></tr>`).join('')}</tbody></table>`}
-function renderCalendar(){return `<div class="calendar">${state.schedule.map((rd,i)=>{const fx=rd.find(m=>m.home===USER_ID||m.away===USER_ID),o=teamById(fx.home===USER_ID?fx.away:fx.home),hist=state.history[i];return `<div class="calendar-row ${i===state.matchday?'current':''} ${i<state.matchday?'done':''}"><b>G ${i+1}</b><span>${esc(fx.home===USER_ID?state.teamName:o.name)} – ${esc(fx.away===USER_ID?state.teamName:o.name)}</span><strong>${hist?`${hist.gf}-${hist.ga}`:'-'}</strong></div>`}).join('')}</div>`}
+function renderTable(){const rows=sortedTable();return `<table><thead><tr><th>Squadra</th><th>PG</th><th>V</th><th>N</th><th>P</th><th>GF</th><th>GS</th><th>DR</th><th>Pt</th></tr></thead><tbody>${rows.map((r,i)=>{const team=teamById(r.id);return `<tr class="${r.id===USER_ID?'us-row':''}"><td><span class="standing-team">${teamColorDot(team)}<span>${i+1}. ${esc(r.name)}</span></span></td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}</td><td>${r.ga}</td><td>${r.gf-r.ga}</td><td>${r.pts}</td></tr>`}).join('')}</tbody></table>`}
+function renderCalendar(){return `<div class="calendar">${state.schedule.map((rd,i)=>{const fx=rd.find(m=>m.home===USER_ID||m.away===USER_ID),home=teamById(fx.home),away=teamById(fx.away),hist=state.history[i];return `<div class="calendar-row ${i===state.matchday?'current':''} ${i<state.matchday?'done':''}"><b>G ${i+1}</b><span class="calendar-clubs">${teamColorDot(home)}<span>${esc(home?.name||state.teamName)}</span><em>–</em>${teamColorDot(away)}<span>${esc(away?.name||state.teamName)}</span></span><strong>${hist?`${hist.gf}-${hist.ga}`:'-'}</strong></div>`}).join('')}</div>`}
 function renderStats(){const goals=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1]).slice(0,10);const assists=Object.entries(state.stats.assists).sort((a,b)=>b[1]-a[1]).slice(0,10);return `<div class="setup-grid"><div><h3>Marcatori</h3>${goals.length?goals.map(([id,n],i)=>`<p><b>${i+1}. ${esc((playerById(id)||{name:id}).name)}</b> — ${n}</p>`).join(''):'<p>Nessun gol.</p>'}</div><div><h3>Assist</h3>${assists.length?assists.map(([id,n],i)=>`<p><b>${i+1}. ${esc((playerById(id)||{name:id}).name)}</b> — ${n}</p>`).join(''):'<p>Nessun assist.</p>'}</div></div>`}
 function poisson(lambda){let L=Math.exp(-lambda),p=1,k=0;do{k++;p*=Math.random()}while(p>L&&k<12);return k-1}
 function simulateScore(powerA,powerB,homeAdv=0){const la=clamp(1.25+(powerA-powerB)/18+homeAdv,.15,4.5),lb=clamp(1.15+(powerB-powerA)/18-homeAdv,.15,4.5);return[poisson(la),poisson(lb)]}
@@ -2656,6 +2733,7 @@ function completeMarket(id){
  const replacement=playerById(id);
  state.draft.roster[index].playerId=String(id);
  state.draft.roster[index].player=replacement?{...replacement}:null;
+ refreshOpponentClubRosters();
  ms.step++;
  ms.outgoingId='';
  ms.nation='';
@@ -2674,14 +2752,17 @@ function completeMarket(id){
 function showFinished(){const table=sortedTable(),rank=table.findIndex(x=>x.id===USER_ID)+1,s=userStanding(),top=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1])[0],topPlayer=top?playerById(top[0]):null;screen.innerHTML=`<section class="panel"><div class="final-hero"><div class="label" style="color:#ffe96c">Stagione conclusa</div><h2>${rank===1?'Campioni!':'Campionato terminato'}</h2><div class="final-position">${rank}°</div><p>${esc(state.teamName)} chiude la stagione dopo 38 giornate.</p></div><div class="final-grid"><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div></div><section class="panel"><h3>Capocannoniere</h3><p>${topPlayer?`<b>${esc(topPlayer.name)}</b> — ${top[1]} gol`:'Nessun marcatore'}</p><div class="top-actions"><button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultati inviati':'Invia risultati'}</button><button id="exportSeason" class="btn gold">Esporta risultati JSON</button></div></section>${renderTable()}</section>`;document.getElementById('sendSeason').onclick=sendSeason;document.getElementById('exportSeason').onclick=exportSeason}
 async function sendSeason(){const s=userStanding(),top=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1])[0],p=top?playerById(top[0]):null;const payload={squadra:state.teamName,allenatore:state.coachName,modalita:'Campionato del Ca***',vittorie:s.w,pareggi:s.d,sconfitte:s.l,gol_fatti:s.gf,gol_subiti:s.ga,modulo:state.formation,ovr_medio:Math.round(teamPowerBase()*10)/10,capocannoniere:p?`${p.name} (${top[1]})`:''};const fd=new FormData();fd.append('payload',JSON.stringify(payload));try{await fetch(VICTORY_ENDPOINT,{method:'POST',mode:'no-cors',body:fd});state.submitted=true;save();render();toast('Risultati inviati')}catch{toast('Invio non riuscito')}}
 function exportSeason(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fantaballa-campionato-risultati.json';a.click();URL.revokeObjectURL(a.href)}
-function render(){if(!PLAYERS.length){screen.innerHTML='<section class="panel"><h2>Caricamento database giocatori...</h2></section>';return}if(state.phase==='setup')showSetup();else if(state.phase==='draft')showDraft();else if(state.phase==='season')showSeason();else if(state.phase==='midseason')showMidseason();else if(state.phase==='finished')showFinished()}
+function render(){if(!PLAYERS.length||!CLUBS.length){screen.innerHTML='<section class="panel"><h2>Caricamento database giocatori...</h2></section>';return}if(state.phase==='setup')showSetup();else if(state.phase==='draft')showDraft();else if(state.phase==='season')showSeason();else if(state.phase==='midseason')showMidseason();else if(state.phase==='finished')showFinished()}
 async function boot(){
  try{
-   PLAYERS=await fetch('data/giocatori.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(`giocatori.json: ${r.status}`);return r.json()});
-   COMMENTARY=await fetch('data/cronaca-gol.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
+   [PLAYERS,CLUBS,COMMENTARY]=await Promise.all([
+     fetch('data/giocatori.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(`giocatori.json: ${r.status}`);return r.json()}),
+     fetch('data/club.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(`club.json: ${r.status}`);return r.json()}),
+     fetch('data/cronaca-gol.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)
+   ]);
  }catch(e){
    console.error('Errore caricamento database giocatori',e);
-   screen.innerHTML='<section class="panel"><h2>Database non disponibile</h2><p>Controlla che <code>data/giocatori.json</code> sia stato caricato insieme a <code>campionato.html</code>.</p></section>';
+   screen.innerHTML='<section class="panel"><h2>Database non disponibile</h2><p>Controlla che <code>data/giocatori.json</code> e <code>data/club.json</code> siano stati caricati insieme a <code>campionato.html</code>.</p></section>';
    return;
  }
  try{
