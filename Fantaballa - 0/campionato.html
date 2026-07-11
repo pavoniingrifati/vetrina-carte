@@ -1894,7 +1894,7 @@
 </div>
 <div id="modalRoot"></div><input id="importSaveInput" type="file" accept="application/json,.json" hidden><div id="toast" class="toast"></div>
 <script>
-const CURRENT_STATE_VERSION=9;
+const CURRENT_STATE_VERSION=10;
 const SAVE_BASE='fantaballa_campionato_v7';
 const LEGACY_SAVE_KEYS=['fantaballa_campionato_v1'];
 const ACTIVE_SLOT_KEY='fantaballa_campionato_active_slot';
@@ -1930,7 +1930,7 @@ const FORMATION_LAYOUTS={
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
 let PLAYERS=[];let CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),saveSlot:activeSaveSlot},phase:'setup',userClubId:'fantaballa-fc',teamName:'Fantaballa FC',coachName:'',formation:'4-3-3',draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),saveSlot:activeSaveSlot},phase:'setup',userClubId:'fantaballa-fc',teamName:'Fantaballa FC',coachName:'',formation:'4-3-3',draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
@@ -2094,7 +2094,8 @@ function validateGameData(players,clubs){
    const ovr=Number(player?.ovr);if(!Number.isFinite(ovr)||ovr<1||ovr>100)fatal.push(`${player?.name||id}: OVR non valido.`);
    const club=String(player?.club||'').trim();if(!clubIds.has(club))fatal.push(`${player?.name||id}: club “${club||'mancante'}” non presente in club.json.`);
  });
- if(clubs.length!==20)warnings.push(`Sono presenti ${clubs.length} club invece dei 20 previsti.`);
+ if(clubs.length<20)fatal.push(`Sono presenti soltanto ${clubs.length} club: ne servono almeno 20.`);
+ if(clubs.length!==32)warnings.push(`Sono presenti ${clubs.length} club invece dei 32 configurati.`);
  clubs.forEach(club=>{
    const roster=players.filter(player=>String(player.club)===String(club.id));
    const roles={P:0,D:0,C:0,A:0};roster.forEach(player=>roles[roleOf(player)]=(roles[roleOf(player)]||0)+1);
@@ -2233,6 +2234,7 @@ function normalizeCampionatoState(input){
  ['goals','assists','appearances','cleanSheets','mvpVotes','mvpPoints','playerNames','playerTeams','playerTeamNames'].forEach(key=>{
    next.stats[key]=next.stats[key]&&typeof next.stats[key]==='object'?next.stats[key]:{};
  });
+ next.leagueClubIds=Array.isArray(next.leagueClubIds)?[...new Set(next.leagueClubIds.map(String).filter(id=>clubById(id)))]:[];
  next.teams=Array.isArray(next.teams)?next.teams:[];
  next.teams.forEach(team=>{
    if(!team)return;
@@ -2252,6 +2254,7 @@ function normalizeCampionatoState(input){
    }
    team.strength=Number(team.strength)||(config?clubStrength(config.id):nationalStrength(team.name));
  });
+ if(!next.leagueClubIds.length&&next.teams.length)next.leagueClubIds=next.teams.map(team=>String(team.clubId||team.id)).filter(id=>id!==String(next.userClubId)&&clubById(id)).slice(0,19);
  next.version=CURRENT_STATE_VERSION;
  next.meta=next.meta&&typeof next.meta==='object'?next.meta:{};
  next.meta.createdAt=next.meta.createdAt||new Date().toISOString();
@@ -2365,7 +2368,7 @@ function renderPlayerJersey(player,extra='',chemistryBonus=0){
  return `<span class="season-jersey-wrap ${sub?'subscriber':''} ${extra}" style="--nation-a:${pal.a};--nation-b:${pal.b};--nation-c:${pal.c};--nation-ink:${pal.ink}" title="OVR base ${Math.round(Number(player?.ovr)||0)} · Intesa attuale ${formatSignedIntesa(currentChem)}"><span class="season-jersey"><span class="season-jersey-number">${shownOvr}</span></span>${sub?'<span class="season-jersey-sub-star">★</span>':''}</span>`
 }
 
-function showSetup(){const userClub=activeUserClub(),userPal=clubPalette(userClub);screen.innerHTML=`<section class="panel season-setup-card"><div class="season-setup-kicker">Campionato del Ca***</div><h2>Crea la tua squadra</h2><div class="season-club-preview" style="--club-primary:${userPal.primary};--club-secondary:${userPal.secondary};--club-accent:${userPal.accent};--club-text:${userPal.text}"><span class="season-club-preview-badge">${esc(userClub.shortName||'FAN')}</span><div><small>Club controllato</small><b>${esc(userClub.name)}</b></div></div><p class="season-setup-copy">Stesso feeling grafico di Gary MEDel, ma con tutte le meccaniche del campionato: 11 titolari, 3 riserve, eventi, infortuni, squalifiche e draft di metà stagione.</p><div class="setup-grid"><div class="field"><label>Nome squadra</label><input id="teamName" maxlength="32" value="${esc(state.teamName||userClub.name)}" placeholder="Fantaballa FC"></div><div class="field"><label>Allenatore</label><input id="coachName" maxlength="32" value="${esc(state.coachName)}" placeholder="Il tuo nome"></div></div><div class="season-setup-tip">Se il nome allenatore coincide con quello di un calciatore scelto, quel giocatore ottiene +10 OVR bonus di intesa.</div><h3 style="margin-top:20px">Scegli il modulo</h3><div class="season-formation-grid">${Object.keys(FORMATIONS).map(f=>`<button class="season-formation-btn ${state.formation===f?'active':''}" data-form="${f}">${f}<small>${esc(formationPositionSummary(f))}</small></button>`).join('')}</div><div class="season-setup-tip secondary"><b>Meccanica Gary MEDel:</b> estrai un club, scegli un giocatore e piazzalo esclusivamente in uno slot compatibile con la sua <code>Position</code>. Dopo gli 11 titolari drafterai anche 3 riserve.</div><button id="startDraft" class="btn primary season-start-btn">Inizia il draft Gary MEDel</button></section>`;
+function showSetup(){const userClub=activeUserClub(),userPal=clubPalette(userClub);screen.innerHTML=`<section class="panel season-setup-card"><div class="season-setup-kicker">Campionato del Ca***</div><h2>Crea la tua squadra</h2><div class="season-club-preview" style="--club-primary:${userPal.primary};--club-secondary:${userPal.secondary};--club-accent:${userPal.accent};--club-text:${userPal.text}"><span class="season-club-preview-badge">${esc(userClub.shortName||'FAN')}</span><div><small>Club controllato</small><b>${esc(userClub.name)}</b></div></div><p class="season-setup-copy">Stesso feeling grafico di Gary MEDel, ma con tutte le meccaniche del campionato: 11 titolari, 3 riserve, eventi, infortuni, squalifiche e draft di metà stagione. A ogni nuova stagione Fantaballa FC affronta 19 avversarie estratte casualmente dal database completo.</p><div class="setup-grid"><div class="field"><label>Nome squadra</label><input id="teamName" maxlength="32" value="${esc(state.teamName||userClub.name)}" placeholder="Fantaballa FC"></div><div class="field"><label>Allenatore</label><input id="coachName" maxlength="32" value="${esc(state.coachName)}" placeholder="Il tuo nome"></div></div><div class="season-setup-tip">Se il nome allenatore coincide con quello di un calciatore scelto, quel giocatore ottiene +10 OVR bonus di intesa.</div><h3 style="margin-top:20px">Scegli il modulo</h3><div class="season-formation-grid">${Object.keys(FORMATIONS).map(f=>`<button class="season-formation-btn ${state.formation===f?'active':''}" data-form="${f}">${f}<small>${esc(formationPositionSummary(f))}</small></button>`).join('')}</div><div class="season-setup-tip secondary"><b>32 club disponibili:</b> nel draft iniziale e nel mercato di metà stagione possono uscire tutti i club del database, anche quelli che non parteciperanno al campionato. Al termine del draft verranno sorteggiate 19 avversarie e il torneo resterà composto da 20 squadre per 38 giornate.</div><div class="season-setup-tip secondary"><b>Meccanica Gary MEDel:</b> estrai un club, scegli un giocatore e piazzalo esclusivamente in uno slot compatibile con la sua <code>Position</code>. Dopo gli 11 titolari drafterai anche 3 riserve.</div><button id="startDraft" class="btn primary season-start-btn">Inizia il draft Gary MEDel</button></section>`;
  document.querySelectorAll('[data-form]').forEach(b=>b.onclick=()=>{state.formation=b.dataset.form;save();showSetup()});
  document.getElementById('startDraft').onclick=()=>{state.teamName=document.getElementById('teamName').value.trim()||'Fantaballa FC';state.coachName=document.getElementById('coachName').value.trim()||'Mister';state.phase='draft';state.draft=freshState().draft;save();render()}
 }
@@ -2618,7 +2621,7 @@ function showDraft(){
  const rerollWord=state.draft.rerolls===1?'RE-ROLL DISPONIBILE':'RE-ROLL DISPONIBILI';
  const rollText=draftRolling?'Apertura pack…':!hasPack?'Rolla il club 🎲':state.draft.rerolls>0?`Re-rolla · ${state.draft.rerolls} rimasti 🎲`:'Re-roll terminati';
  const centerRollTitle=draftRolling?'APERTURA PACK…':!hasPack?'ROLLA IL CLUB':state.draft.rerolls>0?'RE-ROLLA IL CLUB':'RE-ROLL TERMINATI';
- const centerRollSub=draftRolling?'Sto aprendo il pacchetto club':!hasPack?'Estrai uno dei 20 club':state.draft.rerolls>0?`${state.draft.rerolls} ${rerollWord}`:'Scegli uno dei giocatori già estratti';
+ const centerRollSub=draftRolling?'Sto aprendo il pacchetto club':!hasPack?`Estrai uno dei ${CLUBS.length} club`:state.draft.rerolls>0?`${state.draft.rerolls} ${rerollWord}`:'Scegli uno dei giocatori già estratti';
  const currentDrawClub=drawnClub();
  const drawPal=clubPalette(currentDrawClub||activeUserClub());
  const drawStyle=`--draw-a:${drawPal.a};--draw-b:${drawPal.b};--draw-c:${drawPal.c};--draw-ink:${drawPal.ink}`;
@@ -2732,7 +2735,8 @@ function finalizeDraft(){
  state.userClubId=userClub.id;
  state.teamName=String(state.teamName||userClub.name).trim()||userClub.name;
  const draftedIds=currentUserPlayerIds();
- const opponents=CLUBS.filter(club=>club.id!==userClub.id).slice(0,19);
+ const opponents=shuffle(CLUBS.filter(club=>club.id!==userClub.id)).slice(0,19);
+ state.leagueClubIds=opponents.map(club=>String(club.id));
  state.teams=[{
    id:USER_ID,
    clubId:userClub.id,
@@ -3249,7 +3253,7 @@ function renderFinalStatList({title,icon,bucket,unit,tieBucket='',empty='Nessun 
  return `<section class="final-player-stat-card"><div class="final-player-stat-head"><span class="final-player-stat-icon">${icon}</span><div><span>Top 5 campionato</span><h3>${esc(title)}</h3></div></div><div class="final-player-stat-list">${listHtml}</div></section>`;
 }
 function renderFinalPlayerStats(){
- return `<section class="final-player-stats"><div class="final-player-stats-title"><div><span>Premi individuali</span><h2>Statistiche generali</h2></div><p>Dati di tutti i giocatori e di tutti i 20 club nelle 38 giornate.</p></div><div class="final-player-stats-grid">${renderFinalStatList({title:'Capocannonieri',icon:'⚽',bucket:'goals',unit:'gol'})}${renderFinalStatList({title:'Assist-man',icon:'🎯',bucket:'assists',unit:'assist'})}${renderFinalStatList({title:'MVP',icon:'⭐',bucket:'mvpVotes',tieBucket:'mvpPoints',unit:'MVP',empty:'Nessun MVP assegnato.'})}${renderFinalStatList({title:'Porte inviolate',icon:'🧤',bucket:'cleanSheets',unit:'clean sheet',empty:'Nessuna porta inviolata.'})}</div></section>`;
+ return `<section class="final-player-stats"><div class="final-player-stats-title"><div><span>Premi individuali</span><h2>Statistiche generali</h2></div><p>Dati di tutti i giocatori dei 20 club sorteggiati per questa stagione nelle 38 giornate.</p></div><div class="final-player-stats-grid">${renderFinalStatList({title:'Capocannonieri',icon:'⚽',bucket:'goals',unit:'gol'})}${renderFinalStatList({title:'Assist-man',icon:'🎯',bucket:'assists',unit:'assist'})}${renderFinalStatList({title:'MVP',icon:'⭐',bucket:'mvpVotes',tieBucket:'mvpPoints',unit:'MVP',empty:'Nessun MVP assegnato.'})}${renderFinalStatList({title:'Porte inviolate',icon:'🧤',bucket:'cleanSheets',unit:'clean sheet',empty:'Nessuna porta inviolata.'})}</div></section>`;
 }
 
 function updateStanding(id,gf,ga){const s=state.standings[id];s.p++;s.gf+=gf;s.ga+=ga;if(gf>ga){s.w++;s.pts+=3}else if(gf===ga){s.d++;s.pts++}else s.l++}
