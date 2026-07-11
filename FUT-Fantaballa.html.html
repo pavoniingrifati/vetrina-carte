@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#05080a" />
+<link rel="icon" type="image/png" href="assets/favicon.png" />
 <title>Fantaballa – FUT Tik Tok</title>
 <meta name="description" content="Vetrina di carte collezionabili con filtri, valutazioni, commenti e preferiti (dati locali + Firestore)." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -811,97 +813,131 @@ window.FEATURED_CARD_IDS = []; // <-- METTI QUI i tuoi ID in ordine
 .hero .card-mock .label{ position:absolute; z-index:2 }
 </style>
 
+<link rel="stylesheet" href="fut-fantaballa-redesign.css" />
 </head>
 
-<body>
+<body class="fut-gaming-theme">
+<div class="site-bg" aria-hidden="true"></div>
+<div class="noise" aria-hidden="true"></div>
 <header class="hero-enabled">
   <div class="wrap">
-    <div class="hero">
+    <div class="fut-top-hud" aria-label="Navigazione Fantaballa FUT">
+      <a class="fut-brand" href="index.html" aria-label="Torna alla home Fantaballa">
+        <img class="fut-brand-logo" src="assets/logo.png" alt="Fantaballa" />
+        <span class="fut-brand-copy">
+          <small>Gaming Hub</small>
+          <strong>Fantaballa</strong>
+        </span>
+      </a>
+
+      <div class="fut-hud-right" aria-label="Percorso e stato">
+        <a class="fut-path" href="index.html">
+          <span>Home</span>
+          <strong>Menu</strong>
+        </a>
+        <div class="fut-path is-active">
+          <span>FUT</span>
+          <strong>Database</strong>
+        </div>
+        <div class="fut-live-state">
+          <span>Stato</span>
+          <strong>Online</strong>
+        </div>
+      </div>
+    </div>
+
+    <section class="hero" aria-labelledby="heroTitle">
       <div class="collage" aria-hidden="true"></div>
       <div class="hero-wrap">
         <div class="col text">
-          <span class="h-kicker">Fantaballa • Vetrina carte FUT</span>
-          <h1 class="big">La tua collezione<br/>prende vita</h1>
-          <p class="sub">Sfoglia, vota e commenta le carte della community. Trova le rarità più ambite e crea la tua lista di preferite.</p>
-          <div class="stats">
+          <span class="h-kicker">Fantaballa · Ultimate Team</span>
+          <h1 class="big" id="heroTitle">La tua collezione<br />prende vita</h1>
+          <p class="sub">Sfoglia, vota e commenta le carte della community. Trova le rarità più ambite e crea la tua formazione di preferite.</p>
+          <div class="stats" aria-label="Funzioni principali">
             <div class="stat">📦 <span id="cardsCountHero">Carte disponibili: …</span></div>
-            <div class="stat">⭐ Valutazioni &amp; commenti in tempo reale</div>
-            <div class="stat">🎁 Pack e nuove serie in arrivo</div>
+            <div class="stat">⭐ Valutazioni e commenti live</div>
+            <div class="stat">🎁 Pack e nuove serie</div>
           </div>
           <div class="hero-cta">
             <a class="cta-primary" href="open-pack.html">🎁 Apri un pacchetto</a>
-            <button class="cta-secondary" id="ctaPreferite" type="button">❤️ Vai alle preferite</button>
+            <button class="cta-secondary" id="ctaPreferite" type="button">♥ Vai alle preferite</button>
           </div>
         </div>
+
         <div class="col visual" aria-hidden="true">
-          <div class="card-mock c1"><span class="label"></span><img class="fit" alt="Anteprima carta"/><span class="label"></span></div>
-          <div class="card-mock c2"><span class="label"></span><img class="fit" alt="Anteprima carta"/><span class="label"></span></div>
-          <div class="card-mock c3"><span class="label"></span><img class="fit" alt="Anteprima carta"/><span class="label"></span></div>
+          <div class="card-mock c1"><span class="label"></span><img class="fit" alt="" /></div>
+          <div class="card-mock c2"><span class="label"></span><img class="fit" alt="" /></div>
+          <div class="card-mock c3"><span class="label"></span><img class="fit" alt="" /></div>
         </div>
       </div>
-    </div>
-    <div class="wrap after-hero">
+    </section>
 
-    <div class="title">
-      <div>
-        <h1>VETRINA CARTE FANTABALLA FUT</h1>
-        <div class="subtitle">Non hai ancora una carta? Segui le live su <a href="https://www.tiktok.com/@fantaballa">Tik Tok</a> di Fanataballa!</div>
+    <section class="after-hero" aria-label="Comandi database carte">
+      <div class="title">
+        <div>
+          <h1>Vetrina carte Fantaballa FUT</h1>
+          <div class="subtitle">Non hai ancora una carta? Segui le live su <a href="https://www.tiktok.com/@fantaballa">TikTok</a> di Fantaballa.</div>
+        </div>
+
+        <div id="authBox" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+          <img id="userPhoto" alt="Foto profilo" style="display:none" />
+          <span id="userName" style="display:none"></span>
+
+          <div class="actions-row">
+            <button id="btnLogin" class="pill" type="button">Accedi</button>
+            <a class="pill pack-btn" href="open-pack.html"><span class="gift">🎁</span> Apri un pacchetto</a>
+          </div>
+
+          <button id="btnLogout" class="pill" type="button" title="Esci" style="display:none">⎋ Esci</button>
+        </div>
       </div>
-      <!-- 🔐 Box login Google -->
-    <div id="authBox" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
-  <img id="userPhoto" ...>
-  <span id="userName" ...></span>
 
-  <div class="actions-row">
-    <a class="pill pack-btn" href="open-pack.html"><span class="gift">🎁</span> Apri un pacchetto</a>
+      <div class="tabs" role="tablist" aria-label="Sezioni">
+        <button class="tab-btn" id="tabAll" role="tab" aria-selected="true"><span class="i">▦</span><span>Tutte</span></button>
+        <button class="tab-btn" id="tabFavs" role="tab" aria-selected="false"><span class="i">♥</span><span>Preferite</span> <span id="favCount" aria-hidden="true"></span></button>
+      </div>
+
+      <div class="toolbar" aria-label="Filtri e ricerca">
+        <div class="search" role="search">⌕ <input id="q" type="search" placeholder="Cerca per nome, serie o testo" aria-label="Cerca" /></div>
+        <select id="fGame" aria-label="Squadra o gioco">
+          <option value="">Tutte le squadre</option>
+          <option>Fantaballa FC</option>
+          <option>Gotham City</option>
+          <option>Svincolato</option>
+        </select>
+        <select id="fRarity" aria-label="Rarità">
+          <option value="">Tutte le rarità</option>
+          <option>Comune</option>
+          <option>Non Comune</option>
+          <option>Rara</option>
+          <option>Ultra Rara</option>
+          <option>Epica</option>
+          <option>Season</option>
+          <option>Leggendaria</option>
+          <option>Oggetti</option>
+        </select>
+        <select id="fRole" aria-label="Ruolo">
+          <option value="">Tutti i ruoli</option>
+          <option>POR</option><option>DC</option><option>DS</option><option>DD</option>
+          <option>MC</option><option>CC</option><option>TRQ</option>
+          <option>AS</option><option>AD</option><option>ATT</option>
+        </select>
+        <select id="fSeries" aria-label="Serie">
+          <option value="">Tutte le serie</option>
+        </select>
+      </div>
+    </section>
   </div>
-
-  <button id="btnLogout" class="pill" type="button" title="Esci" style="display:none">⎋ Esci</button>
-</div>
-
-
-    <div class="tabs" role="tablist" aria-label="Sezioni">
-      <button class="tab-btn" id="tabAll" role="tab" aria-selected="true"><span class="i">📚</span><span>Tutte</span></button>
-      <button class="tab-btn" id="tabFavs" role="tab" aria-selected="false"><span class="i">❤️</span><span>Preferite</span> <span id="favCount" aria-hidden="true"></span></button>
-    </div>
-
-    <div class="toolbar" aria-label="Filtri e ricerca">
-      <div class="search" role="search">🔎 <input id="q" type="search" placeholder="Cerca per nome, serie o testo." aria-label="Cerca" /></div>
-      <select id="fGame" aria-label="Squadra/Gioco">
-        <option value="">Tutte le squadre</option>
-        <option>Fantaballa FC</option>
-        <option>Gotham City</option>
-        <option>Svincolato</option>
-      </select>
-      <select id="fRarity" aria-label="Rarità">
-        <option value="">Tutte le rarità</option>
-        <option>Comune</option>
-        <option>Non Comune</option>
-        <option>Rara</option>
-        <option>Ultra Rara</option>
-        <option>Epica</option>
-        <option>Season</option>
-        <option>Leggendaria</option>
-        <option>Oggetti</option>
-      </select>
-      <select id="fRole" aria-label="Ruolo">
-        <option value="">Tutti i ruoli</option>
-        <option>POR</option><option>DC</option><option>DS</option><option>DD</option>
-        <option>MC</option><option>CC</option><option>TRQ</option>
-        <option>AS</option><option>AD</option><option>ATT</option>
-      </select>
-      <select id="fSeries" aria-label="Serie">
-        <option value="">Tutte le serie</option>
-        <!-- le opzioni verranno aggiunte via JS in base al cards.json -->
-      </select>
-    </div>
-  </div>
-  </div>
-    </div>
 </header>
 
 <main class="wrap">
-  <h2 id="sectionTitle" style="margin:8px 0 0; font-size:18px; color:var(--muted); font-weight:600">Tutte le carte</h2>
+  <div class="collection-heading">
+    <div>
+      <span class="eyebrow">Ultimate Team database</span>
+      <h2 id="sectionTitle">Tutte le carte</h2>
+    </div>
+    <span class="collection-status">Database live</span>
+  </div>
   <div id="grid" class="grid" aria-live="polite"></div>
 </main>
 
@@ -1435,8 +1471,7 @@ async function safeGoogleSignIn() {
     }
 
     if (e && e.code === 'auth/unauthorized-domain') {
-      alert('Dominio non autorizzato in Firebase.
-Aggiungi "pavoniingrifati.github.io" in Firebase Console → Authentication → Settings → Authorized domains.');
+      alert('Dominio non autorizzato in Firebase.\nAggiungi "pavoniingrifati.github.io" in Firebase Console → Authentication → Settings → Authorized domains.');
       return;
     }
 
