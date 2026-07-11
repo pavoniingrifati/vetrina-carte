@@ -29,12 +29,7 @@ data/
 
 ## Font
 
-Inserisci manualmente, se non già presenti:
-
-```text
-assets/fonts/MODERNIZ.OTF
-assets/fonts/INLANDERS DEMO.OTF
-```
+Il sito usa la pila di font di sistema già configurata nel CSS e non richiede file font esterni.
 
 ## Pubblicazione GitHub Pages
 
@@ -80,3 +75,9 @@ Cliccando sul box si apre il database carte completo.
 - Nella sezione Abbonati l'alert di scadenza viene mostrato solo per le sub Prime.
 - Se una Prime scade entro 5 giorni o è già scaduta, il giocatore riceve cornice rossa e simbolo `!`.
 - Le sub recurring/gift non vengono evidenziate.
+
+## Aggiornamento v21
+
+- Primo box Minigame aggiornato con i testi **38-0-0 ma sei tu il calciatore!**, **Fantaballa 0-0-0** e il nuovo sottotitolo.
+- Il titolo **Fantaballa 0-0-0** resta su una sola riga anche nei layout compatti.
+- Il box **Wrestling** usa la nuova grafica approvata.
