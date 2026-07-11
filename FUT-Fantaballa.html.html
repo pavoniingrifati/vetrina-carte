@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Fantaballa – FUT Tik Tok</title>
+<meta name="description" content="Vetrina di carte collezionabili con filtri, valutazioni, commenti e preferiti (dati locali + Firestore)." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg: #0b0f19;
+  --panel: #0f1526; 
+  --card: #121a2e;
+  --card-2: #0d1325;
+  --text: #ecf0ff;
+  --muted: #a7b0d3;
+  --accent: #6ee7ff;
+  --danger: #ff6b6b;
+  --radius: 16px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --fav: #ff5d8f;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+/* ✅ Evita scroll orizzontale su mobile */
+html,body{overflow-x:hidden}
+body{ margin:0; background: radial-gradient(1200px 800px at 10% -10%, #132040, transparent), var(--bg); color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial }
+body.modal-open{ overflow:hidden; touch-action:none; }
+
+/* ===== HEADER STICKY + LAYOUT MOBILE-FIRST ===== */
+header{ position:sticky; top:0; z-index:100; backdrop-filter: blur(10px); background: linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6)); border-bottom:1px solid rgba(255,255,255,.06); }
+.wrap{max-width:1280px; margin:0 auto; padding: 14px clamp(12px,4vw,20px);}
+.title{display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap}
+h1{font-size: clamp(20px, 5.2vw, 34px); margin:0}
+.subtitle{color:var(--muted); margin-top:6px; font-size: clamp(12px, 3.4vw, 14px)}
+/* Stack su schermi stretti */
+@media (max-width: 600px){
+  .title{flex-direction:column; align-items:flex-start}
+}
+
+/* ===== TABS: scroll orizzontale con snap ===== */
+.tabs{ display:flex; gap:10px; margin-top:12px; flex-wrap:nowrap; overflow:auto; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; padding-bottom:4px }
+.tabs::-webkit-scrollbar{display:none}
+.tab-btn{ border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text); padding:10px 14px; border-radius:999px; cursor:pointer; scroll-snap-align:start; white-space:nowrap }
+.tab-btn[aria-selected="true"]{ background:rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15) }
+
+/* ===== TOOLBAR: compatta, scorrevole, no overflow ===== */
+.toolbar{display:grid; grid-template-columns: 1fr; gap:10px; margin-top:12px;}
+@media (min-width: 900px){ .toolbar{grid-template-columns: 1.2fr .8fr .8fr .8fr .8fr} }
+/* Su mobile trasformo in carosello orizzontale */
+@media (max-width: 600px){
+  .toolbar{ display:flex; overflow:auto; gap:8px; padding-bottom:6px }
+  .toolbar > *{ flex:0 0 auto; min-width: clamp(180px, 54vw, 280px) }
+}
+
+.search, select, .range, button, .tag{ background: linear-gradient(180deg, #121a2e, #0d1325); border:1px solid rgba(255,255,255,.08); border-radius:12px; color: var(--text); padding:12px 14px; outline:none }
+.search{display:flex; gap:10px; align-items:center}
+.search input{flex:1; background:transparent; border:none; color:var(--text)}
+.search input::placeholder{color:#98a3c7}
+select{ appearance:none; background-image: linear-gradient(180deg, transparent, transparent), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat:no-repeat; background-position:right 10px center; padding-right:38px }
+select, select option { color: var(--text); background-color: var(--card); }
+.range{display:flex; gap:10px; align-items:center}
+.range input{width:100%}
+
+/* ===== GRID: mobile-first con card full-bleed ===== */
+.grid{display:grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap:16px; margin:16px 0 calc(88px + var(--safe-bottom))}
+@media (min-width:600px){.grid{grid-template-columns: repeat(2, minmax(0,1fr)); gap:22px}}
+@media (min-width:900px){.grid{grid-template-columns: repeat(3, minmax(0,1fr)); gap:24px}}
+@media (min-width:1200px){.grid{grid-template-columns: repeat(4, minmax(0,1fr)); gap:26px}}
+
+/* Card: alleggerisco ombre su mobile e aumento target tattili */
+.card{ background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--card); border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); overflow:hidden; position:relative; box-shadow: 0 6px 18px rgba(0,0,0,.35); transition: transform .16s ease, box-shadow .25s ease, border-color .25s ease, filter .25s ease; --glow: #6ee7ff; opacity:0; transform: translateY(6px); animation: cardIn .35s ease forwards }
+@keyframes cardIn{to{opacity:1; transform: translateY(0)}}
+@media (prefers-reduced-motion: reduce){ .card{ animation:none; opacity:1; transform:none } }
+@media (max-width:600px){ .card{ box-shadow: 0 4px 10px rgba(0,0,0,.28) } }
+
+.card.r-comune      { --glow:#9aa3b2 }
+.card.r-non-comune  { --glow:#34d399 }
+.card.r-rara        { --glow:#60a5fa }
+.card.r-ultra-rara  { --glow:#fbbf24 }
+.card.r-epica       { --glow:#a78bfa }
+.card.r-season      { --glow:#ef4444 }
+.card.r-leggendaria { --glow: #ff4d94 }
+.card.r-oggetto, .card.r-oggetti { --glow:#10b981 }
+.card:hover{ transform: translateY(-3px); border-color: var(--glow); box-shadow: 0 10px 30px rgba(0,0,0,.55), 0 0 0 1px var(--glow), 0 14px 40px color-mix(in oklab, var(--glow) 35%, transparent) }
+
+.thumb{aspect-ratio: 3/4; width:100%; background:#0b0f19; object-fit:cover; cursor:pointer }
+.content{padding:12px 14px}
+.name{font-weight:600; font-size:16px}
+.meta{font-size:13px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; margin-top:4px}
+.stars{display:flex; gap:4px; align-items:center; margin-top:8px}
+.stars .s{width:18px; height:18px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3))}
+
+.badge{ position:absolute; top:10px; right:10px; background: rgba(0,0,0,.5); backdrop-filter: blur(6px); border:1px solid rgba(255,255,255,.15); color:white; padding:6px 8px; border-radius:999px; font-size:12px; font-weight:600 }
+.card.r-comune      .badge { background: rgba(154,163,178,0.8) }
+.card.r-non-comune  .badge { background: rgba(52,211,153,0.8) }
+.card.r-rara        .badge { background: rgba(96,165,250,0.8) }
+.card.r-ultra-rara  .badge { background: rgba(251,191,36,0.85); color: #000 }
+.card.r-epica       .badge { background: rgba(167,139,250,0.85) }
+.card.r-season      .badge { background: rgba(239,68,68,0.85) }
+.card.r-leggendaria .badge {background: rgba(255, 77, 148, 0.9); color: #fff }
+.card.r-oggetto .badge, .card.r-oggetti .badge { background: rgba(16,185,129,.85) }
+
+.card.r-leggendaria { position: relative; z-index: 0 }
+.card.r-leggendaria::before {
+  content: ""; position: absolute; inset: 0; padding: 2px; border-radius: var(--radius);
+  background: linear-gradient(130deg,#ff4d94,#ff9d00,#ffd700,#ff4d94);
+  background-size: 300% 300%; animation: legendaryBorder 4s linear infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out; mask-composite: exclude; z-index: -1;
+}
+@keyframes legendaryBorder { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+.open{position:absolute; bottom:10px; right:10px}
+@media (max-width:600px){ .open{ position:static; display:block; width:100%; margin-top:10px; text-align:center } }
+
+.tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+.tag{ padding: 3px 8px; font-size: 11px; line-height: 1.2; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); white-space: nowrap; margin-top: 4px }
+
+.fav{ position:absolute; top:10px; left:10px; z-index:2; display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:999px; background: rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18); cursor:pointer; user-select:none; transition: transform .15s ease, background .2s ease, box-shadow .2s ease }
+.fav:active{ transform: scale(.96) }
+.fav svg{ width:24px; height:24px }
+.fav .outline{ display: block }
+.fav .filled{ display: none }
+.fav.active{ background: color-mix(in oklab, var(--fav) 25%, rgba(0,0,0,.45)); box-shadow: 0 0 0 1px color-mix(in oklab, var(--fav) 60%, transparent) inset }
+.fav.active .outline{ display: none }
+.fav.active .filled{ display: block; color: var(--fav) }
+
+/* ===== MODALE OTTIMIZZATA MOBILE ===== */
+dialog{ inset: 0; margin: 0; padding: 0; border: none; width: 100vw; max-width: none; height: 100svh; height: 100dvh; background: transparent }
+dialog::backdrop{ background: rgba(0,0,0,.65) }
+.modal{ display: grid; grid-template-columns: 1fr; width: 100%; height: 100%; background: var(--panel) }
+@media(min-width:900px){ .modal{ grid-template-columns: .95fr 1.05fr; height: auto; max-height: 90vh; border-radius: 18px } }
+
+.modal .left{ position:relative; background: radial-gradient(500px 320px at 20% 0, rgba(110,231,255,.05), transparent), var(--card-2); padding:12px }
+.modal .big{ width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.08); aspect-ratio:3/4; object-fit:cover }
+
+/* --- MOBILE UX --- */
+@media (max-width: 600px){
+  /* immagine più bassa di default: lascia spazio sotto */
+  .modal .big{ max-height: 42vh; height: auto; }
+
+  .quick-rate{
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(15,21,38,.85), rgba(15,21,38,.9));
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    z-index: 2;
+  }
+
+  .quick-rate .stars { gap: 6px }
+  .quick-rate .stars .s { width: 28px; height: 28px }
+  .quick-rate .stars button{
+    background: transparent; border: none; padding: 10px; line-height: 0; border-radius: 10px;
+  }
+
+  /* evita zoom automatico iOS */
+  input[type="text"], textarea { font-size: 16px }
+}
+/* modalità compatta ancora più bassa */
+.modal .big.compact{ max-height: 30vh !important }
+
+
+.modal .close{ position:absolute; top:10px; right:10px; background: rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18); padding:8px 10px; border-radius:10px; color:white }
+
+.hint{ position:absolute; top:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.42); border:1px solid rgba(255,255,255,.18); border-radius:999px; color:white; transform: translateY(-50%); opacity:.9; animation: fadeHints 4s ease forwards }
+.hint.left{ left:8px }
+.hint.right{ right:8px }
+@keyframes fadeHints{ 0%{opacity:.9} 70%{opacity:.9} 100%{opacity:0} }
+@media(min-width:900px){ .hint{ display:none } }
+
+.modal .right{ display:flex; flex-direction:column; min-height:0; padding:12px 12px calc(12px + var(--safe-bottom)) }
+.scroll{ flex:1 1 auto; min-height:0; overflow:auto; padding-right:2px }
+.actions{ position: sticky; bottom: 0; background: linear-gradient(180deg, rgba(15,21,38,.7), var(--panel)); border-top: 1px solid rgba(255,255,255,.08); padding: 10px 0 calc(10px + var(--safe-bottom)); display:flex; gap:10px }
+
+.field{display:grid; gap:8px; margin: 8px 0}
+textarea, input[type="text"]{background:#0d1325; border:1px solid rgba(255,255,255,.1); border-radius:10px; color:var(--text); padding:10px}
+
+.comment{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)); border:1px solid rgba(255,255,255,.09); border-radius:12px; padding:10px; margin-top:10px}
+.comment .author{font-weight:600; font-size:13px}
+.comment .text{font-size:14px; color: #d9e1ff}
+
+footer{position:sticky; bottom:0; background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6)); border-top:1px solid rgba(255,255,255,.06)}
+.foot{max-width:1280px; margin:0 auto; padding:12px 20px calc(12px + var(--safe-bottom)); font-size:13px; color:var(--muted)}
+.pill{display:inline-flex; align-items:center; gap:6px; padding:10px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03)}
+
+.pill.pack-btn { background: linear-gradient(135deg, #ff9d00, #ff4d4d); border: none; color: #fff; font-weight: 600; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 12px rgba(255,77,77,0.6); transition: transform 0.15s ease, box-shadow 0.25s ease; cursor: pointer; margin-top: 12px; margin-bottom: 14px }
+.pill.pack-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.35), 0 0 18px rgba(255,77,77,0.8) }
+.pill.pack-btn:active { transform: scale(0.97) }
+.pill.pack-btn .gift { animation: bounceGift 1.8s infinite; display: inline-block }
+@keyframes bounceGift { 0%, 100% { transform: translateY(0) } 30% { transform: translateY(-2px) } 50% { transform: translateY(1px) } }
+
+@media (max-width: 500px) {
+  .wrap { padding: 10px 12px }
+  .card .name { font-size: 15px }
+  .card .meta { font-size: 12px }
+}
+
+#dlgName{ color:#fff; text-shadow: 0 1px 3px rgba(0,0,0,.8) }
+.navBtn{ position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.2); color:#fff; padding:8px 10px; border-radius:10px; cursor:pointer }
+.navPrev{ left:10px } .navNext{ right:50px }
+@media(max-width:900px){ .navBtn{ display:none } }
+
+/* Evita rimbalzi quando la modale è aperta */
+body.modal-open { overscroll-behavior: contain }
+.modal .scroll { overscroll-behavior: contain }
+
+@media (max-width: 600px){
+  /* le azioni non occupano spazio fisso in basso */
+  .actions{ position: static; padding: 10px 0 }
+  /* textarea più comoda */
+  textarea{ min-height: 160px }
+  /* pulsante "Pubblica" piena larghezza */
+  .actions .primary{ width:100%; padding:12px 14px }
+}
+
+/* 🔥 Cornice infuocata per carte "On fire" */
+@keyframes fireGlow {
+  0%   { box-shadow: 0 0 0 1px rgba(255,100,0,.45), 0 0 12px 4px rgba(255,100,0,.35), 0 0 28px 10px rgba(255,50,0,.18) }
+  50%  { box-shadow: 0 0 0 1px rgba(255,160,0,.55), 0 0 18px 6px rgba(255,140,0,.45), 0 0 36px 14px rgba(255,80,0,.22) }
+  100% { box-shadow: 0 0 0 1px rgba(255,100,0,.45), 0 0 12px 4px rgba(255,100,0,.35), 0 0 28px 10px rgba(255,50,0,.18) }
+}
+
+/* Griglia */
+.card.on-fire {
+  position: relative;
+  border-color: rgba(255,140,0,.7);
+  /* Non sovrascrivere cardIn: esegui entrambe le animazioni */
+  animation: cardIn .35s ease forwards, fireGlow 1.8s ease-in-out infinite;
+  /* Cintura di sicurezza nel caso in cui l'animazione non parta */
+  opacity: 1;
+}
+
+/* Modale: bagliore attorno all'immagine grande */
+.modal .big.on-fire {
+  outline: 2px solid rgba(255,140,0,.7);
+  outline-offset: -2px;
+  animation: fireGlow 1.8s ease-in-out infinite;
+}
+
+/* Etichetta "On fire" nei tag */
+.tag.fire {
+  border-color: rgba(255,140,0,.6);
+  background: linear-gradient(180deg, rgba(255,140,0,.18), rgba(255,140,0,0));
+  color: #ffd7b3;
+  font-weight: 600;
+}
+
+/* 🤢 Cornice "Bidone": verde vomito */
+@keyframes vomitGlow {
+  0%   { box-shadow: 0 0 0 1px rgba(120,255,0,.45), 0 0 12px 4px rgba(120,255,0,.35), 0 0 28px 10px rgba(60,255,0,.18) }
+  50%  { box-shadow: 0 0 0 1px rgba(160,255,60,.55), 0 0 18px 6px rgba(140,255,60,.45), 0 0 36px 14px rgba(80,255,40,.22) }
+  100% { box-shadow: 0 0 0 1px rgba(120,255,0,.45), 0 0 12px 4px rgba(120,255,0,.35), 0 0 28px 10px rgba(60,255,0,.18) }
+}
+.card.bidone {
+  position: relative;
+  border-color: rgba(120,255,0,.7);
+  animation: cardIn .35s ease forwards, vomitGlow 1.8s ease-in-out infinite;
+  opacity: 1;
+}
+.modal .big.bidone {
+  outline: 2px solid rgba(120,255,0,.7);
+  outline-offset: -2px;
+  animation: vomitGlow 1.8s ease-in-out infinite;
+}
+.tag.bidone {
+  border-color: rgba(120,255,0,.6);
+  background: linear-gradient(180deg, rgba(120,255,0,.18), rgba(120,255,0,0));
+  color: #e9ffd7;
+  font-weight: 700;
+}
+
+/* Header più compatto su mobile */
+@media (max-width: 600px){
+  header .wrap{ padding: 8px 12px; }
+  .title{ gap: 6px; }
+  h1{ font-size: 18px; line-height: 1.15; }
+  .subtitle{ display:none; } /* nasconde il sottotitolo su schermi piccoli */
+  .tabs{ margin-top: 8px; }
+}
+
+/* Righe azioni: login + apri pacchetto affiancati */
+.actions-row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:nowrap;
+}
+.actions-row .pill{
+  padding:10px 12px;
+  border-radius: 999px;
+  line-height:1;
+}
+
+/* Rende i due pulsanti più “stretti” su mobile */
+@media (max-width: 600px){
+  #authBox{ gap:8px; }
+  .actions-row .pill{ padding:9px 10px; font-size: 14px; }
+  .pill.pack-btn{ margin:0; box-shadow:none; }
+}
+
+/* Evita sovrapposizione con le carte (header sticky + extra margine sotto) */
+header{ position: sticky; top: 0; }
+main.wrap{ margin-top: 8px; }
+
+</style>
+
+<!-- 📱 Mobile Filters Toggle + Responsive Filters Panel -->
+<style id="mobile-filters-toggle-and-layout">
+:root{
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (max-width: 600px){
+  /* Nascondi i filtri su mobile finché l'utente non li apre */
+  header .toolbar[hidden]{ display:none !important; }
+
+  /* Bottone toggle: versione inline (affianco a "Preferite") */
+  .filters-toggle{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    min-height: 44px;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,.08);
+    background: rgba(255,255,255,.95);
+    box-shadow: 0 2px 10px rgba(0,0,0,.12);
+    font-size: 16px;
+    line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+    color: #111;
+    vertical-align: middle;
+  }
+  .filters-toggle .dot{ width:8px; height:8px; border-radius:999px; background:currentColor }
+  .filters-toggle[aria-expanded="true"] .lbl-open{ display:none }
+  .filters-toggle[aria-expanded="false"] .lbl-close{ display:none }
+  /* Quando non riusciamo a metterlo accanto a preferite, rendilo sticky per comodità */
+  .filters-toggle.sticky{
+    position: sticky;
+    top: calc(8px + var(--safe-top));
+    z-index: 102;
+    margin: 8px 12px;
+  }
+  .filters-toggle.next-to-fav{ margin-left: 8px }
+
+  /* ✅ Pannello filtri responsive e scorrevole */
+  header .toolbar{
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+    gap: 10px !important;
+    padding: 10px 12px !important;
+    margin: 8px 12px !important;
+    background: var(--toolbar-bg, rgba(255,255,255,0.98)) !important;
+    border-radius: 14px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.18);
+    max-height: calc(70vh - var(--safe-top)) !important;
+    overflow: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    z-index: 101;
+  }
+  /* Oggetti interni non strabordano */
+  header .toolbar > *{ min-width: 0 !important; }
+  /* Campi lunghi a tutta larghezza */
+  header .toolbar .search,
+  header .toolbar .range,
+  header .toolbar .long,
+  header .toolbar input[type="search"],
+  header .toolbar input[type="text"]{ grid-column: 1 / -1; }
+  /* Gruppi flessibili che vanno a capo */
+  header .toolbar .row,
+  header .toolbar .flex,
+  header .toolbar .filters,
+  header .toolbar .group{ display:flex; flex-wrap: wrap; gap:8px; min-width:0 }
+  /* Evita scorrimento orizzontale */
+  header .toolbar{ overflow-x: hidden !important; }
+  header .toolbar *{ word-break: break-word; }
+
+  /* Target tattili comodi */
+  .tab-btn, .pill, select, .range, .search, button{ min-height:44px; font-size:16px }
+
+  /* ✅ Modale: non tagliare testo a sinistra e usa safe-areas */
+  dialog[open]{ margin:0 }
+  dialog{ padding:0 }
+  .modal{ width:100vw !important; height:100dvh !important; }
+  .modal .left, .modal .right{
+    padding-left: calc(12px + var(--safe-left)) !important;
+    padding-right: calc(12px + var(--safe-right)) !important;
+  }
+  .modal .scroll{ overflow:auto; padding-right:2px }
+  #dlgName, .modal .meta, .modal .tags, .comment .text{ overflow-wrap:anywhere; word-break: break-word }
+  .modal .big{ max-height: 38vh !important; }
+}
+@media (min-width: 601px){
+  .filters-toggle{ display:none !important; }
+  header .toolbar[hidden]{ display: initial !important; }
+}
+@media (hover:none){
+  .card:hover{ transform:none; box-shadow: 0 4px 12px rgba(0,0,0,.35); }
+}
+@media (prefers-reduced-motion: reduce){
+  *{ animation: none !important; transition: none !important; }
+}
+</style>
+
+
+<style id="visual-upgrades">
+/* =========================
+   VISUAL UPGRADES (only CSS)
+   - Rarity frames more evident
+   - Card shine effect
+   - Modern tab pills with icons
+   - Upgraded "Apri un pacchetto" button
+   ========================= */
+
+/* --- Helper: rarity rim colors --- */
+.card{
+  --rim1: #9aa3b2; /* default/common */
+  --rim2: rgba(255,255,255,0.12);
+}
+.card.r-comune      { --rim1:#9aa3b2; --rim2:#cfd5df; }
+.card.r-non-comune  { --rim1:#1ee59b; --rim2:#7ef7cf; }
+.card.r-rara        { --rim1:#4ea3ff; --rim2:#a9d0ff; }
+.card.r-ultra-rara  { --rim1:#ffb400; --rim2:#ffe08a; }
+.card.r-epica       { --rim1:#a78bfa; --rim2:#d6c7ff; }
+.card.r-season      { --rim1:#ff5a5a; --rim2:#ffb0b0; }
+.card.r-oggetto,
+.card.r-oggetti     { --rim1:#10b981; --rim2:#7af2c4; }
+
+/* --- Rarity border (subtle animated gradient rim) --- */
+.card::before{
+  content:"";
+  position:absolute; inset:0; border-radius: var(--radius);
+  padding:1.5px; /* rim thickness */
+  background: linear-gradient(135deg, var(--rim1), var(--rim2));
+  background-size: 200% 200%;
+  animation: rimPulse 6s ease-in-out infinite;
+  -webkit-mask: 
+    linear-gradient(#000 0 0) content-box, 
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events:none;
+  z-index:0;
+}
+/* Keep legendary custom rainbow stronger (existing rule wins because it's later in source in original). To ensure it wins, we reduce our specificity for leggendaria */
+.card.r-leggendaria::before{ display:none; }
+
+@keyframes rimPulse{
+  0%,100%{ background-position: 0% 50%; opacity:.85 }
+  50%    { background-position: 100% 50%; opacity:1 }
+}
+
+/* --- Shine effect sweeping across the card on hover/focus --- */
+.card{ overflow:hidden; position:relative }
+.card .thumb{ position:relative; z-index:1 }
+.card::after{
+  content:"";
+  position:absolute;
+  top:-40%; left:-60%;
+  width:60%; height:180%;
+  transform: skewX(-25deg) translateX(-120%);
+  background: linear-gradient(90deg, 
+    transparent 0%,
+    rgba(255,255,255,.06) 45%,
+    rgba(255,255,255,.18) 50%,
+    rgba(255,255,255,.06) 55%,
+    transparent 100%);
+  opacity:0; transition: opacity .25s ease;
+  pointer-events:none;
+  z-index:2;
+}
+.card:hover::after, .card:focus-within::after{
+  opacity:1;
+  animation: shineSweep .9s cubic-bezier(.25,.1,.25,1);
+}
+@keyframes shineSweep{
+  to{ transform: skewX(-25deg) translateX(260%); }
+}
+
+/* --- Tabs: modern glassy pills with icons --- */
+.tabs{
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.08);
+}
+.tab-btn{
+  display:inline-flex; align-items:center; gap:10px;
+  font-weight:600;
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.14);
+  transition: transform .12s ease, background .2s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.tab-btn .i{ font-size: 1.05em; line-height: 1; }
+.tab-btn[aria-selected="true"]{
+  background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.06));
+  border-color: rgba(255,255,255,.28);
+  box-shadow: 0 6px 18px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,.08) inset;
+}
+.tab-btn:active{ transform: translateY(1px); }
+
+/* --- Upgraded "Apri un pacchetto" CTA --- */
+.pill.pack-btn{
+  position:relative; overflow:hidden;
+  border: none;
+  background: linear-gradient(135deg, #ff9d00, #ff4d4d);
+  box-shadow: 0 4px 16px rgba(0,0,0,.35), 0 0 22px rgba(255,77,77,.75);
+}
+/* Shimmer sweep */
+.pill.pack-btn::before{
+  content:""; position:absolute; inset:-40% -120%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+  transform: translateX(-60%);
+  animation: ctaShimmer 3s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes ctaShimmer{ 
+  0%,25%{ transform: translateX(-60%) }
+  55%   { transform: translateX(60%) }
+  100%  { transform: translateX(60%) }
+}
+/* Sparkles */
+.pill.pack-btn::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,.75), transparent 18%),
+    radial-gradient(circle at 70% 40%, rgba(255,255,255,.6), transparent 22%),
+    radial-gradient(circle at 40% 75%, rgba(255,255,255,.55), transparent 18%);
+  mix-blend-mode: screen; opacity:.35;
+  animation: sparkFloat 4s ease-in-out infinite alternate;
+}
+@keyframes sparkFloat{
+  from{ transform: translateY(0) }
+  to  { transform: translateY(-3px) }
+}
+.pill.pack-btn:hover{ transform: translateY(-2px) }
+.pill.pack-btn:active{ transform: translateY(0) }
+
+/* --- Modal big image gets an optional subtle shine on tap --- */
+.modal .big{
+  position:relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,.35);
+}
+.modal .big:active{
+  outline: 2px solid rgba(255,255,255,.12);
+}
+
+/* --- Small bounce when fav counter updates (utility class) --- */
+@keyframes favBounce{ 0%{ transform: scale(1) } 35%{ transform: scale(1.18) } 100%{ transform: scale(1) } }
+.fav-bounce{ animation: favBounce .35s ease }
+
+</style>
+
+
+<style id="hero-collezione-css">
+/* =============================
+   HERO "Collezione" — big header
+   ============================= */
+:root{
+  --hero-h-mobile: 58svh;
+  --hero-h-desktop: 56vh;
+}
+header.hero-enabled{
+  position: relative;
+  background: transparent;
+  border-bottom: none;
+}
+.hero{
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.hero .hero-wrap{
+  max-width:1280px; margin:0 auto;
+  padding: clamp(16px, 4vw, 28px) clamp(12px, 4vw, 24px);
+  min-height: var(--hero-h-mobile);
+  display:grid; grid-template-columns: 1fr; align-items:center;
+}
+@media (min-width: 900px){
+  .hero .hero-wrap{ min-height: var(--hero-h-desktop); grid-template-columns: 1.1fr .9fr; gap: 24px; }
+}
+
+/* Background layers */
+.hero::before{
+  content:"";
+  position:absolute; inset:0;
+  background:
+    radial-gradient(900px 520px at 8% -10%, rgba(110,231,255,.12), transparent 60%),
+    radial-gradient(600px 420px at 90% 10%, rgba(255,77,148,.16), transparent 60%),
+    linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6));
+  z-index:-2;
+}
+/* subtle moving pattern (sparkles) */
+.hero::after{
+  content:"";
+  position:absolute; inset:-20%;
+  background:
+    radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,.25), transparent 60%),
+    radial-gradient(2px 2px at 60% 70%, rgba(255,255,255,.15), transparent 60%),
+    radial-gradient(2px 2px at 80% 20%, rgba(255,255,255,.2), transparent 60%);
+  filter: blur(0.6px);
+  animation: heroSpark 8s ease-in-out infinite alternate;
+  z-index:-1;
+  opacity:.35;
+}
+@keyframes heroSpark{
+  from{ transform: translateY(0) }
+  to  { transform: translateY(-10px) }
+}
+
+/* Left: content */
+.hero .h-kicker{
+  display:inline-flex; gap:8px; align-items:center;
+  padding:8px 12px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0));
+  font-size:14px; color: var(--muted);
+}
+.hero h1.big{
+  margin:12px 0 8px;
+  font-size: clamp(28px, 6.8vw, 54px);
+  line-height: 1.05;
+  letter-spacing: .2px;
+  text-shadow: 0 6px 28px rgba(0,0,0,.5), 0 0 24px rgba(110,231,255,.25);
+}
+.hero .sub{
+  color: var(--muted);
+  font-size: clamp(14px, 2.7vw, 18px);
+  max-width: 60ch;
+}
+.hero .hero-cta{
+  display:flex; flex-wrap:wrap; gap:10px; margin-top:16px;
+}
+.hero .cta-primary{
+  display:inline-flex; align-items:center; gap:10px;
+  padding:12px 16px; border-radius:999px; border:none;
+  background: linear-gradient(135deg, #ff9d00, #ff4d4d);
+  color:#fff; font-weight:700; cursor:pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,.35), 0 0 22px rgba(255,77,77,.7);
+  transition: transform .15s ease;
+}
+.hero .cta-primary:active{ transform: translateY(1px) }
+.hero .cta-secondary{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:12px 16px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  color: var(--text); font-weight:600; cursor:pointer;
+}
+
+/* Right: visual mock (stack of cards) */
+.hero .visual{
+  position:relative; height: clamp(220px, 38vh, 420px);
+  display:none;
+}
+@media (min-width: 900px){ .hero .visual{ display:block } }
+.hero .card-mock{
+  position:absolute; inset:auto;
+  width: clamp(160px, 26vw, 240px); aspect-ratio: 3/4;
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(255,255,255,.08), rgba(255,255,255,0) 60%), var(--card);
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow: 0 20px 40px rgba(0,0,0,.45);
+  overflow:hidden;
+}
+.hero .card-mock::after{
+  content:""; position:absolute; inset:0;
+  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.12) 45%, transparent 50%);
+  transform: translateX(-120%) skewX(-20deg);
+  animation: heroShine 3.2s ease-in-out infinite;
+}
+@keyframes heroShine{ 60%{ transform: translateX(140%) skewX(-20deg) } 100%{ transform: translateX(140%) skewX(-20deg) } }
+.hero .c1{ left: 10%; bottom: 10%; transform: rotate(-10deg) }
+.hero .c2{ left: 32%; bottom: 18%; transform: rotate(6deg) }
+.hero .c3{ left: 56%; bottom: 6%;  transform: rotate(-3deg) }
+.hero .c1{ --card: #101a30 } .hero .c2{ --card:#121f3a } .hero .c3{ --card:#0d152a }
+
+/* Stats inline under subtitle */
+.hero .stats{
+  display:flex; gap:14px; flex-wrap:wrap; margin-top:14px;
+  font-size: 14px; color: var(--muted);
+}
+.hero .stat{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 12px; border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0));
+}
+
+/* Push toolbar below the hero for clarity on first load */
+header .wrap.after-hero{ padding-top: 0 }
+</style>
+
+
+<style id="hero-collage-css">
+/* ==== HERO Collage of real cards ==== */
+.hero{ isolation:isolate }
+.hero .collage{
+  position:absolute; inset:-8% -6% -6% -6%;
+  z-index:-1;
+  pointer-events:none;
+  overflow:hidden;
+}
+.hero .collage::after{
+  /* vignette + dark overlay to keep text readable */
+  content:""; position:absolute; inset:0;
+  background: radial-gradient(1200px 600px at 10% -10%, rgba(13,19,37,.0), rgba(13,19,37,.35)),
+              linear-gradient(180deg, rgba(13,19,37,.25), rgba(13,19,37,.55) 60%, rgba(13,19,37,.85) 100%);
+}
+.hero .collage img{
+  position:absolute;
+  width: clamp(90px, 13vw, 180px);
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 12px 28px rgba(0,0,0,.45);
+  opacity: .4;
+  transform: translate3d(0,0,0) rotate(var(--rot, 0deg)) scale(var(--z, 1));
+  animation: drift var(--dur, 10s) ease-in-out infinite alternate;
+  will-change: transform;
+  filter: saturate(1.05);
+}
+@keyframes drift{
+  from{ transform: translateY(0px) rotate(var(--rot, 0deg)) scale(var(--z, 1)) }
+  to  { transform: translateY(-18px) rotate(calc(var(--rot, 0deg) + .6deg)) scale(var(--z, 1)) }
+}
+
+@media (max-width: 900px){
+  .hero .collage img{ opacity:.30 }
+}
+</style>
+
+
+<style id="hero-featured-css">
+/* Featured trio on the right uses real images if available */
+.hero .visual{ position:relative }
+.hero .card-mock{
+  background-size: cover;
+  background-position: center;
+}
+.hero .card-mock .label{
+  position:absolute; left:10px; bottom:10px;
+  padding:6px 8px; border-radius:10px;
+  font-size:12px; font-weight:700;
+  background: rgba(0,0,0,.5);
+  border:1px solid rgba(255,255,255,.15);
+  color:#fff;
+  max-width: 90%;
+  backdrop-filter: blur(4px);
+  display:none; /* shown only when we set a real card */
+}
+</style>
+
+
+<style id="hero-featured-safe-css">
+/* Show featured only when we have a real image */
+.hero .card-mock{ background: none; }
+.hero .visual[hidden]{ display:none !important; }
+</style>
+
+
+<script id="hero-featured-config">
+/* ➜ SCEGLI TU le 3 carte "featured" indicando gli ID (come in cards.json).
+   Esempio: window.FEATURED_CARD_IDS = ["card_101","card_205","card_999"];
+   Lascia [] per usare le carte con { featured: true } in cards.json,
+   altrimenti si userà il fallback per rarità. */
+window.FEATURED_CARD_IDS = []; // <-- METTI QUI i tuoi ID in ordine
+</script>
+
+
+<style id="login-zfix">
+/* Safeguard: make sure login buttons are on top of background visuals */
+#authBox, #btnLogin, #btnLogout { position: relative; z-index: 5; }
+</style>
+
+
+<style id="hero-featured-proportion-css">
+/* Featured cards: preserve image proportions without cropping */
+.hero .card-mock{ position:relative; overflow:hidden }
+.hero .card-mock::before{
+  content:""; position:absolute; inset:0;
+  background-image: var(--bg);
+  background-size: cover;
+  background-position: center;
+  filter: blur(14px) brightness(.85);
+  transform: scale(1.1);
+  opacity: .65;
+}
+.hero .card-mock .fit{
+  position:absolute; inset:8px;
+  width: calc(100% - 16px);
+  height: calc(100% - 16px);
+  object-fit: contain; /* keep full image visible, no distortion */
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.28);
+}
+/* Ensure label sits on top */
+.hero .card-mock .label{ position:absolute; z-index:2 }
+</style>
+
+</head>
+
+<body>
+<header class="hero-enabled">
+  <div class="wrap">
+    <div class="hero">
+      <div class="collage" aria-hidden="true"></div>
+      <div class="hero-wrap">
+        <div class="col text">
+          <span class="h-kicker">Fantaballa • Vetrina carte FUT</span>
+          <h1 class="big">La tua collezione<br/>prende vita</h1>
+          <p class="sub">Sfoglia, vota e commenta le carte della community. Trova le rarità più ambite e crea la tua lista di preferite.</p>
+          <div class="stats">
+            <div class="stat">📦 <span id="cardsCountHero">Carte disponibili: …</span></div>
+            <div class="stat">⭐ Valutazioni &amp; commenti in tempo reale</div>
+            <div class="stat">🎁 Pack e nuove serie in arrivo</div>
+          </div>
+          <div class="hero-cta">
+            <a class="cta-primary" href="open-pack.html">🎁 Apri un pacchetto</a>
+            <button class="cta-secondary" id="ctaPreferite" type="button">❤️ Vai alle preferite</button>
+          </div>
+        </div>
+        <div class="col visual" aria-hidden="true">
+          <div class="card-mock c1"><span class="label"></span><img class="fit" alt="Anteprima carta"/><span class="label"></span></div>
+          <div class="card-mock c2"><span class="label"></span><img class="fit" alt="Anteprima carta"/><span class="label"></span></div>
+          <div class="card-mock c3"><span class="label"></span><img class="fit" alt="Anteprima carta"/><span class="label"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="wrap after-hero">
+
+    <div class="title">
+      <div>
+        <h1>VETRINA CARTE FANTABALLA FUT</h1>
+        <div class="subtitle">Non hai ancora una carta? Segui le live su <a href="https://www.tiktok.com/@fantaballa">Tik Tok</a> di Fanataballa!</div>
+      </div>
+      <!-- 🔐 Box login Google -->
+    <div id="authBox" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+  <img id="userPhoto" ...>
+  <span id="userName" ...></span>
+
+  <div class="actions-row">
+    <a class="pill pack-btn" href="open-pack.html"><span class="gift">🎁</span> Apri un pacchetto</a>
+  </div>
+
+  <button id="btnLogout" class="pill" type="button" title="Esci" style="display:none">⎋ Esci</button>
+</div>
+
+
+    <div class="tabs" role="tablist" aria-label="Sezioni">
+      <button class="tab-btn" id="tabAll" role="tab" aria-selected="true"><span class="i">📚</span><span>Tutte</span></button>
+      <button class="tab-btn" id="tabFavs" role="tab" aria-selected="false"><span class="i">❤️</span><span>Preferite</span> <span id="favCount" aria-hidden="true"></span></button>
+    </div>
+
+    <div class="toolbar" aria-label="Filtri e ricerca">
+      <div class="search" role="search">🔎 <input id="q" type="search" placeholder="Cerca per nome, serie o testo." aria-label="Cerca" /></div>
+      <select id="fGame" aria-label="Squadra/Gioco">
+        <option value="">Tutte le squadre</option>
+        <option>Fantaballa FC</option>
+        <option>Gotham City</option>
+        <option>Svincolato</option>
+      </select>
+      <select id="fRarity" aria-label="Rarità">
+        <option value="">Tutte le rarità</option>
+        <option>Comune</option>
+        <option>Non Comune</option>
+        <option>Rara</option>
+        <option>Ultra Rara</option>
+        <option>Epica</option>
+        <option>Season</option>
+        <option>Leggendaria</option>
+        <option>Oggetti</option>
+      </select>
+      <select id="fRole" aria-label="Ruolo">
+        <option value="">Tutti i ruoli</option>
+        <option>POR</option><option>DC</option><option>DS</option><option>DD</option>
+        <option>MC</option><option>CC</option><option>TRQ</option>
+        <option>AS</option><option>AD</option><option>ATT</option>
+      </select>
+      <select id="fSeries" aria-label="Serie">
+        <option value="">Tutte le serie</option>
+        <!-- le opzioni verranno aggiunte via JS in base al cards.json -->
+      </select>
+    </div>
+  </div>
+  </div>
+    </div>
+</header>
+
+<main class="wrap">
+  <h2 id="sectionTitle" style="margin:8px 0 0; font-size:18px; color:var(--muted); font-weight:600">Tutte le carte</h2>
+  <div id="grid" class="grid" aria-live="polite"></div>
+</main>
+
+<footer>
+  <div class="foot">
+    <span id="cardsCount" style="margin-left: 1rem; font-size: 0.9em; opacity: 0.8;">Carte disponibili: 0</span>
+  </div>
+</footer>
+
+<!-- ====== DIALOG ====== -->
+<dialog id="dlg" aria-labelledby="dlgName" aria-describedby="dlgMeta">
+  <form method="dialog" class="modal">
+    <button class="close" type="button" aria-label="Chiudi">✕</button>
+    <div class="left">
+      <button class="navBtn navPrev" type="button" title="Precedente" aria-label="Carta precedente">◀</button>
+      <div class="hint left" aria-hidden="true">‹</div>
+
+      <img id="dlgImg" alt="Immagine carta" class="big" />
+
+      <!-- Barra rapida per votare su mobile -->
+      <div id="quickRate" class="quick-rate">
+        <div class="stars" id="dlgStarsQuick" aria-label="Valuta questa carta (barra rapida)"></div>
+      </div>
+
+      <div class="hint right" aria-hidden="true">›</div>
+      <button class="navBtn navNext" type="button" title="Successiva" aria-label="Carta successiva">▶</button>
+    </div>
+    <div class="right">
+      <div class="scroll">
+        <h2 id="dlgName" style="margin:0 0 8px"></h2>
+        <div id="dlgMeta" class="meta"></div>
+        <div class="stars" id="dlgStars" aria-label="Valuta questa carta"></div>
+        <div class="tags" id="dlgTags"></div>
+
+        <h3 style="margin:14px 0 6px">Commenti</h3>
+        <div id="comments"></div>
+
+        <div class="field"><label for="author">Nome</label><input id="author" type="text" placeholder="Il tuo nome" autocomplete="name" /></div>
+        <div class="field"><label for="message">Commento</label><textarea id="message" rows="3" placeholder="Scrivi un commento."></textarea></div>
+
+        <div class="actions">
+          <button class="primary" id="saveC">💾 Pubblica commento</button>
+          <button id="clearC" type="button" title="Solo su questo dispositivo">🗑️ Svuota commenti</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<!-- ====== TEMPLATE CARD ====== -->
+<template id="tplCard">
+  <article class="card" role="article">
+    <button class="fav" type="button" title="Aggiungi ai preferiti" aria-label="Aggiungi ai preferiti" aria-pressed="false">
+      <svg class="outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12.1 8.64l.9-.92a3.5 3.5 0 015 4.9L12 19l-6-6.38a3.5 3.5 0 115-4.9l1 .92z"/></svg>
+      <svg class="filled" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4 8.04 4 9.54 4.81 10.35 6.09 11.16 4.81 12.66 4 14.2 4 16.7 4 18.7 6 18.7 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+    </button>
+    <div class="badge"></div>
+<img 
+  class="thumb" 
+  alt="Immagine carta"
+  onerror="this.onerror=null; this.src='img/nEW%20pLAYER.png';"
+/>    <div class="content">
+      <div class="name"></div>
+      <div class="meta"></div>
+      <div class="stars" aria-label="Valutazione media"></div>
+      <div class="tags"></div>
+      <button class="primary open">Apri</button>
+    </div>
+  </article>
+</template>
+
+<!-- ====== SCRIPT ====== -->
+<script>
+const $ = sel => document.querySelector(sel);
+const esc = (s='') => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+const STAR_OUT = 'M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.401 8.169L12 18.896l-7.335 3.87 1.401-8.169L.132 9.21l8.2-1.192z';
+const starSVG = (filled)=>`<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_OUT}" fill="${filled? 'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"/></svg>`;
+const avg = arr => arr.length? (arr.reduce((a,b)=>a+b,0)/arr.length):0;
+
+
+
+// Helper per "Bidone" (stessa logica di onFire)
+function isBidone(c){
+  return !!(c && (c.Bidone === true || c.Bidone === 'true'));
+}
+const keyFor = (id, type) => `cardhub_${type}_${id}`;
+const loadRatings = id => { const raw = localStorage.getItem(keyFor(id,'ratings')); return raw? JSON.parse(raw): [] };
+const saveRating = (id,val) => { const list = loadRatings(id); list.push(val); localStorage.setItem(keyFor(id,'ratings'), JSON.stringify(list)); };
+const loadCommentsLocal = id => { const raw = localStorage.getItem(keyFor(id,'comments')); return raw? JSON.parse(raw): [] };
+const addCommentLocal = (id,c) => { const list = loadCommentsLocal(id); list.push(c); localStorage.setItem(keyFor(id,'comments'), JSON.stringify(list)); };
+const clearCommentsLocal = id => localStorage.removeItem(keyFor(id,'comments'));
+
+const loadFavs = ()=>{ try{ return JSON.parse(localStorage.getItem('cardhub_favs')||'[]'); }catch{ return []; } };
+const saveFavs = list => localStorage.setItem('cardhub_favs', JSON.stringify(list));
+const isFav = id => loadFavs().includes(id);
+const toggleFav = id => { const s=new Set(loadFavs()); s.has(id)? s.delete(id): s.add(id); saveFavs([...s]); updateFavCount(); };
+function updateFavCount(){ const n = loadFavs().length; const el=$('#favCount'); if(el) el.textContent = n? `(${n})` : ''; }
+
+let CARDS = [];
+async function loadCards(){
+  try{
+    const res = await fetch('cards.json', { cache: 'no-store' });
+    if(!res.ok) throw new Error('cards.json non trovato');
+    CARDS = await res.json();
+  }catch(e){
+    console.error('[ERRORE CARICAMENTO CARTE]', e);
+    CARDS = [];
+  } finally {
+    // 🔹 Aggiorna il numero di carte disponibili
+    document.getElementById('cardsCount').textContent = "Carte disponibili: " + CARDS.length;
+    if (window.__setHeroCardsCount) { window.__setHeroCardsCount(CARDS.length); }
+    // 🔹 Popola il filtro "Series" in base a cards.json
+    populateSeriesOptions();
+    // 🔹 Applica i filtri
+    applyFilters();
+    if (window.__setHeroCardsCount) { window.__setHeroCardsCount(CARDS.length); }
+    if (window.__buildHeroCollage) { window.__buildHeroCollage(CARDS); }
+  
+    if (window.__setHeroFeatured) { window.__setHeroFeatured(CARDS); }
+}
+}
+
+function populateSeriesOptions(){
+  const sel = document.getElementById('fSeries');
+  if(!sel || !Array.isArray(CARDS)) return;
+
+  const seriesSet = new Set(
+    CARDS.map(c => c && c.series).filter(Boolean)
+  );
+  const list = Array.from(seriesSet).sort((a,b)=> a.localeCompare(b));
+
+  // ricrea le option (mantiene "Tutte le serie" come prima opzione)
+  const first = sel.querySelector('option[value=""]')?.outerHTML || '<option value="">Tutte le serie</option>';
+  sel.innerHTML = first + list.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+/* ⭐⭐ stelle: tipo button + prevenzione submit */
+function renderStars(container, value, onRate){
+  container.innerHTML='';
+  const full = Math.round(value);
+  for(let i=1;i<=5;i++){
+    const btn = document.createElement(onRate? 'button':'div');
+    if (onRate) btn.type = 'button';
+    btn.innerHTML = starSVG(i<=full);
+    if(onRate) btn.addEventListener('click', (e)=> { e.preventDefault(); e.stopPropagation(); onRate(i); });
+    container.appendChild(btn);
+  }
+  const label = document.createElement('span');
+  label.textContent = value? ` ${value.toFixed(1)}/5` : ' Nessuna valutazione';
+  container.appendChild(label);
+}
+
+let CURRENT_TAB = 'all';
+function setTab(tab){
+  CURRENT_TAB = tab;
+  $('#tabAll').setAttribute('aria-selected', tab==='all');
+  $('#tabFavs').setAttribute('aria-selected', tab==='favs');
+  $('#sectionTitle').textContent = tab==='favs' ? 'Le tue carte preferite' : 'Tutte le carte';
+  applyFilters();
+}
+$('#tabAll').addEventListener('click', ()=> setTab('all'));
+$('#tabFavs').addEventListener('click', ()=> setTab('favs'));
+
+function getQty(c){
+  if (typeof c === 'object' && c){
+    if (Number.isFinite(c.quantity)) return c.quantity;
+    if (Number.isFinite(c.quantita)) return c.quantita;
+    if (c['Quantità'] != null && Number.isFinite(Number(c['Quantità']))) return Number(c['Quantità']);
+  }
+  return null;
+}
+function isOggettoRarity(r){ return r === 'Oggetto' || r === 'Oggetti'; }
+function noFiltersActive(){
+  return (
+    !$('#q').value &&
+    !$('#fGame').value &&
+    !$('#fRarity').value &&
+    !$('#fRole').value &&
+    !$('#fSeries').value
+  );
+}
+
+let LAST_ITEMS = [];
+let GRID_UNSUBS = [];
+function clearGridSubs(){
+  try{ GRID_UNSUBS.forEach(u=>{ try{ u&&u(); }catch{} }); }catch{}
+  GRID_UNSUBS = [];
+}
+
+function applyFilters(){
+  const q      = $('#q').value.trim().toLowerCase();
+  const game   = $('#fGame').value;
+  const rarity = $('#fRarity').value;
+  const role   = $('#fRole').value;
+  const series = $('#fSeries').value;
+
+  let items = CARDS.map(c => ({ ...c, rating: avg(loadRatings(c.id)) }));
+
+  if (CURRENT_TAB === 'favs') {
+    const favSet = new Set(loadFavs());
+    items = items.filter(c => favSet.has(c.id));
+  }
+  if (q)      items = items.filter(c => (c.name + " " + c.series + " " + (c.text||'')).toLowerCase().includes(q));
+  if (game)   items = items.filter(c => c.game === game);
+  if (rarity) items = items.filter(c => {
+                if (rarity === 'Oggetti') return isOggettoRarity(c.rarity);
+                return c.rarity === rarity;
+              });
+  if (role)   items = items.filter(c => c.role === role);
+  if (series) items = items.filter(c => c.series === series);
+
+  // Ordine fisso per nome (abbiamo rimosso "Ordina")
+  items.sort((a,b) => a.name.localeCompare(b.name));
+
+  // Griglia iniziale casuale se nessun filtro è attivo
+  if (CURRENT_TAB === 'all' && noFiltersActive()) {
+    items = items.slice().sort(() => Math.random() - 0.5).slice(0, 8);
+  }
+
+  LAST_ITEMS = items.slice();
+  renderGrid(items);
+}
+
+const grid = $('#grid');
+function renderGrid(items){
+  clearGridSubs();
+  grid.innerHTML='';
+  if(!items.length){
+    const msg = CURRENT_TAB==='favs' ? 'Nessuna carta nei preferiti. Tocca il cuore su una carta per aggiungerla.' : 'Nessuna carta trovata. Prova a cambiare i filtri.';
+    grid.innerHTML = `<p style="color:var(--muted)">${msg}</p>`; return;
+  }
+  const tpl = document.getElementById('tplCard');
+  const favSet = new Set(loadFavs());
+  for(const c of items){
+    const node = tpl.content.firstElementChild.cloneNode(true);
+    // 🔥 cornice infuocata in griglia se onFire
+    if (c.onFire) node.classList.add('on-fire');
+
+    if (isBidone(c)) node.classList.add('bidone');
+            const rarSlug = (c.rarity || '').toLowerCase().replace(/\s+/g,'-');
+    if (rarSlug) node.classList.add('r-' + rarSlug);
+    node.querySelector('.badge').textContent = c.rarity;
+    const img = node.querySelector('.thumb');
+    img.src = c.img; img.loading='lazy'; img.alt = `Carta ${c.name}`;
+    img.addEventListener('click', ()=> openModal(c));
+    node.querySelector('.name').textContent = c.name;
+    node.querySelector('.meta').textContent = `${c.game} • ${c.series} • ${c.role || '—'}`;
+    renderStars(node.querySelector('.stars'), c.rating||0, null);
+
+    if (window._subscribeModalRating) {
+      const unsub = window._subscribeModalRating(c.id, (avgVal)=>{
+        renderStars(node.querySelector('.stars'), avgVal||0, null);
+      });
+      GRID_UNSUBS.push(unsub);
+    }
+    if (window._fetchRatings) {
+      window._fetchRatings(c.id).then(vals=>{
+        const avgVal = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
+        renderStars(node.querySelector('.stars'), avgVal, null);
+      }).catch(()=>{});
+    }
+    const tags = node.querySelector('.tags');
+    const qty = getQty(c);
+    if (qty!=null){ const s=document.createElement('span'); s.className='tag'; s.textContent=`Quantità: ${qty}`; tags.appendChild(s); }
+    (c.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s);});
+
+    if (c.onFire) {
+      const s = document.createElement('span');
+      s.className = 'tag fire';
+      s.textContent = '🔥 On fire';
+      tags.appendChild(s);
+    }
+            if (isBidone(c)) {
+              const s = document.createElement('span');
+              s.className = 'tag bidone';
+              s.textContent = '🤢 Bidone';
+              tags.appendChild(s);
+            }
+
+    const favBtn = node.querySelector('.fav');
+    const favActive = favSet.has(c.id);
+    favBtn.classList.toggle('active', favActive);
+    favBtn.setAttribute('aria-pressed', String(favActive));
+    favBtn.addEventListener('click', (ev)=>{
+      ev.stopPropagation(); ev.preventDefault();
+      toggleFav(c.id);
+      const on = isFav(c.id);
+      favBtn.classList.toggle('active', on);
+      favBtn.setAttribute('aria-pressed', String(on));
+      if(CURRENT_TAB==='favs' && !on){
+        favBtn.closest('.card').remove();
+        LAST_ITEMS = LAST_ITEMS.filter(x=> x.id!==c.id);
+        if(!grid.children.length){ grid.innerHTML = '<p style="color:var(--muted)">Nessuna carta nei preferiti.</p>'; }
+      }
+    });
+
+    node.querySelector('.open').addEventListener('click', ()=> openModal(c));
+    grid.appendChild(node);
+  }
+}
+
+const dlg = document.getElementById('dlg');
+const dlgImg = document.getElementById('dlgImg');
+const dlgName = document.getElementById('dlgName');
+const dlgMeta = document.getElementById('dlgMeta');
+const dlgStars = document.getElementById('dlgStars');
+const dlgTags = document.getElementById('dlgTags');
+const commentsBox = document.getElementById('comments');
+const navPrev = document.querySelector('.navPrev');
+const navNext = document.querySelector('.navNext');
+let current = null; let currentIndex = -1;
+
+function openByIndex(i){ if(!LAST_ITEMS.length) return; if(i<0) i = LAST_ITEMS.length-1; if(i>=LAST_ITEMS.length) i = 0; openModal(LAST_ITEMS[i]); }
+
+async function openModal(card){
+  current = card; currentIndex = LAST_ITEMS.findIndex(x=> x.id===card.id);
+  dlgImg.src = card.img; dlgName.textContent = card.name; dlgMeta.textContent = `${card.game} • ${card.series} • ${card.role || '—'}`;
+
+  // 🔥 cornice infuocata nella modale se onFire
+  dlgImg.classList.toggle('on-fire', !!card.onFire);
+        dlgImg.classList.toggle('bidone', isBidone(card));
+
+  dlgTags.innerHTML='';
+  const _q=getQty(card);
+  if(_q!=null){ const s=document.createElement('span'); s.className='tag'; s.textContent=`Quantità: ${_q}`; dlgTags.appendChild(s); }
+  (card.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; dlgTags.appendChild(s)});
+
+  
+if (card.onFire) {
+    const s = document.createElement('span');
+    s.className = 'tag fire';
+    s.textContent = '🔥 On fire';
+    dlgTags.appendChild(s);
+  }
+
+  
+  if (isBidone(card)) {
+    const s = document.createElement('span');
+    s.className = 'tag bidone';
+    s.textContent = '🤢 Bidone';
+    dlgTags.appendChild(s);
+  }
+const onRate = async (v)=>{ 
+    saveRating(card.id, v); 
+    if (window._setMyRating) { try{ await window._setMyRating(card.id, v); }catch(e){ console.error(e); } } 
+    applyFilters(); 
+  };
+  renderStars(dlgStars, 0, onRate);
+
+  // ⭐ barra rapida sotto l’immagine
+  const dlgStarsQuick = document.getElementById('dlgStarsQuick');
+  renderStars(dlgStarsQuick, 0, onRate);
+
+  if (window._fetchRatings) { 
+    try{ 
+      const vals = await window._fetchRatings(card.id); 
+      const avgVal = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0; 
+      renderStars(dlgStars, avgVal, onRate);
+      renderStars(dlgStarsQuick, avgVal, onRate);
+    }catch(e){ /* ignore */ }
+  }
+
+  if (window._modalUnsub) { try{ window._modalUnsub(); }catch{} window._modalUnsub = null; }
+  if (window._subscribeModalRating) { 
+    window._modalUnsub = window._subscribeModalRating(card.id, (avgVal)=>{ 
+      renderStars(dlgStars, avgVal, onRate); 
+      renderStars(dlgStarsQuick, avgVal, onRate);
+    }); 
+  }
+
+  renderCommentsLocal(card.id);
+  if (window._commentsUnsub) { try{ window._commentsUnsub(); }catch{} window._commentsUnsub=null; }
+  if (window._subscribeComments) {
+    window._commentsUnsub = window._subscribeComments(card.id, (list)=>{
+      const box = document.getElementById('comments');
+      box.innerHTML = list.length
+        ? list.map(c => `
+               <div class="comment">
+                 <div class="author">${esc(c.author||'Anonimo')}</div>
+                 <div class="text">${esc(c.text||'')}</div>
+                 <div class="meta" style="margin-top:6px">${new Date(c.ts).toLocaleString()}</div>
+               </div>
+             `).join('')
+        : '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>';
+    });
+  } else if (window._loadCommentsRemoteIntoUI) {
+    window._loadCommentsRemoteIntoUI(card);
+  }
+
+  document.body.classList.add('modal-open');
+  dlg.showModal();
+
+  // appena apro su mobile, parto in modalità compatta e porto le stelle in vista
+  if (window.matchMedia('(max-width: 600px)').matches) {
+    dlgImg.classList.add('compact'); // 👈 più spazio ai commenti
+    setTimeout(()=> document.getElementById('dlgStarsQuick')
+      .scrollIntoView({behavior:'smooth', block:'center'}), 50);
+  }
+
+  // Tap sull’immagine per ridurre/espandere (toggle)
+  dlgImg.onclick = () => dlgImg.classList.toggle('compact');
+}
+
+function renderCommentsLocal(id){
+  commentsBox.innerHTML='';
+  const list = loadCommentsLocal(id);
+  if(!list.length){ commentsBox.innerHTML = '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>'; return }
+  for(const c of list.slice().reverse()){
+    const div = document.createElement('div');
+    div.className='comment';
+    div.innerHTML = `<div class="author">${esc(c.author||'Anonimo')}</div><div class="text">${esc(c.text||'')}</div><div class="meta" style="margin-top:6px">${new Date(c.ts).toLocaleString()}</div>`;
+    commentsBox.appendChild(div);
+  }
+}
+
+dlg.addEventListener('close', ()=>{
+  current=null; currentIndex=-1; document.body.classList.remove('modal-open');
+  if (window._modalUnsub) { try{ window._modalUnsub(); }catch{} window._modalUnsub = null; }
+  if (window._commentsUnsub) { try{ window._commentsUnsub(); }catch{} window._commentsUnsub = null; }
+});
+
+navPrev.addEventListener('click', ()=> openByIndex(currentIndex-1));
+navNext.addEventListener('click', ()=> openByIndex(currentIndex+1));
+
+document.addEventListener('keydown', (e)=>{
+  if(!dlg.open) return;
+  if(e.key==='ArrowLeft') { e.preventDefault(); openByIndex(currentIndex-1); }
+  if(e.key==='ArrowRight'){ e.preventDefault(); openByIndex(currentIndex+1); }
+  if(e.key==='Escape'){ dlg.close(); }
+});
+
+(function enableSwipe(){
+  let startX=0, startY=0, t=0;
+  const el = dlg;
+  el.addEventListener('touchstart', (e)=>{
+    if(!e.touches || !e.touches[0]) return;
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY; t=Date.now();
+  }, {passive:true});
+  el.addEventListener('touchend', (e)=>{
+    const dt = Date.now()-t; const touch = e.changedTouches && e.changedTouches[0]; if(!touch) return;
+    const dx = touch.clientX - startX; const dy = touch.clientY - startY; const absX = Math.abs(dx), absY = Math.abs(dy);
+    if(absX > 60 && absX > absY && dt < 600){ if(dx < 0) openByIndex(currentIndex+1); else openByIndex(currentIndex-1); }
+  }, {passive:true});
+})();
+
+// Salvataggio / pulizia commenti
+const commentsSaveBtn = document.getElementById('saveC');
+commentsSaveBtn.addEventListener('click', async (e)=>{
+  e.preventDefault(); if(!current) return;
+  const author = document.getElementById('author').value.trim() || 'Anonimo';
+  const text = document.getElementById('message').value.trim();
+  if(!text){ alert('Scrivi un commento!'); return }
+  addCommentLocal(current.id, {author, text, ts: Date.now()});
+  if (window._addCommentRemote) { try{ await window._addCommentRemote(current.id, {author, text}); }catch(e){ console.error(e); } }
+  document.getElementById('message').value='';
+  renderCommentsLocal(current.id);
+  if (window._loadCommentsRemoteIntoUI) { await window._loadCommentsRemoteIntoUI(current); }
+  applyFilters();
+});
+
+const commentsClearBtn = document.getElementById('clearC');
+commentsClearBtn.addEventListener('click', async ()=>{
+  if(!current) return; 
+  if(confirm('Vuoi eliminare SOLO i tuoi commenti su questa carta?')){
+    clearCommentsLocal(current.id); 
+    if (window._deleteMyComments) { try{ await window._deleteMyComments(current.id); }catch(e){} }
+    renderCommentsLocal(current.id);
+    if (window._loadCommentsRemoteIntoUI) { await window._loadCommentsRemoteIntoUI(current); }
+  }
+});
+
+// 🔁 Event listeners per i filtri (inclusa "Series")
+['q','fGame','fRarity','fRole','fSeries']
+  .forEach(id => document.getElementById(id).addEventListener('input', applyFilters));
+
+updateFavCount();
+loadCards();
+
+window.addEventListener('firebase-ready', () => {
+  applyFilters();
+  if (dlg.open && current) { dlg.close(); openModal(current); }
+});
+</script>
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<!-- Setup Firebase + bridge (immutato rispetto alla tua versione) -->
+<script id="firebase-setup">
+/* Copiato 1:1 dalla tua versione per evitare regressioni */
+(async ()=>{
+const firebaseConfig = {
+apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
+authDomain: "fantaball-9e19c.firebaseapp.com",
+projectId: "fantaball-9e19c",
+storageBucket: "fantaball-9e19c.appspot.com",
+messagingSenderId: "683304379837",
+appId: "1:683304379837:web:d2bbe7a814e2e40e075ed4",
+measurementId: "G-C8Q8K5B52C"
+};
+
+firebase.initializeApp(firebaseConfig);
+try { await firebase.auth().signInAnonymously(); } catch(e){ console.error('[firebase auth]', e); }
+
+/* 🔐 Google Auth (niente login anonimo) */
+const auth = firebase.auth();
+
+async function safeGoogleSignIn() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  try {
+    if (auth.currentUser && auth.currentUser.isAnonymous) {
+      const { user } = await auth.currentUser.linkWithPopup(provider);
+      return user;
+    }
+    const { user } = await auth.signInWithPopup(provider);
+    return user;
+  } catch (e) {
+    console.warn('[safeGoogleSignIn]', e.code, e.message);
+
+    // Common cases on static hosts / mobile browsers
+    if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || /blocked/i.test(e.message||''))) {
+      try {
+        await auth.signInWithRedirect(provider);
+        return; // will redirect
+      } catch (er) {
+        console.error('[redirectSignIn]', er);
+      }
+    }
+
+    if (e && e.code === 'auth/unauthorized-domain') {
+      alert('Dominio non autorizzato in Firebase.
+Aggiungi "pavoniingrifati.github.io" in Firebase Console → Authentication → Settings → Authorized domains.');
+      return;
+    }
+
+    if (e.code === 'auth/credential-already-in-use' && e.credential) {
+      const { user } = await auth.signInWithCredential(e.credential);
+      return user;
+    }
+
+    if (e.code === 'auth/account-exists-with-different-credential' && e.email) {
+      const methods = await auth.fetchSignInMethodsForEmail(e.email);
+      if (methods.includes('google.com') && e.credential) {
+        const { user } = await auth.signInWithCredential(e.credential);
+        return user;
+      }
+      alert(
+        'Quest’email è già usata con: ' + methods.join(', ') +
+        '. Accedi con quel metodo, poi potrai collegare Google dalle impostazioni del tuo profilo.'
+      );
+    }
+
+    throw e;
+  }
+}
+
+// UI login/logout
+const $id = (x)=>document.getElementById(x);
+const btnLogin  = $id('btnLogin');
+const btnLogout = $id('btnLogout');
+const userName  = $id('userName');
+const userPhoto = $id('userPhoto');
+
+btnLogin?.addEventListener('click', async ()=>{
+  try{ await safeGoogleSignIn(); }
+  catch(e){ alert('Login annullato o fallito.'); }
+});
+
+btnLogout?.addEventListener('click', async ()=>{
+  try{ await auth.signOut(); }
+  catch(e){ console.error('[logout]', e); }
+});
+
+// Complete redirect-based sign-in if present
+auth.getRedirectResult().then(function(res){
+  if (res && res.user) {
+    console.log('[redirectResult] signed-in as', res.user.uid);
+  }
+}).catch(function(err){ console.warn('[redirectResult]', err); });
+
+auth.onAuthStateChanged((user)=>{
+  const logged = !!user;
+  if (btnLogin)  btnLogin.style.display  = logged ? 'none' : '';
+  if (btnLogout) btnLogout.style.display = logged ? '' : 'none';
+
+  if (userName){
+    userName.textContent = logged ? (user.displayName || user.email || 'Account') : '';
+    userName.style.display = logged ? '' : 'none';
+  }
+  if (userPhoto){
+    if (logged && user.photoURL){
+      userPhoto.src = user.photoURL;
+      userPhoto.style.display = '';
+    }else{
+      userPhoto.style.display = 'none';
+      userPhoto.removeAttribute('src');
+    }
+  }
+
+  // Bonus: se non anonimo, inizializza documento utente con 10 punti (come tua versione)
+  if (user && !user.isAnonymous) {
+    const db = firebase.firestore();
+    const ref = db.collection('users').doc(user.uid);
+    db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) {
+        const now = firebase.firestore.FieldValue.serverTimestamp();
+        tx.set(ref, { points: 10, createdAt: now, updatedAt: now });
+      }
+    }).catch(console.error);
+  }
+
+  // Notifica il resto dell’app
+  window.dispatchEvent(new CustomEvent('firebase-ready'));
+});
+
+/* 🔗 Firestore bridge identico alla tua versione */
+const db = firebase.firestore();
+try { db.settings({ experimentalForceLongPolling: true }); } catch(e) {}
+
+window._fetchRatings = async function(cardId){
+  try{
+    const snap = await db.collection('cards').doc(cardId).collection('ratings').get();
+    return snap.docs.map(d => d.data().value);
+  }catch(e){ console.error('[fetchRatings]', e); return []; }
+};
+
+window._setMyRating = async function(cardId, value){
+  try{
+    const uid = firebase.auth().currentUser?.uid;
+    if(!uid) throw new Error('no-uid');
+    const v = Math.max(1, Math.min(5, Math.round(Number(value) || 0)));
+    await db.collection('cards').doc(cardId).collection('ratings').doc(uid).set({
+      value: v,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge:true });
+  }catch(e){ console.error('[setMyRating]', e); }
+};
+
+window._fetchComments = async function(cardId){
+  try{
+    const snap = await db.collection('cards').doc(cardId).collection('comments').orderBy('createdAt','desc').get();
+    return snap.docs.map(d => { const x = d.data(); return { id:d.id, author:x.author, text:x.text, ts:x.createdAt?.toMillis?.() || Date.now(), uid:x.uid }; });
+  }catch(e){ console.error('[fetchComments]', e); return []; }
+};
+
+window._addCommentRemote = async function(cardId, {author, text}){
+  try{
+    const uid = firebase.auth().currentUser?.uid;
+    await db.collection('cards').doc(cardId).collection('comments').add({
+      author, text, uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(e){ console.error('[addCommentRemote]', e); }
+};
+
+window._deleteMyComments = async function(cardId){
+  try{
+    const uid = firebase.auth().currentUser?.uid;
+    const snap = await db.collection('cards').doc(cardId).collection('comments').get();
+    const batch = db.batch();
+    snap.docs.filter(d=> d.data().uid===uid).forEach(d=> batch.delete(d.ref));
+    await batch.commit();
+  }catch(e){ console.error('[deleteMyComments]', e); }
+};
+
+window._subscribeModalRating = function(cardId, onAvg){
+  return db.collection('cards').doc(cardId).collection('ratings')
+    .onSnapshot(
+      snap=>{
+        const vals = snap.docs.map(d=> d.data().value);
+        const avg = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
+        onAvg(avg);
+      },
+      err=>{ console.error('[comments onSnapshot]', err); }
+    );
+};
+
+window._subscribeComments = function(cardId, onList){
+  return db.collection('cards').doc(cardId).collection('comments')
+    .orderBy('createdAt','desc')
+    .onSnapshot(
+      snap=>{
+        const list = snap.docs.map(d => { const x = d.data(); return { id:d.id, author:x.author, text:x.text, ts:x.createdAt?.toMillis?.() || Date.now(), uid:x.uid }; });
+        onList(list);
+      },
+      err=>{ console.error('[comments onSnapshot]', err); }
+    );
+};
+
+window._loadCommentsRemoteIntoUI = async function(card){
+  const list = await window._fetchComments(card.id);
+  const box = document.getElementById('comments');
+  box.innerHTML = list.length
+    ? list.map(c => `
+             <div class="comment">
+               <div class="author">${esc(c.author||'Anonimo')}</div>
+               <div class="text">${esc(c.text||'')}</div>
+               <div class="meta" style="margin-top:6px">${new Date(c.ts).toLocaleString()}</div>
+             </div>
+           `).join('')
+    : '<div class="comment">Ancora nessun commento. Scrivi il primo! 🎉</div>';
+};
+
+window.dispatchEvent(new CustomEvent('firebase-ready'));
+})();
+</script>
+
+<!-- 📱 Mobile Filters Toggle + Placement Next To "Preferite" -->
+<script id="mobile-filters-toggle-and-layout-js">
+(function(){
+  const mq = window.matchMedia('(max-width: 600px)');
+  const ensureId = (el, fallbackId)=>{
+    if(!el) return null;
+    if(!el.id){ el.id = fallbackId; }
+    return el.id;
+  };
+  const findFavEl = ()=>{
+    // Cerca un controllo "Preferite/Preferiti"/Favorites/heart nella header
+    const candidates = [
+      'header .fav',
+      'header .favorites',
+      'header .preferite',
+      'header .preferiti',
+      'header [aria-label*="Preferit" i]',
+      'header [title*="Preferit" i]',
+      'header [aria-label*="Favorite" i]',
+      'header [title*="Favorite" i]'
+    ];
+    for(const sel of candidates){
+      const el = document.querySelector(sel);
+      if(el) return el;
+    }
+    // Fallback per testo
+    const buttons = Array.from(document.querySelectorAll('header button, header a'));
+    const byText = buttons.find(el => /preferit|favorite/i.test((el.textContent||'').trim()));
+    return byText || null;
+  };
+
+  const createToggle = (toolbar)=>{
+    if(!toolbar) return null;
+    if(document.querySelector('.filters-toggle')) return document.querySelector('.filters-toggle');
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'filters-toggle';
+    btn.setAttribute('aria-pressed','false');
+    btn.setAttribute('aria-expanded','false');
+    const id = ensureId(toolbar, 'toolbar-filters');
+    btn.setAttribute('aria-controls', id);
+    btn.innerHTML = '<span class="dot" aria-hidden="true"></span><span class="lbl-open">Mostra filtri</span><span class="lbl-close">Nascondi filtri</span>';
+    return btn;
+  };
+
+  const placeToggle = (btn)=>{
+    const fav = findFavEl();
+    // inserisci affianco a preferite se presente; altrimenti sticky in header
+    const headerWrap = document.querySelector('header .wrap') || document.querySelector('header') || document.body;
+    if(fav && fav.parentElement){
+      fav.insertAdjacentElement('afterend', btn);
+      btn.classList.add('next-to-fav');
+    }else{
+      headerWrap.insertBefore(btn, headerWrap.firstChild);
+      btn.classList.add('sticky');
+    }
+  };
+
+  const setState = (toolbar, btn, open)=>{
+    if(!toolbar || !btn) return;
+    if(open){
+      toolbar.removeAttribute('hidden');
+      btn.setAttribute('aria-expanded','true');
+      btn.setAttribute('aria-pressed','true');
+    }else{
+      toolbar.setAttribute('hidden','');
+      btn.setAttribute('aria-expanded','false');
+      btn.setAttribute('aria-pressed','false');
+    }
+  };
+
+  const init = ()=>{
+    const toolbar = document.querySelector('header .toolbar');
+    if(!toolbar) return;
+    if(mq.matches){
+      let btn = createToggle(toolbar);
+      placeToggle(btn);
+      // stato iniziale chiuso
+      setState(toolbar, btn, false);
+      btn.addEventListener('click', ()=>{
+        const open = btn.getAttribute('aria-expanded') === 'true';
+        setState(toolbar, btn, !open);
+        if(!open){
+          // porta la toolbar in vista
+          setTimeout(()=>toolbar.scrollIntoView({block:'nearest'}),0);
+        }
+      });
+    }else{
+      // desktop: filtri sempre visibili
+      toolbar.removeAttribute('hidden');
+    }
+  };
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init, {once:true});
+  }else{
+    init();
+  }
+  mq.addEventListener ? mq.addEventListener('change', init) : mq.addListener(init);
+})();
+</script>
+
+
+<script id="hero-collezione-js">
+(function(){
+  // Update hero cards count when available
+  const setHeroCount = (n)=>{
+    var el = document.getElementById('cardsCountHero');
+    if(el){ el.textContent = "Carte disponibili: " + n; }
+  };
+  // if footer count updates via your loadCards, we also mirror it
+  const footerCount = document.getElementById('cardsCount');
+  if(footerCount && /\d+/.test(footerCount.textContent||"")){
+    var m = (footerCount.textContent||"").match(/(\d+)/);
+    if(m){ setHeroCount(m[1]); }
+  }
+
+  // Click to open "Preferite" tab
+  var btn = document.getElementById('ctaPreferite');
+  if(btn){
+    btn.addEventListener('click', function(){
+      try{
+        var favTab = document.getElementById('tabFavs');
+        if(favTab){ favTab.click(); }
+        // Smooth scroll to main content
+        var main = document.querySelector('main.wrap');
+        if(main){ main.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      }catch(e){}
+    });
+  }
+
+  // Expose helper so existing loadCards can update hero count too
+  window.__setHeroCardsCount = setHeroCount;
+})();
+</script>
+
+
+<script id="hero-collage-js">
+(function(){
+  function pickRandom(arr, n){
+    const out = [];
+    const used = new Set();
+    n = Math.min(n, arr.length);
+    while(out.length < n){
+      const i = Math.floor(Math.random()*arr.length);
+      if(used.has(i)) continue;
+      used.add(i);
+      out.push(arr[i]);
+    }
+    return out;
+  }
+  function rand(a,b){ return a + Math.random()*(b-a); }
+
+  function buildHeroCollage(cards){
+    try{
+      var root = document.querySelector('.hero .collage');
+      if(!root || !Array.isArray(cards) || !cards.length) return;
+      if(root.dataset.built === "1") return; // build once
+      root.dataset.built = "1";
+
+      const isDesktop = window.matchMedia('(min-width: 900px)').matches;
+      const N = isDesktop ? 12 : 6;
+      const chosen = pickRandom(cards.filter(c => c && c.img), N);
+
+      const W = root.clientWidth || window.innerWidth;
+      const H = root.clientHeight || (window.innerHeight * 0.56);
+
+      chosen.forEach((c, idx)=>{
+        const img = new Image();
+        img.loading = "eager";
+        img.decoding = "async";
+        img.src = c.img;
+        img.alt = "";
+        // Random position (avoid the left-top quarter too much to keep title readable)
+        const x = rand(W*0.25, W*0.92);
+        const y = rand(H*0.05, H*0.88);
+        const rot = rand(-12, 10);
+        const z = rand(0.92, 1.12);
+        const dur = rand(8, 14);
+        img.style.left = Math.round(x) + "px";
+        img.style.top  = Math.round(y) + "px";
+        img.style.setProperty("--rot", rot+"deg");
+        img.style.setProperty("--z", z);
+        img.style.setProperty("--dur", dur+"s");
+        img.style.zIndex = String(1 + Math.floor(z*10));
+        root.appendChild(img);
+      });
+    }catch(e){ console.warn("[hero-collage]", e); }
+  }
+
+  // Expose globally so loadCards() can call it once it has CARDS
+  window.__buildHeroCollage = function(cards){ buildHeroCollage(cards || (window.CARDS || [])); };
+
+  // If CARDS already exists, build immediately
+  if (Array.isArray(window.CARDS) && window.CARDS.length){
+    buildHeroCollage(window.CARDS);
+  } else {
+    // else wait a tiny bit; loadCards will also invoke this
+    setTimeout(function(){ if(Array.isArray(window.CARDS) && window.CARDS.length){ buildHeroCollage(window.CARDS); } }, 1200);
+  }
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+<script id="hero-featured-js">
+(function(){
+  function byRarityRank(r){
+    var order = ["Leggendaria","Ultra Rara","Epica","Rara","Non Comune","Comune","Season","Oggetti","Oggetto"];
+    var i = order.indexOf(r || "");
+    return i < 0 ? 99 : i;
+  }
+  function pickByExplicitIds(cards, ids){
+    if(!Array.isArray(cards) || !Array.isArray(ids) || !ids.length) return [];
+    var map = new Map();
+    cards.forEach(function(c){ if(c && (c.id || c.name)) map.set(String(c.id || c.name), c); });
+    var out = [];
+    ids.forEach(function(raw){
+      var key = String(raw);
+      if(map.has(key)) out.push(map.get(key));
+      else{
+        var hit = cards.find(function(c){ return c && (c.name === key || String(c.id) === key); });
+        if(hit) out.push(hit);
+      }
+    });
+    return out;
+  }
+  function pickByFeaturedFlag(cards){
+    if(!Array.isArray(cards)) return [];
+    return cards.filter(function(c){ return c && c.featured === true; });
+  }
+  function pickByRarity(cards, n){
+    if(!Array.isArray(cards)) return [];
+    var pool = cards.filter(function(c){ return c && c.img; });
+    pool.sort(function(a,b){
+      return byRarityRank(a.rarity) - byRarityRank(b.rarity) || (a.name||"").localeCompare(b.name||"");
+    });
+    return pool.slice(0, n);
+  }
+  function dedupeByImg(arr){
+    var out = [], used = new Set();
+    arr.forEach(function(c){
+      if(!c || !c.img) return;
+      if(used.has(c.img)) return;
+      used.add(c.img); out.push(c);
+    });
+    return out;
+  }
+  function loadOK(url){
+    return new Promise(function(resolve){
+      var im = new Image();
+      im.onload = function(){ resolve(true); };
+      im.onerror = function(){ resolve(false); };
+      try{ im.referrerPolicy = "no-referrer"; }catch(e){}
+      im.src = url;
+    });
+  }
+  async function setFeatured(cards){
+    try{
+      var visual = document.querySelector('.hero .visual');
+      var boxes = [
+        document.querySelector('.hero .card-mock.c1'),
+        document.querySelector('.hero .card-mock.c2'),
+        document.querySelector('.hero .card-mock.c3')
+      ];
+      if(!visual || !boxes[0] || !boxes[1] || !boxes[2]) return;
+
+      var explicitIds = Array.isArray(window.FEATURED_CARD_IDS) ? window.FEATURED_CARD_IDS.filter(Boolean) : [];
+      var selected = [];
+      if (explicitIds.length){
+        selected = pickByExplicitIds(cards, explicitIds);
+      }
+      if (!selected.length){
+        selected = pickByFeaturedFlag(cards);
+      }
+      if (!selected.length){
+        selected = pickByRarity(cards, 6);
+      }
+      selected = dedupeByImg(selected);
+
+      if(!selected.length){
+        visual.hidden = true;
+        return;
+      }
+      var filled = 0;
+      for (var i=0, bi=0; i<selected.length && bi<boxes.length; i++){
+        var c = selected[i];
+        if(!c || !c.img) continue;
+        var ok = await loadOK(c.img);
+        if(!ok) continue;
+        var box = boxes[bi++];
+        var img = box.querySelector('img.fit');
+        if(img){
+          img.src = c.img;
+          img.alt = (c.name || "Carta") + (c.series ? " • " + c.series : "");
+        }
+        box.style.setProperty('--bg', 'url(' + c.img + ')');
+        box.title = (c.name || "") + (c.series ? " • " + c.series : "");
+        var label = box.querySelector('.label');
+        if(label){
+          label.textContent = (c.rarity ? c.rarity + " • " : "") + (c.name || "");
+          label.style.display = "inline-flex";
+        }
+        filled++;
+      }
+      visual.hidden = filled === 0;
+    }catch(e){
+      console.warn("[hero-featured]", e);
+    }
+  }
+
+  window.__setHeroFeatured = setFeatured;
+
+  if (Array.isArray(window.CARDS) && window.CARDS.length){
+    setFeatured(window.CARDS);
+  }
+})();
+</script>
+
+</body>
+</html>
