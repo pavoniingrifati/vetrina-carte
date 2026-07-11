@@ -1739,6 +1739,37 @@
     .season-finished-view .us-row td{background:#fff0a8!important;color:#10243a!important;font-weight:1000;}
     .season-finished-view .standing-team span{color:#10243a!important;}
 
+  
+    .final-player-stats{margin:18px 0;padding:18px;border-radius:24px;background:linear-gradient(145deg,#0d2a45,#173f66);border:2px solid #e4c84e;box-shadow:0 16px 35px rgba(16,36,58,.18);color:#fff!important}
+    .final-player-stats *{box-sizing:border-box}
+    .final-player-stats-title{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:15px}
+    .final-player-stats-title span{display:block;color:#ffe96c!important;font-size:10px;font-weight:1000;text-transform:uppercase;letter-spacing:.14em}
+    .final-player-stats-title h2{margin:3px 0 0;color:#fff!important;font-size:clamp(24px,4vw,38px)}
+    .final-player-stats-title p{max-width:470px;margin:0;color:#dbe7f1!important;font-size:12px;font-weight:800;text-align:right}
+    .final-player-stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .final-player-stat-card{min-width:0;overflow:hidden;border-radius:19px;background:#f8f4e8;border:1px solid rgba(255,233,108,.65);color:#10243a!important;box-shadow:0 8px 22px rgba(0,0,0,.16)}
+    .final-player-stat-head{display:flex;align-items:center;gap:10px;padding:13px 14px;background:linear-gradient(180deg,#fff5b2,#f0d65b);border-bottom:1px solid #d8bd45}
+    .final-player-stat-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#10243a;color:#fff!important;font-size:20px}
+    .final-player-stat-head span:not(.final-player-stat-icon){display:block;color:#755c16!important;font-size:8px;font-weight:1000;text-transform:uppercase;letter-spacing:.14em}
+    .final-player-stat-head h3{margin:2px 0 0;color:#10243a!important;font-size:16px;text-transform:uppercase}
+    .final-player-stat-list{display:grid}
+    .final-player-stat-row{display:grid;grid-template-columns:28px 34px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:57px;padding:8px 12px;border-bottom:1px solid #ded5bc;background:#fffdf7}
+    .final-player-stat-row:last-child{border-bottom:0}
+    .final-player-stat-row.winner{background:linear-gradient(90deg,#fff0a6,#fffdf7 70%)}
+    .final-player-rank{display:grid;place-items:center;width:25px;height:25px;border-radius:999px;background:#10243a;color:#fff!important;font-size:10px;font-weight:1000}
+    .final-player-stat-row.winner .final-player-rank{background:#e1b91c;color:#10243a!important}
+    .final-player-copy{min-width:0}
+    .final-player-copy b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#10243a!important;font-size:13px}
+    .final-player-copy small{display:block;color:#6d6559!important;font-size:9px;font-weight:850}
+    .final-player-stat-row>strong{color:#10243a!important;font-size:18px;white-space:nowrap}
+    .final-player-stat-row>strong em{font-style:normal;color:#6d6559!important;font-size:8px;text-transform:uppercase}
+    .final-player-stat-empty{padding:18px;color:#6d6559!important;font-weight:850;text-align:center}
+    @media(max-width:820px){.final-player-stats-grid{grid-template-columns:1fr}.final-player-stats-title{align-items:flex-start;flex-direction:column}.final-player-stats-title p{text-align:left}}
+
+  
+    .final-clean-sheet-team{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#e7edf3}
+    .final-clean-sheet-team .team-color-dot{width:22px;height:22px;margin:0}
+
   </style>
 </head>
 <body>
@@ -1779,7 +1810,7 @@ const FORMATION_LAYOUTS={
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
 let PLAYERS=[];let CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:4,phase:'setup',userClubId:'fantaballa-fc',teamName:'Fantaballa FC',coachName:'',formation:'4-3-3',draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,activeEffects:[],seasonRules:{midseasonPickDelta:0,autoDecisions:false,autoMidseason:false,botMidseason:false},stats:{goals:{},assists:{}},midseason:{step:0,target:2,outgoingId:'',clubId:'',candidates:[],auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
+function freshState(){return{version:5,phase:'setup',userClubId:'fantaballa-fc',teamName:'Fantaballa FC',coachName:'',formation:'4-3-3',draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,activeEffects:[],seasonRules:{midseasonPickDelta:0,autoDecisions:false,autoMidseason:false,botMidseason:false},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{}},midseason:{step:0,target:2,outgoingId:'',clubId:'',candidates:[],auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
 function loadState(){try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null')}catch{return null}}
 function save(){localStorage.setItem(SAVE_KEY,JSON.stringify(state))}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -1848,6 +1879,10 @@ function normalizeCampionatoState(input){
  next.midseason.auto=Boolean(next.midseason.auto);
  next.midseason.autoCompleted=Boolean(next.midseason.autoCompleted);
  next.midseason.changes=Array.isArray(next.midseason.changes)?next.midseason.changes:[];
+ next.stats=next.stats&&typeof next.stats==='object'?next.stats:{};
+ ['goals','assists','appearances','cleanSheets','mvpVotes','mvpPoints','playerNames'].forEach(key=>{
+   next.stats[key]=next.stats[key]&&typeof next.stats[key]==='object'?next.stats[key]:{};
+ });
  next.teams=Array.isArray(next.teams)?next.teams:[];
  next.teams.forEach(team=>{
    if(!team)return;
@@ -1867,7 +1902,7 @@ function normalizeCampionatoState(input){
    }
    team.strength=Number(team.strength)||(config?clubStrength(config.id):nationalStrength(team.name));
  });
- next.version=4;
+ next.version=5;
  return next;
 }
 function formationSlots(key=state.formation){return (FORMATION_LAYOUTS[key]||FORMATION_LAYOUTS['4-3-3']).map((row,index)=>({code:row[0],x:row[1],y:row[2],instanceId:`starter-${index}`}))}
@@ -2593,7 +2628,81 @@ function poisson(lambda){let L=Math.exp(-lambda),p=1,k=0;do{k++;p*=Math.random()
 function simulateScore(powerA,powerB,homeAdv=0){const la=clamp(1.25+(powerA-powerB)/18+homeAdv,.15,4.5),lb=clamp(1.15+(powerB-powerA)/18-homeAdv,.15,4.5);return[poisson(la),poisson(lb)]}
 function weightedScorer(line){const pool=[];line.forEach(r=>{const role=roleOf(r.player),w=role==='A'?7:role==='C'?4:role==='D'?1:.15;for(let i=0;i<Math.ceil(w);i++)pool.push(r)});return pick(pool)}
 function goalDescription(player,assist){const pos=positions(player)[0]||'ATT',pool=(COMMENTARY?.positions?.[pos]||COMMENTARY?.positions?.ATT||['{marcatore} trova la rete.']);let s=pick(pool);if(!assist)s=pool.find(x=>!x.includes('{assist}'))||s;return String(s).replaceAll('{marcatore}',player.name).replaceAll('{assist}',assist?.name||'').replaceAll('{squadra}',state.teamName).replaceAll('{avversario}','avversario')}
-function buildUserGoals(n,line){const events=[];for(let i=0;i<n;i++){const s=weightedScorer(line),others=line.filter(x=>x.playerId!==s.playerId),a=Math.random()<.72?pick(others):null;state.stats.goals[s.playerId]=(state.stats.goals[s.playerId]||0)+1;if(a)state.stats.assists[a.playerId]=(state.stats.assists[a.playerId]||0)+1;events.push({minute:Math.floor(5+Math.random()*84),player:s.player.name,assist:a?.player.name||'',description:goalDescription(s.player,a?.player)})}return events.sort((a,b)=>a.minute-b.minute)}
+function buildUserGoals(n,line){const events=[];for(let i=0;i<n;i++){const s=weightedScorer(line),others=line.filter(x=>x.playerId!==s.playerId),a=Math.random()<.72?pick(others):null;const scorerId=String(s.playerId||s.player?.id||'');const assistId=a?String(a.playerId||a.player?.id||''):'';state.stats.goals[scorerId]=(state.stats.goals[scorerId]||0)+1;state.stats.playerNames[scorerId]=s.player.name;if(a){state.stats.assists[assistId]=(state.stats.assists[assistId]||0)+1;state.stats.playerNames[assistId]=a.player.name}events.push({minute:Math.floor(5+Math.random()*84),playerId:scorerId,assistId,player:s.player.name,assist:a?.player.name||'',description:goalDescription(s.player,a?.player)})}return events.sort((a,b)=>a.minute-b.minute)}
+
+function incrementPlayerStat(bucket,id,amount=1){
+ const key=String(id||'');
+ if(!key)return;
+ if(!state.stats||typeof state.stats!=='object')state.stats={};
+ if(!state.stats[bucket]||typeof state.stats[bucket]!=='object')state.stats[bucket]={};
+ state.stats[bucket][key]=(Number(state.stats[bucket][key])||0)+amount;
+}
+function safeMatchLineup(lineup){return (Array.isArray(lineup)?lineup:[]).map(entry=>({playerId:String(entry.playerId||entry.player?.id||''),name:entry.player?.name||'',slot:entry.slot||'',ovr:Number(entry.player?.ovr)||0}));}
+function recordMatchPlayerStats(lineup,goalsFor,goalsAgainst,goalEvents){
+ const safeLineup=(Array.isArray(lineup)?lineup:[]).filter(entry=>entry&&entry.player);
+ const goalCount={},assistCount={};
+ (goalEvents||[]).forEach(event=>{
+   if(event.playerId)goalCount[String(event.playerId)]=(goalCount[String(event.playerId)]||0)+1;
+   if(event.assistId)assistCount[String(event.assistId)]=(assistCount[String(event.assistId)]||0)+1;
+ });
+ safeLineup.forEach(entry=>{
+   const id=String(entry.playerId||entry.player.id||'');
+   if(!id)return;
+   incrementPlayerStat('appearances',id,1);
+   state.stats.playerNames[id]=entry.player.name;
+ });
+ const goalkeeper=safeLineup.find(entry=>entry.slot==='P'||roleOf(entry.player)==='P')||null;
+ const cleanSheet=Number(goalsAgainst)===0;
+ if(cleanSheet&&goalkeeper)incrementPlayerStat('cleanSheets',goalkeeper.playerId||goalkeeper.player.id,1);
+ let best=null;
+ safeLineup.forEach(entry=>{
+   const id=String(entry.playerId||entry.player.id||'');
+   if(!id)return;
+   const goals=goalCount[id]||0;
+   const assists=assistCount[id]||0;
+   const role=roleOf(entry.player);
+   const cleanBonus=cleanSheet?(role==='P'?5:role==='D'?2:0):0;
+   const resultBonus=goalsFor>goalsAgainst?1.5:goalsFor===goalsAgainst?.5:0;
+   const qualityTie=((Number(entry.player.ovr)||60)+activeEffectBonus(entry.player)+(Number(entry.malus)||0))/100;
+   const score=goals*6+assists*4+cleanBonus+resultBonus+qualityTie+Math.random()*.08;
+   if(!best||score>best.score)best={id,score,player:entry.player};
+ });
+ if(best){
+   incrementPlayerStat('mvpVotes',best.id,1);
+   incrementPlayerStat('mvpPoints',best.id,Math.round(best.score*10)/10);
+   state.stats.playerNames[best.id]=best.player.name;
+ }
+ return {goalkeeperId:goalkeeper?String(goalkeeper.playerId||goalkeeper.player.id||''):'',cleanSheet,mvpId:best?.id||'',mvpScore:best?Math.round(best.score*10)/10:0};
+}
+function statPlayerInfo(id){
+ const key=String(id||'');
+ const player=playerById(key)||rosterPlayers().find(entry=>String(entry.playerId)===key)?.player;
+ if(player)return player;
+ return {id:key,name:state.stats?.playerNames?.[key]||key||'Giocatore',nation:'',Position:'',role:'C',ovr:0,subscriber:'no'};
+}
+function rankedPlayerStat(bucket,limit=5,tieBucket=''){
+ let source=state.stats?.[bucket]||{};
+ const tie=state.stats?.[tieBucket]||{};
+ if(bucket==='mvpVotes'&&!Object.values(source).some(value=>Number(value)>0)){
+   const fallback={};
+   const ids=new Set([...Object.keys(state.stats?.goals||{}),...Object.keys(state.stats?.assists||{})]);
+   ids.forEach(id=>fallback[id]=(Number(state.stats?.goals?.[id])||0)*6+(Number(state.stats?.assists?.[id])||0)*4);
+   source=fallback;
+ }
+ return Object.entries(source).filter(([,value])=>Number(value)>0).sort((a,b)=>(Number(b[1])||0)-(Number(a[1])||0)||(Number(tie[b[0]])||0)-(Number(tie[a[0]])||0)||String(statPlayerInfo(a[0]).name).localeCompare(String(statPlayerInfo(b[0]).name),'it')).slice(0,limit);
+}
+function renderFinalStatList({title,icon,bucket,unit,tieBucket='',empty='Nessun dato disponibile.'}){
+ const entries=rankedPlayerStat(bucket,5,tieBucket);
+ const hasRealMvpVotes=Object.values(state.stats?.mvpVotes||{}).some(value=>Number(value)>0);
+ const teamCleanSheets=(state.history||[]).filter(match=>Number(match.ga)===0).length;
+ const historicalCleanSheetFallback=bucket==='cleanSheets'&&!entries.length&&teamCleanSheets>0;
+ const listHtml=historicalCleanSheetFallback?`<div class="final-player-stat-row winner team-clean-sheet-row"><span class="final-player-rank">1</span><span class="final-clean-sheet-team">${teamColorDot(teamById(USER_ID))}</span><div class="final-player-copy"><b>${esc(state.teamName)}</b><small>Totale squadra nello storico</small></div><strong>${teamCleanSheets} <em>clean sheet</em></strong></div>`:entries.length?entries.map(([id,value],index)=>{const player=statPlayerInfo(id);const mvpFallback=bucket==='mvpVotes'&&!hasRealMvpVotes;const extra=bucket==='mvpVotes'?(mvpFallback?'<small>Indice calcolato da gol e assist</small>':`<small>Punteggio ${Number(state.stats.mvpPoints?.[id]||0).toFixed(1)}</small>`):bucket==='cleanSheets'?'<small>Portiere</small>':`<small>${esc(player.Position||roleOf(player))}</small>`;const shownUnit=mvpFallback?'pt':unit;return `<div class="final-player-stat-row ${index===0?'winner':''}"><span class="final-player-rank">${index+1}</span>${renderMiniAvatar(player,'small')}<div class="final-player-copy"><b>${esc(player.name)}</b>${extra}</div><strong>${Math.round(Number(value)||0)} <em>${esc(shownUnit)}</em></strong></div>`}).join(''):`<div class="final-player-stat-empty">${esc(empty)}</div>`;
+ return `<section class="final-player-stat-card"><div class="final-player-stat-head"><span class="final-player-stat-icon">${icon}</span><div><span>Top 5</span><h3>${esc(title)}</h3></div></div><div class="final-player-stat-list">${listHtml}</div></section>`;
+}
+function renderFinalPlayerStats(){
+ return `<section class="final-player-stats"><div class="final-player-stats-title"><div><span>Premi individuali</span><h2>Statistiche generali</h2></div><p>Dati accumulati nelle 38 giornate dalla formazione realmente schierata.</p></div><div class="final-player-stats-grid">${renderFinalStatList({title:'Capocannonieri',icon:'⚽',bucket:'goals',unit:'gol'})}${renderFinalStatList({title:'Assist-man',icon:'🎯',bucket:'assists',unit:'assist'})}${renderFinalStatList({title:'MVP',icon:'⭐',bucket:'mvpVotes',tieBucket:'mvpPoints',unit:'MVP',empty:'Nessun MVP assegnato.'})}${renderFinalStatList({title:'Porte inviolate',icon:'🧤',bucket:'cleanSheets',unit:'clean sheet',empty:'Nessuna porta inviolata.'})}</div></section>`;
+}
+
 function updateStanding(id,gf,ga){const s=state.standings[id];s.p++;s.gf+=gf;s.ga+=ga;if(gf>ga){s.w++;s.pts+=3}else if(gf===ga){s.d++;s.pts++}else s.l++}
 function playRound(){
  if(state.pendingEvent&&!state.pendingEvent.resolved)return;
@@ -2637,6 +2746,7 @@ function playRound(){
      updateStanding(match.home,homeScore,awayScore);
      updateStanding(match.away,awayScore,homeScore);
    });
+   const matchAwards=recordMatchPlayerStats(lineup,goalsFor,goalsAgainst,goals);
    state.history.push({
      matchday:state.matchday+1,
      opponent:opponent.name,
@@ -2650,6 +2760,11 @@ function playRound(){
      opponentRedPlayer:redCandidate?.name||'',
      ownSuspensionId:ownSuspensionCandidate?.playerId||'',
      ownSuspensionPlayer:ownSuspensionCandidate?.player?.name||'',
+     goalkeeperId:matchAwards.goalkeeperId,
+     cleanSheet:matchAwards.cleanSheet,
+     mvpId:matchAwards.mvpId,
+     mvpScore:matchAwards.mvpScore,
+     lineup:safeMatchLineup(lineup),
      forcedLoss
    });
    state.lastResult=state.history[state.history.length-1];
@@ -2822,7 +2937,7 @@ function completeMarket(id){
  render();
  if(flexible&&ms.step<ms.target)toast(`Cambio ${ms.step} completato. Puoi fermarti qui oppure farne un altro.`)
 }
-function showFinished(){const table=sortedTable(),rank=table.findIndex(x=>x.id===USER_ID)+1,s=userStanding(),top=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1])[0],topPlayer=top?playerById(top[0]):null;screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Stagione conclusa</div><h2>${rank===1?'Campioni!':'Campionato terminato'}</h2><div class="final-position">${rank}°</div><p>${esc(state.teamName)} chiude la stagione dopo 38 giornate.</p></div><div class="final-grid"><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div></div><section class="panel"><h3>Capocannoniere</h3><p>${topPlayer?`<b>${esc(topPlayer.name)}</b> — ${top[1]} gol`:'Nessun marcatore'}</p><div class="top-actions"><button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultati inviati':'Invia risultati'}</button><button id="exportSeason" class="btn gold">Esporta risultati JSON</button></div></section><div class="season-finished-table">${renderTable()}</div></section>`;document.getElementById('sendSeason').onclick=sendSeason;document.getElementById('exportSeason').onclick=exportSeason}
+function showFinished(){const table=sortedTable(),rank=table.findIndex(x=>x.id===USER_ID)+1,s=userStanding(),top=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1])[0],topPlayer=top?playerById(top[0]):null;screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Stagione conclusa</div><h2>${rank===1?'Campioni!':'Campionato terminato'}</h2><div class="final-position">${rank}°</div><p>${esc(state.teamName)} chiude la stagione dopo 38 giornate.</p></div><div class="final-grid"><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div></div><section class="panel"><h3>Capocannoniere</h3><p>${topPlayer?`<b>${esc(topPlayer.name)}</b> — ${top[1]} gol`:'Nessun marcatore'}</p><div class="top-actions"><button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultati inviati':'Invia risultati'}</button><button id="exportSeason" class="btn gold">Esporta risultati JSON</button></div></section>${renderFinalPlayerStats()}<div class="season-finished-table">${renderTable()}</div></section>`;document.getElementById('sendSeason').onclick=sendSeason;document.getElementById('exportSeason').onclick=exportSeason}
 async function sendSeason(){const s=userStanding(),top=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1])[0],p=top?playerById(top[0]):null;const payload={squadra:state.teamName,allenatore:state.coachName,modalita:'Campionato del Ca***',vittorie:s.w,pareggi:s.d,sconfitte:s.l,gol_fatti:s.gf,gol_subiti:s.ga,modulo:state.formation,ovr_medio:Math.round(teamPowerBase()*10)/10,capocannoniere:p?`${p.name} (${top[1]})`:''};const fd=new FormData();fd.append('payload',JSON.stringify(payload));try{await fetch(VICTORY_ENDPOINT,{method:'POST',mode:'no-cors',body:fd});state.submitted=true;save();render();toast('Risultati inviati')}catch{toast('Invio non riuscito')}}
 function exportSeason(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fantaballa-campionato-risultati.json';a.click();URL.revokeObjectURL(a.href)}
 function render(){if(!PLAYERS.length||!CLUBS.length){screen.innerHTML='<section class="panel"><h2>Caricamento database giocatori...</h2></section>';return}if(state.phase==='setup')showSetup();else if(state.phase==='draft')showDraft();else if(state.phase==='season')showSeason();else if(state.phase==='midseason')showMidseason();else if(state.phase==='finished')showFinished()}
