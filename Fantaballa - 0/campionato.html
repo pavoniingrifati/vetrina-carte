@@ -1352,6 +1352,73 @@
       .season-draft-quick-actions .btn{flex:1}
     }
 
+    .red-card-event{margin:12px 0;background:linear-gradient(180deg,#7d1e1e,#4f1010)!important;border:2px solid #ff9b91;color:#fff!important}
+    /* EVENTI DECISIONALI ESTESI + ROSE AVVERSARIE REALI */
+    .season-rules-card{
+      margin-top:12px;
+      padding:11px 12px;
+      border-radius:15px;
+      background:linear-gradient(180deg,#f6f0dc,#e9dfbd);
+      border:1px solid #cbb76f;
+      color:#10243a;
+      font-size:12px;
+      font-weight:850;
+    }
+    .season-rules-card b{font-weight:1000}
+    .opponent-roster-details{margin-top:10px}
+    .opponent-roster-details summary{
+      cursor:pointer;
+      list-style:none;
+      padding:10px 12px;
+      border-radius:14px;
+      background:#10243a;
+      color:#fff;
+      border:2px solid #d9c15d;
+      font-size:12px;
+      font-weight:1000;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .opponent-roster-details summary::-webkit-details-marker{display:none}
+    .opponent-roster-details summary::after{content:"＋";float:right;color:#ffe87e}
+    .opponent-roster-details[open] summary::after{content:"−"}
+    .opponent-roster-list{display:grid;gap:6px;margin-top:8px}
+    .opponent-roster-row{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:8px;
+      align-items:center;
+      padding:8px 9px;
+      border-radius:12px;
+      background:#fffdf7;
+      border:1px solid #d8cdac;
+      font-size:11px;
+    }
+    .opponent-roster-row b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .opponent-roster-row small{display:block;color:#6b6f75;font-weight:800;margin-top:2px}
+    .opponent-roster-row.is-out{background:#ffe0dc;border-color:#db756b}
+    .opponent-roster-row.is-mascot{
+      background:linear-gradient(115deg,#28134f,#7143a3,#b17b23);
+      color:#fff;
+      border-color:#ffe477;
+      box-shadow:0 0 14px rgba(123,76,184,.25);
+    }
+    .opponent-roster-row.is-mascot small{color:#fff1b6}
+    .bot-market-card{
+      padding:16px;
+      border-radius:18px;
+      background:linear-gradient(180deg,#efe4ff,#dac6fb);
+      border:2px solid #8d65c4;
+    }
+    .bot-market-change{
+      margin-top:8px;
+      padding:10px 11px;
+      border-radius:13px;
+      background:#fff;
+      border:1px solid #b79bd9;
+      font-size:13px;
+    }
+
   </style>
 </head>
 <body>
@@ -1360,7 +1427,7 @@
     <div class="brand"><img src="assets/fantaballa-logo.png" alt="Fantaballa"><div><b>Campionato del Ca***</b><span>Una stagione · 38 giornate · Regole Gary MEDel</span></div></div>
     <div class="top-actions"><a class="btn" href="index.html">Menu modalità</a><button id="resetBtn" class="btn red" type="button">Azzera stagione</button></div>
   </header>
-  <section class="hero"><div class="hero-kicker">Modalità stagione</div><h1>Campionato del Ca***</h1><p>Draft iniziale, 11 titolari e 3 panchinari. Posizioni precise, infortuni, squalifiche, eventi e decisioni casuali. Dopo la giornata 19 puoi cambiare due giocatori.</p></section>
+  <section class="hero"><div class="hero-kicker">Modalità stagione</div><h1>Campionato del Ca***</h1><p>Draft iniziale, 11 titolari e 3 panchinari. Posizioni precise, infortuni, squalifiche, eventi e decisioni casuali. Dopo la giornata 19 il draft permette da 1 a 3 cambi, in base agli eventi della stagione.</p></section>
   <main id="screen"></main>
 </div>
 <div id="modalRoot"></div><div id="toast" class="toast"></div>
@@ -1392,7 +1459,7 @@ const FORMATION_LAYOUTS={
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
 let PLAYERS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:1,phase:'setup',teamName:'',coachName:'',formation:'4-3-3',draft:{roster:[],nation:'',candidates:[],rerolls:3,pendingPlayerId:''},teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,activeEffects:[],stats:{goals:{},assists:{}},midseason:{step:0,outgoingId:'',nation:'',candidates:[]},lastResult:null,submitted:false};}
+function freshState(){return{version:2,phase:'setup',teamName:'',coachName:'',formation:'4-3-3',draft:{roster:[],nation:'',candidates:[],rerolls:3,pendingPlayerId:''},teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,activeEffects:[],seasonRules:{midseasonPickDelta:0,autoDecisions:false,autoMidseason:false,botMidseason:false},stats:{goals:{},assists:{}},midseason:{step:0,target:2,outgoingId:'',nation:'',candidates:[],auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
 function loadState(){try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'null')}catch{return null}}
 function save(){localStorage.setItem(SAVE_KEY,JSON.stringify(state))}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -1427,6 +1494,35 @@ function normalizeCampionatoState(input){
    if(!found)found=layouts.find(slot=>!used.has(slot.instanceId));
    if(found){entry.slotId=found.instanceId;entry.slot=found.code;used.add(found.instanceId)}
  });
+ next.activeEffects=Array.isArray(next.activeEffects)?next.activeEffects:[];
+ next.statuses=next.statuses&&typeof next.statuses==='object'?next.statuses:{};
+ next.playInjured=next.playInjured&&typeof next.playInjured==='object'?next.playInjured:{};
+ next.seasonRules=next.seasonRules&&typeof next.seasonRules==='object'?next.seasonRules:{};
+ next.seasonRules.midseasonPickDelta=clamp(Number(next.seasonRules.midseasonPickDelta)||0,-1,1);
+ next.seasonRules.autoDecisions=Boolean(next.seasonRules.autoDecisions);
+ next.seasonRules.autoMidseason=Boolean(next.seasonRules.autoMidseason);
+ next.seasonRules.botMidseason=Boolean(next.seasonRules.botMidseason);
+ next.midseason=next.midseason&&typeof next.midseason==='object'?next.midseason:{};
+ next.midseason.step=Math.max(0,Number(next.midseason.step)||0);
+ next.midseason.target=clamp(Number(next.midseason.target)||midseasonTargetFrom(next),1,3);
+ next.midseason.outgoingId=String(next.midseason.outgoingId||'');
+ next.midseason.nation=String(next.midseason.nation||'');
+ next.midseason.candidates=Array.isArray(next.midseason.candidates)?next.midseason.candidates.map(String):[];
+ next.midseason.auto=Boolean(next.midseason.auto);
+ next.midseason.autoCompleted=Boolean(next.midseason.autoCompleted);
+ next.midseason.changes=Array.isArray(next.midseason.changes)?next.midseason.changes:[];
+ next.teams=Array.isArray(next.teams)?next.teams:[];
+ next.teams.forEach(team=>{
+   if(!team||team.id===USER_ID)return;
+   team.roster=Array.isArray(team.roster)&&team.roster.length?team.roster.map(String):buildNationRoster(team.name);
+   team.statuses=team.statuses&&typeof team.statuses==='object'?team.statuses:{};
+   if(team.mascot&&typeof team.mascot==='object'){
+     team.mascot.id=String(team.mascot.id||`mascot-${team.id}`);
+     team.mascot.ovr=99;
+   }
+   team.strength=Number(team.strength)||nationalStrength(team.name);
+ });
+ next.version=2;
  return next;
 }
 function formationSlots(key=state.formation){return (FORMATION_LAYOUTS[key]||FORMATION_LAYOUTS['4-3-3']).map((row,index)=>({code:row[0],x:row[1],y:row[2],instanceId:`starter-${index}`}))}
@@ -1781,8 +1877,66 @@ function showDraft(){
  const start=document.getElementById('startSeasonBtn');if(start)start.onclick=finalizeDraft;
 }
 
-function nationalStrength(nation){const ps=PLAYERS.filter(p=>p.nation===nation).sort((a,b)=>b.ovr-a.ovr).slice(0,11);return Math.round(avg(ps.map(p=>Number(p.ovr)||70))*10)/10}
-function finalizeDraft(){if(!draftComplete())return toast('Completa 11 titolari e 3 riserve.');state.draft.pendingPlayerId='';const counts={};PLAYERS.forEach(p=>counts[p.nation]=(counts[p.nation]||0)+1);const nations=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]).slice(0,19);state.teams=[{id:USER_ID,name:state.teamName,strength:teamPowerBase()}].concat(nations.map((n,i)=>({id:`nat-${i}`,name:n,strength:nationalStrength(n)})));state.schedule=generateSchedule(state.teams.map(t=>t.id));state.standings={};state.teams.forEach(t=>state.standings[t.id]={id:t.id,name:t.name,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0});state.phase='season';state.matchday=0;state.pendingEvent=null;state.draft.candidates=[];save();prepareEvent();render()}
+function buildNationRoster(nation){
+ const pool=PLAYERS.filter(player=>player.nation===nation).sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0)||String(a.name).localeCompare(String(b.name),'it'));
+ return pool.slice(0,14).map(player=>String(player.id));
+}
+function opponentStatusOf(team,id){
+ if(!team.statuses||typeof team.statuses!=='object')team.statuses={};
+ const key=String(id);
+ if(!team.statuses[key])team.statuses[key]={injury:0,suspension:0};
+ return team.statuses[key];
+}
+function opponentRosterPlayers(team){
+ if(!team||team.id===USER_ID)return[];
+ if(!Array.isArray(team.roster)||!team.roster.length)team.roster=buildNationRoster(team.name);
+ const players=team.roster.map(playerById).filter(Boolean);
+ if(team.mascot)players.push({...team.mascot,role:'A',Position:'ATT',nation:team.name,subscriber:'no',isMascot:true});
+ return players;
+}
+function opponentAvailablePlayers(team){
+ return opponentRosterPlayers(team).filter(player=>{
+   const status=opponentStatusOf(team,player.id);
+   return status.injury<=0&&status.suspension<=0;
+ }).sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0));
+}
+function opponentMatchPower(team){
+ if(!team||team.id===USER_ID)return matchPower();
+ const available=opponentAvailablePlayers(team).slice(0,11);
+ const values=available.map(player=>Number(player.ovr)||60);
+ while(values.length<11)values.push(60);
+ return avg(values);
+}
+function nationalStrength(nation){
+ const ids=buildNationRoster(nation);
+ const values=ids.slice(0,11).map(id=>Number(playerById(id)?.ovr)||60);
+ return Math.round(avg(values)*10)/10;
+}
+function finalizeDraft(){
+ if(!draftComplete())return toast('Completa 11 titolari e 3 riserve.');
+ state.draft.pendingPlayerId='';
+ const counts={};
+ PLAYERS.forEach(player=>counts[player.nation]=(counts[player.nation]||0)+1);
+ const nations=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]).slice(0,19);
+ state.teams=[{id:USER_ID,name:state.teamName,strength:teamPowerBase()}].concat(nations.map((nation,index)=>({
+   id:`nat-${index}`,
+   name:nation,
+   strength:nationalStrength(nation),
+   roster:buildNationRoster(nation),
+   statuses:{},
+   mascot:null
+ })));
+ state.schedule=generateSchedule(state.teams.map(team=>team.id));
+ state.standings={};
+ state.teams.forEach(team=>state.standings[team.id]={id:team.id,name:team.name,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0});
+ state.phase='season';
+ state.matchday=0;
+ state.pendingEvent=null;
+ state.draft.candidates=[];
+ save();
+ prepareEvent();
+ render()
+}
 function generateSchedule(ids){let arr=[...ids],rounds=[];for(let r=0;r<arr.length-1;r++){let matches=[];for(let i=0;i<arr.length/2;i++){let h=arr[i],a=arr[arr.length-1-i];if(r%2&&i===0)[h,a]=[a,h];matches.push({home:h,away:a})}rounds.push(matches);arr=[arr[0],arr[arr.length-1],...arr.slice(1,-1)]}return rounds.concat(rounds.map(rd=>rd.map(m=>({home:m.away,away:m.home}))));}
 function sortedTable(){return Object.values(state.standings).sort((a,b)=>b.pts-a.pts||((b.gf-b.ga)-(a.gf-a.ga))||b.gf-a.gf||b.w-a.w)}
 function userStanding(){return state.standings[USER_ID]}
@@ -1791,28 +1945,190 @@ function currentRound(){return state.schedule[state.matchday]||[]}
 function userFixture(){return currentRound().find(m=>m.home===USER_ID||m.away===USER_ID)}
 function getStarterEntries(){return rosterPlayers().filter(r=>!r.bench)}function getBenchEntries(){return rosterPlayers().filter(r=>r.bench)}
 function chemistryBase(player,list){const playerId=String(player.id);const same=list.filter(o=>String(o.id)!==playerId&&o.nation===player.nation).length;const sameRole=list.filter(o=>String(o.id)!==playerId&&o.nation===player.nation&&roleOf(o)===roleOf(player)).length;let v=Math.min(6,same+sameRole);if(isSubscriber(player))v+=5;const subs=list.filter(o=>o.nation===player.nation&&isSubscriber(o)).length;if(isSubscriber(player)&&subs>=2)v+=10;if(normalizeName(player.name)===normalizeName(state.coachName))v+=10;return v}
-function activeEffectBonus(player){let v=0;state.activeEffects.forEach(e=>{if(e.type==='teamChem')v+=e.value;if(e.type==='teamOvr')v+=e.value;if(e.type==='subscriberChem'&&String(player.subscriber).toLowerCase()==='si')v+=e.value;if(e.type==='playerChem'&&String(e.playerId)===String(player.id))v+=e.value});return v}
+function activeEffectBonus(player){
+ let value=0;
+ state.activeEffects.forEach(effect=>{
+   if(effect.type==='teamChem'||effect.type==='teamOvr')value+=Number(effect.value)||0;
+   if(effect.type==='subscriberChem'&&isSubscriber(player))value+=Number(effect.value)||0;
+   if((effect.type==='playerChem'||effect.type==='playerOvr')&&String(effect.playerId)===String(player.id))value+=Number(effect.value)||0;
+ });
+ return value
+}
+function pushEffect(type,value,rounds,extra={}){
+ state.activeEffects.push({type,value,rounds,...extra});
+}
+function midseasonTargetFrom(source=state){
+ const delta=Number(source?.seasonRules?.midseasonPickDelta)||0;
+ return clamp(2+delta,1,3);
+}
+function midseasonTarget(){return midseasonTargetFrom(state)}
+function changeMidseasonPicks(delta){
+ state.seasonRules.midseasonPickDelta=clamp((Number(state.seasonRules.midseasonPickDelta)||0)+delta,-1,1);
+ return `Il draft di metà stagione avrà ${midseasonTarget()} ${midseasonTarget()===1?'cambio':'cambi'}.`;
+}
+function randomOwnEntry(filter=()=>true){
+ const entries=rosterPlayers().filter(filter);
+ return entries.length?pick(entries):null;
+}
+function nextOpponentTeam(){
+ if(state.phase!=='season')return null;
+ const fixture=userFixture();
+ if(!fixture)return null;
+ return teamById(fixture.home===USER_ID?fixture.away:fixture.home);
+}
+function applyPlayerEffect(type,value,rounds,filter=()=>true){
+ const entry=randomOwnEntry(filter);
+ if(!entry)return 'Nessun giocatore disponibile.';
+ pushEffect(type,value,rounds,{playerId:entry.playerId});
+ return `${entry.player.name} riceve ${value>=0?'+':''}${value} per ${rounds===1?'la prossima partita':`${rounds} giornate`}.`;
+}
+function injureOwnPlayers(entries,rounds=1){
+ const valid=(entries||[]).filter(Boolean);
+ valid.forEach(entry=>statusOf(entry.playerId).injury=Math.max(statusOf(entry.playerId).injury,rounds));
+ return valid.map(entry=>entry.player.name);
+}
+function injureNextOpponentPlayers(count=1){
+ const team=nextOpponentTeam();
+ if(!team)return 'Nessun avversario disponibile.';
+ const candidates=shuffle(opponentRosterPlayers(team).filter(player=>!player.isMascot&&opponentStatusOf(team,player.id).injury<=0)).slice(0,count);
+ candidates.forEach(player=>opponentStatusOf(team,player.id).injury=Math.max(opponentStatusOf(team,player.id).injury,1));
+ return candidates.length?`${candidates.map(player=>player.name).join(' e ')} salteranno la prossima partita con ${team.name}.`:'Nessun giocatore avversario disponibile.';
+}
+function addMascotToRandomTeam(){
+ const candidates=state.teams.filter(team=>team.id!==USER_ID&&!team.mascot);
+ const team=pick(candidates.length?candidates:state.teams.filter(team=>team.id!==USER_ID));
+ if(!team)return 'Nessuna squadra avversaria disponibile.';
+ team.mascot={id:`mascot-${team.id}`,name:'Mascotte della squadra',ovr:99,Position:'ATT',role:'A',nation:team.name,subscriber:'no',isMascot:true};
+ return `La mascotte firma per ${team.name} con 99 OVR.`;
+}
+function seasonRuleSummary(){
+ const target=midseasonTarget();
+ const decisionMode=state.seasonRules.autoDecisions?'Mascotte / bot':'Allenatore';
+ const marketMode=(state.seasonRules.autoMidseason||state.seasonRules.botMidseason)?'Automatico':'Manuale';
+ return `<div class="season-rules-card"><b>Regole alterate dagli eventi</b><br>Draft di metà stagione: ${target} ${target===1?'cambio':'cambi'} · Decisioni: ${decisionMode} · Draft: ${marketMode}</div>`;
+}
 function resolveLineup(){const starters=getStarterEntries(),bench=getBenchEntries(),used=new Set(),out=[];for(const entry of starters){const p=entry.player,st=statusOf(p.id);if(st.suspension>0||(st.injury>0&&!state.playInjured[p.id])){const available=bench.filter(b=>!used.has(b.playerId)&&statusOf(b.playerId).injury<=0&&statusOf(b.playerId).suspension<=0);let sub=available.find(b=>compatible(b.player,entry.slot));if(!sub)sub=available.find(b=>roleOf(b.player)===POSITION_ROLE[entry.slot]);if(!sub)sub=available[0];if(sub){used.add(sub.playerId);out.push({...sub,slot:entry.slot,malus:compatible(sub.player,entry.slot)?0:-10,replaces:p.name})}else{out.push({playerId:`youth-${entry.slot}`,slot:entry.slot,bench:false,malus:-10,replaces:p.name,player:{id:`youth-${entry.slot}`,name:`Primavera ${entry.slot}`,nation:'Academy',Position:entry.slot,role:POSITION_ROLE[entry.slot],ovr:60,subscriber:'no'}})}}else out.push({...entry,malus:st.injury>0?-20:0,replaces:''})}return out}
 function teamPowerBase(){const list=getStarterEntries().map(r=>r.player);return avg(list.map(p=>Number(p.ovr)||70))}
 function matchPower(){const line=resolveLineup(),players=line.map(x=>x.player);let total=0;line.forEach(e=>{total+=(Number(e.player.ovr)||60)+(chemistryBase(e.player,players)/5)+e.malus+activeEffectBonus(e.player)});return total/11}
 function unavailableList(){return rosterPlayers().filter(r=>{const s=statusOf(r.playerId);return s.injury>0||s.suspension>0})}
 const AUTO_EVENTS=[
- {title:'Problema muscolare',text:'Un titolare salta le prossime partite.',apply(){const r=pick(getStarterEntries());if(r){statusOf(r.playerId).injury=2;return `${r.player.name} è infortunato per 2 giornate.`}}},
- {title:'Contusione',text:'Un giocatore della rosa non è al meglio.',apply(){const r=pick(rosterPlayers());if(r){statusOf(r.playerId).injury=1;return `${r.player.name} è infortunato per 1 giornata.`}}},
+ {title:'Problema muscolare',text:'Un titolare casuale si infortuna.',apply(){const r=pick(getStarterEntries());if(r){statusOf(r.playerId).injury=2;return `${r.player.name} è infortunato per 2 giornate.`}return 'Nessun titolare disponibile.'}},
+ {title:'Contusione',text:'Un giocatore casuale della rosa non è al meglio.',apply(){const r=pick(rosterPlayers());if(r){statusOf(r.playerId).injury=1;return `${r.player.name} è infortunato per 1 giornata.`}return 'Nessun giocatore disponibile.'}},
  {title:'Settimana perfetta',text:'La squadra si allena alla grande.',apply(){state.activeEffects.push({type:'teamChem',value:5,rounds:1});return '+5 Intesa per la prossima partita.'}},
- {title:'Sostegno degli abbonati',text:'Gli abbonati trascinano il gruppo.',apply(){state.activeEffects.push({type:'subscriberChem',value:3,rounds:2});return '+3 Intesa ai subscriber per 2 giornate.'}},
- {title:'Arbitraggio severo',text:'La prossima gara si preannuncia nervosa.',apply(){state.activeEffects.push({type:'cards',value:1,rounds:1});return 'Probabilità di squalifica aumentata.'}}
+ {title:'Sostegno degli abbonati',text:'Gli abbonati trascinano il gruppo.',apply(){state.activeEffects.push({type:'subscriberChem',value:3,rounds:2});return '+3 Intesa agli abbonati per 2 giornate.'}},
+ {title:'Arbitraggio severo',text:'La prossima gara si preannuncia nervosa.',apply(){state.activeEffects.push({type:'cards',value:1,rounds:1});return 'Probabilità di squalifica aumentata per la prossima partita.'}}
 ];
 const DECISIONS=[
- {title:'Allenamento straordinario',text:'Come prepari la prossima gara?',choices:[{label:'Allenamento intenso',effect:'+5 OVR prossima partita',apply(){state.activeEffects.push({type:'teamOvr',value:5,rounds:1})}},{label:'Recupero fisico',effect:'Riduce di 1 un infortunio',apply(){const injured=rosterPlayers().map(r=>r.playerId).filter(id=>statusOf(id).injury>0);if(injured.length){const id=pick(injured);statusOf(id).injury=Math.max(0,statusOf(id).injury-1)}}}]},
- {title:'Problema nello spogliatoio',text:'Il gruppo chiede una presa di posizione.',choices:[{label:'Difendi il leader',effect:'+5 Intesa a un titolare',apply(){const r=pick(getStarterEntries());if(r)state.activeEffects.push({type:'playerChem',playerId:r.playerId,value:5,rounds:2})}},{label:'Difendi il gruppo',effect:'+3 Intesa a tutta la squadra',apply(){state.activeEffects.push({type:'teamChem',value:3,rounds:1})}}]},
- {title:'Giornata con gli abbonati',text:'Come sfruttare il supporto della community?',choices:[{label:'Evento speciale',effect:'+5 Intesa ai subscriber',apply(){state.activeEffects.push({type:'subscriberChem',value:5,rounds:2})}},{label:'Allenamento aperto',effect:'+2 Intesa a tutti',apply(){state.activeEffects.push({type:'teamChem',value:2,rounds:2})}}]}
+ {title:'Il pulmino della squadra finisce in un bordello',text:"L’autista ha seguito il navigatore sbagliato e la squadra si ritrova in uno strip club.",choices:[
+  {label:'Restate per lo spettacolo',effect:'+5 Intesa alla squadra per 2 giornate, ma -10 OVR a un giocatore casuale nella prossima partita',apply(){pushEffect('teamChem',5,2);return applyPlayerEffect('playerOvr',-10,1)}},
+  {label:'Prendete subito un taxi',effect:'+10 OVR nella prossima partita, ma 1 scelta in meno al draft di metà stagione',apply(){pushEffect('teamOvr',10,1);return changeMidseasonPicks(-1)}}
+ ]},
+ {title:'Il figlio del presidente contesta la formazione',text:'Pretende di decidere lui come deve giocare la squadra.',choices:[
+  {label:'Segui i consigli del figlio',effect:'Perdi sicuramente la prossima partita, ma ricevi 1 scelta in più al draft di metà stagione',apply(){pushEffect('forcedLoss',1,1);return changeMidseasonPicks(1)}},
+  {label:'Difendi le tue idee tattiche',effect:'+6 OVR nella prossima partita, ma 1 scelta in meno al draft di metà stagione',apply(){pushEffect('teamOvr',6,1);return changeMidseasonPicks(-1)}}
+ ]},
+ {title:'La tua squadra ha appena segnato il gol del 3-2',text:'Cosa decidi di fare?',choices:[
+  {label:'Rimani pacato in panca, applaudendo',effect:'+5 OVR a un giocatore casuale per la prossima partita',apply(){return applyPlayerEffect('playerOvr',5,1)}},
+  {label:'Vai sotto la curva avversaria',effect:'+5 OVR a tutta la squadra, ma un giocatore casuale si infortuna',apply(){pushEffect('teamOvr',5,1);const entry=randomOwnEntry();if(!entry)return 'Nessun giocatore disponibile.';injureOwnPlayers([entry],1);return `${entry.player.name} si infortuna per 1 giornata.`}}
+ ]},
+ {title:'Il gruppo WhatsApp della squadra viene pubblicato online',text:'Sono usciti gli screen delle vostre chat. E ora?',choices:[
+  {label:'Dici che sei stato hackerato',effect:'+10 Intesa agli abbonati nella prossima partita, ma il draft di metà stagione viene fatto casualmente dal bot',apply(){pushEffect('subscriberChem',10,1);state.seasonRules.botMidseason=true;return 'Il bot controllerà casualmente tutte le entrate e le uscite del draft di metà stagione.'}},
+  {label:'Chiedi pubblicamente scusa dicendo che hai un sacco di amici di colore',effect:'-3 Intesa a tutta la squadra per 2 giornate',apply(){pushEffect('teamChem',-3,2)}}
+ ]},
+ {title:'Scoppia una rissa tra te e la mascotte della squadra',text:"La mascotte sostiene d’allenare meglio di te.",choices:[
+  {label:'Allena lui la squadra',effect:'Non avrai più il controllo delle decisioni né del draft di metà stagione',apply(){state.seasonRules.autoDecisions=true;state.seasonRules.autoMidseason=true;state.seasonRules.botMidseason=true;return 'Da ora le decisioni future e il draft di metà stagione saranno gestiti casualmente dalla mascotte.'}},
+  {label:'Lo fai licenziare',effect:'La mascotte appare come calciatore da 99 OVR in una squadra casuale',apply(){return addMascotToRandomTeam()}}
+ ]},
+ {title:'Il presidente ingaggia suo cuggino influencer',text:'Non ha mai giocato a calcio, ma ha due milioni di follower e una videocamera sempre accesa.',choices:[
+  {label:'Lo mandi a fare contenuti con gli abbonati',effect:'+20 Intesa a tutti gli abbonati per 1 giornata',apply(){pushEffect('subscriberChem',20,1)}},
+  {label:'Lo fai partecipare all’allenamento',effect:'+10 OVR a ogni giocatore nella prossima partita, ma tutti gli abbonati si infortunano',apply(){pushEffect('teamOvr',10,1);const entries=rosterPlayers().filter(entry=>isSubscriber(entry.player));const names=injureOwnPlayers(entries,1);return names.length?`Abbonati infortunati: ${names.join(', ')}.`:'Non ci sono abbonati in rosa.'}}
+ ]},
+ {title:'Un drone avversario spia l’allenamento',text:'Il drone sta trasmettendo in diretta tutte le tattiche.',choices:[
+  {label:'Gli mostri deliberatamente una tattica falsa',effect:'OVR del prossimo avversario ridotto di 10 punti',apply(){pushEffect('opponentOvr',-10,1);const opponent=nextOpponentTeam();return opponent?`${opponent.name} riceve -10 OVR nella prossima partita.`:''}},
+  {label:'Lo abbatti con un pallone',effect:'Due giocatori casuali del prossimo avversario saranno infortunati',apply(){return injureNextOpponentPlayers(2)}}
+ ]},
+ {title:'Il VAR deve installare un aggiornamento',text:'Il sistema operativo segnala: “Tempo rimanente: 4 ore e 37 minuti”.',choices:[
+  {label:'Aspetti pazientemente',effect:'+5 Intesa per la prossima partita grazie al riposo extra',apply(){pushEffect('teamChem',5,1)}},
+  {label:'Fai partire la gara senza VAR',effect:'Aumenta la probabilità di un rosso avversario, ma anche quella di una tua squalifica',apply(){pushEffect('refChaos',1,1,{opponentRedChance:.55,ownSuspensionChance:.35,source:'Gara senza VAR'});return 'Nella prossima partita: 55% rosso avversario e 35% squalifica per un tuo giocatore.'}}
+ ]},
+ {title:'Il capitano apre un corso di crescita personale',text:'Per tre ore ripete frasi come “il fuorigioco esiste solo nella tua mente”.',choices:[
+  {label:'Obblighi tutti a partecipare',effect:'+5 Intesa a tutta la squadra per 2 giornate',apply(){pushEffect('teamChem',5,2)}},
+  {label:'Interrompi il seminario e fate allenamento',effect:'+6 OVR nella prossima partita',apply(){pushEffect('teamOvr',6,1)}}
+ ]},
+ {title:'Arriva un mentalista nello spogliatoio',text:'Dice di poter far credere agli avversari che il pallone sia invisibile.',choices:[
+  {label:'Gli permetti di ipnotizzare l’attaccante',effect:'+8 OVR a un attaccante casuale nella prossima partita',apply(){return applyPlayerEffect('playerOvr',8,1,entry=>roleOf(entry.player)==='A')}},
+  {label:'Gli chiedi di confondere l’arbitro',effect:'Possibile rosso avversario, con rischio di squalifica per un tuo giocatore',apply(){pushEffect('refChaos',1,1,{opponentRedChance:.45,ownSuspensionChance:.30,source:'Mentalista'});return 'Nella prossima partita: 45% rosso avversario e 30% squalifica per un tuo giocatore.'}}
+ ]},
+ {title:"L’allenamento viene invaso da una grigliata degli ultras",text:'Fumo, salsicce e cori impediscono qualsiasi esercitazione tattica.',choices:[
+  {label:'Partecipate alla grigliata',effect:'+6 Intesa nella prossima partita',apply(){pushEffect('teamChem',6,1)}},
+  {label:'Continuate ad allenarvi nel fumo',effect:'+7 OVR, ma un giocatore casuale subisce una contusione di 1 giornata',apply(){pushEffect('teamOvr',7,1);const entry=randomOwnEntry();if(!entry)return 'Nessun giocatore disponibile.';injureOwnPlayers([entry],1);return `${entry.player.name} subisce una contusione di 1 giornata.`}}
+ ]},
+ {title:'Un giocatore sostiene di essere stato rapito dagli alieni',text:'È tornato con una pettinatura diversa e nuove convinzioni tattiche.',choices:[
+  {label:'Credi alla sua storia',effect:'+10 Intesa a quel giocatore per 2 giornate',apply(){return applyPlayerEffect('playerChem',10,2)}},
+  {label:'Lo mandi a fare una visita medica',effect:'Riduce di 1 giornata tutti gli infortuni, ma quel giocatore riceve -5 Intesa',apply(){Object.values(state.statuses).forEach(status=>status.injury=Math.max(0,(Number(status.injury)||0)-1));const detail=applyPlayerEffect('playerChem',-5,1);return `Tutti gli infortuni sono ridotti di 1 giornata. ${detail}`}}
+ ]},
+ {title:'Il magazziniere lava tutte le maglie a 90 gradi',text:'Le divise ora sembrano adatte a una squadra Pulcini.',choices:[
+  {label:'Giocate comunque con le maglie strette',effect:'+5 OVR e -3 Intesa nella prossima partita',apply(){pushEffect('teamOvr',5,1);pushEffect('teamChem',-3,1)}},
+  {label:'Usate le vecchie maglie degli anni Novanta',effect:'+5 Intesa per 2 giornate',apply(){pushEffect('teamChem',5,2)}}
+ ]},
+ {title:'Un tifoso vince il diritto di fare la formazione',text:'Ha vinto il concorso comprando 600 pacchetti di patatine.',choices:[
+  {label:'Gli lasci scegliere un giocatore da motivare',effect:'+10 Intesa a un titolare casuale nella prossima partita',apply(){return applyPlayerEffect('playerChem',10,1,entry=>!entry.bench)}},
+  {label:'Gli consegni una formazione finta',effect:'+4 OVR alla squadra, ma -3 Intesa agli abbonati nella prossima partita',apply(){pushEffect('teamOvr',4,1);pushEffect('subscriberChem',-3,1)}}
+ ]},
+ {title:'Il preparatore atletico scopre TikTok',text:'Sostituisce l’allenamento con balletti sincronizzati e challenge.',choices:[
+  {label:'Registrate la challenge',effect:'+10 Intesa agli abbonati per 2 giornate, ma -2 OVR alla squadra nella prossima partita',apply(){pushEffect('subscriberChem',10,2);pushEffect('teamOvr',-2,1)}},
+  {label:'Gli sequestri il telefono',effect:'+5 OVR alla squadra, ma -5 Intesa a un giocatore casuale nella prossima partita',apply(){pushEffect('teamOvr',5,1);return applyPlayerEffect('playerChem',-5,1)}}
+ ]}
 ];
-function prepareEvent(){if(state.phase!=='season'||state.pendingEvent)return;const roll=Math.random();if(roll<.45){state.pendingEvent={kind:'none',resolved:true,title:'Settimana normale',text:'Nessun evento particolare. La squadra pensa solo alla partita.'}}else if(roll<.75){const e=pick(AUTO_EVENTS),result=e.apply();state.pendingEvent={kind:'auto',resolved:true,title:e.title,text:e.text,result}}else{const d=pick(DECISIONS);state.pendingEvent={kind:'decision',resolved:false,title:d.title,text:d.text,decisionIndex:DECISIONS.indexOf(d)}}save()}
-function resolveDecision(i){const d=DECISIONS[state.pendingEvent.decisionIndex],c=d.choices[i];c.apply();state.pendingEvent.resolved=true;state.pendingEvent.result=`Scelta: ${c.label}. ${c.effect}`;save();render()}
+function applyDecisionChoice(decisionIndex,choiceIndex){
+ const decision=DECISIONS[decisionIndex];
+ const choice=decision?.choices?.[choiceIndex];
+ if(!choice)return 'Scelta non disponibile.';
+ const detail=choice.apply();
+ return `Scelta: ${choice.label}. ${detail||choice.effect}`;
+}
+function prepareEvent(){
+ if(state.phase!=='season'||state.pendingEvent)return;
+ const roll=Math.random();
+ if(roll<.55){
+   state.pendingEvent={kind:'none',resolved:true,title:'Settimana normale',text:'Nessun evento particolare. La squadra pensa solo alla partita.'};
+ }else if(roll<.65){
+   const event=pick(AUTO_EVENTS);
+   const result=event.apply();
+   state.pendingEvent={kind:'auto',resolved:true,title:event.title,text:event.text,result};
+ }else{
+   const decision=pick(DECISIONS);
+   const decisionIndex=DECISIONS.indexOf(decision);
+   if(state.seasonRules.autoDecisions){
+     const choiceIndex=Math.floor(Math.random()*decision.choices.length);
+     const result=applyDecisionChoice(decisionIndex,choiceIndex);
+     state.pendingEvent={kind:'decision',resolved:true,title:decision.title,text:decision.text,decisionIndex,result:`La mascotte ha deciso automaticamente. ${result}`};
+   }else{
+     state.pendingEvent={kind:'decision',resolved:false,title:decision.title,text:decision.text,decisionIndex};
+   }
+ }
+ save()
+}
+function resolveDecision(i){
+ if(!state.pendingEvent||state.pendingEvent.resolved)return;
+ state.pendingEvent.result=applyDecisionChoice(state.pendingEvent.decisionIndex,i);
+ state.pendingEvent.resolved=true;
+ save();
+ render()
+}
 function renderEvent(){const e=state.pendingEvent;if(!e)return'';if(e.kind==='decision'&&!e.resolved){const d=DECISIONS[e.decisionIndex];return `<div class="event-card decision"><div class="label">Decisione casuale</div><h3>${esc(e.title)}</h3><p>${esc(e.text)}</p><div class="choice-grid">${d.choices.map((c,i)=>`<button class="choice" data-choice="${i}"><b>${esc(c.label)}</b><small style="display:block;margin-top:5px">${esc(c.effect)}</small></button>`).join('')}</div></div>`}return `<div class="event-card"><div class="label">${e.kind==='auto'?'Evento casuale':'Settimana'}</div><h3>${esc(e.title)}</h3><p>${esc(e.text)}</p>${e.result?`<b>${esc(e.result)}</b>`:''}</div>`}
 function renderAvailability(){const list=unavailableList();if(!list.length)return'<p>Nessun indisponibile.</p>';return `<div class="availability">${list.map(r=>{const s=statusOf(r.playerId),starter=!r.bench;return `<div class="availability-row"><b>${esc(r.player.name)}</b><small>${s.suspension>0?`Squalificato: ${s.suspension} giornate`:`Infortunato: ${s.injury} giornate`}</small>${starter&&s.injury>0?`<button class="btn ${state.playInjured[r.playerId]?'red':''}" data-injured="${esc(r.playerId)}">${state.playInjured[r.playerId]?'Giocherà infortunato (-20)':'Fallo giocare (-20)'}</button>`:''}</div>`}).join('')}</div>`}
-function showSeason(){prepareEvent();const fx=userFixture(),opp=teamById(fx.home===USER_ID?fx.away:fx.home),standing=userStanding(),rank=sortedTable().findIndex(x=>x.id===USER_ID)+1;screen.innerHTML=`<section class="panel"><div class="season-strip"><div class="stat"><b>${state.matchday+1}</b><span>Giornata</span></div><div class="stat"><b>${rank}°</b><span>Posizione</span></div><div class="stat"><b>${standing.pts}</b><span>Punti</span></div><div class="stat"><b>${standing.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${standing.ga}</b><span>Gol subiti</span></div></div></section><div class="dashboard-grid"><div><section class="panel"><div class="label">Prossima partita</div><div class="next-match"><div><div class="team-name" style="font-size:${teamNameFontSize(fx.home===USER_ID?state.teamName:opp.name)}px" title="${esc(fx.home===USER_ID?state.teamName:opp.name)}">${esc(fx.home===USER_ID?state.teamName:opp.name)}</div><div class="subline">${fx.home===USER_ID?'Casa':'Avversario'}</div></div><div class="versus">VS</div><div><div class="team-name" style="font-size:${teamNameFontSize(fx.away===USER_ID?state.teamName:opp.name)}px" title="${esc(fx.away===USER_ID?state.teamName:opp.name)}">${esc(fx.away===USER_ID?state.teamName:opp.name)}</div><div class="subline">${fx.away===USER_ID?'Trasferta':'Avversario'}</div></div></div><div style="margin-top:14px">${renderEvent()}</div><div style="margin-top:14px"><button id="playRound" class="btn primary" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>Gioca la giornata ${state.matchday+1}</button></div></section><section class="panel"><div class="tabs"><button class="tab active" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="roster">Rosa</button><button class="tab" data-tab="stats">Statistiche</button></div><div id="tab-table" class="tab-view active">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-roster" class="tab-view">${renderSeasonRosterField()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div></section></div><aside><section class="panel"><div class="label">Indisponibili</div><h3>Gestione formazione</h3>${renderAvailability()}<p style="font-size:12px"><b>Squalificato:</b> sostituzione automatica. <b>Infortunato:</b> può giocare con -20 Intesa oppure essere sostituito. Panchinaro fuori ruolo: -10 Intesa.</p></section><section class="panel"><div class="label">Formazione effettiva</div>${renderResolvedLineup()}</section></aside></div>`;
+function renderOpponentRoster(team){
+ const players=opponentRosterPlayers(team);
+ const rows=players.map(player=>{
+   const status=opponentStatusOf(team,player.id);
+   const unavailable=status.injury>0||status.suspension>0;
+   const statusText=status.injury>0?`Infortunato: ${status.injury}`:status.suspension>0?`Squalificato: ${status.suspension}`:`${player.Position||roleOf(player)} · OVR ${player.ovr}`;
+   return `<div class="opponent-roster-row ${unavailable?'is-out':''} ${player.isMascot?'is-mascot':''}"><div><b>${player.isMascot?'⭐ ':''}${esc(player.name)}</b><small>${esc(statusText)}</small></div><span class="chip ovr">${esc(player.ovr)}</span></div>`;
+ }).join('');
+ return `<details class="opponent-roster-details"><summary>Rosa di ${esc(team.name)} · ${players.length} giocatori</summary><div class="opponent-roster-list">${rows}</div></details>`;
+}
+function showSeason(){prepareEvent();const fx=userFixture(),opp=teamById(fx.home===USER_ID?fx.away:fx.home),standing=userStanding(),rank=sortedTable().findIndex(x=>x.id===USER_ID)+1;screen.innerHTML=`<section class="panel"><div class="season-strip"><div class="stat"><b>${state.matchday+1}</b><span>Giornata</span></div><div class="stat"><b>${rank}°</b><span>Posizione</span></div><div class="stat"><b>${standing.pts}</b><span>Punti</span></div><div class="stat"><b>${standing.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${standing.ga}</b><span>Gol subiti</span></div></div></section><div class="dashboard-grid"><div><section class="panel"><div class="label">Prossima partita</div><div class="next-match"><div><div class="team-name" style="font-size:${teamNameFontSize(fx.home===USER_ID?state.teamName:opp.name)}px" title="${esc(fx.home===USER_ID?state.teamName:opp.name)}">${esc(fx.home===USER_ID?state.teamName:opp.name)}</div><div class="subline">${fx.home===USER_ID?'Casa':'Avversario'}</div></div><div class="versus">VS</div><div><div class="team-name" style="font-size:${teamNameFontSize(fx.away===USER_ID?state.teamName:opp.name)}px" title="${esc(fx.away===USER_ID?state.teamName:opp.name)}">${esc(fx.away===USER_ID?state.teamName:opp.name)}</div><div class="subline">${fx.away===USER_ID?'Trasferta':'Avversario'}</div></div></div><div style="margin-top:14px">${renderEvent()}</div><div style="margin-top:14px"><button id="playRound" class="btn primary" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>Gioca la giornata ${state.matchday+1}</button></div></section><section class="panel"><div class="tabs"><button class="tab active" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="roster">Rosa</button><button class="tab" data-tab="stats">Statistiche</button></div><div id="tab-table" class="tab-view active">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-roster" class="tab-view">${renderSeasonRosterField()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div></section></div><aside><section class="panel"><div class="label">Indisponibili</div><h3>Gestione formazione</h3>${renderAvailability()}<p style="font-size:12px"><b>Squalificato:</b> sostituzione automatica. <b>Infortunato:</b> può giocare con -20 Intesa oppure essere sostituito. Panchinaro fuori ruolo: -10 Intesa.</p></section><section class="panel"><div class="label">Formazione effettiva</div>${renderResolvedLineup()}</section><section class="panel"><div class="label">Avversario reale</div><h3>${esc(opp.name)}</h3>${seasonRuleSummary()}${renderOpponentRoster(opp)}</section></aside></div>`;
  document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>resolveDecision(Number(b.dataset.choice)));document.querySelectorAll('[data-injured]').forEach(b=>b.onclick=()=>{const id=b.dataset.injured;state.playInjured[id]=!state.playInjured[id];save();render()});document.getElementById('playRound').onclick=playRound;document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-view').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active')})}
 function renderResolvedLineup(){return `<div class="roster-list">${resolveLineup().map(r=>`<div class="roster-row"><span class="slot-code">${esc(r.slot)}</span><div><b>${esc(r.player.name)}</b><small>${r.replaces?`Al posto di ${esc(r.replaces)}`:esc(r.player.Position)} ${r.malus?`· ${r.malus} Intesa`:''}</small></div><span class="chip ovr">${r.player.ovr}</span></div>`).join('')}</div>`}
 function renderTable(){const rows=sortedTable();return `<table><thead><tr><th>Squadra</th><th>PG</th><th>V</th><th>N</th><th>P</th><th>GF</th><th>GS</th><th>DR</th><th>Pt</th></tr></thead><tbody>${rows.map((r,i)=>`<tr class="${r.id===USER_ID?'us-row':''}"><td>${i+1}. ${esc(r.name)}</td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}</td><td>${r.ga}</td><td>${r.gf-r.ga}</td><td>${r.pts}</td></tr>`).join('')}</tbody></table>`}
@@ -1824,12 +2140,202 @@ function weightedScorer(line){const pool=[];line.forEach(r=>{const role=roleOf(r
 function goalDescription(player,assist){const pos=positions(player)[0]||'ATT',pool=(COMMENTARY?.positions?.[pos]||COMMENTARY?.positions?.ATT||['{marcatore} trova la rete.']);let s=pick(pool);if(!assist)s=pool.find(x=>!x.includes('{assist}'))||s;return String(s).replaceAll('{marcatore}',player.name).replaceAll('{assist}',assist?.name||'').replaceAll('{squadra}',state.teamName).replaceAll('{avversario}','avversario')}
 function buildUserGoals(n,line){const events=[];for(let i=0;i<n;i++){const s=weightedScorer(line),others=line.filter(x=>x.playerId!==s.playerId),a=Math.random()<.72?pick(others):null;state.stats.goals[s.playerId]=(state.stats.goals[s.playerId]||0)+1;if(a)state.stats.assists[a.playerId]=(state.stats.assists[a.playerId]||0)+1;events.push({minute:Math.floor(5+Math.random()*84),player:s.player.name,assist:a?.player.name||'',description:goalDescription(s.player,a?.player)})}return events.sort((a,b)=>a.minute-b.minute)}
 function updateStanding(id,gf,ga){const s=state.standings[id];s.p++;s.gf+=gf;s.ga+=ga;if(gf>ga){s.w++;s.pts+=3}else if(gf===ga){s.d++;s.pts++}else s.l++}
-function playRound(){if(state.pendingEvent&&!state.pendingEvent.resolved)return;const fixture=userFixture(),opp=teamById(fixture.home===USER_ID?fixture.away:fixture.home),line=resolveLineup(),power=matchPower(),userHome=fixture.home===USER_ID;const [hg,ag]=simulateScore(userHome?power:opp.strength,userHome?opp.strength:power,.18);const gf=userHome?hg:ag,ga=userHome?ag:hg;const goals=buildUserGoals(gf,line);modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal"><div class="label">Giornata ${state.matchday+1}</div><h2>Partita in corso...</h2><div class="sim"><span></span></div><p>Il campionato sta simulando tutte le partite della giornata.</p></div></div>`;setTimeout(()=>{currentRound().forEach(m=>{let h,a;if(m===fixture){h=hg;a=ag}else{const th=teamById(m.home),ta=teamById(m.away);[h,a]=simulateScore(th.strength,ta.strength,.18)}updateStanding(m.home,h,a);updateStanding(m.away,a,h)});state.history.push({matchday:state.matchday+1,opponent:opp.name,home:userHome,gf,ga,goals,power:Math.round(power*10)/10});state.lastResult=state.history[state.history.length-1];postMatch();save();showResultModal()},1250)}
-function postMatch(){const cardEffect=state.activeEffects.some(e=>e.type==='cards');Object.values(state.statuses).forEach(s=>{if(s.injury>0)s.injury--;if(s.suspension>0)s.suspension--});if(Math.random()<(cardEffect?.18:.07)){const r=pick(rosterPlayers());if(r)statusOf(r.playerId).suspension=1}state.activeEffects.forEach(e=>e.rounds--);state.activeEffects=state.activeEffects.filter(e=>e.rounds>0);state.playInjured={};state.matchday++;state.pendingEvent=null;if(state.matchday===19){state.phase='midseason';state.midseason={step:0,outgoingId:'',nation:'',candidates:[]}}else if(state.matchday>=38)state.phase='finished';else prepareEvent()}
-function showResultModal(){const r=state.lastResult;modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(r.opponent)}</div><div class="score">${r.gf}–${r.ga}</div><div class="goals">${r.goals.length?r.goals.map(g=>`<div class="goal-line"><b>${g.minute}' · ${esc(g.player)}</b>${g.assist?` · Assist ${esc(g.assist)}`:''}<br>${esc(g.description)}</div>`).join(''):'<div class="goal-line">Nessun gol della tua squadra.</div>'}</div></div><button id="closeResult" class="btn primary" style="margin-top:14px">Continua</button></div></div>`;document.getElementById('closeResult').onclick=()=>{modalRoot.innerHTML='';render()}}
-function showMidseason(){const ms=state.midseason,selected=ms.outgoingId?rosterEntry(ms.outgoingId):null;screen.innerHTML=`<section class="panel"><div class="label">Giro di boa</div><h2>Draft di metà campionato</h2><p>Cambia esattamente 2 giocatori. Se sostituisci un titolare, il nuovo giocatore deve essere compatibile con il suo slot preciso.</p><div class="mid-grid"><div><h3>1. Scegli chi lascia la rosa</h3><div class="outgoing-list">${rosterPlayers().map(r=>`<button class="outgoing ${ms.outgoingId===r.playerId?'active':''}" data-out="${esc(r.playerId)}"><b>${esc(r.player.name)}</b><br><small>${esc(r.slot)} · ${esc(r.player.Position)}</small></button>`).join('')}</div></div><div><h3>2. Nuovo draft (${ms.step+1}/2)</h3>${selected?`<p>Uscita: <b>${esc(selected.player.name)}</b> — slot ${esc(selected.slot)}</p><button id="drawMarket" class="btn gold">${ms.nation?'Cambia nazionale':'Estrai nazionale'}</button>${ms.nation?`<div class="nation-card"><div class="need">Nazione estratta</div><div class="nation-name">${esc(ms.nation)}</div></div><div class="candidate-grid">${ms.candidates.map(id=>{const p=playerById(id);return `<button class="candidate" data-market="${id}"><div class="name">${esc(p.name)}</div><div class="meta"><span class="chip">${esc(p.Position)}</span><span class="chip ovr">OVR ${p.ovr}</span></div></button>`}).join('')}</div>`:''}`:'<p>Seleziona un giocatore dalla rosa.</p>'}</div></div></section>`;document.querySelectorAll('[data-out]').forEach(b=>b.onclick=()=>{ms.outgoingId=b.dataset.out;ms.nation='';ms.candidates=[];save();render()});const draw=document.getElementById('drawMarket');if(draw)draw.onclick=drawMarket;document.querySelectorAll('[data-market]').forEach(b=>b.onclick=()=>completeMarket(b.dataset.market))}
-function drawMarket(){const ms=state.midseason,out=rosterEntry(ms.outgoingId),used=new Set(state.draft.roster.map(r=>String(r.playerId)));let base=PLAYERS.filter(p=>!used.has(String(p.id))&&(out.bench||compatible(p,out.slot)));const groups={};base.forEach(p=>(groups[p.nation]??=[]).push(p));const ns=Object.keys(groups).filter(n=>groups[n].length>=2);ms.nation=pick(ns.length?ns:Object.keys(groups));ms.candidates=shuffle(groups[ms.nation]||[]).slice(0,4).map(p=>String(p.id));save();render()}
-function completeMarket(id){const ms=state.midseason,idx=state.draft.roster.findIndex(r=>String(r.playerId)===String(ms.outgoingId));if(idx<0)return;const replacement=playerById(id);state.draft.roster[idx].playerId=String(id);state.draft.roster[idx].player=replacement?{...replacement}:null;ms.step++;ms.outgoingId='';ms.nation='';ms.candidates=[];if(ms.step>=2){state.phase='season';prepareEvent();toast('Mercato completato')}save();render()}
+function playRound(){
+ if(state.pendingEvent&&!state.pendingEvent.resolved)return;
+ const fixture=userFixture();
+ const opponent=teamById(fixture.home===USER_ID?fixture.away:fixture.home);
+ const lineup=resolveLineup();
+ const userPower=matchPower();
+ const userHome=fixture.home===USER_ID;
+ const guaranteedRed=state.activeEffects.some(effect=>effect.type==='opponentRedCard');
+ const chaos=state.activeEffects.filter(effect=>effect.type==='refChaos');
+ const opponentRedChance=guaranteedRed?1:Math.max(0,...chaos.map(effect=>Number(effect.opponentRedChance)||0));
+ const ownSuspensionChance=Math.max(0,...chaos.map(effect=>Number(effect.ownSuspensionChance)||0));
+ const redHappens=Math.random()<opponentRedChance;
+ const redCandidate=redHappens?pick(opponentAvailablePlayers(opponent).slice(0,11)):null;
+ const ownSuspensionCandidate=Math.random()<ownSuspensionChance?randomOwnEntry():null;
+ const opponentEventOvr=state.activeEffects.filter(effect=>effect.type==='opponentOvr').reduce((sum,effect)=>sum+(Number(effect.value)||0),0);
+ const redMalus=redCandidate?10:0;
+ const opponentPower=Math.max(35,opponentMatchPower(opponent)+opponentEventOvr-redMalus);
+ let [homeGoals,awayGoals]=simulateScore(userHome?userPower:opponentPower,userHome?opponentPower:userPower,.18);
+ let goalsFor=userHome?homeGoals:awayGoals;
+ let goalsAgainst=userHome?awayGoals:homeGoals;
+ const forcedLoss=state.activeEffects.some(effect=>effect.type==='forcedLoss');
+ if(forcedLoss&&goalsFor>=goalsAgainst){
+   goalsAgainst=goalsFor+1;
+   if(userHome)awayGoals=goalsAgainst;
+   else homeGoals=goalsAgainst;
+ }
+ const goals=buildUserGoals(goalsFor,lineup);
+ modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal"><div class="label">Giornata ${state.matchday+1}</div><h2>Partita in corso...</h2><div class="sim"><span></span></div><p>Il campionato sta simulando tutte le partite della giornata usando le rose reali delle nazionali.</p></div></div>`;
+ setTimeout(()=>{
+   currentRound().forEach(match=>{
+     let homeScore,awayScore;
+     if(match===fixture){
+       homeScore=homeGoals;
+       awayScore=awayGoals;
+     }else{
+       const homeTeam=teamById(match.home);
+       const awayTeam=teamById(match.away);
+       [homeScore,awayScore]=simulateScore(opponentMatchPower(homeTeam),opponentMatchPower(awayTeam),.18);
+     }
+     updateStanding(match.home,homeScore,awayScore);
+     updateStanding(match.away,awayScore,homeScore);
+   });
+   state.history.push({
+     matchday:state.matchday+1,
+     opponent:opponent.name,
+     home:userHome,
+     gf:goalsFor,
+     ga:goalsAgainst,
+     goals,
+     power:Math.round(userPower*10)/10,
+     opponentPower:Math.round(opponentPower*10)/10,
+     opponentRedCard:Boolean(redCandidate),
+     opponentRedPlayer:redCandidate?.name||'',
+     ownSuspensionId:ownSuspensionCandidate?.playerId||'',
+     ownSuspensionPlayer:ownSuspensionCandidate?.player?.name||'',
+     forcedLoss
+   });
+   state.lastResult=state.history[state.history.length-1];
+   postMatch();
+   save();
+   showResultModal()
+ },1250)
+}
+function postMatch(){
+ const cardEffect=state.activeEffects.some(effect=>effect.type==='cards');
+ Object.values(state.statuses).forEach(status=>{
+   if(status.injury>0)status.injury--;
+   if(status.suspension>0)status.suspension--;
+ });
+ state.teams.filter(team=>team.id!==USER_ID).forEach(team=>{
+   Object.values(team.statuses||{}).forEach(status=>{
+     if(status.injury>0)status.injury--;
+     if(status.suspension>0)status.suspension--;
+   });
+ });
+ const result=state.lastResult;
+ if(result?.ownSuspensionId)statusOf(result.ownSuspensionId).suspension=Math.max(1,statusOf(result.ownSuspensionId).suspension);
+ if(Math.random()<(cardEffect?.18:.07)){
+   const entry=pick(rosterPlayers());
+   if(entry)statusOf(entry.playerId).suspension=Math.max(1,statusOf(entry.playerId).suspension);
+ }
+ state.activeEffects.forEach(effect=>effect.rounds--);
+ state.activeEffects=state.activeEffects.filter(effect=>effect.rounds>0);
+ state.playInjured={};
+ state.matchday++;
+ state.pendingEvent=null;
+ if(state.matchday===19){
+   const target=midseasonTarget();
+   const auto=Boolean(state.seasonRules.autoMidseason||state.seasonRules.botMidseason);
+   state.phase='midseason';
+   state.midseason={step:0,target,outgoingId:'',nation:'',candidates:[],auto,autoCompleted:false,changes:[]};
+ }else if(state.matchday>=38){
+   state.phase='finished';
+ }else{
+   prepareEvent();
+ }
+}
+function showResultModal(){
+ const result=state.lastResult;
+ const redLine=result.opponentRedCard?`<div class="goal-line red-card-event"><b>🟥 Espulsione avversaria: ${esc(result.opponentRedPlayer||'giocatore avversario')}</b><br>${esc(result.opponent)} ha giocato parte della gara in inferiorità numerica.</div>`:'';
+ const suspensionLine=result.ownSuspensionPlayer?`<div class="goal-line"><b>🟨 Conseguenza arbitrale</b><br>${esc(result.ownSuspensionPlayer)} sarà squalificato per la prossima giornata.</div>`:'';
+ const forcedLine=result.forcedLoss?`<div class="goal-line"><b>📋 Formazione imposta dal figlio del presidente</b><br>La sconfitta prevista dall’evento è stata applicata.</div>`:'';
+ modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${result.gf}–${result.ga}</div>${redLine}${suspensionLine}${forcedLine}<div class="goals">${result.goals.length?result.goals.map(goal=>`<div class="goal-line"><b>${goal.minute}' · ${esc(goal.player)}</b>${goal.assist?` · Assist ${esc(goal.assist)}`:''}<br>${esc(goal.description)}</div>`).join(''):'<div class="goal-line">Nessun gol della tua squadra.</div>'}</div></div><button id="closeResult" class="btn primary" style="margin-top:14px">Continua</button></div></div>`;
+ document.getElementById('closeResult').onclick=()=>{modalRoot.innerHTML='';render()}
+}
+function runBotMidseason(){
+ const ms=state.midseason;
+ if(ms.autoCompleted)return;
+ const target=clamp(Number(ms.target)||midseasonTarget(),1,3);
+ const changedSlots=new Set();
+ const changes=[];
+ for(let step=0;step<target;step++){
+   const possibleIndexes=state.draft.roster.map((entry,index)=>({entry,index})).filter(item=>!changedSlots.has(item.index));
+   if(!possibleIndexes.length)break;
+   const selected=pick(possibleIndexes);
+   const outgoing=selected.entry;
+   const usedIds=new Set(state.draft.roster.map(entry=>String(entry.playerId)));
+   const pool=PLAYERS.filter(player=>!usedIds.has(String(player.id))&&(outgoing.bench||compatible(player,outgoing.slot)));
+   if(!pool.length)continue;
+   const replacement=pick(pool);
+   const oldPlayer=outgoing.player||playerById(outgoing.playerId);
+   state.draft.roster[selected.index].playerId=String(replacement.id);
+   state.draft.roster[selected.index].player={...replacement};
+   changedSlots.add(selected.index);
+   changes.push({out:oldPlayer?.name||'Giocatore',incoming:replacement.name,slot:outgoing.slot});
+ }
+ ms.step=changes.length;
+ ms.changes=changes;
+ ms.autoCompleted=true;
+ save();
+}
+function continueAfterBotMarket(){
+ state.phase='season';
+ state.seasonRules.botMidseason=false;
+ prepareEvent();
+ save();
+ render();
+ toast('Draft automatico completato')
+}
+function showMidseason(){
+ const ms=state.midseason;
+ ms.target=clamp(Number(ms.target)||midseasonTarget(),1,3);
+ if(ms.auto){
+   runBotMidseason();
+   screen.innerHTML=`<section class="panel"><div class="label">Giro di boa</div><h2>Draft di metà campionato gestito dal bot</h2><div class="bot-market-card"><h3>La scelta è stata completata automaticamente</h3><p>Il bot ha scelto casualmente sia i giocatori da rimuovere sia i sostituti, rispettando gli slot compatibili.</p>${ms.changes.length?ms.changes.map((change,index)=>`<div class="bot-market-change"><b>${index+1}. ${esc(change.out)} → ${esc(change.incoming)}</b><br><small>Slot ${esc(change.slot)}</small></div>`).join(''):'<p>Nessun cambio disponibile.</p>'}<button id="continueBotMarket" class="btn primary" style="margin-top:14px">Continua il campionato</button></div></section>`;
+   document.getElementById('continueBotMarket').onclick=continueAfterBotMarket;
+   return;
+ }
+ const selected=ms.outgoingId?rosterEntry(ms.outgoingId):null;
+ const remaining=Math.max(0,ms.target-ms.step);
+ screen.innerHTML=`<section class="panel"><div class="label">Giro di boa</div><h2>Draft di metà campionato</h2><p>Cambia esattamente <b>${ms.target}</b> ${ms.target===1?'giocatore':'giocatori'}. Se sostituisci un titolare, il nuovo giocatore deve essere compatibile con il suo slot preciso.</p><div class="mid-grid"><div><h3>1. Scegli chi lascia la rosa</h3><div class="outgoing-list">${rosterPlayers().map(entry=>`<button class="outgoing ${ms.outgoingId===entry.playerId?'active':''}" data-out="${esc(entry.playerId)}"><b>${esc(entry.player.name)}</b><br><small>${esc(entry.slot)} · ${esc(entry.player.Position)}</small></button>`).join('')}</div></div><div><h3>2. Nuovo draft (${ms.step+1}/${ms.target})</h3><p>Cambi ancora disponibili: <b>${remaining}</b></p>${selected?`<p>Uscita: <b>${esc(selected.player.name)}</b> — slot ${esc(selected.slot)}</p><button id="drawMarket" class="btn gold">${ms.nation?'Cambia nazionale':'Estrai nazionale'}</button>${ms.nation?`<div class="nation-card"><div class="need">Nazione estratta</div><div class="nation-name">${esc(ms.nation)}</div></div><div class="candidate-grid">${ms.candidates.map(id=>{const player=playerById(id);return `<button class="candidate" data-market="${id}"><div class="name">${esc(player.name)}</div><div class="meta"><span class="chip">${esc(player.Position)}</span><span class="chip ovr">OVR ${player.ovr}</span></div></button>`}).join('')}</div>`:''}`:'<p>Seleziona un giocatore dalla rosa.</p>'}</div></div></section>`;
+ document.querySelectorAll('[data-out]').forEach(button=>button.onclick=()=>{
+   ms.outgoingId=button.dataset.out;
+   ms.nation='';
+   ms.candidates=[];
+   save();
+   render()
+ });
+ const draw=document.getElementById('drawMarket');
+ if(draw)draw.onclick=drawMarket;
+ document.querySelectorAll('[data-market]').forEach(button=>button.onclick=()=>completeMarket(button.dataset.market))
+}
+function drawMarket(){
+ const ms=state.midseason;
+ const outgoing=rosterEntry(ms.outgoingId);
+ if(!outgoing)return;
+ const used=new Set(state.draft.roster.map(entry=>String(entry.playerId)));
+ const base=PLAYERS.filter(player=>!used.has(String(player.id))&&(outgoing.bench||compatible(player,outgoing.slot)));
+ const groups={};
+ base.forEach(player=>(groups[player.nation]??=[]).push(player));
+ const nations=Object.keys(groups).filter(nation=>groups[nation].length>=2);
+ ms.nation=pick(nations.length?nations:Object.keys(groups));
+ ms.candidates=shuffle(groups[ms.nation]||[]).slice(0,4).map(player=>String(player.id));
+ save();
+ render()
+}
+function completeMarket(id){
+ const ms=state.midseason;
+ const index=state.draft.roster.findIndex(entry=>String(entry.playerId)===String(ms.outgoingId));
+ if(index<0)return;
+ const replacement=playerById(id);
+ state.draft.roster[index].playerId=String(id);
+ state.draft.roster[index].player=replacement?{...replacement}:null;
+ ms.step++;
+ ms.outgoingId='';
+ ms.nation='';
+ ms.candidates=[];
+ if(ms.step>=ms.target){
+   state.phase='season';
+   state.seasonRules.botMidseason=false;
+   prepareEvent();
+   toast('Mercato completato')
+ }
+ save();
+ render()
+}
 function showFinished(){const table=sortedTable(),rank=table.findIndex(x=>x.id===USER_ID)+1,s=userStanding(),top=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1])[0],topPlayer=top?playerById(top[0]):null;screen.innerHTML=`<section class="panel"><div class="final-hero"><div class="label" style="color:#ffe96c">Stagione conclusa</div><h2>${rank===1?'Campioni!':'Campionato terminato'}</h2><div class="final-position">${rank}°</div><p>${esc(state.teamName)} chiude la stagione dopo 38 giornate.</p></div><div class="final-grid"><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div></div><section class="panel"><h3>Capocannoniere</h3><p>${topPlayer?`<b>${esc(topPlayer.name)}</b> — ${top[1]} gol`:'Nessun marcatore'}</p><div class="top-actions"><button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultati inviati':'Invia risultati'}</button><button id="exportSeason" class="btn gold">Esporta risultati JSON</button></div></section>${renderTable()}</section>`;document.getElementById('sendSeason').onclick=sendSeason;document.getElementById('exportSeason').onclick=exportSeason}
 async function sendSeason(){const s=userStanding(),top=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1])[0],p=top?playerById(top[0]):null;const payload={squadra:state.teamName,allenatore:state.coachName,modalita:'Campionato del Ca***',vittorie:s.w,pareggi:s.d,sconfitte:s.l,gol_fatti:s.gf,gol_subiti:s.ga,modulo:state.formation,ovr_medio:Math.round(teamPowerBase()*10)/10,capocannoniere:p?`${p.name} (${top[1]})`:''};const fd=new FormData();fd.append('payload',JSON.stringify(payload));try{await fetch(VICTORY_ENDPOINT,{method:'POST',mode:'no-cors',body:fd});state.submitted=true;save();render();toast('Risultati inviati')}catch{toast('Invio non riuscito')}}
 function exportSeason(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fantaballa-campionato-risultati.json';a.click();URL.revokeObjectURL(a.href)}
