@@ -222,6 +222,47 @@
     .load-more-btn:disabled { opacity:.48; cursor:not-allowed; box-shadow:none; }
     .load-more-status { color:#6d675b; font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.08em; }
 
+
+    .mode-chip.campionato { background:#a13d2d; }
+    .championship-board {
+      background:linear-gradient(180deg,#fffdf5,#f2e5c8);
+      border-color:rgba(156,91,38,.35);
+    }
+    .championship-board.expanded {
+      border-color:rgba(161,61,45,.62);
+      box-shadow:0 18px 46px rgba(69,51,20,.18),0 0 0 4px rgba(161,61,45,.09);
+    }
+    .championship-table th:nth-child(n+3),
+    .championship-table td:nth-child(n+3) { text-align:center; }
+    .finish-pill {
+      display:inline-flex;
+      min-width:54px;
+      min-height:36px;
+      align-items:center;
+      justify-content:center;
+      border-radius:14px;
+      background:linear-gradient(180deg,#ffe778,#e7c84d);
+      border:1px solid #c7a938;
+      color:#10243a;
+      font-size:17px;
+      font-weight:1000;
+      padding:5px 10px;
+      white-space:nowrap;
+    }
+    .points-pill {
+      display:inline-flex;
+      min-width:52px;
+      min-height:36px;
+      align-items:center;
+      justify-content:center;
+      border-radius:14px;
+      background:#a13d2d;
+      color:#fff;
+      font-size:18px;
+      font-weight:1000;
+      padding:5px 10px;
+    }
+
     @media (min-width:901px) {
       body, .masthead, h1, h2, .label, .back-btn, .refresh-btn, .expand-btn, .updated, .rank, .count { font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important; }
       .table-wrap { overflow-x:visible; }
@@ -237,6 +278,13 @@
       .mode-board.expanded .mode-table th:nth-child(4), .mode-board.expanded .mode-table td:nth-child(4),
       .mode-board.expanded .mode-table th:nth-child(5), .mode-board.expanded .mode-table td:nth-child(5) { width:7.5%; }
       .mode-board.expanded .mode-table th:nth-child(7), .mode-board.expanded .mode-table td:nth-child(7) { width:10%; }
+      .championship-table th:first-child, .championship-table td:first-child { width:64px; }
+      .championship-table th:nth-child(2), .championship-table td:nth-child(2) { width:22%; }
+      .championship-table th:nth-child(3), .championship-table td:nth-child(3) { width:10%; }
+      .championship-table th:nth-child(4), .championship-table td:nth-child(4) { width:8%; }
+      .championship-table th:nth-child(8), .championship-table td:nth-child(8) { width:11%; }
+      .championship-table th:nth-child(10), .championship-table td:nth-child(10) { width:10%; }
+      .championship-table th:nth-child(11), .championship-table td:nth-child(11) { width:18%; }
       .scorers-table th:first-child, .scorers-table td:first-child { width:64px; }
       .scorers-table th:nth-child(2), .scorers-table td:nth-child(2) { width:auto; }
       .scorers-table th:nth-child(3), .scorers-table td:nth-child(3) { width:140px; text-align:center; }
@@ -258,6 +306,7 @@
       .table-wrap { border-radius:16px; overflow:auto; }
       .mode-table { min-width:720px; }
       .mode-board.expanded .mode-table { min-width:980px; }
+      .championship-table { min-width:1180px; }
       .scorers-table { min-width:420px; }
       th,td { padding:10px 8px; }
     }
@@ -265,7 +314,7 @@
 </head>
 <body>
   <main class="page">
-    <div class="masthead"><span class="dot">●</span> Fantaballa World Cup</div>
+    <div class="masthead"><span class="dot">●</span> Fantaballa</div>
 
     <div class="actions">
       <a class="back-btn" href="index.html">Torna al gioco</a>
@@ -279,7 +328,7 @@
           <img class="logo" src="assets/fantaballa-logo.png" alt="Fantaballa" />
           <div class="label">Classifiche</div>
           <h1>Campioni e bomber</h1>
-          <p class="sub">Tre modalità separate — Classica, Gary MEDel e HARDa Turan — più la classifica capocannonieri aggregata.</p>
+          <p class="sub">Quattro classifiche separate — Classica, Gary MEDel, HARDa Turan e Campionato — più i capocannonieri delle modalità World Cup.</p>
         </div>
         <div id="leaderboardUpdated" class="updated">Caricamento classifica...</div>
       </div>
@@ -386,12 +435,49 @@
         </div>
       </section>
 
+
+      <section class="mode-board championship-board" id="campionatoBoard" aria-label="Risultati finali Campionato del Ca***">
+        <div class="board-head">
+          <div class="board-title-wrap">
+            <div class="label">Risultati finali</div>
+            <h2>Campionato del Ca***</h2>
+            <p class="sub">Stagioni concluse: piazzamento finale, punti, rendimento e capocannoniere.</p>
+          </div>
+          <button class="expand-btn" type="button" data-toggle-board="campionatoBoard" aria-expanded="false">Vedi tutti i dati</button>
+        </div>
+        <div class="table-wrap">
+          <table class="championship-table">
+            <thead>
+              <tr>
+                <th><button class="sort-btn" type="button" data-board="campionato" data-sort="rank">Pos</button></th>
+                <th><button class="sort-btn" type="button" data-board="campionato" data-sort="name">Squadra</button></th>
+                <th><button class="sort-btn" type="button" data-board="campionato" data-sort="finalPosition">Piazzamento</button></th>
+                <th><button class="sort-btn" type="button" data-board="campionato" data-sort="points">Punti</button></th>
+                <th class="full-col"><button class="sort-btn" type="button" data-board="campionato" data-sort="wins">V</button></th>
+                <th class="full-col"><button class="sort-btn" type="button" data-board="campionato" data-sort="draws">N</button></th>
+                <th class="full-col"><button class="sort-btn" type="button" data-board="campionato" data-sort="losses">P</button></th>
+                <th><button class="sort-btn" type="button" data-board="campionato" data-sort="goalsFor">GF/GS</button></th>
+                <th class="full-col"><button class="sort-btn" type="button" data-board="campionato" data-sort="goalDiff">DR</button></th>
+                <th class="full-col"><button class="sort-btn" type="button" data-board="campionato" data-sort="module">Modulo</button></th>
+                <th><button class="sort-btn" type="button" data-board="campionato" data-sort="ovr">OVR</button></th>
+                <th><button class="sort-btn" type="button" data-board="campionato" data-sort="scorer">Capocannoniere</button></th>
+              </tr>
+            </thead>
+            <tbody id="campionatoBody"><tr><td><span class="rank">-</span></td><td class="empty" colspan="11">In attesa della prima stagione completata</td></tr></tbody>
+          </table>
+        </div>
+        <div class="load-more-wrap" data-load-wrap="campionato">
+          <button class="load-more-btn" type="button" data-load-more="campionato">Carica altre</button>
+          <span class="load-more-status" id="campionatoLoadStatus"></span>
+        </div>
+      </section>
+
       <section class="scorers-board" aria-label="Classifica capocannonieri">
         <div class="board-head">
           <div class="board-title-wrap">
             <div class="label">Classifica</div>
             <h2>Capocannonieri</h2>
-            <p class="sub">Somma i gol dei capocannonieri delle run Classica, Gary MEDel e HARDa Turan.</p>
+            <p class="sub">Somma i gol dei capocannonieri delle run World Cup: Classica, Gary MEDel e HARDa Turan.</p>
           </div>
         </div>
         <div class="table-wrap">
@@ -419,13 +505,14 @@
       const classicBody = document.getElementById('classicBody');
       const garyBody = document.getElementById('garyBody');
       const hardBody = document.getElementById('hardBody');
+      const campionatoBody = document.getElementById('campionatoBody');
       const scorersBody = document.getElementById('scorersBody');
       const updated = document.getElementById('leaderboardUpdated');
       const refreshBtn = document.getElementById('refreshBtn');
       const SHEETS_CLASSIFICA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
       const CLASSIFICA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
       const LOCAL_CLASSIFICA_FALLBACK = 'data/classifica.json';
-      if (!classicBody || !garyBody || !hardBody || !scorersBody) return;
+      if (!classicBody || !garyBody || !hardBody || !campionatoBody || !scorersBody) return;
 
       const escape = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({
         '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '"':'&quot;'
@@ -448,14 +535,33 @@
       const rawModeOf = row => String(valueOf(row, ['modalita','gameMode','mode'], 'Classica')).trim();
       const modeKindOf = row => {
         const raw = rawModeOf(row);
+        if (/campionato|stagione/i.test(raw)) return 'campionato';
         if (/hard|turan/i.test(raw)) return 'hard';
         if (/gary|medel/i.test(raw)) return 'gary';
         return 'classic';
       };
-      const modeLabelOf = row => modeKindOf(row) === 'hard' ? 'HARDa Turan' : (modeKindOf(row) === 'gary' ? 'Gary MEDel' : 'Classica');
+      const modeLabelOf = row => {
+        const kind = modeKindOf(row);
+        if (kind === 'campionato') return 'Campionato del Ca***';
+        if (kind === 'hard') return 'HARDa Turan';
+        if (kind === 'gary') return 'Gary MEDel';
+        return 'Classica';
+      };
       const winsOf = row => numberOf(row, ['vittorie','wins','campione_del_mondo','campioni_del_mondo','count'], 0);
       const drawsOf = row => numberOf(row, ['pareggi','draws'], 0);
       const lossesOf = row => numberOf(row, ['sconfitte','losses'], 0);
+      const pointsOf = row => {
+        const explicit = valueOf(row, ['punti','points','pts'], '');
+        if (explicit !== '') {
+          const value = Number(explicit);
+          if (Number.isFinite(value)) return value;
+        }
+        return winsOf(row) * 3 + drawsOf(row);
+      };
+      const finalPositionOf = row => {
+        const value = numberOf(row, ['posizione_finale','piazzamento_finale','finalPosition','final_position','piazzamento'], 0);
+        return value > 0 ? value : null;
+      };
       const goalsTextOf = row => {
         const combined = valueOf(row, ['gol_fatti_subiti','golFattiSubiti','goals'], '');
         if (combined && typeof combined !== 'object') return String(combined);
@@ -508,6 +614,8 @@
           wins:winsOf(row),
           draws:drawsOf(row),
           losses:lossesOf(row),
+          points:pointsOf(row),
+          finalPosition:finalPositionOf(row),
           goals:goalsTextOf(row),
           goalDiff:goalDiffOf(row),
           goalsFor:goalsForOf(row),
@@ -536,13 +644,14 @@
         classic:{ key:'rank', dir:'asc' },
         gary:{ key:'rank', dir:'asc' },
         hard:{ key:'rank', dir:'asc' },
+        campionato:{ key:'rank', dir:'asc' },
         scorers:{ key:'rank', dir:'asc' }
       };
       let lastRows = [];
 
       const PAGE_SIZE = 10;
       const MAX_VISIBLE_ROWS = 100;
-      const visibleState = { classic:PAGE_SIZE, gary:PAGE_SIZE, hard:PAGE_SIZE, scorers:PAGE_SIZE };
+      const visibleState = { classic:PAGE_SIZE, gary:PAGE_SIZE, hard:PAGE_SIZE, campionato:PAGE_SIZE, scorers:PAGE_SIZE };
 
       const defaultModeCompare = (a, b) =>
         b.wins - a.wins ||
@@ -550,6 +659,16 @@
         b.goalsFor - a.goalsFor ||
         a.losses - b.losses ||
         a.name.localeCompare(b.name, 'it');
+
+      const defaultChampionshipCompare = (a, b) => {
+        const ap = Number.isFinite(Number(a.finalPosition)) ? Number(a.finalPosition) : 999;
+        const bp = Number.isFinite(Number(b.finalPosition)) ? Number(b.finalPosition) : 999;
+        return ap - bp ||
+          b.points - a.points ||
+          b.goalDiff - a.goalDiff ||
+          b.wins - a.wins ||
+          a.name.localeCompare(b.name, 'it');
+      };
 
       const defaultScorerCompare = (a, b) =>
         b.goals - a.goals ||
@@ -586,6 +705,31 @@
             return compareValues(as.goals, bs.goals, dir) || compareValues(as.name, bs.name, dir, 'text') || defaultModeCompare(a, b);
           }
           return defaultModeCompare(a, b);
+        });
+      }
+
+      function sortChampionshipRows(rows) {
+        const state = sortState.campionato;
+        const key = state.key;
+        const dir = state.dir;
+        return rows.sort((a, b) => {
+          if (key === 'rank') return dir === 'asc' ? defaultChampionshipCompare(a, b) : -defaultChampionshipCompare(a, b);
+          if (key === 'name') return compareValues(a.name, b.name, dir, 'text') || defaultChampionshipCompare(a, b);
+          if (key === 'finalPosition') return compareValues(a.finalPosition ?? 999, b.finalPosition ?? 999, dir) || defaultChampionshipCompare(a, b);
+          if (key === 'points') return compareValues(a.points, b.points, dir) || defaultChampionshipCompare(a, b);
+          if (key === 'wins') return compareValues(a.wins, b.wins, dir) || defaultChampionshipCompare(a, b);
+          if (key === 'draws') return compareValues(a.draws, b.draws, dir) || defaultChampionshipCompare(a, b);
+          if (key === 'losses') return compareValues(a.losses, b.losses, dir) || defaultChampionshipCompare(a, b);
+          if (key === 'goalsFor') return compareValues(a.goalsFor, b.goalsFor, dir) || defaultChampionshipCompare(a, b);
+          if (key === 'goalDiff') return compareValues(a.goalDiff, b.goalDiff, dir) || defaultChampionshipCompare(a, b);
+          if (key === 'module') return compareValues(a.module, b.module, dir, 'text') || defaultChampionshipCompare(a, b);
+          if (key === 'ovr') return compareValues(numericOvr(a), numericOvr(b), dir) || defaultChampionshipCompare(a, b);
+          if (key === 'scorer') {
+            const as = parsedScorer(a);
+            const bs = parsedScorer(b);
+            return compareValues(as.goals, bs.goals, dir) || compareValues(as.name, bs.name, dir, 'text') || defaultChampionshipCompare(a, b);
+          }
+          return defaultChampionshipCompare(a, b);
         });
       }
 
@@ -643,6 +787,30 @@
         </tr>`).join('');
       }
 
+      function renderChampionshipTable(rows) {
+        const validRows = sortChampionshipRows(rows.map(rowView).filter(row => row.name));
+        updateLoadMore('campionato', validRows.length);
+        if (!validRows.length) {
+          campionatoBody.innerHTML = '<tr><td><span class="rank">-</span></td><td class="empty" colspan="11">In attesa della prima stagione completata</td></tr>';
+          return;
+        }
+        const visibleRows = validRows.slice(0, visibleLimitFor('campionato', validRows.length));
+        campionatoBody.innerHTML = visibleRows.map((row, index) => `<tr>
+          <td><span class="rank">${index + 1}</span></td>
+          <td class="team-cell"><strong>${escape(row.name)}</strong><small>${escape(row.coach || 'Allenatore non indicato')} · ${escape(row.modeLabel)}</small></td>
+          <td><span class="finish-pill">${row.finalPosition ? `${escape(row.finalPosition)}°` : '—'}</span></td>
+          <td><span class="points-pill">${escape(row.points)}</span></td>
+          <td class="full-col"><span class="stat-pill">${escape(row.wins)}</span></td>
+          <td class="full-col"><span class="stat-pill">${escape(row.draws)}</span></td>
+          <td class="full-col"><span class="stat-pill">${escape(row.losses)}</span></td>
+          <td><span class="stat-pill">${escape(row.goals)}</span></td>
+          <td class="full-col"><span class="stat-pill">${escape(row.goalDiff)}</span></td>
+          <td class="full-col"><span class="stat-pill">${escape(row.module)}</span></td>
+          <td><span class="stat-pill">${escape(row.ovr)}</span></td>
+          <td class="scorer-cell">${escape(row.scorer)}</td>
+        </tr>`).join('');
+      }
+
       function buildScorers(rows) {
         const map = new Map();
         rows.forEach(row => {
@@ -691,10 +859,12 @@
         const classicRows = rows.filter(row => modeKindOf(row) === 'classic');
         const garyRows = rows.filter(row => modeKindOf(row) === 'gary');
         const hardRows = rows.filter(row => modeKindOf(row) === 'hard');
+        const campionatoRows = rows.filter(row => modeKindOf(row) === 'campionato');
         renderModeTable(classicBody, classicRows, 'In attesa del primo campione Classica', 'classic');
         renderModeTable(garyBody, garyRows, 'In attesa del primo campione Gary MEDel', 'gary');
         renderModeTable(hardBody, hardRows, 'In attesa del primo campione HARDa Turan', 'hard');
-        renderScorers(rows);
+        renderChampionshipTable(campionatoRows);
+        renderScorers(rows.filter(row => modeKindOf(row) !== 'campionato'));
         updateSortButtons();
         if (updated) updated.textContent = data && data.aggiornato_il ? `Aggiornata: ${data.aggiornato_il}` : 'Classifiche aggiornate';
       }
@@ -807,6 +977,7 @@
                 renderModeTable(classicBody, [], 'Classifica non disponibile', 'classic');
                 renderModeTable(garyBody, [], 'Classifica non disponibile', 'gary');
                 renderModeTable(hardBody, [], 'Classifica non disponibile', 'hard');
+                renderChampionshipTable([]);
                 renderScorers([]);
                 updateSortButtons();
               });
@@ -834,7 +1005,7 @@
             current.dir = current.dir === 'asc' ? 'desc' : 'asc';
           } else {
             current.key = key;
-            current.dir = ['name','module','playerName'].includes(key) ? 'asc' : 'desc';
+            current.dir = ['name','module','playerName','finalPosition'].includes(key) ? 'asc' : 'desc';
           }
           renderLeaderboards({ classifica:lastRows });
         });
