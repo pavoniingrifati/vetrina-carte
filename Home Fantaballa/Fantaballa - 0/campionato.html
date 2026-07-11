@@ -1002,6 +1002,87 @@
       .season-mobile-tab b{min-width:24px;padding:3px 5px;font-size:8px}
     }
 
+
+    /* FIX PACK + ROLLA PRINCIPALE + CAMPO COMPATTO */
+    .season-pack-name{
+      width:100%;
+      max-width:100%;
+      white-space:nowrap!important;
+      overflow:hidden;
+      text-overflow:clip;
+      overflow-wrap:normal!important;
+      word-break:normal!important;
+      letter-spacing:-.035em;
+      line-height:1!important;
+      text-align:center;
+    }
+    .season-draw-nation{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:100%;
+      font-size:clamp(23px,3vw,38px);
+    }
+    .team-name{
+      white-space:nowrap!important;
+      overflow:hidden;
+      text-overflow:clip;
+      line-height:1.04;
+      max-width:100%;
+      letter-spacing:-.025em;
+    }
+    .season-roll-btn-center{
+      position:relative;
+      isolation:isolate;
+      width:100%;
+      min-height:76px;
+      margin:0 0 14px;
+      padding:18px 24px;
+      border:4px solid #fff2a8;
+      border-radius:20px;
+      background:linear-gradient(180deg,#ff675d 0%,#f13a32 52%,#d92324 100%);
+      color:#fff;
+      font-size:clamp(24px,3.4vw,38px);
+      font-weight:1000;
+      letter-spacing:.035em;
+      text-transform:uppercase;
+      text-shadow:0 2px 0 rgba(112,18,18,.32);
+      box-shadow:0 8px 0 #8f1719,0 14px 28px rgba(0,0,0,.28),inset 0 2px 0 rgba(255,255,255,.34);
+      overflow:hidden;
+      transform:translateY(0);
+      transition:transform .15s ease,filter .15s ease,box-shadow .15s ease;
+    }
+    .season-roll-btn-center::before{
+      content:"";
+      position:absolute;
+      inset:-60% auto -60% -28%;
+      width:24%;
+      z-index:-1;
+      transform:skewX(-18deg);
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.48),transparent);
+      animation:seasonRollShine 2.2s ease-in-out infinite;
+    }
+    .season-roll-btn-center:not(:disabled):hover{
+      transform:translateY(-3px);
+      filter:saturate(1.12) brightness(1.04);
+      box-shadow:0 11px 0 #8f1719,0 18px 34px rgba(0,0,0,.32),inset 0 2px 0 rgba(255,255,255,.38);
+    }
+    .season-roll-btn-center:not(:disabled):active{transform:translateY(5px);box-shadow:0 3px 0 #8f1719,0 8px 15px rgba(0,0,0,.22)}
+    .season-roll-btn-center:disabled{opacity:.58;animation:none;filter:grayscale(.22)}
+    @keyframes seasonRollShine{0%,55%{left:-32%}85%,100%{left:118%}}
+    .season-pitch-panel{max-width:760px;margin:0 auto;width:100%}
+    .season-pitch-wrap{
+      aspect-ratio:100/112!important;
+      max-height:650px!important;
+      width:min(100%,720px);
+      margin:0 auto;
+    }
+    @media(max-width:850px){
+      .season-roll-btn-center{min-height:66px;font-size:clamp(20px,6vw,30px);padding:15px 14px;border-width:3px}
+      .season-pitch-wrap{aspect-ratio:100/118!important;max-height:none!important;width:100%}
+      .team-name{font-size:clamp(14px,4.7vw,24px)!important}
+    }
+
   </style>
 </head>
 <body>
@@ -1143,6 +1224,9 @@ function renderDraftChemistryCard(chem=draftChemistry()){
 }
 function remainingSlotSummary(){const counts={};openStarterSlots().forEach(slot=>counts[slot.code]=(counts[slot.code]||0)+1);return Object.entries(counts).map(([code,count])=>count>1?`${code}×${count}`:code).join(' · ')||'Completati'}
 function waitDraft(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+function packNationFontSize(name){const len=String(name||'').trim().length;if(len<=8)return 30;if(len<=11)return 25;if(len<=15)return 21;if(len<=19)return 18;return 15}
+function teamNameFontSize(name){const len=String(name||'').trim().length;if(len<=10)return 34;if(len<=14)return 29;if(len<=18)return 24;if(len<=22)return 20;return 16}
+function applyPackNationLabel(el,name){if(!el)return;el.textContent=name;el.style.fontSize=`${packNationFontSize(name)}px`;el.title=name}
 
 function isSubscriber(player){return String(player&&player.subscriber||'').trim().toLowerCase()==='si'}
 function hashString(str){let h=2166136261>>>0;for(const ch of String(str||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
@@ -1192,7 +1276,7 @@ async function playSeasonPackReveal(possibleNations,finalNation,isReroll){
  overlay.classList.add('opening');
  for(let i=0;i<10;i++){
    const nation=pick(possibleNations)||'???';
-   label.textContent=nation;
+   applyPackNationLabel(label,nation);
    code.textContent=nation.slice(0,2).toUpperCase();
    caption.innerHTML=i<4?'Strappa il bordo...':i<8?'Le figurine stanno uscendo...':'Reveal finale...';
    await waitDraft(80+i*14)
@@ -1200,7 +1284,7 @@ async function playSeasonPackReveal(possibleNations,finalNation,isReroll){
  overlay.classList.remove('opening');
  overlay.classList.add('bursting');
  await waitDraft(360);
- label.textContent=finalNation;
+ applyPackNationLabel(label,finalNation);
  code.textContent=finalNation.slice(0,2).toUpperCase();
  overlay.classList.add('show-result');
  caption.innerHTML=`<strong>${esc(finalNation)}</strong> è la nazionale pescata`;
@@ -1214,9 +1298,33 @@ async function drawDraft(useReroll=false){
  const possible=useReroll&&possibleBase.length>1?possibleBase.filter(n=>n!==state.draft.nation):possibleBase;
  if(!possible.length)return toast('Non ci sono più giocatori validi per gli slot rimasti.');
  const finalNation=pick(possible);
- draftRolling=true;state.draft.pendingPlayerId='';state.draft.candidates=[];save();render();
- await playSeasonPackReveal(possible,finalNation,useReroll);
- state.draft.nation=finalNation;state.draft.candidates=draftCandidatesForNation(finalNation).map(p=>String(p.id));draftRolling=false;mobileDraftTab='players';save();render();
+ draftRolling=true;
+ state.draft.pendingPlayerId='';
+ state.draft.candidates=[];
+ save();
+ render();
+ try{
+   await playSeasonPackReveal(possible,finalNation,useReroll);
+   const drawn=draftCandidatesForNation(finalNation);
+   state.draft.nation=finalNation;
+   state.draft.candidates=drawn.map(p=>String(p.id));
+   if(!state.draft.candidates.length)throw new Error(`Nessun giocatore disponibile per ${finalNation}`);
+   mobileDraftTab='players';
+   save();
+   render();
+   requestAnimationFrame(()=>document.querySelector('.season-candidate-list')?.scrollIntoView({behavior:'smooth',block:'start'}));
+ }catch(error){
+   console.error('Errore apertura pack campionato',error);
+   modalRoot.innerHTML='';
+   state.draft.nation='';
+   state.draft.candidates=[];
+   if(useReroll)state.draft.rerolls=Math.min(3,state.draft.rerolls+1);
+   toast('Errore durante il pack. Riprova senza perdere il re-roll.');
+ }finally{
+   draftRolling=false;
+   save();
+   render();
+ }
 }
 function selectDraftCandidate(id){if(draftRolling||draftComplete())return;const p=playerById(id);if(!draftPlayerIsValid(p))return toast('Giocatore non compatibile con gli slot rimasti.');const selecting=state.draft.pendingPlayerId!==String(id);state.draft.pendingPlayerId=selecting?String(id):'';if(selecting)mobileDraftTab='field';save();render()}
 function placeDraftStarter(slotId){const player=playerById(state.draft.pendingPlayerId),slot=formationSlots().find(s=>s.instanceId===slotId);if(!player||!slot||!availableStarterSlotsForPlayer(player).some(s=>s.instanceId===slotId))return;state.draft.roster.push({playerId:String(player.id),slotId:slot.instanceId,slot:slot.code,bench:false,player:{...player}});finishDraftPlacement()}
@@ -1235,6 +1343,27 @@ function renderSeasonPitch(){
 function renderSeasonBench(){
  const bench=benchEntries(),pending=playerById(state.draft.pendingPlayerId);
  return `<div class="season-bench"><div class="season-bench-head"><span>Panchina</span><span>${bench.length}/3 riserve</span></div><div class="season-bench-grid">${[1,2,3].map(i=>{const id=`bench-${i}`,entry=bench.find(r=>r.slotId===id),available=Boolean(pending&&!entry&&bench.length<3),sub=entry&&isSubscriber(entry.player);return `<button type="button" class="season-bench-slot ${entry?'filled':''} ${available?'available':''} ${sub?'subscriber':''}" data-bench-slot="${id}">${entry?`<span class="season-bench-player">${renderMiniAvatar(entry.player,'bench')}<span class="season-bench-copy"><b>${sub?'<span class="season-inline-sub-star">★</span>':''}${esc(entry.player.name)}</b><small>${esc(entry.player.Position)} · OVR ${esc(entry.player.ovr)}</small></span></span>`:`<span>Riserva ${i}</span><small>${available?'Clicca per mandare il giocatore selezionato in panchina':'Slot libero di panchina'}</small>`}</button>`}).join('')}</div></div>`
+}
+
+function draftCandidateOvrStyle(ovr){
+ const value=Math.max(40,Math.min(99,Number(ovr)||40));
+ const ratio=Math.max(0,Math.min(1,(value-50)/49));
+ const lightness=Math.round(94-ratio*54);
+ const saturation=Math.round(34+ratio*38);
+ const borderLightness=Math.max(26,lightness-11);
+ const dark=lightness<60;
+ const veryDark=lightness<47;
+ const text=dark?'#ffffff':'#10243a';
+ const chipBg=dark?'rgba(255,255,255,.17)':'rgba(255,255,255,.72)';
+ const chipText=dark?'#ffffff':'#10243a';
+ const positionBg=dark?'rgba(255,233,108,.22)':'rgba(231,216,248,.94)';
+ const positionText=dark?'#fff4b0':'#542b82';
+ const subBg=dark?'rgba(221,201,255,.24)':'rgba(217,199,255,.95)';
+ const subText=dark?'#f5eaff':'#402062';
+ const avatarBg=veryDark?'linear-gradient(145deg,#0c1725,#172e49)':dark?'linear-gradient(145deg,#2d1f4d,#10243a)':'linear-gradient(145deg,#304f70,#10243a)';
+ const ovrBg=dark?'#ffe96c':'#10243a';
+ const ovrText=dark?'#10243a':'#ffffff';
+ return `--candidate-bg:hsl(207 ${saturation}% ${lightness}%);--candidate-border:hsl(207 ${Math.min(82,saturation+8)}% ${borderLightness}%);--candidate-text:${text};--candidate-chip-bg:${chipBg};--candidate-chip-text:${chipText};--candidate-position-bg:${positionBg};--candidate-position-text:${positionText};--candidate-sub-bg:${subBg};--candidate-sub-text:${subText};--candidate-avatar-bg:${avatarBg};--candidate-avatar-text:#fff;--candidate-ovr-bg:${ovrBg};--candidate-ovr-text:${ovrText};--candidate-ovr-border:${dark?'rgba(16,36,58,.2)':'rgba(255,255,255,.28)'};--candidate-shadow:${dark?'0 1px 2px rgba(0,0,0,.26)':'none'}`;
 }
 
 function renderDraftCandidates(){
@@ -1322,7 +1451,7 @@ function showDraft(){
  const stepSubtitle=draftComplete()?'11 titolari e 3 riserve pronti per il campionato.':'Regole Gary MEDel con 11 titolari e 3 riserve selezionabili anche subito.';
  const rollDisabled=draftRolling||draftComplete()||(hasPack&&!canReroll);
  const rollText=draftRolling?'Scarto…':hasPack?`Re-roll (${state.draft.rerolls})`:'Apri pack 🎴';
- const centerRollText=draftRolling?'Scarto…':hasPack?`RE-ROLLA! ${state.draft.rerolls}/3 🎲`:'ROLLA! 🎲';
+ const centerRollText=draftRolling?'APERTURA PACK…':hasPack?`RE-ROLLA LA NAZIONALE · ${state.draft.rerolls}/3 🎲`:'ROLLA LA NAZIONALE 🎲';
  screen.innerHTML=`<div class="season-draft-page">
    <div class="season-draft-toolbar">
      <div class="season-draft-toolbar-copy">
@@ -1348,7 +1477,6 @@ function showDraft(){
        <div class="season-candidate-list">${renderDraftCandidates()}</div>
      </aside>
      <main id="seasonFieldPane" aria-labelledby="seasonMobileField" class="season-draft-main season-mobile-pane ${mobileDraftTab==='field'?'mobile-active':''}" data-mobile-pane="field" role="tabpanel">
-       <div class="season-center-notice">Scelta obbligatoria. Re-roll: ${state.draft.rerolls}/3. Slot liberi: ${esc(freeSlots)}.</div>
        <button id="draftRollBtnCenter" class="season-roll-btn season-roll-btn-center" ${rollDisabled?'disabled':''}>${centerRollText}</button>
        ${renderSeasonPitch()}
      </main>
@@ -1415,7 +1543,7 @@ function prepareEvent(){if(state.phase!=='season'||state.pendingEvent)return;con
 function resolveDecision(i){const d=DECISIONS[state.pendingEvent.decisionIndex],c=d.choices[i];c.apply();state.pendingEvent.resolved=true;state.pendingEvent.result=`Scelta: ${c.label}. ${c.effect}`;save();render()}
 function renderEvent(){const e=state.pendingEvent;if(!e)return'';if(e.kind==='decision'&&!e.resolved){const d=DECISIONS[e.decisionIndex];return `<div class="event-card decision"><div class="label">Decisione casuale</div><h3>${esc(e.title)}</h3><p>${esc(e.text)}</p><div class="choice-grid">${d.choices.map((c,i)=>`<button class="choice" data-choice="${i}"><b>${esc(c.label)}</b><small style="display:block;margin-top:5px">${esc(c.effect)}</small></button>`).join('')}</div></div>`}return `<div class="event-card"><div class="label">${e.kind==='auto'?'Evento casuale':'Settimana'}</div><h3>${esc(e.title)}</h3><p>${esc(e.text)}</p>${e.result?`<b>${esc(e.result)}</b>`:''}</div>`}
 function renderAvailability(){const list=unavailableList();if(!list.length)return'<p>Nessun indisponibile.</p>';return `<div class="availability">${list.map(r=>{const s=statusOf(r.playerId),starter=!r.bench;return `<div class="availability-row"><b>${esc(r.player.name)}</b><small>${s.suspension>0?`Squalificato: ${s.suspension} giornate`:`Infortunato: ${s.injury} giornate`}</small>${starter&&s.injury>0?`<button class="btn ${state.playInjured[r.playerId]?'red':''}" data-injured="${esc(r.playerId)}">${state.playInjured[r.playerId]?'Giocherà infortunato (-20)':'Fallo giocare (-20)'}</button>`:''}</div>`}).join('')}</div>`}
-function showSeason(){prepareEvent();const fx=userFixture(),opp=teamById(fx.home===USER_ID?fx.away:fx.home),standing=userStanding(),rank=sortedTable().findIndex(x=>x.id===USER_ID)+1;screen.innerHTML=`<section class="panel"><div class="season-strip"><div class="stat"><b>${state.matchday+1}</b><span>Giornata</span></div><div class="stat"><b>${rank}°</b><span>Posizione</span></div><div class="stat"><b>${standing.pts}</b><span>Punti</span></div><div class="stat"><b>${standing.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${standing.ga}</b><span>Gol subiti</span></div></div></section><div class="dashboard-grid"><div><section class="panel"><div class="label">Prossima partita</div><div class="next-match"><div><div class="team-name">${esc(fx.home===USER_ID?state.teamName:opp.name)}</div><div class="subline">${fx.home===USER_ID?'Casa':'Avversario'}</div></div><div class="versus">VS</div><div><div class="team-name">${esc(fx.away===USER_ID?state.teamName:opp.name)}</div><div class="subline">${fx.away===USER_ID?'Trasferta':'Avversario'}</div></div></div><div style="margin-top:14px">${renderEvent()}</div><div style="margin-top:14px"><button id="playRound" class="btn primary" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>Gioca la giornata ${state.matchday+1}</button></div></section><section class="panel"><div class="tabs"><button class="tab active" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="roster">Rosa</button><button class="tab" data-tab="stats">Statistiche</button></div><div id="tab-table" class="tab-view active">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-roster" class="tab-view">${renderSeasonRosterField()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div></section></div><aside><section class="panel"><div class="label">Indisponibili</div><h3>Gestione formazione</h3>${renderAvailability()}<p style="font-size:12px"><b>Squalificato:</b> sostituzione automatica. <b>Infortunato:</b> può giocare con -20 Intesa oppure essere sostituito. Panchinaro fuori ruolo: -10 Intesa.</p></section><section class="panel"><div class="label">Formazione effettiva</div>${renderResolvedLineup()}</section></aside></div>`;
+function showSeason(){prepareEvent();const fx=userFixture(),opp=teamById(fx.home===USER_ID?fx.away:fx.home),standing=userStanding(),rank=sortedTable().findIndex(x=>x.id===USER_ID)+1;screen.innerHTML=`<section class="panel"><div class="season-strip"><div class="stat"><b>${state.matchday+1}</b><span>Giornata</span></div><div class="stat"><b>${rank}°</b><span>Posizione</span></div><div class="stat"><b>${standing.pts}</b><span>Punti</span></div><div class="stat"><b>${standing.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${standing.ga}</b><span>Gol subiti</span></div></div></section><div class="dashboard-grid"><div><section class="panel"><div class="label">Prossima partita</div><div class="next-match"><div><div class="team-name" style="font-size:${teamNameFontSize(fx.home===USER_ID?state.teamName:opp.name)}px" title="${esc(fx.home===USER_ID?state.teamName:opp.name)}">${esc(fx.home===USER_ID?state.teamName:opp.name)}</div><div class="subline">${fx.home===USER_ID?'Casa':'Avversario'}</div></div><div class="versus">VS</div><div><div class="team-name" style="font-size:${teamNameFontSize(fx.away===USER_ID?state.teamName:opp.name)}px" title="${esc(fx.away===USER_ID?state.teamName:opp.name)}">${esc(fx.away===USER_ID?state.teamName:opp.name)}</div><div class="subline">${fx.away===USER_ID?'Trasferta':'Avversario'}</div></div></div><div style="margin-top:14px">${renderEvent()}</div><div style="margin-top:14px"><button id="playRound" class="btn primary" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>Gioca la giornata ${state.matchday+1}</button></div></section><section class="panel"><div class="tabs"><button class="tab active" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="roster">Rosa</button><button class="tab" data-tab="stats">Statistiche</button></div><div id="tab-table" class="tab-view active">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-roster" class="tab-view">${renderSeasonRosterField()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div></section></div><aside><section class="panel"><div class="label">Indisponibili</div><h3>Gestione formazione</h3>${renderAvailability()}<p style="font-size:12px"><b>Squalificato:</b> sostituzione automatica. <b>Infortunato:</b> può giocare con -20 Intesa oppure essere sostituito. Panchinaro fuori ruolo: -10 Intesa.</p></section><section class="panel"><div class="label">Formazione effettiva</div>${renderResolvedLineup()}</section></aside></div>`;
  document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>resolveDecision(Number(b.dataset.choice)));document.querySelectorAll('[data-injured]').forEach(b=>b.onclick=()=>{const id=b.dataset.injured;state.playInjured[id]=!state.playInjured[id];save();render()});document.getElementById('playRound').onclick=playRound;document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-view').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active')})}
 function renderResolvedLineup(){return `<div class="roster-list">${resolveLineup().map(r=>`<div class="roster-row"><span class="slot-code">${esc(r.slot)}</span><div><b>${esc(r.player.name)}</b><small>${r.replaces?`Al posto di ${esc(r.replaces)}`:esc(r.player.Position)} ${r.malus?`· ${r.malus} Intesa`:''}</small></div><span class="chip ovr">${r.player.ovr}</span></div>`).join('')}</div>`}
 function renderTable(){const rows=sortedTable();return `<table><thead><tr><th>Squadra</th><th>PG</th><th>V</th><th>N</th><th>P</th><th>GF</th><th>GS</th><th>DR</th><th>Pt</th></tr></thead><tbody>${rows.map((r,i)=>`<tr class="${r.id===USER_ID?'us-row':''}"><td>${i+1}. ${esc(r.name)}</td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}</td><td>${r.ga}</td><td>${r.gf-r.ga}</td><td>${r.pts}</td></tr>`).join('')}</tbody></table>`}
