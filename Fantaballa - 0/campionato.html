@@ -1419,6 +1419,49 @@
       font-size:13px;
     }
 
+  
+    /* FORMazione effettiva migliorata */
+    .resolved-lineup-list{display:grid;gap:10px}
+    .resolved-player-card{display:grid;grid-template-columns:44px 40px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 10px;border-radius:16px;background:#fff;border:1px solid #ddd1ad;box-shadow:0 3px 10px rgba(0,0,0,.06)}
+    .resolved-player-card.subscriber-card{background:linear-gradient(135deg,#fff8d0 0%,#fff1b0 35%,#f2e5ff 100%);border:2px solid #e0bb4f;box-shadow:0 0 0 3px rgba(136,97,215,.14),0 6px 18px rgba(99,66,176,.15)}
+    .resolved-player-card .slot-code{width:42px;height:42px}
+    .resolved-main{min-width:0}
+    .resolved-name-line{display:flex;align-items:center;gap:6px;min-width:0}
+    .resolved-name-line b{font-size:14px;color:#10243a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .resolved-tag-sub{display:inline-flex;align-items:center;gap:4px;padding:4px 7px;border-radius:999px;background:linear-gradient(180deg,#7b4cb8,#5b3595);color:#fff7c9;font-size:10px;font-weight:1000;letter-spacing:.04em;text-transform:uppercase;flex:0 0 auto}
+    .resolved-meta{display:block;color:#6e5838;font-weight:900;font-size:11px;margin-top:1px}
+    .resolved-effects{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+    .resolved-effect{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:1000;line-height:1}
+    .resolved-effect.plus{background:#dff7e5;color:#15603b;border:1px solid #9ad8aa}
+    .resolved-effect.minus{background:#ffe0dc;color:#8d231d;border:1px solid #eca29b}
+    .resolved-effect.neutral{background:#e6edf4;color:#18324b;border:1px solid #c9d3de}
+    .resolved-ovr-col{display:grid;justify-items:end;gap:4px}
+    .resolved-ovr-col .chip.ovr{margin-left:0;min-width:48px;justify-content:center}
+    .resolved-total{font-size:10px;font-weight:1000;color:#6d5a37}
+
+    /* Midseason contrast */
+    .midseason-shell{display:grid;grid-template-columns:minmax(320px,1fr) minmax(360px,1fr);gap:18px;align-items:start}
+    .midseason-panel{background:linear-gradient(180deg,#fffdf7,#f5edda);border:2px solid #d5bf75;border-radius:22px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+    .midseason-title{font-size:clamp(28px,4vw,42px);line-height:.95;margin:4px 0 8px;color:#10243a}
+    .midseason-copy{color:#5a4a30;font-weight:850;margin-bottom:14px}
+    .midseason-panel h3{margin:0 0 10px;color:#10243a;font-size:22px}
+    .midseason-tip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#10243a;color:#fff3ac;font-size:11px;font-weight:1000;text-transform:uppercase;letter-spacing:.05em}
+    .midseason-count{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}
+    .midseason-count .chip{background:#10243a;color:#fff}
+    .outgoing-list{display:grid;gap:8px}
+    .outgoing{border:2px solid #d4c186;border-radius:16px;background:#ffffff;padding:12px;text-align:left;color:#10243a;box-shadow:0 4px 0 rgba(16,36,58,.06)}
+    .outgoing:hover{border-color:#7b4cb8;transform:translateY(-1px)}
+    .outgoing.active{border-color:#7b4cb8;background:linear-gradient(180deg,#efe7ff,#ffffff);box-shadow:0 0 0 3px rgba(123,76,184,.14)}
+    .outgoing small{display:block;color:#6b593d;font-weight:850;margin-top:3px}
+    .midseason-draw-actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 10px}
+    .midseason-summary-card{padding:14px;border-radius:18px;background:linear-gradient(135deg,#173a58,#214f77);color:#fff;border:2px solid #d9c15d;margin:8px 0 12px}
+    .midseason-summary-card .need{font-size:11px;font-weight:1000;color:#ffeb8d;text-transform:uppercase;letter-spacing:.06em}
+    .midseason-summary-card .nation-name{font-size:30px;font-weight:1000;line-height:1;margin-top:6px}
+    .midseason-choice-note{padding:10px 12px;border-radius:14px;background:#f6f0dc;border:1px solid #d5bf75;color:#4f432e;font-size:13px;font-weight:850;margin-bottom:10px}
+    .midseason-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .btn.secondary-strong{background:#fff;border:2px solid #10243a;color:#10243a}
+    .btn.secondary-strong:hover{transform:translateY(-1px)}
+
   </style>
 </head>
 <body>
@@ -2130,7 +2173,26 @@ function renderOpponentRoster(team){
 }
 function showSeason(){prepareEvent();const fx=userFixture(),opp=teamById(fx.home===USER_ID?fx.away:fx.home),standing=userStanding(),rank=sortedTable().findIndex(x=>x.id===USER_ID)+1;screen.innerHTML=`<section class="panel"><div class="season-strip"><div class="stat"><b>${state.matchday+1}</b><span>Giornata</span></div><div class="stat"><b>${rank}°</b><span>Posizione</span></div><div class="stat"><b>${standing.pts}</b><span>Punti</span></div><div class="stat"><b>${standing.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${standing.ga}</b><span>Gol subiti</span></div></div></section><div class="dashboard-grid"><div><section class="panel"><div class="label">Prossima partita</div><div class="next-match"><div><div class="team-name" style="font-size:${teamNameFontSize(fx.home===USER_ID?state.teamName:opp.name)}px" title="${esc(fx.home===USER_ID?state.teamName:opp.name)}">${esc(fx.home===USER_ID?state.teamName:opp.name)}</div><div class="subline">${fx.home===USER_ID?'Casa':'Avversario'}</div></div><div class="versus">VS</div><div><div class="team-name" style="font-size:${teamNameFontSize(fx.away===USER_ID?state.teamName:opp.name)}px" title="${esc(fx.away===USER_ID?state.teamName:opp.name)}">${esc(fx.away===USER_ID?state.teamName:opp.name)}</div><div class="subline">${fx.away===USER_ID?'Trasferta':'Avversario'}</div></div></div><div style="margin-top:14px">${renderEvent()}</div><div style="margin-top:14px"><button id="playRound" class="btn primary" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>Gioca la giornata ${state.matchday+1}</button></div></section><section class="panel"><div class="tabs"><button class="tab active" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="roster">Rosa</button><button class="tab" data-tab="stats">Statistiche</button></div><div id="tab-table" class="tab-view active">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-roster" class="tab-view">${renderSeasonRosterField()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div></section></div><aside><section class="panel"><div class="label">Indisponibili</div><h3>Gestione formazione</h3>${renderAvailability()}<p style="font-size:12px"><b>Squalificato:</b> sostituzione automatica. <b>Infortunato:</b> può giocare con -20 Intesa oppure essere sostituito. Panchinaro fuori ruolo: -10 Intesa.</p></section><section class="panel"><div class="label">Formazione effettiva</div>${renderResolvedLineup()}</section><section class="panel"><div class="label">Avversario reale</div><h3>${esc(opp.name)}</h3>${seasonRuleSummary()}${renderOpponentRoster(opp)}</section></aside></div>`;
  document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>resolveDecision(Number(b.dataset.choice)));document.querySelectorAll('[data-injured]').forEach(b=>b.onclick=()=>{const id=b.dataset.injured;state.playInjured[id]=!state.playInjured[id];save();render()});document.getElementById('playRound').onclick=playRound;document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-view').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active')})}
-function renderResolvedLineup(){return `<div class="roster-list">${resolveLineup().map(r=>`<div class="roster-row"><span class="slot-code">${esc(r.slot)}</span><div><b>${esc(r.player.name)}</b><small>${r.replaces?`Al posto di ${esc(r.replaces)}`:esc(r.player.Position)} ${r.malus?`· ${r.malus} Intesa`:''}</small></div><span class="chip ovr">${r.player.ovr}</span></div>`).join('')}</div>`}
+function lineupEffects(entry,lineup){
+ const player=entry.player||{};
+ const players=(lineup||resolveLineup()).map(item=>item.player).filter(Boolean);
+ const baseChem=Math.round(chemistryBase(player,players)||0);
+ const active=Math.round(activeEffectBonus(player)||0);
+ const malus=Math.round(Number(entry.malus)||0);
+ const effects=[];
+ if(baseChem)effects.push({label:`Intesa ${formatSignedIntesa(baseChem)}`,value:baseChem,type:baseChem>=0?'plus':'minus'});
+ if(active)effects.push({label:`Evento ${formatSignedIntesa(active)}`,value:active,type:active>=0?'plus':'minus'});
+ if(malus){
+   const desc=malus===-20?'Infortunato':malus===-10?'Fuori ruolo':malus<0?'Malus':'Bonus';
+   effects.push({label:`${desc} ${formatSignedIntesa(malus)}`,value:malus,type:malus>=0?'plus':'minus'});
+ }
+ const total=baseChem+active+malus;
+ return {baseChem,active,malus,total,effects};
+}
+function renderResolvedLineup(){
+ const lineup=resolveLineup();
+ return `<div class="resolved-lineup-list">${lineup.map(entry=>{const player=entry.player||{};const fx=lineupEffects(entry,lineup);const sub=isSubscriber(player);const finalOvr=Math.max(1,Math.round((Number(player.ovr)||0)+fx.total));return `<div class="resolved-player-card ${sub?'subscriber-card':''}"><span class="slot-code">${esc(entry.slot)}</span>${renderMiniAvatar(player,'small')}<div class="resolved-main"><div class="resolved-name-line"><b>${esc(player.name)}</b>${sub?'<span class="resolved-tag-sub">★ ABB</span>':''}</div><span class="resolved-meta">${entry.replaces?`Al posto di ${esc(entry.replaces)}`:`${esc(player.nation)} · ${esc(player.Position)}`}</span>${fx.effects.length?`<div class="resolved-effects">${fx.effects.map(effect=>`<span class="resolved-effect ${effect.type}">${esc(effect.label)}</span>`).join('')}</div>`:'<div class="resolved-effects"><span class="resolved-effect neutral">Nessun bonus o malus</span></div>'}</div><div class="resolved-ovr-col"><span class="chip ovr">${finalOvr}</span><span class="resolved-total">OVR finale</span></div></div>`}).join('')}</div>`
+}
 function renderTable(){const rows=sortedTable();return `<table><thead><tr><th>Squadra</th><th>PG</th><th>V</th><th>N</th><th>P</th><th>GF</th><th>GS</th><th>DR</th><th>Pt</th></tr></thead><tbody>${rows.map((r,i)=>`<tr class="${r.id===USER_ID?'us-row':''}"><td>${i+1}. ${esc(r.name)}</td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}</td><td>${r.ga}</td><td>${r.gf-r.ga}</td><td>${r.pts}</td></tr>`).join('')}</tbody></table>`}
 function renderCalendar(){return `<div class="calendar">${state.schedule.map((rd,i)=>{const fx=rd.find(m=>m.home===USER_ID||m.away===USER_ID),o=teamById(fx.home===USER_ID?fx.away:fx.home),hist=state.history[i];return `<div class="calendar-row ${i===state.matchday?'current':''} ${i<state.matchday?'done':''}"><b>G ${i+1}</b><span>${esc(fx.home===USER_ID?state.teamName:o.name)} – ${esc(fx.away===USER_ID?state.teamName:o.name)}</span><strong>${hist?`${hist.gf}-${hist.ga}`:'-'}</strong></div>`}).join('')}</div>`}
 function renderStats(){const goals=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1]).slice(0,10);const assists=Object.entries(state.stats.assists).sort((a,b)=>b[1]-a[1]).slice(0,10);return `<div class="setup-grid"><div><h3>Marcatori</h3>${goals.length?goals.map(([id,n],i)=>`<p><b>${i+1}. ${esc((playerById(id)||{name:id}).name)}</b> — ${n}</p>`).join(''):'<p>Nessun gol.</p>'}</div><div><h3>Assist</h3>${assists.length?assists.map(([id,n],i)=>`<p><b>${i+1}. ${esc((playerById(id)||{name:id}).name)}</b> — ${n}</p>`).join(''):'<p>Nessun assist.</p>'}</div></div>`}
@@ -2245,6 +2307,19 @@ function showResultModal(){
  modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${result.gf}–${result.ga}</div>${redLine}${suspensionLine}${forcedLine}<div class="goals">${result.goals.length?result.goals.map(goal=>`<div class="goal-line"><b>${goal.minute}' · ${esc(goal.player)}</b>${goal.assist?` · Assist ${esc(goal.assist)}`:''}<br>${esc(goal.description)}</div>`).join(''):'<div class="goal-line">Nessun gol della tua squadra.</div>'}</div></div><button id="closeResult" class="btn primary" style="margin-top:14px">Continua</button></div></div>`;
  document.getElementById('closeResult').onclick=()=>{modalRoot.innerHTML='';render()}
 }
+function isFlexibleMidseason(){return midseasonTarget()===2&&(Number(state.seasonRules?.midseasonPickDelta)||0)===0&&!state.seasonRules.autoMidseason&&!state.seasonRules.botMidseason}
+function finishMidseasonEarly(){
+ state.midseason.outgoingId='';
+ state.midseason.nation='';
+ state.midseason.candidates=[];
+ state.phase='season';
+ state.seasonRules.botMidseason=false;
+ prepareEvent();
+ save();
+ render();
+ toast(state.midseason.step?`Draft concluso con ${state.midseason.step} ${state.midseason.step===1?'cambio':'cambi'}`:'Nessun cambio effettuato');
+}
+
 function runBotMidseason(){
  const ms=state.midseason;
  if(ms.autoCompleted)return;
@@ -2282,6 +2357,7 @@ function continueAfterBotMarket(){
 function showMidseason(){
  const ms=state.midseason;
  ms.target=clamp(Number(ms.target)||midseasonTarget(),1,3);
+ const flexible=isFlexibleMidseason();
  if(ms.auto){
    runBotMidseason();
    screen.innerHTML=`<section class="panel"><div class="label">Giro di boa</div><h2>Draft di metà campionato gestito dal bot</h2><div class="bot-market-card"><h3>La scelta è stata completata automaticamente</h3><p>Il bot ha scelto casualmente sia i giocatori da rimuovere sia i sostituti, rispettando gli slot compatibili.</p>${ms.changes.length?ms.changes.map((change,index)=>`<div class="bot-market-change"><b>${index+1}. ${esc(change.out)} → ${esc(change.incoming)}</b><br><small>Slot ${esc(change.slot)}</small></div>`).join(''):'<p>Nessun cambio disponibile.</p>'}<button id="continueBotMarket" class="btn primary" style="margin-top:14px">Continua il campionato</button></div></section>`;
@@ -2290,7 +2366,7 @@ function showMidseason(){
  }
  const selected=ms.outgoingId?rosterEntry(ms.outgoingId):null;
  const remaining=Math.max(0,ms.target-ms.step);
- screen.innerHTML=`<section class="panel"><div class="label">Giro di boa</div><h2>Draft di metà campionato</h2><p>Cambia esattamente <b>${ms.target}</b> ${ms.target===1?'giocatore':'giocatori'}. Se sostituisci un titolare, il nuovo giocatore deve essere compatibile con il suo slot preciso.</p><div class="mid-grid"><div><h3>1. Scegli chi lascia la rosa</h3><div class="outgoing-list">${rosterPlayers().map(entry=>`<button class="outgoing ${ms.outgoingId===entry.playerId?'active':''}" data-out="${esc(entry.playerId)}"><b>${esc(entry.player.name)}</b><br><small>${esc(entry.slot)} · ${esc(entry.player.Position)}</small></button>`).join('')}</div></div><div><h3>2. Nuovo draft (${ms.step+1}/${ms.target})</h3><p>Cambi ancora disponibili: <b>${remaining}</b></p>${selected?`<p>Uscita: <b>${esc(selected.player.name)}</b> — slot ${esc(selected.slot)}</p><button id="drawMarket" class="btn gold">${ms.nation?'Cambia nazionale':'Estrai nazionale'}</button>${ms.nation?`<div class="nation-card"><div class="need">Nazione estratta</div><div class="nation-name">${esc(ms.nation)}</div></div><div class="candidate-grid">${ms.candidates.map(id=>{const player=playerById(id);return `<button class="candidate" data-market="${id}"><div class="name">${esc(player.name)}</div><div class="meta"><span class="chip">${esc(player.Position)}</span><span class="chip ovr">OVR ${player.ovr}</span></div></button>`}).join('')}</div>`:''}`:'<p>Seleziona un giocatore dalla rosa.</p>'}</div></div></section>`;
+ screen.innerHTML=`<section class="panel"><div class="label">Giro di boa</div><h2 class="midseason-title">Draft di metà campionato</h2><p class="midseason-copy">${flexible?`Puoi scegliere liberamente se fare <b>0, 1 o 2 cambi</b>.`:`In questa stagione devi effettuare <b>${ms.target}</b> ${ms.target===1?'cambio':'cambi'} per effetto degli eventi.`} Se sostituisci un titolare, il nuovo giocatore deve essere compatibile con il suo slot preciso.</p><div class="midseason-shell"><div class="midseason-panel"><div class="midseason-tip">1. scegli chi lascia la rosa</div><div class="midseason-count"><span class="chip">Fatti: ${ms.step}</span><span class="chip">Disponibili: ${remaining}</span>${flexible?'<span class="chip">Scelta libera 0–2</span>':''}</div><div class="outgoing-list">${rosterPlayers().map(entry=>`<button class="outgoing ${ms.outgoingId===entry.playerId?'active':''}" data-out="${esc(entry.playerId)}"><b>${esc(entry.player.name)}</b><small>${esc(entry.slot)} · ${esc(entry.player.Position)}${entry.bench?' · Panchina':''}</small></button>`).join('')}</div></div><div class="midseason-panel"><div class="midseason-tip">2. nuovo draft ${ms.target>1?`(${Math.min(ms.step+1,ms.target)}/${ms.target})`:''}</div><div class="midseason-choice-note">${selected?`Stai sostituendo <b>${esc(selected.player.name)}</b> nello slot <b>${esc(selected.slot)}</b>.`:flexible?'Se vuoi, puoi anche chiudere il draft senza fare cambi oppure fermarti dopo il primo.':'Seleziona un giocatore dalla rosa per iniziare il cambio.'}</div>${selected?`<div class="midseason-draw-actions"><button id="drawMarket" class="btn gold">${ms.nation?'Cambia nazionale':'Estrai nazionale'}</button>${flexible||ms.step>0?'<button id="finishMidseasonNow" class="btn secondary-strong">Chiudi il draft</button>':''}</div>${ms.nation?`<div class="midseason-summary-card"><div class="need">Nazione estratta</div><div class="nation-name">${esc(ms.nation)}</div></div><div class="candidate-grid">${ms.candidates.map(id=>{const player=playerById(id);return `<button class="candidate" data-market="${id}"><div class="name">${esc(player.name)}</div><div class="meta"><span class="chip">${esc(player.Position)}</span><span class="chip ovr">OVR ${player.ovr}</span>${isSubscriber(player)?'<span class="chip sub">ABB</span>':''}</div></button>`}).join('')}</div>`:''}`:`<div class="midseason-actions">${flexible?'<button id="finishMidseasonNow" class="btn secondary-strong">Nessun cambio, continua</button>':''}</div>`}${flexible&&ms.step===1?'<div class="midseason-actions"><button id="finishAfterOne" class="btn primary">Conferma 1 cambio e continua</button></div>':''}</div></div></section>`;
  document.querySelectorAll('[data-out]').forEach(button=>button.onclick=()=>{
    ms.outgoingId=button.dataset.out;
    ms.nation='';
@@ -2300,6 +2376,10 @@ function showMidseason(){
  });
  const draw=document.getElementById('drawMarket');
  if(draw)draw.onclick=drawMarket;
+ const fin=document.getElementById('finishMidseasonNow');
+ if(fin)fin.onclick=finishMidseasonEarly;
+ const finOne=document.getElementById('finishAfterOne');
+ if(finOne)finOne.onclick=finishMidseasonEarly;
  document.querySelectorAll('[data-market]').forEach(button=>button.onclick=()=>completeMarket(button.dataset.market))
 }
 function drawMarket(){
@@ -2327,14 +2407,16 @@ function completeMarket(id){
  ms.outgoingId='';
  ms.nation='';
  ms.candidates=[];
+ const flexible=isFlexibleMidseason();
  if(ms.step>=ms.target){
    state.phase='season';
    state.seasonRules.botMidseason=false;
    prepareEvent();
-   toast('Mercato completato')
+   toast('Mercato completato');
  }
  save();
- render()
+ render();
+ if(flexible&&ms.step<ms.target)toast(`Cambio ${ms.step} completato. Puoi fermarti qui oppure farne un altro.`)
 }
 function showFinished(){const table=sortedTable(),rank=table.findIndex(x=>x.id===USER_ID)+1,s=userStanding(),top=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1])[0],topPlayer=top?playerById(top[0]):null;screen.innerHTML=`<section class="panel"><div class="final-hero"><div class="label" style="color:#ffe96c">Stagione conclusa</div><h2>${rank===1?'Campioni!':'Campionato terminato'}</h2><div class="final-position">${rank}°</div><p>${esc(state.teamName)} chiude la stagione dopo 38 giornate.</p></div><div class="final-grid"><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div></div><section class="panel"><h3>Capocannoniere</h3><p>${topPlayer?`<b>${esc(topPlayer.name)}</b> — ${top[1]} gol`:'Nessun marcatore'}</p><div class="top-actions"><button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultati inviati':'Invia risultati'}</button><button id="exportSeason" class="btn gold">Esporta risultati JSON</button></div></section>${renderTable()}</section>`;document.getElementById('sendSeason').onclick=sendSeason;document.getElementById('exportSeason').onclick=exportSeason}
 async function sendSeason(){const s=userStanding(),top=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1])[0],p=top?playerById(top[0]):null;const payload={squadra:state.teamName,allenatore:state.coachName,modalita:'Campionato del Ca***',vittorie:s.w,pareggi:s.d,sconfitte:s.l,gol_fatti:s.gf,gol_subiti:s.ga,modulo:state.formation,ovr_medio:Math.round(teamPowerBase()*10)/10,capocannoniere:p?`${p.name} (${top[1]})`:''};const fd=new FormData();fd.append('payload',JSON.stringify(payload));try{await fetch(VICTORY_ENDPOINT,{method:'POST',mode:'no-cors',body:fd});state.submitted=true;save();render();toast('Risultati inviati')}catch{toast('Invio non riuscito')}}
