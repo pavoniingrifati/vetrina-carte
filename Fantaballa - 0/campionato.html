@@ -403,16 +403,114 @@
     /* RECUPERO GRAFICHE MEDel: faccine, subscriber, magliette */
     .season-candidate{grid-template-columns:42px 40px minmax(0,1fr) auto; overflow:visible}
     .season-candidate.subscriber{
-      border-color:#f5d66d;
-      box-shadow:0 0 0 2px rgba(140,98,255,.18),0 4px 0 rgba(16,36,58,.11);
-      background:linear-gradient(90deg, rgba(255,238,181,.22), transparent), var(--candidate-bg,#fffdf8);
+      position:relative;
+      isolation:isolate;
+      overflow:hidden;
+      border-color:#ffe477;
+      color:#fffdf2!important;
+      background:
+        radial-gradient(circle at 12% 18%,rgba(255,238,135,.34),transparent 0 22%),
+        radial-gradient(circle at 88% 78%,rgba(255,208,67,.22),transparent 0 28%),
+        repeating-linear-gradient(135deg,rgba(255,255,255,.055) 0 9px,rgba(255,255,255,0) 9px 20px),
+        linear-gradient(115deg,#28134f 0%,#56318b 42%,#7d4bb3 68%,#a66b22 100%)!important;
+      box-shadow:
+        0 0 0 2px rgba(255,226,102,.28),
+        0 0 18px rgba(140,98,255,.28),
+        0 5px 0 rgba(35,18,66,.34)!important;
     }
-    .season-candidate.subscriber:hover,
+    .season-candidate.subscriber::before{
+      content:"";
+      position:absolute;
+      z-index:-1;
+      inset:-40% -55%;
+      background:linear-gradient(100deg,transparent 34%,rgba(255,255,255,.26) 48%,rgba(255,239,159,.34) 52%,transparent 66%);
+      transform:translateX(-58%) rotate(7deg);
+      animation:seasonSubscriberShine 3.6s ease-in-out infinite;
+      pointer-events:none;
+    }
+    .season-candidate.subscriber::after{
+      content:"PREMIUM";
+      position:absolute;
+      right:52px;
+      top:5px;
+      z-index:2;
+      padding:3px 7px;
+      border-radius:999px;
+      background:linear-gradient(180deg,#fff2a8,#efbd2c);
+      color:#4d2c00;
+      border:1px solid rgba(255,255,255,.72);
+      box-shadow:0 2px 8px rgba(0,0,0,.24);
+      font-size:7px;
+      font-weight:1000;
+      letter-spacing:.12em;
+    }
+    .season-candidate.subscriber:hover{
+      filter:brightness(1.12) saturate(1.08);
+      border-color:#fff3af;
+      box-shadow:
+        0 0 0 3px rgba(255,226,102,.34),
+        0 0 27px rgba(166,111,255,.48),
+        0 7px 0 rgba(35,18,66,.38)!important;
+    }
     .season-candidate.subscriber.active{
-      box-shadow:0 0 0 2px rgba(140,98,255,.26),0 6px 0 rgba(16,36,58,.16);
+      border-color:#fff6c8;
+      outline:4px solid rgba(255,218,83,.42);
+      box-shadow:
+        0 0 0 3px rgba(140,98,255,.38),
+        0 0 32px rgba(255,216,75,.48),
+        0 7px 0 rgba(35,18,66,.42)!important;
     }
-    .season-chip.sub{font-weight:1000; border:1px solid rgba(255,232,141,.65)}
-    .season-chip.sub::before{content:'★'; margin-right:4px; color:#f4d56c}
+    .season-candidate.subscriber .season-candidate-name{
+      color:#fffdf4!important;
+      text-shadow:0 2px 4px rgba(22,8,45,.58);
+    }
+    .season-candidate.subscriber .season-candidate-meter{
+      background:rgba(255,255,255,.18);
+      border-color:rgba(255,241,177,.52);
+    }
+    .season-candidate.subscriber .season-candidate-meter i{
+      background:linear-gradient(90deg,#f6cf4a,#fff2a5,#d49aff);
+      box-shadow:0 0 12px rgba(255,226,102,.34);
+    }
+    .season-candidate.subscriber .season-candidate-rank{
+      background:linear-gradient(180deg,#fff2a8,#efbd2c);
+      color:#3e2700;
+      border:1px solid rgba(255,255,255,.72);
+      box-shadow:0 0 12px rgba(255,221,91,.34);
+    }
+    .season-candidate.subscriber .season-chip:not(.ovr){
+      background:rgba(255,255,255,.15)!important;
+      color:#fffdf4!important;
+      border-color:rgba(255,242,182,.34)!important;
+      backdrop-filter:blur(3px);
+    }
+    .season-candidate.subscriber .season-chip.ovr{
+      background:linear-gradient(180deg,#fff0a2,#eebc28)!important;
+      color:#352100!important;
+      border-color:#fff7d0!important;
+      box-shadow:0 0 14px rgba(255,218,73,.38);
+    }
+    .season-candidate.subscriber .season-chip.sub{
+      background:linear-gradient(180deg,#8f62d4,#6840a8)!important;
+      color:#fff7cd!important;
+      border:1px solid #ffe78d!important;
+      box-shadow:0 0 12px rgba(151,96,230,.36);
+      font-weight:1000;
+    }
+    .season-candidate.subscriber .season-chip.sub::before{
+      content:'★';
+      margin-right:4px;
+      color:#ffe477;
+      filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));
+    }
+    @keyframes seasonSubscriberShine{
+      0%,58%{transform:translateX(-58%) rotate(7deg);opacity:0}
+      68%{opacity:1}
+      85%,100%{transform:translateX(58%) rotate(7deg);opacity:0}
+    }
+    @media(prefers-reduced-motion:reduce){
+      .season-candidate.subscriber::before{animation:none;opacity:.18;transform:none}
+    }
     .season-mini-avatar{
       position:relative; width:38px; height:38px; display:block; border-radius:11px;
       background:linear-gradient(180deg,#162648 0%, #0d1730 100%);
@@ -446,7 +544,16 @@
     .season-mini-avatar.small .av-body{width:16px;height:10px}
     .season-mini-avatar .av-body::before,.season-mini-avatar .av-body::after{content:"";position:absolute;top:1px;width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.72);opacity:.72}
     .season-mini-avatar .av-body::before{left:2px}.season-mini-avatar .av-body::after{right:2px}
-    .season-mini-avatar.subscriber{border-color:rgba(255,223,97,.94);box-shadow:0 0 0 2px rgba(140,98,255,.24), inset 0 1px 0 rgba(255,255,255,.08), 0 3px 8px rgba(0,0,0,.18);background:linear-gradient(180deg,#2b1958 0%, #121b3d 100%)}
+    .season-mini-avatar.subscriber{
+      border-color:#ffe477;
+      box-shadow:
+        0 0 0 2px rgba(255,242,177,.52),
+        0 0 0 5px rgba(140,98,255,.26),
+        0 0 16px rgba(255,217,73,.34),
+        inset 0 1px 0 rgba(255,255,255,.12),
+        0 3px 8px rgba(0,0,0,.22);
+      background:linear-gradient(180deg,#3e2371 0%,#17113d 100%);
+    }
     .season-mini-avatar .av-subscriber-badge{position:absolute;top:1px;right:1px;width:13px;height:13px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#ffe78d,#f3be31);color:#5b3c00;font-size:9px;font-weight:900;box-shadow:0 1px 3px rgba(0,0,0,.22);z-index:5}
 
     .season-jersey-wrap{position:relative;width:56px;height:54px;margin:0 auto;display:grid;place-items:center;overflow:visible;z-index:2}
