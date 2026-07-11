@@ -1600,6 +1600,46 @@
       .season-candidate-rank.roles-triple{font-size:7.4px}
     }
 
+  
+    /* LISTA GIOCATORI DRAFT: numeri, info grandi e massimo 10 righe visibili */
+    .season-candidate-list{
+      max-height:720px!important;
+      overflow-y:auto!important;
+      overflow-x:hidden!important;
+      padding-right:7px!important;
+      scrollbar-gutter:stable;
+      overscroll-behavior:contain;
+      scrollbar-width:thin;
+      scrollbar-color:#e4c84e rgba(255,255,255,.13);
+    }
+    .season-candidate-list::-webkit-scrollbar{width:10px}
+    .season-candidate-list::-webkit-scrollbar-track{background:rgba(255,255,255,.1);border-radius:999px}
+    .season-candidate-list::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#ffe96c,#d8b52d);border:2px solid #173f66;border-radius:999px}
+    .season-candidate{min-height:64px}
+    .season-candidate-rank{
+      width:30px!important;
+      min-width:30px!important;
+      height:30px!important;
+      padding:0!important;
+      font-size:10px!important;
+      border-radius:999px!important;
+    }
+    .season-candidate-meta{gap:6px!important;margin-top:5px!important;align-items:center}
+    .season-candidate .season-chip.position,
+    .season-candidate .season-chip.chemistry{
+      padding:5px 8px!important;
+      font-size:10px!important;
+      line-height:1!important;
+      min-height:23px;
+      align-items:center;
+    }
+    .season-candidate .season-chip.sub{padding:5px 8px!important;font-size:9px!important;min-height:23px;align-items:center}
+    @media(max-width:680px){
+      .season-candidate-list{max-height:720px!important}
+      .season-candidate .season-chip.position,
+      .season-candidate .season-chip.chemistry{font-size:9.5px!important;padding:5px 7px!important}
+    }
+
   </style>
 </head>
 <body>
@@ -1967,13 +2007,12 @@ function draftCandidateOvrStyle(ovr){
  return `--candidate-bg:hsl(207 ${saturation}% ${lightness}%);--candidate-border:hsl(207 ${Math.min(82,saturation+8)}% ${borderLightness}%);--candidate-text:${text};--candidate-chip-bg:${chipBg};--candidate-chip-text:${chipText};--candidate-position-bg:${positionBg};--candidate-position-text:${positionText};--candidate-sub-bg:${subBg};--candidate-sub-text:${subText};--candidate-avatar-bg:${avatarBg};--candidate-avatar-text:#fff;--candidate-ovr-bg:${ovrBg};--candidate-ovr-text:${ovrText};--candidate-ovr-border:${dark?'rgba(16,36,58,.2)':'rgba(255,255,255,.28)'};--candidate-shadow:${dark?'0 1px 2px rgba(0,0,0,.26)':'none'}`;
 }
 
-function draftCandidateRoleBadge(position){const roles=String(position||'').split(',').map(s=>s.trim()).filter(Boolean);const txt=(roles.slice(0,2).join('/')||'?').toUpperCase();const cls=roles.length>=3?'roles-triple':roles.length===2?'roles-double':'roles-single';return `<span class="season-candidate-rank ${cls}">${esc(txt)}</span>`}
 function renderDraftCandidates(){
  if(draftRolling)return '<div class="season-empty">Apertura del pacchetto nazionale…</div>';
  if(!state.draft.nation)return '<div class="season-empty">Premi <b>Apri pack nazionale</b>. Verranno mostrati tutti i giocatori compatibili. Più l’OVR è alto, più il box diventa scuro.</div>';
  const candidates=state.draft.candidates.map(playerById).filter(Boolean);
  if(!candidates.length)return '<div class="season-empty">Nessun giocatore valido in questa nazione. Usa il re-roll.</div>';
- return candidates.map((p,index)=>{const ovr=Math.max(0,Math.min(100,Number(p.ovr)||0));const sub=isSubscriber(p);const chemPreview=draftCandidateChemPreview(p);return `<button type="button" class="season-candidate ${sub?'subscriber':''} ${state.draft.pendingPlayerId===String(p.id)?'active':''}" data-candidate="${esc(p.id)}" style="${draftCandidateOvrStyle(p.ovr)}" aria-label="${esc(p.name)}, overall ${esc(p.ovr)}, intesa ${chemPreview}">${draftCandidateRoleBadge(p.Position)}${renderMiniAvatar(p)}<span class="season-candidate-body"><span class="season-candidate-name">${esc(p.name)}</span><span class="season-candidate-meter" aria-hidden="true"><i style="width:${ovr}%"></i></span><span class="season-candidate-meta"><span class="season-chip position">${esc(p.Position)}</span><span class="season-chip">${esc(p.nation)}</span>${sub?'<span class="season-chip sub">ABBONATO</span>':''}<span class="season-chip chemistry ${benchDraftPhase()?'bench':''}">${benchDraftPhase()?'PAN':`${formatSignedIntesa(chemPreview)} INT`}</span></span></span><span class="season-chip ovr">${esc(p.ovr)}</span></button>`}).join('')
+ return candidates.map((p,index)=>{const ovr=Math.max(0,Math.min(100,Number(p.ovr)||0));const sub=isSubscriber(p);const chemPreview=draftCandidateChemPreview(p);return `<button type="button" class="season-candidate ${sub?'subscriber':''} ${state.draft.pendingPlayerId===String(p.id)?'active':''}" data-candidate="${esc(p.id)}" style="${draftCandidateOvrStyle(p.ovr)}" aria-label="${esc(p.name)}, overall ${esc(p.ovr)}, intesa ${chemPreview}"><span class="season-candidate-rank">#${index+1}</span>${renderMiniAvatar(p)}<span class="season-candidate-body"><span class="season-candidate-name">${esc(p.name)}</span><span class="season-candidate-meter" aria-hidden="true"><i style="width:${ovr}%"></i></span><span class="season-candidate-meta"><span class="season-chip position">${esc(p.Position)}</span>${sub?'<span class="season-chip sub">ABBONATO</span>':''}<span class="season-chip chemistry ${benchDraftPhase()?'bench':''}">${benchDraftPhase()?'PAN':`${formatSignedIntesa(chemPreview)} INT`}</span></span></span><span class="season-chip ovr">${esc(p.ovr)}</span></button>`}).join('')
 }
 function renderRosterMini(){
  const rows=rosterPlayers();
