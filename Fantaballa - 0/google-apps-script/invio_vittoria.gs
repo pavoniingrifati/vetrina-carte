@@ -33,7 +33,8 @@ const HEADERS = [
   'modulo',
   'ovr_medio',
   'capocannoniere',
-  'capocannoniere_giocatore'
+  'capocannoniere_giocatore',
+  'capocannoniere_campionato'
 ];
 
 function getSheet_() {
@@ -95,7 +96,8 @@ function normalizePayload_(payload) {
     modulo: String(firstValue_(payload, ['modulo', 'formation'], '')).trim(),
     ovr_medio: safeNumber_(firstValue_(payload, ['ovr_medio', 'avgOvr', 'averageOvr'], ''), ''),
     capocannoniere: String(firstValue_(payload, ['capocannoniere', 'capocannoniereSquadra', 'topScorer', 'migliorMarcatore'], '')).trim(),
-    capocannoniere_giocatore: String(firstValue_(payload, ['capocannoniere_giocatore', 'capocannoniereGiocatore', 'userTopScorer', 'playerOwnedTopScorer'], '')).trim()
+    capocannoniere_giocatore: String(firstValue_(payload, ['capocannoniere_giocatore', 'capocannoniereGiocatore', 'userTopScorer', 'playerOwnedTopScorer', 'capocannoniere'], '')).trim(),
+    capocannoniere_campionato: String(firstValue_(payload, ['capocannoniere_campionato', 'capocannoniereCampionato', 'leagueTopScorer'], '')).trim()
   };
 }
 
@@ -187,7 +189,8 @@ function doGet(e) {
         modulo: item.modulo || '',
         ovr_medio: item.ovr_medio || '',
         capocannoniere: item.capocannoniere || '',
-        capocannoniere_giocatore: item.capocannoniere_giocatore || ''
+        capocannoniere_giocatore: item.capocannoniere_giocatore || item.capocannoniere || '',
+        capocannoniere_campionato: item.capocannoniere_campionato || ''
       };
     });
 

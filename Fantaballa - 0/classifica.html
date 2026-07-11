@@ -603,7 +603,7 @@
         const isCampionato = modeKindOf(row) === 'campionato';
         if (isCampionato && finalPositionOf(row) !== 1) return [];
         const source = isCampionato
-          ? valueOf(row, ['capocannoniere_giocatore','capocannoniereGiocatore','userTopScorer','playerOwnedTopScorer'], '')
+          ? valueOf(row, ['capocannoniere_giocatore','capocannoniereGiocatore','userTopScorer','playerOwnedTopScorer','capocannoniere','capocannoniereSquadra','topScorer','migliorMarcatore'], '')
           : scorerTextOf(row);
         const parsed = parseScorerString(source);
         if (parsed && parsed.name && parsed.goals > 0) {
@@ -627,7 +627,9 @@
           goalsAgainst:numberOf(row, ['gol_subiti','golSubiti','goalsAgainst','ga'], 0),
           module:moduleOf(row),
           ovr:ovrOf(row),
-          scorer:scorerTextOf(row),
+          scorer:modeKindOf(row)==='campionato'
+            ? String(valueOf(row, ['capocannoniere_giocatore','capocannoniereGiocatore','userTopScorer','playerOwnedTopScorer','capocannoniere','capocannoniereSquadra','topScorer','migliorMarcatore'], '—'))
+            : scorerTextOf(row),
           coach:coachOf(row),
           modeKind:modeKindOf(row),
           modeLabel:modeLabelOf(row)
