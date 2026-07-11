@@ -32,7 +32,8 @@ const HEADERS = [
   'gol_subiti',
   'modulo',
   'ovr_medio',
-  'capocannoniere'
+  'capocannoniere',
+  'capocannoniere_giocatore'
 ];
 
 function getSheet_() {
@@ -93,7 +94,8 @@ function normalizePayload_(payload) {
     gol_subiti: safeNumber_(firstValue_(payload, ['gol_subiti', 'golSubiti', 'goalsAgainst', 'ga'], 0), 0),
     modulo: String(firstValue_(payload, ['modulo', 'formation'], '')).trim(),
     ovr_medio: safeNumber_(firstValue_(payload, ['ovr_medio', 'avgOvr', 'averageOvr'], ''), ''),
-    capocannoniere: String(firstValue_(payload, ['capocannoniere', 'capocannoniereSquadra', 'topScorer', 'migliorMarcatore'], '')).trim()
+    capocannoniere: String(firstValue_(payload, ['capocannoniere', 'capocannoniereSquadra', 'topScorer', 'migliorMarcatore'], '')).trim(),
+    capocannoniere_giocatore: String(firstValue_(payload, ['capocannoniere_giocatore', 'capocannoniereGiocatore', 'userTopScorer', 'playerOwnedTopScorer'], '')).trim()
   };
 }
 
@@ -180,7 +182,8 @@ function doGet(e) {
         gol_subiti: Number(item.gol_subiti || 0),
         modulo: item.modulo || '',
         ovr_medio: item.ovr_medio || '',
-        capocannoniere: item.capocannoniere || ''
+        capocannoniere: item.capocannoniere || '',
+        capocannoniere_giocatore: item.capocannoniere_giocatore || ''
       };
     });
 

@@ -477,7 +477,7 @@
           <div class="board-title-wrap">
             <div class="label">Classifica</div>
             <h2>Capocannonieri</h2>
-            <p class="sub">Somma i gol dei capocannonieri delle run World Cup: Classica, Gary MEDel e HARDa Turan.</p>
+            <p class="sub">Somma i gol dei capocannonieri delle run World Cup e aggiunge il Campionato solo quando il capocannoniere appartiene alla squadra del giocatore.</p>
           </div>
         </div>
         <div class="table-wrap">
@@ -598,11 +598,14 @@
       }
 
       function scorerEntriesFromRow(row) {
-        // La classifica Capocannonieri usa solo il capocannoniere della run,
-        // non la lista completa dei marcatori della squadra.
-        const fallback = parseScorerString(scorerTextOf(row));
-        if (fallback && fallback.name && fallback.goals > 0) {
-          return [{ playerName:fallback.name, goals:fallback.goals }];
+        // Per il Campionato entra nella classifica generale soltanto un
+        // capocannoniere appartenente alla squadra controllata dal giocatore.
+        const source = modeKindOf(row) === 'campionato'
+          ? valueOf(row, ['capocannoniere_giocatore','capocannoniereGiocatore','userTopScorer','playerOwnedTopScorer'], '')
+          : scorerTextOf(row);
+        const parsed = parseScorerString(source);
+        if (parsed && parsed.name && parsed.goals > 0) {
+          return [{ playerName:parsed.name, goals:parsed.goals }];
         }
         return [];
       }
@@ -864,7 +867,7 @@
         renderModeTable(garyBody, garyRows, 'In attesa del primo campione Gary MEDel', 'gary');
         renderModeTable(hardBody, hardRows, 'In attesa del primo campione HARDa Turan', 'hard');
         renderChampionshipTable(campionatoRows);
-        renderScorers(rows.filter(row => modeKindOf(row) !== 'campionato'));
+        renderScorers(rows);
         updateSortButtons();
         if (updated) updated.textContent = data && data.aggiornato_il ? `Aggiornata: ${data.aggiornato_il}` : 'Classifiche aggiornate';
       }
