@@ -583,7 +583,7 @@
       text-shadow:0 1px 0 rgba(255,255,255,.45);
     }
     .season-jersey::after{content:"";position:absolute;left:50%;top:2px;transform:translateX(-50%);width:16px;height:10px;border-radius:0 0 8px 8px;background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.08) inset}
-    .season-jersey-number{position:relative;z-index:1}
+    .season-jersey-number{position:relative;z-index:1;color:#111;font-weight:1000;letter-spacing:-.02em}
     .season-jersey-wrap.subscriber .season-jersey{border-color:#fff8d2; box-shadow:0 0 0 5px rgba(140,98,255,.32), 0 0 0 10px rgba(255,225,116,.2), 0 8px 16px rgba(0,0,0,.18)}
     .season-jersey-sub-star{position:absolute;right:-8px;top:-8px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#8c62ff,#6840d6);color:#fff8d2;font-size:11px;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,.24);z-index:6}
 
@@ -697,7 +697,7 @@
     .season-field-slot.filled:nth-child(even) .season-jersey{transform:rotate(1.5deg)}
     .season-field-slot.filled:hover .season-jersey{transform:translateY(-3px) rotate(0);filter:saturate(1.08)}
     .season-jersey::after{width:18px;height:10px;top:2px}
-    .season-jersey-number{transform:translateY(3px);font-size:16px;text-shadow:0 2px 0 rgba(255,255,255,.32),0 3px 7px rgba(0,0,0,.22)}
+    .season-jersey-number{transform:translateY(3px);font-size:16px;color:#111;font-weight:1000;text-shadow:0 1px 0 rgba(255,255,255,.35),0 2px 4px rgba(0,0,0,.14)}
     .season-field-slot.filled .season-slot-name{
       max-width:128px;
       padding:3px 7px;
@@ -1420,20 +1420,42 @@
       box-shadow:0 0 14px rgba(123,76,184,.25);
     }
     .opponent-roster-row.is-mascot small{color:#fff1b6}
+    .bot-market-view .label{color:#b8621f!important}
+    .bot-market-view .midseason-title{color:#10243a!important;margin-bottom:8px}
     .bot-market-card{
-      padding:16px;
-      border-radius:18px;
-      background:linear-gradient(180deg,#efe4ff,#dac6fb);
+      padding:18px;
+      border-radius:22px;
+      background:linear-gradient(180deg,#fff7e7 0%,#f3e6ff 100%);
       border:2px solid #8d65c4;
+      box-shadow:0 10px 24px rgba(57,31,99,.10);
+      color:#10243a;
+    }
+    .bot-market-card h3{
+      margin:0 0 10px;
+      color:#5d3796;
+      font-size:30px;
+      line-height:1;
+      font-weight:1000;
+    }
+    .bot-market-card p{
+      margin:0 0 12px;
+      color:#4d4c58;
+      font-size:18px;
+      font-weight:850;
+      line-height:1.45;
     }
     .bot-market-change{
-      margin-top:8px;
-      padding:10px 11px;
-      border-radius:13px;
-      background:#fff;
+      margin-top:10px;
+      padding:13px 14px;
+      border-radius:15px;
+      background:#fffdf8;
       border:1px solid #b79bd9;
-      font-size:13px;
+      color:#10243a;
+      font-size:15px;
+      box-shadow:0 3px 10px rgba(0,0,0,.05);
     }
+    .bot-market-change b{color:#10243a;font-size:18px;font-weight:1000}
+    .bot-market-change small{display:block;margin-top:4px;color:#6c5a84;font-size:13px;font-weight:900}
 
   
     /* FORMazione effettiva migliorata */
@@ -2214,7 +2236,8 @@ function renderSeasonRosterField(){
  const chemistry=draftChemistry(starters);
  const assigned=new Map(starters.map(r=>[String(r.slotId),r]));
  const slots=formationSlots();
- return `<div class="season-roster-board"><div class="season-roster-board-head"><div><div class="label">Rosa titolare</div><h3>Modulo ${esc(state.formation)}</h3></div><div class="season-roster-board-meta"><span class="season-board-pill">Intesa ${chemistry.score}/100</span><span class="season-board-pill">${starters.length}/11 titolari</span><span class="season-board-pill">${bench.length}/3 riserve</span></div></div><div class="season-roster-pitch"><svg class="season-pitch-svg" viewBox="0 0 100 120" preserveAspectRatio="none" aria-hidden="true"><rect x="1" y="1" width="98" height="118" fill="none" stroke="rgba(255,255,255,.8)" stroke-width=".8"/><rect x="21" y="1" width="58" height="18" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".6"/><rect x="34" y="1" width="32" height="8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><rect x="21" y="101" width="58" height="18" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".6"/><rect x="34" y="111" width="32" height="8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><line x1="1" y1="60" x2="99" y2="60" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><circle cx="50" cy="60" r="12" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/></svg>${slots.map(slot=>{const entry=assigned.get(String(slot.instanceId));if(!entry)return `<div class="season-roster-field-slot empty" style="left:${slot.x}%;top:${slot.y}%"><span class="season-slot-badge">${esc(slot.code)}</span><span class="season-slot-name">${esc(slot.code)}</span></div>`;const sub=isSubscriber(entry.player);const chemBonus=chemistry.playerBonus[String(entry.player.id)]||0;return `<div class="season-roster-field-slot filled ${sub?'subscriber-player':''}" style="left:${slot.x}%;top:${slot.y}%">${renderPlayerJersey(entry.player,'',chemBonus)}<span class="season-slot-name">${sub?'<span class="season-field-sub-star">★</span>':''}${esc(entry.player.name)}</span><span class="season-slot-role">${esc(slot.code)}</span><span class="season-slot-chem ${chemBonus>0?'positive':''}">${formatSignedIntesa(chemBonus)} INT</span></div>`}).join('')}</div><div class="season-roster-bench-wrap"><div class="season-roster-bench-title">Panchina</div><div class="season-roster-bench-grid">${[1,2,3].map(i=>{const entry=bench.find(r=>String(r.slotId)===`bench-${i}`);const sub=entry&&isSubscriber(entry.player);return `<div class="season-roster-bench-card ${entry?'filled':''} ${sub?'subscriber':''}">${entry?`${renderMiniAvatar(entry.player,'small')}<div class="season-roster-bench-copy"><b>${sub?'<span class="season-inline-sub-star">★</span>':''}${esc(entry.player.name)}</b><small>${esc(entry.player.nation)} · ${esc(entry.player.Position)}</small></div><span class="season-roster-ovr">${esc(entry.player.ovr)}</span>`:`<b>Riserva ${i}</b><small>Slot panchina vuoto</small>`}</div>`}).join('')}</div></div></div>`
+ const avgOverall=starters.length?(starters.reduce((sum,entry)=>sum+midseasonDisplayedOvr(entry.player,entry),0)/starters.length).toFixed(1):'—';
+ return `<div class="season-roster-board"><div class="season-roster-board-head"><div><div class="label">Rosa titolare</div><h3>Modulo ${esc(state.formation)}</h3></div><div class="season-roster-board-meta"><span class="season-board-pill">OVR medio ${avgOverall}</span><span class="season-board-pill">Intesa ${chemistry.score}/100</span><span class="season-board-pill">${starters.length}/11 titolari</span><span class="season-board-pill">${bench.length}/3 riserve</span></div></div><div class="season-roster-pitch"><svg class="season-pitch-svg" viewBox="0 0 100 120" preserveAspectRatio="none" aria-hidden="true"><rect x="1" y="1" width="98" height="118" fill="none" stroke="rgba(255,255,255,.8)" stroke-width=".8"/><rect x="21" y="1" width="58" height="18" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".6"/><rect x="34" y="1" width="32" height="8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><rect x="21" y="101" width="58" height="18" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".6"/><rect x="34" y="111" width="32" height="8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><line x1="1" y1="60" x2="99" y2="60" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><circle cx="50" cy="60" r="12" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/></svg>${slots.map(slot=>{const entry=assigned.get(String(slot.instanceId));if(!entry)return `<div class="season-roster-field-slot empty" style="left:${slot.x}%;top:${slot.y}%"><span class="season-slot-badge">${esc(slot.code)}</span><span class="season-slot-name">${esc(slot.code)}</span></div>`;const sub=isSubscriber(entry.player);const chemBonus=chemistry.playerBonus[String(entry.player.id)]||0;return `<div class="season-roster-field-slot filled ${sub?'subscriber-player':''}" style="left:${slot.x}%;top:${slot.y}%">${renderPlayerJersey(entry.player,'',chemBonus)}<span class="season-slot-name">${sub?'<span class="season-field-sub-star">★</span>':''}${esc(entry.player.name)}</span><span class="season-slot-role">${esc(slot.code)}</span><span class="season-slot-chem ${chemBonus>0?'positive':''}">${formatSignedIntesa(chemBonus)} INT</span></div>`}).join('')}</div><div class="season-roster-bench-wrap"><div class="season-roster-bench-title">Panchina</div><div class="season-roster-bench-grid">${[1,2,3].map(i=>{const entry=bench.find(r=>String(r.slotId)===`bench-${i}`);const sub=entry&&isSubscriber(entry.player);return `<div class="season-roster-bench-card ${entry?'filled':''} ${sub?'subscriber':''}">${entry?`${renderMiniAvatar(entry.player,'small')}<div class="season-roster-bench-copy"><b>${sub?'<span class="season-inline-sub-star">★</span>':''}${esc(entry.player.name)}</b><small>${esc(entry.player.nation)} · ${esc(entry.player.Position)}</small></div><span class="season-roster-ovr">${esc(entry.player.ovr)}</span>`:`<b>Riserva ${i}</b><small>Slot panchina vuoto</small>`}</div>`}).join('')}</div></div></div>`
 }
 
 function setMobileDraftTab(tab,scrollToTabs=true){
@@ -3048,7 +3071,7 @@ function showMidseason(){
  const flexible=isFlexibleMidseason();
  if(ms.auto){
    runBotMidseason();
-   screen.innerHTML=`<section class="panel"><div class="label">Giro di boa</div><h2>Draft di metà campionato gestito dal bot</h2><div class="bot-market-card"><h3>La scelta è stata completata automaticamente</h3><p>Il bot ha scelto casualmente sia i giocatori da rimuovere sia i sostituti, rispettando gli slot compatibili.</p>${ms.changes.length?ms.changes.map((change,index)=>`<div class="bot-market-change"><b>${index+1}. ${esc(change.out)} → ${esc(change.incoming)}</b><br><small>Slot ${esc(change.slot)}</small></div>`).join(''):'<p>Nessun cambio disponibile.</p>'}<button id="continueBotMarket" class="btn primary" style="margin-top:14px">Continua il campionato</button></div></section>`;
+   screen.innerHTML=`<section class="panel bot-market-view"><div class="label">Giro di boa</div><h2 class="midseason-title">Draft di metà campionato gestito dal bot</h2><div class="bot-market-card"><h3>La scelta è stata completata automaticamente</h3><p>Il bot ha scelto casualmente sia i giocatori da rimuovere sia i sostituti, rispettando gli slot compatibili.</p>${ms.changes.length?ms.changes.map((change,index)=>`<div class="bot-market-change"><b>${index+1}. ${esc(change.out)} → ${esc(change.incoming)}</b><small>Slot ${esc(change.slot)}</small></div>`).join(''):'<p>Nessun cambio disponibile.</p>'}<button id="continueBotMarket" class="btn primary" style="margin-top:14px">Continua il campionato</button></div></section>`;
    document.getElementById('continueBotMarket').onclick=continueAfterBotMarket;
    return;
  }
