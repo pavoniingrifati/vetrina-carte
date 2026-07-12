@@ -3998,7 +3998,7 @@ function commentaryRowHtml(event,homeTeam,awayTeam){
  return `<article class="match-commentary-row ${neutral?'neutral-event':''} ${eventClass}" style="${team?teamCssVars(team):''}"><span class="commentary-minute">${esc(event.minute)}'</span><span class="commentary-icon">${event.icon||'•'}</span><div class="commentary-copy"><b>${esc(event.title||'Azione')}</b><span>${esc(event.text||'')}</span></div>${event.scoreAfter?`<strong class="commentary-score">${esc(event.scoreAfter)}</strong>`:''}</article>`;
 }
 function playLiveMatch({commentary,homeTeam,awayTeam,homeGoals,awayGoals,matchday},finishRound){
- let index=0,timer=null,closed=false,paused=false,homeScore=0,awayScore=0;
+ let index=0,timer=null,closed=false,paused=false,homeScore=0,awayScore=0,currentMinute=0;
  modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal live-match-modal" role="dialog" aria-modal="true"><header class="live-match-head"><div class="live-match-headline"><div><div class="label">Giornata ${matchday}</div><b>Cronaca della partita</b></div><span class="live-status">Live</span></div></header><div class="live-scoreboard"><div class="live-team" style="${teamCssVars(homeTeam)}"><span class="live-team-colors"></span><b title="${esc(homeTeam.name)}">${esc(homeTeam.name)}</b></div><div class="live-score"><span id="liveHomeScore">0</span><em>–</em><span id="liveAwayScore">0</span></div><div class="live-team" style="${teamCssVars(awayTeam)}"><span class="live-team-colors"></span><b title="${esc(awayTeam.name)}">${esc(awayTeam.name)}</b></div></div><div class="live-clock-wrap"><span id="liveClock" class="live-clock">0'</span><div class="live-progress"><i id="liveProgress"></i></div></div><div id="liveCommentary" class="live-commentary"><div class="live-empty">La partita sta per iniziare…</div></div><footer class="live-match-controls"><button id="pauseLiveMatch" class="btn secondary-strong" type="button">⏸ Pausa</button><button id="skipLiveMatch" class="btn match-instant-button" type="button">⚡ Simula il resto</button></footer></section></div>`;
  const commentaryBox=document.getElementById('liveCommentary');
  const clock=document.getElementById('liveClock');
@@ -4006,10 +4006,15 @@ function playLiveMatch({commentary,homeTeam,awayTeam,homeGoals,awayGoals,matchda
  const homeScoreNode=document.getElementById('liveHomeScore');
  const awayScoreNode=document.getElementById('liveAwayScore');
  const pauseButton=document.getElementById('pauseLiveMatch');
- const scheduleNext=delay=>{
+ const schedule=(callback,delay)=>{
    if(closed||paused)return;
    if(timer)clearTimeout(timer);
-   timer=setTimeout(showNext,delay);
+   timer=setTimeout(callback,delay);
+ };
+ const updateClock=minute=>{
+   currentMinute=clamp(Math.floor(Number(minute)||0),0,90);
+   clock.textContent=`${currentMinute}'`;
+   progress.style.width=`${currentMinute/90*100}%`;
  };
  const complete=()=>{
    if(closed)return;
@@ -4017,8 +4022,7 @@ function playLiveMatch({commentary,homeTeam,awayTeam,homeGoals,awayGoals,matchda
    if(timer)clearTimeout(timer);
    homeScoreNode.textContent=String(homeGoals);
    awayScoreNode.textContent=String(awayGoals);
-   clock.textContent="90'";
-   progress.style.width='100%';
+   updateClock(90);
    pauseButton.disabled=true;
    setTimeout(finishRound,1500);
  };
@@ -4029,21 +4033,38 @@ function playLiveMatch({commentary,homeTeam,awayTeam,homeGoals,awayGoals,matchda
    if(event.type==='halftime'||event.type==='fulltime')return 3000;
    return 2500;
  };
- function showNext(){
-   if(closed||paused)return;
-   const event=commentary[index++];
-   if(!event){complete();return;}
+ const clockTickDelay=()=>150;
+ const showEvent=event=>{
    if(index===1)commentaryBox.innerHTML='';
    if(event.type==='goal'){
      if(String(event.teamId)===String(homeTeam.id))homeScore++;
      else if(String(event.teamId)===String(awayTeam.id))awayScore++;
-     homeScoreNode.textContent=String(homeScore);awayScoreNode.textContent=String(awayScore);
+     homeScoreNode.textContent=String(homeScore);
+     awayScoreNode.textContent=String(awayScore);
    }
-   clock.textContent=`${event.minute}'`;
-   progress.style.width=`${clamp(Number(event.minute)||0,0,90)/90*100}%`;
+   updateClock(event.minute);
    commentaryBox.insertAdjacentHTML('beforeend',commentaryRowHtml(event,homeTeam,awayTeam));
    commentaryBox.scrollTop=commentaryBox.scrollHeight;
-   scheduleNext(eventReadingDelay(event));
+   schedule(advanceClock,eventReadingDelay(event));
+ };
+ function advanceClock(){
+   if(closed||paused)return;
+   const event=commentary[index];
+   if(!event){
+     if(currentMinute<90){
+       updateClock(currentMinute+1);
+       schedule(advanceClock,clockTickDelay());
+     }else complete();
+     return;
+   }
+   const eventMinute=clamp(Math.floor(Number(event.minute)||currentMinute),0,90);
+   if(currentMinute<eventMinute){
+     updateClock(currentMinute+1);
+     schedule(advanceClock,clockTickDelay());
+     return;
+   }
+   index++;
+   showEvent(event);
  }
  pauseButton.onclick=()=>{
    paused=!paused;
@@ -4052,11 +4073,11 @@ function playLiveMatch({commentary,homeTeam,awayTeam,homeGoals,awayGoals,matchda
      pauseButton.textContent='▶ Riprendi';
    }else{
      pauseButton.textContent='⏸ Pausa';
-     scheduleNext(700);
+     schedule(advanceClock,500);
    }
  };
  document.getElementById('skipLiveMatch').onclick=complete;
- scheduleNext(1400);
+ schedule(advanceClock,900);
 }
 function playRound(mode='instant'){
  if(state.pendingEvent&&!state.pendingEvent.resolved)return;
