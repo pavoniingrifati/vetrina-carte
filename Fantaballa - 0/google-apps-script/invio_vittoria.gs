@@ -12,6 +12,7 @@
   - Gary MEDel
   - HARDa Turan
   - Campionato del Ca***: vengono accettate soltanto le stagioni vinte
+  - Fantacampionato del Ca***: modalità REAL separata, accettata soltanto se vinta
 */
 
 const SHEET_NAME = 'Classifica';
@@ -22,6 +23,7 @@ const HEADERS = [
   'squadra',
   'allenatore',
   'modalita',
+  'modalita_tipo',
   'posizione_finale',
   'punti',
   'giornate',
@@ -74,17 +76,65 @@ function firstValue_(payload, keys, fallback) {
   return fallback;
 }
 
+
+function normalizeMode_(modeValue, explicitType) {
+  const rawMode = String(modeValue || 'Classica').trim();
+  const rawType = String(explicitType || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+
+  if (rawType === 'campionato_real' || rawType === 'fantacampionato' || rawType === 'real') {
+    return { label:'Fantacampionato del Ca***', type:'campionato_real' };
+  }
+  if (rawType === 'campionato' || rawType === 'stagione') {
+    return { label:'Campionato del Ca***', type:'campionato' };
+  }
+  if (rawType === 'hard' || rawType === 'harda_turan') {
+    return { label:'HARDa Turan', type:'hard' };
+  }
+  if (rawType === 'gary' || rawType === 'gary_medel') {
+    return { label:'Gary MEDel', type:'gary' };
+  }
+  if (rawType === 'classica' || rawType === 'classic') {
+    return { label:'Classica', type:'classica' };
+  }
+
+  if (/fantacampionato|(campionato|stagione).*real|real.*(campionato|stagione)/i.test(rawMode)) {
+    return { label:'Fantacampionato del Ca***', type:'campionato_real' };
+  }
+  if (/campionato|stagione/i.test(rawMode)) {
+    return { label:'Campionato del Ca***', type:'campionato' };
+  }
+  if (/hard|turan/i.test(rawMode)) {
+    return { label:'HARDa Turan', type:'hard' };
+  }
+  if (/gary|medel/i.test(rawMode)) {
+    return { label:'Gary MEDel', type:'gary' };
+  }
+  if (/classic|classica/i.test(rawMode)) {
+    return { label:'Classica', type:'classica' };
+  }
+  return { label:rawMode || 'Classica', type:'altro' };
+}
+
+function isChampionshipMode_(type) {
+  return type === 'campionato' || type === 'campionato_real';
+}
+
 function normalizePayload_(payload) {
   const wins = safeNumber_(firstValue_(payload, ['vittorie', 'wins'], 0), 0);
   const draws = safeNumber_(firstValue_(payload, ['pareggi', 'draws'], 0), 0);
   const explicitPoints = firstValue_(payload, ['punti', 'points', 'pts'], '');
+  const modeInfo = normalizeMode_(
+    firstValue_(payload, ['modalita', 'gameMode', 'mode'], 'Classica'),
+    firstValue_(payload, ['modalita_tipo', 'modalitaTipo', 'modeType'], '')
+  );
 
   return {
     data_invio: new Date(),
     codice_vittoria: String(firstValue_(payload, ['victoryCode', 'codice_vittoria'], '')).trim(),
     squadra: String(firstValue_(payload, ['squadra', 'nome_squadra', 'teamName', 'team_name'], '')).trim(),
     allenatore: String(firstValue_(payload, ['allenatore', 'coachName', 'coach_name', 'nome_allenatore', 'coach'], '')).trim(),
-    modalita: String(firstValue_(payload, ['modalita', 'gameMode', 'mode'], 'Classica')).trim(),
+    modalita: modeInfo.label,
+    modalita_tipo: modeInfo.type,
     posizione_finale: safeNumber_(firstValue_(payload, ['posizione_finale', 'piazzamento_finale', 'finalPosition', 'final_position'], ''), ''),
     punti: explicitPoints === '' ? wins * 3 + draws : safeNumber_(explicitPoints, wins * 3 + draws),
     giornate: safeNumber_(firstValue_(payload, ['giornate', 'matchesPlayed', 'partite_giocate'], ''), ''),
@@ -133,9 +183,11 @@ function doPost(e) {
     if (!row.squadra || !row.allenatore) {
       return jsonOutput_({ ok:false, error:'Squadra o allenatore mancanti' });
     }
-    const isCampionato = /campionato|stagione/i.test(String(row.modalita || ''));
-    if (isCampionato && Number(row.posizione_finale) !== 1) {
+    if (isChampionshipMode_(row.modalita_tipo) && Number(row.posizione_finale) !== 1) {
       return jsonOutput_({ ok:false, error:'Il risultato del Campionato può essere salvato solo con posizione finale 1.' });
+    }
+    if (row.modalita_tipo === 'campionato_real' && row.giornate !== '' && Number(row.giornate) !== 38) {
+      return jsonOutput_({ ok:false, error:'Il Fantacampionato REAL deve risultare concluso dopo 38 giornate.' });
     }
 
     const sheet = getSheet_();
@@ -174,10 +226,12 @@ function doGet(e) {
       const wins = Number(item.vittorie || 0);
       const draws = Number(item.pareggi || 0);
       const storedPoints = item.punti;
+      const modeInfo = normalizeMode_(item.modalita || 'Classica', item.modalita_tipo || '');
       return {
         squadra: item.squadra || '',
         allenatore: item.allenatore || '',
-        modalita: item.modalita || 'Classica',
+        modalita: modeInfo.label,
+        modalita_tipo: modeInfo.type,
         posizione_finale: item.posizione_finale === '' ? '' : Number(item.posizione_finale || 0),
         punti: storedPoints === '' || storedPoints === undefined ? wins * 3 + draws : Number(storedPoints || 0),
         giornate: item.giornate === '' ? '' : Number(item.giornate || 0),

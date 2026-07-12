@@ -571,6 +571,12 @@
       const coachOf = row => String(valueOf(row, ['allenatore','coachName','coach_name','nome_allenatore','coach'], '')).trim();
       const rawModeOf = row => String(valueOf(row, ['modalita','gameMode','mode'], 'Classica')).trim();
       const modeKindOf = row => {
+        const explicit = String(valueOf(row, ['modalita_tipo','modalitaTipo','modeType'], '')).trim().toLowerCase().replace(/[\s-]+/g, '_');
+        if (explicit === 'campionato_real' || explicit === 'fantacampionato' || explicit === 'real') return 'campionatoReal';
+        if (explicit === 'campionato' || explicit === 'stagione') return 'campionato';
+        if (explicit === 'hard' || explicit === 'harda_turan') return 'hard';
+        if (explicit === 'gary' || explicit === 'gary_medel') return 'gary';
+        if (explicit === 'classica' || explicit === 'classic') return 'classic';
         const raw = rawModeOf(row);
         if (/fantacampionato|(campionato|stagione).*real|real.*(campionato|stagione)/i.test(raw)) return 'campionatoReal';
         if (/campionato|stagione/i.test(raw)) return 'campionato';
