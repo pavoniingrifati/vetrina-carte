@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="color-scheme" content="light">
+  <title>Fantaballa Admin · Bilanciamento</title>
+  <link rel="icon" href="favicon.ico">
+  <style>
+    :root{--ink:#10243a;--muted:#657080;--paper:#f5f0e5;--card:#fffdf7;--line:#d9cfb8;--purple:#6f3fb2;--purple2:#8d65c4;--gold:#d6a928;--green:#166846;--red:#a9362e;--blue:#1769aa;--shadow:0 12px 34px rgba(25,29,45,.10)}
+    *{box-sizing:border-box}
+    html{background:#e9e1d3}
+    body{margin:0;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at 10% 0,#f9efce 0,transparent 32%),linear-gradient(180deg,#efe8dc,#e7dfd2);min-height:100vh}
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    .shell{width:min(1500px,calc(100% - 28px));margin:0 auto;padding:20px 0 56px}
+    .topbar{display:flex;justify-content:space-between;gap:18px;align-items:center;padding:16px 18px;border:1px solid rgba(111,63,178,.25);border-radius:22px;background:rgba(255,253,247,.92);box-shadow:var(--shadow);position:sticky;top:10px;z-index:30;backdrop-filter:blur(12px)}
+    .brand{display:flex;align-items:center;gap:12px;min-width:0}.brand img{width:48px;height:48px;object-fit:contain}.brand b{display:block;font-size:19px}.brand span{display:block;color:var(--muted);font-weight:750;font-size:12px;margin-top:2px}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.btn{border:0;border-radius:12px;padding:10px 13px;font-weight:900;background:#ece5f5;color:#4e2b81}.btn:hover{transform:translateY(-1px)}.btn.primary{background:var(--purple);color:#fff}.btn.ghost{background:#f1ece1;color:var(--ink);border:1px solid var(--line)}
+    .hero{margin:18px 0;display:grid;grid-template-columns:1.5fr .7fr;gap:16px}.hero-main,.hero-note{border-radius:24px;padding:24px;box-shadow:var(--shadow)}.hero-main{background:linear-gradient(135deg,#171b39,#43236f 56%,#7748a8);color:#fff}.hero-main .kicker{color:#f3cf59;font-weight:1000;text-transform:uppercase;letter-spacing:.12em;font-size:11px}.hero h1{font-size:clamp(30px,5vw,58px);line-height:.9;margin:8px 0 12px;letter-spacing:-.045em}.hero p{margin:0;color:#eee5ff;font-weight:720;max-width:850px}.hero-note{background:linear-gradient(180deg,#fff9e5,#fffdf7);border:1px solid #e2c86b}.hero-note b{display:block;font-size:18px;margin-bottom:7px}.hero-note p{color:#675a3e;font-size:13px;line-height:1.5}
+    .status{display:none;margin:12px 0;padding:13px 15px;border-radius:14px;font-weight:800}.status.show{display:block}.status.error{background:#ffe3df;color:#8d231d;border:1px solid #e6aaa3}.status.ok{background:#e0f3e7;color:#14583a;border:1px solid #a5d3b5}
+    .metric-grid{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:12px;margin-bottom:18px}.metric{padding:15px;border-radius:18px;background:var(--card);border:1px solid var(--line);box-shadow:0 5px 16px rgba(20,25,39,.06)}.metric span{display:block;color:var(--muted);font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:.06em}.metric b{display:block;font-size:29px;margin-top:4px;letter-spacing:-.04em}.metric small{color:var(--muted);font-weight:750}
+    .tabs{display:flex;gap:8px;overflow:auto;padding:4px 0 12px;scrollbar-width:thin}.tab{flex:0 0 auto;border:1px solid var(--line);background:#fffaf0;color:#5a4a35;border-radius:999px;padding:10px 15px;font-weight:950}.tab.active{background:var(--ink);border-color:var(--ink);color:#fff}.view{display:none}.view.active{display:block}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow);min-width:0}.panel h2,.panel h3{margin:0}.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.panel-head p{margin:5px 0 0;color:var(--muted);font-size:13px;font-weight:720}.badge{display:inline-flex;align-items:center;padding:6px 9px;border-radius:999px;background:#eee5f8;color:#5d3693;font-size:11px;font-weight:1000;white-space:nowrap}.badge.good{background:#daf1e2;color:#145c3c}.badge.warn{background:#fff0c4;color:#7b5710}.badge.bad{background:#ffe0dc;color:#8d231d}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.toolbar input,.toolbar select{border:1px solid var(--line);border-radius:12px;padding:10px 11px;background:#fff;min-width:180px;color:var(--ink);font-weight:750}.toolbar input{flex:1}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff;max-height:720px}.table-wrap table{width:100%;border-collapse:separate;border-spacing:0;min-width:1050px}.table-wrap th{position:sticky;top:0;z-index:2;background:#17263a;color:#fff;padding:11px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em}.table-wrap th button{border:0;background:none;color:inherit;font:inherit;font-weight:1000;padding:0}.table-wrap td{padding:10px;border-bottom:1px solid #eee7d9;font-size:13px;font-weight:750}.table-wrap tr:hover td{background:#fbf6e9}.club-cell{display:flex;align-items:center;gap:9px;min-width:190px}.club-colors{width:32px;height:32px;border-radius:10px;flex:0 0 auto;border:2px solid var(--c3);background:linear-gradient(135deg,var(--c1) 0 50%,var(--c2) 50%)}.num{text-align:right;font-variant-numeric:tabular-nums}.power{font-size:16px;font-weight:1000}.flag{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}.flag.good{background:#28956a}.flag.warn{background:#d09520}.flag.bad{background:#c64b43}
+    .highlight-card{padding:18px;border-radius:18px;color:#fff;min-height:145px;display:flex;flex-direction:column;justify-content:space-between}.highlight-card.strong{background:linear-gradient(135deg,#14533b,#23835b)}.highlight-card.weak{background:linear-gradient(135deg,#722c2b,#b3443d)}.highlight-card.neutral{background:linear-gradient(135deg,#273d58,#4f6590)}.highlight-card small{font-weight:900;opacity:.75;text-transform:uppercase;letter-spacing:.08em}.highlight-card b{font-size:28px;line-height:1}.highlight-card p{margin:7px 0 0;font-weight:750;opacity:.9}
+    .bar-list{display:grid;gap:9px}.bar-row{display:grid;grid-template-columns:minmax(120px,1.2fr) 3fr 52px;align-items:center;gap:10px;font-size:13px;font-weight:800}.bar-track{height:13px;border-radius:999px;background:#e8e0d4;overflow:hidden}.bar-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#56328f,#9b6bc9)}.bar-row strong{text-align:right}
+    .role-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.role-box{padding:14px;border-radius:16px;background:#f4eee2;border:1px solid var(--line)}.role-box span{display:block;color:var(--muted);font-size:11px;font-weight:900}.role-box b{font-size:25px}
+    .player-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:600px;overflow:auto}.player-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px;border:1px solid #e2d8c5;border-radius:13px;background:#fff}.player-row b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.player-row small{display:block;color:var(--muted);font-weight:750}.player-row strong{align-self:center}
+    .event-list{display:grid;gap:10px}.event{border:1px solid var(--line);border-radius:16px;background:#fff;padding:13px}.event-top{display:flex;justify-content:space-between;gap:12px}.event h4{margin:0;font-size:16px}.event-score{font-size:20px;font-weight:1000}.choice{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;margin-top:8px;padding-top:8px;border-top:1px dashed #ddd0bc;font-size:12px}.choice b{display:block}.choice span{color:var(--muted);font-weight:720}.score-pos{color:#18724d}.score-neg{color:#a43831}.score-zero{color:#66717e}
+    .note{font-size:12px;color:var(--muted);line-height:1.5;font-weight:720}.empty{padding:30px;text-align:center;color:var(--muted);font-weight:800}
+    .footer{padding:18px 0;text-align:center;color:#776c5e;font-size:12px;font-weight:750}
+    @media(max-width:1100px){.metric-grid{grid-template-columns:repeat(3,1fr)}.hero{grid-template-columns:1fr}.grid-3{grid-template-columns:1fr 1fr}}
+    @media(max-width:760px){.shell{width:min(100% - 16px,1500px);padding-top:8px}.topbar{position:static;align-items:flex-start;flex-direction:column}.actions{width:100%;justify-content:flex-start}.hero-main,.hero-note{padding:18px}.metric-grid{grid-template-columns:repeat(2,1fr)}.grid-2,.grid-3{grid-template-columns:1fr}.panel{padding:13px;border-radius:17px}.player-list{grid-template-columns:1fr}.bar-row{grid-template-columns:105px 1fr 42px}.role-grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand"><img src="assets/fantaballa-logo.png" alt="Fantaballa"><div><b>Fantaballa Admin</b><span>Analisi interna di bilanciamento · pagina non collegata al sito</span></div></div>
+    <div class="actions"><button class="btn ghost" id="reloadBtn">Ricarica dati</button><button class="btn" id="simulateBtn">Ripeti simulazione</button><button class="btn primary" id="exportBtn">Esporta club CSV</button></div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-main"><div class="kicker">Control room</div><h1>Bilanciamento<br>visibile.</h1><p>Controlla in un unico posto forza delle rose, copertura dei ruoli, abbonati, nazioni, probabilità simulate e impatto stimato degli imprevisti.</p></div>
+    <aside class="hero-note"><b>Pagina amministrativa separata</b><p>Questo file non è citato né collegato da `index.html`, `campionato.html` o `classifica.html`. Non costituisce però una protezione tramite password: chi conosce l’indirizzo può aprirlo.</p></aside>
+  </section>
+
+  <div id="status" class="status"></div>
+  <section class="metric-grid" id="metrics"></section>
+
+  <nav class="tabs" aria-label="Sezioni admin">
+    <button class="tab active" data-view="overview">Panoramica</button>
+    <button class="tab" data-view="clubs">Club</button>
+    <button class="tab" data-view="nations">Nazioni</button>
+    <button class="tab" data-view="coverage">Giocatori mai estratti</button>
+    <button class="tab" data-view="events">Eventi</button>
+  </nav>
+
+  <section id="view-overview" class="view active"></section>
+  <section id="view-clubs" class="view"></section>
+  <section id="view-nations" class="view"></section>
+  <section id="view-coverage" class="view"></section>
+  <section id="view-events" class="view"></section>
+
+  <footer class="footer">Fantaballa Admin · i dati sono letti direttamente da <b>data/club.json</b> e <b>data/giocatori.json</b>.</footer>
+</div>
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=value=>String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const avg=list=>list.length?list.reduce((a,b)=>a+b,0)/list.length:0;
+const median=list=>{const a=[...list].sort((x,y)=>x-y);if(!a.length)return 0;const m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2};
+const num=n=>new Intl.NumberFormat('it-IT',{maximumFractionDigits:1}).format(Number(n)||0);
+const roleNames={P:'Portieri',D:'Difensori',C:'Centrocampisti',A:'Attaccanti'};
+let CLUBS=[],PLAYERS=[],clubRows=[],sortKey='power',sortDir=-1,simulationSeed=20260712;
+
+const EVENT_CATALOG=[
+ ['Il pulmino della squadra finisce in un bordello',[['Restate per lo spettacolo','+5 Intesa per 2 gare, -10 OVR a un giocatore',2],['Prendete subito un taxi','+10 OVR, ma un cambio in meno',1]]],
+ ['Il figlio del presidente contesta la formazione',[['Segui i consigli del figlio','Sconfitta forzata, ma un cambio in più',-2],['Difendi le tue idee tattiche','+6 OVR, ma un cambio in meno',1]]],
+ ['La tua squadra ha appena segnato il gol del 3-2',[['Rimani pacato','+5 OVR a un giocatore',2],['Vai sotto la curva','+5 OVR squadra, un infortunio',3]]],
+ ['Il gruppo WhatsApp viene pubblicato online',[['Dici che sei stato hackerato','+10 Intesa abbonati, draft automatico',0],['Chiedi pubblicamente scusa','-5 Intesa per 2 gare',-4]]],
+ ['Scoppia una rissa con la mascotte',[['Allena lui','Perdita controllo decisioni e draft',-8],['Lo fai licenziare','Mascotte 99 OVR a un avversario',-5]]],
+ ['Il presidente ingaggia suo cuggino influencer',[['Contenuti con gli abbonati','+10 Intesa abbonati',4],['Partecipa all’allenamento','+5 OVR, abbonati infortunati',0]]],
+ ['Un drone avversario spia l’allenamento',[['Tattica falsa','-10 OVR al prossimo avversario',5],['Lo abbatti','2 avversari infortunati',4]]],
+ ['Il VAR deve installare un aggiornamento',[['Aspetti','Rischio infortunio 45%',-2],['Partita senza VAR','Più rossi per entrambe',0]]],
+ ['Il capitano apre un corso di crescita personale',[['Obblighi tutti','×2 Intesa positiva',6],['Fate allenamento','+6 OVR, Intesa azzerata',2]]],
+ ['Arriva un mentalista nello spogliatoio',[['Ipnotizza l’attaccante','+8 OVR a un attaccante',3],['Confonde l’arbitro','Rossi possibili per entrambe',0]]],
+ ['Grigliata degli ultras',[['Partecipate','×2 Intesa positiva',6],['Allenamento nel fumo','+7 OVR, una contusione',3]]],
+ ['Un giocatore sostiene di essere stato rapito dagli alieni',[['Credi alla storia','+10 Intesa per 2 gare',3],['Visita medica','Scambio obbligatorio',-3]]],
+ ['Il magazziniere lava le maglie a 90 gradi',[['Maglie strette','+5 OVR, rischio infortunio',2],['Maglie anni Novanta','+5 Intesa per 2 gare',4]]],
+ ['Un tifoso vince il diritto di fare la formazione',[['Ti rifiuti','-1 punto',-2],['Accetti ma è Gullo','Al massimo pareggio',-4]]],
+ ['Il preparatore boomer scopre TikTok',[['Registrate la challenge','Abbonati ×2, squadra -5 OVR per 2 gare',0],['Torna su Facebook','+5 OVR, Intesa azzerata',1]]],
+ ['La Marotta League',[['Vittorie doppie','6 punti a vittoria, -100 a sconfitta',-7],['Vittoria assicurata','Vittoria certa, rischio infortunio 80%',7]]],
+ ['Corto Muso',[['Te ne intendi di ippica?','Massimo 1 gol, vittoria da 9 punti',6],['Il miglior attacco è la difesa','2 clean sheet, attaccanti squalificati',5]]],
+ ['Ma che mollo',[['Siamo pazzi qua?','×3 Intesa, gol subito obbligatorio',5],['Chi fa sto mestiere non è mollo','Gol abbonati, decisioni automatiche',2]]],
+ ['VAR',[['Favori rischiosi','Una squadra casuale a 0 punti',-1],['Video Assistant Referee','Rossi molto probabili per 2 gare',-1]]],
+ ['Milan Lab',[['Catena di infortuni','80% rischio infortunio per 3 gare',-6],['Competenza','Un giocatore fuori tutta la stagione',-8]]],
+ ['Anvedi Goicoechea',[['Che ha combinato?','Portiere fuori tutta la stagione',-9],['Nonno Ballotta','Cambio portiere obbligatorio',-5]]]
+];
+
+function status(message,type='ok'){
+ const el=$('#status');el.className=`status show ${type}`;el.textContent=message;
+}
+function roleOf(player){return ['P','D','C','A'].includes(player?.role)?player.role:String(player?.Position||'').startsWith('P')?'P':'A'}
+function palette(club){const c=club?.colorClub||{};return{primary:c.primary||'#273d58',secondary:c.secondary||'#fff',accent:c.accent||'#d6a928'}}
+function clubPlayers(id){return PLAYERS.filter(p=>String(p.club)===String(id))}
+function buildClubRoster(id){
+ const pool=clubPlayers(id).sort((a,b)=>(+b.ovr||0)-(+a.ovr||0)||String(a.name).localeCompare(String(b.name),'it'));
+ const selected=[],used=new Set();
+ [['P',2],['D',5],['C',4],['A',3]].forEach(([role,count])=>pool.filter(p=>roleOf(p)===role).slice(0,count).forEach(p=>{selected.push(p);used.add(String(p.id))}));
+ pool.filter(p=>!used.has(String(p.id))).slice(0,Math.max(0,14-selected.length)).forEach(p=>selected.push(p));
+ return selected.slice(0,14);
+}
+function clubPower(id){const vals=buildClubRoster(id).sort((a,b)=>(+b.ovr||0)-(+a.ovr||0)).slice(0,11).map(p=>+p.ovr||60);while(vals.length<11)vals.push(60);return Math.round(avg(vals)*10)/10}
+function rng(seed){let x=seed|0;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return((x>>>0)/4294967296)}}
+function poisson(lambda,random){let L=Math.exp(-lambda),p=1,k=0;do{k++;p*=random()}while(p>L&&k<12);return k-1}
+function simulateScore(a,b,home,random){const la=clamp(1.25+(a-b)/18+home,.15,4.5),lb=clamp(1.15+(b-a)/18-home,.15,4.5);return[poisson(la,random),poisson(lb,random)]}
+function simulations(){
+ const random=rng(simulationSeed++), powers=Object.fromEntries(CLUBS.map(c=>[c.id,clubPower(c.id)]));
+ const result={};
+ CLUBS.forEach(club=>{let w=0,d=0,l=0;const opponents=CLUBS.filter(c=>c.id!==club.id);for(let i=0;i<4500;i++){const opp=opponents[Math.floor(random()*opponents.length)],home=random()<.5;const score=home?simulateScore(powers[club.id],powers[opp.id],.18,random):simulateScore(powers[opp.id],powers[club.id],.18,random).reverse();if(score[0]>score[1])w++;else if(score[0]===score[1])d++;else l++}result[club.id]={win:w/45,draw:d/45,loss:l/45}});
+ return result;
+}
+function prepareRows(){
+ const sim=simulations();
+ clubRows=CLUBS.map(club=>{
+  const players=clubPlayers(club.id),roles={P:0,D:0,C:0,A:0};players.forEach(p=>roles[roleOf(p)]++);
+  const power=clubPower(club.id), rosterAvg=avg(players.map(p=>+p.ovr||0)),subs=players.filter(p=>String(p.subscriber).toLowerCase()==='si').length;
+  const problems=[];if(roles.P<2)problems.push('portieri');if(roles.D<5)problems.push('difensori');if(roles.C<4)problems.push('centrocampisti');if(roles.A<3)problems.push('attaccanti');if(players.length<14)problems.push('rosa corta');
+  return{club,players,roles,power,rosterAvg,subs,problems,...sim[club.id]};
+ });
+}
+function renderMetrics(){
+ const allOvr=PLAYERS.map(p=>+p.ovr||0),subs=PLAYERS.filter(p=>String(p.subscriber).toLowerCase()==='si').length,medianPower=median(clubRows.map(r=>r.power));
+ const roleCounts={P:0,D:0,C:0,A:0};PLAYERS.forEach(p=>roleCounts[roleOf(p)]++);
+ $('#metrics').innerHTML=[['Club',CLUBS.length,'database completo'],['Giocatori',PLAYERS.length,'ID univoci'],['OVR medio',num(avg(allOvr)),'intero database'],['OVR XI mediano',num(medianPower),'club bilanciato'],['Abbonati',subs,`${num(subs/Math.max(1,PLAYERS.length)*100)}% del database`],['Nazioni',new Set(PLAYERS.map(p=>p.nation).filter(Boolean)).size,`P ${roleCounts.P} · D ${roleCounts.D} · C ${roleCounts.C} · A ${roleCounts.A}`]].map(([label,value,small])=>`<article class="metric"><span>${esc(label)}</span><b>${esc(value)}</b><small>${esc(small)}</small></article>`).join('');
+}
+function renderOverview(){
+ const byPower=[...clubRows].sort((a,b)=>b.power-a.power), strongest=byPower[0],weakest=byPower.at(-1),medianP=median(byPower.map(r=>r.power));
+ const unbalanced=clubRows.filter(r=>Math.abs(r.power-medianP)>=4||r.problems.length), topNations=nationStats().slice(0,10), max=topNations[0]?.count||1;
+ $('#view-overview').innerHTML=`<div class="grid-3">
+  <article class="highlight-card strong"><small>Club più forte</small><div><b>${esc(strongest.club.name)}</b><p>OVR XI ${num(strongest.power)} · vittorie simulate ${num(strongest.win)}%</p></div></article>
+  <article class="highlight-card weak"><small>Club più debole</small><div><b>${esc(weakest.club.name)}</b><p>OVR XI ${num(weakest.power)} · vittorie simulate ${num(weakest.win)}%</p></div></article>
+  <article class="highlight-card neutral"><small>Alert automatici</small><div><b>${unbalanced.length}</b><p>Club lontani dalla mediana o con copertura ruolo insufficiente.</p></div></article>
+ </div><div class="grid-2" style="margin-top:16px">
+ <article class="panel"><div class="panel-head"><div><h2>Distribuzione delle nazioni</h2><p>Prime 10 per numero di giocatori.</p></div><span class="badge">${new Set(PLAYERS.map(p=>p.nation)).size} totali</span></div><div class="bar-list">${topNations.map(n=>`<div class="bar-row"><span>${esc(n.name)}</span><div class="bar-track"><div class="bar-fill" style="width:${n.count/max*100}%"></div></div><strong>${n.count}</strong></div>`).join('')}</div></article>
+ <article class="panel"><div class="panel-head"><div><h2>Controlli di bilanciamento</h2><p>Problemi che possono alterare simulazione e draft.</p></div></div>${unbalanced.length?unbalanced.slice(0,12).map(r=>`<div class="player-row"><div><b>${esc(r.club.name)}</b><small>${r.problems.length?`Copertura: ${esc(r.problems.join(', '))}`:`Scarto mediana ${num(r.power-medianP)} OVR`}</small></div><strong>${num(r.power)}</strong></div>`).join(''):'<div class="empty">Nessun alert rilevato.</div>'}</article>
+ </div>`;
+}
+function renderClubs(){
+ $('#view-clubs').innerHTML=`<article class="panel"><div class="panel-head"><div><h2>Analisi dei 32 club</h2><p>La simulazione replica formula gol e costruzione rosa del Campionato, su 4.500 partite neutrali per club.</p></div><span class="badge">seed ${simulationSeed-1}</span></div><div class="toolbar"><input id="clubSearch" placeholder="Cerca club…"><select id="clubFilter"><option value="all">Tutti</option><option value="issues">Solo alert</option><option value="strong">Sopra mediana</option><option value="weak">Sotto mediana</option></select></div><div class="table-wrap"><table><thead><tr>${[['name','Club'],['players','Rosa'],['rosterAvg','OVR rosa'],['power','OVR XI'],['P','P'],['D','D'],['C','C'],['A','A'],['subs','ABB'],['win','V%'],['draw','N%'],['loss','P%'],['alert','Stato']].map(([key,label])=>`<th class="${['players','rosterAvg','power','P','D','C','A','subs','win','draw','loss'].includes(key)?'num':''}"><button data-sort="${key}">${label}</button></th>`).join('')}</tr></thead><tbody id="clubBody"></tbody></table></div></article>`;
+ $('#clubSearch').addEventListener('input',renderClubRows);$('#clubFilter').addEventListener('change',renderClubRows);$$('[data-sort]').forEach(b=>b.onclick=()=>{const key=b.dataset.sort;if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=key==='name'?1:-1}renderClubRows()});renderClubRows();
+}
+function renderClubRows(){
+ const search=String($('#clubSearch')?.value||'').trim().toLowerCase(),filter=$('#clubFilter')?.value||'all',med=median(clubRows.map(r=>r.power));
+ let rows=clubRows.filter(r=>!search||r.club.name.toLowerCase().includes(search));
+ if(filter==='issues')rows=rows.filter(r=>r.problems.length||Math.abs(r.power-med)>=4);if(filter==='strong')rows=rows.filter(r=>r.power>=med);if(filter==='weak')rows=rows.filter(r=>r.power<med);
+ const val=(r,key)=>key==='name'?r.club.name:key==='players'?r.players.length:['P','D','C','A'].includes(key)?r.roles[key]:key==='alert'?r.problems.length:r[key];rows.sort((a,b)=>{const x=val(a,sortKey),y=val(b,sortKey);return(typeof x==='string'?x.localeCompare(y,'it'):x-y)*sortDir});
+ $('#clubBody').innerHTML=rows.map(r=>{const c=palette(r.club),delta=r.power-med,statusClass=r.problems.length?'bad':Math.abs(delta)>=4?'warn':'good',statusText=r.problems.length?r.problems.join(', '):Math.abs(delta)>=4?`${delta>0?'+':''}${num(delta)} vs mediana`:'OK';return `<tr><td><div class="club-cell"><span class="club-colors" style="--c1:${c.primary};--c2:${c.secondary};--c3:${c.accent}"></span><div><b>${esc(r.club.name)}</b><small>${esc(r.club.shortName||r.club.id)}</small></div></div></td><td class="num">${r.players.length}</td><td class="num">${num(r.rosterAvg)}</td><td class="num power">${num(r.power)}</td><td class="num">${r.roles.P}</td><td class="num">${r.roles.D}</td><td class="num">${r.roles.C}</td><td class="num">${r.roles.A}</td><td class="num">${r.subs}</td><td class="num">${num(r.win)}%</td><td class="num">${num(r.draw)}%</td><td class="num">${num(r.loss)}%</td><td><span class="flag ${statusClass}"></span>${esc(statusText)}</td></tr>`}).join('')||'<tr><td colspan="13" class="empty">Nessun club trovato.</td></tr>';
+}
+function nationStats(){const map={};PLAYERS.forEach(p=>{const n=String(p.nation||'Sconosciuta');if(!map[n])map[n]={name:n,count:0,ovr:[],subs:0,roles:{P:0,D:0,C:0,A:0}};const x=map[n];x.count++;x.ovr.push(+p.ovr||0);x.roles[roleOf(p)]++;if(String(p.subscriber).toLowerCase()==='si')x.subs++});return Object.values(map).map(n=>({...n,average:avg(n.ovr)})).sort((a,b)=>b.count-a.count)}
+function renderNations(){
+ const nations=nationStats(),max=nations[0]?.count||1,total=PLAYERS.length;
+ $('#view-nations').innerHTML=`<div class="grid-2"><article class="panel"><div class="panel-head"><div><h2>Distribuzione completa</h2><p>Incidenza di ogni nazione nel database.</p></div></div><div class="bar-list">${nations.map(n=>`<div class="bar-row"><span title="OVR medio ${num(n.average)}">${esc(n.name)}</span><div class="bar-track"><div class="bar-fill" style="width:${n.count/max*100}%"></div></div><strong>${n.count}</strong></div>`).join('')}</div></article><article class="panel"><div class="panel-head"><div><h2>Dettaglio nazioni</h2><p>Ruoli, abbonati e OVR medio.</p></div></div><div class="table-wrap" style="max-height:760px"><table style="min-width:650px"><thead><tr><th>Nazione</th><th class="num">Gioc.</th><th class="num">%</th><th class="num">OVR</th><th class="num">P</th><th class="num">D</th><th class="num">C</th><th class="num">A</th><th class="num">ABB</th></tr></thead><tbody>${nations.map(n=>`<tr><td><b>${esc(n.name)}</b></td><td class="num">${n.count}</td><td class="num">${num(n.count/total*100)}%</td><td class="num">${num(n.average)}</td><td class="num">${n.roles.P}</td><td class="num">${n.roles.D}</td><td class="num">${n.roles.C}</td><td class="num">${n.roles.A}</td><td class="num">${n.subs}</td></tr>`).join('')}</tbody></table></div></article></div>`;
+}
+function idsFromCandidateList(list,seen){(Array.isArray(list)?list:[]).forEach(x=>{const id=typeof x==='object'?(x.id??x.playerId):x;if(id!==undefined&&id!==null)seen.add(String(id))})}
+function localDraftCoverage(){
+ const seen=new Set(),slots=[];
+ for(let i=1;i<=3;i++){
+  const keys=[`fantaballa_campionato_v7_slot_${i}`,`fantaballa_campionato_v7_slot_${i}_backup`];
+  keys.forEach(key=>{try{const raw=localStorage.getItem(key);if(!raw)return;const s=JSON.parse(raw);slots.push(key);idsFromCandidateList(s?.draft?.candidates,seen);idsFromCandidateList(s?.midseason?.candidates,seen);(s?.draft?.roster||[]).forEach(e=>seen.add(String(e.playerId)));(s?.midseason?.changes||[]).forEach(c=>{if(c.incomingId)seen.add(String(c.incomingId));if(c.outId)seen.add(String(c.outId))})}catch{}})
+ }
+ return{seen,slots};
+}
+function renderCoverage(){
+ const {seen,slots}=localDraftCoverage(),unseen=PLAYERS.filter(p=>!seen.has(String(p.id))).sort((a,b)=>(+b.ovr||0)-(+a.ovr||0)||String(a.name).localeCompare(String(b.name),'it'));
+ $('#view-coverage').innerHTML=`<div class="grid-2"><article class="panel"><div class="panel-head"><div><h2>Giocatori mai osservati</h2><p>Confronto con candidati correnti, rose e scambi presenti nei salvataggi locali.</p></div><span class="badge ${slots.length?'warn':'bad'}">${unseen.length}/${PLAYERS.length}</span></div><p class="note"><b>Limite importante:</b> il gioco attuale non conserva lo storico di ogni spacchettamento. Questo pannello non può ricostruire le estrazioni passate già sostituite: segnala i giocatori per cui non esiste alcuna traccia nei ${slots.length} salvataggi/backup leggibili su questo dispositivo.</p><div class="toolbar"><input id="unseenSearch" placeholder="Cerca giocatore, club o nazione…"><button class="btn" id="unseenCsv">Esporta CSV</button></div><div class="player-list" id="unseenList"></div></article><article class="panel"><div class="panel-head"><div><h2>Copertura locale</h2><p>Quanto del database è comparso almeno una volta nei dati disponibili.</p></div></div><div class="highlight-card neutral"><small>Copertura rilevata</small><div><b>${num(seen.size/Math.max(1,PLAYERS.length)*100)}%</b><p>${seen.size} giocatori con almeno una traccia · ${slots.length} salvataggi o backup analizzati.</p></div></div><div class="role-grid" style="margin-top:14px">${['P','D','C','A'].map(role=>{const all=PLAYERS.filter(p=>roleOf(p)===role),covered=all.filter(p=>seen.has(String(p.id))).length;return `<div class="role-box"><span>${roleNames[role]}</span><b>${covered}/${all.length}</b><small>${num(covered/Math.max(1,all.length)*100)}%</small></div>`}).join('')}</div><p class="note" style="margin-top:14px">Per ottenere un vero dato “mai estratto” globale servirebbe registrare ogni apertura pacchetto nel gioco o inviarla a un archivio server. L’admin è già predisposto a leggere i candidati presenti nei salvataggi.</p></article></div>`;
+ const draw=()=>{const q=String($('#unseenSearch').value||'').toLowerCase();const rows=unseen.filter(p=>!q||`${p.name} ${p.club} ${p.nation} ${p.Position}`.toLowerCase().includes(q)).slice(0,300);$('#unseenList').innerHTML=rows.map(p=>`<div class="player-row"><div><b>${esc(p.name)}</b><small>${esc((CLUBS.find(c=>c.id===p.club)||{}).name||p.club)} · ${esc(p.nation)} · ${esc(p.Position)}</small></div><strong>${esc(p.ovr)}</strong></div>`).join('')||'<div class="empty">Nessun giocatore.</div>'};$('#unseenSearch').addEventListener('input',draw);$('#unseenCsv').onclick=()=>downloadCsv('fantaballa_giocatori_non_osservati.csv',[['id','nome','club','nazione','ruolo','posizione','ovr','abbonato'],...unseen.map(p=>[p.id,p.name,p.club,p.nation,p.role,p.Position,p.ovr,p.subscriber])]);draw();
+}
+function renderEvents(){
+ const entries=EVENT_CATALOG.map(([title,choices],i)=>({index:i+1,title,choices,avg:avg(choices.map(c=>c[2])),spread:Math.max(...choices.map(c=>c[2]))-Math.min(...choices.map(c=>c[2])),best:Math.max(...choices.map(c=>c[2])),worst:Math.min(...choices.map(c=>c[2]))}));
+ const strongest=[...entries].sort((a,b)=>b.best-a.best)[0],weakest=[...entries].sort((a,b)=>a.worst-b.worst)[0],volatile=[...entries].sort((a,b)=>b.spread-a.spread)[0];
+ $('#view-events').innerHTML=`<div class="grid-3"><article class="highlight-card strong"><small>Bonus più forte</small><div><b>${esc(strongest.title)}</b><p>Picco euristico +${strongest.best}</p></div></article><article class="highlight-card weak"><small>Conseguenza più dura</small><div><b>${esc(weakest.title)}</b><p>Picco euristico ${weakest.worst}</p></div></article><article class="highlight-card neutral"><small>Evento più volatile</small><div><b>${esc(volatile.title)}</b><p>Scarto tra scelte: ${volatile.spread} punti</p></div></article></div><article class="panel" style="margin-top:16px"><div class="panel-head"><div><h2>Indice di impatto degli eventi</h2><p>Stima amministrativa da -10 a +10: non è una statistica reale delle partite.</p></div><select id="eventSort"><option value="index">Ordine gioco</option><option value="avg-desc">Media migliore</option><option value="avg-asc">Media peggiore</option><option value="spread">Più volatili</option></select></div><div class="event-list" id="eventList"></div><p class="note">L’indice pesa durata, OVR/Intesa, punti forzati, controllo perso, infortuni stagionali e modifiche al draft. Serve per individuare rapidamente eventi da testare, non sostituisce la telemetria reale.</p></article>`;
+ const draw=()=>{let list=[...entries],mode=$('#eventSort').value;if(mode==='avg-desc')list.sort((a,b)=>b.avg-a.avg);if(mode==='avg-asc')list.sort((a,b)=>a.avg-b.avg);if(mode==='spread')list.sort((a,b)=>b.spread-a.spread);$('#eventList').innerHTML=list.map(e=>`<article class="event"><div class="event-top"><h4>${e.index}. ${esc(e.title)}</h4><span class="event-score ${e.avg>0?'score-pos':e.avg<0?'score-neg':'score-zero'}">${e.avg>0?'+':''}${num(e.avg)}</span></div>${e.choices.map(c=>`<div class="choice"><div><b>${esc(c[0])}</b><span>${esc(c[1])}</span></div><strong class="${c[2]>0?'score-pos':c[2]<0?'score-neg':'score-zero'}">${c[2]>0?'+':''}${c[2]}</strong></div>`).join('')}</article>`).join('')};$('#eventSort').addEventListener('change',draw);draw();
+}
+function downloadCsv(filename,rows){const csv=rows.map(row=>row.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(';')).join('\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function exportClubs(){downloadCsv('fantaballa_bilanciamento_club.csv',[['club','giocatori','ovr_rosa','ovr_xi','portieri','difensori','centrocampisti','attaccanti','abbonati','vittorie_pct','pareggi_pct','sconfitte_pct','alert'],...clubRows.map(r=>[r.club.name,r.players.length,r.rosterAvg.toFixed(1),r.power,r.roles.P,r.roles.D,r.roles.C,r.roles.A,r.subs,r.win.toFixed(1),r.draw.toFixed(1),r.loss.toFixed(1),r.problems.join(', ')])])}
+function renderAll(){renderMetrics();renderOverview();renderClubs();renderNations();renderCoverage();renderEvents()}
+async function load(){
+ try{status('Caricamento database…','ok');const [c,p]=await Promise.all([fetch('data/club.json',{cache:'no-store'}),fetch('data/giocatori.json',{cache:'no-store'})]);if(!c.ok||!p.ok)throw new Error(`HTTP club ${c.status}, giocatori ${p.status}`);CLUBS=await c.json();PLAYERS=await p.json();if(!Array.isArray(CLUBS)||!Array.isArray(PLAYERS))throw new Error('Formato JSON non valido');prepareRows();renderAll();status(`Database caricato: ${CLUBS.length} club e ${PLAYERS.length} giocatori.`,'ok')}
+ catch(error){status(`Impossibile caricare i dati: ${error.message}. Apri la pagina attraverso il sito/server, non direttamente con file://.`,'error');console.error(error)}
+}
+$$('.tab').forEach(tab=>tab.onclick=()=>{$$('.tab').forEach(x=>x.classList.toggle('active',x===tab));$$('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${tab.dataset.view}`))});
+$('#reloadBtn').onclick=load;$('#simulateBtn').onclick=()=>{if(!CLUBS.length)return;prepareRows();renderAll();status('Simulazione ripetuta con un nuovo seed.','ok')};$('#exportBtn').onclick=exportClubs;
+load();
+})();
+</script>
+</body>
+</html>
