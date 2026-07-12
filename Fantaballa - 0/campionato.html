@@ -239,8 +239,10 @@
       display:inline-flex; padding:7px 12px; border-radius:999px; background:var(--camp-gold); color:#10243a;
       font-size:11px; font-weight:1000; letter-spacing:.14em; text-transform:uppercase; margin-bottom:10px;
     }
-    .season-setup-card h2{font-size:clamp(30px,4vw,52px); line-height:.95; margin-bottom:10px}
-    .season-setup-copy{max-width:880px; color:#564d40; font-weight:850; line-height:1.45; margin-bottom:16px}
+    .season-setup-card h2{font-size:clamp(30px,4vw,52px);line-height:.95;margin-bottom:10px;color:#10243a;text-shadow:none}
+    .season-setup-card>h3{color:#603b8d;font-size:clamp(21px,2.2vw,28px);letter-spacing:.02em;text-shadow:none}
+    .season-setup-card .field label{color:#5b4829}
+    .season-setup-copy{max-width:980px;color:#40392f;font-weight:850;line-height:1.5;margin-bottom:16px}
     .season-setup-tip{
       margin-top:14px; padding:12px 14px; border-radius:16px; background:linear-gradient(180deg,#fff6c8,#f1dd7a); color:#10243a;
       border:2px solid #e0c750; font-size:13px; font-weight:950; line-height:1.35;
@@ -2161,6 +2163,8 @@ const CURRENT_STATE_VERSION=10;
 const SAVE_BASE='fantaballa_campionato_v7';
 const LEGACY_SAVE_KEYS=['fantaballa_campionato_v1'];
 const ACTIVE_SLOT_KEY='fantaballa_campionato_active_slot';
+const SETUP_TEAM_NAME_KEY='fantaballa_campionato_team_name';
+const SETUP_COACH_NAME_KEY='fantaballa_campionato_coach_name';
 const SLOT_COUNT=3;
 let startupNotice='';
 let dataDiagnostics={fatal:[],warnings:[]};
@@ -2191,9 +2195,9 @@ const FORMATION_LAYOUTS={
  '4-3-1-2':[['ATT',34,13],['ATT',66,13],['COC',50,31],['CC',27,50],['CDC',50,58],['CC',73,50],['TS',12,68],['DC',32,78],['DC',68,78],['TD',88,68],['P',50,90]]
 };
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
-let PLAYERS=[];let CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;
+let PLAYERS=[];let CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),saveSlot:activeSaveSlot},phase:'setup',userClubId:'fantaballa-fc',teamName:'Fantaballa FC',coachName:'',formation:'4-3-3',draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),saveSlot:activeSaveSlot},phase:'setup',userClubId:'fantaballa-fc',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa FC'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
@@ -2450,7 +2454,8 @@ function clearMandatoryMidseasonPlayer(id){
 function normalizeCampionatoState(input){
  const next=input&&typeof input==='object'?input:freshState();
  next.userClubId=String(next.userClubId||'fantaballa-fc');
- if(!next.teamName)next.teamName=clubById(next.userClubId)?.name||'Fantaballa FC';
+ next.teamName=String(next.teamName||localStorage.getItem(SETUP_TEAM_NAME_KEY)||clubById(next.userClubId)?.name||'Fantaballa FC');
+ next.coachName=String(next.coachName||localStorage.getItem(SETUP_COACH_NAME_KEY)||'');
  if(!next.draft||typeof next.draft!=='object')next.draft=freshState().draft;
  next.draft.roster=Array.isArray(next.draft.roster)?next.draft.roster:[];
  const legacyDraftClubKey=String(next.draft.clubId||next.draft.nation||'');
@@ -2646,9 +2651,45 @@ function renderPlayerJersey(player,extra='',chemistryBonus=0){
  return `<span class="season-jersey-wrap ${sub?'subscriber':''} ${extra}" style="--nation-a:${pal.a};--nation-b:${pal.b};--nation-c:${pal.c};--nation-ink:${pal.ink}" title="OVR base ${Math.round(Number(player?.ovr)||0)} · Intesa attuale ${formatSignedIntesa(currentChem)}"><span class="season-jersey"><span class="season-jersey-number">${shownOvr}</span></span>${sub?'<span class="season-jersey-sub-star">★</span>':''}</span>`
 }
 
-function showSetup(){const userClub=activeUserClub(),userPal=clubPalette(userClub);screen.innerHTML=`<section class="panel season-setup-card"><div class="season-setup-kicker">Campionato del Ca***</div><h2>Crea la tua squadra</h2><div class="season-club-preview" style="--club-primary:${userPal.primary};--club-secondary:${userPal.secondary};--club-accent:${userPal.accent};--club-text:${userPal.text}"><span class="season-club-preview-badge">${esc(userClub.shortName||'FAN')}</span><div><small>Club controllato</small><b>${esc(userClub.name)}</b></div></div><p class="season-setup-copy">Stesso feeling grafico di Gary MEDel, ma con tutte le meccaniche del campionato: 11 titolari, 3 riserve, eventi, infortuni, squalifiche e draft di metà stagione. A ogni nuova stagione Fantaballa FC affronta 19 avversarie estratte casualmente dal database completo.</p><div class="setup-grid"><div class="field"><label>Nome squadra</label><input id="teamName" maxlength="32" value="${esc(state.teamName||userClub.name)}" placeholder="Fantaballa FC"></div><div class="field"><label>Allenatore</label><input id="coachName" maxlength="32" value="${esc(state.coachName)}" placeholder="Il tuo nome"></div></div><div class="season-setup-tip">Se il nome allenatore coincide con quello di un calciatore scelto, quel giocatore ottiene +10 OVR bonus di intesa.</div><h3 style="margin-top:20px">Scegli il modulo</h3><div class="season-formation-grid">${Object.keys(FORMATIONS).map(f=>`<button class="season-formation-btn ${state.formation===f?'active':''}" data-form="${f}">${f}<small>${esc(formationPositionSummary(f))}</small></button>`).join('')}</div><div class="season-setup-tip secondary"><b>32 club disponibili:</b> nel draft iniziale e nel mercato di metà stagione possono uscire tutti i club del database, anche quelli che non parteciperanno al campionato. Al termine del draft verranno sorteggiate 19 avversarie e il torneo resterà composto da 20 squadre per 38 giornate.</div><div class="season-setup-tip secondary"><b>Meccanica Gary MEDel:</b> estrai un club, scegli un giocatore e piazzalo esclusivamente in uno slot compatibile con la sua <code>Position</code>. Dopo gli 11 titolari drafterai anche 3 riserve.</div><button id="startDraft" class="btn primary season-start-btn">Inizia il draft Gary MEDel</button></section>`;
- document.querySelectorAll('[data-form]').forEach(b=>b.onclick=()=>{state.formation=b.dataset.form;save();showSetup()});
- document.getElementById('startDraft').onclick=()=>{state.teamName=document.getElementById('teamName').value.trim()||'Fantaballa FC';state.coachName=document.getElementById('coachName').value.trim()||'Mister';state.phase='draft';state.draft=freshState().draft;save();render()}
+function persistSetupIdentity(teamInput,coachInput,saveState=true){
+ const teamName=String(teamInput?.value??state.teamName??'').trim();
+ const coachName=String(coachInput?.value??state.coachName??'').trim();
+ state.teamName=teamName||'Fantaballa FC';
+ state.coachName=coachName;
+ try{
+   localStorage.setItem(SETUP_TEAM_NAME_KEY,state.teamName);
+   localStorage.setItem(SETUP_COACH_NAME_KEY,state.coachName);
+ }catch(error){console.warn('Preferenze squadra non salvate',error)}
+ if(saveState)save({skipBackup:true});
+}
+function scheduleSetupIdentitySave(teamInput,coachInput){
+ persistSetupIdentity(teamInput,coachInput,false);
+ clearTimeout(setupIdentitySaveTimer);
+ setupIdentitySaveTimer=setTimeout(()=>save({skipBackup:true}),220);
+}
+function showSetup(){
+ const userClub=activeUserClub(),userPal=clubPalette(userClub);
+ screen.innerHTML=`<section class="panel season-setup-card"><div class="season-setup-kicker">Campionato del Ca***</div><h2>Crea la tua squadra</h2><div class="season-club-preview" style="--club-primary:${userPal.primary};--club-secondary:${userPal.secondary};--club-accent:${userPal.accent};--club-text:${userPal.text}"><span class="season-club-preview-badge">${esc(userClub.shortName||'FAN')}</span><div><small>Club controllato</small><b>${esc(userClub.name)}</b></div></div><p class="season-setup-copy">Scegli 11 titolari e 3 riserve. Cerca poi di ottenere il miglior punteggio a fine stagione. Ma attento agli imprevisti, infortuni, squalifiche e draft di metà stagione!<br><b>Pronto a fare 0 vittorie su 38?</b></p><div class="setup-grid"><div class="field"><label>Nome squadra</label><input id="teamName" maxlength="32" value="${esc(state.teamName||localStorage.getItem(SETUP_TEAM_NAME_KEY)||userClub.name)}" placeholder="Fantaballa FC" autocomplete="organization"></div><div class="field"><label>Allenatore</label><input id="coachName" maxlength="32" value="${esc(state.coachName||localStorage.getItem(SETUP_COACH_NAME_KEY)||'')}" placeholder="Il tuo nome" autocomplete="name"></div></div><div class="season-setup-tip">Se il nome allenatore coincide con quello di un calciatore scelto, quel giocatore ottiene +10 OVR bonus di intesa.</div><h3 style="margin-top:20px">Scegli il modulo</h3><div class="season-formation-grid">${Object.keys(FORMATIONS).map(f=>`<button class="season-formation-btn ${state.formation===f?'active':''}" data-form="${f}">${f}<small>${esc(formationPositionSummary(f))}</small></button>`).join('')}</div><div class="season-setup-tip secondary"><b>32 club disponibili:</b> nel draft iniziale e nel mercato di metà stagione possono uscire tutti i club del database, anche quelli che non parteciperanno al campionato. Al termine del draft verranno sorteggiate 19 avversarie e il torneo resterà composto da 20 squadre per 38 giornate.</div><div class="season-setup-tip secondary"><b>Come funziona il draft:</b> spacchetta un club, scegli un giocatore e piazzalo esclusivamente in uno slot compatibile con la sua posizione. Attento ai panchinari! Quelli, anche se forti, non giocano se non c'è spazio!</div><button id="startDraft" class="btn primary season-start-btn">Inizia il draft</button></section>`;
+ const teamInput=document.getElementById('teamName');
+ const coachInput=document.getElementById('coachName');
+ [teamInput,coachInput].forEach(input=>input.addEventListener('input',()=>scheduleSetupIdentitySave(teamInput,coachInput)));
+ document.querySelectorAll('[data-form]').forEach(b=>b.onclick=()=>{
+   clearTimeout(setupIdentitySaveTimer);
+   persistSetupIdentity(teamInput,coachInput,false);
+   state.formation=b.dataset.form;
+   save({skipBackup:true});
+   showSetup();
+ });
+ document.getElementById('startDraft').onclick=()=>{
+   clearTimeout(setupIdentitySaveTimer);
+   persistSetupIdentity(teamInput,coachInput,false);
+   state.coachName=state.coachName||'Mister';
+   try{localStorage.setItem(SETUP_COACH_NAME_KEY,state.coachName)}catch{}
+   state.phase='draft';
+   state.draft=freshState().draft;
+   save();
+   render();
+ };
 }
 
 function clubCardRgb(color){
