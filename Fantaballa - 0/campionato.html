@@ -2200,6 +2200,63 @@
       }
     }
 
+  
+
+    /* Draft pack opening, rarity e reveal giocatori */
+    .season-candidate,.midseason-market-player{position:relative;isolation:isolate}
+    .season-rarity-badge{
+      display:inline-flex;align-items:center;justify-content:center;min-height:21px;padding:4px 7px;
+      border-radius:999px;font-size:8px;font-weight:1000;letter-spacing:.075em;line-height:1;
+      text-transform:uppercase;border:1px solid rgba(255,255,255,.45);white-space:nowrap;
+      box-shadow:0 2px 5px rgba(0,0,0,.14);color:#10243a;background:#eef1f4
+    }
+    .rarity-common .season-rarity-badge{background:#e8ecef;color:#33414f;border-color:#c3ccd4}
+    .rarity-bronze .season-rarity-badge{background:linear-gradient(180deg,#e5b37b,#9d5f2d);color:#281305;border-color:#f4c797}
+    .rarity-silver .season-rarity-badge{background:linear-gradient(180deg,#f7fbff,#aab8c5);color:#172534;border-color:#fff}
+    .rarity-gold .season-rarity-badge{background:linear-gradient(180deg,#fff3a5,#e2ad18);color:#352300;border-color:#fff1a1}
+    .rarity-elite .season-rarity-badge{background:linear-gradient(135deg,#7b4cb8,#2c5dd8);color:#fff;border-color:#d9c8ff}
+    .rarity-icon .season-rarity-badge{background:linear-gradient(135deg,#fff7ca,#d6a114,#7b4cb8);color:#2b1700;border-color:#fff6be}
+    .season-candidate.rarity-bronze{box-shadow:inset 5px 0 0 #ad6b32,0 4px 0 rgba(16,36,58,.11)}
+    .season-candidate.rarity-silver{box-shadow:inset 5px 0 0 #cad5df,0 4px 0 rgba(16,36,58,.11)}
+    .season-candidate.rarity-gold{box-shadow:inset 5px 0 0 #e5b521,0 4px 0 rgba(16,36,58,.11)}
+    .season-candidate.rarity-elite{box-shadow:inset 6px 0 0 #8b64d4,0 0 18px rgba(109,73,192,.18),0 4px 0 rgba(16,36,58,.12)}
+    .season-candidate.rarity-icon{box-shadow:inset 6px 0 0 #f1cb4c,0 0 23px rgba(231,188,51,.28),0 4px 0 rgba(16,36,58,.12)}
+    .season-candidate.rarity-elite::after,.season-candidate.rarity-icon::after,
+    .midseason-market-player.rarity-elite::after,.midseason-market-player.rarity-icon::after{
+      content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:3;
+      background:linear-gradient(112deg,transparent 15%,rgba(255,255,255,.48) 38%,transparent 61%);
+      transform:translateX(-135%);animation:rarityGlint 3.4s ease-in-out infinite
+    }
+    .season-candidate.pack-hidden{opacity:0!important;transform:translateY(18px) scale(.94)!important;filter:blur(4px)!important;pointer-events:none}
+    .season-candidate.pack-revealed,.midseason-market-player.pack-revealed{animation:draftPlayerReveal .58s cubic-bezier(.18,.82,.25,1.18) both}
+    .season-candidate.pack-revealed.rarity-elite,.season-candidate.pack-revealed.rarity-icon,.midseason-market-player.pack-revealed.rarity-elite,.midseason-market-player.pack-revealed.rarity-icon{animation:draftPlayerRevealStrong .72s cubic-bezier(.18,.82,.25,1.22) both}
+    .midseason-market-player.rarity-bronze{border-color:#ad6b32}
+    .midseason-market-player.rarity-silver{border-color:#aab8c5}
+    .midseason-market-player.rarity-gold{border-color:#e5b521}
+    .midseason-market-player.rarity-elite{border-color:#7b4cb8;box-shadow:0 0 16px rgba(123,76,184,.18)}
+    .midseason-market-player.rarity-icon{border-color:#d6a114;box-shadow:0 0 18px rgba(214,161,20,.24)}
+    .midseason-market-player .season-rarity-badge{margin-left:5px;vertical-align:middle}
+    @keyframes draftPlayerReveal{
+      0%{opacity:0;transform:translateY(18px) rotateX(35deg) scale(.92);filter:blur(5px)}
+      62%{opacity:1;transform:translateY(-3px) rotateX(0) scale(1.025);filter:blur(0)}
+      100%{opacity:1;transform:none;filter:none}
+    }
+    @keyframes draftPlayerRevealStrong{
+      0%{opacity:0;transform:translateY(22px) rotateY(-18deg) scale(.86);filter:blur(7px) brightness(1.6)}
+      55%{opacity:1;transform:translateY(-5px) rotateY(0) scale(1.045);filter:blur(0) brightness(1.22)}
+      100%{opacity:1;transform:none;filter:none}
+    }
+    @keyframes rarityGlint{0%,56%{transform:translateX(-135%)}78%,100%{transform:translateX(135%)}}
+    @media(max-width:860px){
+      .season-rarity-badge{font-size:7px;padding:3px 5px;min-height:18px;letter-spacing:.045em}
+      .season-candidate-meta{align-items:center}
+    }
+    @media(prefers-reduced-motion:reduce){
+      .season-candidate.pack-hidden{opacity:1!important;transform:none!important;filter:none!important;pointer-events:auto}
+      .season-candidate.pack-revealed,.season-candidate.pack-revealed.rarity-elite,.season-candidate.pack-revealed.rarity-icon{animation:none!important}
+      .season-candidate.rarity-elite::after,.season-candidate.rarity-icon::after,.midseason-market-player.rarity-elite::after,.midseason-market-player.rarity-icon::after{animation:none!important;display:none}
+    }
+
   </style>
 </head>
 <body>
@@ -2809,6 +2866,7 @@ async function playSeasonPackReveal(possibleClubIds,finalClubId,isReroll){
 }
 async function drawDraft(useReroll=false){
  if(draftRolling||draftComplete())return;
+ primeDraftAudio();
  const savedScrollY=window.scrollY;
  if(useReroll){
    if(state.draft.rerolls<=0)return toast('Re-roll terminati');
@@ -2824,6 +2882,7 @@ async function drawDraft(useReroll=false){
  state.draft.pendingPlayerId='';
  state.draft.candidates=[];
  save();
+ playDraftPackSound();
  document.querySelectorAll('#draftRollBtn,#draftRollBtnCenter').forEach(button=>{
    button.disabled=true;
    button.setAttribute('aria-busy','true');
@@ -2838,6 +2897,7 @@ async function drawDraft(useReroll=false){
    draftRolling=false;
    save();
    render();
+   animateDraftCandidateReveal(drawn);
    requestAnimationFrame(()=>window.scrollTo({top:savedScrollY,left:0,behavior:'auto'}));
  }catch(error){
    console.error('Errore apertura pack club campionato',error);
@@ -2917,6 +2977,86 @@ function renderSeasonBench(){
  return `<div class="season-bench"><div class="season-bench-head"><span>Panchina</span><span>${bench.length}/3 riserve</span></div><div class="season-bench-grid">${[1,2,3].map(i=>{const id=`bench-${i}`,entry=bench.find(r=>r.slotId===id),available=Boolean(pending&&!entry&&bench.length<3),sub=entry&&isSubscriber(entry.player);return `<button type="button" class="season-bench-slot ${entry?'filled':''} ${available?'available':''} ${sub?'subscriber':''}" data-bench-slot="${id}">${entry?`<span class="season-bench-player">${renderMiniAvatar(entry.player,'bench')}<span class="season-bench-copy"><b>${sub?'<span class="season-inline-sub-star">★</span>':''}${esc(entry.player.name)}</b><small>${esc(entry.player.Position)} · OVR ${esc(entry.player.ovr)}</small></span></span>`:`<span>Riserva ${i}</span><small>${available?'Clicca per mandare il giocatore selezionato in panchina':'Slot libero di panchina'}</small>`}</button>`}).join('')}</div></div>`
 }
 
+
+function draftRarityMeta(ovr){
+ const value=Number(ovr)||0;
+ if(value>=85)return {key:'icon',label:'Icona',sound:4};
+ if(value>=80)return {key:'elite',label:'Élite',sound:3};
+ if(value>=75)return {key:'gold',label:'Oro',sound:2};
+ if(value>=70)return {key:'silver',label:'Argento',sound:1};
+ if(value>=65)return {key:'bronze',label:'Bronzo',sound:0};
+ return {key:'common',label:'Comune',sound:0};
+}
+let draftAudioContext=null;
+function primeDraftAudio(){
+ try{
+   const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+   if(!AudioContextClass)return null;
+   if(!draftAudioContext)draftAudioContext=new AudioContextClass();
+   if(draftAudioContext.state==='suspended')draftAudioContext.resume().catch(()=>{});
+   return draftAudioContext;
+ }catch(error){return null}
+}
+function draftTone(frequency,start,duration,volume=.035,type='sine'){
+ const context=primeDraftAudio();
+ if(!context)return;
+ const oscillator=context.createOscillator();
+ const gain=context.createGain();
+ oscillator.type=type;
+ oscillator.frequency.setValueAtTime(frequency,start);
+ gain.gain.setValueAtTime(.0001,start);
+ gain.gain.exponentialRampToValueAtTime(Math.max(.0002,volume),start+.018);
+ gain.gain.exponentialRampToValueAtTime(.0001,start+duration);
+ oscillator.connect(gain);gain.connect(context.destination);
+ oscillator.start(start);oscillator.stop(start+duration+.025);
+}
+function playDraftPackSound(){
+ const context=primeDraftAudio();if(!context)return;
+ const now=context.currentTime+.02;
+ draftTone(150,now,.20,.025,'triangle');
+ draftTone(230,now+.12,.22,.028,'triangle');
+ draftTone(340,now+.25,.28,.032,'sine');
+}
+function playDraftRaritySound(ovr){
+ const context=primeDraftAudio();if(!context)return;
+ const tier=draftRarityMeta(ovr).sound;
+ if(tier<2)return;
+ const now=context.currentTime+.015;
+ if(tier===2){draftTone(523.25,now,.18,.03);draftTone(659.25,now+.12,.24,.032);return}
+ if(tier===3){draftTone(392,now,.18,.035,'triangle');draftTone(523.25,now+.11,.22,.038,'triangle');draftTone(783.99,now+.24,.34,.042,'sine');return}
+ draftTone(392,now,.20,.04,'triangle');draftTone(523.25,now+.09,.24,.042,'triangle');draftTone(659.25,now+.19,.28,.045,'triangle');draftTone(1046.5,now+.34,.48,.052,'sine');
+}
+function animateDraftCandidateReveal(players){
+ const cards=[...document.querySelectorAll('.season-candidate[data-candidate]')];
+ if(!cards.length)return;
+ const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ if(reduced)return;
+ cards.forEach(card=>card.classList.add('pack-hidden'));
+ void cards[0].offsetWidth;
+ cards.forEach((card,index)=>{
+   setTimeout(()=>{
+     card.classList.remove('pack-hidden');
+     card.classList.add('pack-revealed');
+     const ovr=Number(card.dataset.ovr)||0;
+     if(ovr>=75)playDraftRaritySound(ovr);
+     setTimeout(()=>card.classList.remove('pack-revealed'),900);
+   },120+index*105);
+ });
+}
+
+
+function animateMidseasonCandidateReveal(){
+ const cards=[...document.querySelectorAll('.midseason-market-player[data-market]')];
+ if(!cards.length||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+ cards.forEach(card=>{card.classList.add('pack-hidden');card.style.opacity='0';card.style.transform='translateY(14px) scale(.95)'});
+ void cards[0].offsetWidth;
+ cards.forEach((card,index)=>setTimeout(()=>{
+   card.classList.remove('pack-hidden');card.style.opacity='';card.style.transform='';card.classList.add('pack-revealed');
+   const ovr=Number(card.dataset.ovr)||0;if(ovr>=75)playDraftRaritySound(ovr);
+   setTimeout(()=>card.classList.remove('pack-revealed'),900);
+ },100+index*150));
+}
+
 function draftCandidateOvrStyle(ovr){
  const value=Math.max(40,Math.min(99,Number(ovr)||40));
  const ratio=Math.max(0,Math.min(1,(value-50)/49));
@@ -2943,7 +3083,7 @@ function renderDraftCandidates(){
  if(!state.draft.clubId)return '<div class="season-empty">Premi <b>Apri pack club</b>. Verranno mostrati tutti i giocatori compatibili appartenenti al club estratto. Più l’OVR è alto, più il box diventa scuro.</div>';
  const candidates=sortPlayersByRole(state.draft.candidates.map(playerById).filter(Boolean));
  if(!candidates.length)return '<div class="season-empty">Nessun giocatore valido in questo club. Usa il re-roll.</div>';
- return candidates.map((p,index)=>{const ovr=Math.max(0,Math.min(100,Number(p.ovr)||0));const sub=isSubscriber(p);const chemPreview=draftCandidateChemPreview(p);return `<button type="button" class="season-candidate ${sub?'subscriber':''} ${state.draft.pendingPlayerId===String(p.id)?'active':''}" data-candidate="${esc(p.id)}" style="${draftCandidateOvrStyle(p.ovr)}" aria-label="${esc(p.name)}, overall ${esc(p.ovr)}, intesa ${chemPreview}"><span class="season-candidate-rank">#${index+1}</span>${renderMiniAvatar(p)}<span class="season-candidate-body"><span class="season-candidate-name">${esc(p.name)}</span><span class="season-candidate-meter" aria-hidden="true"><i style="width:${ovr}%"></i></span><span class="season-candidate-meta"><span class="season-chip position">${esc(p.Position)}</span>${sub?'<span class="season-chip sub">ABBONATO</span>':''}<span class="season-chip chemistry ${benchDraftPhase()?'bench':''}">${benchDraftPhase()?'PAN':`${formatSignedIntesa(chemPreview)} INT`}</span></span></span><span class="season-chip ovr">${esc(p.ovr)}</span></button>`}).join('')
+ return candidates.map((p,index)=>{const ovr=Math.max(0,Math.min(100,Number(p.ovr)||0));const sub=isSubscriber(p);const chemPreview=draftCandidateChemPreview(p);const rarity=draftRarityMeta(p.ovr);return `<button type="button" class="season-candidate rarity-${rarity.key} ${sub?'subscriber':''} ${state.draft.pendingPlayerId===String(p.id)?'active':''}" data-candidate="${esc(p.id)}" data-ovr="${ovr}" style="${draftCandidateOvrStyle(p.ovr)}" aria-label="${esc(p.name)}, overall ${esc(p.ovr)}, rarità ${esc(rarity.label)}, intesa ${chemPreview}"><span class="season-candidate-rank">#${index+1}</span>${renderMiniAvatar(p)}<span class="season-candidate-body"><span class="season-candidate-name">${esc(p.name)}</span><span class="season-candidate-meter" aria-hidden="true"><i style="width:${ovr}%"></i></span><span class="season-candidate-meta"><span class="season-chip position">${esc(p.Position)}</span><span class="season-rarity-badge">${esc(rarity.label)}</span>${sub?'<span class="season-chip sub">ABBONATO</span>':''}<span class="season-chip chemistry ${benchDraftPhase()?'bench':''}">${benchDraftPhase()?'PAN':`${formatSignedIntesa(chemPreview)} INT`}</span></span></span><span class="season-chip ovr">${esc(p.ovr)}</span></button>`}).join('')
 }
 function renderRosterMini(){
  const rows=rosterPlayers();
@@ -4110,7 +4250,7 @@ function showMidseason(){
  const outgoingLocked=mandatoryActive||Boolean(ms.clubId)||Number(ms.drawsUsed)>0;
  const extraDrawsRemaining=Math.max(0,midseasonDrawLimit()-Number(ms.drawsUsed||0));
  const confirmedHtml=ms.changes.length?`<div class="midseason-confirmed-box"><div class="midseason-tip">Cambi già confermati</div>${renderMidseasonChanges(ms.changes)}</div>`:'';
- screen.innerHTML=`<section class="panel"><div class="label">Giro di boa</div><h2 class="midseason-title">Draft di metà campionato</h2><p class="midseason-copy">${flexible?`Puoi scegliere liberamente se fare <b>0, 1 o 2 cambi</b>.`:`In questa stagione devi effettuare <b>${ms.target}</b> ${ms.target===1?'cambio':'cambi'} per effetto degli eventi.`} Prima di confermare vedrai l’impatto previsto su OVR medio e Intesa. <b>Ogni cambio ha una sola estrazione del club.</b></p>${mandatoryActive?`<div class="midseason-draw-lock"><b>Scambio obbligatorio.</b> Devi sostituire ${esc(rosterEntry(mandatoryId)?.player?.name||'il giocatore indicato')} prima di poter chiudere il mercato.</div>`:''}${confirmedHtml}<div class="midseason-shell"><div class="midseason-panel"><div class="midseason-tip">1. scegli chi lascia la rosa</div><div class="midseason-count"><span class="chip">Fatti: ${ms.step}</span><span class="chip">Disponibili: ${remaining}</span>${flexible?'<span class="chip">Scelta libera 0–2</span>':''}</div><div class="outgoing-list">${sortRosterEntriesByRole(rosterPlayers()).map(entry=>{const currentOvr=midseasonDisplayedOvr(entry.player,entry);const sub=isSubscriber(entry.player);return `<button class="outgoing midseason-player-row ${ms.outgoingId===entry.playerId?'active':''} ${sub?'subscriber':''}" data-out="${esc(entry.playerId)}" ${outgoingLocked?'disabled':''}>${renderMiniAvatar(entry.player,'small')}<span class="midseason-player-copy"><b>${sub?'<span class="midseason-sub-star">★</span>':''}${esc(entry.player.name)}</b><small>${esc(entry.slot)} · ${esc(entry.player.Position)}${entry.bench?' · Panchina':''}</small></span><span class="midseason-current-ovr"><strong>${currentOvr}</strong><small>OVR attuale</small></span></button>`}).join('')}</div></div><div class="midseason-panel"><div class="midseason-tip">2. scegli il sostituto ${ms.target>1?`(${Math.min(ms.step+1,ms.target)}/${ms.target})`:''}</div><div class="midseason-choice-note">${selected?`Stai sostituendo <b>${esc(selected.player.name)}</b> nello slot <b>${esc(selected.slot)}</b>. L’estrazione del club è definitiva: scegli con attenzione uno dei candidati disponibili.`:flexible?'Puoi anche chiudere il mercato senza fare cambi oppure fermarti dopo il primo.':'Seleziona un giocatore dalla rosa per iniziare il cambio.'}</div>${selected?`<div class="midseason-draw-actions">${!ms.clubId?'<button id="drawMarket" class="btn gold">Estrai club</button>':midseasonCanDraw()?`<button id="drawMarket" class="btn gold">Re-roll imprevisto (${extraDrawsRemaining})</button>`:''}${!mandatoryActive&&(flexible||ms.step>0)?'<button id="finishMidseasonNow" class="btn secondary-strong">Chiudi il mercato</button>':''}</div>${ms.clubId?`<div class="midseason-draw-lock"><b>Estrazione bloccata.</b> Non puoi cambiare club né il giocatore in uscita. Puoi soltanto scegliere un altro candidato dello stesso club prima di confermare.</div>`:''}${ms.clubId?`<div class="midseason-summary-card" style="${teamCssVars({colors:marketClub()?.colorClub})}"><div class="need">Club estratto</div><div class="nation-name">${esc(marketClub()?.name||ms.clubId)}</div></div><div class="candidate-grid midseason-candidate-grid">${sortPlayersByRole(ms.candidates.map(playerById).filter(Boolean)).map(player=>{const id=String(player.id);const currentOvr=midseasonDisplayedOvr(player);const sub=isSubscriber(player);return `<button class="candidate midseason-market-player ${sub?'subscriber':''} ${ms.pendingCandidateId===String(id)?'active':''}" data-market="${id}">${renderMiniAvatar(player,'small')}<span class="midseason-player-copy"><span class="name">${sub?'<span class="midseason-sub-star">★</span>':''}${esc(player.name)}</span><span class="meta"><span class="chip">${esc(player.Position)}</span>${sub?'<span class="chip sub">ABB</span>':''}</span></span><span class="midseason-current-ovr"><strong>${currentOvr}</strong><small>OVR base</small></span></button>`}).join('')}</div>${renderMidseasonComparison(projection)}`:''}`:`<div class="midseason-actions">${flexible&&!mandatoryActive?'<button id="finishMidseasonNow" class="btn secondary-strong">Nessun cambio, continua</button>':''}</div>`}${flexible&&ms.step===1?'<div class="midseason-actions"><button id="finishAfterOne" class="btn primary">Concludi con 1 cambio</button></div>':''}</div></div></section>`;
+ screen.innerHTML=`<section class="panel"><div class="label">Giro di boa</div><h2 class="midseason-title">Draft di metà campionato</h2><p class="midseason-copy">${flexible?`Puoi scegliere liberamente se fare <b>0, 1 o 2 cambi</b>.`:`In questa stagione devi effettuare <b>${ms.target}</b> ${ms.target===1?'cambio':'cambi'} per effetto degli eventi.`} Prima di confermare vedrai l’impatto previsto su OVR medio e Intesa. <b>Ogni cambio ha una sola estrazione del club.</b></p>${mandatoryActive?`<div class="midseason-draw-lock"><b>Scambio obbligatorio.</b> Devi sostituire ${esc(rosterEntry(mandatoryId)?.player?.name||'il giocatore indicato')} prima di poter chiudere il mercato.</div>`:''}${confirmedHtml}<div class="midseason-shell"><div class="midseason-panel"><div class="midseason-tip">1. scegli chi lascia la rosa</div><div class="midseason-count"><span class="chip">Fatti: ${ms.step}</span><span class="chip">Disponibili: ${remaining}</span>${flexible?'<span class="chip">Scelta libera 0–2</span>':''}</div><div class="outgoing-list">${sortRosterEntriesByRole(rosterPlayers()).map(entry=>{const currentOvr=midseasonDisplayedOvr(entry.player,entry);const sub=isSubscriber(entry.player);return `<button class="outgoing midseason-player-row ${ms.outgoingId===entry.playerId?'active':''} ${sub?'subscriber':''}" data-out="${esc(entry.playerId)}" ${outgoingLocked?'disabled':''}>${renderMiniAvatar(entry.player,'small')}<span class="midseason-player-copy"><b>${sub?'<span class="midseason-sub-star">★</span>':''}${esc(entry.player.name)}</b><small>${esc(entry.slot)} · ${esc(entry.player.Position)}${entry.bench?' · Panchina':''}</small></span><span class="midseason-current-ovr"><strong>${currentOvr}</strong><small>OVR attuale</small></span></button>`}).join('')}</div></div><div class="midseason-panel"><div class="midseason-tip">2. scegli il sostituto ${ms.target>1?`(${Math.min(ms.step+1,ms.target)}/${ms.target})`:''}</div><div class="midseason-choice-note">${selected?`Stai sostituendo <b>${esc(selected.player.name)}</b> nello slot <b>${esc(selected.slot)}</b>. L’estrazione del club è definitiva: scegli con attenzione uno dei candidati disponibili.`:flexible?'Puoi anche chiudere il mercato senza fare cambi oppure fermarti dopo il primo.':'Seleziona un giocatore dalla rosa per iniziare il cambio.'}</div>${selected?`<div class="midseason-draw-actions">${!ms.clubId?'<button id="drawMarket" class="btn gold">Estrai club</button>':midseasonCanDraw()?`<button id="drawMarket" class="btn gold">Re-roll imprevisto (${extraDrawsRemaining})</button>`:''}${!mandatoryActive&&(flexible||ms.step>0)?'<button id="finishMidseasonNow" class="btn secondary-strong">Chiudi il mercato</button>':''}</div>${ms.clubId?`<div class="midseason-draw-lock"><b>Estrazione bloccata.</b> Non puoi cambiare club né il giocatore in uscita. Puoi soltanto scegliere un altro candidato dello stesso club prima di confermare.</div>`:''}${ms.clubId?`<div class="midseason-summary-card" style="${teamCssVars({colors:marketClub()?.colorClub})}"><div class="need">Club estratto</div><div class="nation-name">${esc(marketClub()?.name||ms.clubId)}</div></div><div class="candidate-grid midseason-candidate-grid">${sortPlayersByRole(ms.candidates.map(playerById).filter(Boolean)).map(player=>{const id=String(player.id);const currentOvr=midseasonDisplayedOvr(player);const sub=isSubscriber(player);const rarity=draftRarityMeta(currentOvr);return `<button class="candidate midseason-market-player rarity-${rarity.key} ${sub?'subscriber':''} ${ms.pendingCandidateId===String(id)?'active':''}" data-market="${id}" data-ovr="${currentOvr}">${renderMiniAvatar(player,'small')}<span class="midseason-player-copy"><span class="name">${sub?'<span class="midseason-sub-star">★</span>':''}${esc(player.name)} <span class="season-rarity-badge">${esc(rarity.label)}</span></span><span class="meta"><span class="chip">${esc(player.Position)}</span>${sub?'<span class="chip sub">ABB</span>':''}</span></span><span class="midseason-current-ovr"><strong>${currentOvr}</strong><small>OVR base</small></span></button>`}).join('')}</div>${renderMidseasonComparison(projection)}`:''}`:`<div class="midseason-actions">${flexible&&!mandatoryActive?'<button id="finishMidseasonNow" class="btn secondary-strong">Nessun cambio, continua</button>':''}</div>`}${flexible&&ms.step===1?'<div class="midseason-actions"><button id="finishAfterOne" class="btn primary">Concludi con 1 cambio</button></div>':''}</div></div></section>`;
  document.querySelectorAll('[data-out]').forEach(button=>button.onclick=()=>{
    if(mandatoryActive&&String(button.dataset.out)!==mandatoryId)return toast('Questo mercato richiede lo scambio obbligatorio del giocatore indicato.');
    if(ms.clubId||Number(ms.drawsUsed)>0)return toast('Dopo l’estrazione non puoi cambiare il giocatore in uscita.');
@@ -4130,6 +4270,7 @@ function showMidseason(){
  const cancel=document.getElementById('cancelMarketCandidate');if(cancel)cancel.onclick=cancelMarketCandidate;
 }
 function drawMarket(){
+ primeDraftAudio();
  const ms=state.midseason;
  const outgoing=rosterEntry(ms.outgoingId);
  if(!outgoing)return toast('Scegli prima il giocatore da sostituire.');
@@ -4145,9 +4286,11 @@ function drawMarket(){
  ms.clubId=pick(clubPool)||'';
  ms.candidates=shuffle(groups[ms.clubId]||[]).slice(0,4).map(player=>String(player.id));
  ms.pendingCandidateId='';
+ playDraftPackSound();
  ms.drawsUsed=Math.max(0,Number(ms.drawsUsed)||0)+1;
  save();
  render();
+ animateMidseasonCandidateReveal();
 }
 
 function selectMarketCandidate(id){
