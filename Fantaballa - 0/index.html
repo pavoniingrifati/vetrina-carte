@@ -204,6 +204,12 @@
     .award-player span { display:block; color:#7d745f; font-size:11px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .award-stat { min-width:34px; text-align:center; background:#2f2619; color:#fff; border-radius:12px; padding:5px 8px; font-size:15px; font-weight:900; }
     .event .player small { display:block; color:inherit; opacity:.72; font-size:11px; font-weight:800; margin-top:2px; }
+
+    @media (max-width:1120px) and (min-width:761px) {
+      .macro-mode-grid { grid-template-columns:repeat(2,minmax(0,1fr))!important; }
+      .macro-mode-card.season-real { grid-column:1 / -1!important; }
+    }
+
     @media (max-width:900px) { .awards-grid { grid-template-columns:1fr; } }
 
     .reroll-info { margin:-6px 0 12px; color:#6d665b; font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
@@ -5037,7 +5043,7 @@
       position:relative;
       z-index:1;
       display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
+      grid-template-columns:repeat(3,minmax(0,1fr));
       gap:16px;
     }
     .macro-mode-card {
@@ -5083,8 +5089,17 @@
       background-position:center center;
       background-repeat:no-repeat;
     }
+    .macro-mode-card.season-real {
+      color:#fff;
+      background:
+        radial-gradient(circle at 86% 18%,rgba(242,200,75,.42) 0 9%,transparent 10%),
+        repeating-linear-gradient(120deg,rgba(255,255,255,.075) 0 12px,transparent 12px 28px),
+        linear-gradient(115deg,#071522 0%,#123f68 50%,#0d6b4c 100%);
+      border:1px solid rgba(255,255,255,.18);
+    }
     .macro-mode-card.world-cup::after,
-    .macro-mode-card.season::after {
+    .macro-mode-card.season::after,
+    .macro-mode-card.season-real::after {
       display:none;
     }
     .macro-mode-card:disabled {
@@ -5114,6 +5129,11 @@
       border-color:#2d261b;
       color:#fff4c7;
     }
+    .macro-mode-card.season-real .macro-mode-card-label {
+      background:#f2c84b;
+      border-color:#f2c84b;
+      color:#10243a;
+    }
 
     .macro-mode-card.world-cup h2,
     .macro-mode-card.world-cup p,
@@ -5126,11 +5146,24 @@
     .macro-mode-card.season .macro-mode-card-action {
       text-shadow:0 1px 8px rgba(255,240,188,.18);
     }
+    .macro-mode-card.season-real h2,
+    .macro-mode-card.season-real p,
+    .macro-mode-card.season-real .macro-mode-card-action,
+    .macro-mode-card.season-real .macro-mode-card-label {
+      text-shadow:0 2px 10px rgba(0,0,0,.38);
+    }
     .macro-mode-card.world-cup p {
       color:rgba(255,255,255,.96);
     }
     .macro-mode-card.season p {
       color:#4e4638;
+    }
+    .macro-mode-card.season-real p {
+      color:rgba(255,255,255,.96);
+    }
+    .macro-mode-card.season-real h2 {
+      max-width:96%;
+      font-size:clamp(27px,3.2vw,44px);
     }
     .macro-mode-card h2 {
       margin:30px 0 10px;
@@ -5790,7 +5823,7 @@
         <div class="intro-kicker">Come si gioca</div>
         <h1 class="intro-title" id="introTitle">DIVENTA IL NUOVO CAMPIONE!</h1>
         <div class="intro-content-card intro-card-dynamic">
-          <p class="intro-text intro-playbook"><span>Costruisci il miglior XI usando te stesso come giocatore!</span><span>Poi gioca una delle modalità e vinci!</span><span>Scegli la World Cup 2026 oppure Campionato del Ca***. Una stagione di 38 partite con eventi improbabili.</span></p>
+          <p class="intro-text intro-playbook"><span>Costruisci il miglior XI usando te stesso come giocatore!</span><span>Poi gioca una delle modalità e vinci!</span><span>Scegli la World Cup 2026, Campionato del Ca*** oppure Campionato del Ca*** REAL con club e calciatori della stagione 2025/26.</span></p>
         </div>
         <div class="intro-actions">
           <button class="intro-btn" type="button" data-intro-close>Salta</button>
@@ -5994,7 +6027,7 @@
 
     <section class="macro-mode-screen" id="macroModeScreen" aria-label="Scegli la modalità di gioco">
       <div class="macro-mode-grid">
-        <button class="macro-mode-card world-cup" id="worldCupMacroBtn" type="button" onclick="enterWorldCupMode()">
+        <button class="macro-mode-card world-cup" id="worldCupMacroBtn" type="button">
           <span class="macro-mode-card-label">Disponibile ora</span>
           <h2>World Cup 2026</h2>
           <p>Draft, fase a gironi ed eliminazione diretta nelle modalità Classica, Gary MEDel e HARDa Turan.</p>
@@ -6005,6 +6038,12 @@
           <h2>Campionato del Ca***</h2>
           <p>Una stagione completa da 38 partite con panchina, eventi, decisioni e draft di metà campionato.</p>
           <span class="macro-mode-card-action">Entra nel campionato →</span>
+        </button>
+        <button class="macro-mode-card season-real" id="seasonRealMacroBtn" type="button" aria-label="Gioca a Campionato del Ca*** REAL" onclick="window.location.href='campionato-real.html'">
+          <span class="macro-mode-card-label">Disponibile ora · REAL</span>
+          <h2>Campionato del Ca*** REAL</h2>
+          <p>Draft e stagione da 38 giornate con 20 club e 455 calciatori reali della stagione 2025/26.</p>
+          <span class="macro-mode-card-action">Gioca al Campionato REAL →</span>
         </button>
       </div>
     </section>
@@ -6241,6 +6280,27 @@
     </div>
   </div>
 <script>
+  (() => {
+    // Runtime privato: stato del draft e funzioni casuali non sono esposti in window.
+    const nativeFetch = window.fetch.bind(window);
+    const nativeCrypto = window.crypto;
+    const nativeGetRandomValues = nativeCrypto && typeof nativeCrypto.getRandomValues === 'function'
+      ? nativeCrypto.getRandomValues.bind(nativeCrypto)
+      : null;
+
+    // Nomi-esca non modificabili: bloccano gli snippet che provano a sovrascrivere
+    // window.randomItem o a leggere la lista interna NATIONS.
+    for (const protectedName of ['randomItem', 'NATIONS']) {
+      try {
+        if (!Object.prototype.hasOwnProperty.call(window, protectedName)) {
+          Object.defineProperty(window, protectedName, {
+            value:undefined, writable:false, configurable:false, enumerable:false
+          });
+        }
+      } catch (error) {
+        /* Il gioco continua comunque nel runtime privato. */
+      }
+    }
 
     const MAX_PICKS = 11;
     const STORAGE_KEY = 'ruota-nazionali-draft-v6-worldcup';
@@ -6341,7 +6401,7 @@
     let GOAL_COMMENTARY = DEFAULT_GOAL_COMMENTARY;
 
     async function loadGoalCommentary() {
-      const response = await fetch('data/cronaca-gol.json', { cache:'no-store' });
+      const response = await nativeFetch('data/cronaca-gol.json', { cache:'no-store' });
       if (!response.ok) throw new Error(`Impossibile caricare data/cronaca-gol.json (${response.status})`);
       const data = await response.json();
       if (!data || !data.positions || !data.special || !data.result || !data.milestones) {
@@ -6352,7 +6412,7 @@
 
 
     async function loadPlayersDatabase() {
-      const response = await fetch('data/giocatori.json', { cache:'no-store' });
+      const response = await nativeFetch('data/giocatori.json', { cache:'no-store' });
       if (!response.ok) throw new Error(`Impossibile caricare data/giocatori.json (${response.status})`);
       const data = await response.json();
       if (Array.isArray(data)) return data;
@@ -6487,8 +6547,8 @@
     async function boot() {
       try {
         const rawPlayers = await loadPlayersDatabase();
-        PLAYERS = normalizePlayersData(rawPlayers);
-        NATIONS = [...new Set(PLAYERS.map(p => p.nation))].sort((a,b) => a.localeCompare(b,'it'));
+        PLAYERS = Object.freeze(normalizePlayersData(rawPlayers).map(player => Object.freeze(player)));
+        NATIONS = Object.freeze([...new Set(PLAYERS.map(p => p.nation))].sort((a,b) => a.localeCompare(b,'it')));
         selected = migrateSelectedSlots(loadSelected());
       } catch (err) {
         console.error('Errore database giocatori', err);
@@ -6864,7 +6924,20 @@
     function saveSelected() { safeSet(STORAGE_KEY, JSON.stringify(selected)); }
     function selectedIds() { return new Set(selected.map(p => String(p.id))); }
     function selectedSlotIds() { return new Set(selected.map(p => String(p.slotId))); }
-    function randomItem(items) { return items[Math.floor(Math.random() * items.length)]; }
+    function secureRandomIndex(length) {
+      const size = Number(length);
+      if (!Number.isInteger(size) || size <= 0) return -1;
+      if (!nativeGetRandomValues) return Math.floor(Math.random() * size);
+      const range = 0x100000000;
+      const limit = range - (range % size);
+      const buffer = new Uint32Array(1);
+      do { nativeGetRandomValues(buffer); } while (buffer[0] >= limit);
+      return buffer[0] % size;
+    }
+    function randomItem(items) {
+      if (!Array.isArray(items) || !items.length) return undefined;
+      return items[secureRandomIndex(items.length)];
+    }
     function shuffleCopy(items) {
       const copy = [...items];
       for (let i = copy.length - 1; i > 0; i -= 1) {
@@ -8333,7 +8406,7 @@
       setVictorySendStatus('Salvataggio in classifica in corso...', '');
 
       try {
-        await fetch(VICTORY_ENDPOINT.trim(), {
+        await nativeFetch(VICTORY_ENDPOINT.trim(), {
           method:'POST',
           mode:'no-cors',
           headers:{ 'Content-Type':'text/plain;charset=utf-8' },
@@ -8513,6 +8586,7 @@
     function showToast(message) { els.toast.textContent = message; els.toast.classList.add('show'); window.clearTimeout(showToast.timer); showToast.timer = window.setTimeout(() => els.toast.classList.remove('show'), 2200); }
     function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '"':'&quot;' }[ch])); }
     function escapeAttr(value) { return escapeHtml(value); }
+  })();
   </script>
 
 
