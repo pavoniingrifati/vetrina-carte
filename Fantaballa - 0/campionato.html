@@ -49,6 +49,15 @@
     .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.tab{border:0;border-radius:999px;background:#e8dfc8;color:var(--navy);padding:9px 13px;font-weight:1000}.tab.active{background:var(--navy);color:#fff}.tab-view{display:none}.tab-view.active{display:block}
     table{width:100%;border-collapse:collapse;background:#fff;border-radius:16px;overflow:hidden}th,td{padding:9px 8px;border-bottom:1px solid #e2dac5;text-align:right;font-size:13px;font-weight:800}th{background:#10243a;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.08em}th:first-child,td:first-child{text-align:left}.us-row td{background:#fff3b2;font-weight:1000}.calendar{display:grid;gap:8px}.calendar-row{display:grid;grid-template-columns:70px 1fr auto;gap:10px;align-items:center;padding:10px;border-radius:14px;background:#fff;border:1px solid #ddd1ad}.calendar-row.current{border:3px solid var(--gold)}.calendar-row.done{opacity:.72}
     .match-result{padding:14px;border-radius:18px;background:#10243a;color:#fff}.score{font-size:52px;font-weight:1000;text-align:center}.goals{display:grid;gap:7px;margin-top:12px}.goal-line{padding:9px;border-radius:12px;background:rgba(255,255,255,.1)}
+    .result-scorers{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:10px 0 14px}
+    .result-scorers-team{min-width:0;padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16)}
+    .result-scorers-team>strong{display:block;margin-bottom:7px;color:#f0da69;font-size:12px;font-weight:1000;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .result-scorer-line{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:4px 0;border-top:1px solid rgba(255,255,255,.1);font-size:14px;font-weight:900}
+    .result-scorer-line:first-of-type{border-top:0}
+    .result-scorer-line span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .result-scorer-line small{flex:0 0 auto;color:#fff7cf;font-size:12px;font-weight:1000}
+    .result-scorers-empty{display:block;color:rgba(255,255,255,.7);font-size:12px;font-weight:800}
+    @media(max-width:560px){.result-scorers{grid-template-columns:1fr}.result-scorers-team{padding:10px}.result-scorer-line{font-size:13px}}
     .mid-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.outgoing-list{display:grid;gap:7px}.outgoing{border:2px solid #c8b98a;border-radius:14px;background:#fff;padding:10px;text-align:left}.outgoing.active{border-color:var(--red);background:#ffe7df}
     .final-hero{text-align:center;padding:28px;border-radius:24px;background:linear-gradient(135deg,#10243a,#214f77);color:#fff}.final-position{font-size:clamp(72px,13vw,140px);line-height:.8;font-weight:1000;color:#ffe96c}.final-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
     .modal-backdrop{position:fixed;inset:0;background:rgba(4,12,20,.76);display:grid;place-items:center;padding:18px;z-index:50}.modal{width:min(800px,100%);max-height:90vh;overflow:auto;background:#fffaf0;border:4px solid var(--gold);border-radius:28px;padding:22px;box-shadow:0 25px 80px rgba(0,0,0,.4)}.sim{height:12px;border-radius:999px;background:#ded5bc;overflow:hidden}.sim span{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--gold));animation:sim 1.2s linear forwards}@keyframes sim{from{width:0}to{width:100%}}
@@ -4194,6 +4203,17 @@ function postMatch(){
  }else if(state.matchday>=38){state.phase='finished';}
  else{prepareEvent();}
 }
+function renderResultScorers(goals,teamName){
+ const grouped=new Map();
+ (Array.isArray(goals)?goals:[]).forEach(goal=>{
+   const name=String(goal?.player||'Marcatore');
+   if(!grouped.has(name))grouped.set(name,[]);
+   grouped.get(name).push(Number(goal?.minute)||0);
+ });
+ const rows=[...grouped.entries()].map(([name,minutes])=>`<div class="result-scorer-line"><span>⚽ ${esc(name)}</span><small>${minutes.sort((a,b)=>a-b).map(minute=>`${minute}′`).join(', ')}</small></div>`).join('');
+ return `<div class="result-scorers-team"><strong>${esc(teamName)}</strong>${rows||'<span class="result-scorers-empty">Nessun marcatore</span>'}</div>`;
+}
+
 function showResultModal(){
  const result=state.lastResult;
  const userTeam=teamById(USER_ID)||{id:USER_ID,name:state.teamName,colors:activeUserClub().colorClub};
@@ -4214,7 +4234,8 @@ function showResultModal(){
  const mvpPlayer=result.mvpId?statPlayerInfo(result.mvpId):null;
  const mvpTeam=result.mvpTeamId?teamById(result.mvpTeamId):null;
  const mvpLine=mvpPlayer?`<div class="match-mvp" style="${teamCssVars(mvpTeam)}">${renderMiniAvatar(mvpPlayer,'small')}<div><span>⭐ MVP della partita</span><b>${esc(mvpPlayer.name)}</b><small>${mvpTeam?`${teamColorDot(mvpTeam)}${esc(mvpTeam.name)}`:''}</small></div></div>`:'';
- modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${result.gf}–${result.ga}</div>${redLine}${suspensionLine}${forcedLine}${pointsLine}${injuryLine}${subscriberLine}<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>${mvpLine}</div><button id="closeResult" class="btn primary" style="margin-top:14px">Continua</button></div></div>`;
+ const scorersLine=`<div class="result-scorers">${renderResultScorers(result.goals,state.teamName)}${renderResultScorers(result.opponentGoals,result.opponent)}</div>`;
+ modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${result.gf}–${result.ga}</div>${scorersLine}${redLine}${suspensionLine}${forcedLine}${pointsLine}${injuryLine}${subscriberLine}<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>${mvpLine}</div><button id="closeResult" class="btn primary" style="margin-top:14px">Continua</button></div></div>`;
  document.getElementById('closeResult').onclick=()=>{modalRoot.innerHTML='';render()};
 }
 
