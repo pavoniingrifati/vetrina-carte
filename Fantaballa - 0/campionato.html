@@ -2012,7 +2012,81 @@
     }
 
 
-  </style>
+  
+
+    /* MOBILE: colori sociali coerenti con desktop */
+    @media(max-width:760px){
+      /* riepilogo della squadra: fondo chiaro, doppia fascia coi colori sociali */
+      .season-overview-panel .season-strip .stat{
+        position:relative;
+        overflow:hidden;
+        background:#fffdf8!important;
+        border-color:var(--team-accent)!important;
+        box-shadow:inset 0 5px 0 var(--team-primary),inset 0 9px 0 var(--team-secondary),0 4px 10px rgba(16,36,58,.08)!important;
+      }
+      .season-overview-panel .season-strip .stat b{color:#10243a!important}
+      .season-overview-panel .season-strip .stat span{color:#594c38!important}
+
+      /* le due squadre della prossima partita mantengono SEMPRE la palette del club */
+      .season-match-panel .next-team-card{
+        background:linear-gradient(145deg,var(--team-primary) 0 58%,var(--team-secondary) 58% 100%)!important;
+        color:var(--team-text)!important;
+        border-color:var(--team-accent)!important;
+        box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 7px 16px rgba(16,36,58,.18)!important;
+      }
+      .season-match-panel .next-team-card::before{
+        content:"";
+        position:absolute;
+        inset:0 auto 0 0;
+        width:7px;
+        background:var(--team-accent);
+        opacity:1;
+      }
+      .season-match-panel .next-team-card .team-name,
+      .season-match-panel .next-team-card .subline{color:var(--team-text)!important}
+      .season-match-panel .next-team-colors{background:var(--team-accent)!important;opacity:.22!important}
+
+      /* classifica: ogni squadra ha una fascia con i propri colori, non una card scura generica */
+      .season-table-scroll tbody tr td:first-child{
+        border-left:6px solid var(--team-primary)!important;
+        box-shadow:inset 0 4px 0 var(--team-secondary),7px 0 10px rgba(16,36,58,.08)!important;
+      }
+      .season-table-scroll tbody tr td:first-child .team-color-dot{
+        width:17px!important;
+        height:17px!important;
+        border-color:var(--team-accent)!important;
+      }
+      .season-table-scroll tbody tr.us-row td:first-child{
+        outline:2px solid var(--team-accent);
+        outline-offset:-2px;
+      }
+
+      /* calendario: pillole chiare con doppia fascia sociale */
+      .calendar-team{
+        position:relative;
+        padding:5px 7px 5px 10px;
+        border-radius:9px;
+        background:#fffdf8;
+        border:1px solid var(--team-accent);
+        box-shadow:inset 4px 0 0 var(--team-primary),inset 7px 0 0 var(--team-secondary);
+      }
+      .calendar-team .team-color-dot{border-color:var(--team-accent)!important}
+
+      /* pannello avversario: base chiara e fascia sociale evidente */
+      .season-opponent-panel{
+        position:relative;
+        overflow:hidden;
+        background:linear-gradient(180deg,var(--team-primary) 0 7px,var(--team-secondary) 7px 12px,#fffdf8 12px 100%)!important;
+        border-color:var(--team-accent)!important;
+        color:#10243a!important;
+        box-shadow:0 9px 24px rgba(17,22,28,.14)!important;
+      }
+      .season-opponent-panel .label{margin-top:5px}
+      .season-opponent-panel h3,
+      .season-opponent-panel summary,
+      .season-opponent-panel .opponent-roster-row{color:#10243a!important}
+    }
+</style>
 </head>
 <body>
 <div class="app">
@@ -3173,7 +3247,7 @@ function renderOpponentRoster(team){
 function showSeason(){
  prepareEvent();
  const fx=userFixture(),opp=teamById(fx.home===USER_ID?fx.away:fx.home),userTeam=teamById(USER_ID)||{id:USER_ID,name:state.teamName,clubId:state.userClubId,colors:activeUserClub().colorClub},homeTeam=teamById(fx.home),awayTeam=teamById(fx.away),standing=userStanding(),rank=sortedTable().findIndex(x=>x.id===USER_ID)+1;
- screen.innerHTML=`<section class="panel season-overview-panel"><div class="season-strip"><div class="stat"><b>${state.matchday+1}</b><span>Giornata</span></div><div class="stat"><b>${rank}°</b><span>Posizione</span></div><div class="stat"><b>${standing.pts}</b><span>Punti</span></div><div class="stat"><b>${standing.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${standing.ga}</b><span>Gol subiti</span></div></div></section><div class="dashboard-grid season-dashboard-grid"><div class="season-main-column"><section class="panel season-match-panel"><div class="label">Prossima partita</div><div class="next-match"><div class="next-team-card" style="${teamCssVars(homeTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(homeTeam?.name||state.teamName)}px" title="${esc(homeTeam?.name||state.teamName)}">${esc(homeTeam?.name||state.teamName)}</div><div class="subline">${fx.home===USER_ID?'Casa':'Avversario'}</div></div><div class="versus">VS</div><div class="next-team-card" style="${teamCssVars(awayTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(awayTeam?.name||state.teamName)}px" title="${esc(awayTeam?.name||state.teamName)}">${esc(awayTeam?.name||state.teamName)}</div><div class="subline">${fx.away===USER_ID?'Trasferta':'Avversario'}</div></div></div><div style="margin-top:14px">${renderEvent()}</div><div style="margin-top:14px"><button id="playRound" class="btn primary" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>Gioca la giornata ${state.matchday+1}</button></div></section><section class="panel season-tabs-panel"><div class="tabs"><button class="tab active" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="roster">Rosa</button><button class="tab" data-tab="stats">Statistiche</button></div><div id="tab-table" class="tab-view active">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-roster" class="tab-view">${renderSeasonRosterField()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div></section></div><aside class="season-sidebar"><section class="panel season-availability-panel"><div class="label">Indisponibili</div><h3>Gestione formazione</h3>${renderAvailability()}<p style="font-size:12px"><b>Squalificato:</b> sostituzione automatica. <b>Infortunato:</b> può giocare con -20 Intesa oppure essere sostituito. Panchinaro fuori ruolo: -10 Intesa.</p></section><section class="panel season-lineup-panel"><div class="label">Formazione effettiva</div>${renderResolvedLineup()}</section><section class="panel opponent-club-panel season-opponent-panel" style="${teamCssVars(opp)}"><div class="label">Avversario reale</div><h3>${teamColorDot(opp)}${esc(opp.name)}</h3>${seasonRuleSummary()}${renderOpponentRoster(opp)}</section></aside></div>`;
+ screen.innerHTML=`<section class="panel season-overview-panel" style="${teamCssVars(userTeam)}"><div class="season-strip"><div class="stat"><b>${state.matchday+1}</b><span>Giornata</span></div><div class="stat"><b>${rank}°</b><span>Posizione</span></div><div class="stat"><b>${standing.pts}</b><span>Punti</span></div><div class="stat"><b>${standing.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${standing.ga}</b><span>Gol subiti</span></div></div></section><div class="dashboard-grid season-dashboard-grid"><div class="season-main-column"><section class="panel season-match-panel"><div class="label">Prossima partita</div><div class="next-match"><div class="next-team-card" style="${teamCssVars(homeTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(homeTeam?.name||state.teamName)}px" title="${esc(homeTeam?.name||state.teamName)}">${esc(homeTeam?.name||state.teamName)}</div><div class="subline">${fx.home===USER_ID?'Casa':'Avversario'}</div></div><div class="versus">VS</div><div class="next-team-card" style="${teamCssVars(awayTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(awayTeam?.name||state.teamName)}px" title="${esc(awayTeam?.name||state.teamName)}">${esc(awayTeam?.name||state.teamName)}</div><div class="subline">${fx.away===USER_ID?'Trasferta':'Avversario'}</div></div></div><div style="margin-top:14px">${renderEvent()}</div><div style="margin-top:14px"><button id="playRound" class="btn primary" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>Gioca la giornata ${state.matchday+1}</button></div></section><section class="panel season-tabs-panel"><div class="tabs"><button class="tab active" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="roster">Rosa</button><button class="tab" data-tab="stats">Statistiche</button></div><div id="tab-table" class="tab-view active">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-roster" class="tab-view">${renderSeasonRosterField()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div></section></div><aside class="season-sidebar"><section class="panel season-availability-panel"><div class="label">Indisponibili</div><h3>Gestione formazione</h3>${renderAvailability()}<p style="font-size:12px"><b>Squalificato:</b> sostituzione automatica. <b>Infortunato:</b> può giocare con -20 Intesa oppure essere sostituito. Panchinaro fuori ruolo: -10 Intesa.</p></section><section class="panel season-lineup-panel"><div class="label">Formazione effettiva</div>${renderResolvedLineup()}</section><section class="panel opponent-club-panel season-opponent-panel" style="${teamCssVars(opp)}"><div class="label">Avversario reale</div><h3>${teamColorDot(opp)}${esc(opp.name)}</h3>${seasonRuleSummary()}${renderOpponentRoster(opp)}</section></aside></div>`;
  document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>resolveDecision(Number(b.dataset.choice)));
  document.querySelectorAll('[data-injured]').forEach(b=>b.onclick=()=>{const id=b.dataset.injured;state.playInjured[id]=!state.playInjured[id];save();render()});
  document.getElementById('playRound').onclick=playRound;
@@ -3206,8 +3280,8 @@ function renderResolvedLineup(){
  const lineup=resolveLineup();
  return `<div class="resolved-lineup-list">${lineup.map(entry=>{const player=entry.player||{};const fx=lineupEffects(entry,lineup);const sub=isSubscriber(player);const finalOvr=Math.max(1,Math.round((Number(player.ovr)||0)+fx.total));return `<div class="resolved-player-card ${sub?'subscriber-card':''}"><span class="slot-code">${esc(entry.slot)}</span>${renderMiniAvatar(player,'small')}<div class="resolved-main"><div class="resolved-name-line"><b>${esc(player.name)}</b>${sub?'<span class="resolved-tag-sub">★ ABB</span>':''}</div><span class="resolved-meta">${entry.replaces?`Al posto di ${esc(entry.replaces)}`:`${esc(player.nation)} · ${esc(player.Position)}`}</span>${fx.effects.length?`<div class="resolved-effects">${fx.effects.map(effect=>`<span class="resolved-effect ${effect.type}">${esc(effect.label)}</span>`).join('')}</div>`:'<div class="resolved-effects"><span class="resolved-effect neutral">Nessun bonus o malus</span></div>'}</div><div class="resolved-ovr-col"><span class="chip ovr">${finalOvr}</span><span class="resolved-total">OVR finale</span></div></div>`}).join('')}</div>`
 }
-function renderTable(){const rows=sortedTable();return `<div class="season-table-scroll" role="region" aria-label="Classifica del campionato" tabindex="0"><table><thead><tr><th>Squadra</th><th>PG</th><th>V</th><th>N</th><th>P</th><th>GF</th><th>GS</th><th>DR</th><th>Pt</th></tr></thead><tbody>${rows.map((r,i)=>{const team=teamById(r.id);return `<tr class="${r.id===USER_ID?'us-row':''}"><td><span class="standing-team">${teamColorDot(team)}<span>${i+1}. ${esc(r.name)}</span></span></td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}</td><td>${r.ga}</td><td>${r.gf-r.ga}</td><td>${r.pts}</td></tr>`}).join('')}</tbody></table></div>`}
-function renderCalendar(){return `<div class="calendar">${state.schedule.map((rd,i)=>{const fx=rd.find(m=>m.home===USER_ID||m.away===USER_ID),home=teamById(fx.home),away=teamById(fx.away),hist=state.history[i];return `<div class="calendar-row ${i===state.matchday?'current':''} ${i<state.matchday?'done':''}"><b>G ${i+1}</b><span class="calendar-clubs"><span class="calendar-team">${teamColorDot(home)}<span>${esc(home?.name||state.teamName)}</span></span><em>–</em><span class="calendar-team">${teamColorDot(away)}<span>${esc(away?.name||state.teamName)}</span></span></span><strong>${hist?`${hist.gf}-${hist.ga}`:'-'}</strong></div>`}).join('')}</div>`}
+function renderTable(){const rows=sortedTable();return `<div class="season-table-scroll" role="region" aria-label="Classifica del campionato" tabindex="0"><table><thead><tr><th>Squadra</th><th>PG</th><th>V</th><th>N</th><th>P</th><th>GF</th><th>GS</th><th>DR</th><th>Pt</th></tr></thead><tbody>${rows.map((r,i)=>{const team=teamById(r.id);return `<tr class="${r.id===USER_ID?'us-row':''}" style="${teamCssVars(team)}"><td><span class="standing-team">${teamColorDot(team)}<span>${i+1}. ${esc(r.name)}</span></span></td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}</td><td>${r.ga}</td><td>${r.gf-r.ga}</td><td>${r.pts}</td></tr>`}).join('')}</tbody></table></div>`}
+function renderCalendar(){return `<div class="calendar">${state.schedule.map((rd,i)=>{const fx=rd.find(m=>m.home===USER_ID||m.away===USER_ID),home=teamById(fx.home),away=teamById(fx.away),hist=state.history[i];return `<div class="calendar-row ${i===state.matchday?'current':''} ${i<state.matchday?'done':''}"><b>G ${i+1}</b><span class="calendar-clubs"><span class="calendar-team" style="${teamCssVars(home)}">${teamColorDot(home)}<span>${esc(home?.name||state.teamName)}</span></span><em>–</em><span class="calendar-team" style="${teamCssVars(away)}">${teamColorDot(away)}<span>${esc(away?.name||state.teamName)}</span></span></span><strong>${hist?`${hist.gf}-${hist.ga}`:'-'}</strong></div>`}).join('')}</div>`}
 function renderStats(){const goals=Object.entries(state.stats.goals).sort((a,b)=>b[1]-a[1]).slice(0,10);const assists=Object.entries(state.stats.assists).sort((a,b)=>b[1]-a[1]).slice(0,10);return `<div class="setup-grid"><div><h3>Marcatori</h3>${goals.length?goals.map(([id,n],i)=>`<p><b>${i+1}. ${esc((playerById(id)||{name:id}).name)}</b> — ${n}</p>`).join(''):'<p>Nessun gol.</p>'}</div><div><h3>Assist</h3>${assists.length?assists.map(([id,n],i)=>`<p><b>${i+1}. ${esc((playerById(id)||{name:id}).name)}</b> — ${n}</p>`).join(''):'<p>Nessun assist.</p>'}</div></div>`}
 function poisson(lambda){let L=Math.exp(-lambda),p=1,k=0;do{k++;p*=Math.random()}while(p>L&&k<12);return k-1}
 function simulateScore(powerA,powerB,homeAdv=0){const la=clamp(1.25+(powerA-powerB)/18+homeAdv,.15,4.5),lb=clamp(1.15+(powerB-powerA)/18-homeAdv,.15,4.5);return[poisson(la),poisson(lb)]}
