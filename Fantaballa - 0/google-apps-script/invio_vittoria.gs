@@ -173,6 +173,25 @@ function jsOutput_(callback, data) {
     .setMimeType(ContentService.MimeType.JAVASCRIPT);
 }
 
+function iframeOutput_(data, requestId) {
+  const safeRequestId = String(requestId || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  const payload = JSON.stringify({
+    type:'fantaballa-classifica-response-v1',
+    requestId:safeRequestId,
+    data:data
+  })
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+  const html = '<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex"></head><body>' +
+    '<script>parent.postMessage(' + payload + ', "*");<\/script></body></html>';
+  return HtmlService
+    .createHtmlOutput(html)
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
 function doPost(e) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -252,6 +271,9 @@ function doGet(e) {
     aggiornato_il: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm'),
     classifica: classifica
   };
-  const callback = e && e.parameter && e.parameter.callback;
+  const params = e && e.parameter ? e.parameter : {};
+  const transport = String(params.transport || '').toLowerCase();
+  if (transport === 'iframe') return iframeOutput_(data, params.requestId || '');
+  const callback = params.callback;
   return callback ? jsOutput_(callback, data) : jsonOutput_(data);
 }
