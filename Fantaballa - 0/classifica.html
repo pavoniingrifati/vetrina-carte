@@ -380,7 +380,7 @@
           <img class="logo" src="assets/fantaballa-logo.png" alt="Fantaballa" />
           <div class="label">Classifiche</div>
           <h1>Campioni e bomber</h1>
-          <p class="sub">Cinque classifiche separate — Classica, Gary MEDel, HARDa Turan, Campionato e Campionato REAL — più la classifica generale dei capocannonieri.</p>
+          <p class="sub">Cinque classifiche separate — Classica, Gary MEDel, HARDa Turan, Campionato e Fantacampionato — più la classifica generale dei capocannonieri.</p>
         </div>
         <div id="leaderboardUpdated" class="updated">Caricamento classifica...</div>
       </div>
@@ -529,7 +529,7 @@
           <div class="board-title-wrap">
             <div class="label">Risultati finali</div>
             <h2>Fantacampionato del Ca***</h2>
-            <p class="sub">Solo stagioni REAL vinte, con i calciatori e i club della stagione 2025/26.</p>
+            <p class="sub">Solo Fantacampionati vinti, con i calciatori e i club della stagione 2025/26.</p>
           </div>
           <button class="expand-btn" type="button" data-toggle-board="campionatoRealBoard" aria-expanded="false">Vedi tutti i dati</button>
         </div>
@@ -551,7 +551,7 @@
                 <th><button class="sort-btn" type="button" data-board="campionatoReal" data-sort="scorer">Capocannoniere</button></th>
               </tr>
             </thead>
-            <tbody id="campionatoRealBody"><tr><td><span class="rank">-</span></td><td class="empty" colspan="11">In attesa della prima stagione REAL vinta</td></tr></tbody>
+            <tbody id="campionatoRealBody"><tr><td><span class="rank">-</span></td><td class="empty" colspan="11">In attesa del primo Fantacampionato vinto</td></tr></tbody>
           </table>
         </div>
         <div class="load-more-wrap" data-load-wrap="campionatoReal">
@@ -565,7 +565,7 @@
           <div class="board-title-wrap">
             <div class="label">Classifica</div>
             <h2>Capocannonieri</h2>
-            <p class="sub">Somma i gol dei capocannonieri World Cup e il miglior marcatore della squadra nelle stagioni vinte di Campionato e Campionato REAL.</p>
+            <p class="sub">Somma i gol dei capocannonieri World Cup e il miglior marcatore della squadra nelle stagioni vinte di Campionato e Fantacampionato.</p>
           </div>
         </div>
         <div class="table-wrap">
@@ -601,6 +601,13 @@
       const SHEETS_CLASSIFICA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
       const CLASSIFICA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
       const LOCAL_CLASSIFICA_FALLBACK = 'data/classifica.json';
+      const CLASSIFICA_CACHE_KEY = 'fantaballa_classifica_online_cache_v2';
+      const ONLINE_ATTEMPTS = 3;
+      const ONLINE_TIMEOUTS = [12000, 16000, 20000];
+      let loadInProgress = false;
+      let backgroundRetryTimer = null;
+      let offlineSourceActive = false;
+      let backgroundRetryCount = 0;
       if (!classicBody || !garyBody || !hardBody || !campionatoBody || !campionatoRealBody || !scorersBody) return;
 
       const escape = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({
@@ -970,61 +977,63 @@
         renderModeTable(garyBody, garyRows, 'In attesa del primo campione Gary MEDel', 'gary');
         renderModeTable(hardBody, hardRows, 'In attesa del primo campione HARDa Turan', 'hard');
         renderChampionshipTable(campionatoBody, campionatoRows, 'campionato', 'In attesa della prima stagione completata');
-        renderChampionshipTable(campionatoRealBody, campionatoRealRows, 'campionatoReal', 'In attesa della prima stagione REAL vinta');
+        renderChampionshipTable(campionatoRealBody, campionatoRealRows, 'campionatoReal', 'In attesa del primo Fantacampionato vinto');
         renderScorers(rows);
         updateSortButtons();
         if (updated) updated.textContent = data && data.aggiornato_il ? `Aggiornata: ${data.aggiornato_il}` : 'Classifiche aggiornate';
       }
 
-      function loadLocalFallback() {
-        return fetch(LOCAL_CLASSIFICA_FALLBACK, { cache:'no-store' })
-          .then(response => {
-            if (!response.ok) throw new Error('classifica locale non trovata');
-            return response.json();
-          });
+      function validLeaderboardData(data) {
+        if (Array.isArray(data)) return true;
+        return Boolean(data && Array.isArray(data.classifica));
       }
 
-      function loadFromAppsScriptJsonp() {
-        return new Promise((resolve, reject) => {
-          if (!CLASSIFICA_ENDPOINT || !/^https:\/\/script\.google\.com\//.test(CLASSIFICA_ENDPOINT)) {
-            reject(new Error('endpoint classifica non configurato'));
-            return;
-          }
-          const callbackName = 'fantaballaClassificaCallback_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-          const script = document.createElement('script');
-          const cleanup = () => {
-            try { delete window[callbackName]; } catch (error) { window[callbackName] = undefined; }
-            script.remove();
-          };
-          const timer = window.setTimeout(() => {
-            cleanup();
-            reject(new Error('timeout classifica'));
-          }, 12000);
-          window[callbackName] = data => {
-            window.clearTimeout(timer);
-            cleanup();
-            resolve(data);
-          };
-          script.onerror = () => {
-            window.clearTimeout(timer);
-            cleanup();
-            reject(new Error('errore caricamento classifica'));
-          };
-          const separator = CLASSIFICA_ENDPOINT.includes('?') ? '&' : '?';
-          script.src = CLASSIFICA_ENDPOINT + separator + 'callback=' + encodeURIComponent(callbackName) + '&_=' + Date.now();
-          document.head.appendChild(script);
+      function saveOnlineCache(data) {
+        if (!validLeaderboardData(data)) return;
+        try {
+          localStorage.setItem(CLASSIFICA_CACHE_KEY, JSON.stringify({
+            savedAt:new Date().toISOString(),
+            data
+          }));
+        } catch (error) {
+          console.warn('Impossibile salvare la cache della classifica:', error);
+        }
+      }
+
+      function loadOnlineCache() {
+        try {
+          const cached = JSON.parse(localStorage.getItem(CLASSIFICA_CACHE_KEY) || 'null');
+          if (!cached || !validLeaderboardData(cached.data)) return null;
+          return cached;
+        } catch (error) {
+          console.warn('Cache classifica non valida:', error);
+          return null;
+        }
+      }
+
+      function formatCacheDate(value) {
+        const date = new Date(value || '');
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toLocaleString('it-IT', {
+          day:'2-digit', month:'2-digit', year:'numeric',
+          hour:'2-digit', minute:'2-digit'
         });
       }
 
-      function loadFromSheetsJsonp() {
+      function delay(ms) {
+        return new Promise(resolve => window.setTimeout(resolve, ms));
+      }
+
+      function loadFromSheetsJsonp(timeoutMs = 16000) {
         return new Promise((resolve, reject) => {
-          const callbackName = 'fantaballaClassificaCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+          if (!SHEETS_CLASSIFICA_ENDPOINT || !/^https:\/\/script\.google\.com\//.test(SHEETS_CLASSIFICA_ENDPOINT)) {
+            reject(new Error('Endpoint Google Sheets non configurato'));
+            return;
+          }
+          const callbackName = 'fantaballaClassificaCallback_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
           const script = document.createElement('script');
           const separator = SHEETS_CLASSIFICA_ENDPOINT.includes('?') ? '&' : '?';
-          const timeout = window.setTimeout(() => {
-            cleanup();
-            reject(new Error('Timeout lettura Google Sheets'));
-          }, 12000);
+          let settled = false;
 
           function cleanup() {
             window.clearTimeout(timeout);
@@ -1032,64 +1041,148 @@
             if (script.parentNode) script.parentNode.removeChild(script);
           }
 
+          function finish(handler, value) {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            handler(value);
+          }
+
+          const timeout = window.setTimeout(() => {
+            finish(reject, new Error('Timeout lettura Google Sheets'));
+          }, timeoutMs);
+
           window[callbackName] = data => {
-            cleanup();
-            resolve(data);
+            if (!validLeaderboardData(data)) {
+              finish(reject, new Error('Risposta Google Sheets non valida'));
+              return;
+            }
+            finish(resolve, data);
           };
 
-          script.onerror = () => {
-            cleanup();
-            reject(new Error('Impossibile leggere Google Sheets'));
-          };
-
+          script.onerror = () => finish(reject, new Error('Impossibile leggere Google Sheets'));
           script.src = SHEETS_CLASSIFICA_ENDPOINT + separator + 'callback=' + encodeURIComponent(callbackName) + '&t=' + Date.now();
           document.body.appendChild(script);
         });
       }
 
       function loadFromLocalJson() {
-        return fetch('data/classifica.json', { cache:'no-store' }).then(response => {
+        return fetch(LOCAL_CLASSIFICA_FALLBACK, { cache:'no-store' }).then(response => {
           if (!response.ok) throw new Error('classifica locale non trovata');
           return response.json();
+        }).then(data => {
+          if (!validLeaderboardData(data)) throw new Error('classifica locale non valida');
+          return data;
         });
       }
 
-      function loadLeaderboard() {
-        if (updated) updated.textContent = 'Caricamento classifica da Google Sheets...';
+      async function loadOnlineWithRetries(attempts = ONLINE_ATTEMPTS, silent = false) {
+        let lastError = null;
+        for (let attempt = 0; attempt < attempts; attempt += 1) {
+          if (!silent && updated) {
+            updated.textContent = `Collegamento a Google Sheets: tentativo ${attempt + 1} di ${attempts}...`;
+          }
+          try {
+            return await loadFromSheetsJsonp(ONLINE_TIMEOUTS[Math.min(attempt, ONLINE_TIMEOUTS.length - 1)]);
+          } catch (error) {
+            lastError = error;
+            console.warn(`Tentativo Google Sheets ${attempt + 1} non riuscito:`, error);
+            if (attempt < attempts - 1) await delay(1200 + attempt * 800);
+          }
+        }
+        throw lastError || new Error('Google Sheets non raggiungibile');
+      }
 
-        loadFromSheetsJsonp()
-          .then(data => {
-            renderLeaderboards(data);
-            if (updated) {
-              updated.textContent = data && data.aggiornato_il
-                ? `Aggiornata da Google Sheets: ${data.aggiornato_il}`
-                : 'Classifica aggiornata da Google Sheets';
+      function scheduleBackgroundRetry() {
+        window.clearTimeout(backgroundRetryTimer);
+        const delays = [30000, 60000, 120000, 300000];
+        const wait = delays[Math.min(backgroundRetryCount, delays.length - 1)];
+        backgroundRetryTimer = window.setTimeout(() => retryOnlineInBackground(), wait);
+      }
+
+      async function retryOnlineInBackground() {
+        if (loadInProgress || !offlineSourceActive) return;
+        loadInProgress = true;
+        try {
+          const data = await loadOnlineWithRetries(1, true);
+          saveOnlineCache(data);
+          renderLeaderboards(data);
+          offlineSourceActive = false;
+          backgroundRetryCount = 0;
+          refreshBtn.textContent = 'Aggiorna';
+          if (updated) {
+            updated.textContent = data && data.aggiornato_il
+              ? `Aggiornata da Google Sheets: ${data.aggiornato_il}`
+              : 'Classifica aggiornata da Google Sheets';
+          }
+        } catch (error) {
+          backgroundRetryCount += 1;
+          console.warn('Aggiornamento in background non riuscito:', error);
+          scheduleBackgroundRetry();
+        } finally {
+          loadInProgress = false;
+        }
+      }
+
+      function showUnavailableTables() {
+        renderModeTable(classicBody, [], 'Classifica non disponibile', 'classic');
+        renderModeTable(garyBody, [], 'Classifica non disponibile', 'gary');
+        renderModeTable(hardBody, [], 'Classifica non disponibile', 'hard');
+        renderChampionshipTable(campionatoBody, [], 'campionato', 'In attesa della prima stagione completata');
+        renderChampionshipTable(campionatoRealBody, [], 'campionatoReal', 'In attesa del primo Fantacampionato vinto');
+        renderScorers([]);
+        updateSortButtons();
+      }
+
+      async function loadLeaderboard() {
+        if (loadInProgress) return;
+        loadInProgress = true;
+        window.clearTimeout(backgroundRetryTimer);
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = 'Aggiornamento...';
+
+        try {
+          const data = await loadOnlineWithRetries(ONLINE_ATTEMPTS, false);
+          saveOnlineCache(data);
+          renderLeaderboards(data);
+          offlineSourceActive = false;
+          backgroundRetryCount = 0;
+          refreshBtn.textContent = 'Aggiorna';
+          if (updated) {
+            updated.textContent = data && data.aggiornato_il
+              ? `Aggiornata da Google Sheets: ${data.aggiornato_il}`
+              : 'Classifica aggiornata da Google Sheets';
+          }
+        } catch (error) {
+          console.warn('Google Sheets non raggiungibile dopo più tentativi:', error);
+          offlineSourceActive = true;
+          refreshBtn.textContent = 'Riprova aggiornamento';
+
+          const cached = loadOnlineCache();
+          if (cached) {
+            renderLeaderboards(cached.data);
+            const cachedAt = formatCacheDate(cached.savedAt);
+            if (updated) updated.textContent = `Ultima classifica online salvata${cachedAt ? `: ${cachedAt}` : ''}. Riprovo automaticamente.`;
+          } else {
+            try {
+              const localData = await loadFromLocalJson();
+              renderLeaderboards(localData);
+              if (updated) {
+                updated.textContent = localData && localData.aggiornato_il
+                  ? `Backup locale del ${localData.aggiornato_il}. Riprovo automaticamente.`
+                  : 'Backup locale provvisorio. Riprovo automaticamente.';
+              }
+            } catch (localError) {
+              console.warn('Anche il backup locale non è disponibile:', localError);
+              if (updated) updated.textContent = 'Classifica non disponibile. Premi “Riprova aggiornamento”.';
+              showUnavailableTables();
             }
-          })
-          .catch(error => {
-            console.warn('Lettura Google Sheets non riuscita, provo classifica.json:', error);
-            if (updated) updated.textContent = 'Google Sheets non raggiungibile, provo backup locale...';
-
-            loadFromLocalJson()
-              .then(data => {
-                renderLeaderboards(data);
-                if (updated) {
-                  updated.textContent = data && data.aggiornato_il
-                    ? `Backup locale: ${data.aggiornato_il}`
-                    : 'Backup locale caricato';
-                }
-              })
-              .catch(() => {
-                if (updated) updated.textContent = 'Classifica non disponibile';
-                renderModeTable(classicBody, [], 'Classifica non disponibile', 'classic');
-                renderModeTable(garyBody, [], 'Classifica non disponibile', 'gary');
-                renderModeTable(hardBody, [], 'Classifica non disponibile', 'hard');
-                renderChampionshipTable(campionatoBody, [], 'campionato', 'In attesa della prima stagione completata');
-                renderChampionshipTable(campionatoRealBody, [], 'campionatoReal', 'In attesa della prima stagione REAL vinta');
-                renderScorers([]);
-                updateSortButtons();
-              });
-          });
+          }
+          scheduleBackgroundRetry();
+        } finally {
+          loadInProgress = false;
+          refreshBtn.disabled = false;
+        }
       }
 
       document.querySelectorAll('[data-toggle-board]').forEach(button => {
@@ -1129,6 +1222,12 @@
       });
 
       refreshBtn.addEventListener('click', loadLeaderboard);
+      window.addEventListener('online', () => {
+        if (offlineSourceActive) loadLeaderboard();
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && offlineSourceActive) retryOnlineInBackground();
+      });
       loadLeaderboard();
     })();
   </script>
