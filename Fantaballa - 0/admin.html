@@ -29,7 +29,7 @@
     .bar-list{display:grid;gap:9px}.bar-row{display:grid;grid-template-columns:minmax(120px,1.2fr) 3fr 52px;align-items:center;gap:10px;font-size:13px;font-weight:800}.bar-track{height:13px;border-radius:999px;background:#e8e0d4;overflow:hidden}.bar-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#56328f,#9b6bc9)}.bar-row strong{text-align:right}
     .role-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.role-box{padding:14px;border-radius:16px;background:#f4eee2;border:1px solid var(--line)}.role-box span{display:block;color:var(--muted);font-size:11px;font-weight:900}.role-box b{font-size:25px}
     .player-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:600px;overflow:auto}.player-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px;border:1px solid #e2d8c5;border-radius:13px;background:#fff}.player-row b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.player-row small{display:block;color:var(--muted);font-weight:750}.player-row strong{align-self:center}
-    .event-list{display:grid;gap:10px}.event{border:1px solid var(--line);border-radius:16px;background:#fff;padding:13px}.event-top{display:flex;justify-content:space-between;gap:12px}.event h4{margin:0;font-size:16px}.event-score{font-size:20px;font-weight:1000}.choice{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;margin-top:8px;padding-top:8px;border-top:1px dashed #ddd0bc;font-size:12px}.choice b{display:block}.choice span{color:var(--muted);font-weight:720}.score-pos{color:#18724d}.score-neg{color:#a43831}.score-zero{color:#66717e}
+    .event-list{display:grid;gap:10px}.event{border:1px solid var(--line);border-radius:16px;background:#fff;padding:13px}.event-top{display:flex;justify-content:space-between;gap:12px}.event h4{margin:0;font-size:16px}.event-source{display:block;margin-top:4px;color:var(--muted);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em}.event-score{font-size:20px;font-weight:1000}.choice{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;margin-top:8px;padding-top:8px;border-top:1px dashed #ddd0bc;font-size:12px}.choice b{display:block}.choice span{color:var(--muted);font-weight:720}.score-pos{color:#18724d}.score-neg{color:#a43831}.score-zero{color:#66717e}
     .note{font-size:12px;color:var(--muted);line-height:1.5;font-weight:720}.empty{padding:30px;text-align:center;color:var(--muted);font-weight:800}
     .footer{padding:18px 0;text-align:center;color:#776c5e;font-size:12px;font-weight:750}
     @media(max-width:1100px){.metric-grid{grid-template-columns:repeat(3,1fr)}.hero{grid-template-columns:1fr}.grid-3{grid-template-columns:1fr 1fr}}
@@ -40,7 +40,7 @@
 <div class="shell">
   <header class="topbar">
     <div class="brand"><img src="assets/fantaballa-logo.png" alt="Fantaballa"><div><b>Fantaballa Admin</b><span>Analisi interna di bilanciamento · pagina non collegata al sito</span></div></div>
-    <div class="actions"><button class="btn ghost" id="reloadBtn">Ricarica dati</button><button class="btn" id="simulateBtn">Ripeti simulazione</button><button class="btn primary" id="exportBtn">Esporta club CSV</button></div>
+    <div class="actions"><button class="btn ghost" id="reloadBtn">Ricarica dati</button><button class="btn" id="reloadEventsBtn">Ricarica eventi</button><button class="btn" id="simulateBtn">Ripeti simulazione</button><button class="btn primary" id="exportBtn">Esporta club CSV</button></div>
   </header>
 
   <section class="hero">
@@ -65,7 +65,7 @@
   <section id="view-coverage" class="view"></section>
   <section id="view-events" class="view"></section>
 
-  <footer class="footer">Fantaballa Admin · i dati sono letti direttamente da <b>data/club.json</b> e <b>data/giocatori.json</b>.</footer>
+  <footer class="footer">Fantaballa Admin · i dati sono letti direttamente dai JSON e gli eventi da <b>campionato.html</b> e <b>campionato-real.html</b>.</footer>
 </div>
 <script>
 (()=>{
@@ -102,6 +102,157 @@ const EVENT_CATALOG=[
  ['Milan Lab',[['Catena di infortuni','80% rischio infortunio per 3 gare',-6],['Competenza','Un giocatore fuori tutta la stagione',-8]]],
  ['Anvedi Goicoechea',[['Che ha combinato?','Portiere fuori tutta la stagione',-9],['Nonno Ballotta','Cambio portiere obbligatorio',-5]]]
 ];
+let LIVE_EVENT_CATALOG=[];
+let EVENT_LOAD_META={loadedAt:0,sources:[],errors:[]};
+
+function jsStringValue(raw){
+ return String(raw||'').replace(/\\([\\'"nrtbfv])/g,(_,c)=>({n:'\n',r:'\r',t:'\t',b:'\b',f:'\f',v:'\v'}[c]??c));
+}
+function structuralIndex(text,start,target){
+ let quote='',escaped=false,lineComment=false,blockComment=false;
+ for(let i=Math.max(0,start);i<text.length;i++){
+  const c=text[i],n=text[i+1];
+  if(lineComment){if(c==='\n')lineComment=false;continue}
+  if(blockComment){if(c==='*'&&n==='/'){blockComment=false;i++}continue}
+  if(quote){if(escaped){escaped=false;continue}if(c==='\\'){escaped=true;continue}if(c===quote)quote='';continue}
+  if(c==='/'&&n==='/'){lineComment=true;i++;continue}
+  if(c==='/'&&n==='*'){blockComment=true;i++;continue}
+  if(c==='\''||c==='"'||c==='`'){quote=c;continue}
+  if(c===target)return i;
+ }
+ return -1;
+}
+function balancedEnd(text,start,open,close){
+ let depth=0,quote='',escaped=false,lineComment=false,blockComment=false;
+ for(let i=start;i<text.length;i++){
+  const c=text[i],n=text[i+1];
+  if(lineComment){if(c==='\n')lineComment=false;continue}
+  if(blockComment){if(c==='*'&&n==='/'){blockComment=false;i++}continue}
+  if(quote){if(escaped){escaped=false;continue}if(c==='\\'){escaped=true;continue}if(c===quote)quote='';continue}
+  if(c==='/'&&n==='/'){lineComment=true;i++;continue}
+  if(c==='/'&&n==='*'){blockComment=true;i++;continue}
+  if(c==='\''||c==='"'||c==='`'){quote=c;continue}
+  if(c===open)depth++;
+  if(c===close){depth--;if(depth===0)return i}
+ }
+ return -1;
+}
+function assignedArraySource(source,name){
+ const pos=source.indexOf(`const ${name}=`);
+ if(pos<0)return '';
+ const start=structuralIndex(source,pos,'['),end=start>=0?balancedEnd(source,start,'[',']'):-1;
+ return start>=0&&end>start?source.slice(start,end+1):'';
+}
+function objectBlocks(arraySource){
+ const blocks=[];
+ let cursor=1;
+ while(cursor<arraySource.length-1){
+  const start=structuralIndex(arraySource,cursor,'{');
+  if(start<0)break;
+  const end=balancedEnd(arraySource,start,'{','}');
+  if(end<0)break;
+  blocks.push(arraySource.slice(start,end+1));
+  cursor=end+1;
+ }
+ return blocks;
+}
+function stringProperty(block,name){
+ const re=new RegExp(`\\b${name}\\s*:\\s*(['\"])`),m=re.exec(block);
+ if(!m)return '';
+ const quote=m[1],start=m.index+m[0].length;
+ let raw='',escaped=false;
+ for(let i=start;i<block.length;i++){
+  const c=block[i];
+  if(escaped){raw+='\\'+c;escaped=false;continue}
+  if(c==='\\'){escaped=true;continue}
+  if(c===quote)return jsStringValue(raw);
+  raw+=c;
+ }
+ return '';
+}
+function arrayProperty(block,name){
+ const re=new RegExp(`\\b${name}\\s*:`),m=re.exec(block);
+ if(!m)return '';
+ const start=structuralIndex(block,m.index+m[0].length,'['),end=start>=0?balancedEnd(block,start,'[',']'):-1;
+ return start>=0&&end>start?block.slice(start,end+1):'';
+}
+function normalizeEventKey(value){return String(value||'').toLocaleLowerCase('it').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
+function manualEventScore(title,label){
+ const event=EVENT_CATALOG.find(item=>normalizeEventKey(item[0])===normalizeEventKey(title));
+ const choice=event?.[1]?.find(item=>normalizeEventKey(item[0])===normalizeEventKey(label));
+ return Number.isFinite(choice?.[2])?choice[2]:null;
+}
+function estimateEventScore(effect,label=''){
+ const text=normalizeEventKey(`${label} ${effect}`);
+ let score=0;
+ const signed=[...String(effect||'').matchAll(/([+-])\s*(\d+)\s*(ovr|overall|intesa|punti?|gol)/gi)];
+ signed.forEach(m=>{const n=Number(m[2]),unit=m[3].toLowerCase();let weight=unit.startsWith('punt')?.7:unit==='gol'?1.2:unit==='intesa'?.28:.34;score+=(m[1]==='+'?1:-1)*Math.min(8,n*weight)});
+ if(/x2.*intesa|intesa.*x2/.test(text))score+=5;
+ if(/x3.*intesa|intesa.*x3/.test(text))score+=7;
+ if(/vittoria (certa|sicura|assicurata)|vinci sicuramente|vinci sicuro/.test(text))score+=7;
+ if(/perdi sicuro|sconfitta forzata/.test(text))score-=8;
+ if(/fuori.*fine stagione|infortunati.*fine stagione|perdi.*resto stagione/.test(text))score-=9;
+ if(/punti.*(?:a|vanno a) 0|azzera.*punti/.test(text))score-=7;
+ if(/top player|maradona|overall 120/.test(text))score+=7;
+ if(/perdita controllo|non hai piu il controllo|draft automatico/.test(text))score-=5;
+ if(/infortun/.test(text))score-=2;
+ if(/squalific/.test(text))score-=2;
+ if(/scambio obbligatorio|costretto a scambiare/.test(text))score-=2;
+ if(/clean sheet|non subisci gol/.test(text))score+=5;
+ return Math.round(clamp(score,-10,10));
+}
+function extractPageEvents(source,sourceName){
+ const out=[];
+ const automaticSources=['AUTO_EVENTS','EVENTS'].map(name=>assignedArraySource(source,name)).filter(Boolean);
+ automaticSources.forEach(automatic=>objectBlocks(automatic).forEach((block,index)=>{
+  const title=stringProperty(block,'title'),effect=stringProperty(block,'text');
+  if(title)out.push({key:`automatic:${normalizeEventKey(title)}`,id:`automatic-${index+1}`,title,type:'Automatico',sources:[sourceName],choices:[['Effetto automatico',effect,estimateEventScore(effect,title)]]});
+ }));
+ const decisions=assignedArraySource(source,'DECISIONS');
+ objectBlocks(decisions).forEach((block,index)=>{
+  const id=stringProperty(block,'id')||`decision-${index+1}`,title=stringProperty(block,'title');
+  if(!title)return;
+  const choices=objectBlocks(arrayProperty(block,'choices')).map(choice=>{
+   const label=stringProperty(choice,'label')||'Scelta',effect=stringProperty(choice,'effect')||stringProperty(choice,'text');
+   const manual=manualEventScore(title,label);
+   return [label,effect,manual===null?estimateEventScore(effect,label):manual];
+  }).filter(choice=>choice[1]||choice[0]);
+  out.push({key:`decision:${id||normalizeEventKey(title)}`,id,title,type:'Decisione',sources:[sourceName],choices});
+ });
+ return out;
+}
+function mergeLoadedEvents(events){
+ const map=new Map();
+ events.forEach(event=>{
+  const key=event.key||`${event.type}:${normalizeEventKey(event.title)}`;
+  if(!map.has(key)){map.set(key,{...event,sources:[...(event.sources||[])]});return}
+  const current=map.get(key);
+  current.sources=[...new Set([...(current.sources||[]),...(event.sources||[])])];
+  if((event.choices||[]).length>(current.choices||[]).length)current.choices=event.choices;
+ });
+ return [...map.values()];
+}
+async function loadEventCatalog(announce=true){
+ const stamp=Date.now(),targets=[['campionato.html','Campionato'],['campionato-real.html','Fantacampionato']];
+ const loaded=[],errors=[];
+ await Promise.all(targets.map(async([url,label])=>{
+  try{
+   const response=await fetch(`${url}?adminEvents=${stamp}`,{cache:'no-store'});
+   if(!response.ok)throw new Error(`HTTP ${response.status}`);
+   const source=await response.text(),events=extractPageEvents(source,label);
+   if(!events.length)throw new Error('nessun evento riconosciuto');
+   loaded.push(...events);
+  }catch(error){errors.push(`${label}: ${error.message}`)}
+ }));
+ if(loaded.length)LIVE_EVENT_CATALOG=mergeLoadedEvents(loaded);
+ EVENT_LOAD_META={loadedAt:Date.now(),sources:[...new Set(loaded.flatMap(e=>e.sources||[]))],errors};
+ renderEvents();
+ if(announce){
+  const suffix=errors.length?` Avvisi: ${errors.join(' · ')}`:'';
+  status(loaded.length?`${LIVE_EVENT_CATALOG.length} eventi riletti dai file di gioco.${suffix}`:`Impossibile rileggere gli eventi; uso il catalogo interno. ${errors.join(' · ')}` ,loaded.length?'ok':'error');
+ }
+ return LIVE_EVENT_CATALOG;
+}
 
 function status(message,type='ok'){
  const el=$('#status');el.className=`status show ${type}`;el.textContent=message;
@@ -183,20 +334,27 @@ function renderCoverage(){
  const draw=()=>{const q=String($('#unseenSearch').value||'').toLowerCase();const rows=unseen.filter(p=>!q||`${p.name} ${p.club} ${p.nation} ${p.Position}`.toLowerCase().includes(q)).slice(0,300);$('#unseenList').innerHTML=rows.map(p=>`<div class="player-row"><div><b>${esc(p.name)}</b><small>${esc((CLUBS.find(c=>c.id===p.club)||{}).name||p.club)} · ${esc(p.nation)} · ${esc(p.Position)}</small></div><strong>${esc(p.ovr)}</strong></div>`).join('')||'<div class="empty">Nessun giocatore.</div>'};$('#unseenSearch').addEventListener('input',draw);$('#unseenCsv').onclick=()=>downloadCsv('fantaballa_giocatori_non_osservati.csv',[['id','nome','club','nazione','ruolo','posizione','ovr','abbonato'],...unseen.map(p=>[p.id,p.name,p.club,p.nation,p.role,p.Position,p.ovr,p.subscriber])]);draw();
 }
 function renderEvents(){
- const entries=EVENT_CATALOG.map(([title,choices],i)=>({index:i+1,title,choices,avg:avg(choices.map(c=>c[2])),spread:Math.max(...choices.map(c=>c[2]))-Math.min(...choices.map(c=>c[2])),best:Math.max(...choices.map(c=>c[2])),worst:Math.min(...choices.map(c=>c[2]))}));
+ const catalog=LIVE_EVENT_CATALOG.length?LIVE_EVENT_CATALOG:EVENT_CATALOG.map(([title,choices],index)=>({index:index+1,title,type:'Catalogo interno',sources:['Admin'],choices}));
+ const entries=catalog.map((item,i)=>{
+  const choices=(item.choices||[]).map(c=>Array.isArray(c)?c:[c.label,c.effect,c.score]);
+  const scores=choices.map(c=>Number(c[2])||0);
+  return{index:item.index||i+1,title:item.title,type:item.type||'Decisione',sources:item.sources||[],choices,avg:avg(scores),spread:scores.length?Math.max(...scores)-Math.min(...scores):0,best:scores.length?Math.max(...scores):0,worst:scores.length?Math.min(...scores):0};
+ });
+ if(!entries.length){$('#view-events').innerHTML='<div class="empty">Nessun evento disponibile.</div>';return}
  const strongest=[...entries].sort((a,b)=>b.best-a.best)[0],weakest=[...entries].sort((a,b)=>a.worst-b.worst)[0],volatile=[...entries].sort((a,b)=>b.spread-a.spread)[0];
- $('#view-events').innerHTML=`<div class="grid-3"><article class="highlight-card strong"><small>Bonus più forte</small><div><b>${esc(strongest.title)}</b><p>Picco euristico +${strongest.best}</p></div></article><article class="highlight-card weak"><small>Conseguenza più dura</small><div><b>${esc(weakest.title)}</b><p>Picco euristico ${weakest.worst}</p></div></article><article class="highlight-card neutral"><small>Evento più volatile</small><div><b>${esc(volatile.title)}</b><p>Scarto tra scelte: ${volatile.spread} punti</p></div></article></div><article class="panel" style="margin-top:16px"><div class="panel-head"><div><h2>Indice di impatto degli eventi</h2><p>Stima amministrativa da -10 a +10: non è una statistica reale delle partite.</p></div><select id="eventSort"><option value="index">Ordine gioco</option><option value="avg-desc">Media migliore</option><option value="avg-asc">Media peggiore</option><option value="spread">Più volatili</option></select></div><div class="event-list" id="eventList"></div><p class="note">L’indice pesa durata, OVR/Intesa, punti forzati, controllo perso, infortuni stagionali e modifiche al draft. Serve per individuare rapidamente eventi da testare, non sostituisce la telemetria reale.</p></article>`;
- const draw=()=>{let list=[...entries],mode=$('#eventSort').value;if(mode==='avg-desc')list.sort((a,b)=>b.avg-a.avg);if(mode==='avg-asc')list.sort((a,b)=>a.avg-b.avg);if(mode==='spread')list.sort((a,b)=>b.spread-a.spread);$('#eventList').innerHTML=list.map(e=>`<article class="event"><div class="event-top"><h4>${e.index}. ${esc(e.title)}</h4><span class="event-score ${e.avg>0?'score-pos':e.avg<0?'score-neg':'score-zero'}">${e.avg>0?'+':''}${num(e.avg)}</span></div>${e.choices.map(c=>`<div class="choice"><div><b>${esc(c[0])}</b><span>${esc(c[1])}</span></div><strong class="${c[2]>0?'score-pos':c[2]<0?'score-neg':'score-zero'}">${c[2]>0?'+':''}${c[2]}</strong></div>`).join('')}</article>`).join('')};$('#eventSort').addEventListener('change',draw);draw();
+ const updated=EVENT_LOAD_META.loadedAt?new Date(EVENT_LOAD_META.loadedAt).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'catalogo interno';
+ $('#view-events').innerHTML=`<div class="grid-3"><article class="highlight-card strong"><small>Bonus più forte</small><div><b>${esc(strongest.title)}</b><p>Picco euristico +${strongest.best}</p></div></article><article class="highlight-card weak"><small>Conseguenza più dura</small><div><b>${esc(weakest.title)}</b><p>Picco euristico ${weakest.worst}</p></div></article><article class="highlight-card neutral"><small>Evento più volatile</small><div><b>${esc(volatile.title)}</b><p>Scarto tra scelte: ${volatile.spread} punti</p></div></article></div><article class="panel" style="margin-top:16px"><div class="panel-head"><div><h2>Indice di impatto degli eventi</h2><p>${entries.length} eventi rilevati · ultimo aggiornamento ${esc(updated)}. La stima va da -10 a +10.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="btn" id="eventsInlineReload">Ricarica eventi</button><select id="eventSort"><option value="index">Ordine gioco</option><option value="avg-desc">Media migliore</option><option value="avg-asc">Media peggiore</option><option value="spread">Più volatili</option></select></div></div><div class="event-list" id="eventList"></div><p class="note">Il pulsante rilegge direttamente <b>campionato.html</b> e <b>campionato-real.html</b>. Quando aggiungi un evento ai file di gioco non devi più copiarlo manualmente nell’admin. I punteggi degli eventi nuovi sono una stima automatica basata sul testo dell’effetto.</p></article>`;
+ const draw=()=>{let list=[...entries],mode=$('#eventSort').value;if(mode==='avg-desc')list.sort((a,b)=>b.avg-a.avg);if(mode==='avg-asc')list.sort((a,b)=>a.avg-b.avg);if(mode==='spread')list.sort((a,b)=>b.spread-a.spread);$('#eventList').innerHTML=list.map(e=>`<article class="event"><div class="event-top"><div><h4>${e.index}. ${esc(e.title)}</h4><small class="event-source">${esc(e.type)} · ${esc(e.sources.join(' + ')||'Admin')}</small></div><span class="event-score ${e.avg>0?'score-pos':e.avg<0?'score-neg':'score-zero'}">${e.avg>0?'+':''}${num(e.avg)}</span></div>${e.choices.map(c=>`<div class="choice"><div><b>${esc(c[0])}</b><span>${esc(c[1])}</span></div><strong class="${c[2]>0?'score-pos':c[2]<0?'score-neg':'score-zero'}">${c[2]>0?'+':''}${c[2]}</strong></div>`).join('')}</article>`).join('')};$('#eventSort').addEventListener('change',draw);$('#eventsInlineReload').onclick=()=>loadEventCatalog(true);draw();
 }
 function downloadCsv(filename,rows){const csv=rows.map(row=>row.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(';')).join('\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function exportClubs(){downloadCsv('fantaballa_bilanciamento_club.csv',[['club','giocatori','ovr_rosa','ovr_xi','portieri','difensori','centrocampisti','attaccanti','abbonati','vittorie_pct','pareggi_pct','sconfitte_pct','alert'],...clubRows.map(r=>[r.club.name,r.players.length,r.rosterAvg.toFixed(1),r.power,r.roles.P,r.roles.D,r.roles.C,r.roles.A,r.subs,r.win.toFixed(1),r.draw.toFixed(1),r.loss.toFixed(1),r.problems.join(', ')])])}
 function renderAll(){renderMetrics();renderOverview();renderClubs();renderNations();renderCoverage();renderEvents()}
 async function load(){
- try{status('Caricamento database…','ok');const [c,p]=await Promise.all([fetch('data/club.json',{cache:'no-store'}),fetch('data/giocatori.json',{cache:'no-store'})]);if(!c.ok||!p.ok)throw new Error(`HTTP club ${c.status}, giocatori ${p.status}`);CLUBS=await c.json();PLAYERS=await p.json();if(!Array.isArray(CLUBS)||!Array.isArray(PLAYERS))throw new Error('Formato JSON non valido');prepareRows();renderAll();status(`Database caricato: ${CLUBS.length} club e ${PLAYERS.length} giocatori.`,'ok')}
+ try{status('Caricamento database ed eventi…','ok');const [c,p]=await Promise.all([fetch('data/club.json',{cache:'no-store'}),fetch('data/giocatori.json',{cache:'no-store'})]);if(!c.ok||!p.ok)throw new Error(`HTTP club ${c.status}, giocatori ${p.status}`);CLUBS=await c.json();PLAYERS=await p.json();if(!Array.isArray(CLUBS)||!Array.isArray(PLAYERS))throw new Error('Formato JSON non valido');await loadEventCatalog(false);prepareRows();renderAll();status(`Database caricato: ${CLUBS.length} club, ${PLAYERS.length} giocatori e ${LIVE_EVENT_CATALOG.length||EVENT_CATALOG.length} eventi.`,'ok')}
  catch(error){status(`Impossibile caricare i dati: ${error.message}. Apri la pagina attraverso il sito/server, non direttamente con file://.`,'error');console.error(error)}
 }
 $$('.tab').forEach(tab=>tab.onclick=()=>{$$('.tab').forEach(x=>x.classList.toggle('active',x===tab));$$('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${tab.dataset.view}`))});
-$('#reloadBtn').onclick=load;$('#simulateBtn').onclick=()=>{if(!CLUBS.length)return;prepareRows();renderAll();status('Simulazione ripetuta con un nuovo seed.','ok')};$('#exportBtn').onclick=exportClubs;
+$('#reloadBtn').onclick=load;$('#reloadEventsBtn').onclick=()=>{loadEventCatalog(true);const tab=$('[data-view="events"]');if(tab)tab.click()};$('#simulateBtn').onclick=()=>{if(!CLUBS.length)return;prepareRows();renderAll();status('Simulazione ripetuta con un nuovo seed.','ok')};$('#exportBtn').onclick=exportClubs;
 load();
 })();
 </script>
