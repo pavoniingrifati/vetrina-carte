@@ -2518,25 +2518,33 @@
 <div class="app">
   <header class="topbar">
     <div class="brand"><img src="assets/fantaballa-logo.png" alt="Fantaballa"><div><b>Fantacampionato del Ca***</b><span>38 giornate · 20 club · 455 calciatori reali</span></div></div>
-    <div class="top-actions"><span id="saveStatus" class="save-status">Slot 1 · salvataggio automatico</span><button id="saveToolsBtn" class="btn compact" type="button">Salvataggi</button><a class="btn compact" href="index.html">Menu modalità</a><button id="resetBtn" class="btn red compact" type="button">Azzera stagione</button></div>
+    <div class="top-actions"><span id="saveStatus" class="save-status">Salvataggio automatico attivo</span><a class="btn compact" href="index.html">Menu modalità</a><button id="resetBtn" class="btn red compact" type="button">Azzera stagione</button></div>
   </header>
   <section class="hero hero-season"><div class="hero-season-inner"><div class="hero-season-copy"><div class="hero-kicker">Modalità stagione</div><h1>Fantacampionato del Ca***</h1><p>I calciatori e i club della stagione 2025/26 dentro il Campionato di Fantaballa: draft, 38 giornate, eventi, infortuni, squalifiche e mercato di metà stagione.</p></div></div></section>
   <main id="screen"></main>
 </div>
-<div id="modalRoot"></div><input id="importSaveInput" type="file" accept="application/json,.json" hidden><div id="toast" class="toast"></div>
+<div id="modalRoot"></div><div id="toast" class="toast"></div>
 <script>
 const CURRENT_STATE_VERSION=14;
 const SAVE_BASE='fantaballa_campionato_real_v1';
+const AUTO_SAVE_KEY=`${SAVE_BASE}_autosave`;
 const LEGACY_SAVE_KEYS=[];
 const ACTIVE_SLOT_KEY='fantaballa_campionato_real_active_slot';
 const SETUP_TEAM_NAME_KEY='fantaballa_campionato_real_team_name';
 const SETUP_COACH_NAME_KEY='fantaballa_campionato_real_coach_name';
-const SLOT_COUNT=3;
 let startupNotice='';
 let dataDiagnostics={fatal:[],warnings:[]};
-let activeSaveSlot=Math.max(1,Math.min(SLOT_COUNT,Number(localStorage.getItem(ACTIVE_SLOT_KEY))||1));
-function saveKey(slot=activeSaveSlot){return `${SAVE_BASE}_slot_${slot}`}
-function backupKey(slot=activeSaveSlot){return `${SAVE_BASE}_slot_${slot}_backup`}
+const legacyActiveSlot=Math.max(1,Math.min(3,Number(localStorage.getItem(ACTIVE_SLOT_KEY))||1));
+const activeSaveSlot=1;
+function saveKey(){return AUTO_SAVE_KEY}
+function legacySlotKey(slot){return `${SAVE_BASE}_slot_${slot}`}
+function cleanupLegacySaveArtifacts(){
+ try{
+  for(let slot=1;slot<=3;slot++){localStorage.removeItem(legacySlotKey(slot));localStorage.removeItem(`${legacySlotKey(slot)}_backup`)}
+  localStorage.removeItem(ACTIVE_SLOT_KEY);
+  LEGACY_SAVE_KEYS.forEach(key=>localStorage.removeItem(key));
+ }catch(error){console.warn('Pulizia vecchi salvataggi non riuscita',error)}
+}
 const VICTORY_ENDPOINT='https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
 const USER_ID='fantaballa-real-xi';
 const FORMATIONS={
@@ -2565,71 +2573,58 @@ const FORMATION_LAYOUTS={
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
 let PLAYERS=[];let CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),saveSlot:activeSaveSlot},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,drawPoints:1,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,generatedEventPlayers:[]},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,drawPoints:1,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,generatedEventPlayers:[]},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
    try{localStorage.setItem(`${key}_corrotto_${Date.now()}`,raw);localStorage.removeItem(key)}catch{}
-   startupNotice='Un salvataggio danneggiato è stato isolato. È stata aperta una nuova stagione senza cancellare la copia corrotta.';
+   startupNotice='Un salvataggio danneggiato è stato isolato. È stata avviata una nuova stagione.';
    console.error('Salvataggio non leggibile',error);
    return null;
  }
 }
-function loadState(slot=activeSaveSlot){
- const key=saveKey(slot);
- const direct=parseStoredState(localStorage.getItem(key),key);
+function loadState(){
+ const direct=parseStoredState(localStorage.getItem(AUTO_SAVE_KEY),AUTO_SAVE_KEY);
  if(direct)return direct;
- if(slot===1){
-   for(const legacyKey of LEGACY_SAVE_KEYS){
-     const legacy=parseStoredState(localStorage.getItem(legacyKey),legacyKey);
-     if(legacy){startupNotice='Il vecchio salvataggio è stato aggiornato automaticamente al nuovo formato.';return legacy}
-   }
+ const slotOrder=[legacyActiveSlot,1,2,3].filter((slot,index,array)=>array.indexOf(slot)===index);
+ for(const slot of slotOrder){
+   const key=legacySlotKey(slot),legacySlot=parseStoredState(localStorage.getItem(key),key);
+   if(legacySlot){startupNotice='La stagione attiva è stata trasferita al nuovo salvataggio automatico unico.';return legacySlot}
+ }
+ for(const legacyKey of LEGACY_SAVE_KEYS){
+   const legacy=parseStoredState(localStorage.getItem(legacyKey),legacyKey);
+   if(legacy){startupNotice='Il vecchio salvataggio è stato trasferito al nuovo salvataggio automatico unico.';return legacy}
  }
  return null;
 }
-function save(options={}){
+function save(){
  try{
    const now=new Date().toISOString();
    state.version=CURRENT_STATE_VERSION;
    state.meta=state.meta&&typeof state.meta==='object'?state.meta:{};
    state.meta.createdAt=state.meta.createdAt||now;
    state.meta.updatedAt=now;
-   state.meta.saveSlot=activeSaveSlot;
-   const serialized=JSON.stringify(state);
-   const key=saveKey();
-   const previous=localStorage.getItem(key);
-   if(!options.skipBackup&&previous&&previous!==serialized)localStorage.setItem(backupKey(),previous);
-   localStorage.setItem(key,serialized);
-   localStorage.setItem(ACTIVE_SLOT_KEY,String(activeSaveSlot));
+   state.meta.autosave=true;
+   delete state.meta.saveSlot;
+   localStorage.setItem(AUTO_SAVE_KEY,JSON.stringify(state));
    updateSaveStatus();
    return true;
  }catch(error){
-   console.error('Salvataggio non riuscito',error);
-   try{toast('Salvataggio non riuscito: spazio del browser insufficiente. Esporta un backup.')}catch{}
+   console.error('Salvataggio automatico non riuscito',error);
+   try{toast('Salvataggio automatico non riuscito: spazio del browser insufficiente.')}catch{}
    return false;
  }
 }
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function shuffle(a){return [...a].sort(()=>Math.random()-.5)}function pick(a){return a[Math.floor(Math.random()*a.length)]}function clamp(n,a,b){return Math.max(a,Math.min(b,n))}
 function toast(msg){toastEl.textContent=msg;toastEl.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>toastEl.classList.remove('show'),2200)}
-function phaseLabel(value){return({setup:'Impostazione',draft:'Draft iniziale',season:'Campionato',midseason:'Mercato di metà stagione',finished:'Stagione conclusa'})[value]||'Salvataggio'}
-function slotSummary(slot){
- const raw=localStorage.getItem(saveKey(slot));
- if(!raw)return{slot,empty:true,label:'Slot vuoto',meta:'Nessuna stagione salvata'};
- try{
-   const parsed=JSON.parse(raw),updated=parsed?.meta?.updatedAt?new Date(parsed.meta.updatedAt):null;
-   const when=updated&&!Number.isNaN(updated.getTime())?updated.toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'}):'data non disponibile';
-   const progress=parsed.phase==='season'?`Giornata ${Math.min(38,(Number(parsed.matchday)||0)+1)}/38`:parsed.phase==='finished'?'38 giornate completate':phaseLabel(parsed.phase);
-   return{slot,empty:false,label:parsed.teamName||'Fantaballa REAL',meta:`${progress} · ${when}`,phase:parsed.phase};
- }catch{return{slot,empty:false,label:'Salvataggio non leggibile',meta:'Usa il backup o svuota questo slot',broken:true}}
-}
+function phaseLabel(value){return({setup:'Impostazione',draft:'Draft iniziale',season:'Campionato',midseason:'Mercato di metà stagione',finished:'Stagione conclusa'})[value]||'Stagione'}
 function updateSaveStatus(){
  const el=document.getElementById('saveStatus');if(!el)return;
- const summary=slotSummary(activeSaveSlot);
- const phase=summary.empty?'Nuova stagione':phaseLabel(state?.phase);
+ const phase=phaseLabel(state?.phase);
  const round=state?.phase==='season'?` · G${Math.min(38,(Number(state.matchday)||0)+1)}`:'';
- el.textContent=`Slot ${activeSaveSlot} · ${phase}${round}`;
- el.title=`Salvataggio automatico attivo nello slot ${activeSaveSlot}`;
+ el.textContent=`Salvataggio automatico · ${phase}${round}`;
+ el.title='Il gioco salva automaticamente dopo ogni scelta e ogni partita';
 }
 function closeRobustModal(){modalRoot.innerHTML=''}
 function openConfirm({title='Conferma',message='',confirmText='Conferma',cancelText='Annulla',danger=false}={}){
@@ -2642,71 +2637,6 @@ function openConfirm({title='Conferma',message='',confirmText='Conferma',cancelT
    modalRoot.querySelector('.robust-modal-backdrop').onclick=event=>{if(event.target===event.currentTarget)finish(false)};
    document.getElementById('robustConfirmOk').focus();
  });
-}
-function exportSaveBackup(){
- const payload={app:'Fantaballa Campionato',schemaVersion:CURRENT_STATE_VERSION,exportedAt:new Date().toISOString(),slot:activeSaveSlot,state};
- const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),a=document.createElement('a');
- a.href=URL.createObjectURL(blob);a.download=`fantaballa-campionato-backup-slot-${activeSaveSlot}.json`;a.click();URL.revokeObjectURL(a.href);
- toast('Backup della stagione esportato.')
-}
-function validateBackupPayload(payload){
- const candidate=payload&&typeof payload==='object'&&payload.state?payload.state:payload;
- if(!candidate||typeof candidate!=='object'||Array.isArray(candidate))throw Error('Il file non contiene un salvataggio valido.');
- if(!['setup','draft','season','midseason','finished'].includes(candidate.phase))throw Error('La fase della stagione non è riconosciuta.');
- if(candidate.draft&&!Array.isArray(candidate.draft.roster))throw Error('La rosa del salvataggio non è valida.');
- return candidate;
-}
-async function importSaveBackup(file){
- if(!file)return;
- try{
-   const payload=JSON.parse(await file.text());
-   const candidate=validateBackupPayload(payload);
-   const ok=await openConfirm({title:`Importa nello slot ${activeSaveSlot}`,message:'Il salvataggio corrente verrà sostituito. Prima dell’importazione ne verrà conservata una copia automatica.',confirmText:'Importa backup',danger:true});
-   if(!ok)return;
-   const previous=localStorage.getItem(saveKey());if(previous)localStorage.setItem(backupKey(),previous);
-   state=normalizeCampionatoState(candidate);save({skipBackup:true});render();toast('Backup importato correttamente.');
- }catch(error){
-   console.error('Importazione backup fallita',error);
-   modalRoot.innerHTML=`<div class="robust-modal-backdrop"><section class="robust-modal robust-error" role="dialog" aria-modal="true"><div class="robust-modal-head"><div><div class="label">Backup non importato</div><h2>File non valido</h2></div><button class="robust-close" id="importErrorClose" type="button">×</button></div><p class="robust-modal-copy">Il file selezionato non può essere usato come salvataggio del Campionato.</p><div class="robust-error-detail">${esc(error?.message||error)}</div><div class="robust-actions"><button class="btn primary" id="importErrorOk" type="button">Chiudi</button></div></section></div>`;
-   document.getElementById('importErrorClose').onclick=closeRobustModal;document.getElementById('importErrorOk').onclick=closeRobustModal;
- }
-}
-async function openSaveSlot(slot){
- if(slot===activeSaveSlot){closeRobustModal();return}
- activeSaveSlot=slot;localStorage.setItem(ACTIVE_SLOT_KEY,String(slot));state=loadState(slot)||freshState();
- if(PLAYERS.length&&CLUBS.length)state=normalizeCampionatoState(state);
- save({skipBackup:true});closeRobustModal();render();toast(`Slot ${slot} aperto.`)
-}
-async function clearSaveSlot(slot){
- const summary=slotSummary(slot);
- const ok=await openConfirm({title:`Svuota slot ${slot}`,message:summary.empty?'Lo slot è già vuoto.':`La stagione “${summary.label}” verrà rimossa. Il backup automatico dello slot non verrà cancellato.`,confirmText:'Svuota slot',danger:true});
- if(!ok){showSaveManager();return}
- localStorage.removeItem(saveKey(slot));
- if(slot===activeSaveSlot){state=freshState();save({skipBackup:true});render()}
- showSaveManager();
-}
-async function restoreSlotBackup(){
- const raw=localStorage.getItem(backupKey());
- if(!raw){toast('Nessun backup automatico disponibile per questo slot.');return}
- const ok=await openConfirm({title:'Ripristina backup automatico',message:`Verrà ripristinata la versione precedente dello slot ${activeSaveSlot}.`,confirmText:'Ripristina',danger:true});
- if(!ok){showSaveManager();return}
- try{state=normalizeCampionatoState(JSON.parse(raw));save({skipBackup:true});closeRobustModal();render();toast('Backup automatico ripristinato.')}catch(error){toast('Il backup automatico non è leggibile.')}
-}
-function diagnosticsMarkup(){
- const warnings=dataDiagnostics?.warnings||[];
- if(!warnings.length)return '<div class="diagnostic-box"><b>Database verificato:</b> club e giocatori risultano collegati correttamente.</div>';
- return `<div class="diagnostic-box warning"><b>Database caricato con ${warnings.length} avvisi.</b><ul class="diagnostic-list">${warnings.slice(0,6).map(item=>`<li>${esc(item)}</li>`).join('')}</ul>${warnings.length>6?`<div>Altri ${warnings.length-6} avvisi non mostrati.</div>`:''}</div>`;
-}
-function showSaveManager(){
- const cards=Array.from({length:SLOT_COUNT},(_,index)=>slotSummary(index+1)).map(info=>`<div class="save-slot-card ${info.slot===activeSaveSlot?'current':''} ${info.empty?'empty':''}"><div><div class="save-slot-title"><b>Slot ${info.slot}: ${esc(info.label)}</b>${info.slot===activeSaveSlot?'<span class="save-slot-badge">Attivo</span>':''}</div><div class="save-slot-meta">${esc(info.meta)}</div></div><div class="save-slot-buttons">${info.slot!==activeSaveSlot?`<button class="btn primary compact" data-open-slot="${info.slot}" type="button">${info.empty?'Inizia qui':'Continua'}</button>`:''}<button class="btn compact" data-clear-slot="${info.slot}" type="button">Svuota</button></div></div>`).join('');
- modalRoot.innerHTML=`<div class="robust-modal-backdrop"><section class="robust-modal" role="dialog" aria-modal="true" aria-labelledby="saveManagerTitle"><div class="robust-modal-head"><div><div class="label">Salvataggi e sicurezza</div><h2 id="saveManagerTitle">Gestione stagione</h2></div><button class="robust-close" id="saveManagerClose" type="button">×</button></div><p class="robust-modal-copy">Ogni slot viene salvato automaticamente. Prima di ogni sovrascrittura viene conservata anche la versione precedente.</p><div class="save-slot-grid">${cards}</div><div class="save-tools-bar"><button class="btn gold" id="exportBackupBtn" type="button">Esporta backup</button><button class="btn" id="importBackupBtn" type="button">Importa backup</button><button class="btn" id="restoreBackupBtn" type="button">Ripristina precedente</button></div>${diagnosticsMarkup()}<span class="autosave-note">Versione salvataggio ${CURRENT_STATE_VERSION}. I vecchi salvataggi vengono migrati automaticamente.</span></section></div>`;
- document.getElementById('saveManagerClose').onclick=closeRobustModal;
- modalRoot.querySelector('.robust-modal-backdrop').onclick=event=>{if(event.target===event.currentTarget)closeRobustModal()};
- modalRoot.querySelectorAll('[data-open-slot]').forEach(button=>button.onclick=()=>openSaveSlot(Number(button.dataset.openSlot)));
- modalRoot.querySelectorAll('[data-clear-slot]').forEach(button=>button.onclick=()=>clearSaveSlot(Number(button.dataset.clearSlot)));
- document.getElementById('exportBackupBtn').onclick=exportSaveBackup;
- document.getElementById('importBackupBtn').onclick=()=>document.getElementById('importSaveInput').click();
- document.getElementById('restoreBackupBtn').onclick=restoreSlotBackup;
 }
 function validateGameData(players,clubs){
  const fatal=[],warnings=[];
@@ -3070,12 +3000,12 @@ function persistSetupIdentity(teamInput,coachInput,saveState=true){
    localStorage.setItem(SETUP_TEAM_NAME_KEY,state.teamName);
    localStorage.setItem(SETUP_COACH_NAME_KEY,state.coachName);
  }catch(error){console.warn('Preferenze squadra non salvate',error)}
- if(saveState)save({skipBackup:true});
+ if(saveState)save();
 }
 function scheduleSetupIdentitySave(teamInput,coachInput){
  persistSetupIdentity(teamInput,coachInput,false);
  clearTimeout(setupIdentitySaveTimer);
- setupIdentitySaveTimer=setTimeout(()=>save({skipBackup:true}),220);
+ setupIdentitySaveTimer=setTimeout(()=>save(),220);
 }
 function showSetup(){
  const userClub=activeUserClub(),userPal=clubPalette(userClub);
@@ -3087,7 +3017,7 @@ function showSetup(){
    clearTimeout(setupIdentitySaveTimer);
    persistSetupIdentity(teamInput,coachInput,false);
    state.formation=b.dataset.form;
-   save({skipBackup:true});
+   save();
    showSetup();
  });
  document.getElementById('startDraft').onclick=()=>{
@@ -4866,25 +4796,23 @@ async function boot(){
    console.error('Errore caricamento database',error);showBootError(error);return;
  }
  try{
-   state=normalizeCampionatoState(state);save({skipBackup:true});render();
+   state=normalizeCampionatoState(state);save();cleanupLegacySaveArtifacts();render();
    if(startupNotice)toast(startupNotice);
-   else if(dataDiagnostics.warnings.length)toast(`Database caricato con ${dataDiagnostics.warnings.length} avvisi. Apri Salvataggi per i dettagli.`);
+   else if(dataDiagnostics.warnings.length)toast(`Database caricato con ${dataDiagnostics.warnings.length} avvisi.`);
  }catch(error){
    console.error('Errore interfaccia Fantacampionato del Ca***',error);
-   screen.innerHTML=`<section class="panel robust-error"><div class="label">Ripristino interfaccia</div><h2>La schermata non si è aperta</h2><p>Il salvataggio è ancora presente nello slot ${activeSaveSlot}.</p><div class="robust-error-detail">${esc(error&&error.message?error.message:error)}</div><div class="top-actions" style="margin-top:14px"><button id="recoverInterfaceBtn" class="btn primary" type="button">Riprova senza cancellare</button><button id="recoverDraftViewBtn" class="btn gold" type="button">Apri il draft in modalità sicura</button><button id="openSaveManagerErrorBtn" class="btn" type="button">Salvataggi</button></div></section>`;
+   screen.innerHTML=`<section class="panel robust-error"><div class="label">Ripristino interfaccia</div><h2>La schermata non si è aperta</h2><p>Il salvataggio automatico è ancora presente e non è stato cancellato.</p><div class="robust-error-detail">${esc(error&&error.message?error.message:error)}</div><div class="top-actions" style="margin-top:14px"><button id="recoverInterfaceBtn" class="btn primary" type="button">Riprova senza cancellare</button><button id="recoverDraftViewBtn" class="btn gold" type="button">Apri il draft in modalità sicura</button></div></section>`;
    const recover=document.getElementById('recoverInterfaceBtn');if(recover)recover.onclick=()=>{state=normalizeCampionatoState(state);render()};
    const safeDraft=document.getElementById('recoverDraftViewBtn');if(safeDraft)safeDraft.onclick=()=>{state=normalizeCampionatoState(state);state.phase='draft';mobileDraftTab='players';save();render()};
-   const tools=document.getElementById('openSaveManagerErrorBtn');if(tools)tools.onclick=showSaveManager;
  }
 }
-document.getElementById('saveToolsBtn').onclick=showSaveManager;
-document.getElementById('importSaveInput').onchange=event=>{const file=event.target.files?.[0];event.target.value='';importSaveBackup(file)};
 document.getElementById('resetBtn').onclick=async()=>{
- const confirmed=await openConfirm({title:'Azzera stagione',message:`La stagione nello slot ${activeSaveSlot} verrà cancellata. Il backup automatico precedente resterà disponibile nella gestione salvataggi.`,confirmText:'Azzera stagione',danger:true});
+ const confirmed=await openConfirm({title:'Azzera stagione',message:'La stagione corrente verrà cancellata definitivamente. Non esistono backup o possibilità di ripristino.',confirmText:'Azzera definitivamente',danger:true});
  if(!confirmed)return;
- const existing=localStorage.getItem(saveKey());if(existing)localStorage.setItem(backupKey(),existing);
- localStorage.removeItem(saveKey());state=freshState();save({skipBackup:true});render();toast('Stagione azzerata.')
+ localStorage.removeItem(AUTO_SAVE_KEY);state=freshState();save();render();toast('Stagione azzerata definitivamente.')
 };
+window.addEventListener('pagehide',()=>save());
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save()});
 window.addEventListener('error',event=>{console.error('Errore JavaScript non gestito',event.error||event.message)});
 window.addEventListener('unhandledrejection',event=>{console.error('Promise non gestita',event.reason)});
 boot();
