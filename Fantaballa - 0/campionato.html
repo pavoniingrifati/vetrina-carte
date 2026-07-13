@@ -2525,7 +2525,7 @@
 </div>
 <div id="modalRoot"></div><input id="importSaveInput" type="file" accept="application/json,.json" hidden><div id="toast" class="toast"></div>
 <script>
-const CURRENT_STATE_VERSION=12;
+const CURRENT_STATE_VERSION=13;
 const SAVE_BASE='fantaballa_campionato_v7';
 const LEGACY_SAVE_KEYS=['fantaballa_campionato_v1'];
 const ACTIVE_SLOT_KEY='fantaballa_campionato_active_slot';
@@ -2565,7 +2565,7 @@ const FORMATION_LAYOUTS={
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
 let PLAYERS=[];let CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),saveSlot:activeSaveSlot},phase:'setup',userClubId:'fantaballa-fc',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa FC'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,drawPoints:1,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',redCardGoals:false,pointsEqualGoals:false,injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:''},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),saveSlot:activeSaveSlot},phase:'setup',userClubId:'fantaballa-fc',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa FC'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,drawPoints:1,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:''},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
@@ -2867,6 +2867,9 @@ function normalizeCampionatoState(input){
  next.seasonRules.longMatchRisk=Boolean(next.seasonRules.longMatchRisk);
  next.seasonRules.deathMatchClubId=String(next.seasonRules.deathMatchClubId||'');
  next.seasonRules.deathMatchClubName=String(next.seasonRules.deathMatchClubName||'');
+ next.seasonRules.deathMatchClubBonus=Math.max(0,Number(next.seasonRules.deathMatchClubBonus)||10);
+ next.seasonRules.sixtyPointFear=Boolean(next.seasonRules.sixtyPointFear);
+ next.seasonRules.sixtyPointFearTriggered=Boolean(next.seasonRules.sixtyPointFearTriggered);
  next.seasonRules.redCardGoals=Boolean(next.seasonRules.redCardGoals);
  next.seasonRules.pointsEqualGoals=Boolean(next.seasonRules.pointsEqualGoals);
  next.seasonRules.injuredOvrBonus=Math.max(0,Number(next.seasonRules.injuredOvrBonus)||0);
@@ -3633,6 +3636,7 @@ function activeChemistryMultiplier(player){
  state.activeEffects.forEach(effect=>{
    if(effect.type==='teamChemMultiplier')multiplier*=Math.max(1,Number(effect.value)||1);
    if(effect.type==='subscriberChemMultiplier'&&isSubscriber(player))multiplier*=Math.max(1,Number(effect.value)||1);
+   if(effect.type==='playerChemMultiplier'&&String(effect.playerId)===String(player?.id||''))multiplier*=Math.max(1,Number(effect.value)||1);
  });
  return clamp(multiplier,1,6);
 }
@@ -3783,7 +3787,8 @@ function activateDeathMatchClub(){
  if(!target)return 'Nessun avversario disponibile.';
  state.seasonRules.deathMatchClubId=String(target.id);
  state.seasonRules.deathMatchClubName=String(target.name||'Atalanta');
- return isAtalanta?'L’Atalanta riceverà +20 OVR ogni volta che ti affronterà.':`L’Atalanta non partecipa a questa stagione: ${target.name} ne prende il posto e riceverà +20 OVR contro di te.`;
+ state.seasonRules.deathMatchClubBonus=10;
+ return isAtalanta?'L’Atalanta riceverà +10 OVR ogni volta che ti affronterà.':`L’Atalanta non partecipa a questa stagione: ${target.name} ne prende il posto e riceverà +10 OVR contro di te.`;
 }
 function permanentRandomPlayerBoost(delta,source='Magia nera'){
  const entry=randomOwnEntry();if(!entry)return 'Nessun giocatore disponibile.';
@@ -3791,6 +3796,65 @@ function permanentRandomPlayerBoost(delta,source='Magia nera'){
  const index=state.draft.roster.findIndex(item=>String(item.playerId)===String(entry.playerId));
  if(index>=0)state.draft.roster[index].player={...player,ovr:after};
  return `${player.name}: OVR ${before} → ${after} per il resto della stagione (${source}).`;
+}
+function originalBaseOvr(player){
+ const original=playerById(player?.id);
+ return Math.max(1,Number(original?.ovr??player?.ovr)||60);
+}
+function rosterEntryIndex(entry){return state.draft.roster.findIndex(item=>String(item.playerId)===String(entry?.playerId||''))}
+function setPermanentRosterOvr(entry,value){
+ if(!entry)return null;
+ const index=rosterEntryIndex(entry),player=entry.player||playerById(entry.playerId);
+ if(index<0||!player)return null;
+ const before=Number(player.ovr)||60,after=Math.max(1,Math.round(Number(value)||before));
+ state.draft.roster[index].player={...player,ovr:after};
+ return {player:state.draft.roster[index].player,before,after};
+}
+function empowerUnderdog(){
+ const entries=rosterPlayers().filter(entry=>entry?.player);
+ const eligible=entries.filter(entry=>{const base=originalBaseOvr(entry.player);return base>=60&&base<=70});
+ if(!eligible.length)return 'Non hai giocatori con OVR base compreso tra 60 e 70.';
+ const selected=pick(eligible),highest=Math.max(...entries.map(entry=>originalBaseOvr(entry.player)));
+ const change=setPermanentRosterOvr(selected,highest);
+ return change?`${change.player.name} passa da ${change.before} a ${change.after} OVR, quanto il tuo giocatore con l’OVR base più alto, fino a fine stagione.`:'Il potenziamento non è stato applicato.';
+}
+function guaranteeSixNil(){
+ pushEffect('forcedScore',1,1,{gf:6,ga:0,source:'Favoriti'});
+ return 'La prossima partita terminerà con una tua vittoria per 6-0.';
+}
+function sixtyShadesSacrifice(){
+ const entries=rosterPlayers().filter(entry=>entry?.player);
+ const eligible=entries.filter(entry=>originalBaseOvr(entry.player)===60);
+ if(!eligible.length)return 'Non hai un giocatore con esattamente 60 OVR base.';
+ const chosen=pick(eligible);
+ const bestPool=entries.filter(entry=>String(entry.playerId)!==String(chosen.playerId)&&!statusOf(entry.playerId).seasonOut);
+ const best=[...(bestPool.length?bestPool:entries.filter(entry=>String(entry.playerId)!==String(chosen.playerId)))].sort((a,b)=>(Number(b.player?.ovr)||originalBaseOvr(b.player))-(Number(a.player?.ovr)||originalBaseOvr(a.player)))[0];
+ const change=setPermanentRosterOvr(chosen,originalBaseOvr(chosen.player)*2);
+ let sacrifice='Nessun altro giocatore disponibile da sacrificare.';
+ if(best)sacrifice=ruleOutForSeason(best,'Un piccolo sacrificio');
+ return change?`${change.player.name} raddoppia il proprio OVR fino a ${change.after} per tutta la stagione. ${sacrifice}`:sacrifice;
+}
+function activateSixtyPointFear(){
+ state.seasonRules.sixtyPointFear=true;
+ state.seasonRules.sixtyPointFearTriggered=false;
+ return 'Se la tua squadra raggiungerà esattamente 60 punti, il punteggio verrà immediatamente azzerato.';
+}
+function applySixtyPointFear(){
+ const standing=userStanding();
+ if(!state.seasonRules.sixtyPointFear||state.seasonRules.sixtyPointFearTriggered||!standing||Number(standing.pts)!==60)return '';
+ standing.pts=0;state.seasonRules.sixtyPointFear=false;state.seasonRules.sixtyPointFearTriggered=true;
+ return '60 la paura: hai raggiunto esattamente 60 punti e la classifica ti ha azzerato il punteggio.';
+}
+function doubleCoachNamesakeChemistry(){
+ const entry=coachNamedRosterEntry();
+ if(!entry)return 'Non hai in rosa un giocatore con lo stesso nome dell’allenatore.';
+ const remaining=Math.max(1,38-Number(state.matchday||0));
+ pushEffect('playerChemMultiplier',2,remaining,{playerId:String(entry.playerId),source:'Ehi ma ti chiami come me'});
+ return `${entry.player.name} avrà Intesa ×2 fino al termine della stagione.`;
+}
+function doubleTeamChemistryTwoMatches(){
+ pushEffect('teamChemMultiplier',2,2,{source:'Che nome del ca***'});
+ return 'L’Intesa positiva di tutta la squadra sarà raddoppiata per le prossime 2 partite.';
 }
 function activateMandatoryDcTopSwap(){
  const entry=centralDefenderRosterEntry();if(!entry)return 'Non è presente alcun difensore centrale da indicare.';
@@ -3817,12 +3881,13 @@ function seasonRuleSummary(){
  if(state.seasonRules.marottaDoubleWins)extras.push('Marotta League attiva: vittoria +6, sconfitta -100');
  if(Number(state.seasonRules.drawPoints)>1)extras.push(`Pareggi globali: +${Number(state.seasonRules.drawPoints)} punti a squadra`);
  if(currentMatchDuration()!==90)extras.push(`Durata tue partite: ${currentMatchDuration()} minuti`);
- if(state.seasonRules.deathMatchClubId)extras.push(`${state.seasonRules.deathMatchClubName||'Club speciale'}: +20 OVR contro di te`);
+ if(state.seasonRules.deathMatchClubId)extras.push(`${state.seasonRules.deathMatchClubName||'Club speciale'}: +${Number(state.seasonRules.deathMatchClubBonus)||10} OVR contro di te`);
  if(state.seasonRules.redCardGoals)extras.push('Ogni rosso vale un gol per la squadra che lo riceve');
  if(state.seasonRules.pointsEqualGoals)extras.push('Punti in classifica uguali ai gol segnati');
  if(Number(state.seasonRules.injuredOvrBonus)>0)extras.push(`Infortunati schierati: +${state.seasonRules.injuredOvrBonus} OVR`);
  if(state.seasonRules.lateGoalsDouble)extras.push('Gol dall’80°: valore doppio');
  if(state.seasonRules.zeroZeroNoPoints)extras.push('0-0: nessun punto');
+ if(state.seasonRules.sixtyPointFear&&!state.seasonRules.sixtyPointFearTriggered)extras.push('60 la paura: a 60 punti il punteggio viene azzerato');
  if(state.seasonRules.guaranteedTopPlayerNextMidseason)extras.push('Prossimo pack mercato: top player garantito');
  if(state.seasonRules.coachTopSwapPlayerId)extras.push('Scambio speciale del figlio del mister disponibile');
  const mandatoryNames=mandatoryMidseasonPlayerIds().map(id=>playerById(id)?.name).filter(Boolean);if(mandatoryNames.length)extras.push(`Scambi obbligatori: ${mandatoryNames.join(', ')}`)
@@ -3941,8 +4006,8 @@ const DECISIONS=[
   {label:'Lungo e godurioso',effect:'Le tue partite durano 120 minuti, ma aumentano infortuni e squalifiche',apply(){state.seasonRules.matchDuration=120;state.seasonRules.longMatchRisk=true;return 'Da ora le tue partite dureranno 120 minuti, con rischio maggiore di infortuni ed espulsioni.'}}
  ]},
  {id:'personaggio-capelli-bianchi',title:'Un personaggio dai capelli bianchi si avvicina con una bevanda in mano',text:'La bottiglia non ha etichetta, ma emette una luce decisamente sospetta.',choices:[
-  {label:'Bevanda energetica',effect:'50%: tutta la rosa +20 OVR. 50%: tutta la rosa fuori fino a fine stagione',apply(){if(Math.random()<.5){const names=boostAllRosterPlayers(20);return `${names.length} giocatori ricevono +20 OVR fino a fine stagione.`}const names=ruleOutAllRosterPlayers('Bevanda energetica');return `${names.length} giocatori sono infortunati fino al termine della stagione.`}},
-  {label:'Rifiuto la bevanda',effect:'L’Atalanta riceve +20 OVR ogni volta che ti affronta',apply(){return activateDeathMatchClub()}}
+  {label:'Bevanda energetica',effect:'50%: tutta la rosa +10 OVR. 50%: tutta la rosa fuori fino a fine stagione',apply(){if(Math.random()<.5){const names=boostAllRosterPlayers(10);return `${names.length} giocatori ricevono +10 OVR fino a fine stagione.`}const names=ruleOutAllRosterPlayers('Bevanda energetica');return `${names.length} giocatori sono infortunati fino al termine della stagione.`}},
+  {label:'Rifiuto la bevanda',effect:'L’Atalanta riceve +10 OVR ogni volta che ti affronta',apply(){return activateDeathMatchClub()}}
  ]},
  {id:'figura-aldila',title:'Una figura dall’aldilà si avvicina',text:'Pronuncia poche parole e pretende una rivoluzione tattica.',available(){return Number(state.matchday)<19},choices:[
   {label:'ATAKARE',effect:'Cambi modulo e giochi con un 2-4-4',apply(){return forceSeasonFormation('2-4-4')}},
@@ -3959,6 +4024,18 @@ const DECISIONS=[
  {id:'fgci-regolamento-gol-tardivi',title:'FGCI',text:'La federazione cambia nuovamente il regolamento del campionato.',choices:[
   {label:'Dal 80’ i gol valgono doppio',effect:'Ogni gol segnato dall’80° in poi vale due reti fino a fine stagione',apply(){state.seasonRules.lateGoalsDouble=true;return 'Da ora i gol segnati dall’80° minuto in poi valgono doppio per tutte le squadre.'}},
   {label:'Zero a zero, zero punti',effect:'Se una partita finisce 0-0 nessuna squadra ottiene punti',apply(){state.seasonRules.zeroZeroNoPoints=true;return 'Da ora ogni 0-0 assegna 0 punti a entrambe le squadre.'}}
+ ]},
+ {id:'underdog',title:'Underdog',text:'Il destino mette alla prova il rapporto tra favoriti e giocatori dimenticati.',choices:[
+  {label:'I primi saranno gli ultimi',effect:'Un giocatore con OVR base tra 60 e 70 diventa forte quanto il tuo giocatore con l’OVR base più alto fino a fine stagione',apply(){return empowerUnderdog()}},
+  {label:'Favoriti',effect:'La prossima partita è vinta automaticamente per 6-0',apply(){return guaranteeSixNil()}}
+ ]},
+ {id:'sessanta-sfumature',title:'60 sfumature di ca***',text:'Il numero 60 assume improvvisamente un significato molto pericoloso.',choices:[
+  {label:'Un piccolo sacrificio',effect:'Un giocatore con 60 OVR base raddoppia la forza per tutta la stagione, ma perdi il tuo miglior giocatore',apply(){return sixtyShadesSacrifice()}},
+  {label:'60 la paura',effect:'Se raggiungi esattamente 60 punti in classifica, perdi tutti i punti',apply(){return activateSixtyPointFear()}}
+ ]},
+ {id:'omonimo-allenatore',get title(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`},text:'Il tipo sostiene che condividere un nome crei un legame tattico inspiegabile.',available(){return Boolean(String(state.coachName||'').trim())},choices:[
+  {label:'Ehi ma ti chiami come me',effect:'Se hai un giocatore con lo stesso nome dell’allenatore, la sua Intesa viene moltiplicata ×2 fino a fine stagione',apply(){return doubleCoachNamesakeChemistry()}},
+  {label:'Che nome del ca***',effect:'L’Intesa di tutta la squadra viene moltiplicata ×2 per le prossime 2 partite',apply(){return doubleTeamChemistryTwoMatches()}}
  ]},
  {id:'figlio-del-mister',title:'Il figlio del mister',text:'In rosa c’è un giocatore con lo stesso nome dell’allenatore.',available(){return Number(state.matchday)<19&&Boolean(coachNamedRosterEntry())},choices:[
   {label:'Talento di famiglia',effect:'Il giocatore con il tuo stesso nome riceve +10 OVR fino a fine stagione',apply(){return boostCoachNamedPlayer()}},
@@ -3993,14 +4070,15 @@ function prepareEvent(){
    }else{
      const selected=pick(available),decision=selected.decision,decisionIndex=selected.index;
      const context=decision.createContext?decision.createContext():{};
+     const eventTitle=typeof decision.title==='function'?decision.title(context):decision.title;
      const eventText=decision.describe?decision.describe(context):decision.text;
      state.seenDecisionEvents=[...seen,decision.id];
      if(state.seasonRules.autoDecisions){
        const choiceIndex=Math.floor(Math.random()*decision.choices.length);
        const result=applyDecisionChoice(decisionIndex,choiceIndex,context,decision.id);
-       state.pendingEvent={kind:'decision',resolved:true,title:decision.title,text:eventText,decisionId:decision.id,decisionIndex,context,result:`Decisione automatica. ${result}`};
+       state.pendingEvent={kind:'decision',resolved:true,title:eventTitle,text:eventText,decisionId:decision.id,decisionIndex,context,result:`Decisione automatica. ${result}`};
      }else{
-       state.pendingEvent={kind:'decision',resolved:false,title:decision.title,text:eventText,decisionId:decision.id,decisionIndex,context};
+       state.pendingEvent={kind:'decision',resolved:false,title:eventTitle,text:eventText,decisionId:decision.id,decisionIndex,context};
      }
    }
  }
@@ -4379,23 +4457,26 @@ function playRound(mode='instant'){
  const ownRedChance=Math.min(1,Math.max(0,...chaos.map(effect=>Number(effect.ownRedChance??effect.ownSuspensionChance)||0))+(longRisk?0.25:0));
  const redCandidate=Math.random()<opponentRedChance?pick(opponentLineup.map(entry=>entry.player).filter(Boolean)):null,ownRedEntry=Math.random()<ownRedChance?pick(lineup.filter(entry=>entry&&entry.player)):null;
  const opponentEventOvr=state.activeEffects.filter(effect=>effect.type==='opponentOvr').reduce((sum,effect)=>sum+(Number(effect.value)||0),0);
- const deathMatchBonus=String(state.seasonRules.deathMatchClubId||'')===String(opponent?.id||'')?20:0;
+ const deathMatchBonus=String(state.seasonRules.deathMatchClubId||'')===String(opponent?.id||'')?Math.max(0,Number(state.seasonRules.deathMatchClubBonus)||10):0;
  const opponentPower=Math.max(35,opponentMatchPower(opponent)+opponentEventOvr+deathMatchBonus-(redCandidate?10:0)),userPower=Math.max(35,baseUserPower-(ownRedEntry?10:0));
  let [homeBase,awayBase]=simulateScore(userHome?userPower:opponentPower,userHome?opponentPower:userPower,.18,matchMinutes);
  let goalsFor=userHome?homeBase:awayBase,goalsAgainst=userHome?awayBase:homeBase;
- const forcedLoss=state.activeEffects.some(effect=>effect.type==='forcedLoss'),forcedWin=state.activeEffects.some(effect=>effect.type==='forcedWin'),maxDraw=state.activeEffects.some(effect=>effect.type==='maxDraw');
+ const forcedLoss=state.activeEffects.some(effect=>effect.type==='forcedLoss'),forcedWin=state.activeEffects.some(effect=>effect.type==='forcedWin'),maxDraw=state.activeEffects.some(effect=>effect.type==='maxDraw'),forcedScoreEffect=state.activeEffects.find(effect=>effect.type==='forcedScore')||null;
  const capValues=state.activeEffects.filter(effect=>effect.type==='goalCap').map(effect=>Number(effect.value)).filter(Number.isFinite);
  if(capValues.length)goalsFor=Math.min(goalsFor,Math.min(...capValues));
  const forcedSubscribers=state.activeEffects.some(effect=>effect.type==='forceSubscriberGoals')?lineup.filter(entry=>isSubscriber(entry.player)).map(entry=>String(entry.playerId)):[];
  if(forcedSubscribers.length)goalsFor=Math.max(goalsFor,forcedSubscribers.length);
  const defensiveRules=state.activeEffects.filter(effect=>effect.type==='cleanSheet'||effect.type==='minimumGoalsAgainst');if(defensiveRules.length){const lastRule=defensiveRules[defensiveRules.length-1];goalsAgainst=lastRule.type==='cleanSheet'?0:Math.max(goalsAgainst,Number(lastRule.value)||1)}
  if(forcedWin&&goalsFor<=goalsAgainst)goalsFor=goalsAgainst+1;if(forcedLoss&&goalsFor>=goalsAgainst)goalsAgainst=goalsFor+1;if(maxDraw&&goalsFor>goalsAgainst)goalsAgainst=goalsFor;if(state.activeEffects.some(effect=>effect.type==='noGoals'))goalsFor=0;
+ if(forcedScoreEffect){goalsFor=Math.max(0,Number(forcedScoreEffect.gf)||6);goalsAgainst=Math.max(0,Number(forcedScoreEffect.ga)||0)}
  const userGoalEvents=buildTeamGoals(goalsFor,lineup,userTeam,opponent,forcedSubscribers,matchMinutes),opponentGoalEvents=buildTeamGoals(goalsAgainst,opponentLineup,opponent,userTeam,[],matchMinutes);
- if(state.seasonRules.redCardGoals){if(ownRedEntry)userGoalEvents.push(regulationGoalEvent(userTeam,opponent,matchMinutes));if(redCandidate)opponentGoalEvents.push(regulationGoalEvent(opponent,userTeam,matchMinutes));}
+ if(forcedScoreEffect){userGoalEvents.forEach(event=>event.goalValue=1);opponentGoalEvents.forEach(event=>event.goalValue=1)}
+ if(state.seasonRules.redCardGoals&&!forcedScoreEffect){if(ownRedEntry)userGoalEvents.push(regulationGoalEvent(userTeam,opponent,matchMinutes));if(redCandidate)opponentGoalEvents.push(regulationGoalEvent(opponent,userTeam,matchMinutes));}
  userGoalEvents.sort((a,b)=>a.minute-b.minute);opponentGoalEvents.sort((a,b)=>a.minute-b.minute);
  goalsFor=scoreGoalEvents(userGoalEvents);goalsAgainst=scoreGoalEvents(opponentGoalEvents);
  if(capValues.length)goalsFor=Math.min(goalsFor,Math.min(...capValues));
  if(forcedWin&&goalsFor<=goalsAgainst)goalsFor=goalsAgainst+1;if(forcedLoss&&goalsFor>=goalsAgainst)goalsAgainst=goalsFor+1;if(maxDraw&&goalsFor>goalsAgainst)goalsAgainst=goalsFor;
+ if(forcedScoreEffect){goalsFor=Math.max(0,Number(forcedScoreEffect.gf)||6);goalsAgainst=Math.max(0,Number(forcedScoreEffect.ga)||0)}
  let homeGoals=userHome?goalsFor:goalsAgainst,awayGoals=userHome?goalsAgainst:goalsFor;
  const homeTeam=userHome?userTeam:opponent,awayTeam=userHome?opponent:userTeam,homeLineup=userHome?lineup:opponentLineup,awayLineup=userHome?opponentLineup:lineup,homeEvents=userHome?userGoalEvents:opponentGoalEvents,awayEvents=userHome?opponentGoalEvents:userGoalEvents;
  const commentary=buildMatchCommentary({homeTeam,awayTeam,homeLineup,awayLineup,homeEvents,awayEvents,homePower:userHome?userPower:opponentPower,awayPower:userHome?opponentPower:userPower,redCandidate,ownRedEntry,userHome,duration:matchMinutes});
@@ -4416,8 +4497,9 @@ function playRound(mode='instant'){
      const awards=recordLeagueMatchPlayerStats({homeTeam:roundHomeTeam,awayTeam:roundAwayTeam,homeLineup:roundHomeLineup,awayLineup:roundAwayLineup,homeScore,awayScore,homeEvents:roundHomeEvents,awayEvents:roundAwayEvents});
      roundResults.push({matchday:state.matchday+1,homeId:match.home,awayId:match.away,homeName:roundHomeTeam?.name||'',awayName:roundAwayTeam?.name||'',homeScore,awayScore,homeGoals:roundHomeEvents,awayGoals:roundAwayEvents,mvpId:awards.mvpId,mvpScore:awards.mvpScore,mvpTeamId:awards.mvpTeamId});if(match===fixture)userAwards=awards;
    });
+   const sixtyFearNote=applySixtyPointFear();if(sixtyFearNote)userPoints.note=[userPoints.note,sixtyFearNote].filter(Boolean).join(' ');
    const allHighlights=[...userGoalEvents,...opponentGoalEvents].sort((a,b)=>a.minute-b.minute);state.lastRoundResults=roundResults;
-   state.history.push({matchday:state.matchday+1,opponent:opponent.name,opponentId:opponent.id,home:userHome,gf:goalsFor,ga:goalsAgainst,goals:userGoalEvents,opponentGoals:opponentGoalEvents,highlights:allHighlights,commentary,power:Math.round(userPower*10)/10,opponentPower:Math.round(opponentPower*10)/10,opponentRedCard:Boolean(redCandidate),opponentRedPlayer:redCandidate?.name||'',ownRedCard:Boolean(ownRedEntry),ownSuspensionId:ownRedEntry?.playerId||'',ownSuspensionPlayer:ownRedEntry?.player?.name||'',goalkeeperId:userHome?userAwards?.homeGoalkeeperId:userAwards?.awayGoalkeeperId,opponentGoalkeeperId:userHome?userAwards?.awayGoalkeeperId:userAwards?.homeGoalkeeperId,cleanSheet:Number(goalsAgainst)===0,opponentCleanSheet:Number(goalsFor)===0,mvpId:userAwards?.mvpId||'',mvpScore:userAwards?.mvpScore||0,mvpTeamId:userAwards?.mvpTeamId||'',lineup:safeMatchLineup(lineup),opponentLineup:safeMatchLineup(opponentLineup),forcedLoss,forcedWin,maxDraw,pointsAwarded:userPoints.awarded,pointsAdjustment:userPoints.adjustment,pointsNote:userPoints.note,forcedSubscriberGoals:forcedSubscribers.length,playMode:mode,matchDuration:matchMinutes,deathMatchBonus});
+   state.history.push({matchday:state.matchday+1,opponent:opponent.name,opponentId:opponent.id,home:userHome,gf:goalsFor,ga:goalsAgainst,goals:userGoalEvents,opponentGoals:opponentGoalEvents,highlights:allHighlights,commentary,power:Math.round(userPower*10)/10,opponentPower:Math.round(opponentPower*10)/10,opponentRedCard:Boolean(redCandidate),opponentRedPlayer:redCandidate?.name||'',ownRedCard:Boolean(ownRedEntry),ownSuspensionId:ownRedEntry?.playerId||'',ownSuspensionPlayer:ownRedEntry?.player?.name||'',goalkeeperId:userHome?userAwards?.homeGoalkeeperId:userAwards?.awayGoalkeeperId,opponentGoalkeeperId:userHome?userAwards?.awayGoalkeeperId:userAwards?.homeGoalkeeperId,cleanSheet:Number(goalsAgainst)===0,opponentCleanSheet:Number(goalsFor)===0,mvpId:userAwards?.mvpId||'',mvpScore:userAwards?.mvpScore||0,mvpTeamId:userAwards?.mvpTeamId||'',lineup:safeMatchLineup(lineup),opponentLineup:safeMatchLineup(opponentLineup),forcedLoss,forcedWin,maxDraw,forcedScore:Boolean(forcedScoreEffect),pointsAwarded:userPoints.awarded,pointsAdjustment:userPoints.adjustment,pointsNote:userPoints.note,forcedSubscriberGoals:forcedSubscribers.length,playMode:mode,matchDuration:matchMinutes,deathMatchBonus});
    state.lastResult=state.history[state.history.length-1];postMatch();save();showResultModal();
  };
  if(mode==='live')playLiveMatch({commentary,homeTeam,awayTeam,homeGoals,awayGoals,matchday:state.matchday+1,duration:matchMinutes},finishRound);
@@ -4450,7 +4532,7 @@ function showResultModal(){
  const awayTeam=result.home?opponent:userTeam;
  const redLine=result.opponentRedCard?`<div class="goal-line red-card-event"><b>🟥 Espulsione avversaria: ${esc(result.opponentRedPlayer||'giocatore avversario')}</b><br>${esc(result.opponent)} ha giocato parte della gara in inferiorità numerica.</div>`:'';
  const suspensionLine=result.ownSuspensionPlayer?`<div class="goal-line red-card-event"><b>🟥 Espulsione: ${esc(result.ownSuspensionPlayer)}</b><br>Sarà squalificato per la prossima giornata.</div>`:'';
- const forcedLine=result.forcedLoss?`<div class="goal-line"><b>📋 Sconfitta obbligatoria</b><br>La sconfitta prevista dall’evento è stata applicata.</div>`:result.forcedWin?`<div class="goal-line"><b>✅ Vittoria assicurata</b><br>La vittoria prevista dall’evento è stata applicata.</div>`:result.maxDraw?`<div class="goal-line"><b>🤝 Risultato limitato</b><br>La squadra non poteva ottenere più di un pareggio.</div>`:'';
+ const forcedLine=result.forcedScore?`<div class="goal-line"><b>✅ Vittoria per 6-0</b><br>Il risultato garantito dall’evento Favoriti è stato applicato.</div>`:result.forcedLoss?`<div class="goal-line"><b>📋 Sconfitta obbligatoria</b><br>La sconfitta prevista dall’evento è stata applicata.</div>`:result.forcedWin?`<div class="goal-line"><b>✅ Vittoria assicurata</b><br>La vittoria prevista dall’evento è stata applicata.</div>`:result.maxDraw?`<div class="goal-line"><b>🤝 Risultato limitato</b><br>La squadra non poteva ottenere più di un pareggio.</div>`:'';
  const pointsLine=result.pointsNote?`<div class="goal-line"><b>🏆 Punti campionato</b><br>${esc(result.pointsNote)}</div>`:'';
  const injuryLine=result.eventInjuries?.length?`<div class="goal-line"><b>🚑 Conseguenza dell’imprevisto</b><br>${result.eventInjuries.map(item=>`${esc(item.name)}: ${item.duration} ${item.duration===1?'giornata':'giornate'}`).join(' · ')}</div>`:'';
  const subscriberLine=result.forcedSubscriberGoals?`<div class="goal-line"><b>⚽ Abbonati scatenati</b><br>${result.forcedSubscriberGoals} ${result.forcedSubscriberGoals===1?'abbonato ha':'abbonati hanno'} segnato almeno un gol.</div>`:'';
