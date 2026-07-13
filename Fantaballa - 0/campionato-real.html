@@ -2525,7 +2525,7 @@
 </div>
 <div id="modalRoot"></div><input id="importSaveInput" type="file" accept="application/json,.json" hidden><div id="toast" class="toast"></div>
 <script>
-const CURRENT_STATE_VERSION=13;
+const CURRENT_STATE_VERSION=14;
 const SAVE_BASE='fantaballa_campionato_real_v1';
 const LEGACY_SAVE_KEYS=[];
 const ACTIVE_SLOT_KEY='fantaballa_campionato_real_active_slot';
@@ -2565,7 +2565,7 @@ const FORMATION_LAYOUTS={
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
 let PLAYERS=[];let CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),saveSlot:activeSaveSlot},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,drawPoints:1,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:''},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),saveSlot:activeSaveSlot},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,drawPoints:1,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,generatedEventPlayers:[]},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
@@ -2772,7 +2772,7 @@ function comparePlayersByRole(a,b){
 }
 function sortPlayersByRole(players){return [...players].sort(comparePlayersByRole)}
 function sortRosterEntriesByRole(entries){return [...entries].sort((a,b)=>comparePlayersByRole(a.player,b.player)||String(a.slot||'').localeCompare(String(b.slot||''),'it'))}
-function playerById(id){return PLAYERS.find(p=>String(p.id)===String(id))}
+function playerById(id){return PLAYERS.find(p=>String(p.id)===String(id))||(Array.isArray(state?.seasonRules?.generatedEventPlayers)?state.seasonRules.generatedEventPlayers.find(p=>String(p.id)===String(id)):null)}
 function clubById(id){return CLUBS.find(club=>String(club.id)===String(id))||null}
 function activeUserClub(){return clubById(state.userClubId)||CLUBS[0]||{id:'fantaballa-real',name:'Fantaballa REAL',shortName:'REAL',colorClub:{primary:'#173A61',secondary:'#F2C84B',accent:'#E84A3A',text:'#FFFFFF'}}}
 function normalizeClubColors(source={}){return{primary:source.primary||'#245786',secondary:source.secondary||'#10243A',accent:source.accent||'#FFE96C',text:source.text||'#FFFFFF'}}
@@ -2877,6 +2877,8 @@ function normalizeCampionatoState(input){
  next.seasonRules.topPlayerAfterMandatoryId=String(next.seasonRules.topPlayerAfterMandatoryId||'');
  next.seasonRules.guaranteedTopPlayerNextMidseason=Boolean(next.seasonRules.guaranteedTopPlayerNextMidseason);
  next.seasonRules.coachTopSwapPlayerId=String(next.seasonRules.coachTopSwapPlayerId||'');
+ next.seasonRules.fantaguruBetterMidseason=Boolean(next.seasonRules.fantaguruBetterMidseason);
+ next.seasonRules.generatedEventPlayers=Array.isArray(next.seasonRules.generatedEventPlayers)?next.seasonRules.generatedEventPlayers.filter(player=>player&&player.id).map(player=>({...player,id:String(player.id),ovr:Math.max(1,Number(player.ovr)||60)})):[];
  next.midseason=next.midseason&&typeof next.midseason==='object'?next.midseason:{};
  next.midseason.step=Math.max(0,Number(next.midseason.step)||0);
  next.midseason.target=clamp(Number(next.midseason.target)||midseasonTargetFrom(next),1,3);
@@ -3746,6 +3748,47 @@ function runMisterFmExperiment(){
  selected.entry.player={...selected.player,ovr:after};
  return `${selected.player.name}: OVR ${before} → ${after} (${delta>0?'+20':'-20'}) fino al termine della stagione.`;
 }
+function optimizeLineupWithBench(){
+ const roster=state.draft.roster;
+ const changes=[];
+ let guard=0;
+ while(guard++<20){
+   const benches=roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>item.entry.bench&&item.player).sort((a,b)=>(Number(b.player.ovr)||0)-(Number(a.player.ovr)||0));
+   let swap=null;
+   for(const bench of benches){
+     const benchOvr=Number(bench.player.ovr)||0;
+     const targets=roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>!item.entry.bench&&item.player&&compatible(bench.player,item.entry.slot)&&(Number(item.player.ovr)||0)<benchOvr).sort((a,b)=>(Number(a.player.ovr)||0)-(Number(b.player.ovr)||0));
+     if(targets.length){swap={bench,target:targets[0]};break}
+   }
+   if(!swap)break;
+   const benchEntry={...swap.bench.entry},targetEntry={...swap.target.entry};
+   roster[swap.target.index]={...benchEntry,bench:false,slot:targetEntry.slot,slotId:targetEntry.slotId};
+   roster[swap.bench.index]={...targetEntry,bench:true,slot:benchEntry.slot,slotId:benchEntry.slotId};
+   changes.push(`${swap.bench.player.name} entra al posto di ${swap.target.player.name} nello slot ${targetEntry.slot}`);
+ }
+ return changes.length?`Formazione ottimizzata: ${changes.join(' · ')}.`:'La formazione era già la migliore possibile con i panchinari disponibili.';
+}
+function activateFantaguru(){
+ state.seasonRules.fantaguruBetterMidseason=true;
+ return 'Al draft di metà stagione ogni pack conterrà almeno un giocatore con OVR superiore a quello che stai cedendo.';
+}
+function registerGeneratedEventPlayer(player){
+ state.seasonRules.generatedEventPlayers=Array.isArray(state.seasonRules.generatedEventPlayers)?state.seasonRules.generatedEventPlayers:[];
+ const id=String(player.id),index=state.seasonRules.generatedEventPlayers.findIndex(item=>String(item.id)===id);
+ if(index>=0)state.seasonRules.generatedEventPlayers[index]={...player,id};else state.seasonRules.generatedEventPlayers.push({...player,id});
+ return state.seasonRules.generatedEventPlayers.find(item=>String(item.id)===id);
+}
+function fantaguruCandidate(outgoing,pool){
+ const list=(pool||[]).filter(Boolean);
+ if(!list.length)return null;
+ const outgoingPlayer=outgoing?.player||playerById(outgoing?.playerId),outgoingOvr=Number(outgoingPlayer?.ovr)||0;
+ const stronger=[...list].filter(player=>(Number(player.ovr)||0)>outgoingOvr).sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0))[0];
+ if(stronger)return stronger;
+ const strongest=[...list].sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0))[0];
+ if(!strongest)return null;
+ const boosted={...strongest,id:`event-fantaguru-${state.meta?.createdAt||Date.now()}-${state.midseason?.step||0}-${Date.now()}`,ovr:Math.max(outgoingOvr+1,(Number(strongest.ovr)||0)+1),eventPlayer:true,fantaguru:true};
+ return registerGeneratedEventPlayer(boosted);
+}
 function currentMatchDuration(){return [30,90,120].includes(Number(state.seasonRules?.matchDuration))?Number(state.seasonRules.matchDuration):90}
 function goalValueForMinute(minute){return state.seasonRules?.lateGoalsDouble&&Number(minute)>=80?2:1}
 function scoreGoalEvents(events){return (Array.isArray(events)?events:[]).reduce((sum,event)=>sum+Math.max(1,Number(event?.goalValue)||1),0)}
@@ -4035,6 +4078,10 @@ const DECISIONS=[
  {id:'omonimo-allenatore',get title(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`},text:'Il tipo sostiene che condividere un nome crei un legame tattico inspiegabile.',available(){return Boolean(String(state.coachName||'').trim())},choices:[
   {label:'Ehi ma ti chiami come me',effect:'Se hai un giocatore con lo stesso nome dell’allenatore, la sua Intesa viene moltiplicata ×2 fino a fine stagione',apply(){return doubleCoachNamesakeChemistry()}},
   {label:'Che nome del ca***',effect:'L’Intesa di tutta la squadra viene moltiplicata ×2 per le prossime 2 partite',apply(){return doubleTeamChemistryTwoMatches()}}
+ ]},
+ {id:'figura-misteriosa-tattico-fantaguru',title:'Ti si avvicina una figura misteriosa',text:'La figura sostiene di poter sistemare la formazione oppure prevedere ogni affare del mercato.',available(){return Number(state.matchday)<19},choices:[
+  {label:'Il tattico',effect:'Sistema la formazione mettendo in campo i panchinari più forti dei titolari, ma solo nelle posizioni compatibili',apply(){return optimizeLineupWithBench()}},
+  {label:'Il fantaguru',effect:'Nel draft di metà stagione avrai sempre almeno una scelta migliore del giocatore che stai offrendo',apply(){return activateFantaguru()}}
  ]},
  {id:'figlio-del-mister',title:'Il figlio del mister',text:'In rosa c’è un giocatore con lo stesso nome dell’allenatore.',available(){return Number(state.matchday)<19&&Boolean(coachNamedRosterEntry())},choices:[
   {label:'Talento di famiglia',effect:'Il giocatore con il tuo stesso nome riceve +10 OVR fino a fine stagione',apply(){return boostCoachNamedPlayer()}},
@@ -4714,18 +4761,47 @@ function showMidseason(){
  const cancel=document.getElementById('cancelMarketCandidate');if(cancel)cancel.onclick=cancelMarketCandidate;
 }
 function drawMarket(){
- primeDraftAudio();const ms=state.midseason,outgoing=rosterEntry(ms.outgoingId);if(!outgoing)return toast('Scegli prima il giocatore da sostituire.');if(!midseasonCanDraw())return toast('L’estrazione è definitiva: non puoi cambiare club.');
- const used=new Set(state.draft.roster.map(entry=>String(entry.playerId)));let base=PLAYERS.filter(player=>player.club&&!used.has(String(player.id))&&(outgoing.bench||compatible(player,outgoing.slot)));
- const coachSpecial=String(state.seasonRules.coachTopSwapPlayerId||'')===String(outgoing.playerId),guaranteed=Boolean(state.seasonRules.guaranteedTopPlayerNextMidseason||coachSpecial);
+ primeDraftAudio();
+ const ms=state.midseason,outgoing=rosterEntry(ms.outgoingId);
+ if(!outgoing)return toast('Scegli prima il giocatore da sostituire.');
+ if(!midseasonCanDraw())return toast('L’estrazione è definitiva: non puoi cambiare club.');
+ const used=new Set(state.draft.roster.map(entry=>String(entry.playerId)));
+ let base=PLAYERS.filter(player=>player.club&&!used.has(String(player.id))&&(outgoing.bench||compatible(player,outgoing.slot)));
+ const coachSpecial=String(state.seasonRules.coachTopSwapPlayerId||'')===String(outgoing.playerId);
+ const oneTimeGuaranteed=Boolean(state.seasonRules.guaranteedTopPlayerNextMidseason||coachSpecial);
+ const fantaguruActive=Boolean(state.seasonRules.fantaguruBetterMidseason);
  if(coachSpecial)base=base.filter(player=>roleOf(player)===roleOf(outgoing.player));
- const groups={};base.forEach(player=>(groups[String(player.club)]??=[]).push(player));const previousClub=String(ms.clubId||'');let guaranteedPlayer=null;
- if(guaranteed&&base.length){const top=base.filter(player=>(Number(player.ovr)||0)>=80).sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0));guaranteedPlayer=(top[0]||[...base].sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0))[0])||null;}
+ let guaranteedPlayer=null;
+ if(oneTimeGuaranteed&&base.length){
+   const top=base.filter(player=>(Number(player.ovr)||0)>=80).sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0));
+   guaranteedPlayer=(top[0]||[...base].sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0))[0])||null;
+ }
+ if(fantaguruActive&&base.length){
+   const guru=fantaguruCandidate(outgoing,base);
+   if(guru){
+     if(!base.some(player=>String(player.id)===String(guru.id)))base.push(guru);
+     const outgoingOvr=Number(outgoing.player?.ovr||playerById(outgoing.playerId)?.ovr)||0;
+     if(!guaranteedPlayer||(Number(guaranteedPlayer.ovr)||0)<=outgoingOvr)guaranteedPlayer=guru;
+   }
+ }
+ const groups={};
+ base.forEach(player=>(groups[String(player.club)]??=[]).push(player));
+ const previousClub=String(ms.clubId||'');
  if(guaranteedPlayer)ms.clubId=String(guaranteedPlayer.club);
- else{const preferred=Object.keys(groups).filter(clubId=>groups[clubId].length>=2&&clubById(clubId)&&clubId!==previousClub),fallback=Object.keys(groups).filter(clubId=>clubById(clubId)&&clubId!==previousClub),clubPool=preferred.length?preferred:(fallback.length?fallback:Object.keys(groups).filter(clubId=>clubById(clubId)));ms.clubId=pick(clubPool)||'';}
- const clubPlayers=groups[ms.clubId]||[];ms.candidates=guaranteedPlayer?[String(guaranteedPlayer.id),...shuffle(clubPlayers.filter(player=>String(player.id)!==String(guaranteedPlayer.id))).slice(0,3).map(player=>String(player.id))]:shuffle(clubPlayers).slice(0,4).map(player=>String(player.id));
- ms.pendingCandidateId='';playDraftPackSound();ms.drawsUsed=Math.max(0,Number(ms.drawsUsed)||0)+1;
- if(state.seasonRules.guaranteedTopPlayerNextMidseason)state.seasonRules.guaranteedTopPlayerNextMidseason=false;if(coachSpecial)state.seasonRules.coachTopSwapPlayerId='';
- save();render();animateMidseasonCandidateReveal();if(guaranteedPlayer)toast(`Top player garantito nel pack: ${guaranteedPlayer.name}.`);
+ else{
+   const preferred=Object.keys(groups).filter(clubId=>groups[clubId].length>=2&&clubById(clubId)&&clubId!==previousClub),fallback=Object.keys(groups).filter(clubId=>clubById(clubId)&&clubId!==previousClub),clubPool=preferred.length?preferred:(fallback.length?fallback:Object.keys(groups).filter(clubId=>clubById(clubId)));
+   ms.clubId=pick(clubPool)||'';
+ }
+ const clubPlayers=groups[ms.clubId]||[];
+ ms.candidates=guaranteedPlayer?[String(guaranteedPlayer.id),...shuffle(clubPlayers.filter(player=>String(player.id)!==String(guaranteedPlayer.id))).slice(0,3).map(player=>String(player.id))]:shuffle(clubPlayers).slice(0,4).map(player=>String(player.id));
+ ms.pendingCandidateId='';
+ playDraftPackSound();
+ ms.drawsUsed=Math.max(0,Number(ms.drawsUsed)||0)+1;
+ if(state.seasonRules.guaranteedTopPlayerNextMidseason)state.seasonRules.guaranteedTopPlayerNextMidseason=false;
+ if(coachSpecial)state.seasonRules.coachTopSwapPlayerId='';
+ save();render();animateMidseasonCandidateReveal();
+ if(fantaguruActive&&guaranteedPlayer)toast(`Fantaguru: ${guaranteedPlayer.name} (${guaranteedPlayer.ovr} OVR) è migliore del giocatore ceduto.`);
+ else if(guaranteedPlayer)toast(`Top player garantito nel pack: ${guaranteedPlayer.name}.`);
 }
 function selectMarketCandidate(id){
  const ms=state.midseason;
