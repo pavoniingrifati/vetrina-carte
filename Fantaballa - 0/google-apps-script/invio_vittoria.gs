@@ -201,7 +201,7 @@ function iframeOutput_(data, requestId) {
     .replace(/\u2028/g, '\\u2028')
     .replace(/\u2029/g, '\\u2029');
   const html = '<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex"></head><body>' +
-    '<script>parent.postMessage(' + payload + ', "*");<\/script></body></html>';
+    '<script>(function(){var message=' + payload + ';try{parent.postMessage(message,"*");}catch(e){}try{if(top&&top!==parent)top.postMessage(message,"*");}catch(e){}})();<\/script></body></html>';
   return HtmlService
     .createHtmlOutput(html)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -261,7 +261,34 @@ function doPost(e) {
   }
 }
 
+function findSubmissionByCode_(code) {
+  const cleanCode = String(code || '').trim();
+  if (!cleanCode) return null;
+  const sheet = getSheet_();
+  const values = sheet.getDataRange().getValues();
+  if (!values.length) return null;
+  const headers = values[0].map(value => String(value || '').trim());
+  const codeIndex = headers.indexOf('codice_vittoria');
+  if (codeIndex < 0) return null;
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][codeIndex] || '').trim() !== cleanCode) continue;
+    const found = {};
+    headers.forEach((header, index) => found[header] = values[i][index]);
+    return found;
+  }
+  return null;
+}
+
 function doGet(e) {
+  const requestParams = e && e.parameter ? e.parameter : {};
+  const action = String(requestParams.action || '').trim().toLowerCase();
+  if (action === 'submission_status' || action === 'status') {
+    const code = String(requestParams.codice_vittoria || requestParams.victoryCode || requestParams.code || '').trim();
+    if (!code) return postOutput_(e, { ok:false, found:false, error:'Codice univoco della stagione mancante.' });
+    const saved = findSubmissionByCode_(code);
+    return postOutput_(e, { ok:true, found:Boolean(saved), saved:saved || null });
+  }
+
   const sheet = getSheet_();
   const values = sheet.getDataRange().getValues();
   const headers = values.shift().map(String);

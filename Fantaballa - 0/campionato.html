@@ -5297,7 +5297,40 @@ function createSeasonSubmissionCode(){
  state.meta.submissionCode=`campionato-${created}-${randomPart}`;
  return state.meta.submissionCode;
 }
-function submitSeasonPayloadVerified(payload,timeoutMs=25000){
+function googleScriptRequestUrl(params={}){
+ const url=new URL(VICTORY_ENDPOINT,window.location.href);
+ Object.entries(params).forEach(([key,value])=>url.searchParams.set(key,String(value)));
+ url.searchParams.set('_fb',`${Date.now()}_${Math.floor(Math.random()*1000000)}`);
+ return url.toString();
+}
+function waitForSeasonSubmissionStatus(submissionCode,timeoutMs=6500){
+ return new Promise((resolve,reject)=>{
+   if(!submissionCode){reject(new Error('Codice univoco della stagione mancante'));return}
+   const callbackName=`fantaballaSubmissionStatus_${Date.now()}_${Math.floor(Math.random()*1000000)}`;
+   const script=document.createElement('script');
+   let settled=false;
+   script.async=true;
+   script.referrerPolicy='no-referrer';
+   function cleanup(){
+     window.clearTimeout(timeout);
+     try{delete window[callbackName]}catch(error){window[callbackName]=undefined}
+     if(script.parentNode)script.parentNode.removeChild(script);
+   }
+   function finish(handler,value){if(settled)return;settled=true;cleanup();handler(value)}
+   const timeout=window.setTimeout(()=>finish(reject,new Error('Verifica salvataggio scaduta')),timeoutMs);
+   window[callbackName]=data=>{
+     if(!data||data.ok!==true||typeof data.found!=='boolean'){
+       finish(reject,new Error(String(data&&data.error?data.error:'Risposta di verifica non valida')));
+       return;
+     }
+     finish(resolve,data);
+   };
+   script.onerror=()=>finish(reject,new Error('Verifica Google Apps Script non disponibile'));
+   script.src=googleScriptRequestUrl({action:'submission_status',codice_vittoria:submissionCode,callback:callbackName,transport:'jsonp'});
+   document.body.appendChild(script);
+ });
+}
+function submitSeasonPayloadVerified(payload,timeoutMs=22000){
  return new Promise((resolve,reject)=>{
    if(!VICTORY_ENDPOINT||!/^https:\/\/script\.google\.com\//i.test(VICTORY_ENDPOINT)){
      reject(new Error('Endpoint Google Apps Script non configurato'));
@@ -5339,7 +5372,8 @@ function submitSeasonPayloadVerified(payload,timeoutMs=25000){
    function onMessage(event){
      const message=event&&event.data;
      if(!message||message.type!=='fantaballa-classifica-response-v1'||message.requestId!==requestId)return;
-     if(!/^https:\/\/([a-z0-9-]+\.)*(google\.com|googleusercontent\.com)$/i.test(String(event.origin||'')))return;
+     const origin=String(event.origin||'');
+     if(origin!=='null'&&!/^https:\/\/([a-z0-9-]+\.)*(google\.com|googleusercontent\.com)$/i.test(origin))return;
      const result=message.data;
      if(!result||typeof result.ok!=='boolean'){
        finish(reject,new Error('Risposta non valida da Google Apps Script'));
@@ -5351,11 +5385,22 @@ function submitSeasonPayloadVerified(payload,timeoutMs=25000){
      }
      finish(resolve,result);
    }
-   const timeout=window.setTimeout(()=>finish(reject,new Error('Google Apps Script non ha confermato il salvataggio')),timeoutMs);
+   async function verifySavedRow(){
+     await new Promise(done=>window.setTimeout(done,1200));
+     while(!settled){
+       try{
+         const status=await waitForSeasonSubmissionStatus(payload.codice_vittoria||payload.victoryCode,5000);
+         if(status.found){finish(resolve,{ok:true,duplicate:Boolean(status.duplicate),saved:status.saved||null,verifiedBy:'status'});return}
+       }catch(error){}
+       if(!settled)await new Promise(done=>window.setTimeout(done,1100));
+     }
+   }
+   const timeout=window.setTimeout(()=>finish(reject,new Error('Google Apps Script non ha confermato il salvataggio. Puoi riprovare senza creare duplicati.')),timeoutMs);
    window.addEventListener('message',onMessage);
    iframe.onerror=()=>finish(reject,new Error('Impossibile raggiungere Google Apps Script'));
    document.body.appendChild(iframe);
    document.body.appendChild(form);
+   verifySavedRow();
    try{form.submit()}catch(error){finish(reject,error)}
  });
 }
@@ -5379,7 +5424,6 @@ async function sendSeason(){
    state.meta.submittedAt=new Date().toISOString();
    state.meta.submissionPendingAt='';
    state.meta.lastSubmissionError='';
-   seasonSendInFlight=false;
    save();
    render();
    toast(result.duplicate?'Risultato già presente: invio confermato':'Vittoria e miglior marcatore della squadra inviati');
@@ -5388,10 +5432,12 @@ async function sendSeason(){
    state.meta.submittedAt='';
    state.meta.submissionPendingAt='';
    state.meta.lastSubmissionError=String(error&&error.message?error.message:error||'Errore sconosciuto');
-   seasonSendInFlight=false;
    save();
-   if(sendButton){sendButton.disabled=false;sendButton.textContent='Invia vittoria';sendButton.removeAttribute('aria-busy')}
    toast(`Invio non riuscito: ${state.meta.lastSubmissionError}`);
+ }finally{
+   seasonSendInFlight=false;
+   const currentButton=document.getElementById('sendSeason');
+   if(!state.submitted&&currentButton){currentButton.disabled=false;currentButton.textContent='Invia vittoria';currentButton.removeAttribute('aria-busy')}
  }
 }
 function exportSeason(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fantaballa-campionato-risultati.json';a.click();URL.revokeObjectURL(a.href)}
