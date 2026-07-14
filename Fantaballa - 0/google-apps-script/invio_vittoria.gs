@@ -13,6 +13,7 @@
   - HARDa Turan
   - Campionato del Ca***: vengono accettate soltanto le stagioni vinte
   - Fantacampionato del Ca***: modalità REAL separata, accettata soltanto se vinta
+  - Modalità Caos e Caos REAL: classifiche separate, accettate soltanto se vinte
 */
 
 const SHEET_NAME = 'Classifica';
@@ -81,6 +82,12 @@ function normalizeMode_(modeValue, explicitType) {
   const rawMode = String(modeValue || 'Classica').trim();
   const rawType = String(explicitType || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
 
+  if (rawType === 'caos_real' || rawType === 'chaos_real' || rawType === 'fantacaos') {
+    return { label:'Modalità Caos REAL', type:'caos_real' };
+  }
+  if (rawType === 'caos' || rawType === 'chaos') {
+    return { label:'Modalità Caos', type:'caos' };
+  }
   if (rawType === 'campionato_real' || rawType === 'fantacampionato' || rawType === 'real') {
     return { label:'Fantacampionato del Ca***', type:'campionato_real' };
   }
@@ -97,6 +104,12 @@ function normalizeMode_(modeValue, explicitType) {
     return { label:'Classica', type:'classica' };
   }
 
+  if (/\b(caos|chaos)\b.*\breal\b|\breal\b.*\b(caos|chaos)\b/i.test(rawMode)) {
+    return { label:'Modalità Caos REAL', type:'caos_real' };
+  }
+  if (/\b(caos|chaos)\b/i.test(rawMode)) {
+    return { label:'Modalità Caos', type:'caos' };
+  }
   if (/fantacampionato|(campionato|stagione).*real|real.*(campionato|stagione)/i.test(rawMode)) {
     return { label:'Fantacampionato del Ca***', type:'campionato_real' };
   }
@@ -116,7 +129,7 @@ function normalizeMode_(modeValue, explicitType) {
 }
 
 function isChampionshipMode_(type) {
-  return type === 'campionato' || type === 'campionato_real';
+  return type === 'campionato' || type === 'campionato_real' || type === 'caos' || type === 'caos_real';
 }
 
 function normalizePayload_(payload) {
@@ -208,7 +221,7 @@ function doPost(e) {
     if (isChampionshipMode_(row.modalita_tipo) && !row.codice_vittoria) {
       return jsonOutput_({ ok:false, error:'Codice univoco della stagione mancante.' });
     }
-    if (row.modalita_tipo === 'campionato_real' && row.giornate !== '' && Number(row.giornate) !== 38) {
+    if ((row.modalita_tipo === 'campionato_real' || row.modalita_tipo === 'caos_real') && row.giornate !== '' && Number(row.giornate) !== 38) {
       return jsonOutput_({ ok:false, error:'Il Fantacampionato REAL deve risultare concluso dopo 38 giornate.' });
     }
 

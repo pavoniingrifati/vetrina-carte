@@ -383,7 +383,7 @@
           <img class="logo" src="assets/fantaballa-logo.png" alt="Fantaballa" />
           <div class="label">Classifiche</div>
           <h1>Campioni e bomber</h1>
-          <p class="sub">Cinque classifiche separate — Classica, Gary MEDel, HARDa Turan, Campionato e Fantacampionato — più la classifica generale dei capocannonieri.</p>
+          <p class="sub">Sei classifiche separate — Campionato, Fantacampionato, Caos, Classica, Gary MEDel e HARDa Turan — più la classifica generale dei capocannonieri.</p>
         </div>
         <div id="leaderboardUpdated" class="updated">Caricamento classifica...</div>
       </div>
@@ -458,6 +458,42 @@
         <div class="load-more-wrap" data-load-wrap="campionatoReal">
           <button class="load-more-btn" type="button" data-load-more="campionatoReal">Carica altre</button>
           <span class="load-more-status" id="campionatoRealLoadStatus"></span>
+        </div>
+      </section>
+
+      <section class="mode-board championship-board" id="caosBoard" aria-label="Classifica modalità Caos">
+        <div class="board-head">
+          <div class="board-title-wrap">
+            <div class="label">Risultati finali</div>
+            <h2>🌀 Modalità Caos</h2>
+            <p class="sub">Riunisce le stagioni Caos vinte nel Campionato e nel Fantacampionato, con tutte le 19 avversarie attive sugli eventi.</p>
+          </div>
+          <button class="expand-btn" type="button" data-toggle-board="caosBoard" aria-expanded="false">Vedi tutti i dati</button>
+        </div>
+        <div class="table-wrap">
+          <table class="championship-table chaos-table">
+            <thead>
+              <tr>
+                <th><button class="sort-btn" type="button" data-board="chaos" data-sort="rank">Pos</button></th>
+                <th><button class="sort-btn" type="button" data-board="chaos" data-sort="name">Squadra</button></th>
+                <th><button class="sort-btn" type="button" data-board="chaos" data-sort="competition">Campionato</button></th>
+                <th><button class="sort-btn" type="button" data-board="chaos" data-sort="finalPosition">Piazzamento</button></th>
+                <th><button class="sort-btn" type="button" data-board="chaos" data-sort="points">Punti</button></th>
+                <th class="full-col"><button class="sort-btn" type="button" data-board="chaos" data-sort="wins">V</button></th>
+                <th class="full-col"><button class="sort-btn" type="button" data-board="chaos" data-sort="draws">N</button></th>
+                <th class="full-col"><button class="sort-btn" type="button" data-board="chaos" data-sort="losses">P</button></th>
+                <th><button class="sort-btn" type="button" data-board="chaos" data-sort="goalsFor">GF/GS</button></th>
+                <th class="full-col"><button class="sort-btn" type="button" data-board="chaos" data-sort="goalDiff">DR</button></th>
+                <th><button class="sort-btn" type="button" data-board="chaos" data-sort="ovr">OVR</button></th>
+                <th><button class="sort-btn" type="button" data-board="chaos" data-sort="scorer">Capocannoniere</button></th>
+              </tr>
+            </thead>
+            <tbody id="chaosBody"><tr><td><span class="rank">-</span></td><td class="empty" colspan="11">In attesa della prima stagione Caos vinta</td></tr></tbody>
+          </table>
+        </div>
+        <div class="load-more-wrap" data-load-wrap="chaos">
+          <button class="load-more-btn" type="button" data-load-more="chaos">Carica altre</button>
+          <span class="load-more-status" id="chaosLoadStatus"></span>
         </div>
       </section>
 
@@ -593,6 +629,7 @@
       const hardBody = document.getElementById('hardBody');
       const campionatoBody = document.getElementById('campionatoBody');
       const campionatoRealBody = document.getElementById('campionatoRealBody');
+      const chaosBody = document.getElementById('chaosBody');
       const scorersBody = document.getElementById('scorersBody');
       const updated = document.getElementById('leaderboardUpdated');
       const refreshBtn = document.getElementById('refreshBtn');
@@ -607,7 +644,7 @@
       let backgroundRetryTimer = null;
       let offlineSourceActive = false;
       let backgroundRetryCount = 0;
-      if (!classicBody || !garyBody || !hardBody || !campionatoBody || !campionatoRealBody || !scorersBody) return;
+      if (!classicBody || !garyBody || !hardBody || !campionatoBody || !campionatoRealBody || !chaosBody || !scorersBody) return;
 
       const escape = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({
         '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '"':'&quot;'
@@ -630,20 +667,31 @@
       const rawModeOf = row => String(valueOf(row, ['modalita','gameMode','mode'], 'Classica')).trim();
       const modeKindOf = row => {
         const explicit = String(valueOf(row, ['modalita_tipo','modalitaTipo','modeType'], '')).trim().toLowerCase().replace(/[\s-]+/g, '_');
+        if (explicit === 'caos_real' || explicit === 'chaos_real' || explicit === 'fantacaos') return 'chaos';
+        if (explicit === 'caos' || explicit === 'chaos') return 'chaos';
         if (explicit === 'campionato_real' || explicit === 'fantacampionato' || explicit === 'real') return 'campionatoReal';
         if (explicit === 'campionato' || explicit === 'stagione') return 'campionato';
         if (explicit === 'hard' || explicit === 'harda_turan') return 'hard';
         if (explicit === 'gary' || explicit === 'gary_medel') return 'gary';
         if (explicit === 'classica' || explicit === 'classic') return 'classic';
         const raw = rawModeOf(row);
+        if (/\b(caos|chaos)\b/i.test(raw)) return 'chaos';
         if (/fantacampionato|(campionato|stagione).*real|real.*(campionato|stagione)/i.test(raw)) return 'campionatoReal';
         if (/campionato|stagione/i.test(raw)) return 'campionato';
         if (/hard|turan/i.test(raw)) return 'hard';
         if (/gary|medel/i.test(raw)) return 'gary';
         return 'classic';
       };
+      const chaosCompetitionOf = row => {
+        const explicit = String(valueOf(row, ['modalita_tipo','modalitaTipo','modeType'], '')).trim().toLowerCase().replace(/[\s-]+/g, '_');
+        const raw = rawModeOf(row);
+        return explicit === 'caos_real' || explicit === 'chaos_real' || explicit === 'fantacaos' || /\breal\b|fantacampionato/i.test(raw)
+          ? 'Fantacampionato del Ca***'
+          : 'Campionato del Ca***';
+      };
       const modeLabelOf = row => {
         const kind = modeKindOf(row);
+        if (kind === 'chaos') return `Caos · ${chaosCompetitionOf(row)}`;
         if (kind === 'campionatoReal') return 'Fantacampionato del Ca***';
         if (kind === 'campionato') return 'Campionato del Ca***';
         if (kind === 'hard') return 'HARDa Turan';
@@ -701,7 +749,7 @@
       function scorerEntriesFromRow(row) {
         // Per il Campionato entra nella classifica generale il miglior marcatore
         // della squadra controllata dal giocatore, salvato soltanto nelle stagioni vinte.
-        const isCampionato = modeKindOf(row) === 'campionato' || modeKindOf(row) === 'campionatoReal';
+        const isCampionato = modeKindOf(row) === 'campionato' || modeKindOf(row) === 'campionatoReal' || modeKindOf(row) === 'chaos';
         if (isCampionato && finalPositionOf(row) !== 1) return [];
         const source = isCampionato
           ? valueOf(row, ['capocannoniere_giocatore','capocannoniereGiocatore','userTopScorer','playerOwnedTopScorer','capocannoniere','capocannoniereSquadra','topScorer','migliorMarcatore'], '')
@@ -727,12 +775,13 @@
           goalsFor:goalsForOf(row),
           goalsAgainst:numberOf(row, ['gol_subiti','golSubiti','goalsAgainst','ga'], 0),
           ovr:ovrOf(row),
-          scorer:(modeKindOf(row)==='campionato'||modeKindOf(row)==='campionatoReal')
+          scorer:(modeKindOf(row)==='campionato'||modeKindOf(row)==='campionatoReal'||modeKindOf(row)==='chaos')
             ? String(valueOf(row, ['capocannoniere_giocatore','capocannoniereGiocatore','userTopScorer','playerOwnedTopScorer','capocannoniere','capocannoniereSquadra','topScorer','migliorMarcatore'], '—'))
             : scorerTextOf(row),
           coach:coachOf(row),
           modeKind:modeKindOf(row),
-          modeLabel:modeLabelOf(row)
+          modeLabel:modeLabelOf(row),
+          competition:modeKindOf(row)==='chaos' ? chaosCompetitionOf(row) : modeLabelOf(row)
         };
       }
 
@@ -753,13 +802,14 @@
         hard:{ key:'rank', dir:'asc' },
         campionato:{ key:'rank', dir:'asc' },
         campionatoReal:{ key:'rank', dir:'asc' },
+        chaos:{ key:'rank', dir:'asc' },
         scorers:{ key:'rank', dir:'asc' }
       };
       let lastRows = [];
 
       const PAGE_SIZE = 10;
       const MAX_VISIBLE_ROWS = 100;
-      const visibleState = { classic:PAGE_SIZE, gary:PAGE_SIZE, hard:PAGE_SIZE, campionato:PAGE_SIZE, campionatoReal:PAGE_SIZE, scorers:PAGE_SIZE };
+      const visibleState = { classic:PAGE_SIZE, gary:PAGE_SIZE, hard:PAGE_SIZE, campionato:PAGE_SIZE, campionatoReal:PAGE_SIZE, chaos:PAGE_SIZE, scorers:PAGE_SIZE };
 
       const defaultModeCompare = (a, b) =>
         b.wins - a.wins ||
@@ -822,6 +872,7 @@
         return rows.sort((a, b) => {
           if (key === 'rank') return dir === 'asc' ? defaultChampionshipCompare(a, b) : -defaultChampionshipCompare(a, b);
           if (key === 'name') return compareValues(a.name, b.name, dir, 'text') || defaultChampionshipCompare(a, b);
+          if (key === 'competition') return compareValues(a.competition, b.competition, dir, 'text') || defaultChampionshipCompare(a, b);
           if (key === 'finalPosition') return compareValues(a.finalPosition ?? 999, b.finalPosition ?? 999, dir) || defaultChampionshipCompare(a, b);
           if (key === 'points') return compareValues(a.points, b.points, dir) || defaultChampionshipCompare(a, b);
           if (key === 'wins') return compareValues(a.wins, b.wins, dir) || defaultChampionshipCompare(a, b);
@@ -915,6 +966,30 @@
         </tr>`).join('');
       }
 
+      function renderChaosTable(tbody, rows, emptyText) {
+        const validRows = sortChampionshipRows(rows.map(rowView).filter(row => row.name), 'chaos');
+        updateLoadMore('chaos', validRows.length);
+        if (!validRows.length) {
+          tbody.innerHTML = `<tr><td><span class="rank">-</span></td><td class="empty" colspan="11">${escape(emptyText)}</td></tr>`;
+          return;
+        }
+        const visibleRows = validRows.slice(0, visibleLimitFor('chaos', validRows.length));
+        tbody.innerHTML = visibleRows.map((row, index) => `<tr>
+          <td><span class="rank">${index + 1}</span></td>
+          <td class="team-cell"><strong>${escape(row.name)}</strong><small>${escape(row.coach || 'Allenatore non indicato')} · Modalità Caos</small></td>
+          <td><span class="stat-pill">${escape(row.competition)}</span></td>
+          <td><span class="finish-pill">${row.finalPosition ? `${escape(row.finalPosition)}°` : '—'}</span></td>
+          <td><span class="points-pill">${escape(row.points)}</span></td>
+          <td class="full-col"><span class="stat-pill">${escape(row.wins)}</span></td>
+          <td class="full-col"><span class="stat-pill">${escape(row.draws)}</span></td>
+          <td class="full-col"><span class="stat-pill">${escape(row.losses)}</span></td>
+          <td><span class="stat-pill">${escape(row.goals)}</span></td>
+          <td class="full-col"><span class="stat-pill">${escape(row.goalDiff)}</span></td>
+          <td><span class="stat-pill">${escape(row.ovr)}</span></td>
+          <td class="scorer-cell">${escape(row.scorer)}</td>
+        </tr>`).join('');
+      }
+
       function buildScorers(rows) {
         const map = new Map();
         rows.forEach(row => {
@@ -965,11 +1040,13 @@
         const hardRows = rows.filter(row => modeKindOf(row) === 'hard');
         const campionatoRows = rows.filter(row => modeKindOf(row) === 'campionato' && finalPositionOf(row) === 1);
         const campionatoRealRows = rows.filter(row => modeKindOf(row) === 'campionatoReal' && finalPositionOf(row) === 1);
+        const chaosRows = rows.filter(row => modeKindOf(row) === 'chaos' && finalPositionOf(row) === 1);
         renderModeTable(classicBody, classicRows, 'In attesa del primo campione Classica', 'classic');
         renderModeTable(garyBody, garyRows, 'In attesa del primo campione Gary MEDel', 'gary');
         renderModeTable(hardBody, hardRows, 'In attesa del primo campione HARDa Turan', 'hard');
         renderChampionshipTable(campionatoBody, campionatoRows, 'campionato', 'In attesa della prima stagione completata');
         renderChampionshipTable(campionatoRealBody, campionatoRealRows, 'campionatoReal', 'In attesa del primo Fantacampionato vinto');
+        renderChaosTable(chaosBody, chaosRows, 'In attesa della prima stagione Caos vinta');
         renderScorers(rows);
         updateSortButtons();
         if (updated) updated.textContent = data && data.aggiornato_il ? `Aggiornata: ${data.aggiornato_il}` : 'Classifiche aggiornate';
@@ -1245,6 +1322,7 @@
         renderModeTable(hardBody, [], 'Classifica non disponibile', 'hard');
         renderChampionshipTable(campionatoBody, [], 'campionato', 'In attesa della prima stagione completata');
         renderChampionshipTable(campionatoRealBody, [], 'campionatoReal', 'In attesa del primo Fantacampionato vinto');
+        renderChaosTable(chaosBody, [], 'In attesa della prima stagione Caos vinta');
         renderScorers([]);
         updateSortButtons();
       }
