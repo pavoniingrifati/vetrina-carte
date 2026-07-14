@@ -130,8 +130,8 @@
     }
     .logo { width:min(150px, 42vw); height:auto; display:block; margin-bottom:10px; filter:drop-shadow(0 8px 14px rgba(0,0,0,.12)); }
     .label { font-size:12px; font-weight:900; letter-spacing:.24em; color:#8a7446; text-transform:uppercase; margin-bottom:8px; }
-    h1 { margin:0; font-size:clamp(34px, 6vw, 62px); line-height:.9; letter-spacing:-.05em; text-transform:uppercase; }
-    h2 { margin:0; font-size:clamp(24px, 3.2vw, 42px); line-height:.95; letter-spacing:-.035em; text-transform:uppercase; }
+    h1 { margin:0; font-size:clamp(34px, 6vw, 62px); line-height:.9; letter-spacing:-.05em; text-transform:uppercase; white-space:nowrap; }
+    h2 { margin:0; font-size:clamp(24px, 3.2vw, 42px); line-height:.95; letter-spacing:-.035em; text-transform:uppercase; white-space:nowrap; }
     .sub { margin:10px 0 0; color:#6d675b; font-weight:900; line-height:1.35; }
     .updated {
       align-self:flex-start;
@@ -168,7 +168,14 @@
     .table-wrap { overflow:auto; border-radius:18px; border:1px solid #e2d2ac; background:rgba(255,255,255,.58); }
     table { width:100%; border-collapse:separate; border-spacing:0; min-width:0; }
     th, td { padding:14px 13px; border-bottom:1px dashed #ddcfaf; text-align:left; font-weight:900; vertical-align:middle; }
-    th { color:#8a7446; font-size:12px; letter-spacing:.14em; text-transform:uppercase; background:#fff7df; }
+    th {
+      color:#8a7446;
+      font-size:12px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      background:#fff7df;
+      white-space:nowrap;
+    }
     .sort-btn {
       appearance:none;
       width:100%;
@@ -186,6 +193,7 @@
       align-items:center;
       justify-content:flex-start;
       gap:5px;
+      white-space:nowrap;
     }
     th:first-child .sort-btn,
     th.is-center .sort-btn { justify-content:center; }
@@ -270,28 +278,79 @@
       body, .masthead, h1, h2, .label, .back-btn, .refresh-btn, .expand-btn, .updated, .rank, .count { font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important; }
       .table-wrap { overflow-x:visible; }
       table { min-width:0; table-layout:fixed; }
-      th, td { min-width:0; padding:12px 10px; white-space:normal; overflow-wrap:anywhere; }
-      .mode-table th:first-child, .mode-table td:first-child { width:64px; }
-      .mode-table th:nth-child(2), .mode-table td:nth-child(2) { width:30%; }
-      .mode-table th:nth-child(6), .mode-table td:nth-child(6) { width:14%; }
-      .mode-table th:nth-child(8), .mode-table td:nth-child(8) { width:12%; }
-      .mode-table th:nth-child(9), .mode-table td:nth-child(9) { width:24%; }
-      .mode-board.expanded .mode-table th:nth-child(2), .mode-board.expanded .mode-table td:nth-child(2) { width:22%; }
-      .mode-board.expanded .mode-table th:nth-child(3), .mode-board.expanded .mode-table td:nth-child(3),
-      .mode-board.expanded .mode-table th:nth-child(4), .mode-board.expanded .mode-table td:nth-child(4),
-      .mode-board.expanded .mode-table th:nth-child(5), .mode-board.expanded .mode-table td:nth-child(5) { width:7.5%; }
-      .mode-board.expanded .mode-table th:nth-child(7), .mode-board.expanded .mode-table td:nth-child(7) { width:10%; }
-      .championship-table th:first-child, .championship-table td:first-child { width:64px; }
-      .championship-table th:nth-child(2), .championship-table td:nth-child(2) { width:22%; }
-      .championship-table th:nth-child(3), .championship-table td:nth-child(3) { width:10%; }
-      .championship-table th:nth-child(4), .championship-table td:nth-child(4) { width:8%; }
-      .championship-table th:nth-child(8), .championship-table td:nth-child(8) { width:11%; }
-      .championship-table th:nth-child(10), .championship-table td:nth-child(10) { width:10%; }
-      .championship-table th:nth-child(11), .championship-table td:nth-child(11) { width:18%; }
-      .scorers-table th:first-child, .scorers-table td:first-child { width:64px; }
-      .scorers-table th:nth-child(2), .scorers-table td:nth-child(2) { width:auto; }
-      .scorers-table th:nth-child(3), .scorers-table td:nth-child(3) { width:140px; text-align:center; }
-      .count,.stat-pill { white-space:nowrap; }
+      th, td { min-width:0; padding:12px 9px; }
+      th { font-size:11px; letter-spacing:.07em; overflow:visible; }
+      td { overflow-wrap:anywhere; }
+      .sort-btn { justify-content:center; }
+      th:nth-child(2) .sort-btn,
+      th:last-child .sort-btn { justify-content:flex-start; }
+
+      /* Classifiche modalità: 8 colonne proporzionate. */
+      .mode-table th:nth-child(1), .mode-table td:nth-child(1) { width:5%; }
+      .mode-table th:nth-child(2), .mode-table td:nth-child(2) { width:23%; }
+      .mode-table th:nth-child(3), .mode-table td:nth-child(3),
+      .mode-table th:nth-child(4), .mode-table td:nth-child(4),
+      .mode-table th:nth-child(5), .mode-table td:nth-child(5) { width:8%; }
+      .mode-table th:nth-child(6), .mode-table td:nth-child(6) { width:13%; }
+      .mode-table th:nth-child(7), .mode-table td:nth-child(7) { width:10%; }
+      .mode-table th:nth-child(8), .mode-table td:nth-child(8) { width:25%; }
+
+      /* Campionato e Fantacampionato: 11 colonne. */
+      .championship-table:not(.chaos-table) th:nth-child(1),
+      .championship-table:not(.chaos-table) td:nth-child(1) { width:5%; }
+      .championship-table:not(.chaos-table) th:nth-child(2),
+      .championship-table:not(.chaos-table) td:nth-child(2) { width:20%; }
+      .championship-table:not(.chaos-table) th:nth-child(3),
+      .championship-table:not(.chaos-table) td:nth-child(3) { width:10%; }
+      .championship-table:not(.chaos-table) th:nth-child(4),
+      .championship-table:not(.chaos-table) td:nth-child(4) { width:7%; }
+      .championship-table:not(.chaos-table) th:nth-child(5),
+      .championship-table:not(.chaos-table) td:nth-child(5),
+      .championship-table:not(.chaos-table) th:nth-child(6),
+      .championship-table:not(.chaos-table) td:nth-child(6),
+      .championship-table:not(.chaos-table) th:nth-child(7),
+      .championship-table:not(.chaos-table) td:nth-child(7) { width:5%; }
+      .championship-table:not(.chaos-table) th:nth-child(8),
+      .championship-table:not(.chaos-table) td:nth-child(8) { width:9%; }
+      .championship-table:not(.chaos-table) th:nth-child(9),
+      .championship-table:not(.chaos-table) td:nth-child(9) { width:6%; }
+      .championship-table:not(.chaos-table) th:nth-child(10),
+      .championship-table:not(.chaos-table) td:nth-child(10) { width:7%; }
+      .championship-table:not(.chaos-table) th:nth-child(11),
+      .championship-table:not(.chaos-table) td:nth-child(11) { width:21%; }
+
+      /* Caos: 12 colonne, con spazio dedicato al tipo di campionato. */
+      .chaos-table th:nth-child(1), .chaos-table td:nth-child(1) { width:5%; }
+      .chaos-table th:nth-child(2), .chaos-table td:nth-child(2) { width:17%; }
+      .chaos-table th:nth-child(3), .chaos-table td:nth-child(3) { width:11%; }
+      .chaos-table th:nth-child(4), .chaos-table td:nth-child(4) { width:10%; }
+      .chaos-table th:nth-child(5), .chaos-table td:nth-child(5) { width:7%; }
+      .chaos-table th:nth-child(6), .chaos-table td:nth-child(6),
+      .chaos-table th:nth-child(7), .chaos-table td:nth-child(7),
+      .chaos-table th:nth-child(8), .chaos-table td:nth-child(8) { width:4.5%; }
+      .chaos-table th:nth-child(9), .chaos-table td:nth-child(9) { width:8%; }
+      .chaos-table th:nth-child(10), .chaos-table td:nth-child(10) { width:5.5%; }
+      .chaos-table th:nth-child(11), .chaos-table td:nth-child(11) { width:6.5%; }
+      .chaos-table th:nth-child(12), .chaos-table td:nth-child(12) { width:16.5%; }
+      .chaos-table th { font-size:10.5px; letter-spacing:.045em; }
+
+      .scorers-table th:nth-child(1), .scorers-table td:nth-child(1) { width:5%; }
+      .scorers-table th:nth-child(2), .scorers-table td:nth-child(2) { width:75%; }
+      .scorers-table th:nth-child(3), .scorers-table td:nth-child(3) { width:20%; text-align:center; }
+
+      .team-cell strong,
+      .team-cell small,
+      .scorer-cell { overflow-wrap:anywhere; }
+      .count,.stat-pill,.finish-pill,.points-pill { white-space:nowrap; }
+    }
+
+    @media (min-width:681px) and (max-width:900px) {
+      .table-wrap { overflow-x:auto; }
+      .championship-table:not(.chaos-table) { min-width:1120px; }
+      .chaos-table { min-width:1280px; }
+      .mode-table { min-width:900px; }
+      .mode-board.expanded .mode-table { min-width:1020px; }
+      .scorers-table { min-width:620px; }
     }
 
     @media (max-width:680px) {
@@ -302,13 +361,13 @@
       .leaderboard,.mode-board,.scorers-board { border-radius:22px; padding:15px 12px; }
       .leaderboard-head,.board-head { display:block; }
       .expand-btn { margin-top:10px; }
-      h1 { font-size:clamp(34px,13vw,52px); letter-spacing:.005em; }
-      h2 { font-size:clamp(25px,10vw,38px); letter-spacing:.005em; }
+      h1 { font-size:clamp(30px,10vw,44px); letter-spacing:.005em; }
+      h2 { font-size:clamp(21px,7.2vw,32px); letter-spacing:.005em; }
       .sub { font-size:15px; line-height:1.35; }
       .updated { display:inline-block; white-space:normal; margin-top:10px; line-height:1.15; }
       .table-wrap { border-radius:16px; overflow:auto; }
       .mode-table { min-width:720px; }
-      .mode-board.expanded .mode-table { min-width:980px; }
+      .mode-board.expanded .mode-table { min-width:1020px; }
 
       /* Campionati: vista mobile compatta senza trascinamento.
          Mostra subito posizione, squadra e punti; i dati completi restano
@@ -360,7 +419,18 @@
         padding:4px 8px;
         font-size:17px;
       }
-      .championship-board.expanded .championship-table { min-width:1080px; }
+      .championship-board.expanded .championship-table:not(.chaos-table) { min-width:1120px; }
+      .championship-board.expanded .chaos-table { min-width:1280px; }
+
+      /* In modalità compatta Caos mostra Pos, Squadra e Punti (quinta colonna). */
+      .championship-board:not(.expanded) .chaos-table th:nth-child(4),
+      .championship-board:not(.expanded) .chaos-table td:nth-child(4) { display:none; }
+      .championship-board:not(.expanded) .chaos-table th:nth-child(5),
+      .championship-board:not(.expanded) .chaos-table td:nth-child(5) {
+        display:table-cell;
+        width:72px;
+        text-align:center;
+      }
 
       .scorers-table { min-width:420px; }
       th,td { padding:10px 8px; }
