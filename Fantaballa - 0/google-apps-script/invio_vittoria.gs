@@ -14,6 +14,8 @@
   - Campionato del Ca***: vengono accettate soltanto le stagioni vinte
   - Fantacampionato del Ca***: modalità REAL separata, accettata soltanto se vinta
   - Modalità Caos e Caos REAL: classifiche separate, accettate soltanto se vinte
+  - Invio verificato dal browser tramite risposta iframe (niente falsi messaggi di successo)
+  - Fantacampionato REAL da 38 giornate o 76 con la regola Maratona
 */
 
 const SHEET_NAME = 'Classifica';
@@ -205,6 +207,14 @@ function iframeOutput_(data, requestId) {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
+function postOutput_(e, data) {
+  const params = e && e.parameter ? e.parameter : {};
+  const transport = String(params.transport || '').toLowerCase();
+  if (transport === 'iframe') return iframeOutput_(data, params.requestId || '');
+  const callback = params.callback;
+  return callback ? jsOutput_(callback, data) : jsonOutput_(data);
+}
+
 function doPost(e) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -213,16 +223,19 @@ function doPost(e) {
     const payload = parseRequest_(e);
     const row = normalizePayload_(payload);
     if (!row.squadra || !row.allenatore) {
-      return jsonOutput_({ ok:false, error:'Squadra o allenatore mancanti' });
+      return postOutput_(e, { ok:false, error:'Squadra o allenatore mancanti' });
     }
     if (isChampionshipMode_(row.modalita_tipo) && Number(row.posizione_finale) !== 1) {
-      return jsonOutput_({ ok:false, error:'Il risultato del Campionato può essere salvato solo con posizione finale 1.' });
+      return postOutput_(e, { ok:false, error:'Il risultato del Campionato può essere salvato solo con posizione finale 1.' });
     }
     if (isChampionshipMode_(row.modalita_tipo) && !row.codice_vittoria) {
-      return jsonOutput_({ ok:false, error:'Codice univoco della stagione mancante.' });
+      return postOutput_(e, { ok:false, error:'Codice univoco della stagione mancante.' });
     }
-    if ((row.modalita_tipo === 'campionato_real' || row.modalita_tipo === 'caos_real') && row.giornate !== '' && Number(row.giornate) !== 38) {
-      return jsonOutput_({ ok:false, error:'Il Fantacampionato REAL deve risultare concluso dopo 38 giornate.' });
+    if (row.modalita_tipo === 'campionato_real' || row.modalita_tipo === 'caos_real') {
+      const giornateReal = Number(row.giornate);
+      if (row.giornate !== '' && giornateReal !== 38 && giornateReal !== 76) {
+        return postOutput_(e, { ok:false, error:'Il Fantacampionato REAL deve risultare concluso dopo 38 giornate, oppure 76 con la regola Maratona.' });
+      }
     }
 
     const sheet = getSheet_();
@@ -234,15 +247,15 @@ function doPost(e) {
     if (row.codice_vittoria && codeIndex >= 0) {
       for (let i = 1; i < values.length; i++) {
         if (String(values[i][codeIndex] || '') === row.codice_vittoria) {
-          return jsonOutput_({ ok:true, duplicate:true, saved:row });
+          return postOutput_(e, { ok:true, duplicate:true, saved:row });
         }
       }
     }
 
     sheet.appendRow(headers.map(header => row[header] !== undefined ? row[header] : ''));
-    return jsonOutput_({ ok:true, saved:row });
+    return postOutput_(e, { ok:true, saved:row });
   } catch (err) {
-    return jsonOutput_({ ok:false, error:String(err && err.message ? err.message : err) });
+    return postOutput_(e, { ok:false, error:String(err && err.message ? err.message : err) });
   } finally {
     lock.releaseLock();
   }
