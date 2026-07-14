@@ -835,6 +835,7 @@
       box-shadow:0 3px 7px rgba(0,0,0,.2);
     }
     .season-slot-chem.positive{background:linear-gradient(180deg,#ffe98a,#e6c13f);color:#10243a;border-color:#fff3bd}
+    .season-slot-chem.zeroed{background:linear-gradient(180deg,#ffe0dc,#efaca4);color:#7d1e18;border-color:#fff0ed}
     .season-roster-chem{display:inline-flex;padding:1px 5px;border-radius:999px;background:#f0da69;color:#10243a;font-size:8px;font-weight:1000}
     .season-chemistry-card{
       margin-top:12px;padding:12px;border-radius:18px;
@@ -2963,6 +2964,7 @@ function draftAverageOvr(){const list=rosterPlayers();return list.length?avg(lis
 function draftSubscriberCount(){return rosterPlayers().filter(r=>String(r.player.subscriber).toLowerCase()==='si').length}
 function formatSignedIntesa(value){const n=Math.round(Number(value)||0);return `${n>=0?'+':''}${n}`}
 function isItalianPlayer(player){const nation=normalizeName(player?.nation||'');return nation==='italia'||nation==='italy'||nation==='italiano'||nation==='italiana'}
+function closedPortsAffects(player,rules=state?.seasonRules){return Boolean(rules?.nonItalianChemZero)&&Boolean(player)&&!isItalianPlayer(player)}
 function playerClubChemistryKey(player){return normalizeName(player&&player.club||'')}
 function nationMirrorsClub(player){
  const club=clubById(player&&player.club);
@@ -2997,7 +2999,7 @@ function draftChemistry(source=starterEntries()){
  const playerCoachBonus={};
  players.forEach(player=>{
    const playerId=String(player.id);
-   if(state.seasonRules?.nonItalianChemZero&&!isItalianPlayer(player)){playerBaseBonus[playerId]=0;playerClubBonus[playerId]=0;playerSubscriberBonus[playerId]=0;playerCoachBonus[playerId]=0;playerBonus[playerId]=0;return}
+   if(closedPortsAffects(player)){playerBaseBonus[playerId]=0;playerClubBonus[playerId]=0;playerSubscriberBonus[playerId]=0;playerCoachBonus[playerId]=0;playerBonus[playerId]=0;return}
    const base=nationChemistryBonus(player,players);
    const clubBonus=clubChemistryBonus(player,players);
    const nationKey=normalizeName(player.nation);
@@ -3421,7 +3423,7 @@ function renderSeasonRosterField(){
  const starterTarget=seasonStarterTarget(),benchTarget=seasonBenchTarget(),benchNumbers=seasonBenchNumbers();
  const avgOverall=starters.length?(starters.reduce((sum,entry)=>sum+midseasonDisplayedOvr(entry.player,entry),0)/starters.length).toFixed(1):'—';
  const benchMarkup=benchTarget?`<div class="season-roster-bench-wrap"><div class="season-roster-bench-title">Panchina</div><div class="season-roster-bench-grid">${benchNumbers.map(i=>{const entry=bench.find(r=>String(r.slotId)===`bench-${i}`);const sub=entry&&isSubscriber(entry.player);return `<div class="season-roster-bench-card ${entry?'filled':''} ${sub?'subscriber':''}">${entry?`${renderMiniAvatar(entry.player,'small')}<div class="season-roster-bench-copy"><b>${sub?'<span class="season-inline-sub-star">★</span>':''}${esc(entry.player.name)}</b><small>${esc(entry.player.nation)} · ${esc(entry.player.Position)}</small></div><span class="season-roster-ovr">${esc(entry.player.ovr)}</span>`:`<b>Riserva ${i}</b><small>Slot panchina vuoto</small>`}</div>`}).join('')}</div></div>`:`<div class="season-roster-bench-wrap"><div class="season-roster-bench-title">Panchina</div><div class="season-empty">La regola ${esc(state.formation)} porta tutti i 14 giocatori in campo: nessun panchinaro disponibile.</div></div>`;
- return `<div class="season-roster-board"><div class="season-roster-board-head"><div><div class="label">Rosa titolare</div><h3>Modulo ${esc(state.formation)}</h3></div><div class="season-roster-board-meta"><span class="season-board-pill">OVR medio ${avgOverall}</span><span class="season-board-pill">Intesa ${chemistry.score}/100</span><span class="season-board-pill">${starters.length}/${starterTarget} titolari</span><span class="season-board-pill">${bench.length}/${benchTarget} riserve</span></div></div><div class="season-roster-pitch"><svg class="season-pitch-svg" viewBox="0 0 100 120" preserveAspectRatio="none" aria-hidden="true"><rect x="1" y="1" width="98" height="118" fill="none" stroke="rgba(255,255,255,.8)" stroke-width=".8"/><rect x="21" y="1" width="58" height="18" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".6"/><rect x="34" y="1" width="32" height="8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><rect x="21" y="101" width="58" height="18" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".6"/><rect x="34" y="111" width="32" height="8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><line x1="1" y1="60" x2="99" y2="60" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><circle cx="50" cy="60" r="12" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/></svg>${slots.map(slot=>{const entry=assigned.get(String(slot.instanceId));if(!entry)return `<div class="season-roster-field-slot empty" style="left:${slot.x}%;top:${slot.y}%"><span class="season-slot-badge">${esc(slot.code)}</span><span class="season-slot-name">${esc(slot.code)}</span></div>`;const sub=isSubscriber(entry.player);const chemBonus=chemistry.playerBonus[String(entry.player.id)]||0;return `<div class="season-roster-field-slot filled ${sub?'subscriber-player':''}" style="left:${slot.x}%;top:${slot.y}%">${renderPlayerJersey(entry.player,'',chemBonus)}<span class="season-slot-name">${sub?'<span class="season-field-sub-star">★</span>':''}${esc(entry.player.name)}</span><span class="season-slot-role">${esc(slot.code)}</span><span class="season-slot-chem ${chemBonus>0?'positive':''}">${formatSignedIntesa(chemBonus)} INT</span></div>`}).join('')}</div>${benchMarkup}</div>`
+ return `<div class="season-roster-board"><div class="season-roster-board-head"><div><div class="label">Rosa titolare</div><h3>Modulo ${esc(state.formation)}</h3></div><div class="season-roster-board-meta"><span class="season-board-pill">OVR medio ${avgOverall}</span><span class="season-board-pill">Intesa ${chemistry.score}/100</span><span class="season-board-pill">${starters.length}/${starterTarget} titolari</span><span class="season-board-pill">${bench.length}/${benchTarget} riserve</span></div></div><div class="season-roster-pitch"><svg class="season-pitch-svg" viewBox="0 0 100 120" preserveAspectRatio="none" aria-hidden="true"><rect x="1" y="1" width="98" height="118" fill="none" stroke="rgba(255,255,255,.8)" stroke-width=".8"/><rect x="21" y="1" width="58" height="18" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".6"/><rect x="34" y="1" width="32" height="8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><rect x="21" y="101" width="58" height="18" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".6"/><rect x="34" y="111" width="32" height="8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><line x1="1" y1="60" x2="99" y2="60" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><circle cx="50" cy="60" r="12" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/></svg>${slots.map(slot=>{const entry=assigned.get(String(slot.instanceId));if(!entry)return `<div class="season-roster-field-slot empty" style="left:${slot.x}%;top:${slot.y}%"><span class="season-slot-badge">${esc(slot.code)}</span><span class="season-slot-name">${esc(slot.code)}</span></div>`;const sub=isSubscriber(entry.player);const chemBonus=chemistry.playerBonus[String(entry.player.id)]||0;const portsZero=closedPortsAffects(entry.player);return `<div class="season-roster-field-slot filled ${sub?'subscriber-player':''}" style="left:${slot.x}%;top:${slot.y}%">${renderPlayerJersey(entry.player,'',chemBonus)}<span class="season-slot-name">${sub?'<span class="season-field-sub-star">★</span>':''}${esc(entry.player.name)}</span><span class="season-slot-role">${esc(slot.code)}</span><span class="season-slot-chem ${portsZero?'zeroed':chemBonus>0?'positive':''}">${portsZero?'⛔ 0 INT':`${formatSignedIntesa(chemBonus)} INT`}</span></div>`}).join('')}</div>${benchMarkup}</div>`
 }
 
 function setMobileDraftTab(tab,scrollToTabs=true){
@@ -3872,7 +3874,8 @@ function teamById(id){return state.teams.find(t=>t.id===id)}
 function currentRound(){return state.schedule[state.matchday]||[]}
 function userFixture(){return currentRound().find(m=>m.home===USER_ID||m.away===USER_ID)}
 function getStarterEntries(){return rosterPlayers().filter(r=>!r.bench)}function getBenchEntries(){return rosterPlayers().filter(r=>r.bench)}
-function chemistryBase(player,list){if(state.seasonRules?.nonItalianChemZero&&!isItalianPlayer(player))return 0;const players=Array.isArray(list)?list:[];let v=nationChemistryBonus(player,players)+clubChemistryBonus(player,players);if(isSubscriber(player))v+=5;const subs=players.filter(o=>o.nation===player.nation&&isSubscriber(o)).length;if(isSubscriber(player)&&subs>=2)v+=10;if(normalizeName(player.name)===normalizeName(state.coachName))v+=10;return v}
+function chemistryBaseRaw(player,list){const players=Array.isArray(list)?list:[];let v=nationChemistryBonus(player,players)+clubChemistryBonus(player,players);if(isSubscriber(player))v+=5;const subs=players.filter(o=>o.nation===player.nation&&isSubscriber(o)).length;if(isSubscriber(player)&&subs>=2)v+=10;if(normalizeName(player.name)===normalizeName(state.coachName))v+=10;return v}
+function chemistryBase(player,list){return closedPortsAffects(player)?0:chemistryBaseRaw(player,list)}
 function activeChemistryEventBonus(player){
  let value=0;
  state.activeEffects.forEach(effect=>{
@@ -3905,7 +3908,7 @@ function activeChemistryMultiplier(player){
 function chemistryIsZeroed(){return state.activeEffects.some(effect=>effect.type==='teamChemZero')}
 function effectiveChemistryFromBase(player,baseChem=0){
  if(state.activeEffects.some(effect=>effect.type==='baseOvrOnly'))return 0;
- if(chemistryIsZeroed()||(state.seasonRules?.nonItalianChemZero&&!isItalianPlayer(player)))return 0;
+ if(chemistryIsZeroed()||closedPortsAffects(player))return 0;
  const raw=(Number(baseChem)||0)+activeChemistryEventBonus(player);
  const multiplier=activeChemistryMultiplier(player);
  return raw>0?raw*multiplier:raw;
@@ -4016,7 +4019,7 @@ function chaosReplaceNonItalianWithItalians(team){
  [...team.roster].forEach((playerId,index)=>{const outgoing=chaosPlayer(team,playerId);if(!outgoing||isItalianPlayer(outgoing)||outgoing.isMascot)return;const pools=italianPlayerPools();let source=null;for(const pool of pools){let candidates=pool.filter(player=>!usedSources.has(`${String(player.id)}|${normalizeName(player.name)}`)&&roleOf(player)===roleOf(outgoing));if(!candidates.length)candidates=pool.filter(player=>!usedSources.has(`${String(player.id)}|${normalizeName(player.name)}`));if(candidates.length){source=pick(candidates);break}}if(!source)return;usedSources.add(`${String(source.id)}|${normalizeName(source.name)}`);const incoming=chaosRegisterGeneratedPlayer({...source,id:`chaos-rimmigrazione-${team.id}-${state.matchday}-${index}-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,club:team.id,eventPlayer:true});team.roster[index]=String(incoming.id);changes.push(`${outgoing.name} → ${incoming.name}`)});
  return changes.length?`Rimmigrazione completata: ${changes.length} sostituzioni. ${changes.join(' · ')}`:'La rosa è già tutta italiana.';
 }
-function activateClosedPorts(){state.seasonRules.nonItalianChemZero=true;return 'Da ora tutti i giocatori non italiani della tua rosa hanno 0 Intesa fino a fine stagione.'}
+function activateClosedPorts(){state.seasonRules.nonItalianChemZero=true;const affected=rosterPlayers().filter(entry=>!isItalianPlayer(entry.player)).map(entry=>entry.player.name);return affected.length?`Chiusi i porti è attivo: ${affected.length} ${affected.length===1?'giocatore non italiano ha':'giocatori non italiani hanno'} ora 0 Intesa fino a fine stagione (${affected.join(', ')}).`:'Chiusi i porti è attivo, ma al momento la rosa è composta soltanto da giocatori italiani.'}
 function activateYellowEqualsRed(){state.seasonRules.yellowEqualsRed=true;return 'Da ora ogni cartellino giallo porta direttamente all’espulsione.'}
 function activatePinkCardRule(){state.seasonRules.pinkCardEndsMatch=true;return 'Da ora ogni partita termina immediatamente quando compare il cartellino rosa, a un minuto casuale.'}
 function pinkCardMatchDuration(baseDuration=90){const base=Math.max(30,Number(baseDuration)||90);if(!state.seasonRules?.pinkCardEndsMatch)return base;return Math.max(30,Math.min(base,30+Math.floor(Math.random()*Math.max(1,base-29))))}
@@ -4591,7 +4594,9 @@ function showSeason(){
 function lineupEffects(entry,lineup){
  const player=entry.player||{};
  const players=(lineup||resolveLineup()).map(item=>item.player).filter(Boolean);
- const baseChem=Math.round(chemistryBase(player,players)||0);
+ const closedPorts=closedPortsAffects(player);
+ const rawBaseChem=Math.round(chemistryBaseRaw(player,players)||0);
+ const baseChem=closedPorts?0:rawBaseChem;
  const eventChem=Math.round(activeChemistryEventBonus(player)||0);
  const multiplier=activeChemistryMultiplier(player);
  const zeroed=chemistryIsZeroed();
@@ -4599,9 +4604,10 @@ function lineupEffects(entry,lineup){
  const activeOvr=Math.round(activeOvrBonus(player)||0);
  const malus=Math.round(Number(entry.malus)||0);
  const effects=[];
- if(baseChem)effects.push({label:`Intesa base ${formatSignedIntesa(baseChem)}`,value:baseChem,type:baseChem>=0?'plus':'minus'});
- if(eventChem)effects.push({label:`Intesa evento ${formatSignedIntesa(eventChem)}`,value:eventChem,type:eventChem>=0?'plus':'minus'});
- if(zeroed)effects.push({label:'Intesa azzerata',value:-baseChem-eventChem,type:'minus'});
+ if(!closedPorts&&baseChem)effects.push({label:`Intesa base ${formatSignedIntesa(baseChem)}`,value:baseChem,type:baseChem>=0?'plus':'minus'});
+ if(!closedPorts&&eventChem)effects.push({label:`Intesa evento ${formatSignedIntesa(eventChem)}`,value:eventChem,type:eventChem>=0?'plus':'minus'});
+ if(closedPorts)effects.push({label:'Chiusi i porti · Intesa 0',value:-(rawBaseChem+eventChem),type:'minus'});
+ else if(zeroed)effects.push({label:'Intesa azzerata',value:-baseChem-eventChem,type:'minus'});
  else if(multiplier>1)effects.push({label:`Intesa ×${multiplier}`,value:effectiveChem-(baseChem+eventChem),type:'plus'});
  if(activeOvr)effects.push({label:`OVR evento ${formatSignedIntesa(activeOvr)}`,value:activeOvr,type:activeOvr>=0?'plus':'minus'});
  if(malus){
