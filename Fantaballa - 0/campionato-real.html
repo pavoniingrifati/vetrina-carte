@@ -2538,7 +2538,7 @@
 </div>
 <div id="modalRoot"></div><div id="toast" class="toast"></div>
 <script>
-const CURRENT_STATE_VERSION=20;
+const CURRENT_STATE_VERSION=21;
 const SAVE_BASE='fantaballa_campionato_real_v1';
 const AUTO_SAVE_KEY=`${SAVE_BASE}_autosave`;
 const LEGACY_SAVE_KEYS=[];
@@ -2590,7 +2590,7 @@ const FORMATION_LAYOUTS={
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
 let PLAYERS=[];let CLASSIC_PLAYERS=[];let REAL_PLAYERS=[];let CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',gameMode:'normal',chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,nonItalianChemZero:false,eventChanceMultiplier:1,injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[]},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',gameMode:'normal',chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[]},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
@@ -2846,6 +2846,8 @@ function normalizeCampionatoState(input){
  next.seasonRules.pinkCardEndsMatch=Boolean(next.seasonRules.pinkCardEndsMatch);
  next.seasonRules.nonItalianChemZero=Boolean(next.seasonRules.nonItalianChemZero);
  next.seasonRules.eventChanceMultiplier=clamp(Number(next.seasonRules.eventChanceMultiplier)||1,1,2);
+ next.seasonRules.leagueFormation=FORMATIONS[String(next.seasonRules.leagueFormation||'')]?String(next.seasonRules.leagueFormation):'';
+ next.seasonRules.userFormationOverride=FORMATIONS[String(next.seasonRules.userFormationOverride||'')]?String(next.seasonRules.userFormationOverride):'';
  next.seasonRules.injuredOvrBonus=Math.max(0,Number(next.seasonRules.injuredOvrBonus)||0);
  next.seasonRules.lateGoalsDouble=Boolean(next.seasonRules.lateGoalsDouble);
  next.seasonRules.zeroZeroNoPoints=Boolean(next.seasonRules.zeroZeroNoPoints);
@@ -2907,6 +2909,7 @@ function normalizeCampionatoState(input){
    team.chaos.futureInjuryZeroPoints=Boolean(team.chaos.futureInjuryZeroPoints);
    team.chaos.sixtyPointFear=Boolean(team.chaos.sixtyPointFear);
    team.chaos.eventChanceMultiplier=clamp(Number(team.chaos.eventChanceMultiplier)||1,1,2);
+   team.chaos.formation=FORMATIONS[String(team.chaos.formation||'')]?String(team.chaos.formation):'';
    team.playerOverrides=team.playerOverrides&&typeof team.playerOverrides==='object'?team.playerOverrides:{};
    team.roster=Array.isArray(team.roster)&&team.roster.length?team.roster.map(String):(config?buildClubRoster(config.id):buildNationRoster(team.name));
    team.statuses=team.statuses&&typeof team.statuses==='object'?team.statuses:{};
@@ -2926,6 +2929,8 @@ function normalizeCampionatoState(input){
  next.submitted=Boolean(next.submitted);
  next.meta.saveSlot=activeSaveSlot;
  if(!FORMATIONS[next.formation])next.formation='4-3-3';
+ if(!next.seasonRules.leagueFormation)next.seasonRules.leagueFormation=next.formation;
+ if(next.seasonRules.userFormationOverride&&next.formation!==next.seasonRules.userFormationOverride)next.formation=next.seasonRules.userFormationOverride;
  if(!['setup','draft','season','midseason','finished'].includes(next.phase))next.phase='setup';
  next.schedule=Array.isArray(next.schedule)?next.schedule:[];
  if(next.seasonRules.seasonLength===76&&next.teams.length&&next.schedule.length<76){const base=generateSchedule(next.teams.map(team=>team.id));next.schedule=[...base,...base.map(round=>round.map(match=>({...match})))].slice(0,76)}
@@ -3581,6 +3586,7 @@ function ensureChaosTeam(team){
  team.chaos.futureInjuryZeroPoints=Boolean(team.chaos.futureInjuryZeroPoints);
  team.chaos.sixtyPointFear=Boolean(team.chaos.sixtyPointFear);
  team.chaos.eventChanceMultiplier=clamp(Number(team.chaos.eventChanceMultiplier)||1,1,2);
+ team.chaos.formation=FORMATIONS[String(team.chaos.formation||'')]?String(team.chaos.formation):'';
  team.chaos.nonItalianChemZero=Boolean(team.chaos.nonItalianChemZero);
  team.chaos.latestDecision=team.chaos.latestDecision&&typeof team.chaos.latestDecision==='object'?team.chaos.latestDecision:null;
  team.playerOverrides=team.playerOverrides&&typeof team.playerOverrides==='object'?team.playerOverrides:{};
@@ -3657,6 +3663,7 @@ function applyChaosTeamDecision(team,decision,choiceIndex){
  const id=String(decision.id||''),text=String(choice.effect||''),lower=text.toLowerCase(),rounds=chaosEffectRounds(text);
  chaos.decisions++;chaos.seenDecisionEvents=[...new Set([...chaos.seenDecisionEvents,id])];
  if(chaosApplyGlobalRule(id,choiceIndex))return text;
+ if(id==='figura-aldila'&&choiceIndex===0){chaos.formation='2-4-4';return 'ATAKARE: solo questa squadra giocherà con il 2-4-4 fino a fine stagione.'}
  if(id==='figlio-presidente'){if(choiceIndex===0)pushChaosEffect(team,'forcedLoss',1,1);else pushChaosEffect(team,'power',6,1);chaos.midseasonPickDelta=clamp(chaos.midseasonPickDelta+(choiceIndex===0?1:-1),-1,1);return text}
  if(id==='pulmino-bordello'){if(choiceIndex===0){pushChaosEffect(team,'power',1,2);pushChaosEffect(team,'power',-1,1)}else{pushChaosEffect(team,'power',10,1);chaos.midseasonPickDelta=clamp(chaos.midseasonPickDelta-1,-1,1)}return text}
  if(id==='tifoso-formazione'){if(choiceIndex===0&&state.standings?.[team.id])state.standings[team.id].pts-=1;else pushChaosEffect(team,'maxDraw',1,1);return text}
@@ -3774,7 +3781,7 @@ function runChaosOpponentMidseason(){
 
 function opponentMatchPower(team){
  if(!team||team.id===USER_ID)return matchPower();
- const lineup=teamMatchLineup(team),target=Math.max(1,seasonStarterTarget());
+ const lineup=teamMatchLineup(team),target=Math.max(1,activeAiMatchSlots(team).length);
  const values=lineup.map(entry=>Number(entry?.player?.ovr)||60);
  while(values.length<target)values.push(60);
  const chaos=ensureChaosTeam(team),nonItalianShare=lineup.length?lineup.filter(entry=>entry?.player&&!isItalianPlayer(entry.player)).length/lineup.length:0;
@@ -3821,6 +3828,8 @@ function finalizeDraft(){
  const userClub=activeUserClub();
  state.userClubId=userClub.id;
  state.teamName=String(state.teamName||userClub.name).trim()||userClub.name;
+ state.seasonRules.leagueFormation=state.formation;
+ state.seasonRules.userFormationOverride='';
  const draftedIds=currentUserPlayerIds();
  const opponents=shuffle(CLUBS.filter(club=>club.id!==userClub.id)).slice(0,19);
  state.leagueClubIds=opponents.map(club=>String(club.id));
@@ -3842,7 +3851,7 @@ function finalizeDraft(){
    statuses:{},
    mascot:null,
    playerOverrides:{},
-   chaos:{activeEffects:[],seenDecisionEvents:[],decisions:0,midseasonPickDelta:0,matchDuration:90,futureScorerId:'',futureInjuryZeroPoints:false,sixtyPointFear:false,eventChanceMultiplier:1,nonItalianChemZero:false,latestDecision:null}
+   chaos:{activeEffects:[],seenDecisionEvents:[],decisions:0,midseasonPickDelta:0,matchDuration:90,futureScorerId:'',futureInjuryZeroPoints:false,sixtyPointFear:false,eventChanceMultiplier:1,nonItalianChemZero:false,formation:'',latestDecision:null}
  })));
  state.chaos={lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false};
  state.schedule=generateSchedule(state.teams.map(team=>team.id));
@@ -4153,7 +4162,7 @@ function ruleOutAllRosterPlayers(reason='Bevanda energetica'){
 }
 function coachNamedRosterEntry(){const coach=normalizeName(state.coachName);return coach?rosterPlayers().find(entry=>normalizeName(entry.player?.name)===coach)||null:null}
 function centralDefenderRosterEntry(){return rosterPlayers().find(entry=>!entry.bench&&(entry.slot==='DC'||positions(entry.player).includes('DC')))||rosterPlayers().find(entry=>entry.slot==='DC'||positions(entry.player).includes('DC'))||null}
-function forceSeasonFormation(key){
+function applyUserFormationLayout(key){
  if(!FORMATION_LAYOUTS[key])return 'Modulo non disponibile.';
  const slots=formationSlots(key),all=state.draft.roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>item.player);
  if(all.length<slots.length)return `Non ci sono abbastanza giocatori per applicare il ${key}.`;
@@ -4173,7 +4182,23 @@ function forceSeasonFormation(key){
  state.formation=key;
  if(state.seasonRules?.autoOptimizeLineup)optimizeLineupWithBench();
  const benchCount=Math.max(0,all.length-slots.length);
- return `Nuova regola ${key}: ${slots.length} giocatori in campo e ${benchCount} ${benchCount===1?'panchinaro':'panchinari'}.`;
+ return {players:slots.length,bench:benchCount};
+}
+function forceSeasonFormation(key){
+ if(!FORMATION_LAYOUTS[key])return 'Modulo non disponibile.';
+ state.seasonRules.leagueFormation=key;
+ const userKey=FORMATIONS[state.seasonRules.userFormationOverride]?state.seasonRules.userFormationOverride:key;
+ const result=applyUserFormationLayout(userKey);
+ if(typeof result==='string')return result;
+ const exception=userKey!==key?` La tua squadra mantiene l’eccezione ${userKey}.`:'';
+ return `Nuova regola ${key}: le squadre giocano con ${(FORMATION_LAYOUTS[key]||[]).length} giocatori in campo.${exception}`;
+}
+function forceUserFormation(key){
+ if(!FORMATION_LAYOUTS[key])return 'Modulo non disponibile.';
+ state.seasonRules.userFormationOverride=key;
+ const result=applyUserFormationLayout(key);
+ if(typeof result==='string')return result;
+ return `ATAKARE: solo la tua squadra passa al ${key}, con ${result.players} giocatori in campo e ${result.bench} ${result.bench===1?'panchinaro':'panchinari'}.`;
 }
 function activateDeathMatchClub(){
  const active=(state.teams||[]).filter(team=>team.id!==USER_ID);
@@ -4301,8 +4326,10 @@ function seasonRuleSummary(){
  if(state.seasonRules.guaranteedTopPlayerNextMidseason)extras.push('Prossimo pack mercato: top player garantito');
  if(state.seasonRules.coachTopSwapPlayerId)extras.push('Scambio speciale del figlio del mister disponibile');
  if(state.seasonRules.autoOptimizeLineup)extras.push('Il tattico aggiorna automaticamente i titolari fino a fine stagione');
- if(state.formation==='4-4-4')extras.push('4-4-4: 14 giocatori in campo e 0 panchinari');
- if(state.formation==='3-3-3')extras.push('3-3-3: 9 giocatori in campo e 5 panchinari');
+ const leagueFormation=FORMATIONS[state.seasonRules.leagueFormation]?state.seasonRules.leagueFormation:state.formation;
+ if(leagueFormation==='4-4-4')extras.push('Regola FGCI 4-4-4: le squadre giocano in 14');
+ if(leagueFormation==='3-3-3')extras.push('Regola FGCI 3-3-3: le squadre giocano in 9');
+ if(state.seasonRules.userFormationOverride)extras.push(`Eccezione personale ATAKARE: la tua squadra gioca con il ${state.seasonRules.userFormationOverride}`);
  const mandatoryNames=mandatoryMidseasonPlayerIds().map(id=>playerById(id)?.name).filter(Boolean);if(mandatoryNames.length)extras.push(`Scambi obbligatori: ${mandatoryNames.join(', ')}`)
  return `<div class="season-rules-card"><b>Regole alterate dagli eventi</b><br>Modalità: ${chaosEnabled()?'Caos (19 avversarie attive)':'Normale'} · Draft di metà stagione: ${target} ${target===1?'cambio':'cambi'} · Decisioni: ${decisionMode} · Draft: ${marketMode} · Eventi unici: ${(state.seenDecisionEvents||[]).length}/${DECISIONS.length}${extras.length?`<br>${extras.map(esc).join(' · ')}`:''}</div>`;
 }
@@ -4423,7 +4450,7 @@ const DECISIONS=[
   {label:'Rifiuto la bevanda',effect:'L’Atalanta riceve +10 OVR ogni volta che ti affronta',apply(){return activateDeathMatchClub()}}
  ]},
  {id:'figura-aldila',title:'Una figura dall’aldilà si avvicina',text:'Pronuncia poche parole e pretende una rivoluzione tattica.',available(){return Number(state.matchday)<19},choices:[
-  {label:'ATAKARE',effect:'Cambi modulo e giochi con un 2-4-4',apply(){return forceSeasonFormation('2-4-4')}},
+  {label:'ATAKARE',effect:'Solo la tua squadra cambia modulo e gioca con un 2-4-4',apply(){return forceUserFormation('2-4-4')}},
   {label:'Mi consenta',effect:'Al draft di metà stagione devi scambiare un difensore centrale; il pack successivo avrà un top player',apply(){return activateMandatoryDcTopSwap()}}
  ]},
  {id:'fgci-regolamento-rossi-punti',title:'FGCI',text:'La federazione presenta un nuovo regolamento con effetto immediato.',choices:[
@@ -4652,13 +4679,14 @@ function safeMatchLineup(lineup){
  }));
 }
 const AI_MATCH_SLOTS=['P','TS','DC','DC','TD','CDC','CC','COC','AS','ATT','AD'];
-function activeAiMatchSlots(){return FORMATIONS[state.formation]||AI_MATCH_SLOTS}
+function leagueFormationKey(){const key=String(state.seasonRules?.leagueFormation||'');return FORMATIONS[key]?key:(FORMATIONS[state.formation]?state.formation:'4-3-3')}
+function activeAiMatchSlots(team=null){const personal=String(team?.chaos?.formation||'');const key=FORMATIONS[personal]?personal:leagueFormationKey();return FORMATIONS[key]||AI_MATCH_SLOTS}
 function teamMatchLineup(team){
  if(!team)return[];
  if(team.id===USER_ID)return resolveLineup();
  const pool=opponentAvailablePlayers(team);
  const used=new Set();
- return activeAiMatchSlots().map((slot,index)=>{
+ return activeAiMatchSlots(team).map((slot,index)=>{
    const role=POSITION_ROLE[slot]||'C';
    let player=pool.find(candidate=>!used.has(String(candidate.id))&&compatible(candidate,slot));
    if(!player)player=pool.find(candidate=>!used.has(String(candidate.id))&&roleOf(candidate)===role);
