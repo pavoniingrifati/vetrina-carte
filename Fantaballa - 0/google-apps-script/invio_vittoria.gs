@@ -205,6 +205,9 @@ function doPost(e) {
     if (isChampionshipMode_(row.modalita_tipo) && Number(row.posizione_finale) !== 1) {
       return jsonOutput_({ ok:false, error:'Il risultato del Campionato può essere salvato solo con posizione finale 1.' });
     }
+    if (isChampionshipMode_(row.modalita_tipo) && !row.codice_vittoria) {
+      return jsonOutput_({ ok:false, error:'Codice univoco della stagione mancante.' });
+    }
     if (row.modalita_tipo === 'campionato_real' && row.giornate !== '' && Number(row.giornate) !== 38) {
       return jsonOutput_({ ok:false, error:'Il Fantacampionato REAL deve risultare concluso dopo 38 giornate.' });
     }

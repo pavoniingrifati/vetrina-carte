@@ -2525,7 +2525,7 @@
 </div>
 <div id="modalRoot"></div><div id="toast" class="toast"></div>
 <script>
-const CURRENT_STATE_VERSION=14;
+const CURRENT_STATE_VERSION=15;
 const SAVE_BASE='fantaballa_campionato_v7';
 const AUTO_SAVE_KEY=`${SAVE_BASE}_autosave`;
 const LEGACY_SAVE_KEYS=['fantaballa_campionato_v1'];
@@ -2573,7 +2573,7 @@ const FORMATION_LAYOUTS={
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
 let PLAYERS=[];let CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true},phase:'setup',userClubId:'fantaballa-fc',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa FC'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,drawPoints:1,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,generatedEventPlayers:[]},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-fc',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa FC'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,drawPoints:1,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,generatedEventPlayers:[]},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
@@ -2859,6 +2859,9 @@ function normalizeCampionatoState(input){
  next.meta=next.meta&&typeof next.meta==='object'?next.meta:{};
  next.meta.createdAt=next.meta.createdAt||new Date().toISOString();
  next.meta.updatedAt=next.meta.updatedAt||next.meta.createdAt;
+ next.meta.submissionCode=String(next.meta.submissionCode||'');
+ next.meta.submittedAt=String(next.meta.submittedAt||'');
+ next.submitted=Boolean(next.submitted);
  next.meta.saveSlot=activeSaveSlot;
  if(!FORMATIONS[next.formation])next.formation='4-3-3';
  if(!['setup','draft','season','midseason','finished'].includes(next.phase))next.phase='setup';
@@ -4781,7 +4784,45 @@ function rankedGoalStats(){return Object.entries(state.stats?.goals||{}).filter(
 function userTeamGoalStats(){const totals={};(state.history||[]).forEach(match=>(match.goals||[]).forEach(goal=>{const id=String(goal.playerId||'');if(id)totals[id]=(totals[id]||0)+1}));const exact=Object.entries(totals).filter(([,goals])=>Number(goals)>0).sort((a,b)=>Number(b[1])-Number(a[1])||String(statPlayerInfo(a[0]).name).localeCompare(String(statPlayerInfo(b[0]).name),'it'));return exact.length?exact:rankedGoalStats().filter(([id])=>String(statPlayerTeam(id)?.id||'')===USER_ID)}
 function teamTopScorer(){return userTeamGoalStats()[0]||null}
 function showFinished(){const table=sortedTable(),rank=table.findIndex(x=>x.id===USER_ID)+1,s=userStanding(),rankedGoals=rankedGoalStats(),top=rankedGoals[0],topPlayer=top?statPlayerInfo(top[0]):null,userTop=teamTopScorer(),userTopPlayer=userTop?statPlayerInfo(userTop[0]):null,canSubmit=rank===1;screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Stagione conclusa</div><h2>${canSubmit?'Campioni!':'Campionato terminato'}</h2><div class="final-position">${rank}°</div><p>${esc(state.teamName)} chiude la stagione dopo 38 giornate.</p></div><div class="final-grid"><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div></div><section class="panel"><h3>Capocannonieri</h3><p><b>Campionato:</b> ${topPlayer?`${esc(topPlayer.name)} — ${Number(top[1])||0} gol`:'Nessun marcatore'}</p><p><b>${esc(state.teamName)}:</b> ${userTopPlayer?`${esc(userTopPlayer.name)} — ${Number(userTop[1])||0} gol`:'Nessun marcatore'}</p>${canSubmit?`<p class="subline">La vittoria del Campionato può essere inviata alla classifica generale. Il miglior marcatore della tua squadra verrà sommato alla tabella Capocannonieri.</p>`:`<p class="subline"><b>Invio non disponibile:</b> solo chi conclude il Campionato al 1° posto può inviare il risultato.</p>`}<div class="top-actions">${canSubmit?`<button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultati inviati':'Invia vittoria'}</button>`:''}<button id="exportSeason" class="btn gold">Esporta risultati JSON</button></div></section>${renderFinalPlayerStats()}<div class="season-finished-table">${renderTable()}</div></section>`;const sendButton=document.getElementById('sendSeason');if(sendButton)sendButton.onclick=sendSeason;document.getElementById('exportSeason').onclick=exportSeason}
-async function sendSeason(){const s=userStanding(),rank=sortedTable().findIndex(row=>row.id===USER_ID)+1;if(rank!==1){toast('Puoi inviare il risultato solo vincendo il Campionato');return}if(state.submitted){toast('Risultato già inviato');return}const rankedGoals=rankedGoalStats(),top=rankedGoals[0],topGoals=top?Number(top[1])||0:0,p=top?statPlayerInfo(top[0]):null,userTop=teamTopScorer(),userTopGoals=userTop?Number(userTop[1])||0:0,userTopPlayer=userTop?statPlayerInfo(userTop[0]):null;const userScorerText=userTopPlayer?`${userTopPlayer.name} (${userTopGoals})`:'';const leagueScorerText=p?`${p.name} (${topGoals})`:'';const payload={squadra:state.teamName,allenatore:state.coachName,modalita:'Campionato del Ca***',modalita_tipo:'campionato',posizione_finale:1,punti:s.pts,giornate:38,vittorie:s.w,pareggi:s.d,sconfitte:s.l,gol_fatti:s.gf,gol_subiti:s.ga,modulo:state.formation,ovr_medio:Math.round(teamPowerBase()*10)/10,capocannoniere:userScorerText,capocannoniere_giocatore:userScorerText,capocannoniere_campionato:leagueScorerText};const fd=new FormData();fd.append('payload',JSON.stringify(payload));try{await fetch(VICTORY_ENDPOINT,{method:'POST',mode:'no-cors',body:fd});state.submitted=true;save();render();toast('Vittoria e miglior marcatore della squadra inviati')}catch{toast('Invio non riuscito')}}
+let seasonSendInFlight=false;
+function createSeasonSubmissionCode(){
+ state.meta=state.meta&&typeof state.meta==='object'?state.meta:{};
+ if(state.meta.submissionCode)return String(state.meta.submissionCode);
+ const randomPart=(globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function')?globalThis.crypto.randomUUID():`${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+ const created=String(state.meta.createdAt||new Date().toISOString()).replace(/[^0-9]/g,'').slice(0,17)||Date.now().toString(36);
+ state.meta.submissionCode=`campionato-${created}-${randomPart}`;
+ return state.meta.submissionCode;
+}
+async function sendSeason(){
+ const s=userStanding(),rank=sortedTable().findIndex(row=>row.id===USER_ID)+1;
+ if(rank!==1){toast('Puoi inviare il risultato solo vincendo il Campionato');return}
+ if(state.submitted||seasonSendInFlight){toast(state.submitted?'Risultato già inviato':'Invio già in corso');return}
+ const sendButton=document.getElementById('sendSeason');
+ seasonSendInFlight=true;
+ if(sendButton){sendButton.disabled=true;sendButton.textContent='Invio in corso…';sendButton.setAttribute('aria-busy','true')}
+ const rankedGoals=rankedGoalStats(),top=rankedGoals[0],topGoals=top?Number(top[1])||0:0,p=top?statPlayerInfo(top[0]):null,userTop=teamTopScorer(),userTopGoals=userTop?Number(userTop[1])||0:0,userTopPlayer=userTop?statPlayerInfo(userTop[0]):null;
+ const userScorerText=userTopPlayer?`${userTopPlayer.name} (${userTopGoals})`:'';
+ const leagueScorerText=p?`${p.name} (${topGoals})`:'';
+ const submissionCode=createSeasonSubmissionCode();
+ const payload={codice_vittoria:submissionCode,victoryCode:submissionCode,squadra:state.teamName,allenatore:state.coachName,modalita:'Campionato del Ca***',modalita_tipo:'campionato',posizione_finale:1,punti:s.pts,giornate:38,vittorie:s.w,pareggi:s.d,sconfitte:s.l,gol_fatti:s.gf,gol_subiti:s.ga,modulo:state.formation,ovr_medio:Math.round(teamPowerBase()*10)/10,capocannoniere:userScorerText,capocannoniere_giocatore:userScorerText,capocannoniere_campionato:leagueScorerText};
+ const fd=new FormData();fd.append('payload',JSON.stringify(payload));
+ state.submitted=true;
+ state.meta.submittedAt=new Date().toISOString();
+ save();
+ try{
+   await fetch(VICTORY_ENDPOINT,{method:'POST',mode:'no-cors',body:fd});
+   seasonSendInFlight=false;
+   render();
+   toast('Vittoria e miglior marcatore della squadra inviati');
+ }catch(error){
+   state.submitted=false;
+   state.meta.submittedAt='';
+   seasonSendInFlight=false;
+   save();
+   if(sendButton){sendButton.disabled=false;sendButton.textContent='Invia vittoria';sendButton.removeAttribute('aria-busy')}
+   toast('Invio non riuscito: puoi riprovare');
+ }
+}
 function exportSeason(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fantaballa-campionato-risultati.json';a.click();URL.revokeObjectURL(a.href)}
 function render(){updateSaveStatus();if(!PLAYERS.length||!CLUBS.length){screen.innerHTML='<section class="panel"><h2>Caricamento database giocatori...</h2></section>';return}if(state.phase==='setup')showSetup();else if(state.phase==='draft')showDraft();else if(state.phase==='season')showSeason();else if(state.phase==='midseason')showMidseason();else if(state.phase==='finished')showFinished();updateSaveStatus()}
 async function boot(){
