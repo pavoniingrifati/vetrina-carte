@@ -270,7 +270,7 @@
       border:2px solid #e0c750; font-size:13px; font-weight:950; line-height:1.35;
     }
     .season-setup-tip.secondary{background:#f6f1e0; border-color:#d6c697; color:#473f33}
-    .season-start-btn{margin-top:16px; min-width:280px}
+    .season-start-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;margin-top:16px}.season-start-actions .season-start-btn{margin-top:0;min-width:240px;flex:1 1 260px}.season-start-actions .season-start-btn.gold{background:linear-gradient(180deg,#ffe96c,#e9bd37);color:#10243a;border-color:#8f6810}@media(max-width:620px){.season-start-actions{display:grid;grid-template-columns:1fr}.season-start-actions .season-start-btn{width:100%;min-width:0}}
 
     .season-draft-page{gap:16px}
     .season-draft-toolbar{
@@ -2538,7 +2538,7 @@
 </div>
 <div id="modalRoot"></div><div id="toast" class="toast"></div>
 <script>
-const CURRENT_STATE_VERSION=17;
+const CURRENT_STATE_VERSION=18;
 const SAVE_BASE='fantaballa_campionato_v7';
 const AUTO_SAVE_KEY=`${SAVE_BASE}_autosave`;
 const LEGACY_SAVE_KEYS=['fantaballa_campionato_v1'];
@@ -2586,7 +2586,7 @@ const FORMATION_LAYOUTS={
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
 let PLAYERS=[];let CLASSIC_PLAYERS=[];let REAL_PLAYERS=[];let CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-fc',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa FC'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',gameMode:'normal',chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[]},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-fc',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa FC'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',gameMode:'normal',chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[]},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
@@ -2612,6 +2612,7 @@ function loadState(){
 }
 function save(){
  try{
+   if(state?.seasonRules?.autoOptimizeLineup&&state?.draft?.roster?.length)optimizeLineupWithBench();
    const now=new Date().toISOString();
    state.version=CURRENT_STATE_VERSION;
    state.meta=state.meta&&typeof state.meta==='object'?state.meta:{};
@@ -2845,6 +2846,7 @@ function normalizeCampionatoState(input){
  next.seasonRules.guaranteedTopPlayerNextMidseason=Boolean(next.seasonRules.guaranteedTopPlayerNextMidseason);
  next.seasonRules.coachTopSwapPlayerId=String(next.seasonRules.coachTopSwapPlayerId||'');
  next.seasonRules.fantaguruBetterMidseason=Boolean(next.seasonRules.fantaguruBetterMidseason);
+ next.seasonRules.autoOptimizeLineup=Boolean(next.seasonRules.autoOptimizeLineup);
  next.seasonRules.futureScorerPlayerId=String(next.seasonRules.futureScorerPlayerId||'');
  next.seasonRules.futureScorerPlayerName=String(next.seasonRules.futureScorerPlayerName||'');
  next.seasonRules.futureInjuryZeroPoints=Boolean(next.seasonRules.futureInjuryZeroPoints);
@@ -3066,7 +3068,7 @@ function scheduleSetupIdentitySave(teamInput,coachInput){
 }
 function showSetup(){
  const userClub=activeUserClub(),userPal=clubPalette(userClub);
- screen.innerHTML=`<section class="panel season-setup-card"><div class="season-setup-kicker">Campionato del Ca***</div><h2>Crea la tua squadra</h2><div class="season-club-preview" style="--club-primary:${userPal.primary};--club-secondary:${userPal.secondary};--club-accent:${userPal.accent};--club-text:${userPal.text}"><span class="season-club-preview-badge">${esc(userClub.shortName||'FAN')}</span><div><small>Club controllato</small><b>${esc(userClub.name)}</b></div></div><p class="season-setup-copy">Scegli 11 titolari e 3 riserve. Cerca poi di ottenere il miglior punteggio a fine stagione. Ma attento agli imprevisti, infortuni, squalifiche e draft di metà stagione!<br><b>Pronto a fare 0 vittorie su 38?</b></p><div class="setup-grid"><div class="field"><label>Nome squadra</label><input id="teamName" maxlength="32" value="${esc(state.teamName||localStorage.getItem(SETUP_TEAM_NAME_KEY)||userClub.name)}" placeholder="Fantaballa FC" autocomplete="organization"></div><div class="field"><label>Allenatore</label><input id="coachName" maxlength="32" value="${esc(state.coachName||localStorage.getItem(SETUP_COACH_NAME_KEY)||'')}" placeholder="Il tuo nome" autocomplete="name"></div></div><div class="season-setup-tip">Se il nome allenatore coincide con quello di un calciatore scelto, quel giocatore ottiene +10 OVR bonus di intesa.</div><h3 style="margin-top:20px">Scegli la modalità</h3><div class="season-mode-grid"><button type="button" class="season-mode-btn ${state.gameMode!=='chaos'?'active':''}" data-game-mode="normal"><b>Normale</b><small>Gli eventi e le decisioni riguardano soltanto la tua squadra.</small></button><button type="button" class="season-mode-btn ${state.gameMode==='chaos'?'active':''}" data-game-mode="chaos"><b>🌀 Caos</b><small>Anche le 19 avversarie ricevono eventi, scelgono casualmente e subiscono conseguenze reali.</small></button></div><h3 style="margin-top:20px">Scegli il modulo</h3><div class="season-formation-grid">${Object.keys(FORMATIONS).filter(f=>f!=='2-4-4').map(f=>`<button class="season-formation-btn ${state.formation===f?'active':''}" data-form="${f}">${f}<small>${esc(formationPositionSummary(f))}</small></button>`).join('')}</div><div class="season-setup-tip secondary"><b>36 club disponibili:</b> nel draft iniziale e nel mercato di metà stagione possono uscire tutti i club del database, anche quelli che non parteciperanno al campionato. Al termine del draft verranno sorteggiate 19 avversarie e il torneo resterà composto da 20 squadre per 38 giornate.</div><div class="season-setup-tip secondary"><b>Come funziona il draft:</b> spacchetta un club, scegli un giocatore e piazzalo esclusivamente in uno slot compatibile con la sua posizione. Attento ai panchinari! Quelli, anche se forti, non giocano se non c'è spazio!</div><button id="startDraft" class="btn primary season-start-btn">Inizia il draft</button></section>`;
+ screen.innerHTML=`<section class="panel season-setup-card"><div class="season-setup-kicker">Campionato del Ca***</div><h2>Crea la tua squadra</h2><div class="season-club-preview" style="--club-primary:${userPal.primary};--club-secondary:${userPal.secondary};--club-accent:${userPal.accent};--club-text:${userPal.text}"><span class="season-club-preview-badge">${esc(userClub.shortName||'FAN')}</span><div><small>Club controllato</small><b>${esc(userClub.name)}</b></div></div><p class="season-setup-copy">Scegli 11 titolari e 3 riserve. Cerca poi di ottenere il miglior punteggio a fine stagione. Ma attento agli imprevisti, infortuni, squalifiche e draft di metà stagione!<br><b>Pronto a fare 0 vittorie su 38?</b></p><div class="setup-grid"><div class="field"><label>Nome squadra</label><input id="teamName" maxlength="32" value="${esc(state.teamName||localStorage.getItem(SETUP_TEAM_NAME_KEY)||userClub.name)}" placeholder="Fantaballa FC" autocomplete="organization"></div><div class="field"><label>Allenatore</label><input id="coachName" maxlength="32" value="${esc(state.coachName||localStorage.getItem(SETUP_COACH_NAME_KEY)||'')}" placeholder="Il tuo nome" autocomplete="name"></div></div><div class="season-setup-tip">Se il nome allenatore coincide con quello di un calciatore scelto, quel giocatore ottiene +10 OVR bonus di intesa.</div><h3 style="margin-top:20px">Scegli la modalità</h3><div class="season-mode-grid"><button type="button" class="season-mode-btn ${state.gameMode!=='chaos'?'active':''}" data-game-mode="normal"><b>Normale</b><small>Gli eventi e le decisioni riguardano soltanto la tua squadra.</small></button><button type="button" class="season-mode-btn ${state.gameMode==='chaos'?'active':''}" data-game-mode="chaos"><b>🌀 Caos</b><small>Anche le 19 avversarie ricevono eventi, scelgono casualmente e subiscono conseguenze reali.</small></button></div><h3 style="margin-top:20px">Scegli il modulo</h3><div class="season-formation-grid">${Object.keys(FORMATIONS).filter(f=>f!=='2-4-4').map(f=>`<button class="season-formation-btn ${state.formation===f?'active':''}" data-form="${f}">${f}<small>${esc(formationPositionSummary(f))}</small></button>`).join('')}</div><div class="season-setup-tip secondary"><b>36 club disponibili:</b> nel draft iniziale e nel mercato di metà stagione possono uscire tutti i club del database, anche quelli che non parteciperanno al campionato. Al termine del draft verranno sorteggiate 19 avversarie e il torneo resterà composto da 20 squadre per 38 giornate.</div><div class="season-setup-tip secondary"><b>Come funziona il draft:</b> spacchetta un club, scegli un giocatore e piazzalo esclusivamente in uno slot compatibile con la sua posizione. Attento ai panchinari! Quelli, anche se forti, non giocano se non c'è spazio!</div><div class="season-setup-tip secondary"><b>Draft automatico casuale:</b> vengono estratti 14 giocatori senza alcun filtro di ruolo, club o OVR. Possono quindi finire fuori ruolo e la rosa può essere fortissima, scarsissima o completamente sbilanciata.</div><div class="season-start-actions"><button id="startDraft" class="btn primary season-start-btn">Draft manuale</button><button id="startRandomDraft" class="btn gold season-start-btn">🎲 Draft automatico casuale</button></div></section>`;
  const teamInput=document.getElementById('teamName');
  const coachInput=document.getElementById('coachName');
  [teamInput,coachInput].forEach(input=>input.addEventListener('input',()=>scheduleSetupIdentitySave(teamInput,coachInput)));
@@ -3087,6 +3089,13 @@ function showSetup(){
    state.draft=freshState().draft;
    save();
    render();
+ };
+ document.getElementById('startRandomDraft').onclick=()=>{
+   clearTimeout(setupIdentitySaveTimer);
+   persistSetupIdentity(teamInput,coachInput,false);
+   state.coachName=state.coachName||'Mister';
+   try{localStorage.setItem(SETUP_COACH_NAME_KEY,state.coachName)}catch{}
+   startFullyRandomDraft();
  };
 }
 
@@ -3639,11 +3648,21 @@ function applyChaosTeamDecision(team,decision,choiceIndex){
  if(id==='misterfm-fa-video'){if(choiceIndex===0)chaosRebuildWeakest(team,3);else{const player=chaosRandomRosterPlayer(team);if(player)chaosSetPlayerOvr(team,player.id,(Number(player.ovr)||60)+(Math.random()<.5?20:-20))}return text}
  if(id==='fantaballa-fa-video'&&choiceIndex===0){const attackers=opponentRosterPlayers(team).filter(player=>roleOf(player)==='A');const outgoing=attackers.sort((a,b)=>(Number(a.ovr)||0)-(Number(b.ovr)||0))[0]||chaosRandomRosterPlayer(team);if(outgoing){const maradona=chaosRegisterGeneratedPlayer({id:`chaos-maradona-${team.id}-${Date.now()}`,name:'Diego Armando Maradona',nation:'Argentina',Position:'ATT, AS, AD',role:'A',ovr:120,subscriber:'no',club:team.id,eventPlayer:true});const index=team.roster.findIndex(value=>String(value)===String(outgoing.id));if(index>=0)team.roster[index]=String(maradona.id)}if(state.standings?.[team.id])state.standings[team.id].pts=0;return text}
  if(id==='mago-do-nascimento'){if(choiceIndex===0)pushChaosEffect(team,'injuredBonus',40,9999);else{const player=chaosRandomRosterPlayer(team);if(player)chaosSetPlayerOvr(team,player.id,(Number(player.ovr)||60)+20)}return text}
- if(id==='sessanta-sfumature'){if(choiceIndex===0){const sixty=opponentRosterPlayers(team).filter(player=>Number(player.ovr)===60);if(sixty.length)chaosSetPlayerOvr(team,pick(sixty).id,120);const best=opponentRosterPlayers(team).sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0))[0];if(best)opponentStatusOf(team,best.id).injury=9999}else chaos.sixtyPointFear=true;return text}
+ if(id==='var-misterioso'){if(choiceIndex===0)zeroFiveTeamsIncluding(team.id);else pushChaosEffect(team,'redRisk',1,2,{chance:.75});return text}
+ if(id==='sessanta-sfumature'){if(choiceIndex===0){const roster=opponentRosterPlayers(team);const eligible=roster.filter(player=>{const base=Number(playerById(player.id)?.ovr??player.ovr)||0;return base>=60&&base<=65});const chosen=eligible.length?pick(eligible):null;const best=roster.filter(player=>!chosen||String(player.id)!==String(chosen.id)).sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0))[0];if(chosen){const base=Number(playerById(chosen.id)?.ovr??chosen.ovr)||60;chaosSetPlayerOvr(team,chosen.id,base*2)}if(best)opponentStatusOf(team,best.id).injury=9999}else chaos.sixtyPointFear=true;return text}
  if(id==='personaggio-capelli-bianchi'){if(choiceIndex===0){if(Math.random()<.5)opponentRosterPlayers(team).forEach(player=>chaosSetPlayerOvr(team,player.id,(Number(player.ovr)||60)+10));else chaosInjure(team,Math.max(1,team.roster.length),9999)}else{const target=chaosNextOpponent(team.id);if(target)pushChaosEffect(target,'power',10,1)}return text}
  if(id==='rissa-mascotte'&&choiceIndex===1){const targets=state.teams.filter(item=>item.id!==USER_ID&&item.id!==team.id);const target=targets.length?pick(targets):team;target.mascot={id:`chaos-mascot-${team.id}-${Date.now()}`,name:`Mascotte di ${team.name}`,ovr:99};return text}
  if(id==='drone-avversario'){const target=chaosNextOpponent(team.id);if(target){if(choiceIndex===0)pushChaosEffect(target,'power',-10,1);else chaosInjure(target,2,1)}return text}
- if(id==='aggiornamento-var'||id==='mentalista'){if(choiceIndex===0&&id==='aggiornamento-var')pushChaosEffect(team,'injuryRisk',1,1,{chance:.45});else pushChaosEffect(team,'redRisk',1,1,{chance:.35});return text}
+ if(id==='aggiornamento-var'){if(choiceIndex===0)pushChaosEffect(team,'injuryRisk',1,1,{chance:.45});else pushChaosEffect(team,'redRisk',1,1,{chance:.35});return text}
+ if(id==='mentalista'){
+   if(choiceIndex===0){
+     const attacker=chaosRandomRosterPlayer(team,player=>roleOf(player)==='A');
+     if(!attacker)return 'Nessun attaccante disponibile da ipnotizzare.';
+     if(Math.random()<.25){chaosSetPlayerOvr(team,attacker.id,1);return `Il mentalista sbaglia: ${attacker.name} diventa un pollo da 1 OVR fino a fine stagione.`}
+     pushChaosEffect(team,'power',8/11,1);return `${attacker.name} riceve +8 OVR nella prossima partita.`;
+   }
+   pushChaosEffect(team,'redRisk',1,1,{chance:.35});return text;
+ }
  if(lower.includes('perdi sicuramente')||lower.includes('sconfitta obbligatoria'))pushChaosEffect(team,'forcedLoss',1,1);
  if(lower.includes('vittoria assicurata')||lower.includes('vinci sicuramente'))pushChaosEffect(team,'forcedWin',1,1);
  if(lower.includes('al massimo pareggiare'))pushChaosEffect(team,'maxDraw',1,1);
@@ -3743,6 +3762,25 @@ function nationalStrength(nation){
  const values=ids.slice(0,11).map(id=>Number(playerById(id)?.ovr)||60);
  return Math.round(avg(values)*10)/10;
 }
+function buildFullyRandomDraftRoster(){
+ const selected=shuffle(PLAYERS).slice(0,14);
+ if(selected.length<14)return false;
+ const slots=formationSlots();
+ state.draft=freshState().draft;
+ state.draft.roster=[
+   ...slots.map((slot,index)=>{const player=selected[index];return {playerId:String(player.id),slotId:slot.instanceId,slot:slot.code,bench:false,player:{...player}}}),
+   ...selected.slice(11,14).map((player,index)=>({playerId:String(player.id),slotId:`bench-${index+1}`,slot:`PAN${index+1}`,bench:true,player:{...player}}))
+ ];
+ state.draft.clubId='';
+ state.draft.candidates=[];
+ state.draft.pendingPlayerId='';
+ return true;
+}
+function startFullyRandomDraft(){
+ if(!buildFullyRandomDraftRoster())return toast('Non ci sono abbastanza giocatori per creare una rosa casuale.');
+ finalizeDraft();
+ toast('Rosa completamente casuale generata: il campionato è iniziato.');
+}
 function finalizeDraft(){
  if(!draftComplete())return toast('Completa 11 titolari e 3 riserve.');
  state.draft.pendingPlayerId='';
@@ -3785,7 +3823,7 @@ function finalizeDraft(){
  render()
 }
 function generateSchedule(ids){let arr=[...ids],rounds=[];for(let r=0;r<arr.length-1;r++){let matches=[];for(let i=0;i<arr.length/2;i++){let h=arr[i],a=arr[arr.length-1-i];if(r%2&&i===0)[h,a]=[a,h];matches.push({home:h,away:a})}rounds.push(matches);arr=[arr[0],arr[arr.length-1],...arr.slice(1,-1)]}return rounds.concat(rounds.map(rd=>rd.map(m=>({home:m.away,away:m.home}))));}
-function sortedTable(){return Object.values(state.standings).sort((a,b)=>b.pts-a.pts||((b.gf-b.ga)-(a.gf-a.ga))||b.gf-a.gf||b.w-a.w)}
+function sortedTable(){return Object.values(state.standings).filter(team=>!isTeamEliminated(team.id)).sort((a,b)=>b.pts-a.pts||((b.gf-b.ga)-(a.gf-a.ga))||b.gf-a.gf||b.w-a.w)}
 function userStanding(){return state.standings[USER_ID]}
 function teamById(id){return state.teams.find(t=>t.id===id)}
 function currentRound(){return state.schedule[state.matchday]||[]}
@@ -3860,6 +3898,17 @@ function applyPlayerEffect(type,value,rounds,filter=()=>true){
  pushEffect(type,value,rounds,{playerId:entry.playerId});
  return `${entry.player.name} riceve ${value>=0?'+':''}${value} per ${rounds===1?'la prossima partita':`${rounds} giornate`}.`;
 }
+function hypnotizeRandomAttacker(){
+ const entry=randomOwnEntry(item=>roleOf(item.player)==='A');
+ if(!entry)return 'Nessun attaccante disponibile da ipnotizzare.';
+ if(Math.random()<.25){
+   const rosterEntry=state.draft.roster.find(item=>String(item.playerId)===String(entry.playerId));
+   if(rosterEntry){const current=rosterEntry.player||entry.player||playerById(entry.playerId);rosterEntry.player={...current,ovr:1,isChicken:true};}
+   return `Il mentalista sbaglia: ${entry.player.name} viene trasformato in un pollo da 1 OVR fino a fine stagione.`;
+ }
+ pushEffect('playerOvr',8,1,{playerId:entry.playerId});
+ return `${entry.player.name} viene ipnotizzato correttamente e riceve +8 OVR nella prossima partita.`;
+}
 function injureOwnPlayers(entries,rounds=1){
  const valid=(entries||[]).filter(Boolean);
  valid.forEach(entry=>setOwnPlayerInjury(entry,rounds));
@@ -3924,7 +3973,7 @@ function extendSeasonTo76(){
  return 'La stagione è stata estesa a 76 giornate. Ogni vittoria vale 1,5 punti e ogni pareggio vale 0 punti.';
 }
 function isTeamEliminated(id){return Boolean(state.seasonRules?.hungerGames&&(state.seasonRules.eliminatedTeamIds||[]).map(String).includes(String(id)))}
-function activateHungerGames(){state.seasonRules.hungerGames=true;state.seasonRules.eliminatedTeamIds=Array.isArray(state.seasonRules.eliminatedTeamIds)?state.seasonRules.eliminatedTeamIds:[];return 'Da ora chi perde una partita viene eliminato fino al termine della stagione. Le gare future contro squadre eliminate diventano vittorie a tavolino.'}
+function activateHungerGames(){state.seasonRules.hungerGames=true;state.seasonRules.eliminatedTeamIds=Array.isArray(state.seasonRules.eliminatedTeamIds)?state.seasonRules.eliminatedTeamIds:[];return 'Da ora chi perde una partita viene eliminato fino al termine della stagione e scompare dalla classifica. Le gare future contro squadre eliminate diventano vittorie a tavolino.'}
 function applyHungerGamesResult(homeId,awayId,homeScore,awayScore){
  if(!state.seasonRules.hungerGames||Number(homeScore)===Number(awayScore))return '';
  const loserId=Number(homeScore)<Number(awayScore)?String(homeId):String(awayId);if(isTeamEliminated(loserId))return '';
@@ -3967,16 +4016,17 @@ function runMisterFmExperiment(){
  selected.entry.player={...selected.player,ovr:after};
  return `${selected.player.name}: OVR ${before} → ${after} (${delta>0?'+20':'-20'}) fino al termine della stagione.`;
 }
+function tacticianPlayerOvr(player){return Math.max(1,(Number(player?.ovr)||60)+activeOvrBonus(player))}
 function optimizeLineupWithBench(){
  const roster=state.draft.roster;
  const changes=[];
  let guard=0;
  while(guard++<20){
-   const benches=roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>item.entry.bench&&item.player).sort((a,b)=>(Number(b.player.ovr)||0)-(Number(a.player.ovr)||0));
+   const benches=roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>item.entry.bench&&item.player).sort((a,b)=>tacticianPlayerOvr(b.player)-tacticianPlayerOvr(a.player));
    let swap=null;
    for(const bench of benches){
-     const benchOvr=Number(bench.player.ovr)||0;
-     const targets=roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>!item.entry.bench&&item.player&&compatible(bench.player,item.entry.slot)&&(Number(item.player.ovr)||0)<benchOvr).sort((a,b)=>(Number(a.player.ovr)||0)-(Number(b.player.ovr)||0));
+     const benchOvr=tacticianPlayerOvr(bench.player);
+     const targets=roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>!item.entry.bench&&item.player&&compatible(bench.player,item.entry.slot)&&tacticianPlayerOvr(item.player)<benchOvr).sort((a,b)=>tacticianPlayerOvr(a.player)-tacticianPlayerOvr(b.player));
      if(targets.length){swap={bench,target:targets[0]};break}
    }
    if(!swap)break;
@@ -3986,6 +4036,11 @@ function optimizeLineupWithBench(){
    changes.push(`${swap.bench.player.name} entra al posto di ${swap.target.player.name} nello slot ${targetEntry.slot}`);
  }
  return changes.length?`Formazione ottimizzata: ${changes.join(' · ')}.`:'La formazione era già la migliore possibile con i panchinari disponibili.';
+}
+function activatePersistentTactician(){
+ state.seasonRules.autoOptimizeLineup=true;
+ const result=optimizeLineupWithBench();
+ return `${result} Il tattico controllerà nuovamente la formazione dopo ogni cambiamento di OVR o di giocatori, fino a fine stagione.`;
 }
 function activateFantaguru(){
  state.seasonRules.fantaguruBetterMidseason=true;
@@ -4083,17 +4138,25 @@ function guaranteeSixNil(){
  pushEffect('forcedScore',1,1,{gf:6,ga:0,source:'Favoriti'});
  return 'La prossima partita terminerà con una tua vittoria per 6-0.';
 }
+function zeroFiveTeamsIncluding(teamId=USER_ID){
+ const standings=state.standings||{},allIds=Object.keys(standings).filter(id=>standings[id]);
+ if(!allIds.length)return [];
+ const required=allIds.includes(String(teamId))?String(teamId):(allIds.includes(USER_ID)?USER_ID:allIds[0]);
+ const selected=[required,...shuffle(allIds.filter(id=>id!==required)).slice(0,4)];
+ [...new Set(selected)].forEach(id=>{if(standings[id])standings[id].pts=0});
+ return [...new Set(selected)].map(id=>standings[id]?.name||teamById(id)?.name||id);
+}
 function sixtyShadesSacrifice(){
  const entries=rosterPlayers().filter(entry=>entry?.player);
- const eligible=entries.filter(entry=>originalBaseOvr(entry.player)===60);
- if(!eligible.length)return 'Non hai un giocatore con esattamente 60 OVR base.';
+ const eligible=entries.filter(entry=>{const base=originalBaseOvr(entry.player);return base>=60&&base<=65});
+ if(!eligible.length)return 'Non hai un giocatore con OVR base compreso tra 60 e 65.';
  const chosen=pick(eligible);
  const bestPool=entries.filter(entry=>String(entry.playerId)!==String(chosen.playerId)&&!statusOf(entry.playerId).seasonOut);
  const best=[...(bestPool.length?bestPool:entries.filter(entry=>String(entry.playerId)!==String(chosen.playerId)))].sort((a,b)=>(Number(b.player?.ovr)||originalBaseOvr(b.player))-(Number(a.player?.ovr)||originalBaseOvr(a.player)))[0];
- const change=setPermanentRosterOvr(chosen,originalBaseOvr(chosen.player)*2);
+ const base=originalBaseOvr(chosen.player),change=setPermanentRosterOvr(chosen,base*2);
  let sacrifice='Nessun altro giocatore disponibile da sacrificare.';
  if(best)sacrifice=ruleOutForSeason(best,'Un piccolo sacrificio');
- return change?`${change.player.name} raddoppia il proprio OVR fino a ${change.after} per tutta la stagione. ${sacrifice}`:sacrifice;
+ return change?`${change.player.name}, con ${base} OVR base, raddoppia la propria forza fino a ${change.after} per tutta la stagione. ${sacrifice}`:sacrifice;
 }
 function activateSixtyPointFear(){
  state.seasonRules.sixtyPointFear=true;
@@ -4154,10 +4217,11 @@ function seasonRuleSummary(){
  if(state.seasonRules.sixtyPointFear&&!state.seasonRules.sixtyPointFearTriggered)extras.push('60 la paura: a 60 punti il punteggio viene azzerato');
  if(state.seasonRules.guaranteedTopPlayerNextMidseason)extras.push('Prossimo pack mercato: top player garantito');
  if(state.seasonRules.coachTopSwapPlayerId)extras.push('Scambio speciale del figlio del mister disponibile');
+ if(state.seasonRules.autoOptimizeLineup)extras.push('Il tattico aggiorna automaticamente i titolari fino a fine stagione');
  const mandatoryNames=mandatoryMidseasonPlayerIds().map(id=>playerById(id)?.name).filter(Boolean);if(mandatoryNames.length)extras.push(`Scambi obbligatori: ${mandatoryNames.join(', ')}`)
  return `<div class="season-rules-card"><b>Regole alterate dagli eventi</b><br>Modalità: ${chaosEnabled()?'Caos (19 avversarie attive)':'Normale'} · Draft di metà stagione: ${target} ${target===1?'cambio':'cambi'} · Decisioni: ${decisionMode} · Draft: ${marketMode} · Eventi unici: ${(state.seenDecisionEvents||[]).length}/${DECISIONS.length}${extras.length?`<br>${extras.map(esc).join(' · ')}`:''}</div>`;
 }
-function resolveLineup(){const starters=getStarterEntries(),bench=getBenchEntries(),used=new Set(),out=[];for(const entry of starters){const p=entry.player,st=statusOf(p.id);if(st.suspension>0||st.seasonOut||(st.injury>0&&!state.playInjured[p.id])){const available=bench.filter(b=>!used.has(b.playerId)&&statusOf(b.playerId).injury<=0&&statusOf(b.playerId).suspension<=0);let sub=available.find(b=>compatible(b.player,entry.slot));if(!sub)sub=available.find(b=>roleOf(b.player)===POSITION_ROLE[entry.slot]);if(!sub)sub=available[0];if(sub){used.add(sub.playerId);out.push({...sub,slot:entry.slot,malus:compatible(sub.player,entry.slot)?0:-10,replaces:p.name})}else{out.push({playerId:`youth-${entry.slot}`,slot:entry.slot,bench:false,malus:-10,replaces:p.name,player:{id:`youth-${entry.slot}`,name:`Primavera ${entry.slot}`,nation:'Academy',Position:entry.slot,role:POSITION_ROLE[entry.slot],ovr:60,subscriber:'no'}})}}else out.push({...entry,malus:st.injury>0?-20:0,replaces:''})}return out}
+function resolveLineup(){if(state.seasonRules?.autoOptimizeLineup)optimizeLineupWithBench();const starters=getStarterEntries(),bench=getBenchEntries(),used=new Set(),out=[];for(const entry of starters){const p=entry.player,st=statusOf(p.id);if(st.suspension>0||st.seasonOut||(st.injury>0&&!state.playInjured[p.id])){const available=bench.filter(b=>!used.has(b.playerId)&&statusOf(b.playerId).injury<=0&&statusOf(b.playerId).suspension<=0);let sub=available.find(b=>compatible(b.player,entry.slot));if(!sub)sub=available.find(b=>roleOf(b.player)===POSITION_ROLE[entry.slot]);if(!sub)sub=available[0];if(sub){used.add(sub.playerId);out.push({...sub,slot:entry.slot,malus:compatible(sub.player,entry.slot)?0:-10,replaces:p.name})}else{out.push({playerId:`youth-${entry.slot}`,slot:entry.slot,bench:false,malus:-10,replaces:p.name,player:{id:`youth-${entry.slot}`,name:`Primavera ${entry.slot}`,nation:'Academy',Position:entry.slot,role:POSITION_ROLE[entry.slot],ovr:60,subscriber:'no'}})}}else out.push({...entry,malus:st.injury>0?-20:0,replaces:''})}return out}
 function teamPowerBase(){const list=getStarterEntries().map(r=>r.player);return avg(list.map(p=>Number(p.ovr)||70))}
 function matchPower(){const line=resolveLineup(),players=line.map(x=>x.player);let total=0;line.forEach(e=>{total+=(Number(e.player.ovr)||60)+(effectiveChemistryBonus(e.player,players)/5)+e.malus+activeOvrBonus(e.player)});return total/11}
 function unavailableList(){return rosterPlayers().filter(r=>{const s=statusOf(r.playerId);return s.injury>0||s.suspension>0})}
@@ -4206,7 +4270,7 @@ const DECISIONS=[
   {label:'Interrompi il seminario e fate allenamento',effect:'+6 OVR, ma Intesa azzerata nella prossima partita',apply(){pushEffect('teamOvr',6,1);pushEffect('teamChemZero',1,1);return '+6 OVR alla squadra e Intesa azzerata nella prossima partita.'}}
  ]},
  {id:'mentalista',title:'Arriva un mentalista nello spogliatoio',text:'Dice di poter far credere agli avversari che il pallone sia invisibile.',choices:[
-  {label:'Gli permetti di ipnotizzare l’attaccante',effect:'+8 OVR a un attaccante casuale nella prossima partita',apply(){return applyPlayerEffect('playerOvr',8,1,entry=>roleOf(entry.player)==='A')}},
+  {label:'Gli permetti di ipnotizzare l’attaccante',effect:'75%: +8 OVR nella prossima partita. 25%: il mentalista sbaglia e lo trasforma in un pollo da 1 OVR',apply(){return hypnotizeRandomAttacker()}},
   {label:'Gli chiedi di confondere l’arbitro',effect:'Possibile cartellino rosso avversario, ma rischio di espulsione per un tuo giocatore',apply(){pushEffect('refChaos',1,1,{opponentRedChance:.45,ownRedChance:.30,source:'Mentalista'});return 'Nella prossima partita: 45% rosso avversario e 30% rosso per la tua squadra.'}}
  ]},
  {id:'grigliata-ultras',title:"L’allenamento viene invaso da una grigliata degli ultras",text:'Fumo, salsicce e cori impediscono qualsiasi esercitazione tattica.',choices:[
@@ -4242,7 +4306,7 @@ const DECISIONS=[
   {label:'Chi fa sto mestiere non è mollo',effect:'Segnano tutti gli abbonati nella prossima partita e perdi il controllo delle decisioni fino a fine stagione',apply(){pushEffect('forceSubscriberGoals',1,1);state.seasonRules.autoDecisions=true;return 'Nella prossima partita ogni abbonato presente in campo segnerà almeno un gol. Le decisioni future saranno automatiche.'}}
  ]},
  {id:'var-misterioso',title:'VAR',text:'Un misterioso personaggio ti si avvicina.',choices:[
-  {label:'Favori rischiosi',effect:'Una squadra casuale va a 0 punti in classifica, anche la tua',apply(){const ids=Object.keys(state.standings||{});const id=pick(ids);if(!id||!state.standings[id])return 'Nessuna squadra disponibile.';state.standings[id].pts=0;return `${state.standings[id].name} è stata portata a 0 punti in classifica.`}},
+  {label:'Favori rischiosi',effect:'5 squadre casuali, compresa la tua, vanno a 0 punti',apply(){const names=zeroFiveTeamsIncluding(USER_ID);return names.length?`${names.join(', ')} vanno a 0 punti in classifica.`:'Nessuna squadra disponibile.'}},
   {label:'Video Assistant Referee',effect:'Aumentano drasticamente le probabilità di espulsioni per le prossime 2 partite',apply(){pushEffect('refChaos',1,2,{opponentRedChance:.75,ownRedChance:.60,source:'VAR misterioso'});return 'Per 2 partite: 75% di rosso avversario e 60% di rosso per la tua squadra.'}}
  ]},
  {id:'milan-lab',title:'Milan Lab',text:'Lo staff medico presenta un piano di recupero decisamente poco rassicurante.',choices:[
@@ -4294,7 +4358,7 @@ const DECISIONS=[
   {label:'Favoriti',effect:'La prossima partita è vinta automaticamente per 6-0',apply(){return guaranteeSixNil()}}
  ]},
  {id:'sessanta-sfumature',title:'60 sfumature di ca***',text:'Il numero 60 assume improvvisamente un significato molto pericoloso.',choices:[
-  {label:'Un piccolo sacrificio',effect:'Un giocatore con 60 OVR base raddoppia la forza per tutta la stagione, ma perdi il tuo miglior giocatore',apply(){return sixtyShadesSacrifice()}},
+  {label:'Un piccolo sacrificio',effect:'Un giocatore con OVR base tra 60 e 65 raddoppia la forza per tutta la stagione, ma perdi il tuo miglior giocatore',apply(){return sixtyShadesSacrifice()}},
   {label:'60 la paura',effect:'Se raggiungi esattamente 60 punti in classifica, perdi tutti i punti',apply(){return activateSixtyPointFear()}}
  ]},
  {id:'omonimo-allenatore',get title(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`},text:'Il tipo sostiene che condividere un nome crei un legame tattico inspiegabile.',available(){return Boolean(String(state.coachName||'').trim())},choices:[
@@ -4302,7 +4366,7 @@ const DECISIONS=[
   {label:'Che nome del ca***',effect:'L’Intesa di tutta la squadra viene moltiplicata ×2 per le prossime 2 partite',apply(){return doubleTeamChemistryTwoMatches()}}
  ]},
  {id:'figura-misteriosa-tattico-fantaguru',title:'Ti si avvicina una figura misteriosa',text:'La figura sostiene di poter sistemare la formazione oppure prevedere ogni affare del mercato.',available(){return Number(state.matchday)<19},choices:[
-  {label:'Il tattico',effect:'Sistema la formazione mettendo in campo i panchinari più forti dei titolari, ma solo nelle posizioni compatibili',apply(){return optimizeLineupWithBench()}},
+  {label:'Il tattico',effect:'Sistema la formazione mettendo in campo i panchinari più forti dei titolari e la aggiorna automaticamente fino a fine stagione',apply(){return activatePersistentTactician()}},
   {label:'Il fantaguru',effect:'Nel draft di metà stagione avrai sempre almeno una scelta migliore del giocatore che stai offrendo',apply(){return activateFantaguru()}}
  ]},
  {id:'figlio-del-mister',title:'Il figlio del mister',text:'In rosa c’è un giocatore con lo stesso nome dell’allenatore.',available(){return Number(state.matchday)<19&&Boolean(coachNamedRosterEntry())},choices:[
@@ -4319,7 +4383,7 @@ const DECISIONS=[
  ]},
  {id:'fgci-regole-estreme',title:'Nuova regola FGCI',text:'La federazione propone due riforme estreme con effetto immediato.',choices:[
   {label:'Maratona',effect:'Il campionato dura 76 giornate; vittorie da 1,5 punti e pareggi da 0',apply(){return extendSeasonTo76()}},
-  {label:'Hunger Games',effect:'Chi perde viene eliminato fino a fine stagione',apply(){return activateHungerGames()}}
+  {label:'Hunger Games',effect:'Chi perde viene eliminato fino a fine stagione e scompare dalla classifica',apply(){return activateHungerGames()}}
  ]}
 ];
 function decisionFromPending(event){
@@ -4874,7 +4938,7 @@ function renderMidseasonComparison(projection){
  const {outgoing,incoming,current,projected,outgoingOvr,incomingOvr,deltaPlayer,deltaOverall,deltaChemistry}=projection;
  const sourceClub=clubById(incoming.club);
  const clubStyle=teamCssVars({colors:sourceClub?.colorClub});
- return `<div class="midseason-comparison" style="${clubStyle}"><div class="midseason-comparison-title"><span>Confronto prima della conferma</span><b>${esc(outgoing.slot)}${outgoing.bench?' · Panchina':''}</b></div><div class="midseason-versus-grid"><div class="midseason-versus-player outgoing-player">${renderMiniAvatar(outgoing.player)}<span>IN USCITA</span><b>${esc(outgoing.player.name)}</b><small>${esc(outgoing.player.Position)} · OVR ${outgoingOvr}</small></div><div class="midseason-swap-arrow">→</div><div class="midseason-versus-player incoming-player">${renderMiniAvatar(incoming)}<span>IN ENTRATA</span><b>${esc(incoming.name)}</b><small>${esc(incoming.Position)} · OVR ${incomingOvr}</small><em>${sourceClub?esc(sourceClub.name):'Club non indicato'}</em></div></div><div class="midseason-impact-grid"><div class="midseason-impact"><span>OVR giocatore</span><b>${outgoingOvr} → ${incomingOvr}</b><strong class="${midseasonDeltaClass(deltaPlayer)}">${midseasonDeltaLabel(deltaPlayer,0)}</strong></div><div class="midseason-impact"><span>OVR medio titolari</span><b>${current.overall.toFixed(1)} → ${projected.overall.toFixed(1)}</b><strong class="${midseasonDeltaClass(deltaOverall)}">${midseasonDeltaLabel(deltaOverall,1)}</strong></div><div class="midseason-impact"><span>Intesa squadra</span><b>${current.chemistry.score} → ${projected.chemistry.score}</b><strong class="${midseasonDeltaClass(deltaChemistry)}">${midseasonDeltaLabel(deltaChemistry,0)}</strong></div></div><div class="midseason-confirm-actions"><button id="confirmMarketChange" class="btn primary">Conferma il cambio</button><button id="cancelMarketCandidate" class="btn secondary-strong">Annulla selezione</button></div></div>`;
+ return `<div class="midseason-comparison" style="${clubStyle}"><div class="midseason-comparison-title"><span>Confronto prima della conferma</span><b>${esc(outgoing.slot)}${outgoing.bench?' · Panchina':''}</b></div><div class="midseason-versus-grid"><div class="midseason-versus-player outgoing-player">${renderMiniAvatar(outgoing.player)}<span>IN USCITA</span><b>${esc(outgoing.player.name)}</b><small>${esc(outgoing.player.Position)} · OVR ${outgoingOvr}</small></div><div class="midseason-swap-arrow">→</div><div class="midseason-versus-player incoming-player">${renderMiniAvatar(incoming)}<span>IN ENTRATA</span><b>${esc(incoming.name)}</b><small>${esc(incoming.Position)} · OVR ${incomingOvr}</small><em>${sourceClub?esc(sourceClub.name):'Club non indicato'}</em></div></div><div class="midseason-impact-grid"><div class="midseason-impact"><span>OVR giocatore</span><b>${outgoingOvr} → ${incomingOvr}</b><strong class="${midseasonDeltaClass(deltaPlayer)}">${midseasonDeltaLabel(deltaPlayer,0)}</strong></div><div class="midseason-impact"><span>OVR medio titolari</span><b>${current.overall.toFixed(1)} → ${projected.overall.toFixed(1)}</b><strong class="${midseasonDeltaClass(deltaOverall)}">${midseasonDeltaLabel(deltaOverall,1)}</strong></div><div class="midseason-impact"><span>Intesa squadra</span><b>${current.chemistry.score} → ${projected.chemistry.score}</b><strong class="${midseasonDeltaClass(deltaChemistry)}">${midseasonDeltaLabel(deltaChemistry,0)}</strong></div></div><div class="midseason-confirm-actions"><button id="confirmMarketChange" class="btn primary">Conferma il cambio</button></div></div>`;
 }
 function renderMidseasonChanges(changes,finalView=false){
  const list=Array.isArray(changes)?changes:[];
@@ -4979,15 +5043,15 @@ function showMidseason(){
  const projection=selected&&pendingPlayer?midseasonProjection(selected.playerId,pendingPlayer.id):null;
  const remaining=Math.max(0,ms.target-ms.step);
  const drawLocked=Boolean(ms.clubId)&&!midseasonCanDraw();
- const outgoingLocked=mandatoryActive||Boolean(ms.clubId)||Number(ms.drawsUsed)>0;
+ const outgoingLocked=mandatoryActive||Boolean(ms.outgoingId);
  const extraDrawsRemaining=Math.max(0,midseasonDrawLimit()-Number(ms.drawsUsed||0));
  const confirmedHtml=ms.changes.length?`<div class="midseason-confirmed-box"><div class="midseason-tip">Cambi già confermati</div>${renderMidseasonChanges(ms.changes)}</div>`:'';
  const coachSwapEntry=state.seasonRules.coachTopSwapPlayerId?rosterEntry(state.seasonRules.coachTopSwapPlayerId):null;
  const specialMarketNotice=coachSwapEntry?`<div class="midseason-draw-lock"><b>Figlio del mister.</b> Se scegli ${esc(coachSwapEntry.player.name)} come giocatore in uscita, il pack conterrà un top player garantito del suo macro-ruolo.</div>`:state.seasonRules.guaranteedTopPlayerNextMidseason?`<div class="midseason-draw-lock"><b>Top player garantito.</b> Il prossimo pack del mercato conterrà almeno un giocatore di alto livello compatibile.</div>`:'';
- screen.innerHTML=`<section class="panel"><div class="label">Giro di boa</div><h2 class="midseason-title">Draft di metà campionato</h2><p class="midseason-copy">${flexible?`Puoi scegliere liberamente se fare <b>0, 1 o 2 cambi</b>.`:`In questa stagione devi effettuare <b>${ms.target}</b> ${ms.target===1?'cambio':'cambi'} per effetto degli eventi.`} Prima di confermare vedrai l’impatto previsto su OVR medio e Intesa. <b>Ogni cambio ha una sola estrazione del club.</b></p>${mandatoryActive?`<div class="midseason-draw-lock"><b>Scambio obbligatorio.</b> Devi sostituire ${esc(rosterEntry(mandatoryId)?.player?.name||'il giocatore indicato')} prima di poter chiudere il mercato.</div>`:''}${specialMarketNotice}${confirmedHtml}<div class="midseason-shell ${selected?'has-selection':''}"><div class="midseason-panel midseason-outgoing-panel"><div class="midseason-tip">1. scegli chi lascia la rosa</div><div class="midseason-count"><span class="chip">Fatti: ${ms.step}</span><span class="chip">Disponibili: ${remaining}</span>${flexible?'<span class="chip">Scelta libera 0–2</span>':''}</div><div class="outgoing-list">${sortRosterEntriesByRole(rosterPlayers()).map(entry=>{const currentOvr=midseasonDisplayedOvr(entry.player,entry);const sub=isSubscriber(entry.player);return `<button class="outgoing midseason-player-row ${ms.outgoingId===entry.playerId?'active':''} ${sub?'subscriber':''}" data-out="${esc(entry.playerId)}" ${outgoingLocked?'disabled':''}>${renderMiniAvatar(entry.player,'small')}<span class="midseason-player-copy"><b>${sub?'<span class="midseason-sub-star">★</span>':''}${esc(entry.player.name)}</b><small>${esc(entry.slot)} · ${esc(entry.player.Position)}${entry.bench?' · Panchina':''}</small></span><span class="midseason-current-ovr"><strong>${currentOvr}</strong><small>OVR attuale</small></span></button>`}).join('')}</div></div><div class="midseason-panel midseason-substitute-panel"><div class="midseason-tip">2. scegli il sostituto ${ms.target>1?`(${Math.min(ms.step+1,ms.target)}/${ms.target})`:''}</div><div class="midseason-choice-note">${selected?`Stai sostituendo <b>${esc(selected.player.name)}</b> nello slot <b>${esc(selected.slot)}</b>. L’estrazione del club è definitiva: scegli con attenzione uno dei candidati disponibili.`:flexible?'Puoi anche chiudere il mercato senza fare cambi oppure fermarti dopo il primo.':'Seleziona un giocatore dalla rosa per iniziare il cambio.'}</div>${selected?`<div class="midseason-draw-actions">${!ms.clubId?'<button id="drawMarket" class="btn gold">Estrai club</button>':midseasonCanDraw()?`<button id="drawMarket" class="btn gold">Re-roll imprevisto (${extraDrawsRemaining})</button>`:''}${!mandatoryActive&&(flexible||ms.step>0)?'<button id="finishMidseasonNow" class="btn secondary-strong">Chiudi il mercato</button>':''}</div>${ms.clubId?`<div class="midseason-draw-lock"><b>Estrazione bloccata.</b> Non puoi cambiare club né il giocatore in uscita. Puoi soltanto scegliere un altro candidato dello stesso club prima di confermare.</div>`:''}${ms.clubId?`<div class="midseason-summary-card" style="${teamCssVars({colors:marketClub()?.colorClub})}"><div class="need">Club estratto</div><div class="nation-name">${esc(marketClub()?.name||ms.clubId)}</div></div><div class="candidate-grid midseason-candidate-grid">${sortPlayersByRole(ms.candidates.map(playerById).filter(Boolean)).map(player=>{const id=String(player.id);const currentOvr=midseasonDisplayedOvr(player);const sub=isSubscriber(player);const rarity=draftRarityMeta(currentOvr);return `<button class="candidate midseason-market-player rarity-${rarity.key} ${sub?'subscriber':''} ${ms.pendingCandidateId===String(id)?'active':''}" data-market="${id}" data-ovr="${currentOvr}">${renderMiniAvatar(player,'small')}<span class="midseason-player-copy"><span class="name">${sub?'<span class="midseason-sub-star">★</span>':''}${esc(player.name)} <span class="season-rarity-badge">${esc(rarity.label)}</span></span><span class="meta"><span class="chip">${esc(player.Position)}</span>${sub?'<span class="chip sub">ABB</span>':''}</span></span><span class="midseason-current-ovr"><strong>${currentOvr}</strong><small>OVR base</small></span></button>`}).join('')}</div>${renderMidseasonComparison(projection)}`:''}`:`<div class="midseason-actions">${flexible&&!mandatoryActive?'<button id="finishMidseasonNow" class="btn secondary-strong">Nessun cambio, continua</button>':''}</div>`}${flexible&&ms.step===1?'<div class="midseason-actions"><button id="finishAfterOne" class="btn primary">Concludi con 1 cambio</button></div>':''}</div></div></section>`;
+ screen.innerHTML=`<section class="panel"><div class="label">Giro di boa</div><h2 class="midseason-title">Draft di metà campionato</h2><p class="midseason-copy">${flexible?`Puoi scegliere liberamente se fare <b>0, 1 o 2 cambi</b>.`:`In questa stagione devi effettuare <b>${ms.target}</b> ${ms.target===1?'cambio':'cambi'} per effetto degli eventi.`} Prima di confermare vedrai l’impatto previsto su OVR medio e Intesa. <b>Ogni cambio ha una sola estrazione del club. Dopo aver scelto il giocatore da cedere, lo scambio diventa obbligatorio.</b></p>${mandatoryActive?`<div class="midseason-draw-lock"><b>Scambio obbligatorio.</b> Devi sostituire ${esc(rosterEntry(mandatoryId)?.player?.name||'il giocatore indicato')} prima di poter chiudere il mercato.</div>`:''}${specialMarketNotice}${confirmedHtml}<div class="midseason-shell ${selected?'has-selection':''}"><div class="midseason-panel midseason-outgoing-panel"><div class="midseason-tip">1. scegli chi lascia la rosa</div><div class="midseason-count"><span class="chip">Fatti: ${ms.step}</span><span class="chip">Disponibili: ${remaining}</span>${flexible?'<span class="chip">Scelta libera 0–2</span>':''}</div><div class="outgoing-list">${sortRosterEntriesByRole(rosterPlayers()).map(entry=>{const currentOvr=midseasonDisplayedOvr(entry.player,entry);const sub=isSubscriber(entry.player);return `<button class="outgoing midseason-player-row ${ms.outgoingId===entry.playerId?'active':''} ${sub?'subscriber':''}" data-out="${esc(entry.playerId)}" ${outgoingLocked?'disabled':''}>${renderMiniAvatar(entry.player,'small')}<span class="midseason-player-copy"><b>${sub?'<span class="midseason-sub-star">★</span>':''}${esc(entry.player.name)}</b><small>${esc(entry.slot)} · ${esc(entry.player.Position)}${entry.bench?' · Panchina':''}</small></span><span class="midseason-current-ovr"><strong>${currentOvr}</strong><small>OVR attuale</small></span></button>`}).join('')}</div></div><div class="midseason-panel midseason-substitute-panel"><div class="midseason-tip">2. scegli il sostituto ${ms.target>1?`(${Math.min(ms.step+1,ms.target)}/${ms.target})`:''}</div><div class="midseason-choice-note">${selected?`Stai sostituendo <b>${esc(selected.player.name)}</b> nello slot <b>${esc(selected.slot)}</b>. L’estrazione del club è definitiva: scegli con attenzione uno dei candidati disponibili.`:flexible?'Puoi anche chiudere il mercato senza fare cambi oppure fermarti dopo il primo.':'Seleziona un giocatore dalla rosa per iniziare il cambio.'}</div>${selected?`<div class="midseason-draw-actions">${!ms.clubId?'<button id="drawMarket" class="btn gold">Estrai club</button>':midseasonCanDraw()?`<button id="drawMarket" class="btn gold">Re-roll imprevisto (${extraDrawsRemaining})</button>`:''}</div>${selected?`<div class="midseason-draw-lock"><b>Scambio avviato.</b> Non puoi più annullare o cambiare il giocatore in uscita: devi scegliere e confermare uno dei candidati proposti.</div>`:''}${ms.clubId?`<div class="midseason-summary-card" style="${teamCssVars({colors:marketClub()?.colorClub})}"><div class="need">Club estratto</div><div class="nation-name">${esc(marketClub()?.name||ms.clubId)}</div></div><div class="candidate-grid midseason-candidate-grid">${sortPlayersByRole(ms.candidates.map(playerById).filter(Boolean)).map(player=>{const id=String(player.id);const currentOvr=midseasonDisplayedOvr(player);const sub=isSubscriber(player);const rarity=draftRarityMeta(currentOvr);return `<button class="candidate midseason-market-player rarity-${rarity.key} ${sub?'subscriber':''} ${ms.pendingCandidateId===String(id)?'active':''}" data-market="${id}" data-ovr="${currentOvr}">${renderMiniAvatar(player,'small')}<span class="midseason-player-copy"><span class="name">${sub?'<span class="midseason-sub-star">★</span>':''}${esc(player.name)} <span class="season-rarity-badge">${esc(rarity.label)}</span></span><span class="meta"><span class="chip">${esc(player.Position)}</span>${sub?'<span class="chip sub">ABB</span>':''}</span></span><span class="midseason-current-ovr"><strong>${currentOvr}</strong><small>OVR base</small></span></button>`}).join('')}</div>${renderMidseasonComparison(projection)}`:''}`:`<div class="midseason-actions">${flexible&&!mandatoryActive?'<button id="finishMidseasonNow" class="btn secondary-strong">Nessun cambio, continua</button>':''}</div>`}${flexible&&ms.step===1?'<div class="midseason-actions"><button id="finishAfterOne" class="btn primary">Concludi con 1 cambio</button></div>':''}</div></div></section>`;
  document.querySelectorAll('[data-out]').forEach(button=>button.onclick=()=>{
    if(mandatoryActive&&String(button.dataset.out)!==mandatoryId)return toast('Questo mercato richiede lo scambio obbligatorio del giocatore indicato.');
-   if(ms.clubId||Number(ms.drawsUsed)>0)return toast('Dopo l’estrazione non puoi cambiare il giocatore in uscita.');
+   if(ms.outgoingId)return toast('Hai già avviato questo scambio: devi scegliere e confermare uno dei candidati proposti.');
    ms.outgoingId=button.dataset.out;
    ms.clubId='';
    ms.candidates=[];
@@ -5004,7 +5068,6 @@ function showMidseason(){
  const finOne=document.getElementById('finishAfterOne');if(finOne)finOne.onclick=finishMidseasonEarly;
  document.querySelectorAll('[data-market]').forEach(button=>button.onclick=()=>selectMarketCandidate(button.dataset.market));
  const confirm=document.getElementById('confirmMarketChange');if(confirm)confirm.onclick=()=>completeMarket(ms.pendingCandidateId);
- const cancel=document.getElementById('cancelMarketCandidate');if(cancel)cancel.onclick=cancelMarketCandidate;
 }
 function drawMarket(){
  primeDraftAudio();
@@ -5056,11 +5119,6 @@ function selectMarketCandidate(id){
  save();
  render();
 }
-function cancelMarketCandidate(){
- state.midseason.pendingCandidateId='';
- save();
- render();
-}
 function completeMarket(id){
  const ms=state.midseason;
  const index=state.draft.roster.findIndex(entry=>String(entry.playerId)===String(ms.outgoingId));
@@ -5095,7 +5153,7 @@ function completeMarket(id){
 function rankedGoalStats(){return Object.entries(state.stats?.goals||{}).filter(([,goals])=>Number(goals)>0).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0)||String(statPlayerInfo(a[0]).name).localeCompare(String(statPlayerInfo(b[0]).name),'it'))}
 function userTeamGoalStats(){const totals={};(state.history||[]).forEach(match=>(match.goals||[]).forEach(goal=>{const id=String(goal.playerId||'');if(id)totals[id]=(totals[id]||0)+1}));const exact=Object.entries(totals).filter(([,goals])=>Number(goals)>0).sort((a,b)=>Number(b[1])-Number(a[1])||String(statPlayerInfo(a[0]).name).localeCompare(String(statPlayerInfo(b[0]).name),'it'));return exact.length?exact:rankedGoalStats().filter(([id])=>String(statPlayerTeam(id)?.id||'')===USER_ID)}
 function teamTopScorer(){return userTeamGoalStats()[0]||null}
-function showFinished(){const table=sortedTable(),rank=table.findIndex(x=>x.id===USER_ID)+1,s=userStanding(),rankedGoals=rankedGoalStats(),top=rankedGoals[0],topPlayer=top?statPlayerInfo(top[0]):null,userTop=teamTopScorer(),userTopPlayer=userTop?statPlayerInfo(userTop[0]):null,eliminated=isTeamEliminated(USER_ID),canSubmit=rank===1&&!eliminated;screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Stagione conclusa</div><h2>${eliminated?'Eliminato dagli Hunger Games':canSubmit?'Campioni!':'Campionato terminato'}</h2><div class="final-position">${rank}°</div><p>${esc(state.teamName)} chiude la stagione dopo ${state.matchday} giornate.</p></div><div class="final-grid"><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div></div><section class="panel"><h3>Capocannonieri</h3><p><b>Campionato:</b> ${topPlayer?`${esc(topPlayer.name)} — ${Number(top[1])||0} gol`:'Nessun marcatore'}</p><p><b>${esc(state.teamName)}:</b> ${userTopPlayer?`${esc(userTopPlayer.name)} — ${Number(userTop[1])||0} gol`:'Nessun marcatore'}</p>${canSubmit?`<p class="subline">La vittoria del Campionato può essere inviata alla classifica generale. Il miglior marcatore della tua squadra verrà sommato alla tabella Capocannonieri.</p>`:`<p class="subline"><b>Invio non disponibile:</b> solo chi conclude il Campionato al 1° posto può inviare il risultato.</p>`}<div class="top-actions">${canSubmit?`<button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultati inviati':'Invia vittoria'}</button>`:''}<button id="exportSeason" class="btn gold">Esporta risultati JSON</button></div></section>${renderFinalPlayerStats()}<div class="season-finished-table">${renderTable()}</div></section>`;const sendButton=document.getElementById('sendSeason');if(sendButton)sendButton.onclick=sendSeason;document.getElementById('exportSeason').onclick=exportSeason}
+function showFinished(){const table=sortedTable(),eliminated=isTeamEliminated(USER_ID),rank=eliminated?0:table.findIndex(x=>x.id===USER_ID)+1,rankLabel=eliminated?'—':`${rank}°`,s=userStanding(),rankedGoals=rankedGoalStats(),top=rankedGoals[0],topPlayer=top?statPlayerInfo(top[0]):null,userTop=teamTopScorer(),userTopPlayer=userTop?statPlayerInfo(userTop[0]):null,canSubmit=rank===1&&!eliminated;screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Stagione conclusa</div><h2>${eliminated?'Eliminato dagli Hunger Games':canSubmit?'Campioni!':'Campionato terminato'}</h2><div class="final-position">${rankLabel}</div><p>${esc(state.teamName)} chiude la stagione dopo ${state.matchday} giornate.</p></div><div class="final-grid"><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div></div><section class="panel"><h3>Capocannonieri</h3><p><b>Campionato:</b> ${topPlayer?`${esc(topPlayer.name)} — ${Number(top[1])||0} gol`:'Nessun marcatore'}</p><p><b>${esc(state.teamName)}:</b> ${userTopPlayer?`${esc(userTopPlayer.name)} — ${Number(userTop[1])||0} gol`:'Nessun marcatore'}</p>${canSubmit?`<p class="subline">La vittoria del Campionato può essere inviata alla classifica generale. Il miglior marcatore della tua squadra verrà sommato alla tabella Capocannonieri.</p>`:`<p class="subline"><b>Invio non disponibile:</b> solo chi conclude il Campionato al 1° posto può inviare il risultato.</p>`}<div class="top-actions">${canSubmit?`<button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultati inviati':'Invia vittoria'}</button>`:''}<button id="exportSeason" class="btn gold">Esporta risultati JSON</button></div></section>${renderFinalPlayerStats()}<div class="season-finished-table">${renderTable()}</div></section>`;const sendButton=document.getElementById('sendSeason');if(sendButton)sendButton.onclick=sendSeason;document.getElementById('exportSeason').onclick=exportSeason}
 let seasonSendInFlight=false;
 function createSeasonSubmissionCode(){
  state.meta=state.meta&&typeof state.meta==='object'?state.meta:{};
