@@ -2556,7 +2556,7 @@
 </div>
 <div id="modalRoot"></div><div id="toast" class="toast"></div>
 <script>
-const CURRENT_STATE_VERSION=22;
+const CURRENT_STATE_VERSION=23;
 const SAVE_BASE='fantaballa_campionato_real_v1';
 const AUTO_SAVE_KEY=`${SAVE_BASE}_autosave`;
 const LEGACY_SAVE_KEYS=[];
@@ -2608,7 +2608,7 @@ const FORMATION_LAYOUTS={
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
 let PLAYERS=[];let CLASSIC_PLAYERS=[];let REAL_PLAYERS=[];let CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',gameMode:'normal',chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[]},analytics:{initialOvr:0,injuries:0,redCards:0,eventLog:[],biggestResult:null},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',gameMode:'normal',chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[]},eventChains:{mentalista:{active:false,stage:0,playerId:'',playerName:'',originalOvr:0,dueMatchday:-1,training:false,nature:false,goals:0,completed:false},general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false}},analytics:{initialOvr:0,injuries:0,redCards:0,eventLog:[],biggestResult:null},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
@@ -2888,6 +2888,25 @@ function normalizeCampionatoState(input){
  next.seasonRules.hungerGames=Boolean(next.seasonRules.hungerGames);
  next.seasonRules.eliminatedTeamIds=[...new Set((Array.isArray(next.seasonRules.eliminatedTeamIds)?next.seasonRules.eliminatedTeamIds:[]).map(String).filter(Boolean))];
  next.seasonRules.generatedEventPlayers=Array.isArray(next.seasonRules.generatedEventPlayers)?next.seasonRules.generatedEventPlayers.filter(player=>player&&player.id).map(player=>({...player,id:String(player.id),ovr:Math.max(1,Number(player.ovr)||60)})):[];
+ next.eventChains=next.eventChains&&typeof next.eventChains==='object'?next.eventChains:{};
+ next.eventChains.mentalista=next.eventChains.mentalista&&typeof next.eventChains.mentalista==='object'?next.eventChains.mentalista:{};
+ next.eventChains.mentalista.active=Boolean(next.eventChains.mentalista.active);
+ next.eventChains.mentalista.stage=Math.max(0,Number(next.eventChains.mentalista.stage)||0);
+ next.eventChains.mentalista.playerId=String(next.eventChains.mentalista.playerId||'');
+ next.eventChains.mentalista.playerName=String(next.eventChains.mentalista.playerName||'');
+ next.eventChains.mentalista.originalOvr=Math.max(1,Number(next.eventChains.mentalista.originalOvr)||1);
+ next.eventChains.mentalista.dueMatchday=Number.isFinite(Number(next.eventChains.mentalista.dueMatchday))?Number(next.eventChains.mentalista.dueMatchday):-1;
+ next.eventChains.mentalista.training=Boolean(next.eventChains.mentalista.training);
+ next.eventChains.mentalista.nature=Boolean(next.eventChains.mentalista.nature);
+ next.eventChains.mentalista.goals=Math.max(0,Number(next.eventChains.mentalista.goals)||0);
+ next.eventChains.mentalista.completed=Boolean(next.eventChains.mentalista.completed);
+ next.eventChains.general=next.eventChains.general&&typeof next.eventChains.general==='object'?next.eventChains.general:{};
+ next.eventChains.general.active=Boolean(next.eventChains.general.active);
+ next.eventChains.general.stage=Math.max(0,Number(next.eventChains.general.stage)||0);
+ next.eventChains.general.dueMatchday=Number.isFinite(Number(next.eventChains.general.dueMatchday))?Number(next.eventChains.general.dueMatchday):-1;
+ next.eventChains.general.replacements=Array.isArray(next.eventChains.general.replacements)?next.eventChains.general.replacements.filter(item=>item&&item.originalPlayer).map(item=>({...item,replacementId:String(item.replacementId||''),slotId:String(item.slotId||''),originalPlayer:{...item.originalPlayer,id:String(item.originalPlayer.id||'')}})):[];
+ next.eventChains.general.nationalBoostPending=Boolean(next.eventChains.general.nationalBoostPending);
+ next.eventChains.general.completed=Boolean(next.eventChains.general.completed);
  next.midseason=next.midseason&&typeof next.midseason==='object'?next.midseason:{};
  next.midseason.step=Math.max(0,Number(next.midseason.step)||0);
  next.midseason.target=clamp(Number(next.midseason.target)||midseasonTargetFrom(next),1,3);
@@ -3755,8 +3774,8 @@ function prepareChaosOpponentEvents(){
    if(roll<normalChance){normal++;return}
    if(roll<autoLimit){const event=pick(AUTO_EVENTS),result=applyChaosAutoEvent(team,event);automatic++;reports.push({kind:'auto',teamId:team.id,teamName:team.name,title:event.title,choice:'Evento automatico',effect:result});return}
    const beforeMidseasonOnly=new Set(['pulmino-bordello','figlio-presidente','whatsapp-pubblicato','rissa-mascotte','rapito-alieni','figura-aldila','figura-misteriosa-tattico-fantaguru','figlio-del-mister']);
-   let available=DECISIONS.filter(decision=>!chaos.seenDecisionEvents.includes(String(decision.id))&&(state.matchday<19||!beforeMidseasonOnly.has(String(decision.id))));
-   if(!available.length){chaos.seenDecisionEvents=[];available=DECISIONS.filter(decision=>state.matchday<19||!beforeMidseasonOnly.has(String(decision.id)))}
+   let available=DECISIONS.filter(decision=>!decision.chainOnly&&!chaos.seenDecisionEvents.includes(String(decision.id))&&(state.matchday<19||!beforeMidseasonOnly.has(String(decision.id))));
+   if(!available.length){chaos.seenDecisionEvents=[];available=DECISIONS.filter(decision=>!decision.chainOnly&&(state.matchday<19||!beforeMidseasonOnly.has(String(decision.id))))}
    const decision=pick(available),choiceIndex=Math.floor(Math.random()*decision.choices.length),choice=decision.choices[choiceIndex],effect=applyChaosTeamDecision(team,decision,choiceIndex);
    decisions++;const title=typeof decision.title==='string'?decision.title:String(decision.id).replaceAll('-',' ');const report={kind:'decision',teamId:team.id,teamName:team.name,title,choice:choice.label,effect:effect||choice.effect};chaos.latestDecision=report;reports.push(report);
  });
@@ -3924,11 +3943,11 @@ function activeOvrBonus(player){
 function activeChemistryMultiplier(player){
  let multiplier=1;
  state.activeEffects.forEach(effect=>{
-   if(effect.type==='teamChemMultiplier')multiplier*=Math.max(1,Number(effect.value)||1);
-   if(effect.type==='subscriberChemMultiplier'&&isSubscriber(player))multiplier*=Math.max(1,Number(effect.value)||1);
-   if(effect.type==='playerChemMultiplier'&&String(effect.playerId)===String(player?.id||''))multiplier*=Math.max(1,Number(effect.value)||1);
+   if(effect.type==='teamChemMultiplier')multiplier*=Math.max(.1,Number(effect.value)||1);
+   if(effect.type==='subscriberChemMultiplier'&&isSubscriber(player))multiplier*=Math.max(.1,Number(effect.value)||1);
+   if(effect.type==='playerChemMultiplier'&&String(effect.playerId)===String(player?.id||''))multiplier*=Math.max(.1,Number(effect.value)||1);
  });
- return clamp(multiplier,1,6);
+ return clamp(multiplier,.1,6);
 }
 function chemistryIsZeroed(){return state.activeEffects.some(effect=>effect.type==='teamChemZero')}
 function effectiveChemistryFromBase(player,baseChem=0){
@@ -3974,12 +3993,133 @@ function hypnotizeRandomAttacker(){
  if(!entry)return 'Nessun attaccante disponibile da ipnotizzare.';
  if(Math.random()<.25){
    const rosterEntry=state.draft.roster.find(item=>String(item.playerId)===String(entry.playerId));
-   if(rosterEntry){const current=rosterEntry.player||entry.player||playerById(entry.playerId);rosterEntry.player={...current,ovr:1,isChicken:true};}
-   return `Il mentalista sbaglia: ${entry.player.name} viene trasformato in un pollo da 1 OVR fino a fine stagione.`;
+   if(rosterEntry){const current=rosterEntry.player||entry.player||playerById(entry.playerId),originalOvr=Math.max(1,Number(current?.ovr)||1);rosterEntry.player={...current,ovr:1,isChicken:true,chickenOriginalOvr:originalOvr};beginMentalistaChicken(rosterEntry,originalOvr);}
+   return `Il mentalista sbaglia: ${entry.player.name} viene trasformato in un pollo da 1 OVR. Tra alcune giornate inizierà il Richiamo del pollaio.`;
  }
  pushEffect('playerOvr',8,1,{playerId:entry.playerId});
  return `${entry.player.name} viene ipnotizzato correttamente e riceve +8 OVR nella prossima partita.`;
 }
+
+function mentalistaChain(){
+ state.eventChains=state.eventChains&&typeof state.eventChains==='object'?state.eventChains:{};
+ state.eventChains.mentalista=state.eventChains.mentalista&&typeof state.eventChains.mentalista==='object'?state.eventChains.mentalista:{active:false,stage:0,playerId:'',playerName:'',originalOvr:1,dueMatchday:-1,training:false,nature:false,goals:0,completed:false};
+ return state.eventChains.mentalista;
+}
+function generalChain(){
+ state.eventChains=state.eventChains&&typeof state.eventChains==='object'?state.eventChains:{};
+ state.eventChains.general=state.eventChains.general&&typeof state.eventChains.general==='object'?state.eventChains.general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false};
+ return state.eventChains.general;
+}
+function chainedDelay(min=2,max=5){return Math.max(1,Math.floor(min+Math.random()*(Math.max(min,max)-min+1)))}
+function chickenRosterEntry(){const chain=mentalistaChain();return state.draft.roster.find(entry=>String(entry.playerId)===String(chain.playerId))||null}
+function beginMentalistaChicken(entry,originalOvr){
+ const chain=mentalistaChain();
+ Object.assign(chain,{active:true,stage:1,playerId:String(entry.playerId),playerName:String(entry.player?.name||''),originalOvr:Math.max(1,Number(originalOvr)||1),dueMatchday:Number(state.matchday)+chainedDelay(2,5),training:false,nature:false,goals:0,completed:false});
+}
+function trainChicken(){
+ const chain=mentalistaChain(),entry=chickenRosterEntry();if(!entry){Object.assign(chain,{active:false,stage:0,dueMatchday:-1,training:false,nature:false,completed:true});return 'Il pollo non è più presente in rosa.';}
+ chain.active=true;chain.stage=2;chain.training=true;chain.nature=false;chain.dueMatchday=-1;
+ entry.player={...(entry.player||playerById(entry.playerId)),ovr:Math.max(1,Number(entry.player?.ovr)||1),isChicken:true,chickenOriginalOvr:chain.originalOvr};
+ return `${chain.playerName||entry.player.name} resta un pollo, ma da ora guadagnerà tra 1 e 5 OVR dopo ogni giornata.`;
+}
+function veterinarianChicken(){
+ const chain=mentalistaChain(),entry=chickenRosterEntry();if(!entry){Object.assign(chain,{active:false,stage:0,dueMatchday:-1,training:false,nature:false,completed:true});return 'Il pollo non è più presente in rosa.';}
+ const current=entry.player||playerById(entry.playerId);entry.player={...current,ovr:chain.originalOvr,isChicken:false,isChickenKing:false};
+ const status=statusOf(entry.playerId);status.injury=Math.max(status.injury,5);status.seasonOut=false;status.seasonOutReason='';
+ Object.assign(chain,{active:false,stage:0,training:false,nature:false,dueMatchday:-1,completed:true});
+ return `${entry.player.name} torna umano e recupera ${chain.originalOvr} OVR, ma salterà le prossime 5 partite.`;
+}
+function acceptChickenNature(){
+ const chain=mentalistaChain(),entry=chickenRosterEntry();if(!entry){Object.assign(chain,{active:false,stage:0,dueMatchday:-1,training:false,nature:false,completed:true});return 'Il pollo non è più presente in rosa.';}
+ chain.active=true;chain.stage=2;chain.training=false;chain.nature=true;chain.dueMatchday=-1;
+ entry.player={...(entry.player||playerById(entry.playerId)),ovr:1,isChicken:true,chickenOriginalOvr:chain.originalOvr};
+ return `${chain.playerName||entry.player.name} resta a 1 OVR. Da ora ogni suo gol vale doppio.`;
+}
+function applyChickenGoalRule(events){
+ const chain=mentalistaChain();if(!chain.active||chain.stage!==2||!chain.nature)return;
+ (events||[]).forEach(event=>{if(String(event.playerId)===String(chain.playerId)){event.goalValue=Math.max(1,Number(event.goalValue)||1)*2;event.isChickenDoubleGoal=true;event.description=`${event.description||''} Il gol del pollo vale doppio.`.trim();}});
+}
+function crownChickenKing(){
+ const chain=mentalistaChain(),entry=chickenRosterEntry();if(!entry){Object.assign(chain,{active:false,completed:true});return 'Il pollo non è più presente in rosa.'}
+ const current=entry.player||playerById(entry.playerId),newOvr=Math.max(Number(current?.ovr)||1,chain.originalOvr+10);
+ entry.player={...current,ovr:newOvr,isChicken:false,isChickenKing:true,chickenOriginalOvr:chain.originalOvr};
+ Object.assign(chain,{active:false,stage:0,training:false,nature:false,dueMatchday:-1,completed:true});
+ return `${entry.player.name} torna umano come Re del Pollaio: ${newOvr} OVR, superiore al suo valore originale di ${chain.originalOvr}.`;
+}
+function collaborateWithGeneral(){
+ const chain=generalChain(),italians=rosterPlayers().filter(entry=>isItalianPlayer(entry.player));
+ const rounds=Math.max(1,seasonLength()-Number(state.matchday));
+ italians.forEach(entry=>pushEffect('playerChem',3,rounds,{playerId:String(entry.playerId),source:'Controllo dei documenti'}));
+ chain.active=true;chain.stage=2;chain.dueMatchday=Number(state.matchday)+chainedDelay(3,6);chain.completed=false;
+ return `${italians.length} giocatori italiani ricevono +3 Intesa fino a fine stagione. Il generale continuerà a osservare la squadra.`;
+}
+function findGeneralReplacementEntry(record){
+ let index=state.draft.roster.findIndex(entry=>String(entry.playerId)===String(record.replacementId));
+ if(index<0&&record.slotId)index=state.draft.roster.findIndex(entry=>String(entry.slotId)===String(record.slotId));
+ return index;
+}
+function hideForeignPlayerFromGeneral(){
+ const chain=generalChain(),records=(chain.replacements||[]).filter(record=>record?.originalPlayer&&!record.recovered);
+ if(!records.length){chain.active=false;chain.completed=true;return 'Non ci sono giocatori stranieri sostituiti da recuperare.'}
+ const record=[...records].sort((a,b)=>(Number(b.originalPlayer?.ovr)||0)-(Number(a.originalPlayer?.ovr)||0))[0],index=findGeneralReplacementEntry(record);
+ if(index<0){chain.active=false;chain.completed=true;return `${record.originalPlayer.name} non può più essere reinserito perché il suo posto in rosa è cambiato.`}
+ replaceUserRosterPlayer(index,{...record.originalPlayer,id:String(record.originalPlayer.id)});record.recovered=true;
+ if(record.originalStatus)state.statuses[String(record.originalPlayer.id)]={...record.originalStatus};
+ const discovered=Math.random()<.5;if(discovered&&state.standings?.[USER_ID])state.standings[USER_ID].pts-=3;
+ chain.active=false;chain.stage=0;chain.completed=true;chain.dueMatchday=-1;refreshOpponentClubRosters();
+ return discovered?`${record.originalPlayer.name} torna in rosa, ma il generale scopre l’inganno: -3 punti in classifica.`:`${record.originalPlayer.name} torna in rosa e il generale non scopre nulla.`;
+}
+function dismissGeneral(){
+ const chain=generalChain();let restored=0;
+ (chain.replacements||[]).forEach(record=>{const index=findGeneralReplacementEntry(record);if(index<0||!record.originalPlayer)return;replaceUserRosterPlayer(index,{...record.originalPlayer,id:String(record.originalPlayer.id)});if(record.originalStatus)state.statuses[String(record.originalPlayer.id)]={...record.originalStatus};restored++;});
+ const rounds=Math.max(1,seasonLength()-Number(state.matchday));pushEffect('teamChemMultiplier',.5,rounds,{source:'Generale cacciato'});
+ Object.assign(chain,{active:false,stage:0,dueMatchday:-1,nationalBoostPending:false,completed:true});refreshOpponentClubRosters();
+ return `Il generale viene cacciato: ${restored} giocatori originali tornano in rosa, ma l’Intesa della squadra è dimezzata fino a fine stagione.`;
+}
+function activateNationalFantaballa(){
+ const chain=generalChain();
+ pushEffect('forcedScore',1,1,{gf:0,ga:3,source:'Nazionale Fantaballa'});
+ chain.nationalBoostPending=true;chain.active=false;chain.stage=0;chain.dueMatchday=-1;chain.completed=true;
+ return 'La rosa tutta italiana viene convocata dalla Nazionale Fantaballa: salterà la prossima partita di campionato. Dopo il rientro avrà +5 OVR per 3 giornate.';
+}
+function activatePendingNationalBoost(){
+ const chain=generalChain();if(!chain.nationalBoostPending)return;
+ chain.nationalBoostPending=false;pushEffect('teamOvr',5,3,{source:'Nazionale Fantaballa'});
+}
+function allRosterItalian(){const entries=rosterPlayers();return Boolean(entries.length)&&entries.every(entry=>isItalianPlayer(entry.player))}
+function queueChainedDecision(decisionId){
+ const decision=DECISIONS.find(item=>item.id===decisionId);if(!decision)return false;
+ const context=decision.createContext?decision.createContext():{},eventTitle=typeof decision.title==='function'?decision.title(context):decision.title,eventText=decision.describe?decision.describe(context):decision.text,decisionIndex=DECISIONS.indexOf(decision);
+ if(state.seasonRules.autoDecisions){const choiceIndex=Math.floor(Math.random()*decision.choices.length),choice=decision.choices[choiceIndex],before=analyticsSnapshot(),result=applyDecisionChoice(decisionIndex,choiceIndex,context,decision.id);recordSeasonEvent({kind:'decision',title:eventTitle,choice:choice?.label||'',effect:choice?.effect||'',result,automatic:true},before);state.pendingEvent={kind:'decision',chained:true,resolved:true,title:eventTitle,text:eventText,decisionId:decision.id,decisionIndex,context,result:`Decisione automatica. ${result}`};}
+ else state.pendingEvent={kind:'decision',chained:true,resolved:false,title:eventTitle,text:eventText,decisionId:decision.id,decisionIndex,context};
+ return true;
+}
+function queueChainedAuto(title,text,result){
+ const before=analyticsSnapshot();recordSeasonEvent({kind:'auto',title,choice:'Evento concatenato',effect:text,result,automatic:true},before);state.pendingEvent={kind:'auto',chained:true,resolved:true,title,text,result};return true;
+}
+function prepareChainedEvent(){
+ const mental=mentalistaChain(),general=generalChain(),day=Number(state.matchday);
+ if(mental.active&&mental.stage===3&&day>=Number(mental.dueMatchday)){return queueChainedAuto('Il re del pollaio','Il pollo ha segnato almeno tre gol e completa la sua trasformazione.',crownChickenKing())}
+ if(mental.active&&mental.stage===1&&day>=Number(mental.dueMatchday)){if(!chickenRosterEntry()){Object.assign(mental,{active:false,stage:0,dueMatchday:-1,completed:true});return false}return queueChainedDecision('mentalista-pollaio')}
+ if(general.active&&general.stage===1&&day>=Number(general.dueMatchday))return queueChainedDecision('generale-documenti');
+ if(general.active&&general.stage===2&&day>=Number(general.dueMatchday)){
+   if(allRosterItalian())return queueChainedAuto('La nazionale Fantaballa','La rosa è ancora interamente italiana e riceve una convocazione inattesa.',activateNationalFantaballa());
+   Object.assign(general,{active:false,stage:0,dueMatchday:-1,completed:true});
+ }
+ return false;
+}
+function tickEventChainsAfterMatch(result){
+ const chain=mentalistaChain();
+ if(chain.active&&chain.stage===2){
+   const goals=(Array.isArray(result?.goals)?result.goals:[]).filter(goal=>String(goal.playerId)===String(chain.playerId)).length;
+   if(goals){chain.goals+=goals;if(result)result.chickenGoals={playerName:chain.playerName,count:goals,total:chain.goals,double:Boolean(chain.nature)};}
+   const entry=chickenRosterEntry();
+   if(!entry){Object.assign(chain,{active:false,stage:0,dueMatchday:-1,training:false,nature:false,completed:true});return}
+   if(chain.training&&entry){const gain=1+Math.floor(Math.random()*5),current=entry.player||playerById(entry.playerId);entry.player={...current,ovr:Math.max(1,Number(current?.ovr)||1)+gain,isChicken:true,chickenOriginalOvr:chain.originalOvr};if(result)result.chickenTraining={playerName:entry.player.name,gain,newOvr:entry.player.ovr};}
+   if(chain.goals>=3){chain.stage=3;chain.dueMatchday=Number(state.matchday)+1;chain.training=false;chain.nature=false;}
+ }
+}
+
 function injureOwnPlayers(entries,rounds=1){
  const valid=(entries||[]).filter(Boolean);
  valid.forEach(entry=>setOwnPlayerInjury(entry,rounds));
@@ -4033,10 +4173,17 @@ function italianReplacementForEntry(entry,usedSources=new Set()){
 function replaceNonItalianWithItalians(){
  const targets=state.draft.roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>item.player&&!isItalianPlayer(item.player));
  if(!targets.length)return 'La rosa è già composta soltanto da giocatori italiani.';
- const usedSources=new Set(),changes=[];
- targets.forEach(item=>{const source=italianReplacementForEntry(item.entry,usedSources);if(!source)return;usedSources.add(`${String(source.id)}|${normalizeName(source.name)}`);const incoming=eventPlayerClone(source,'rimmigrazione'),change=replaceUserRosterPlayer(item.index,incoming);if(change)changes.push(`${change.outgoing?.name||'Giocatore'} → ${incoming.name}`)});
+ const usedSources=new Set(),changes=[],records=[];
+ targets.forEach(item=>{
+   const source=italianReplacementForEntry(item.entry,usedSources);if(!source)return;
+   usedSources.add(`${String(source.id)}|${normalizeName(source.name)}`);
+   const originalStatus=state.statuses?.[String(item.entry.playerId)]?{...state.statuses[String(item.entry.playerId)]}:null;
+   const incoming=eventPlayerClone(source,'rimmigrazione'),change=replaceUserRosterPlayer(item.index,incoming);
+   if(change){changes.push(`${change.outgoing?.name||'Giocatore'} → ${incoming.name}`);records.push({replacementId:String(incoming.id),slotId:String(item.entry.slotId||''),slot:String(item.entry.slot||''),bench:Boolean(item.entry.bench),originalPlayer:{...change.outgoing,id:String(change.outgoing?.id||item.entry.playerId)},originalStatus});}
+ });
  refreshOpponentClubRosters();
- return changes.length===targets.length?`Rimmigrazione completata: ${changes.length} giocatori non italiani sono stati sostituiti. ${changes.join(' · ')}`:`Sostituiti ${changes.length} giocatori non italiani su ${targets.length}. ${changes.join(' · ')}`;
+ if(records.length){const chain=generalChain();Object.assign(chain,{active:true,stage:1,dueMatchday:Number(state.matchday)+chainedDelay(3,6),replacements:records,nationalBoostPending:false,completed:false});}
+ return changes.length===targets.length?`Rimmigrazione completata: ${changes.length} giocatori non italiani sono stati sostituiti. Il generale tornerà a controllare i documenti tra alcune giornate. ${changes.join(' · ')}`:`Sostituiti ${changes.length} giocatori non italiani su ${targets.length}. Il generale tornerà per un controllo. ${changes.join(' · ')}`;
 }
 function chaosReplaceNonItalianWithItalians(team){
  if(!team||!Array.isArray(team.roster))return 'Nessuna rosa disponibile.';
@@ -4487,9 +4634,14 @@ const DECISIONS=[
   {label:'Obblighi tutti a partecipare',effect:'×2 Intesa per 1 giornata',apply(){pushEffect('teamChemMultiplier',2,1);return 'Tutti i bonus Intesa positivi dei titolari vengono raddoppiati nella prossima partita.'}},
   {label:'Interrompi il seminario e fate allenamento',effect:'+6 OVR, ma Intesa azzerata nella prossima partita',apply(){pushEffect('teamOvr',6,1);pushEffect('teamChemZero',1,1);return '+6 OVR alla squadra e Intesa azzerata nella prossima partita.'}}
  ]},
- {id:'mentalista',title:'Arriva un mentalista nello spogliatoio',text:'Dice di poter far credere agli avversari che il pallone sia invisibile.',choices:[
+ {id:'mentalista',title:'Arriva un mentalista nello spogliatoio',text:'Dice di poter far credere agli avversari che il pallone sia invisibile.',available(){return Number(state.matchday)<seasonLength()-6},choices:[
   {label:'Gli permetti di ipnotizzare l’attaccante',effect:'75%: +8 OVR nella prossima partita. 25%: il mentalista sbaglia e lo trasforma in un pollo da 1 OVR',apply(){return hypnotizeRandomAttacker()}},
   {label:'Gli chiedi di confondere l’arbitro',effect:'Possibile cartellino rosso avversario, ma rischio di espulsione per un tuo giocatore',apply(){pushEffect('refChaos',1,1,{opponentRedChance:.45,ownRedChance:.30,source:'Mentalista'});return 'Nella prossima partita: 45% rosso avversario e 30% rosso per la tua squadra.'}}
+ ]},
+ {id:'mentalista-pollaio',chainOnly:true,title:'Il richiamo del pollaio',text:'Il pollo sembra ricordare vagamente come si gioca a calcio.',choices:[
+  {label:'Continua ad allenarlo',effect:'Dopo ogni giornata guadagna casualmente da 1 a 5 OVR',apply(){return trainChicken()}},
+  {label:'Portalo dal veterinario',effect:'Torna subito al suo OVR originale, ma resta fuori per 5 partite',apply(){return veterinarianChicken()}},
+  {label:'Accetta la sua nuova natura',effect:'Resta a 1 OVR, ma ogni suo gol vale doppio',apply(){return acceptChickenNature()}}
  ]},
  {id:'grigliata-ultras',title:"L’allenamento viene invaso da una grigliata degli ultras",text:'Fumo, salsicce e cori impediscono qualsiasi esercitazione tattica.',choices:[
   {label:'Partecipate alla grigliata',effect:'×2 Intesa nella prossima partita',apply(){pushEffect('teamChemMultiplier',2,1);return 'Tutti i bonus Intesa positivi dei titolari vengono raddoppiati nella prossima partita.'}},
@@ -4611,9 +4763,14 @@ const DECISIONS=[
   {label:'4-4-4',effect:'Ora in campo vanno 14 giocatori, con 0 panchinari',apply(){return forceSeasonFormation('4-4-4')}},
   {label:'3-3-3',effect:'Ora in campo vanno 9 giocatori, con 5 panchinari',apply(){return forceSeasonFormation('3-3-3')}}
  ]},
- {id:'generale-misterioso',title:'Si avvicina un generale misterioso',text:'Il generale vuole rivoluzionare la composizione della rosa e i rapporti tra i giocatori.',choices:[
+ {id:'generale-misterioso',title:'Si avvicina un generale misterioso',text:'Il generale vuole rivoluzionare la composizione della rosa e i rapporti tra i giocatori.',available(){return Number(state.matchday)<seasonLength()-6},choices:[
   {label:'Rimmigrazione!',effect:'Tutti i giocatori non italiani vengono scambiati con giocatori italiani compatibili; se necessario si pesca anche dall’altro campionato',apply(){return replaceNonItalianWithItalians()}},
   {label:'Chiusi i porti',effect:'0 Intesa per tutti i giocatori non italiani fino a fine stagione',apply(){return activateClosedPorts()}}
+ ]},
+ {id:'generale-documenti',chainOnly:true,title:'Controllo dei documenti',text:'Dopo alcune giornate il generale torna a controllare la rosa.',choices:[
+  {label:'Collabori',effect:'Tutti gli italiani ricevono +3 Intesa fino a fine stagione',apply(){return collaborateWithGeneral()}},
+  {label:'Nascondi un giocatore straniero',effect:'Recuperi il più forte tra gli stranieri sostituiti; 50% di rischio di essere scoperto e perdere 3 punti',apply(){return hideForeignPlayerFromGeneral()}},
+  {label:'Cacci il generale',effect:'Recuperi la rosa originale, ma l’Intesa viene dimezzata fino a fine stagione',apply(){return dismissGeneral()}}
  ]},
  {id:'fgci-cartellini-estremi',title:'Nuova regola FGCI',text:'La federazione introduce due cartellini capaci di cambiare completamente le partite.',choices:[
   {label:'Giallo=Rosso',effect:'Il cartellino giallo porta direttamente all’espulsione',apply(){return activateYellowEqualsRed()}},
@@ -4634,6 +4791,7 @@ function applyDecisionChoice(decisionIndex,choiceIndex,context={},decisionId='')
 function prepareEvent(){
  if(state.phase!=='season'||state.pendingEvent)return;
  if(chaosEnabled())prepareChaosOpponentEvents();
+ if(prepareChainedEvent()){save();return;}
  const multiplier=clamp(Number(state.seasonRules.eventChanceMultiplier)||1,1,2),normalChance=Math.max(0,1-(.45*multiplier)),autoLimit=normalChance+(.10*multiplier),roll=Math.random();
  if(roll<normalChance){
    state.pendingEvent={kind:'none',resolved:true,title:'Settimana normale',text:'Nessun evento particolare. La squadra pensa solo alla partita.'};
@@ -4644,7 +4802,7 @@ function prepareEvent(){
    state.pendingEvent={kind:'auto',resolved:true,title:event.title,text:event.text,result};
  }else{
    const seen=new Set((state.seenDecisionEvents||[]).map(String));
-   const available=DECISIONS.map((decision,index)=>({decision,index})).filter(item=>!seen.has(item.decision.id)&&(!item.decision.available||item.decision.available()));
+   const available=DECISIONS.map((decision,index)=>({decision,index})).filter(item=>!item.decision.chainOnly&&!seen.has(item.decision.id)&&(!item.decision.available||item.decision.available()));
    if(!available.length){
      state.pendingEvent={kind:'none',resolved:true,title:'Settimana normale',text:'Gli imprevisti disponibili sono già comparsi: la squadra pensa solo alla partita.'};
    }else{
@@ -4676,7 +4834,7 @@ function resolveDecision(i){
  save();
  render();
 }
-function renderEvent(){const e=state.pendingEvent;if(!e)return'';if(e.kind==='decision'&&!e.resolved){const d=decisionFromPending(e);if(!d)return'';return `<div class="event-card decision"><div class="label">Decisione casuale · evento unico</div><h3>${esc(e.title)}</h3><p>${esc(e.text)}</p><div class="choice-grid">${d.choices.map((c,i)=>`<button class="choice" data-choice="${i}"><b>${esc(c.label)}</b><small style="display:block;margin-top:5px">${esc(c.effect)}</small></button>`).join('')}</div></div>`}return `<div class="event-card"><div class="label">${e.kind==='auto'?'Evento casuale':'Settimana'}</div><h3>${esc(e.title)}</h3><p>${esc(e.text)}</p>${e.result?`<b>${esc(e.result)}</b>`:''}</div>`}
+function renderEvent(){const e=state.pendingEvent;if(!e)return'';if(e.kind==='decision'&&!e.resolved){const d=decisionFromPending(e);if(!d)return'';return `<div class="event-card decision"><div class="label">${e.chained?'Evento concatenato':'Decisione casuale · evento unico'}</div><h3>${esc(e.title)}</h3><p>${esc(e.text)}</p><div class="choice-grid">${d.choices.map((c,i)=>`<button class="choice" data-choice="${i}"><b>${esc(c.label)}</b><small style="display:block;margin-top:5px">${esc(c.effect)}</small></button>`).join('')}</div></div>`}return `<div class="event-card"><div class="label">${e.chained?'Evento concatenato':(e.kind==='auto'?'Evento casuale':'Settimana')}</div><h3>${esc(e.title)}</h3><p>${esc(e.text)}</p>${e.result?`<b>${esc(e.result)}</b>`:''}</div>`}
 function renderAvailability(){const list=unavailableList();if(!list.length)return'<p>Nessun indisponibile.</p>';return `<div class="availability">${list.map(r=>{const s=statusOf(r.playerId),starter=!r.bench;const statusText=s.suspension>0?`Squalificato: ${s.suspension} giornate`:s.seasonOut?`Fuori fino a fine stagione${s.seasonOutReason?` · ${esc(s.seasonOutReason)}`:''}`:`Infortunato: ${s.injury} giornate`;return `<div class="availability-row"><b>${esc(r.player.name)}</b><small>${statusText}</small>${starter&&s.injury>0&&!s.seasonOut?`<button class="btn ${state.playInjured[r.playerId]?'red':''}" data-injured="${esc(r.playerId)}">${state.playInjured[r.playerId]?'Giocherà infortunato (-20)':'Fallo giocare (-20)'}</button>`:''}</div>`}).join('')}</div>`}
 function renderOpponentRoster(team){
  const players=opponentRosterPlayers(team);
@@ -5061,18 +5219,19 @@ function playRound(mode='instant'){
  if(forcedSubscribers.length)goalsFor=Math.max(goalsFor,forcedSubscribers.length);
  const defensiveRules=state.activeEffects.filter(effect=>effect.type==='cleanSheet'||effect.type==='minimumGoalsAgainst');if(defensiveRules.length){const lastRule=defensiveRules[defensiveRules.length-1];goalsAgainst=lastRule.type==='cleanSheet'?0:Math.max(goalsAgainst,Number(lastRule.value)||1)}
  if(forcedWin&&goalsFor<=goalsAgainst)goalsFor=goalsAgainst+1;if(forcedLoss&&goalsFor>=goalsAgainst)goalsAgainst=goalsFor+1;if(maxDraw&&goalsFor>goalsAgainst)goalsAgainst=goalsFor;if(state.activeEffects.some(effect=>effect.type==='noGoals'))goalsFor=0;
- if(forcedScoreEffect){goalsFor=Math.max(0,Number(forcedScoreEffect.gf)||6);goalsAgainst=Math.max(0,Number(forcedScoreEffect.ga)||0)}
+ if(forcedScoreEffect){goalsFor=Math.max(0,Number.isFinite(Number(forcedScoreEffect.gf))?Number(forcedScoreEffect.gf):6);goalsAgainst=Math.max(0,Number.isFinite(Number(forcedScoreEffect.ga))?Number(forcedScoreEffect.ga):0)}
  if(hungerWalkover){goalsFor=3;goalsAgainst=0}
  if(chaosEnabled()&&!hungerWalkover)[goalsFor,goalsAgainst]=applyChaosOpponentToUserScore(opponent,goalsFor,goalsAgainst);
  const userGoalEvents=buildTeamGoals(goalsFor,lineup,userTeam,opponent,forcedSubscribers,matchMinutes),opponentGoalEvents=buildTeamGoals(goalsAgainst,opponentLineup,opponent,userTeam,[],matchMinutes);
  const futureGoal=futureScorerGoalEvent(userTeam,opponent,matchMinutes);if(futureGoal&&!hungerWalkover&&!forcedScoreEffect)userGoalEvents.push(futureGoal);
+ applyChickenGoalRule(userGoalEvents);
  if(forcedScoreEffect){userGoalEvents.forEach(event=>event.goalValue=1);opponentGoalEvents.forEach(event=>event.goalValue=1)}
  if(state.seasonRules.redCardGoals&&!forcedScoreEffect){if(ownRedEntry)userGoalEvents.push(regulationGoalEvent(userTeam,opponent,matchMinutes));if(redCandidate)opponentGoalEvents.push(regulationGoalEvent(opponent,userTeam,matchMinutes));}
  userGoalEvents.sort((a,b)=>a.minute-b.minute);opponentGoalEvents.sort((a,b)=>a.minute-b.minute);
  goalsFor=scoreGoalEvents(userGoalEvents);goalsAgainst=scoreGoalEvents(opponentGoalEvents);
  if(capValues.length)goalsFor=Math.min(goalsFor,Math.min(...capValues));
  if(forcedWin&&goalsFor<=goalsAgainst)goalsFor=goalsAgainst+1;if(forcedLoss&&goalsFor>=goalsAgainst)goalsAgainst=goalsFor+1;if(maxDraw&&goalsFor>goalsAgainst)goalsAgainst=goalsFor;
- if(forcedScoreEffect){goalsFor=Math.max(0,Number(forcedScoreEffect.gf)||6);goalsAgainst=Math.max(0,Number(forcedScoreEffect.ga)||0)}
+ if(forcedScoreEffect){goalsFor=Math.max(0,Number.isFinite(Number(forcedScoreEffect.gf))?Number(forcedScoreEffect.gf):6);goalsAgainst=Math.max(0,Number.isFinite(Number(forcedScoreEffect.ga))?Number(forcedScoreEffect.ga):0)}
  if(hungerWalkover){goalsFor=3;goalsAgainst=0}
  let homeGoals=userHome?goalsFor:goalsAgainst,awayGoals=userHome?goalsAgainst:goalsFor;
  const homeTeam=userHome?userTeam:opponent,awayTeam=userHome?opponent:userTeam,homeLineup=userHome?lineup:opponentLineup,awayLineup=userHome?opponentLineup:lineup,homeEvents=userHome?userGoalEvents:opponentGoalEvents,awayEvents=userHome?opponentGoalEvents:userGoalEvents;
@@ -5097,7 +5256,7 @@ function playRound(mode='instant'){
    });
    const sixtyFearNote=applySixtyPointFear();if(sixtyFearNote)userPoints.note=[userPoints.note,sixtyFearNote].filter(Boolean).join(' ');
    const allHighlights=[...userGoalEvents,...opponentGoalEvents].sort((a,b)=>a.minute-b.minute);state.lastRoundResults=roundResults;
-   state.history.push({matchday:state.matchday+1,opponent:opponent.name,opponentId:opponent.id,home:userHome,gf:goalsFor,ga:goalsAgainst,goals:userGoalEvents,opponentGoals:opponentGoalEvents,highlights:allHighlights,commentary,power:Math.round(userPower*10)/10,opponentPower:Math.round(opponentPower*10)/10,opponentRedCard:Boolean(redCandidate),opponentRedPlayer:redCandidate?.name||'',ownRedCard:Boolean(ownRedEntry),ownSuspensionId:ownRedEntry?.playerId||'',ownSuspensionPlayer:ownRedEntry?.player?.name||'',goalkeeperId:userHome?userAwards?.homeGoalkeeperId:userAwards?.awayGoalkeeperId,opponentGoalkeeperId:userHome?userAwards?.awayGoalkeeperId:userAwards?.homeGoalkeeperId,cleanSheet:Number(goalsAgainst)===0,opponentCleanSheet:Number(goalsFor)===0,mvpId:userAwards?.mvpId||'',mvpScore:userAwards?.mvpScore||0,mvpTeamId:userAwards?.mvpTeamId||'',lineup:safeMatchLineup(lineup),opponentLineup:safeMatchLineup(opponentLineup),forcedLoss,forcedWin,maxDraw,forcedScore:Boolean(forcedScoreEffect),pointsAwarded:userPoints.awarded,pointsAdjustment:userPoints.adjustment,pointsNote:userPoints.note,forcedSubscriberGoals:forcedSubscribers.length,playMode:mode,matchDuration:matchMinutes,pinkCardMinute,opponentYellowRed,ownYellowRed,deathMatchBonus,hungerWalkover,futureScorerGoal:Boolean(futureGoal)});
+   state.history.push({matchday:state.matchday+1,opponent:opponent.name,opponentId:opponent.id,home:userHome,gf:goalsFor,ga:goalsAgainst,goals:userGoalEvents,opponentGoals:opponentGoalEvents,highlights:allHighlights,commentary,power:Math.round(userPower*10)/10,opponentPower:Math.round(opponentPower*10)/10,opponentRedCard:Boolean(redCandidate),opponentRedPlayer:redCandidate?.name||'',ownRedCard:Boolean(ownRedEntry),ownSuspensionId:ownRedEntry?.playerId||'',ownSuspensionPlayer:ownRedEntry?.player?.name||'',goalkeeperId:userHome?userAwards?.homeGoalkeeperId:userAwards?.awayGoalkeeperId,opponentGoalkeeperId:userHome?userAwards?.awayGoalkeeperId:userAwards?.homeGoalkeeperId,cleanSheet:Number(goalsAgainst)===0,opponentCleanSheet:Number(goalsFor)===0,mvpId:userAwards?.mvpId||'',mvpScore:userAwards?.mvpScore||0,mvpTeamId:userAwards?.mvpTeamId||'',lineup:safeMatchLineup(lineup),opponentLineup:safeMatchLineup(opponentLineup),forcedLoss,forcedWin,maxDraw,forcedScore:Boolean(forcedScoreEffect),forcedScoreData:forcedScoreEffect?{gf:Math.max(0,Number(forcedScoreEffect.gf)||0),ga:Math.max(0,Number(forcedScoreEffect.ga)||0),source:String(forcedScoreEffect.source||'')}:null,pointsAwarded:userPoints.awarded,pointsAdjustment:userPoints.adjustment,pointsNote:userPoints.note,forcedSubscriberGoals:forcedSubscribers.length,playMode:mode,matchDuration:matchMinutes,pinkCardMinute,opponentYellowRed,ownYellowRed,deathMatchBonus,hungerWalkover,futureScorerGoal:Boolean(futureGoal)});
    state.lastResult=state.history[state.history.length-1];const analyticsBeforePostMatch=analyticsStatusSnapshot();postMatch();updateSeasonMatchAnalytics(state.lastResult,analyticsBeforePostMatch);save();showResultModal();
  };
  if(mode==='live')playLiveMatch({commentary,homeTeam,awayTeam,homeGoals,awayGoals,matchday:state.matchday+1,duration:matchMinutes},finishRound);
@@ -5114,7 +5273,8 @@ function postMatch(){
  if(risks.length){const chance=1-risks.reduce((remaining,effect)=>remaining*(1-clamp(Number(effect.chance)||0,0,1)),1);if(Math.random()<chance){const count=Math.max(1,...risks.map(effect=>Number(effect.count)||1)),duration=Math.max(1,...risks.map(effect=>Number(effect.duration)||1)),candidates=shuffle(rosterPlayers()).slice(0,count);candidates.forEach(entry=>setOwnPlayerInjury(entry,duration));if(result)result.eventInjuries=candidates.map(entry=>({playerId:String(entry.playerId),name:entry.player.name,duration}));}}
  if(state.seasonRules.longMatchRisk&&Number(result?.matchDuration)===120&&Math.random()<.55){const entry=randomOwnEntry();if(entry){setOwnPlayerInjury(entry,2);result.longMatchInjury={playerId:String(entry.playerId),name:entry.player.name,duration:2};}}
  if(result&&state.seasonRules.futureInjuryPenaltyNotice){if(state.standings?.[USER_ID])state.standings[USER_ID].pts=0;result.futureInjuryPenalty=state.seasonRules.futureInjuryPenaltyNotice;state.seasonRules.futureInjuryPenaltyNotice=''}
- state.activeEffects.forEach(effect=>effect.rounds--);state.activeEffects=state.activeEffects.filter(effect=>effect.rounds>0);state.playInjured={};tickChaosOpponentEffects();state.matchday++;state.pendingEvent=null;
+ tickEventChainsAfterMatch(result);
+ state.activeEffects.forEach(effect=>effect.rounds--);state.activeEffects=state.activeEffects.filter(effect=>effect.rounds>0);activatePendingNationalBoost();state.playInjured={};tickChaosOpponentEffects();state.matchday++;state.pendingEvent=null;
  if(state.matchday===19){runChaosOpponentMidseason();const target=midseasonTarget(),auto=Boolean(state.seasonRules.autoMidseason||state.seasonRules.botMidseason),mandatoryIds=mandatoryMidseasonPlayerIds().filter(id=>rosterEntry(id)).slice(0,3),mandatory=mandatoryIds[0]||'';state.midseason={step:0,target:clamp(Math.max(target,mandatoryIds.length),1,3),outgoingId:mandatory,mandatoryOutgoingId:mandatory,mandatoryOutgoingIds:mandatoryIds,clubId:'',nation:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto,autoCompleted:false,changes:[]};state.phase='midseason';}
  else if(isTeamEliminated(USER_ID)||state.matchday>=seasonLength())state.phase='finished';else prepareEvent();
 }
@@ -5132,10 +5292,12 @@ function showResultModal(){
  const redLine=result.opponentRedCard?`<div class="goal-line red-card-event"><b>🟥 ${result.opponentYellowRed?'Giallo trasformato in rosso':'Espulsione avversaria'}: ${esc(result.opponentRedPlayer||'giocatore avversario')}</b><br>${esc(result.opponent)} ha giocato parte della gara in inferiorità numerica.</div>`:'';
  const suspensionLine=result.ownSuspensionPlayer?`<div class="goal-line red-card-event"><b>🟥 ${result.ownYellowRed?'Giallo trasformato in rosso':'Espulsione'}: ${esc(result.ownSuspensionPlayer)}</b><br>Sarà squalificato per la prossima giornata.</div>`:'';
  const pinkLine=result.pinkCardMinute?`<div class="goal-line"><b>🩷 Cartellino rosa al ${Number(result.pinkCardMinute)}′</b><br>La partita è terminata immediatamente con il risultato maturato fino a quel minuto.</div>`:'';
- const forcedLine=result.forcedScore?`<div class="goal-line"><b>✅ Vittoria per 6-0</b><br>Il risultato garantito dall’evento Favoriti è stato applicato.</div>`:result.forcedLoss?`<div class="goal-line"><b>📋 Sconfitta obbligatoria</b><br>La sconfitta prevista dall’evento è stata applicata.</div>`:result.forcedWin?`<div class="goal-line"><b>✅ Vittoria assicurata</b><br>La vittoria prevista dall’evento è stata applicata.</div>`:result.maxDraw?`<div class="goal-line"><b>🤝 Risultato limitato</b><br>La squadra non poteva ottenere più di un pareggio.</div>`:'';
+ const forcedLine=result.forcedScoreData?.source==='Nazionale Fantaballa'?`<div class="goal-line"><b>🇮🇹 Convocazione della Nazionale Fantaballa</b><br>La squadra ha saltato la partita: sconfitta a tavolino ${Number(result.forcedScoreData.gf)||0}-${Number(result.forcedScoreData.ga)||3}. Ora parte il bonus di +5 OVR per 3 giornate.</div>`:result.forcedScore?`<div class="goal-line"><b>✅ Vittoria per 6-0</b><br>Il risultato garantito dall’evento Favoriti è stato applicato.</div>`:result.forcedLoss?`<div class="goal-line"><b>📋 Sconfitta obbligatoria</b><br>La sconfitta prevista dall’evento è stata applicata.</div>`:result.forcedWin?`<div class="goal-line"><b>✅ Vittoria assicurata</b><br>La vittoria prevista dall’evento è stata applicata.</div>`:result.maxDraw?`<div class="goal-line"><b>🤝 Risultato limitato</b><br>La squadra non poteva ottenere più di un pareggio.</div>`:'';
  const pointsLine=result.pointsNote?`<div class="goal-line"><b>🏆 Punti campionato</b><br>${esc(result.pointsNote)}</div>`:'';
  const injuryLine=result.eventInjuries?.length?`<div class="goal-line"><b>🚑 Conseguenza dell’imprevisto</b><br>${result.eventInjuries.map(item=>`${esc(item.name)}: ${item.duration} ${item.duration===1?'giornata':'giornate'}`).join(' · ')}</div>`:'';
  const futurePenaltyLine=result.futureInjuryPenalty?`<div class="goal-line red-card-event"><b>⏳ Paradosso temporale</b><br>${esc(result.futureInjuryPenalty)}</div>`:'';
+ const chickenTrainingLine=result.chickenTraining?`<div class="goal-line"><b>🐔 Allenamento del pollo</b><br>${esc(result.chickenTraining.playerName)} guadagna +${Number(result.chickenTraining.gain)||0} OVR e sale a ${Number(result.chickenTraining.newOvr)||1}.</div>`:'';
+ const chickenGoalLine=result.chickenGoals?`<div class="goal-line"><b>🐔 Progresso del pollaio</b><br>${esc(result.chickenGoals.playerName)} ha segnato ${Number(result.chickenGoals.count)||0} ${Number(result.chickenGoals.count)===1?'gol':'gol'}${result.chickenGoals.double?' dal valore doppio':''}. Totale: ${Number(result.chickenGoals.total)||0}/3.</div>`:'';
  const hungerLine=result.hungerWalkover?`<div class="goal-line"><b>🏹 Vittoria a tavolino</b><br>L’avversario era già stato eliminato dagli Hunger Games.</div>`:'';
  const subscriberLine=result.forcedSubscriberGoals?`<div class="goal-line"><b>⚽ Abbonati scatenati</b><br>${result.forcedSubscriberGoals} ${result.forcedSubscriberGoals===1?'abbonato ha':'abbonati hanno'} segnato almeno un gol.</div>`:'';
  let commentary=Array.isArray(result.commentary)?result.commentary:[];
@@ -5147,7 +5309,7 @@ function showResultModal(){
  const mvpTeam=result.mvpTeamId?teamById(result.mvpTeamId):null;
  const mvpLine=mvpPlayer?`<div class="match-mvp" style="${teamCssVars(mvpTeam)}">${renderMiniAvatar(mvpPlayer,'small')}<div><span>⭐ MVP della partita</span><b>${esc(mvpPlayer.name)}</b><small>${mvpTeam?`${teamColorDot(mvpTeam)}${esc(mvpTeam.name)}`:''}</small></div></div>`:'';
  const scorersLine=`<div class="result-scorers">${renderResultScorers(result.goals,state.teamName)}${renderResultScorers(result.opponentGoals,result.opponent)}</div>`;
- modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${result.gf}–${result.ga}</div><button id="closeResult" class="btn primary result-continue-top">Continua</button>${scorersLine}${pinkLine}${redLine}${suspensionLine}${forcedLine}${pointsLine}${injuryLine}${futurePenaltyLine}${hungerLine}${subscriberLine}<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>${mvpLine}</div></div></div>`;
+ modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${result.gf}–${result.ga}</div><button id="closeResult" class="btn primary result-continue-top">Continua</button>${scorersLine}${pinkLine}${redLine}${suspensionLine}${forcedLine}${pointsLine}${injuryLine}${futurePenaltyLine}${chickenTrainingLine}${chickenGoalLine}${hungerLine}${subscriberLine}<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>${mvpLine}</div></div></div>`;
  document.getElementById('closeResult').onclick=()=>{modalRoot.innerHTML='';render()};
 }
 
