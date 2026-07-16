@@ -5953,38 +5953,12 @@
     .wc-setup-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px;border:2px solid #e3c653;border-radius:18px;background:linear-gradient(135deg,#10243a,#1d4b70);color:#fff}.wc-setup-actions b,.wc-setup-actions small{display:block}.wc-setup-actions small{margin-top:3px;color:#d9e6ef;font-size:10px;font-weight:800}.wc-setup-actions .btn{flex:0 0 auto}
     .wc-panel-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(16,36,58,.14)}
 
-    .app.wc-step-mode #draftLayout,
-    .app.wc-step-identity #draftLayout,
-    .app.wc-step-formation #draftLayout{display:block!important;max-width:760px;margin:0 auto;border-bottom:0}
-    .app.wc-step-mode #draftLayout>.left-col,
-    .app.wc-step-identity #draftLayout>.left-col,
-    .app.wc-step-formation #draftLayout>.left-col{display:block!important}
-    .app.wc-step-mode #draftLayout>.center-col,
-    .app.wc-step-mode #draftLayout>.right-col,
-    .app.wc-step-identity #draftLayout>.center-col,
-    .app.wc-step-identity #draftLayout>.right-col,
-    .app.wc-step-formation #draftLayout>.center-col,
-    .app.wc-step-formation #draftLayout>.right-col{display:none!important}
-    .app.wc-step-mode #draftLayout>.left-col>*,
-    .app.wc-step-identity #draftLayout>.left-col>*,
-    .app.wc-step-formation #draftLayout>.left-col>*{display:none!important}
-    .app.wc-step-mode #modePanel{display:block!important}
-    .app.wc-step-identity #teamNamePanel{display:block!important}
-    .app.wc-step-formation #formationPanel{display:block!important}
-    .app.wc-step-formation #wcSetupActions{display:flex!important}
-    .app.wc-step-mode #tournamentSection,
-    .app.wc-step-identity #tournamentSection,
-    .app.wc-step-formation #tournamentSection{display:none!important}
-
-    .app.wc-step-draft #draftLayout{display:grid!important}
-    .app.wc-step-draft #teamNamePanel,
-    .app.wc-step-draft #modePanel,
-    .app.wc-step-draft #formationPanel,
-    .app.wc-step-draft #wcSetupActions{display:none!important}
-    .app.wc-step-draft #tournamentSection{display:none!important}
-
-    .app.wc-step-tournament #draftLayout{display:none!important}
-    .app.wc-step-tournament #tournamentSection{display:block!important;margin-top:0!important;border-top:0!important;padding-top:0!important}
+    .world-cup-page [hidden]{display:none!important}
+    .wc-single-screen{width:min(760px,100%);margin:0 auto 18px}
+    .wc-single-screen>.card{margin:0}
+    .wc-single-screen .wc-setup-actions{margin-top:12px}
+    .app.wc-step-draft #draftLayout{display:grid}
+    .app.wc-step-tournament #tournamentSection{display:block;margin-top:0;border-top:0;padding-top:0}
     .world-cup-page .site-footer{color:#d9e6ef}.world-cup-page .site-footer a{color:#f3d85d}
     @media(max-width:720px){.wc-page-header{grid-template-columns:auto 1fr;gap:8px;padding:9px}.wc-page-link{display:none}.wc-page-brand{justify-content:flex-start;text-align:left}.wc-page-brand img{width:34px;height:34px}.wc-page-brand h1{font-size:25px}.wc-flow-head{grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}.wc-flow-step{display:flex;justify-content:center;padding:7px 3px}.wc-flow-step>span{width:24px;height:24px;font-size:10px}.wc-flow-step b,.wc-flow-step small{display:none}.wc-setup-actions,.wc-panel-actions{display:grid!important}.wc-setup-actions .btn,.wc-panel-actions .btn{width:100%}}
 
@@ -6349,9 +6323,16 @@
       <div class="wc-flow-step" id="wcStepDraft"><span>4</span><b>Draft</b><small>Costruisci il tuo undici</small></div>
       <div class="wc-flow-step" id="wcStepTournament"><span>5</span><b>World Cup</b><small>Gironi ed eliminazione diretta</small></div>
     </section>
-    <div class="layout" id="draftLayout">
-      <aside class="left-col">
-        <section class="card" id="teamNamePanel">
+    <section class="wc-single-screen" id="wcModeScreen" aria-label="Scelta modalità">
+<section class="card" id="modePanel">
+          <div class="label">Modalità</div>
+          <div class="mode-grid" id="gameModeGrid"></div>
+          <div class="team-name-note mode-note" id="gameModeNote">Scegli la modalità prima di premere Roll.</div>
+        </section>
+    </section>
+
+    <section class="wc-single-screen" id="wcIdentityScreen" aria-label="Nome squadra e allenatore" hidden>
+<section class="card" id="teamNamePanel">
           <div class="label">Nome squadra</div>
           <input id="teamNameInput" class="team-name-input" type="text" maxlength="24" value="" placeholder="Scrivi il nome della squadra" autocomplete="off" />
           <div class="label" style="margin-top:14px">Nome allenatore</div>
@@ -6362,14 +6343,10 @@
             <button id="wcIdentityContinue" class="btn" type="button">Continua al modulo →</button>
           </div>
         </section>
+    </section>
 
-        <section class="card" id="modePanel">
-          <div class="label">Modalità</div>
-          <div class="mode-grid" id="gameModeGrid"></div>
-          <div class="team-name-note mode-note" id="gameModeNote">Scegli la modalità prima di premere Roll.</div>
-        </section>
-
-        <section class="card" id="formationPanel">
+    <section class="wc-single-screen" id="wcFormationScreen" aria-label="Scelta modulo" hidden>
+<section class="card" id="formationPanel">
           <div class="label">Formation</div>
           <div class="formation-grid" id="formationGrid"></div>
           <div class="formation-note" id="formationNote">Scegli il modulo: il campo cambia subito. Il modulo si blocca solo quando premi Roll.</div>
@@ -6377,13 +6354,15 @@
             <button id="formationResetBtn" class="btn dark formation-reset-btn" type="button">Cambia modulo / Reset</button>
           </div>
         </section>
-
-        <section class="wc-setup-actions" id="wcSetupActions">
+<section class="wc-setup-actions" id="wcSetupActions">
           <button id="wcFormationBack" class="btn dark" type="button">← Torna ai nomi</button>
           <div><b>Modulo selezionato?</b><small>Confermando, modalità, nomi e modulo verranno bloccati per questo draft.</small></div>
           <button id="wcSetupContinue" class="btn" type="button">Inizia il Draft →</button>
         </section>
+    </section>
 
+    <div class="layout" id="draftLayout" hidden>
+      <aside class="left-col">
         <section class="card draw-card" id="drawCard">
           <div class="label">Drawn</div>
           <div class="code-row"><span class="code" id="nationCode">--</span><span class="nation-name" id="nationName">Roll</span></div>
@@ -6397,13 +6376,13 @@
         </div>
         <div class="reroll-info" id="rerollInfo">Re-roll disponibili: 3</div>
 
-        <div class="players-wrap">
+        <div class="players-wrap" id="wcPlayersWrap">
           <div class="players-head"><strong>Scegli un giocatore</strong><small id="playersCount">No nation drawn</small></div>
           <div id="playersGrid" class="player-list"><div class="empty-box">Roll to draw a national team and then choose one valid player.</div></div>
         </div>
       </aside>
 
-      <main class="center-col">
+      <main class="center-col" id="wcDraftCenter">
         <div class="roll-cta" id="rollCta">Scegli un modulo, poi gira una nazionale</div>
         <button id="bigRollBtn" class="roll-btn" type="button"><span>Rolla! 🎲</span></button>
         <div class="notice" id="notice"></div>
@@ -6435,7 +6414,7 @@
         </section>
       </main>
 
-      <aside class="right-col">
+      <aside class="right-col" id="wcDraftRight">
         <div class="score-top"><div><div class="box-title">Box Score · <span class="count" id="progressText">0/11</span></div></div><div class="big-score" id="bigScore">—</div></div>
         <div class="scorebars"><span class="bar red"></span><span class="metric">ATT <b id="attackScore">0</b></span><span class="bar yellow"></span><span class="metric">MID <b id="midfieldScore">0</b></span><span class="bar"></span><span class="metric">DEF <b id="defenseScore">0</b></span></div>
         <div id="teamList" class="boxscore-list"></div>
@@ -6785,7 +6764,7 @@
 
     const $ = id => document.getElementById(id);
     const els = {
-      appRoot:$('appRoot'), macroModeScreen:$('macroModeScreen'), worldCupMacroBtn:$('worldCupMacroBtn'), seasonMacroBtn:$('seasonMacroBtn'), draftLayout:$('draftLayout'), teamNameInput:$('teamNameInput'), coachNameInput:$('coachNameInput'), teamNameSummary:$('teamNameSummary'), coachNameSummary:$('coachNameSummary'), teamNameNote:$('teamNameNote'), finalText:$('finalText'), modePanel:$('modePanel'), gameModeGrid:$('gameModeGrid'), gameModeNote:$('gameModeNote'), gameModeSummary:$('gameModeSummary'), formationPanel:$('formationPanel'), formationGrid:$('formationGrid'), formationNote:$('formationNote'), formationActions:$('formationActions'), formationResetBtn:$('formationResetBtn'), formationSummary:$('formationSummary'), nationCode:$('nationCode'), nationName:$('nationName'), drawSubtitle:$('drawSubtitle'), statusLine:$('statusLine'),
+      appRoot:$('appRoot'), macroModeScreen:$('macroModeScreen'), worldCupMacroBtn:$('worldCupMacroBtn'), seasonMacroBtn:$('seasonMacroBtn'), wcModeScreen:$('wcModeScreen'), wcIdentityScreen:$('wcIdentityScreen'), wcFormationScreen:$('wcFormationScreen'), draftLayout:$('draftLayout'), teamNameInput:$('teamNameInput'), coachNameInput:$('coachNameInput'), teamNameSummary:$('teamNameSummary'), coachNameSummary:$('coachNameSummary'), teamNameNote:$('teamNameNote'), finalText:$('finalText'), modePanel:$('modePanel'), gameModeGrid:$('gameModeGrid'), gameModeNote:$('gameModeNote'), gameModeSummary:$('gameModeSummary'), formationPanel:$('formationPanel'), formationGrid:$('formationGrid'), formationNote:$('formationNote'), formationActions:$('formationActions'), formationResetBtn:$('formationResetBtn'), formationSummary:$('formationSummary'), nationCode:$('nationCode'), nationName:$('nationName'), drawSubtitle:$('drawSubtitle'), statusLine:$('statusLine'),
       playersCount:$('playersCount'), playersGrid:$('playersGrid'), rollCta:$('rollCta'), bigRollBtn:$('bigRollBtn'), spinBtn:$('spinBtn'), resetBtn:$('resetBtn'), afterRollActions:$('afterRollActions'), rerollInfo:$('rerollInfo'), drawCard:$('drawCard'),
       notice:$('notice'), pitchSlots:$('pitchSlots'), progressText:$('progressText'), bigScore:$('bigScore'), attackScore:$('attackScore'), midfieldScore:$('midfieldScore'), defenseScore:$('defenseScore'), teamList:$('teamList'), avgOvr:$('avgOvr'), chemistryScore:$('chemistryScore'), chemistryBonus:$('chemistryBonus'), bestOvr:$('bestOvr'), rolesSummary:$('rolesSummary'), final:$('final'), copyBtn:$('copyBtn'), exportBtn:$('exportBtn'), toast:$('toast'), goalPopup:$('goalPopup'),
       packReveal:$('packReveal'), packKicker:$('packKicker'), packCardLabel:$('packCardLabel'), packCode:$('packCode'), packName:$('packName'), packCaption:$('packCaption'),
@@ -6870,17 +6849,16 @@
     function enterWorldCupMode() {
       if (!els.appRoot) return;
       els.appRoot.classList.add('macro-worldcup-selected');
-      if (els.draftLayout) els.draftLayout.hidden = false;
-      window.requestAnimationFrame(() => {
-        els.modePanel?.scrollIntoView({ behavior:'smooth', block:'start' });
-        els.draftLayout?.scrollIntoView({ behavior:'smooth', block:'start' });
-      });
+      setWorldCupPageStep('mode');
     }
 
     function openMacroModeMenu() {
       if (!els.appRoot || els.appRoot.classList.contains('tournament-mode')) return;
       els.appRoot.classList.remove('macro-worldcup-selected');
       if (els.draftLayout) els.draftLayout.hidden = true;
+      if (els.wcModeScreen) els.wcModeScreen.hidden = true;
+      if (els.wcIdentityScreen) els.wcIdentityScreen.hidden = true;
+      if (els.wcFormationScreen) els.wcFormationScreen.hidden = true;
       window.requestAnimationFrame(() => {
         els.macroModeScreen?.scrollIntoView({ behavior:'smooth', block:'start' });
         els.worldCupMacroBtn?.focus({ preventScroll:true });
@@ -6893,6 +6871,21 @@
       const resolved = steps.includes(step) ? step : 'mode';
       els.appRoot.classList.remove(...steps.map(item => `wc-step-${item}`));
       els.appRoot.classList.add(`wc-step-${resolved}`);
+
+      const screenMap = {
+        mode: els.wcModeScreen,
+        identity: els.wcIdentityScreen,
+        formation: els.wcFormationScreen
+      };
+      Object.entries(screenMap).forEach(([name,element]) => {
+        if (element) element.hidden = name !== resolved;
+      });
+      if (els.draftLayout) els.draftLayout.hidden = resolved !== 'draft';
+      if (els.tournamentSection) {
+        els.tournamentSection.hidden = resolved !== 'tournament';
+        els.tournamentSection.classList.toggle('show', resolved === 'tournament');
+      }
+
       const stepElements = [els.wcStepMode, els.wcStepIdentity, els.wcStepFormation, els.wcStepDraft, els.wcStepTournament];
       const currentIndex = steps.indexOf(resolved);
       stepElements.forEach((item,index) => {
@@ -6900,17 +6893,13 @@
         item.classList.toggle('active', index === currentIndex);
         item.classList.toggle('complete', index < currentIndex);
       });
-      if (els.draftLayout) els.draftLayout.hidden = false;
+
       if (scroll) window.requestAnimationFrame(() => {
         const target = resolved === 'tournament'
           ? els.tournamentSection
           : resolved === 'draft'
             ? els.draftLayout
-            : resolved === 'mode'
-              ? els.modePanel
-              : resolved === 'identity'
-                ? els.teamNameInput
-                : els.formationPanel;
+            : screenMap[resolved];
         target?.scrollIntoView?.({ behavior:'smooth', block:'start' });
         if (resolved === 'identity') els.teamNameInput?.focus({ preventScroll:true });
       });
