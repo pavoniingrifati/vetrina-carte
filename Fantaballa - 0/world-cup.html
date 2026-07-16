@@ -6729,7 +6729,7 @@
         <div class="roll-cta" id="rollCta">Scegli un modulo, poi gira una nazionale</div>
         <button id="bigRollBtn" class="roll-btn" type="button"><span>Rolla! 🎲</span></button>
         <div class="notice" id="notice"></div>
-        <section class="pitch-shell">
+        <section class="pitch-shell" id="wcPitchPlacementTarget" tabindex="-1">
           <div class="pitch-wrap">
             <svg class="pitch-svg" viewBox="0 0 100 120" preserveAspectRatio="none" aria-hidden="true">
               <rect x="0.8" y="0.8" width="98.4" height="118.4" fill="none" stroke="var(--white-line)" stroke-width="0.8"/>
@@ -7892,15 +7892,33 @@
     }
 
     function isMobileWorldCupDraft() {
-      return window.matchMedia('(max-width: 900px)').matches;
+      return window.innerWidth <= 1100 || window.matchMedia('(pointer: coarse)').matches;
     }
 
-    function scrollWorldCupDraftTo(target, block = 'start') {
-      if (!isMobileWorldCupDraft() || !target) return;
-      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        target.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block, inline: 'nearest' });
-      }));
+    function scrollWorldCupDraftTo(targetOrId, block = 'start') {
+      if (!isMobileWorldCupDraft()) return;
+      const resolveTarget = () => typeof targetOrId === 'string'
+        ? document.getElementById(targetOrId)
+        : targetOrId;
+      const jump = () => {
+        const target = resolveTarget();
+        if (!target || target.offsetParent === null) return;
+        const rect = target.getBoundingClientRect();
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+        let top = window.pageYOffset + rect.top - 8;
+        if (block === 'center') top = window.pageYOffset + rect.top - Math.max(8, (viewportHeight - rect.height) / 2);
+        const maxTop = Math.max(0, document.documentElement.scrollHeight - viewportHeight);
+        top = Math.max(0, Math.min(maxTop, Math.round(top)));
+        try { target.focus({ preventScroll:true }); } catch (_) {}
+        window.scrollTo({ top, left:0, behavior:'auto' });
+        document.documentElement.scrollTop = top;
+        document.body.scrollTop = top;
+      };
+      requestAnimationFrame(() => {
+        requestAnimationFrame(jump);
+        window.setTimeout(jump, 90);
+        window.setTimeout(jump, 240);
+      });
     }
 
     function startPlacement(playerId) {
@@ -7913,7 +7931,8 @@
       pendingPlayer = player;
       savePersistedRun();
       render();
-      scrollWorldCupDraftTo(els.pitchSlots?.closest('.pitch-shell') || els.pitchSlots, 'start');
+      if (document.activeElement && typeof document.activeElement.blur === 'function') document.activeElement.blur();
+      scrollWorldCupDraftTo('wcPitchPlacementTarget', 'start');
       showToast(isHardMode()
         ? `HARDa Turan: scegli uno slot per ${player.name}. Se e' fuori ruolo: -10 Intesa.`
         : (isGaryMode()
@@ -7948,7 +7967,7 @@
       currentNation = null;
       currentCandidates = [];
       render();
-      scrollWorldCupDraftTo(els.bigRollBtn, 'center');
+      scrollWorldCupDraftTo('bigRollBtn', 'center');
       const placedId = lastPlacedSlotId;
       lastPlacedTimer = setTimeout(() => {
         els.pitchSlots.querySelectorAll('.slot.just-placed').forEach(el => el.classList.remove('just-placed'));
@@ -8110,7 +8129,12 @@
         console.error('Errore lista giocatori', err);
         els.playersGrid.innerHTML = currentCandidates.map((player,index) => `<button class="player-row" type="button" data-id="${escapeAttr(player.id)}"><span class="row-no">#${index + 1}</span><span class="row-main"><span class="row-name">${escapeHtml(player.name)}</span><span class="row-role ${isHardMode() ? 'hard-secret' : ''}">${isHardMode() ? 'RUOLO ?' : escapeHtml(isGaryMode() ? playerPositionLabel(player) : (ROLE_SHORT[player.role] || player.role))}</span></span><span class="row-ovr ${isHardMode() ? 'hard-secret' : ''}" style="${isHardMode() ? '' : ovrVisualStyle(player.ovr)}">${isHardMode() ? '??' : player.ovr}</span></button>`).join('');
       }
-      els.playersGrid.querySelectorAll('.player-row').forEach(btn => btn.addEventListener('click', () => startPlacement(btn.dataset.id)));
+      els.playersGrid.querySelectorAll('.player-row').forEach(btn => btn.addEventListener('click', event => {
+        event.preventDefault();
+        const playerId = event.currentTarget.dataset.id;
+        event.currentTarget.blur();
+        startPlacement(playerId);
+      }));
     }
 
     function renderPitch() {
