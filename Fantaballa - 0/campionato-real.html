@@ -2627,16 +2627,16 @@
 
     .season-pitch-shell,.season-roster-shell{display:grid;gap:8px}
     .season-pitch-middle,.season-roster-middle{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px;align-items:stretch}
-    .season-board-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:center}
-    .season-board-chip,.season-board-side{background:linear-gradient(180deg,#fcfcfb 0%,#efefec 100%);border:1px solid rgba(27,49,84,.16);box-shadow:0 8px 20px rgba(16,36,58,.08),inset 0 1px 0 rgba(255,255,255,.75)}
-    .season-board-chip{min-height:34px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 10px}
-    .season-board-chip img,.season-board-side img{display:block;width:22px;height:22px;object-fit:contain;flex:0 0 auto}
+    .season-board-strip,.season-board-side{background:linear-gradient(180deg,#fcfcfb 0%,#efefec 100%);border:1px solid rgba(27,49,84,.16);box-shadow:0 8px 20px rgba(16,36,58,.08),inset 0 1px 0 rgba(255,255,255,.75)}
+    .season-board-strip{min-height:34px;border-radius:14px;display:flex;align-items:center;justify-content:space-evenly;gap:10px;padding:6px 12px;overflow:hidden}
+    .season-board-side{border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;padding:10px 4px;overflow:hidden}
+    .season-board-token,.season-board-side-token{display:flex;align-items:center;justify-content:center;gap:8px;min-width:0}
+    .season-board-strip img,.season-board-side img{display:block;width:22px;height:22px;object-fit:contain;flex:0 0 auto}
     .season-board-word{font-size:11px;font-weight:1000;letter-spacing:.05em;text-transform:uppercase;color:#2f5fb0;white-space:nowrap}
-    .season-board-side{border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:10px 4px;overflow:hidden}
     .season-board-vertical{font-size:10px;font-weight:1000;letter-spacing:.08em;text-transform:uppercase;color:#2f5fb0;writing-mode:vertical-rl;text-orientation:mixed;line-height:1;white-space:nowrap}
-    .season-board-side.left .season-board-vertical{transform:rotate(180deg)}
-    @media(max-width:900px){.season-pitch-middle,.season-roster-middle{grid-template-columns:36px minmax(0,1fr) 36px;gap:6px}.season-board-strip{gap:8px}.season-board-chip{min-height:30px;padding:5px 8px;border-radius:12px}.season-board-chip img,.season-board-side img{width:18px;height:18px}.season-board-word{font-size:10px}.season-board-vertical{font-size:9px}}
-    @media(max-width:620px){.season-pitch-middle,.season-roster-middle{grid-template-columns:30px minmax(0,1fr) 30px;gap:5px}.season-board-strip{gap:6px}.season-board-chip{min-height:26px;padding:4px 6px;border-radius:10px;gap:4px}.season-board-chip img,.season-board-side img{width:14px;height:14px}.season-board-word{font-size:8px;letter-spacing:.03em}.season-board-side{padding:8px 2px;border-radius:12px}.season-board-vertical{font-size:8px;letter-spacing:.04em}}
+    .season-board-side.left .season-board-side-token{transform:rotate(180deg)}
+    @media(max-width:900px){.season-pitch-middle,.season-roster-middle{grid-template-columns:36px minmax(0,1fr) 36px;gap:6px}.season-board-strip{min-height:30px;padding:5px 8px;border-radius:12px;gap:8px}.season-board-strip img,.season-board-side img{width:18px;height:18px}.season-board-word{font-size:10px}.season-board-vertical{font-size:9px}}
+    @media(max-width:620px){.season-pitch-middle,.season-roster-middle{grid-template-columns:30px minmax(0,1fr) 30px;gap:5px}.season-board-strip{min-height:26px;padding:4px 6px;border-radius:10px;gap:5px}.season-board-strip img,.season-board-side img{width:14px;height:14px}.season-board-word{font-size:8px;letter-spacing:.03em}.season-board-side{padding:8px 2px;border-radius:12px}.season-board-vertical{font-size:8px;letter-spacing:.04em}}
 
 </style>
 </head>
@@ -3141,12 +3141,14 @@ function seasonStarterTarget(key=state.formation){return formationSlots(key).len
 
 function renderPitchBoardStrip(){
  const logo='assets/site-icon-192.png';
- const chip=()=>`<div class="season-board-chip"><img src="${logo}" alt="" aria-hidden="true"><span class="season-board-word">Fantaballa</span></div>`;
- return `<div class="season-board-strip">${chip()}${chip()}${chip()}</div>`;
+ const token=()=>`<span class="season-board-token"><img src="${logo}" alt="" aria-hidden="true"><span class="season-board-word">Fantaballa</span></span>`;
+ return `<div class="season-board-strip">${token()}${token()}${token()}</div>`;
 }
 function renderPitchBoardSide(side='left'){
  const logo='assets/site-icon-192.png';
- return `<div class="season-board-side ${side}"><img src="${logo}" alt="" aria-hidden="true"><span class="season-board-vertical">Fantaballa</span><img src="${logo}" alt="" aria-hidden="true"></div>`;
+ const text=`<span class="season-board-side-token"><span class="season-board-vertical">Fantaballa</span></span>`;
+ const icon=`<span class="season-board-side-token"><img src="${logo}" alt="" aria-hidden="true"></span>`;
+ return `<div class="season-board-side ${side}">${text}${icon}${text}</div>`;
 }
 
 function seasonBenchTarget(key=state.formation){const rosterSize=state.phase==='draft'?SEASON_ROSTER_SIZE:Math.max(SEASON_ROSTER_SIZE,Array.isArray(state?.draft?.roster)?state.draft.roster.length:SEASON_ROSTER_SIZE);return Math.max(0,rosterSize-seasonStarterTarget(key))}
