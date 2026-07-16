@@ -66,6 +66,15 @@
     .parallel-cup-copy{margin:0;color:#dbe8f4;font-size:12px;font-weight:800;line-height:1.4}.parallel-cup-next{margin-top:10px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:12px;font-weight:900}.parallel-cup-next b{color:#f7d85d}
     .parallel-cup-stages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.parallel-cup-stage{padding:10px;border-radius:14px;background:rgba(5,18,35,.34);border:1px solid rgba(255,255,255,.12)}.parallel-cup-stage>span{display:block;margin-bottom:7px;color:#f7d85d;font-size:9px;font-weight:1000;text-transform:uppercase;letter-spacing:.08em}.parallel-cup-tie{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.08);font-size:10px;color:#e7f0f7}.parallel-cup-tie:first-of-type{border-top:0}.parallel-cup-tie b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.parallel-cup-tie em{font-style:normal;color:#fff;font-weight:1000;white-space:nowrap}.parallel-cup-user{color:#fff3a5!important}
     .cup-result-line{background:linear-gradient(135deg,#173b5b,#38235d)!important;border-color:#f2d356!important}.cup-result-line b{color:#f7d85d!important}
+    .parallel-cup-match-view{display:grid;gap:14px}
+    .parallel-cup-match-hero{padding:18px;border-radius:24px;background:linear-gradient(145deg,#0b1e35,#204d76);border:3px solid #f2d356;color:#fff;box-shadow:0 14px 32px rgba(16,36,58,.2)}
+    .parallel-cup-match-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.parallel-cup-match-top .label{color:#f7d85d}.parallel-cup-match-top h2{margin:3px 0 0;color:#fff;font-size:clamp(25px,4vw,42px)}
+    .parallel-cup-leg-badge{flex:0 0 auto;padding:8px 12px;border-radius:999px;background:#fff7cf;color:#10243a;font-size:11px;font-weight:1000;text-transform:uppercase}
+    .parallel-cup-aggregate{margin:12px 0 0;text-align:center;color:#dbe8f4;font-size:12px;font-weight:900}.parallel-cup-aggregate b{color:#f7d85d}
+    .parallel-cup-event-card{margin-top:14px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16)}.parallel-cup-event-card span{display:block;color:#f7d85d;font-size:9px;font-weight:1000;letter-spacing:.12em;text-transform:uppercase}.parallel-cup-event-card b{display:block;margin:4px 0;color:#fff;font-size:17px}.parallel-cup-event-card p{margin:0;color:#e3edf5;font-size:12px;font-weight:800}
+    .parallel-cup-match-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}.parallel-cup-match-actions .btn{min-width:190px}
+    .parallel-cup-opponent-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:9px}.parallel-cup-opponent-player{display:flex;justify-content:space-between;gap:8px;padding:8px 9px;border-radius:12px;background:#fff;border:1px solid #d9ceb0;font-size:11px}.parallel-cup-opponent-player b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.parallel-cup-opponent-player span{flex:0 0 auto;color:#675b48;font-weight:950}
+    @media(max-width:650px){.parallel-cup-match-top{flex-direction:column}.parallel-cup-match-actions .btn{width:100%;min-width:0}.parallel-cup-opponent-list{grid-template-columns:1fr}}
     @media(max-width:760px){.parallel-cup-head{align-items:flex-start;flex-direction:column}.parallel-cup-stages{grid-template-columns:1fr}.parallel-cup-status{align-self:flex-start}}
     .final-hero{text-align:center;padding:28px;border-radius:24px;background:linear-gradient(135deg,#10243a,#214f77);color:#fff}.final-position{font-size:clamp(72px,13vw,140px);line-height:.8;font-weight:1000;color:#ffe96c}.final-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
 
@@ -2585,7 +2594,7 @@
 </div>
 <div id="modalRoot"></div><div id="toast" class="toast"></div>
 <script>
-const CURRENT_STATE_VERSION=25;
+const CURRENT_STATE_VERSION=26;
 const SAVE_BASE='fantaballa_campionato_v7';
 const AUTO_SAVE_KEY=`${SAVE_BASE}_autosave`;
 const LEGACY_SAVE_KEYS=['fantaballa_campionato_v1'];
@@ -2637,7 +2646,7 @@ const FORMATION_LAYOUTS={
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
 let PLAYERS=[];let CLASSIC_PLAYERS=[];let REAL_PLAYERS=[];let CLUBS=[];let OTHER_CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-fc',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa FC'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',gameMode:'normal',chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[],laCurvaRewardActive:false},quest:{active:false,id:'',title:'',status:'idle',acceptedMatchday:-1,matchesPlayed:0,progress:0,target:0,deadlineMatches:0,targetPlayerId:'',targetPlayerName:'',targetTeamIds:[],facedTeamIds:[],rewardActive:false,objective:'',reward:'',penalty:'',summary:'',notice:''},eventChains:{mentalista:{active:false,stage:0,playerId:'',playerName:'',originalOvr:0,dueMatchday:-1,training:false,nature:false,goals:0,completed:false},general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false}},analytics:{initialOvr:0,injuries:0,redCards:0,eventLog:[],biggestResult:null},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},cup:{status:'pending',qualifiedRank:0,currentCompetition:'',otherCompetition:'',participants:[],userParticipantId:'cup-user',userAlive:true,winnerId:'',rewardApplied:false,penaltyApplied:false,notice:'',history:[],stages:[]},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-fc',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa FC'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',gameMode:'normal',chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[],laCurvaRewardActive:false},quest:{active:false,id:'',title:'',status:'idle',acceptedMatchday:-1,matchesPlayed:0,progress:0,target:0,deadlineMatches:0,targetPlayerId:'',targetPlayerName:'',targetTeamIds:[],facedTeamIds:[],rewardActive:false,objective:'',reward:'',penalty:'',summary:'',notice:''},eventChains:{mentalista:{active:false,stage:0,playerId:'',playerName:'',originalOvr:0,dueMatchday:-1,training:false,nature:false,goals:0,completed:false},general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false},pinguino:{active:false,stage:0,dueMatchday:-1,mode:'',completed:false,wins:0,nonWins:0}},analytics:{initialOvr:0,injuries:0,redCards:0,eventLog:[],biggestResult:null},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},cup:{status:'pending',qualifiedRank:0,currentCompetition:'',otherCompetition:'',participants:[],userParticipantId:'cup-user',userAlive:true,winnerId:'',rewardApplied:false,penaltyApplied:false,notice:'',history:[],stages:[],pendingMatch:null,lastResult:null},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
@@ -2663,6 +2672,7 @@ function loadState(){
 }
 function save(){
  try{
+   if(state?.draft?.roster?.length)enforceTipsterStarters();
    if(state?.seasonRules?.autoOptimizeLineup&&state?.draft?.roster?.length)optimizeLineupWithBench();
    const now=new Date().toISOString();
    state.version=CURRENT_STATE_VERSION;
@@ -2941,6 +2951,15 @@ function normalizeCampionatoState(input){
  next.eventChains.general.replacements=Array.isArray(next.eventChains.general.replacements)?next.eventChains.general.replacements.filter(item=>item&&item.originalPlayer).map(item=>({...item,replacementId:String(item.replacementId||''),slotId:String(item.slotId||''),originalPlayer:{...item.originalPlayer,id:String(item.originalPlayer.id||'')}})):[];
  next.eventChains.general.nationalBoostPending=Boolean(next.eventChains.general.nationalBoostPending);
  next.eventChains.general.completed=Boolean(next.eventChains.general.completed);
+ next.eventChains.pinguino=next.eventChains.pinguino&&typeof next.eventChains.pinguino==='object'?next.eventChains.pinguino:{};
+ next.eventChains.pinguino.active=Boolean(next.eventChains.pinguino.active);
+ next.eventChains.pinguino.stage=Math.max(0,Number(next.eventChains.pinguino.stage)||0);
+ next.eventChains.pinguino.dueMatchday=Number.isFinite(Number(next.eventChains.pinguino.dueMatchday))?Number(next.eventChains.pinguino.dueMatchday):-1;
+ next.eventChains.pinguino.mode=['ludopatia','tipster'].includes(String(next.eventChains.pinguino.mode))?String(next.eventChains.pinguino.mode):'';
+ next.eventChains.pinguino.completed=Boolean(next.eventChains.pinguino.completed);
+ next.eventChains.pinguino.wins=Math.max(0,Number(next.eventChains.pinguino.wins)||0);
+ next.eventChains.pinguino.nonWins=Math.max(0,Number(next.eventChains.pinguino.nonWins)||0);
+ (Array.isArray(next.draft?.roster)?next.draft.roster:[]).forEach(entry=>{entry.tipsterForcedMatches=Math.max(0,Number(entry.tipsterForcedMatches)||0);entry.tipsterForced=entry.tipsterForcedMatches>0;});
 
  next.cup=next.cup&&typeof next.cup==='object'?next.cup:{};
  next.cup.status=['pending','not_qualified','active','completed'].includes(String(next.cup.status))?String(next.cup.status):'pending';
@@ -2956,6 +2975,8 @@ function normalizeCampionatoState(input){
  next.cup.notice=String(next.cup.notice||'');
  next.cup.history=Array.isArray(next.cup.history)?next.cup.history:[];
  next.cup.stages=Array.isArray(next.cup.stages)?next.cup.stages.map((stage,index)=>({name:String(stage?.name||PARALLEL_CUP_STAGE_NAMES[index]||'Turno'),matchdays:Array.isArray(stage?.matchdays)?stage.matchdays.map(Number):[...(PARALLEL_CUP_MATCHDAYS[index]||[])],processedLegs:[...new Set((Array.isArray(stage?.processedLegs)?stage.processedLegs:[]).map(Number))],ties:Array.isArray(stage?.ties)?stage.ties.map((tie,tieIndex)=>({id:String(tie?.id||`cup-${index}-${tieIndex}`),teamAId:String(tie?.teamAId||''),teamBId:String(tie?.teamBId||''),legs:Array.isArray(tie?.legs)?tie.legs:[],winnerId:String(tie?.winnerId||''),aggregateA:Number(tie?.aggregateA)||0,aggregateB:Number(tie?.aggregateB)||0,penalties:String(tie?.penalties||'')})).filter(tie=>tie.teamAId&&tie.teamBId):[]})):[];
+ next.cup.pendingMatch=next.cup.pendingMatch&&typeof next.cup.pendingMatch==='object'?{stageIndex:Number(next.cup.pendingMatch.stageIndex)||0,legIndex:Number(next.cup.pendingMatch.legIndex)||0,tieId:String(next.cup.pendingMatch.tieId||''),matchday:Number(next.cup.pendingMatch.matchday)||0,userHome:Boolean(next.cup.pendingMatch.userHome),event:next.cup.pendingMatch.event&&typeof next.cup.pendingMatch.event==='object'?next.cup.pendingMatch.event:null}:null;
+ next.cup.lastResult=next.cup.lastResult&&typeof next.cup.lastResult==='object'?next.cup.lastResult:null;
  next.midseason=next.midseason&&typeof next.midseason==='object'?next.midseason:{};
  next.midseason.step=Math.max(0,Number(next.midseason.step)||0);
  next.midseason.target=clamp(Number(next.midseason.target)||midseasonTargetFrom(next),1,3);
@@ -3035,7 +3056,7 @@ function normalizeCampionatoState(input){
 function formationSlots(key=state.formation){return (FORMATION_LAYOUTS[key]||FORMATION_LAYOUTS['4-3-3']).map((row,index)=>({code:row[0],x:row[1],y:row[2],instanceId:`starter-${index}`}))}
 const SEASON_ROSTER_SIZE=14;
 function seasonStarterTarget(key=state.formation){return formationSlots(key).length}
-function seasonBenchTarget(key=state.formation){return Math.max(0,SEASON_ROSTER_SIZE-seasonStarterTarget(key))}
+function seasonBenchTarget(key=state.formation){const rosterSize=state.phase==='draft'?SEASON_ROSTER_SIZE:Math.max(SEASON_ROSTER_SIZE,Array.isArray(state?.draft?.roster)?state.draft.roster.length:SEASON_ROSTER_SIZE);return Math.max(0,rosterSize-seasonStarterTarget(key))}
 function seasonBenchNumbers(key=state.formation){return Array.from({length:seasonBenchTarget(key)},(_,index)=>index+1)}
 function starterEntries(){return rosterPlayers().filter(r=>!r.bench)}
 function benchEntries(){return rosterPlayers().filter(r=>r.bench)}
@@ -3823,8 +3844,8 @@ function prepareChaosOpponentEvents(){
    if(roll<normalChance){normal++;return}
    if(roll<autoLimit){const event=pick(AUTO_EVENTS),result=applyChaosAutoEvent(team,event);automatic++;reports.push({kind:'auto',teamId:team.id,teamName:team.name,title:event.title,choice:'Evento automatico',effect:result});return}
    const beforeMidseasonOnly=new Set(['pulmino-bordello','figlio-presidente','whatsapp-pubblicato','rissa-mascotte','rapito-alieni','figura-aldila','figura-misteriosa-tattico-fantaguru','figlio-del-mister']);
-   let available=DECISIONS.filter(decision=>!decision.chainOnly&&!decision.questEvent&&!chaos.seenDecisionEvents.includes(String(decision.id))&&(state.matchday<19||!beforeMidseasonOnly.has(String(decision.id))));
-   if(!available.length){chaos.seenDecisionEvents=[];available=DECISIONS.filter(decision=>!decision.chainOnly&&!decision.questEvent&&(state.matchday<19||!beforeMidseasonOnly.has(String(decision.id))))}
+   let available=DECISIONS.filter(decision=>!decision.chainOnly&&!decision.questEvent&&!decision.userOnly&&!chaos.seenDecisionEvents.includes(String(decision.id))&&(state.matchday<19||!beforeMidseasonOnly.has(String(decision.id))));
+   if(!available.length){chaos.seenDecisionEvents=[];available=DECISIONS.filter(decision=>!decision.chainOnly&&!decision.questEvent&&!decision.userOnly&&(state.matchday<19||!beforeMidseasonOnly.has(String(decision.id))))}
    const decision=pick(available),choiceIndex=Math.floor(Math.random()*decision.choices.length),choice=decision.choices[choiceIndex],effect=applyChaosTeamDecision(team,decision,choiceIndex);
    decisions++;const title=typeof decision.title==='string'?decision.title:String(decision.id).replaceAll('-',' ');const report={kind:'decision',teamId:team.id,teamName:team.name,title,choice:choice.label,effect:effect||choice.effect};chaos.latestDecision=report;reports.push(report);
  });
@@ -4075,32 +4096,78 @@ function parallelCupFinish(){
  if(winner===parallelCupUserId())parallelCupApplyWinnerReward();
  else if(cup.userAlive)parallelCupApplyEliminationPenalty();
 }
-function processParallelCupAfterLeagueRound(completedMatchday,result){
- const cup=parallelCupState();if(cup.status!=='active')return;
- let stageIndex=-1,legIndex=-1;
- cup.stages.forEach((stage,index)=>{const found=(stage.matchdays||[]).indexOf(Number(completedMatchday));if(found>=0){stageIndex=index;legIndex=found}});
- if(stageIndex<0)return;
- const stage=cup.stages[stageIndex];if(!stage.ties?.length||stage.processedLegs.includes(legIndex))return;
+function parallelCupParticipantTeam(participant){
+ if(!participant)return{id:'cup-team',name:'Squadra',colors:null};
+ if(participant.user)return teamById(USER_ID)||{id:USER_ID,name:state.teamName,clubId:state.userClubId,colors:activeUserClub().colorClub};
+ if(participant.origin==='current')return teamById(participant.teamId)||{id:participant.id,name:participant.name,clubId:participant.clubId,colors:participant.colors||null};
+ return{id:participant.id,name:participant.name,clubId:participant.clubId,colors:participant.colors||null};
+}
+function parallelCupParticipantLineup(participant){
+ if(!participant)return[];
+ if(participant.user)return resolveLineup();
+ if(participant.origin==='current')return teamMatchLineup(teamById(participant.teamId));
+ const pool=otherClubPlayerPool(participant.clubId).map(player=>({...player,id:`${participant.id}:${player.id}`}));
+ const slots=FORMATIONS[leagueFormationKey()]||AI_MATCH_SLOTS,used=new Set();
+ return slots.map((slot,index)=>{
+   const role=POSITION_ROLE[slot]||'C';
+   let player=pool.find(candidate=>!used.has(String(candidate.id))&&compatible(candidate,slot));
+   if(!player)player=pool.find(candidate=>!used.has(String(candidate.id))&&roleOf(candidate)===role);
+   if(!player)player=pool.find(candidate=>!used.has(String(candidate.id)));
+   if(!player)player={id:`${participant.id}:primavera:${index}`,name:`Primavera ${index+1}`,role,Position:slot,roleLabel:role==='P'?'Portiere':role==='D'?'Difensore':role==='A'?'Attaccante':'Centrocampista',nation:'Italia',ovr:60,subscriber:'no',club:participant.clubId};
+   used.add(String(player.id));
+   return{playerId:String(player.id),player,slot,slotId:`cup-${participant.id}-${index}`,bench:false,malus:0};
+ });
+}
+function parallelCupPendingMatch(){
+ const cup=parallelCupState();
+ if(cup.status!=='active'||!cup.userAlive)return null;
+ const existing=cup.pendingMatch&&typeof cup.pendingMatch==='object'?cup.pendingMatch:null;
+ if(existing){
+   const stage=cup.stages?.[Number(existing.stageIndex)],tie=stage?.ties?.find(item=>String(item.id)===String(existing.tieId));
+   if(stage&&tie&&!stage.processedLegs.includes(Number(existing.legIndex)))return existing;
+   cup.pendingMatch=null;
+ }
+ const targetMatchday=state.matchday+1;
+ for(let stageIndex=0;stageIndex<(cup.stages||[]).length;stageIndex++){
+   const stage=cup.stages[stageIndex],legIndex=(stage.matchdays||[]).indexOf(Number(targetMatchday));
+   if(legIndex<0||stage.processedLegs.includes(legIndex)||!stage.ties?.length)continue;
+   const tie=stage.ties.find(item=>[item.teamAId,item.teamBId].includes(parallelCupUserId()));
+   if(!tie)return null;
+   const teamA=parallelCupParticipant(tie.teamAId),teamB=parallelCupParticipant(tie.teamBId),home=legIndex===0?teamA:teamB;
+   if(!teamA||!teamB)return null;
+   cup.pendingMatch={stageIndex,legIndex,tieId:tie.id,matchday:targetMatchday,userHome:Boolean(home.user),event:parallelCupDedicatedEvent(Boolean(home.user))};
+   return cup.pendingMatch;
+ }
+ return null;
+}
+function parallelCupCompleteLeg(pending,userData){
+ const cup=parallelCupState(),stageIndex=Number(pending?.stageIndex),legIndex=Number(pending?.legIndex),stage=cup.stages?.[stageIndex];
+ if(!stage||stage.processedLegs.includes(legIndex))return null;
  let userReport=null;
  stage.ties.forEach((tie,tieIndex)=>{
    const teamA=parallelCupParticipant(tie.teamAId),teamB=parallelCupParticipant(tie.teamBId);if(!teamA||!teamB)return;
    const home=legIndex===0?teamA:teamB,away=legIndex===0?teamB:teamA,userInTie=Boolean(teamA.user||teamB.user),userHome=Boolean(home.user);
-   let homePower=parallelCupParticipantPower(home),awayPower=parallelCupParticipantPower(away),event=null;
-   if(userInTie){event=parallelCupDedicatedEvent(userHome);if(home.user){homePower+=event.userBonus;awayPower+=event.opponentBonus}else{awayPower+=event.userBonus;homePower+=event.opponentBonus}}
-   let [homeGoals,awayGoals]=simulateScore(homePower,awayPower,.14,90);
+   let homeGoals=0,awayGoals=0,event=null,homeEvents=[],awayEvents=[],commentary=[];
+   if(userInTie&&userData){
+     homeGoals=Math.max(0,Number(userData.homeGoals)||0);awayGoals=Math.max(0,Number(userData.awayGoals)||0);event=userData.event||null;homeEvents=Array.isArray(userData.homeEvents)?userData.homeEvents:[];awayEvents=Array.isArray(userData.awayEvents)?userData.awayEvents:[];commentary=Array.isArray(userData.commentary)?userData.commentary:[];
+   }else{
+     const homePower=parallelCupParticipantPower(home),awayPower=parallelCupParticipantPower(away);[homeGoals,awayGoals]=simulateScore(homePower,awayPower,.14,90);
+   }
    const aGoals=legIndex===0?homeGoals:awayGoals,bGoals=legIndex===0?awayGoals:homeGoals;
-   const leg={matchday:Number(completedMatchday),leg:legIndex+1,homeId:home.id,awayId:away.id,homeName:home.name,awayName:away.name,homeGoals,awayGoals,aGoals,bGoals,event};
-   tie.legs.push(leg);tie.aggregateA=(tie.aggregateA||0)+aGoals;tie.aggregateB=(tie.aggregateB||0)+bGoals;
+   const leg={matchday:Number(pending.matchday),leg:legIndex+1,homeId:home.id,awayId:away.id,homeName:home.name,awayName:away.name,homeGoals,awayGoals,aGoals,bGoals,event};
+   tie.legs.push(leg);tie.aggregateA=(Number(tie.aggregateA)||0)+aGoals;tie.aggregateB=(Number(tie.aggregateB)||0)+bGoals;
    if(legIndex===1)parallelCupResolveTie(tie);
    if(userInTie){
      const userIsA=Boolean(teamA.user),gf=userIsA?aGoals:bGoals,ga=userIsA?bGoals:aGoals;
-     userReport={stage:stage.name,leg:legIndex===0?'Andata':'Ritorno',opponent:userIsA?teamB.name:teamA.name,home:userHome,gf,ga,event,aggregateUser:userIsA?tie.aggregateA:tie.aggregateB,aggregateOpponent:userIsA?tie.aggregateB:tie.aggregateA,decided:legIndex===1,advanced:legIndex===1&&tie.winnerId===parallelCupUserId(),penalties:tie.penalties||'',winner:legIndex===1?parallelCupParticipantName(tie.winnerId):''};
+     userReport={stage:stage.name,stageIndex,leg:legIndex===0?'Andata':'Ritorno',legIndex,opponent:userIsA?teamB.name:teamA.name,opponentId:userIsA?teamB.id:teamA.id,home:userHome,gf,ga,homeGoals,awayGoals,event,aggregateUser:userIsA?tie.aggregateA:tie.aggregateB,aggregateOpponent:userIsA?tie.aggregateB:tie.aggregateA,decided:legIndex===1,advanced:legIndex===1&&tie.winnerId===parallelCupUserId(),penalties:tie.penalties||'',winner:legIndex===1?parallelCupParticipantName(tie.winnerId):'',homeEvents,awayEvents,commentary,userGoalEvents:userHome?homeEvents:awayEvents,opponentGoalEvents:userHome?awayEvents:homeEvents};
    }
    cup.history.push({stageIndex,tieIndex,...leg});
  });
  stage.processedLegs.push(legIndex);
  if(legIndex===1){if(stageIndex<2)parallelCupAdvanceStage(stageIndex);else parallelCupFinish()}
- if(result&&userReport)result.cupReport=userReport;
+ cup.pendingMatch=null;cup.lastResult=userReport;
+ if(userReport&&cup.status==='active'&&cup.userAlive)cup.notice=userReport.decided?`Turno superato: ${userReport.aggregateUser}-${userReport.aggregateOpponent} nel doppio confronto.`:`Andata completata: aggregato provvisorio ${userReport.aggregateUser}-${userReport.aggregateOpponent}.`;
+ return userReport;
 }
 function parallelCupTieScore(tie){
  if(!tie)return'–';if(!tie.legs?.length)return'–';
@@ -4128,7 +4195,7 @@ function parallelCupNextInfo(){
  return null;
 }
 function renderParallelCupPanel(){
- const cup=parallelCupState();if(cup.status==='pending'&&state.matchday<19)return'';
+ const cup=parallelCupState();if(cup.status!=='active'||!cup.userAlive)return'';
  const outcome=parallelCupOutcomeLabel(),next=parallelCupNextInfo();
  const stages=(cup.stages||[]).map(stage=>`<div class="parallel-cup-stage"><span>${esc(stage.name)}</span>${stage.ties?.length?stage.ties.map(tie=>`<div class="parallel-cup-tie ${[tie.teamAId,tie.teamBId].includes(parallelCupUserId())?'parallel-cup-user':''}"><b>${esc(parallelCupParticipantName(tie.teamAId))} – ${esc(parallelCupParticipantName(tie.teamBId))}</b><em>${esc(parallelCupTieScore(tie))}</em></div>`).join(''):'<div class="parallel-cup-tie"><b>Da definire</b><em>–</em></div>'}</div>`).join('');
  return `<section class="parallel-cup-panel"><div class="parallel-cup-head"><div><span>🏆 Coppa parallela</span><h3>${esc(cup.currentCompetition||currentCompetitionName())} vs ${esc(cup.otherCompetition||otherCompetitionName())}</h3></div><div class="parallel-cup-status">${esc(outcome)}</div></div><p class="parallel-cup-copy">${esc(cup.notice||'Le prime quattro al giro di boa affrontano quattro club casuali dell’altro campionato, con andata e ritorno.')}</p>${next?`<div class="parallel-cup-next"><b>Prossimo turno:</b> Giornata ${next.matchday} · ${esc(next.stage)} · ${esc(next.leg)}${next.userPlaying&&next.opponent?` contro ${esc(next.opponent)}`:''}</div>`:''}${stages?`<div class="parallel-cup-stages">${stages}</div>`:''}</section>`;
@@ -4233,6 +4300,87 @@ function generalChain(){
  state.eventChains=state.eventChains&&typeof state.eventChains==='object'?state.eventChains:{};
  state.eventChains.general=state.eventChains.general&&typeof state.eventChains.general==='object'?state.eventChains.general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false};
  return state.eventChains.general;
+}
+
+function penguinChain(){
+ state.eventChains=state.eventChains&&typeof state.eventChains==='object'?state.eventChains:{};
+ state.eventChains.pinguino=state.eventChains.pinguino&&typeof state.eventChains.pinguino==='object'?state.eventChains.pinguino:{active:false,stage:0,dueMatchday:-1,mode:'',completed:false,wins:0,nonWins:0};
+ return state.eventChains.pinguino;
+}
+function normalizeTipsterBenchSlots(){
+ const bench=state.draft.roster.filter(entry=>entry&&entry.bench);
+ bench.forEach((entry,index)=>{entry.slot=`PAN${index+1}`;entry.slotId=`bench-${index+1}`});
+}
+function enforceTipsterStarters(){
+ if(!Array.isArray(state?.draft?.roster)||!state.draft.roster.length)return;
+ const forced=state.draft.roster.filter(entry=>entry&&entry.bench&&Number(entry.tipsterForcedMatches)>0);
+ forced.forEach(entry=>{
+   const player=entry.player||playerById(entry.playerId);if(!player)return;
+   const used=new Set(state.draft.roster.filter(item=>item&&!item.bench).map(item=>String(item.slotId)));
+   const empty=formationSlots().find(slot=>!used.has(String(slot.instanceId))&&compatible(player,slot.code));
+   if(empty){entry.bench=false;entry.slot=empty.code;entry.slotId=empty.instanceId;return}
+   const starters=state.draft.roster.filter(item=>item&&!item.bench&&Number(item.tipsterForcedMatches)<=0).map(item=>({entry:item,player:item.player||playerById(item.playerId)})).filter(item=>item.player);
+   let target=starters.filter(item=>compatible(player,item.entry.slot)).sort((a,b)=>(Number(a.player.ovr)||0)-(Number(b.player.ovr)||0))[0];
+   if(!target)target=starters.filter(item=>roleOf(item.player)===roleOf(player)).sort((a,b)=>(Number(a.player.ovr)||0)-(Number(b.player.ovr)||0))[0];
+   if(!target)target=starters.sort((a,b)=>(Number(a.player.ovr)||0)-(Number(b.player.ovr)||0))[0];
+   if(!target)return;
+   const benchSlot={slot:entry.slot,slotId:entry.slotId},starterSlot={slot:target.entry.slot,slotId:target.entry.slotId};
+   Object.assign(entry,{bench:false,...starterSlot});Object.assign(target.entry,{bench:true,...benchSlot});
+ });
+ normalizeTipsterBenchSlots();
+}
+function decrementTipsterObligations(){
+ state.draft.roster.forEach(entry=>{if(Number(entry.tipsterForcedMatches)>0){entry.tipsterForcedMatches=Math.max(0,Number(entry.tipsterForcedMatches)-1);entry.tipsterForced=entry.tipsterForcedMatches>0;}});
+}
+function acceptCassaaaBet(){
+ const chain=penguinChain();
+ Object.assign(chain,{active:true,stage:1,dueMatchday:Number(state.matchday)+chainedDelay(1,3),mode:'',completed:false});
+ pushEffect('forcedScore',1,1,{gf:3,ga:2,source:'Cassaaa'});
+ return 'Il pinguino sistema la prossima partita sul 3-2 per te. In cambio prometti di iscriverti al suo canale. Il Capitolo 2 comparirà tra 1 e 3 giornate.';
+}
+function scrollPenguin(){Object.assign(penguinChain(),{active:false,stage:0,dueMatchday:-1,mode:'',completed:true});return'Ignori il pinguino e ti concentri sulla prossima partita. Nessun effetto.'}
+function resolvePenguinLudopatia(){
+ const chain=penguinChain();chain.active=true;chain.stage=2;chain.dueMatchday=-1;chain.completed=false;
+ if(Math.random()<.5){chain.mode='ludopatia';return 'Scatta la ludopatia: da ora, dopo ogni partita non vinta, perdi definitivamente un giocatore casuale della rosa.'}
+ chain.mode='tipster';return 'Diventi un esperto Tipster: dopo ogni vittoria arriva un giocatore casuale, obbligato titolare nella partita successiva al posto di un tuo titolare.';
+}
+function removeGamblingPlayer(){
+ const items=state.draft.roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>item.player);
+ if(items.length<=1)return{type:'ludopatia',message:'La ludopatia vorrebbe portarti via un altro giocatore, ma in rosa ne è rimasto soltanto uno.'};
+ const chosen=pick(items),lost=chosen.player,lostEntry=chosen.entry;
+ if(!lostEntry.bench){
+   const bench=items.filter(item=>item.entry.bench&&item.index!==chosen.index);
+   let replacement=bench.filter(item=>compatible(item.player,lostEntry.slot)).sort((a,b)=>(Number(b.player.ovr)||0)-(Number(a.player.ovr)||0))[0];
+   if(!replacement)replacement=bench.filter(item=>roleOf(item.player)===POSITION_ROLE[lostEntry.slot]).sort((a,b)=>(Number(b.player.ovr)||0)-(Number(a.player.ovr)||0))[0];
+   if(!replacement)replacement=bench.sort((a,b)=>(Number(b.player.ovr)||0)-(Number(a.player.ovr)||0))[0];
+   if(replacement)Object.assign(replacement.entry,{bench:false,slot:lostEntry.slot,slotId:lostEntry.slotId});
+ }
+ state.draft.roster.splice(chosen.index,1);delete state.statuses[String(lost.id)];delete state.playInjured[String(lost.id)];clearMandatoryMidseasonPlayer(String(lost.id));
+ const mental=mentalistaChain();if(String(mental.playerId)===String(lost.id))Object.assign(mental,{active:false,stage:0,dueMatchday:-1,training:false,nature:false,completed:true});
+ if(String(state.seasonRules.futureScorerPlayerId||'')===String(lost.id)){state.seasonRules.futureScorerPlayerId='';state.seasonRules.futureScorerPlayerName='';state.seasonRules.futureInjuryZeroPoints=false;}
+ normalizeTipsterBenchSlots();refreshOpponentClubRosters();
+ return{type:'ludopatia',playerName:lost.name,message:`Ludopatia: ${lost.name} lascia definitivamente la rosa perché non hai vinto la partita.`};
+}
+function tipsterVictoryPlayer(){
+ const starters=state.draft.roster.filter(entry=>entry&&!entry.bench).map(entry=>({entry,player:entry.player||playerById(entry.playerId)})).filter(item=>item.player);
+ if(!starters.length)return{type:'tipster',message:'Il Tipster non trova un titolare da sostituire.'};
+ const freeTargets=starters.filter(item=>Number(item.entry.tipsterForcedMatches)<=0),target=pick(freeTargets.length?freeTargets:starters),rosterIds=new Set(state.draft.roster.map(entry=>String(entry.playerId))),rosterNames=new Set(rosterPlayers().map(item=>normalizeName(item.player.name)));
+ let candidates=(PLAYERS||[]).filter(player=>player&&player.id&&!rosterIds.has(String(player.id))&&!rosterNames.has(normalizeName(player.name))&&compatible(player,target.entry.slot));
+ if(!candidates.length)candidates=(PLAYERS||[]).filter(player=>player&&player.id&&!rosterIds.has(String(player.id))&&!rosterNames.has(normalizeName(player.name))&&roleOf(player)===POSITION_ROLE[target.entry.slot]);
+ if(!candidates.length)candidates=(PLAYERS||[]).filter(player=>player&&player.id&&!rosterIds.has(String(player.id))&&!rosterNames.has(normalizeName(player.name)));
+ if(!candidates.length)return{type:'tipster',message:'Il Tipster non trova nuovi giocatori disponibili nel database.'};
+ const source=pick(candidates),incoming=eventPlayerClone(source,'tipster'),outgoing={...target.entry,player:{...target.player},bench:true,tipsterForced:false,tipsterForcedMatches:0};
+ state.draft.roster.push(outgoing);target.entry.playerId=String(incoming.id);target.entry.player={...incoming,tipsterPlayer:true};target.entry.bench=false;target.entry.tipsterForced=true;target.entry.tipsterForcedMatches=1;
+ state.statuses[String(incoming.id)]={injury:0,suspension:0,seasonOut:false,seasonOutReason:''};normalizeTipsterBenchSlots();enforceTipsterStarters();refreshOpponentClubRosters();
+ return{type:'tipster',playerName:incoming.name,replacedName:target.player.name,message:`Tipster: arriva ${incoming.name} (${Number(incoming.ovr)||60} OVR), obbligato titolare nella prossima partita. ${target.player.name} va in panchina.`};
+}
+function tickPenguinAfterMatch(result){
+ decrementTipsterObligations();
+ const chain=penguinChain();if(!result||!chain.active||chain.stage!==2||!chain.mode)return;
+ const won=Number(result.gf)>Number(result.ga);let update=null;
+ if(chain.mode==='ludopatia'&&!won){chain.nonWins=Math.max(0,Number(chain.nonWins)||0)+1;update=removeGamblingPlayer()}
+ if(chain.mode==='tipster'&&won){chain.wins=Math.max(0,Number(chain.wins)||0)+1;update=tipsterVictoryPlayer()}
+ if(update){result.penguinUpdate=update;recordSeasonEvent({kind:'auto',title:chain.mode==='ludopatia'?'Ludopatia':'Esperto Tipster',choice:won?'Vittoria':'Partita non vinta',effect:update.message,result:update.message,automatic:true},analyticsSnapshot())}
 }
 
 function questState(){
@@ -4436,9 +4584,10 @@ function queueChainedAuto(title,text,result){
  const before=analyticsSnapshot();recordSeasonEvent({kind:'auto',title,choice:'Evento concatenato',effect:text,result,automatic:true},before);state.pendingEvent={kind:'auto',chained:true,resolved:true,title,text,result};return true;
 }
 function prepareChainedEvent(){
- const mental=mentalistaChain(),general=generalChain(),day=Number(state.matchday);
+ const mental=mentalistaChain(),general=generalChain(),penguin=penguinChain(),day=Number(state.matchday);
  if(mental.active&&mental.stage===3&&day>=Number(mental.dueMatchday)){return queueChainedAuto('Il re del pollaio','Il pollo ha segnato almeno tre gol e completa la sua trasformazione.',crownChickenKing())}
  if(mental.active&&mental.stage===1&&day>=Number(mental.dueMatchday)){if(!chickenRosterEntry()){Object.assign(mental,{active:false,stage:0,dueMatchday:-1,completed:true});return false}return queueChainedDecision('mentalista-pollaio')}
+ if(penguin.active&&penguin.stage===1&&day>=Number(penguin.dueMatchday))return queueChainedAuto('Ludopatia','Il misterioso pinguino torna per rivelare le conseguenze della scommessa.',resolvePenguinLudopatia());
  if(general.active&&general.stage===1&&day>=Number(general.dueMatchday))return queueChainedDecision('generale-documenti');
  if(general.active&&general.stage===2&&day>=Number(general.dueMatchday)){
    if(allRosterItalian())return queueChainedAuto('La nazionale Fantaballa','La rosa è ancora interamente italiana e riceve una convocazione inattesa.',activateNationalFantaballa());
@@ -4456,6 +4605,7 @@ function tickEventChainsAfterMatch(result){
    if(chain.training&&entry){const gain=1+Math.floor(Math.random()*5),current=entry.player||playerById(entry.playerId);entry.player={...current,ovr:Math.max(1,Number(current?.ovr)||1)+gain,isChicken:true,chickenOriginalOvr:chain.originalOvr};if(result)result.chickenTraining={playerName:entry.player.name,gain,newOvr:entry.player.ovr};}
    if(chain.goals>=3){chain.stage=3;chain.dueMatchday=Number(state.matchday)+1;chain.training=false;chain.nature=false;}
  }
+ tickPenguinAfterMatch(result);
 }
 
 function injureOwnPlayers(entries,rounds=1){
@@ -4626,7 +4776,7 @@ function optimizeLineupWithBench(){
    let swap=null;
    for(const bench of benches){
      const benchOvr=tacticianPlayerOvr(bench.player);
-     const targets=roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>!item.entry.bench&&item.player&&compatible(bench.player,item.entry.slot)&&tacticianPlayerOvr(item.player)<benchOvr).sort((a,b)=>tacticianPlayerOvr(a.player)-tacticianPlayerOvr(b.player));
+     const targets=roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>!item.entry.bench&&Number(item.entry.tipsterForcedMatches)<=0&&item.player&&compatible(bench.player,item.entry.slot)&&tacticianPlayerOvr(item.player)<benchOvr).sort((a,b)=>tacticianPlayerOvr(a.player)-tacticianPlayerOvr(b.player));
      if(targets.length){swap={bench,target:targets[0]};break}
    }
    if(!swap)break;
@@ -4845,6 +4995,7 @@ function seasonRuleSummary(){
  if(state.seasonRules.guaranteedTopPlayerNextMidseason)extras.push('Prossimo pack mercato: top player garantito');
  if(state.seasonRules.coachTopSwapPlayerId)extras.push('Scambio speciale del figlio del mister disponibile');
  if(state.seasonRules.autoOptimizeLineup)extras.push('Il tattico aggiorna automaticamente i titolari fino a fine stagione');
+ const penguin=penguinChain();if(penguin.active&&penguin.stage===2&&penguin.mode==='ludopatia')extras.push(`Ludopatia: ${Number(penguin.nonWins)||0} giocatori persi dopo partite non vinte`);if(penguin.active&&penguin.stage===2&&penguin.mode==='tipster')extras.push(`Esperto Tipster: ${Number(penguin.wins)||0} nuovi giocatori ottenuti dopo le vittorie`);
  const leagueFormation=FORMATIONS[state.seasonRules.leagueFormation]?state.seasonRules.leagueFormation:state.formation;
  if(leagueFormation==='4-4-4')extras.push('Regola FGCI 4-4-4: le squadre giocano in 14');
  if(leagueFormation==='3-3-3')extras.push('Regola FGCI 3-3-3: le squadre giocano in 9');
@@ -4852,7 +5003,7 @@ function seasonRuleSummary(){
  const mandatoryNames=mandatoryMidseasonPlayerIds().map(id=>playerById(id)?.name).filter(Boolean);if(mandatoryNames.length)extras.push(`Scambi obbligatori: ${mandatoryNames.join(', ')}`)
  return `<div class="season-rules-card"><b>Regole alterate dagli eventi</b><br>Modalità: ${chaosEnabled()?'Caos (19 avversarie attive)':'Normale'} · Draft di metà stagione: ${target} ${target===1?'cambio':'cambi'} · Decisioni: ${decisionMode} · Draft: ${marketMode} · Eventi unici: ${(state.seenDecisionEvents||[]).length}/${DECISIONS.length}${extras.length?`<br>${extras.map(esc).join(' · ')}`:''}</div>`;
 }
-function resolveLineup(){if(state.seasonRules?.autoOptimizeLineup)optimizeLineupWithBench();const starters=getStarterEntries(),bench=getBenchEntries(),used=new Set(),out=[];for(const entry of starters){const p=entry.player,st=statusOf(p.id);if(st.suspension>0||st.seasonOut||(st.injury>0&&!state.playInjured[p.id])){const available=bench.filter(b=>!used.has(b.playerId)&&statusOf(b.playerId).injury<=0&&statusOf(b.playerId).suspension<=0);let sub=available.find(b=>compatible(b.player,entry.slot));if(!sub)sub=available.find(b=>roleOf(b.player)===POSITION_ROLE[entry.slot]);if(!sub)sub=available[0];if(sub){used.add(sub.playerId);out.push({...sub,slot:entry.slot,malus:compatible(sub.player,entry.slot)?0:-10,replaces:p.name})}else{out.push({playerId:`youth-${entry.slot}`,slot:entry.slot,bench:false,malus:-10,replaces:p.name,player:{id:`youth-${entry.slot}`,name:`Primavera ${entry.slot}`,nation:'Academy',Position:entry.slot,role:POSITION_ROLE[entry.slot],ovr:60,subscriber:'no'}})}}else out.push({...entry,malus:st.injury>0?-20:0,replaces:''})}return out}
+function resolveLineup(){enforceTipsterStarters();if(state.seasonRules?.autoOptimizeLineup)optimizeLineupWithBench();const starters=getStarterEntries(),bench=getBenchEntries(),used=new Set(),out=[];for(const entry of starters){const p=entry.player,st=statusOf(p.id);if(st.suspension>0||st.seasonOut||(st.injury>0&&!state.playInjured[p.id])){const available=bench.filter(b=>!used.has(b.playerId)&&statusOf(b.playerId).injury<=0&&statusOf(b.playerId).suspension<=0);let sub=available.find(b=>compatible(b.player,entry.slot));if(!sub)sub=available.find(b=>roleOf(b.player)===POSITION_ROLE[entry.slot]);if(!sub)sub=available[0];if(sub){used.add(sub.playerId);out.push({...sub,slot:entry.slot,malus:compatible(sub.player,entry.slot)?0:-10,replaces:p.name})}else{out.push({playerId:`youth-${entry.slot}`,slot:entry.slot,bench:false,malus:-10,replaces:p.name,player:{id:`youth-${entry.slot}`,name:`Primavera ${entry.slot}`,nation:'Academy',Position:entry.slot,role:POSITION_ROLE[entry.slot],ovr:60,subscriber:'no'}})}}else out.push({...entry,malus:st.injury>0?-20:0,replaces:''})}return out}
 function teamPowerBase(){const list=getStarterEntries().map(r=>r.player);return avg(list.map(p=>Number(p.ovr)||70))}
 function matchPower(){const line=resolveLineup(),players=line.map(x=>x.player);let total=0;line.forEach(e=>{total+=(Number(e.player.ovr)||60)+(effectiveChemistryBonus(e.player,players)/5)+e.malus+activeOvrBonus(e.player)});return line.length?total/line.length:0}
 function unavailableList(){return rosterPlayers().filter(r=>{const s=statusOf(r.playerId);return s.injury>0||s.suspension>0})}
@@ -5002,6 +5153,10 @@ const DECISIONS=[
  {id:'crescita-personale',title:'Il capitano apre un corso di crescita personale',text:'Per tre ore ripete frasi come “il fuorigioco esiste solo nella tua mente”.',choices:[
   {label:'Obblighi tutti a partecipare',effect:'×2 Intesa per 1 giornata',apply(){pushEffect('teamChemMultiplier',2,1);return 'Tutti i bonus Intesa positivi dei titolari vengono raddoppiati nella prossima partita.'}},
   {label:'Interrompi il seminario e fate allenamento',effect:'+6 OVR, ma Intesa azzerata nella prossima partita',apply(){pushEffect('teamOvr',6,1);pushEffect('teamChemZero',1,1);return '+6 OVR alla squadra e Intesa azzerata nella prossima partita.'}}
+ ]},
+ {id:'cassaaa-pinguino',userOnly:true,title:'Capitolo 1: Cassaaa',text:'Arriva un misterioso pinguino e ti propone una scommessa decisamente sospetta.',available(){return Number(state.matchday)<seasonLength()-3&&!penguinChain().active&&!penguinChain().completed},choices:[
+  {label:'1+over 5,3 x Steell cage',effect:'La prossima partita finisce 3-2 per te, ma devi iscriverti al suo canale. In seguito si attiverà il Capitolo 2.',apply(){return acceptCassaaaBet()}},
+  {label:'Scrolla',effect:'Non lo ascolti e ti concentri sulla prossima partita',apply(){return scrollPenguin()}}
  ]},
  {id:'mentalista',title:'Arriva un mentalista nello spogliatoio',text:'Dice di poter far credere agli avversari che il pallone sia invisibile.',available(){return Number(state.matchday)<seasonLength()-6},choices:[
   {label:'Gli permetti di ipnotizzare l’attaccante',effect:'75%: +8 OVR nella prossima partita. 25%: il mentalista sbaglia e lo trasforma in un pollo da 1 OVR',apply(){return hypnotizeRandomAttacker()}},
@@ -5216,8 +5371,51 @@ function renderOpponentRoster(team){
  }).join('');
  return `<details class="opponent-roster-details"><summary>${teamColorDot(team)}<span>Rosa di ${esc(team.name)} · ${players.length} giocatori</span></summary><div class="opponent-roster-list">${rows}</div></details>`;
 }
+
+function renderParallelCupOpponentLineup(lineup){
+ const rows=(Array.isArray(lineup)?lineup:[]).map(entry=>`<div class="parallel-cup-opponent-player"><b>${esc(entry.player?.name||'Giocatore')}</b><span>${esc(entry.slot||entry.player?.Position||'')} · ${Number(entry.player?.ovr)||60} OVR</span></div>`).join('');
+ return `<div class="parallel-cup-opponent-list">${rows||'<p>Rosa non disponibile.</p>'}</div>`;
+}
+function showParallelCupMatch(pending){
+ const cup=parallelCupState(),stage=cup.stages?.[Number(pending.stageIndex)],tie=stage?.ties?.find(item=>String(item.id)===String(pending.tieId));
+ if(!stage||!tie){cup.pendingMatch=null;save();render();return}
+ const teamA=parallelCupParticipant(tie.teamAId),teamB=parallelCupParticipant(tie.teamBId),homeParticipant=Number(pending.legIndex)===0?teamA:teamB,awayParticipant=Number(pending.legIndex)===0?teamB:teamA;
+ const homeTeam=parallelCupParticipantTeam(homeParticipant),awayTeam=parallelCupParticipantTeam(awayParticipant),opponentParticipant=homeParticipant?.user?awayParticipant:homeParticipant,opponentTeam=parallelCupParticipantTeam(opponentParticipant),opponentLineup=parallelCupParticipantLineup(opponentParticipant),event=pending.event||parallelCupDedicatedEvent(Boolean(pending.userHome));
+ pending.event=event;
+ screen.innerHTML=`<div class="parallel-cup-match-view"><section class="parallel-cup-match-hero"><div class="parallel-cup-match-top"><div><div class="label">🏆 Coppa parallela · prima della giornata ${Number(pending.matchday)}</div><h2>${esc(stage.name)}</h2></div><div class="parallel-cup-leg-badge">${Number(pending.legIndex)===0?'Andata':'Ritorno'}</div></div><div class="next-match"><div class="next-team-card" style="${teamCssVars(homeTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(homeTeam.name)}px">${esc(homeTeam.name)}</div><div class="subline">Casa</div></div><div class="versus">VS</div><div class="next-team-card" style="${teamCssVars(awayTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(awayTeam.name)}px">${esc(awayTeam.name)}</div><div class="subline">Trasferta</div></div></div><div class="parallel-cup-aggregate"><b>Aggregato attuale:</b> ${Number(tie.aggregateA)||0}-${Number(tie.aggregateB)||0} · Questa partita non fa avanzare la giornata di campionato.</div><div class="parallel-cup-event-card"><span>Evento dedicato alla coppa</span><b>${esc(event.title)}</b><p>${esc(event.description)}</p></div><div class="parallel-cup-match-actions"><button id="playCupLive" class="btn match-live-button">🎙️ Gioca con cronaca</button><button id="playCupInstant" class="btn match-instant-button">⚡ Simula subito</button></div></section><div class="dashboard-grid season-dashboard-grid"><div class="season-main-column">${renderParallelCupPanel()}<section class="panel"><div class="label">La tua formazione</div>${renderResolvedLineup()}</section></div><aside class="season-sidebar"><section class="panel opponent-club-panel" style="${teamCssVars(opponentTeam)}"><div class="label">Avversario di coppa</div><h3>${esc(opponentTeam.name)}</h3><p>OVR stimato ${parallelCupParticipantPower(opponentParticipant).toFixed(1)}</p>${renderParallelCupOpponentLineup(opponentLineup)}</section><section class="panel season-availability-panel"><div class="label">Indisponibili</div>${renderAvailability()}</section></aside></div></div>`;
+ document.querySelectorAll('[data-injured]').forEach(button=>button.onclick=()=>{const id=button.dataset.injured;state.playInjured[id]=!state.playInjured[id];save();render()});
+ document.getElementById('playCupLive').onclick=()=>playParallelCupMatch('live');
+ document.getElementById('playCupInstant').onclick=()=>playParallelCupMatch('instant');
+ save();
+}
+function playParallelCupMatch(mode='instant'){
+ const pending=parallelCupPendingMatch();if(!pending)return render();
+ const cup=parallelCupState(),stage=cup.stages?.[Number(pending.stageIndex)],tie=stage?.ties?.find(item=>String(item.id)===String(pending.tieId));if(!stage||!tie)return;
+ const teamA=parallelCupParticipant(tie.teamAId),teamB=parallelCupParticipant(tie.teamBId),homeParticipant=Number(pending.legIndex)===0?teamA:teamB,awayParticipant=Number(pending.legIndex)===0?teamB:teamA,userHome=Boolean(homeParticipant?.user),homeTeam=parallelCupParticipantTeam(homeParticipant),awayTeam=parallelCupParticipantTeam(awayParticipant),homeLineup=parallelCupParticipantLineup(homeParticipant),awayLineup=parallelCupParticipantLineup(awayParticipant),event=pending.event||parallelCupDedicatedEvent(userHome);
+ const duration=pinkCardMatchDuration(currentMatchDuration()),pinkCardMinute=state.seasonRules?.pinkCardEndsMatch?duration:0,chaos=state.activeEffects.filter(effect=>effect.type==='refChaos'),longRisk=Boolean(state.seasonRules.longMatchRisk&&duration===120),opponentYellowRed=Boolean(state.seasonRules?.yellowEqualsRed&&Math.random()<.45),ownYellowRed=Boolean(state.seasonRules?.yellowEqualsRed&&Math.random()<.45),opponentRedChance=Math.min(1,Math.max(0,...chaos.map(effect=>Number(effect.opponentRedChance)||0))+(longRisk?0.15:0)),ownRedChance=Math.min(1,Math.max(0,...chaos.map(effect=>Number(effect.ownRedChance??effect.ownSuspensionChance)||0))+(longRisk?0.25:0));
+ const opponentLineup=userHome?awayLineup:homeLineup,userLineup=userHome?homeLineup:awayLineup,redCandidate=(opponentYellowRed||Math.random()<opponentRedChance)?pick(opponentLineup.map(entry=>entry.player).filter(Boolean)):null,ownRedEntry=(ownYellowRed||Math.random()<ownRedChance)?pick(userLineup.filter(entry=>entry?.player)):null;
+ let homePower=parallelCupParticipantPower(homeParticipant),awayPower=parallelCupParticipantPower(awayParticipant);if(userHome){homePower+=Number(event.userBonus)||0;awayPower+=Number(event.opponentBonus)||0}else{awayPower+=Number(event.userBonus)||0;homePower+=Number(event.opponentBonus)||0}if(redCandidate){if(userHome)awayPower-=10;else homePower-=10}if(ownRedEntry){if(userHome)homePower-=10;else awayPower-=10}homePower=Math.max(35,homePower);awayPower=Math.max(35,awayPower);
+ let [homeGoals,awayGoals]=simulateScore(homePower,awayPower,.18,duration),homeEvents=buildTeamGoals(homeGoals,homeLineup,homeTeam,awayTeam,[],duration),awayEvents=buildTeamGoals(awayGoals,awayLineup,awayTeam,homeTeam,[],duration);homeGoals=scoreGoalEvents(homeEvents);awayGoals=scoreGoalEvents(awayEvents);
+ const commentary=buildMatchCommentary({homeTeam,awayTeam,homeLineup,awayLineup,homeEvents,awayEvents,homePower,awayPower,redCandidate,ownRedEntry,userHome,duration,pinkCard:Boolean(pinkCardMinute),opponentYellowRed,ownYellowRed});
+ const finishCup=()=>{
+   if(ownRedEntry){const status=statusOf(ownRedEntry.playerId);status.suspension=Math.max(1,status.suspension)}
+   if(redCandidate){const opponentParticipant=userHome?awayParticipant:homeParticipant;if(opponentParticipant?.origin==='current'){const opponent=teamById(opponentParticipant.teamId),status=opponentStatusOf(opponent,redCandidate.id);status.suspension=Math.max(1,status.suspension)}}
+   const report=parallelCupCompleteLeg(pending,{homeGoals,awayGoals,event,homeEvents,awayEvents,commentary});if(report)tickPenguinAfterMatch(report);save();showParallelCupResultModal(report,homeTeam,awayTeam);
+ };
+ if(mode==='live')playLiveMatch({commentary,homeTeam,awayTeam,homeGoals,awayGoals,matchday:pending.matchday,duration,label:`Coppa · ${stage.name} · ${Number(pending.legIndex)===0?'Andata':'Ritorno'}`},finishCup);
+ else{modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal"><div class="label">Coppa parallela</div><h2>${esc(stage.name)} · ${Number(pending.legIndex)===0?'Andata':'Ritorno'}</h2><div class="sim"><span></span></div><p>La partita di coppa viene simulata separatamente dal campionato.</p></div></div>`;setTimeout(finishCup,1250)}
+}
+function showParallelCupResultModal(report,homeTeam,awayTeam){
+ if(!report){modalRoot.innerHTML='';render();return}
+ const commentaryHtml=(report.commentary||[]).map(event=>commentaryRowHtml(event,homeTeam,awayTeam)).join('')||'<div class="goal-line">Partita senza azioni registrate.</div>',verdict=report.decided?(report.advanced?(Number(report.stageIndex)===2?'Coppa vinta!':'Qualificazione conquistata.'):`Eliminazione: ${esc(report.winner)} passa il turno.`):`Aggregato provvisorio ${report.aggregateUser}-${report.aggregateOpponent}.`;
+ modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">🏆 Coppa parallela · ${esc(report.stage)} · ${esc(report.leg)}</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(report.opponent)}</div><div class="score">${Number(report.gf)}–${Number(report.ga)}</div><button id="closeCupResult" class="btn primary result-continue-top">Continua</button><div class="goal-line cup-result-line"><b>${esc(report.event?.title||'Evento coppa')}</b><br>${esc(report.event?.description||'Nessun modificatore speciale.')}</div><div class="goal-line"><b>Risultato del doppio confronto</b><br>${verdict}${report.penalties?` Rigori: ${esc(report.penalties)}.`:''}</div>${report.penguinUpdate?`<div class="goal-line ${report.penguinUpdate.type==='ludopatia'?'red-card-event':''}"><b>🐧 ${report.penguinUpdate.type==='ludopatia'?'Ludopatia':'Esperto Tipster'}</b><br>${esc(report.penguinUpdate.message)}</div>`:''}<div class="result-scorers">${renderResultScorers(report.userGoalEvents,state.teamName)}${renderResultScorers(report.opponentGoalEvents,report.opponent)}</div><div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div></div></div></div>`;
+ document.getElementById('closeCupResult').onclick=()=>{modalRoot.innerHTML='';render()};
+}
+
 function showSeason(){
  if(state.matchday>=19&&parallelCupState().status==='pending')initializeParallelCup();
+ const pendingCupMatch=parallelCupPendingMatch();
+ if(pendingCupMatch){showParallelCupMatch(pendingCupMatch);return}
  prepareEvent();
  const fx=userFixture(),opp=teamById(fx.home===USER_ID?fx.away:fx.home),userTeam=teamById(USER_ID)||{id:USER_ID,name:state.teamName,clubId:state.userClubId,colors:activeUserClub().colorClub},homeTeam=teamById(fx.home),awayTeam=teamById(fx.away),standing=userStanding(),rank=sortedTable().findIndex(x=>x.id===USER_ID)+1;
  screen.innerHTML=`<section class="panel season-overview-panel" style="${teamCssVars(userTeam)}"><div class="season-strip"><div class="stat"><b>${state.matchday+1}</b><span>Giornata</span></div><div class="stat"><b>${rank}°</b><span>Posizione</span></div><div class="stat"><b>${standing.pts}</b><span>Punti</span></div><div class="stat"><b>${standing.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${standing.ga}</b><span>Gol subiti</span></div></div></section><div class="dashboard-grid season-dashboard-grid"><div class="season-main-column"><section class="panel season-match-panel"><div class="label">Prossima partita</div><div class="next-match"><div class="next-team-card" style="${teamCssVars(homeTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(homeTeam?.name||state.teamName)}px" title="${esc(homeTeam?.name||state.teamName)}">${esc(homeTeam?.name||state.teamName)}</div><div class="subline">${fx.home===USER_ID?'Casa':'Avversario'}</div></div><div class="versus">VS</div><div class="next-team-card" style="${teamCssVars(awayTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(awayTeam?.name||state.teamName)}px" title="${esc(awayTeam?.name||state.teamName)}">${esc(awayTeam?.name||state.teamName)}</div><div class="subline">${fx.away===USER_ID?'Trasferta':'Avversario'}</div></div></div><div style="margin-top:14px">${renderParallelCupPanel()}${renderActiveQuest()}${renderEvent()}${renderChaosLeagueFeed()}</div><div class="match-play-actions"><button id="playRoundLive" class="btn match-live-button" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>🎙️ Gioca con cronaca</button><button id="playRoundInstant" class="btn match-instant-button" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>⚡ Simula subito</button></div><div class="match-play-note">La simulazione rapida mantiene il comportamento attuale.</div></section><section class="panel season-tabs-panel"><div class="tabs"><button class="tab active" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="roster">Rosa</button><button class="tab" data-tab="stats">Statistiche</button></div><div id="tab-table" class="tab-view active">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-roster" class="tab-view">${renderSeasonRosterField()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div></section></div><aside class="season-sidebar"><section class="panel season-availability-panel"><div class="label">Indisponibili</div><h3>Gestione formazione</h3>${renderAvailability()}<p style="font-size:12px"><b>Squalificato:</b> sostituzione automatica. <b>Infortunato:</b> può giocare con -20 Intesa oppure essere sostituito. Panchinaro fuori ruolo: -10 Intesa.</p></section><section class="panel season-lineup-panel"><div class="label">Formazione effettiva</div>${renderResolvedLineup()}</section><section class="panel opponent-club-panel season-opponent-panel" style="${teamCssVars(opp)}"><div class="label">Avversario reale</div><h3>${teamColorDot(opp)}${esc(opp.name)}</h3>${seasonRuleSummary()}${renderOpponentRoster(opp)}</section></aside></div>`;
@@ -5552,10 +5750,10 @@ function commentaryRowHtml(event,homeTeam,awayTeam){
  const eventClass=event.type==='goal'?'goal-event':['red','yellow','pink'].includes(event.type)?'card-event':'';
  return `<article class="match-commentary-row ${neutral?'neutral-event':''} ${eventClass}" style="${team?teamCssVars(team):''}"><span class="commentary-minute">${esc(event.minute)}'</span><span class="commentary-icon">${event.icon||'•'}</span><div class="commentary-copy"><b>${esc(event.title||'Azione')}</b><span>${esc(event.text||'')}</span></div>${event.scoreAfter?`<strong class="commentary-score">${esc(event.scoreAfter)}</strong>`:''}</article>`;
 }
-function playLiveMatch({commentary,homeTeam,awayTeam,homeGoals,awayGoals,matchday,duration=90},finishRound){
+function playLiveMatch({commentary,homeTeam,awayTeam,homeGoals,awayGoals,matchday,duration=90,label=''},finishRound){
  let index=0,timer=null,closed=false,paused=false,homeScore=0,awayScore=0,currentMinute=0;
  const totalMinutes=Math.max(30,Number(duration)||90);
- modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal live-match-modal" role="dialog" aria-modal="true"><header class="live-match-head"><div class="live-match-headline"><div><div class="label">Giornata ${matchday}</div><b>Cronaca della partita</b></div><span class="live-status">Live</span></div></header><div class="live-scoreboard"><div class="live-team" style="${teamCssVars(homeTeam)}"><span class="live-team-colors"></span><b title="${esc(homeTeam.name)}">${esc(homeTeam.name)}</b></div><div class="live-score"><span id="liveHomeScore">0</span><em>–</em><span id="liveAwayScore">0</span></div><div class="live-team" style="${teamCssVars(awayTeam)}"><span class="live-team-colors"></span><b title="${esc(awayTeam.name)}">${esc(awayTeam.name)}</b></div></div><div class="live-clock-wrap"><span id="liveClock" class="live-clock">0'</span><div class="live-progress"><i id="liveProgress"></i></div></div><div id="liveCommentary" class="live-commentary"><div class="live-empty">La partita sta per iniziare…</div></div><footer class="live-match-controls"><button id="pauseLiveMatch" class="btn secondary-strong" type="button">⏸ Pausa</button><button id="skipLiveMatch" class="btn match-instant-button" type="button">⚡ Simula il resto</button></footer></section></div>`;
+ modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal live-match-modal" role="dialog" aria-modal="true"><header class="live-match-head"><div class="live-match-headline"><div><div class="label">${esc(label||`Giornata ${matchday}`)}</div><b>Cronaca della partita</b></div><span class="live-status">Live</span></div></header><div class="live-scoreboard"><div class="live-team" style="${teamCssVars(homeTeam)}"><span class="live-team-colors"></span><b title="${esc(homeTeam.name)}">${esc(homeTeam.name)}</b></div><div class="live-score"><span id="liveHomeScore">0</span><em>–</em><span id="liveAwayScore">0</span></div><div class="live-team" style="${teamCssVars(awayTeam)}"><span class="live-team-colors"></span><b title="${esc(awayTeam.name)}">${esc(awayTeam.name)}</b></div></div><div class="live-clock-wrap"><span id="liveClock" class="live-clock">0'</span><div class="live-progress"><i id="liveProgress"></i></div></div><div id="liveCommentary" class="live-commentary"><div class="live-empty">La partita sta per iniziare…</div></div><footer class="live-match-controls"><button id="pauseLiveMatch" class="btn secondary-strong" type="button">⏸ Pausa</button><button id="skipLiveMatch" class="btn match-instant-button" type="button">⚡ Simula il resto</button></footer></section></div>`;
  const commentaryBox=document.getElementById('liveCommentary'),clock=document.getElementById('liveClock'),progress=document.getElementById('liveProgress'),homeScoreNode=document.getElementById('liveHomeScore'),awayScoreNode=document.getElementById('liveAwayScore'),pauseButton=document.getElementById('pauseLiveMatch');
  const schedule=(callback,delay)=>{if(closed||paused)return;if(timer)clearTimeout(timer);timer=setTimeout(callback,delay)};
  const updateClock=minute=>{currentMinute=clamp(Math.floor(Number(minute)||0),0,totalMinutes);clock.textContent=`${currentMinute}'`;progress.style.width=`${currentMinute/totalMinutes*100}%`};
@@ -5647,7 +5845,7 @@ function postMatch(){
  if(result&&state.seasonRules.futureInjuryPenaltyNotice){if(state.standings?.[USER_ID])state.standings[USER_ID].pts=0;result.futureInjuryPenalty=state.seasonRules.futureInjuryPenaltyNotice;state.seasonRules.futureInjuryPenaltyNotice=''}
  tickEventChainsAfterMatch(result);
  tickSeasonQuestAfterMatch(result);
- state.activeEffects.forEach(effect=>effect.rounds--);state.activeEffects=state.activeEffects.filter(effect=>effect.rounds>0);activatePendingNationalBoost();state.playInjured={};tickChaosOpponentEffects();state.matchday++;state.pendingEvent=null;processParallelCupAfterLeagueRound(state.matchday,result);
+ state.activeEffects.forEach(effect=>effect.rounds--);state.activeEffects=state.activeEffects.filter(effect=>effect.rounds>0);activatePendingNationalBoost();state.playInjured={};tickChaosOpponentEffects();state.matchday++;state.pendingEvent=null;
  if(state.matchday===19){runChaosOpponentMidseason();const target=midseasonTarget(),auto=Boolean(state.seasonRules.autoMidseason||state.seasonRules.botMidseason),mandatoryIds=mandatoryMidseasonPlayerIds().filter(id=>rosterEntry(id)).slice(0,3),mandatory=mandatoryIds[0]||'';state.midseason={step:0,target:clamp(Math.max(target,mandatoryIds.length),1,3),outgoingId:mandatory,mandatoryOutgoingId:mandatory,mandatoryOutgoingIds:mandatoryIds,clubId:'',nation:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto,autoCompleted:false,changes:[]};state.phase='midseason';}
  else if(isTeamEliminated(USER_ID)||state.matchday>=seasonLength())state.phase='finished';else prepareEvent();
 }
@@ -5665,12 +5863,13 @@ function showResultModal(){
  const redLine=result.opponentRedCard?`<div class="goal-line red-card-event"><b>🟥 ${result.opponentYellowRed?'Giallo trasformato in rosso':'Espulsione avversaria'}: ${esc(result.opponentRedPlayer||'giocatore avversario')}</b><br>${esc(result.opponent)} ha giocato parte della gara in inferiorità numerica.</div>`:'';
  const suspensionLine=result.ownSuspensionPlayer?`<div class="goal-line red-card-event"><b>🟥 ${result.ownYellowRed?'Giallo trasformato in rosso':'Espulsione'}: ${esc(result.ownSuspensionPlayer)}</b><br>Sarà squalificato per la prossima giornata.</div>`:'';
  const pinkLine=result.pinkCardMinute?`<div class="goal-line"><b>🩷 Cartellino rosa al ${Number(result.pinkCardMinute)}′</b><br>La partita è terminata immediatamente con il risultato maturato fino a quel minuto.</div>`:'';
- const forcedLine=result.forcedScoreData?.source==='Nazionale Fantaballa'?`<div class="goal-line"><b>🇮🇹 Convocazione della Nazionale Fantaballa</b><br>La squadra ha saltato la partita: sconfitta a tavolino ${Number(result.forcedScoreData.gf)||0}-${Number(result.forcedScoreData.ga)||3}. Ora parte il bonus di +5 OVR per 3 giornate.</div>`:result.forcedScore?`<div class="goal-line"><b>✅ Vittoria per 6-0</b><br>Il risultato garantito dall’evento Favoriti è stato applicato.</div>`:result.forcedLoss?`<div class="goal-line"><b>📋 Sconfitta obbligatoria</b><br>La sconfitta prevista dall’evento è stata applicata.</div>`:result.forcedWin?`<div class="goal-line"><b>✅ Vittoria assicurata</b><br>La vittoria prevista dall’evento è stata applicata.</div>`:result.maxDraw?`<div class="goal-line"><b>🤝 Risultato limitato</b><br>La squadra non poteva ottenere più di un pareggio.</div>`:'';
+ const forcedLine=result.forcedScoreData?.source==='Nazionale Fantaballa'?`<div class="goal-line"><b>🇮🇹 Convocazione della Nazionale Fantaballa</b><br>La squadra ha saltato la partita: sconfitta a tavolino ${Number(result.forcedScoreData.gf)||0}-${Number(result.forcedScoreData.ga)||3}. Ora parte il bonus di +5 OVR per 3 giornate.</div>`:result.forcedScoreData?.source==='Cassaaa'?`<div class="goal-line"><b>🐧 Cassaaa</b><br>Il pinguino mantiene la promessa: partita chiusa ${Number(result.forcedScoreData.gf)||3}-${Number(result.forcedScoreData.ga)||2} per te.</div>`:result.forcedScore?`<div class="goal-line"><b>✅ Risultato garantito</b><br>La partita è terminata ${Number(result.forcedScoreData?.gf)||6}-${Number(result.forcedScoreData?.ga)||0} come previsto dall’evento.</div>`:result.forcedLoss?`<div class="goal-line"><b>📋 Sconfitta obbligatoria</b><br>La sconfitta prevista dall’evento è stata applicata.</div>`:result.forcedWin?`<div class="goal-line"><b>✅ Vittoria assicurata</b><br>La vittoria prevista dall’evento è stata applicata.</div>`:result.maxDraw?`<div class="goal-line"><b>🤝 Risultato limitato</b><br>La squadra non poteva ottenere più di un pareggio.</div>`:'';
  const pointsLine=result.pointsNote?`<div class="goal-line"><b>🏆 Punti campionato</b><br>${esc(result.pointsNote)}</div>`:'';
  const injuryLine=result.eventInjuries?.length?`<div class="goal-line"><b>🚑 Conseguenza dell’imprevisto</b><br>${result.eventInjuries.map(item=>`${esc(item.name)}: ${item.duration} ${item.duration===1?'giornata':'giornate'}`).join(' · ')}</div>`:'';
  const futurePenaltyLine=result.futureInjuryPenalty?`<div class="goal-line red-card-event"><b>⏳ Paradosso temporale</b><br>${esc(result.futureInjuryPenalty)}</div>`:'';
  const chickenTrainingLine=result.chickenTraining?`<div class="goal-line"><b>🐔 Allenamento del pollo</b><br>${esc(result.chickenTraining.playerName)} guadagna +${Number(result.chickenTraining.gain)||0} OVR e sale a ${Number(result.chickenTraining.newOvr)||1}.</div>`:'';
  const chickenGoalLine=result.chickenGoals?`<div class="goal-line"><b>🐔 Progresso del pollaio</b><br>${esc(result.chickenGoals.playerName)} ha segnato ${Number(result.chickenGoals.count)||0} ${Number(result.chickenGoals.count)===1?'gol':'gol'}${result.chickenGoals.double?' dal valore doppio':''}. Totale: ${Number(result.chickenGoals.total)||0}/3.</div>`:'';
+ const penguinLine=result.penguinUpdate?`<div class="goal-line ${result.penguinUpdate.type==='ludopatia'?'red-card-event':''}"><b>🐧 ${result.penguinUpdate.type==='ludopatia'?'Ludopatia':'Esperto Tipster'}</b><br>${esc(result.penguinUpdate.message)}</div>`:'';
  const questLine=(Array.isArray(result.questUpdates)?result.questUpdates:[]).map(update=>`<div class="goal-line ${update.success?'':'red-card-event'}"><b>${update.success?'✅':'❌'} Quest: ${esc(update.title||'Missione')}</b><br>${esc(update.message||'')}</div>`).join('');
  const cupLine=renderParallelCupResult(result.cupReport);
  const champagneLine=result.champagneDrawLoss?`<div class="goal-line red-card-event"><b>🥂 Calcio champagne</b><br>Il pareggio è stato trasformato in sconfitta dalla penalità della quest.</div>`:'';
@@ -5685,7 +5884,7 @@ function showResultModal(){
  const mvpTeam=result.mvpTeamId?teamById(result.mvpTeamId):null;
  const mvpLine=mvpPlayer?`<div class="match-mvp" style="${teamCssVars(mvpTeam)}">${renderMiniAvatar(mvpPlayer,'small')}<div><span>⭐ MVP della partita</span><b>${esc(mvpPlayer.name)}</b><small>${mvpTeam?`${teamColorDot(mvpTeam)}${esc(mvpTeam.name)}`:''}</small></div></div>`:'';
  const scorersLine=`<div class="result-scorers">${renderResultScorers(result.goals,state.teamName)}${renderResultScorers(result.opponentGoals,result.opponent)}</div>`;
- modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${result.gf}–${result.ga}</div><button id="closeResult" class="btn primary result-continue-top">Continua</button>${scorersLine}${pinkLine}${redLine}${suspensionLine}${forcedLine}${pointsLine}${injuryLine}${futurePenaltyLine}${chickenTrainingLine}${chickenGoalLine}${questLine}${cupLine}${champagneLine}${hungerLine}${subscriberLine}<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>${mvpLine}</div></div></div>`;
+ modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${result.gf}–${result.ga}</div><button id="closeResult" class="btn primary result-continue-top">Continua</button>${scorersLine}${pinkLine}${redLine}${suspensionLine}${forcedLine}${pointsLine}${injuryLine}${futurePenaltyLine}${chickenTrainingLine}${chickenGoalLine}${penguinLine}${questLine}${cupLine}${champagneLine}${hungerLine}${subscriberLine}<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>${mvpLine}</div></div></div>`;
  document.getElementById('closeResult').onclick=()=>{modalRoot.innerHTML='';render()};
 }
 
