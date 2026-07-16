@@ -2655,6 +2655,13 @@
       overflow:auto;
       background:rgba(5,15,28,.10)
     }
+    /* Alcuni browser integrati non fanno prevalere automaticamente [hidden]
+       sul display:grid dell'overlay: lo imponiamo esplicitamente. */
+    .season-event-overlay[hidden],
+    .season-event-overlay.is-event-hidden,
+    .season-event-dock[hidden],
+    .season-event-dock.is-event-hidden{display:none!important}
+    .season-event-dock.is-event-visible{display:block!important}
     .season-event-dialog{
       position:relative;
       width:min(920px,100%);
@@ -5942,23 +5949,40 @@ function resolveDecision(i){
  save();
  render();
 }
-function bindSeasonEventControls(){
+function setSeasonEventMinimized(minimized,{focus=true}={}){
+ seasonEventMinimized=Boolean(minimized);
  const overlay=document.querySelector('.season-event-overlay'),dock=document.querySelector('.season-event-dock');
+ if(overlay){
+   overlay.hidden=seasonEventMinimized;
+   overlay.classList.toggle('is-event-hidden',seasonEventMinimized);
+   overlay.setAttribute('aria-hidden',seasonEventMinimized?'true':'false');
+   overlay.style.setProperty('display',seasonEventMinimized?'none':'grid','important');
+ }
+ if(dock){
+   dock.hidden=!seasonEventMinimized;
+   dock.classList.toggle('is-event-hidden',!seasonEventMinimized);
+   dock.classList.toggle('is-event-visible',seasonEventMinimized);
+   dock.setAttribute('aria-hidden',seasonEventMinimized?'false':'true');
+   dock.style.setProperty('display',seasonEventMinimized?'block':'none','important');
+ }
+ if(!focus)return;
+ const target=seasonEventMinimized?dock?.querySelector('[data-event-expand]'):overlay?.querySelector('[data-event-minimize]');
+ try{target?.focus({preventScroll:true})}catch{target?.focus()}
+}
+function bindSeasonEventControls(){
  const minimize=document.querySelector('[data-event-minimize]'),expand=document.querySelector('[data-event-expand]');
- if(minimize)minimize.onclick=()=>{
-   seasonEventMinimized=true;
-   if(overlay)overlay.hidden=true;
-   if(dock)dock.hidden=false;
-   const target=dock?.querySelector('button');
-   try{target?.focus({preventScroll:true})}catch{target?.focus()}
+ if(minimize)minimize.onclick=event=>{
+   event.preventDefault();
+   event.stopPropagation();
+   setSeasonEventMinimized(true);
  };
- if(expand)expand.onclick=()=>{
-   seasonEventMinimized=false;
-   if(dock)dock.hidden=true;
-   if(overlay)overlay.hidden=false;
-   const target=overlay?.querySelector('[data-event-minimize]');
-   try{target?.focus({preventScroll:true})}catch{target?.focus()}
+ if(expand)expand.onclick=event=>{
+   event.preventDefault();
+   event.stopPropagation();
+   setSeasonEventMinimized(false);
  };
+ /* Allinea sempre DOM e variabile, anche sui browser che ignorano [hidden]. */
+ setSeasonEventMinimized(seasonEventMinimized,{focus:false});
 }
 function renderEvent(){
  const e=state.pendingEvent;
