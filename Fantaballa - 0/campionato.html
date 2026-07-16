@@ -688,7 +688,7 @@
       text-shadow:0 1px 0 rgba(255,255,255,.45);
     }
     .season-jersey::after{content:"";position:absolute;left:50%;top:2px;transform:translateX(-50%);width:16px;height:10px;border-radius:0 0 8px 8px;background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.08) inset}
-    .season-jersey-number{position:relative;z-index:1;color:#111;font-weight:1000;letter-spacing:-.02em}
+    .season-jersey-number{position:relative;z-index:1;color:var(--jersey-number-color,#111);font-weight:1000;letter-spacing:-.02em}
     .season-jersey-wrap.subscriber .season-jersey{border-color:#fff8d2; box-shadow:0 0 0 5px rgba(140,98,255,.32), 0 0 0 10px rgba(255,225,116,.2), 0 8px 16px rgba(0,0,0,.18)}
     .season-jersey-sub-star{position:absolute;right:-8px;top:-8px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#8c62ff,#6840d6);color:#fff8d2;font-size:11px;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,.24);z-index:6}
 
@@ -802,7 +802,7 @@
     .season-field-slot.filled:nth-child(even) .season-jersey{transform:rotate(1.5deg)}
     .season-field-slot.filled:hover .season-jersey{transform:translateY(-3px) rotate(0);filter:saturate(1.08)}
     .season-jersey::after{width:18px;height:10px;top:2px}
-    .season-jersey-number{transform:translateY(3px);font-size:16px;color:#111;font-weight:1000;text-shadow:0 1px 0 rgba(255,255,255,.35),0 2px 4px rgba(0,0,0,.14)}
+    .season-jersey-number{transform:translateY(3px);font-size:16px;color:var(--jersey-number-color,#111);font-weight:1000;text-shadow:0 1px 0 rgba(255,255,255,.35),0 2px 4px rgba(0,0,0,.14)}
     .season-field-slot.filled .season-slot-name{
       max-width:128px;
       padding:3px 7px;
@@ -2143,7 +2143,7 @@
       .season-roster-field-slot .season-jersey-wrap{width:44px!important;height:42px!important}
       .season-roster-field-slot .season-jersey{width:44px!important;height:37px!important;font-size:13px!important;border-width:2px!important}
       .season-roster-field-slot .season-jersey::after{width:13px!important;height:7px!important}
-      .season-roster-field-slot .season-jersey-number{font-size:13px!important;transform:translateY(2px)!important;color:#111!important}
+      .season-roster-field-slot .season-jersey-number{font-size:13px!important;transform:translateY(2px)!important;color:var(--jersey-number-color,#111)!important}
       .season-roster-field-slot .season-slot-name{max-width:78px!important;padding:2px 4px!important;font-size:8px!important;line-height:1!important}
       .season-roster-field-slot .season-slot-role{font-size:7px!important;padding:2px 5px!important}
       .season-roster-field-slot .season-slot-chem{min-width:0!important;padding:2px 4px!important;font-size:6.8px!important;border-width:1px!important}
@@ -3293,9 +3293,37 @@ function nationPalette(name){
  const ink=((seed>>10)%2)?'#10243a':'#1d160e';
  return {a,b,c,ink}
 }
+function jerseyColorRgb(color){
+ const value=String(color||'').trim();
+ let match=value.match(/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i);
+ if(match){
+  let hex=match[1];
+  if(hex.length===3)hex=hex.split('').map(ch=>ch+ch).join('');
+  if(hex.length===8)hex=hex.slice(0,6);
+  return [parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16)];
+ }
+ match=value.match(/^rgba?\(\s*([\d.]+)\s*[, ]\s*([\d.]+)\s*[, ]\s*([\d.]+)/i);
+ if(match)return [Number(match[1]),Number(match[2]),Number(match[3])];
+ match=value.match(/^hsla?\(\s*([\d.]+)(?:deg)?[ ,]+([\d.]+)%[ ,]+([\d.]+)%/i);
+ if(match){
+  const h=((Number(match[1])%360)+360)%360/360,s=Number(match[2])/100,l=Number(match[3])/100;
+  const hueToRgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p};
+  if(s===0){const gray=Math.round(l*255);return[gray,gray,gray]}
+  const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;
+  return [Math.round(hueToRgb(p,q,h+1/3)*255),Math.round(hueToRgb(p,q,h)*255),Math.round(hueToRgb(p,q,h-1/3)*255)];
+ }
+ return null;
+}
+function jerseyNumberColor(color){
+ const rgb=jerseyColorRgb(color);
+ if(!rgb)return '#111111';
+ const brightness=(rgb[0]*299+rgb[1]*587+rgb[2]*114)/1000;
+ return brightness<150?'#FFFFFF':'#111111';
+}
 function renderPlayerJersey(player,extra='',chemistryBonus=0){
  const pal=clubPalette(activeUserClub()); const sub=isSubscriber(player); const currentChem=effectiveChemistryFromBase(player,chemistryBonus); const shownOvr=Math.round((Number(player?.ovr)||0)+currentChem+activeOvrBonus(player));
- return `<span class="season-jersey-wrap ${sub?'subscriber':''} ${extra}" style="--nation-a:${pal.a};--nation-b:${pal.b};--nation-c:${pal.c};--nation-ink:${pal.ink}" title="OVR base ${Math.round(Number(player?.ovr)||0)} · Intesa attuale ${formatSignedIntesa(currentChem)}"><span class="season-jersey"><span class="season-jersey-number">${shownOvr}</span></span>${sub?'<span class="season-jersey-sub-star">★</span>':''}</span>`
+ const numberColor=jerseyNumberColor(pal.b||pal.secondary||pal.a);
+ return `<span class="season-jersey-wrap ${sub?'subscriber':''} ${extra}" style="--nation-a:${pal.a};--nation-b:${pal.b};--nation-c:${pal.c};--nation-ink:${pal.ink};--jersey-number-color:${numberColor}" title="OVR base ${Math.round(Number(player?.ovr)||0)} · Intesa attuale ${formatSignedIntesa(currentChem)}"><span class="season-jersey"><span class="season-jersey-number">${shownOvr}</span></span>${sub?'<span class="season-jersey-sub-star">★</span>':''}</span>`
 }
 
 function persistSetupIdentity(teamInput,coachInput,saveState=true){
