@@ -4899,10 +4899,16 @@ function createExpandedLeagueTeam(club,index){
 function activateExpandedLeague(){
  if(state.seasonRules.dynamicLeague)return `La struttura della lega è già stata modificata da ${state.seasonRules.dynamicLeagueLabel||'un altro evento'}.`;
  const clubs=expandedLeagueClubPool().slice(0,20);if(clubs.length<20)return `Nell’altro database sono disponibili soltanto ${clubs.length} club completi: il campionato non può essere allargato a 40 squadre.`;
- const additions=clubs.map(createExpandedLeagueTeam);additions.forEach(team=>{state.teams.push(team);state.standings[team.id]={id:team.id,name:team.name,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0}});
+ const leaderPoints=Math.max(0,...Object.values(state.standings||{}).map(row=>Number(row?.pts)||0));
+ const pointCap=Math.max(0,Math.floor(leaderPoints));
+ const additions=clubs.map(createExpandedLeagueTeam);additions.forEach(team=>{
+  const startingPoints=pointCap>0?Math.floor(Math.random()*(pointCap+1)):0;
+  state.teams.push(team);
+  state.standings[team.id]={id:team.id,name:team.name,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:startingPoints};
+ });
  state.seasonRules.dynamicLeague='expanded';state.seasonRules.dynamicLeagueLabel='Campionato allargato';state.seasonRules.dynamicLeagueAppliedAt=Number(state.matchday)||0;
  const activeIds=state.teams.filter(team=>!isTeamEliminated(team.id)).map(team=>team.id),target=Math.max(78,(Number(state.matchday)||0)+activeIds.length-1,seasonLength());rebuildRemainingLeagueSchedule(activeIds,target);
- return `Campionato allargato attivato: entrano 20 club casuali da ${otherCompetitionName()}. Ora partecipano ${activeIds.length} squadre e la stagione arriverà a ${state.schedule.length} giornate.`;
+ return `Campionato allargato attivato: entrano 20 club casuali da ${otherCompetitionName()} con punti iniziali casuali da 0 a ${pointCap}, il punteggio della capolista al momento dell'evento. Ora partecipano ${activeIds.length} squadre e la stagione arriverà a ${state.schedule.length} giornate.`;
 }
 function activateEliteLeague(){
  if(state.seasonRules.dynamicLeague)return `La struttura della lega è già stata modificata da ${state.seasonRules.dynamicLeagueLabel||'un altro evento'}.`;
@@ -5545,7 +5551,7 @@ const DECISIONS=[
   {label:'Chi segna questo vince',effect:'Chi segna per ultimo vince la partita. La regola resta attiva fino a fine stagione.',apply(){return activateFederationGoalRule('last')}}
  ]},
  {id:'figura-pelata-misteriosa',title:'Una figura pelata misteriosa ti si avvicina',text:'Con aria solenne propone di cambiare immediatamente il numero delle squadre che partecipano al campionato.',available(){return !state.seasonRules.dynamicLeague},choices:[
-  {label:'Campionato allargato',effect:'Entrano altre 20 squadre casuali prese dall’altra modalità: il campionato passa a 40 partecipanti.',apply(){return activateExpandedLeague()}},
+  {label:'Campionato allargato',effect:'Entrano altre 20 squadre casuali prese dall’altra modalità. Ognuna parte con punti casuali, fino al punteggio attuale della capolista.',apply(){return activateExpandedLeague()}},
   {label:'Campionato élite',effect:'Le ultime 10 vengono rimosse: da questo momento partecipano soltanto le prime 10.',apply(){return activateEliteLeague()}}
  ]},
  {id:'fgci-cartellini-estremi',title:'Nuova regola FGCI',text:'La federazione introduce due cartellini capaci di cambiare completamente le partite.',choices:[
