@@ -59,6 +59,14 @@
     .result-scorers-empty{display:block;color:rgba(255,255,255,.7);font-size:12px;font-weight:800}
     @media(max-width:560px){.result-scorers{grid-template-columns:1fr}.result-scorers-team{padding:10px}.result-scorer-line{font-size:13px}}
     .mid-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.outgoing-list{display:grid;gap:7px}.outgoing{border:2px solid #c8b98a;border-radius:14px;background:#fff;padding:10px;text-align:left}.outgoing.active{border-color:var(--red);background:#ffe7df}
+
+    /* COPPA PARALLELA: tabellone, turni e risultati */
+    .parallel-cup-panel{margin:14px 0;padding:15px;border-radius:20px;background:linear-gradient(145deg,#10243a,#254f75);border:2px solid #f2d356;color:#f7fbff;box-shadow:0 10px 24px rgba(16,36,58,.16)}
+    .parallel-cup-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}.parallel-cup-head span{display:block;color:#f7d85d;font-size:10px;font-weight:1000;letter-spacing:.13em;text-transform:uppercase}.parallel-cup-head h3{margin:3px 0 0;color:#fff;font-size:22px;line-height:1}.parallel-cup-status{flex:0 0 auto;padding:7px 10px;border-radius:999px;background:#fff7cf;color:#10243a;font-size:10px;font-weight:1000;text-transform:uppercase}
+    .parallel-cup-copy{margin:0;color:#dbe8f4;font-size:12px;font-weight:800;line-height:1.4}.parallel-cup-next{margin-top:10px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:12px;font-weight:900}.parallel-cup-next b{color:#f7d85d}
+    .parallel-cup-stages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.parallel-cup-stage{padding:10px;border-radius:14px;background:rgba(5,18,35,.34);border:1px solid rgba(255,255,255,.12)}.parallel-cup-stage>span{display:block;margin-bottom:7px;color:#f7d85d;font-size:9px;font-weight:1000;text-transform:uppercase;letter-spacing:.08em}.parallel-cup-tie{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.08);font-size:10px;color:#e7f0f7}.parallel-cup-tie:first-of-type{border-top:0}.parallel-cup-tie b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.parallel-cup-tie em{font-style:normal;color:#fff;font-weight:1000;white-space:nowrap}.parallel-cup-user{color:#fff3a5!important}
+    .cup-result-line{background:linear-gradient(135deg,#173b5b,#38235d)!important;border-color:#f2d356!important}.cup-result-line b{color:#f7d85d!important}
+    @media(max-width:760px){.parallel-cup-head{align-items:flex-start;flex-direction:column}.parallel-cup-stages{grid-template-columns:1fr}.parallel-cup-status{align-self:flex-start}}
     .final-hero{text-align:center;padding:28px;border-radius:24px;background:linear-gradient(135deg,#10243a,#214f77);color:#fff}.final-position{font-size:clamp(72px,13vw,140px);line-height:.8;font-weight:1000;color:#ffe96c}.final-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
 
     .season-report-card{margin-top:18px;padding:22px;border-radius:28px;background:linear-gradient(145deg,#0b1830 0%,#163656 52%,#43256a 100%);color:#f7fbff;border:3px solid #f2d356;box-shadow:0 18px 48px rgba(8,18,33,.34);overflow:hidden;position:relative}
@@ -2577,7 +2585,7 @@
 </div>
 <div id="modalRoot"></div><div id="toast" class="toast"></div>
 <script>
-const CURRENT_STATE_VERSION=24;
+const CURRENT_STATE_VERSION=25;
 const SAVE_BASE='fantaballa_campionato_real_v1';
 const AUTO_SAVE_KEY=`${SAVE_BASE}_autosave`;
 const LEGACY_SAVE_KEYS=[];
@@ -2627,9 +2635,9 @@ const FORMATION_LAYOUTS={
  '3-3-3':[['ATT',18,15],['ATT',50,9],['ATT',82,15],['CC',20,48],['CDC',50,55],['CC',80,48],['DC',20,79],['DC',50,73],['DC',80,79]]
 };
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
-let PLAYERS=[];let CLASSIC_PLAYERS=[];let REAL_PLAYERS=[];let CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;
+let PLAYERS=[];let CLASSIC_PLAYERS=[];let REAL_PLAYERS=[];let CLUBS=[];let OTHER_CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',gameMode:'normal',chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[],laCurvaRewardActive:false},quest:{active:false,id:'',title:'',status:'idle',acceptedMatchday:-1,matchesPlayed:0,progress:0,target:0,deadlineMatches:0,targetPlayerId:'',targetPlayerName:'',targetTeamIds:[],facedTeamIds:[],rewardActive:false,objective:'',reward:'',penalty:'',summary:'',notice:''},eventChains:{mentalista:{active:false,stage:0,playerId:'',playerName:'',originalOvr:0,dueMatchday:-1,training:false,nature:false,goals:0,completed:false},general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false}},analytics:{initialOvr:0,injuries:0,redCards:0,eventLog:[],biggestResult:null},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),formation:'4-3-3',gameMode:'normal',chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[],laCurvaRewardActive:false},quest:{active:false,id:'',title:'',status:'idle',acceptedMatchday:-1,matchesPlayed:0,progress:0,target:0,deadlineMatches:0,targetPlayerId:'',targetPlayerName:'',targetTeamIds:[],facedTeamIds:[],rewardActive:false,objective:'',reward:'',penalty:'',summary:'',notice:''},eventChains:{mentalista:{active:false,stage:0,playerId:'',playerName:'',originalOvr:0,dueMatchday:-1,training:false,nature:false,goals:0,completed:false},general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false}},analytics:{initialOvr:0,injuries:0,redCards:0,eventLog:[],biggestResult:null},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},cup:{status:'pending',qualifiedRank:0,currentCompetition:'',otherCompetition:'',participants:[],userParticipantId:'cup-user',userAlive:true,winnerId:'',rewardApplied:false,penaltyApplied:false,notice:'',history:[],stages:[]},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
@@ -2932,6 +2940,21 @@ function normalizeCampionatoState(input){
  next.eventChains.general.replacements=Array.isArray(next.eventChains.general.replacements)?next.eventChains.general.replacements.filter(item=>item&&item.originalPlayer).map(item=>({...item,replacementId:String(item.replacementId||''),slotId:String(item.slotId||''),originalPlayer:{...item.originalPlayer,id:String(item.originalPlayer.id||'')}})):[];
  next.eventChains.general.nationalBoostPending=Boolean(next.eventChains.general.nationalBoostPending);
  next.eventChains.general.completed=Boolean(next.eventChains.general.completed);
+
+ next.cup=next.cup&&typeof next.cup==='object'?next.cup:{};
+ next.cup.status=['pending','not_qualified','active','completed'].includes(String(next.cup.status))?String(next.cup.status):'pending';
+ next.cup.qualifiedRank=Math.max(0,Number(next.cup.qualifiedRank)||0);
+ next.cup.currentCompetition=String(next.cup.currentCompetition||'');
+ next.cup.otherCompetition=String(next.cup.otherCompetition||'');
+ next.cup.participants=Array.isArray(next.cup.participants)?next.cup.participants.map(item=>({...item,id:String(item?.id||''),teamId:String(item?.teamId||''),clubId:String(item?.clubId||''),name:String(item?.name||'Squadra'),origin:item?.origin==='other'?'other':'current',user:Boolean(item?.user),strength:Number(item?.strength)||60})).filter(item=>item.id):[];
+ next.cup.userParticipantId=String(next.cup.userParticipantId||'cup-user');
+ next.cup.userAlive=next.cup.status==='pending'?true:Boolean(next.cup.userAlive);
+ next.cup.winnerId=String(next.cup.winnerId||'');
+ next.cup.rewardApplied=Boolean(next.cup.rewardApplied);
+ next.cup.penaltyApplied=Boolean(next.cup.penaltyApplied);
+ next.cup.notice=String(next.cup.notice||'');
+ next.cup.history=Array.isArray(next.cup.history)?next.cup.history:[];
+ next.cup.stages=Array.isArray(next.cup.stages)?next.cup.stages.map((stage,index)=>({name:String(stage?.name||PARALLEL_CUP_STAGE_NAMES[index]||'Turno'),matchdays:Array.isArray(stage?.matchdays)?stage.matchdays.map(Number):[...(PARALLEL_CUP_MATCHDAYS[index]||[])],processedLegs:[...new Set((Array.isArray(stage?.processedLegs)?stage.processedLegs:[]).map(Number))],ties:Array.isArray(stage?.ties)?stage.ties.map((tie,tieIndex)=>({id:String(tie?.id||`cup-${index}-${tieIndex}`),teamAId:String(tie?.teamAId||''),teamBId:String(tie?.teamBId||''),legs:Array.isArray(tie?.legs)?tie.legs:[],winnerId:String(tie?.winnerId||''),aggregateA:Number(tie?.aggregateA)||0,aggregateB:Number(tie?.aggregateB)||0,penalties:String(tie?.penalties||'')})).filter(tie=>tie.teamAId&&tie.teamBId):[]})):[];
  next.midseason=next.midseason&&typeof next.midseason==='object'?next.midseason:{};
  next.midseason.step=Math.max(0,Number(next.midseason.step)||0);
  next.midseason.target=clamp(Number(next.midseason.target)||midseasonTargetFrom(next),1,3);
@@ -3924,6 +3947,7 @@ function finalizeDraft(){
    chaos:{activeEffects:[],seenDecisionEvents:[],decisions:0,midseasonPickDelta:0,matchDuration:90,futureScorerId:'',futureInjuryZeroPoints:false,sixtyPointFear:false,eventChanceMultiplier:1,nonItalianChemZero:false,formation:'',latestDecision:null}
  })));
  state.chaos={lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false};
+ state.cup=freshState().cup;
  state.schedule=generateSchedule(state.teams.map(team=>team.id));
  state.standings={};
  state.teams.forEach(team=>state.standings[team.id]={id:team.id,name:team.name,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0});
@@ -3942,6 +3966,180 @@ function userStanding(){return state.standings[USER_ID]}
 function teamById(id){return state.teams.find(t=>t.id===id)}
 function currentRound(){return state.schedule[state.matchday]||[]}
 function userFixture(){return currentRound().find(m=>m.home===USER_ID||m.away===USER_ID)}
+
+const PARALLEL_CUP_MATCHDAYS=[[20,21],[25,26],[30,31]];
+const PARALLEL_CUP_STAGE_NAMES=['Quarti di finale','Semifinali','Finale'];
+function parallelCupState(){
+ state.cup=state.cup&&typeof state.cup==='object'?state.cup:freshState().cup;
+ return state.cup;
+}
+function currentCompetitionName(){return PLAYERS===REAL_PLAYERS?'Fantacampionato del Ca***':'Campionato del Ca***'}
+function otherCompetitionName(){return PLAYERS===REAL_PLAYERS?'Campionato del Ca***':'Fantacampionato del Ca***'}
+function otherCompetitionPlayers(){return PLAYERS===REAL_PLAYERS?CLASSIC_PLAYERS:REAL_PLAYERS}
+function otherClubPlayerPool(clubId){return (otherCompetitionPlayers()||[]).filter(player=>String(player.club)===String(clubId)).sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0))}
+function otherClubStrength(clubId){const values=otherClubPlayerPool(clubId).slice(0,11).map(player=>Number(player.ovr)||60);while(values.length<11)values.push(60);return Math.round(avg(values)*10)/10}
+function parallelCupParticipant(id){return (parallelCupState().participants||[]).find(item=>String(item.id)===String(id))||null}
+function parallelCupUserId(){return String(parallelCupState().userParticipantId||'cup-user')}
+function parallelCupParticipantName(id){return parallelCupParticipant(id)?.name||'Squadra'}
+function parallelCupParticipantPower(participant){
+ if(!participant)return 60;
+ if(participant.user)return Math.max(35,matchPower());
+ if(participant.origin==='current'){
+   const team=teamById(participant.teamId);
+   return Math.max(35,team?opponentMatchPower(team):(Number(participant.strength)||60));
+ }
+ return Math.max(35,Number(participant.strength)||60);
+}
+function makeParallelCupTie(teamAId,teamBId,stageIndex,index){return{id:`cup-${stageIndex}-${index}`,teamAId:String(teamAId),teamBId:String(teamBId),legs:[],winnerId:'',aggregateA:0,aggregateB:0,penalties:''}}
+function parallelCupEligibleOtherClubs(){
+ const playerClubs=new Set((otherCompetitionPlayers()||[]).map(player=>String(player.club||'')).filter(Boolean));
+ return (OTHER_CLUBS||[]).filter(club=>club&&playerClubs.has(String(club.id))&&!/^fantaballa(?:-|$)/i.test(String(club.id)));
+}
+function initializeParallelCup(){
+ const cup=parallelCupState();
+ if(cup.status!=='pending')return cup;
+ const table=sortedTable(),rank=table.findIndex(row=>String(row.id)===USER_ID)+1;
+ cup.qualifiedRank=rank;
+ cup.currentCompetition=currentCompetitionName();
+ cup.otherCompetition=otherCompetitionName();
+ cup.notice='';
+ if(rank<1||rank>4){cup.status='not_qualified';cup.userAlive=false;cup.notice=`Qualificazione mancata: al giro di boa eri ${rank>0?`${rank}°`:'fuori classifica'}.`;return cup}
+ const currentTop=table.slice(0,4);
+ if(currentTop.length<4){cup.status='not_qualified';cup.userAlive=false;cup.notice='Coppa non avviata: al giro di boa erano rimaste meno di quattro squadre disponibili.';return cup}
+ const otherClubs=shuffle(parallelCupEligibleOtherClubs()).slice(0,4);
+ if(otherClubs.length<4){cup.status='not_qualified';cup.userAlive=false;cup.notice='Coppa non avviata: nell’altro database non ci sono quattro club completi.';return cup}
+ const participants=[];
+ currentTop.forEach((row,index)=>{
+   const team=teamById(row.id)||{};
+   const user=String(row.id)===USER_ID;
+   participants.push({id:user?'cup-user':`current:${row.id}`,teamId:String(row.id),clubId:String(team.clubId||row.id),name:user?state.teamName:(team.name||row.name),origin:'current',user,seed:index+1,strength:Number(team.strength)||60,colors:team.colors||null});
+ });
+ otherClubs.forEach((club,index)=>participants.push({id:`other:${club.id}`,teamId:'',clubId:String(club.id),name:club.name,origin:'other',user:false,seed:index+1,strength:otherClubStrength(club.id),colors:club.colorClub||null}));
+ cup.participants=participants;
+ cup.userParticipantId='cup-user';
+ cup.userAlive=true;
+ cup.winnerId='';
+ cup.rewardApplied=false;
+ cup.penaltyApplied=false;
+ cup.history=[];
+ cup.stages=PARALLEL_CUP_STAGE_NAMES.map((name,index)=>({name,matchdays:[...PARALLEL_CUP_MATCHDAYS[index]],processedLegs:[],ties:[]}));
+ cup.stages[0].ties=currentTop.map((row,index)=>makeParallelCupTie(String(row.id)===USER_ID?'cup-user':`current:${row.id}`,`other:${otherClubs[index].id}`,0,index));
+ cup.status='active';
+ cup.notice=`Qualificato da ${rank}°: affronterai quattro club del ${cup.otherCompetition}.`;
+ return cup;
+}
+function parallelCupDedicatedEvent(userHome){
+ const events=[
+  {title:'Notte magica',description:'+4 OVR alla tua squadra per questa partita di coppa.',userBonus:4,opponentBonus:0},
+  {title:'Turnover obbligatorio',description:'Rotazioni forzate: -3 OVR alla tua squadra per questa partita.',userBonus:-3,opponentBonus:0},
+  {title:'Dodicesimo uomo',description:userHome?'Il pubblico di casa vale +4 OVR.':'Il settore ospiti vale +2 OVR.',userBonus:userHome?4:2,opponentBonus:0},
+  {title:'Viaggio infinito',description:userHome?'L’avversaria arriva stanca: -3 OVR per lei.':'La trasferta pesa: -3 OVR alla tua squadra.',userBonus:userHome?0:-3,opponentBonus:userHome?-3:0},
+  {title:'Pressione internazionale',description:'La tensione favorisce l’avversaria: +3 OVR per lei.',userBonus:0,opponentBonus:3}
+ ];
+ return {...pick(events)};
+}
+function parallelCupApplyEliminationPenalty(){
+ const cup=parallelCupState();if(cup.penaltyApplied)return;
+ cup.penaltyApplied=true;cup.userAlive=false;
+ state.activeEffects.push({type:'teamOvr',value:-5,rounds:9999,source:'Sconfitta nella Coppa parallela'});
+ cup.notice='Eliminato dalla coppa: -5 OVR a tutta la squadra fino a fine stagione.';
+}
+function parallelCupApplyWinnerReward(){
+ const cup=parallelCupState();if(cup.rewardApplied)return;
+ cup.rewardApplied=true;cup.userAlive=true;
+ state.activeEffects.push({type:'teamOvr',value:10,rounds:9999,source:'Vittoria della Coppa parallela'});
+ cup.notice='Coppa vinta: +10 OVR a tutta la squadra fino a fine stagione.';
+}
+function parallelCupResolveTie(tie){
+ tie.aggregateA=(tie.legs||[]).reduce((sum,leg)=>sum+(Number(leg.aGoals)||0),0);
+ tie.aggregateB=(tie.legs||[]).reduce((sum,leg)=>sum+(Number(leg.bGoals)||0),0);
+ if(tie.aggregateA>tie.aggregateB)tie.winnerId=tie.teamAId;
+ else if(tie.aggregateB>tie.aggregateA)tie.winnerId=tie.teamBId;
+ else{
+   const a=parallelCupParticipant(tie.teamAId),b=parallelCupParticipant(tie.teamBId),pa=parallelCupParticipantPower(a),pb=parallelCupParticipantPower(b),winner=Math.random()<pa/(pa+pb)?tie.teamAId:tie.teamBId;
+   tie.winnerId=winner;tie.penalties=winner===tie.teamAId?'5-4':'4-5';
+ }
+ const userId=parallelCupUserId();
+ if([tie.teamAId,tie.teamBId].includes(userId)&&tie.winnerId!==userId)parallelCupApplyEliminationPenalty();
+}
+function parallelCupAdvanceStage(stageIndex){
+ const cup=parallelCupState(),stage=cup.stages[stageIndex];if(!stage||stageIndex>=cup.stages.length-1)return;
+ const winners=stage.ties.map(tie=>tie.winnerId).filter(Boolean),next=cup.stages[stageIndex+1];
+ if(stageIndex===0&&winners.length===4)next.ties=[makeParallelCupTie(winners[0],winners[1],1,0),makeParallelCupTie(winners[2],winners[3],1,1)];
+ else if(stageIndex===1&&winners.length===2)next.ties=[makeParallelCupTie(winners[0],winners[1],2,0)];
+}
+function parallelCupFinish(){
+ const cup=parallelCupState(),finalStage=cup.stages?.[2],winner=finalStage?.ties?.[0]?.winnerId||'';
+ if(!winner)return;cup.winnerId=winner;cup.status='completed';
+ if(winner===parallelCupUserId())parallelCupApplyWinnerReward();
+ else if(cup.userAlive)parallelCupApplyEliminationPenalty();
+}
+function processParallelCupAfterLeagueRound(completedMatchday,result){
+ const cup=parallelCupState();if(cup.status!=='active')return;
+ let stageIndex=-1,legIndex=-1;
+ cup.stages.forEach((stage,index)=>{const found=(stage.matchdays||[]).indexOf(Number(completedMatchday));if(found>=0){stageIndex=index;legIndex=found}});
+ if(stageIndex<0)return;
+ const stage=cup.stages[stageIndex];if(!stage.ties?.length||stage.processedLegs.includes(legIndex))return;
+ let userReport=null;
+ stage.ties.forEach((tie,tieIndex)=>{
+   const teamA=parallelCupParticipant(tie.teamAId),teamB=parallelCupParticipant(tie.teamBId);if(!teamA||!teamB)return;
+   const home=legIndex===0?teamA:teamB,away=legIndex===0?teamB:teamA,userInTie=Boolean(teamA.user||teamB.user),userHome=Boolean(home.user);
+   let homePower=parallelCupParticipantPower(home),awayPower=parallelCupParticipantPower(away),event=null;
+   if(userInTie){event=parallelCupDedicatedEvent(userHome);if(home.user){homePower+=event.userBonus;awayPower+=event.opponentBonus}else{awayPower+=event.userBonus;homePower+=event.opponentBonus}}
+   let [homeGoals,awayGoals]=simulateScore(homePower,awayPower,.14,90);
+   const aGoals=legIndex===0?homeGoals:awayGoals,bGoals=legIndex===0?awayGoals:homeGoals;
+   const leg={matchday:Number(completedMatchday),leg:legIndex+1,homeId:home.id,awayId:away.id,homeName:home.name,awayName:away.name,homeGoals,awayGoals,aGoals,bGoals,event};
+   tie.legs.push(leg);tie.aggregateA=(tie.aggregateA||0)+aGoals;tie.aggregateB=(tie.aggregateB||0)+bGoals;
+   if(legIndex===1)parallelCupResolveTie(tie);
+   if(userInTie){
+     const userIsA=Boolean(teamA.user),gf=userIsA?aGoals:bGoals,ga=userIsA?bGoals:aGoals;
+     userReport={stage:stage.name,leg:legIndex===0?'Andata':'Ritorno',opponent:userIsA?teamB.name:teamA.name,home:userHome,gf,ga,event,aggregateUser:userIsA?tie.aggregateA:tie.aggregateB,aggregateOpponent:userIsA?tie.aggregateB:tie.aggregateA,decided:legIndex===1,advanced:legIndex===1&&tie.winnerId===parallelCupUserId(),penalties:tie.penalties||'',winner:legIndex===1?parallelCupParticipantName(tie.winnerId):''};
+   }
+   cup.history.push({stageIndex,tieIndex,...leg});
+ });
+ stage.processedLegs.push(legIndex);
+ if(legIndex===1){if(stageIndex<2)parallelCupAdvanceStage(stageIndex);else parallelCupFinish()}
+ if(result&&userReport)result.cupReport=userReport;
+}
+function parallelCupTieScore(tie){
+ if(!tie)return'–';if(!tie.legs?.length)return'–';
+ const score=`${Number(tie.aggregateA)||0}-${Number(tie.aggregateB)||0}`;
+ return tie.penalties?`${score} (${tie.penalties} dcr)`:score;
+}
+function parallelCupOutcomeLabel(){
+ const cup=parallelCupState();
+ if(cup.status==='pending')return'Qualificazione da decidere';
+ if(cup.status==='not_qualified')return'Non qualificato';
+ if(cup.status==='completed'&&cup.winnerId===parallelCupUserId())return'Vincitore';
+ if(!cup.userAlive)return'Eliminato';
+ return'In corsa';
+}
+function parallelCupNextInfo(){
+ const cup=parallelCupState();if(cup.status!=='active')return null;
+ for(let stageIndex=0;stageIndex<cup.stages.length;stageIndex++){
+  const stage=cup.stages[stageIndex];
+  for(let legIndex=0;legIndex<stage.matchdays.length;legIndex++){
+   if(stage.processedLegs.includes(legIndex)||!stage.ties?.length)continue;
+   const userTie=stage.ties.find(tie=>[tie.teamAId,tie.teamBId].includes(parallelCupUserId()));
+   return{stage:stage.name,matchday:stage.matchdays[legIndex],leg:legIndex===0?'Andata':'Ritorno',opponent:userTie?parallelCupParticipantName(userTie.teamAId===parallelCupUserId()?userTie.teamBId:userTie.teamAId):'',userPlaying:Boolean(userTie&&cup.userAlive)};
+  }
+ }
+ return null;
+}
+function renderParallelCupPanel(){
+ const cup=parallelCupState();if(cup.status==='pending'&&state.matchday<19)return'';
+ const outcome=parallelCupOutcomeLabel(),next=parallelCupNextInfo();
+ const stages=(cup.stages||[]).map(stage=>`<div class="parallel-cup-stage"><span>${esc(stage.name)}</span>${stage.ties?.length?stage.ties.map(tie=>`<div class="parallel-cup-tie ${[tie.teamAId,tie.teamBId].includes(parallelCupUserId())?'parallel-cup-user':''}"><b>${esc(parallelCupParticipantName(tie.teamAId))} – ${esc(parallelCupParticipantName(tie.teamBId))}</b><em>${esc(parallelCupTieScore(tie))}</em></div>`).join(''):'<div class="parallel-cup-tie"><b>Da definire</b><em>–</em></div>'}</div>`).join('');
+ return `<section class="parallel-cup-panel"><div class="parallel-cup-head"><div><span>🏆 Coppa parallela</span><h3>${esc(cup.currentCompetition||currentCompetitionName())} vs ${esc(cup.otherCompetition||otherCompetitionName())}</h3></div><div class="parallel-cup-status">${esc(outcome)}</div></div><p class="parallel-cup-copy">${esc(cup.notice||'Le prime quattro al giro di boa affrontano quattro club casuali dell’altro campionato, con andata e ritorno.')}</p>${next?`<div class="parallel-cup-next"><b>Prossimo turno:</b> Giornata ${next.matchday} · ${esc(next.stage)} · ${esc(next.leg)}${next.userPlaying&&next.opponent?` contro ${esc(next.opponent)}`:''}</div>`:''}${stages?`<div class="parallel-cup-stages">${stages}</div>`:''}</section>`;
+}
+function renderParallelCupResult(report){
+ if(!report)return'';
+ const verdict=report.decided?(report.advanced?'Qualificazione conquistata.':`Eliminazione: ${esc(report.winner)} passa il turno.`):`Aggregato provvisorio ${report.aggregateUser}-${report.aggregateOpponent}.`;
+ return `<div class="goal-line cup-result-line"><b>🏆 ${esc(report.stage)} · ${esc(report.leg)}</b><br>${esc(state.teamName)} ${report.gf}-${report.ga} ${esc(report.opponent)}. ${report.event?`Evento coppa: ${esc(report.event.title)} — ${esc(report.event.description)} `:''}${verdict}${report.penalties?` Rigori: ${esc(report.penalties)}.`:''}</div>`;
+}
+function seasonHonourLabel(rank,eliminated=false){const cupWon=parallelCupState().winnerId===parallelCupUserId();if(rank===1&&!eliminated&&cupWon)return'Double';if(rank===1&&!eliminated)return'Campionato';if(cupWon)return'Coppa parallela';return'Nessun trofeo'}
+function seasonFinalHeadline(rank,eliminated=false){const cupWon=parallelCupState().winnerId===parallelCupUserId();if(eliminated)return'Eliminato dagli Hunger Games';if(rank===1&&cupWon)return'Double!';if(cupWon)return'Coppa vinta!';if(rank===1)return'Campioni!';return'Campionato terminato'}
+
 function getStarterEntries(){return rosterPlayers().filter(r=>!r.bench)}function getBenchEntries(){return rosterPlayers().filter(r=>r.bench)}
 function chemistryBaseRaw(player,list){const players=Array.isArray(list)?list:[];let v=nationChemistryBonus(player,players)+clubChemistryBonus(player,players);if(isSubscriber(player))v+=5;const subs=players.filter(o=>o.nation===player.nation&&isSubscriber(o)).length;if(isSubscriber(player)&&subs>=2)v+=10;if(normalizeName(player.name)===normalizeName(state.coachName))v+=10;return v}
 function chemistryBase(player,list){return closedPortsAffects(player)?0:chemistryBaseRaw(player,list)}
@@ -4712,14 +4910,14 @@ function seasonGrade(rank,eliminated=false){
 }
 function buildSeasonSummary(rank,eliminated=false){
  const standing=userStanding()||{pts:0,w:0,d:0,l:0,gf:0,ga:0},analytics=ensureSeasonAnalytics(),best=seasonBestPlayer(),top=teamTopScorer(),topPlayer=top?statPlayerInfo(top[0]):null,decisive=decisiveSeasonEvent(),worst=worstSeasonDecision(),biggest=biggestSeasonResult(),initial=Number(analytics.initialOvr)||teamPowerBase(),final=Math.round(teamPowerBase()*10)/10,grade=seasonGrade(rank,eliminated),mode=String(SAVE_BASE).includes('real')?'Fantacampionato del Ca***':'Campionato del Ca***';
- return{teamName:state.teamName,coachName:state.coachName,mode,gameMode:chaosEnabled()?'Caos':'Normale',rank,rankLabel:eliminated?'Eliminato':`${rank}°`,played:Number(standing.p)||state.matchday,points:Number(standing.pts)||0,record:`${standing.w}-${standing.d}-${standing.l}`,bestPlayer:best?best.player.name:'Nessun dato',bestPlayerDetail:best?`${best.goals} gol · ${best.assists} assist · ${best.mvps} MVP`:'Statistiche non disponibili',topScorer:topPlayer?topPlayer.name:'Nessun marcatore',topScorerGoals:top?Number(top[1])||0:0,decisive,worst,initialOvr:Math.round(initial*10)/10,finalOvr:final,injuries:Number(analytics.injuries)||0,redCards:Number(analytics.redCards)||0,biggest,grade,gf:Number(standing.gf)||0,ga:Number(standing.ga)||0};
+ return{teamName:state.teamName,coachName:state.coachName,mode,gameMode:chaosEnabled()?'Caos':'Normale',rank,rankLabel:eliminated?'Eliminato':`${rank}°`,played:Number(standing.p)||state.matchday,points:Number(standing.pts)||0,record:`${standing.w}-${standing.d}-${standing.l}`,bestPlayer:best?best.player.name:'Nessun dato',bestPlayerDetail:best?`${best.goals} gol · ${best.assists} assist · ${best.mvps} MVP`:'Statistiche non disponibili',topScorer:topPlayer?topPlayer.name:'Nessun marcatore',topScorerGoals:top?Number(top[1])||0:0,decisive,worst,initialOvr:Math.round(initial*10)/10,finalOvr:final,injuries:Number(analytics.injuries)||0,redCards:Number(analytics.redCards)||0,biggest,grade,gf:Number(standing.gf)||0,ga:Number(standing.ga)||0,cupResult:parallelCupOutcomeLabel(),honour:seasonHonourLabel(rank,eliminated)};
 }
 function seasonResultLabel(result){if(!result)return'Nessun risultato disponibile';const outcome=result.gf>result.ga?'Vittoria':result.gf<result.ga?'Sconfitta':'Pareggio';return `${result.gf}–${result.ga} vs ${result.opponent} · ${outcome}`}
 function renderSeasonSummaryCard(summary){
  const decisive=summary.decisive,worst=summary.worst,eventClass=decisive?(Number(decisive.score)>=0?'positive':'negative'):'';
- return `<section class="season-report-card" id="seasonSummaryCard"><div class="season-report-head"><div><div class="season-report-kicker">Riepilogo completo · ${esc(summary.mode)} · ${esc(summary.gameMode)}</div><h2>${esc(summary.teamName)}</h2><p>${esc(summary.coachName||'Allenatore senza nome')} · ${summary.played} giornate · ${summary.points} punti</p></div><div class="season-grade"><span>Voto</span><b>${esc(summary.grade.label)}</b></div></div><div class="season-report-grid"><div class="season-report-item"><span>Posizione finale</span><b>${esc(summary.rankLabel)}</b><small>${summary.record} · ${summary.gf} gol fatti, ${summary.ga} subiti</small></div><div class="season-report-item"><span>Miglior giocatore</span><b>${esc(summary.bestPlayer)}</b><small>${esc(summary.bestPlayerDetail)}</small></div><div class="season-report-item"><span>Capocannoniere</span><b>${esc(summary.topScorer)}</b><small>${summary.topScorerGoals} ${summary.topScorerGoals===1?'gol':'gol'} con la tua squadra</small></div><div class="season-report-item wide ${eventClass}"><span>Evento più decisivo</span><b>${decisive?esc(decisive.title):'Nessun evento registrato'}</b><small>${decisive?`${decisive.choice?`${esc(decisive.choice)} · `:''}Giornata ${decisive.matchday} · impatto ${Number(decisive.score)>=0?'+':''}${Number(decisive.score)||0}`:'Il tracciamento partirà dal prossimo evento della stagione.'}</small></div><div class="season-report-item ${worst&&Number(worst.score)<0?'negative':''}"><span>Peggior decisione</span><b>${worst?esc(worst.choice||worst.title):'Nessuna decisione negativa'}</b><small>${worst?`${esc(worst.title)} · Giornata ${worst.matchday}`:'Nessuna scelta manuale registrata.'}</small></div><div class="season-report-item"><span>OVR iniziale → finale</span><b>${summary.initialOvr.toFixed(1)} → ${summary.finalOvr.toFixed(1)}</b><small>${summary.finalOvr-summary.initialOvr>=0?'+':''}${(summary.finalOvr-summary.initialOvr).toFixed(1)} OVR nel corso della stagione</small></div><div class="season-report-item"><span>Infortuni ed espulsioni</span><b>${summary.injuries} · ${summary.redCards}</b><small>Infortuni subiti · cartellini rossi ricevuti</small></div><div class="season-report-item wide"><span>Risultato più largo</span><b>${esc(seasonResultLabel(summary.biggest))}</b><small>${summary.biggest?`Giornata ${summary.biggest.matchday} · ${summary.biggest.home?'in casa':'in trasferta'}`:'Nessuna partita disputata.'}</small></div><div class="season-report-item positive"><span>Valutazione stagione</span><b>${esc(summary.grade.description)}</b><small>${summary.grade.score}/100 · voto ${esc(summary.grade.label)}</small></div></div><div class="season-report-actions"><button id="shareSeasonCard" class="btn gold" type="button">📤 Condividi scheda</button><button id="downloadSeasonCard" class="btn" type="button">🖼️ Scarica PNG</button></div></section>`;
+ return `<section class="season-report-card" id="seasonSummaryCard"><div class="season-report-head"><div><div class="season-report-kicker">Riepilogo completo · ${esc(summary.mode)} · ${esc(summary.gameMode)}</div><h2>${esc(summary.teamName)}</h2><p>${esc(summary.coachName||'Allenatore senza nome')} · ${summary.played} giornate · ${summary.points} punti</p></div><div class="season-grade"><span>Voto</span><b>${esc(summary.grade.label)}</b></div></div><div class="season-report-grid"><div class="season-report-item"><span>Posizione finale</span><b>${esc(summary.rankLabel)}</b><small>${summary.record} · ${summary.gf} gol fatti, ${summary.ga} subiti</small></div><div class="season-report-item ${summary.honour!=='Nessun trofeo'?'positive':''}"><span>Trofei e coppa</span><b>${esc(summary.honour)}</b><small>Coppa parallela: ${esc(summary.cupResult)}</small></div><div class="season-report-item"><span>Miglior giocatore</span><b>${esc(summary.bestPlayer)}</b><small>${esc(summary.bestPlayerDetail)}</small></div><div class="season-report-item"><span>Capocannoniere</span><b>${esc(summary.topScorer)}</b><small>${summary.topScorerGoals} ${summary.topScorerGoals===1?'gol':'gol'} con la tua squadra</small></div><div class="season-report-item wide ${eventClass}"><span>Evento più decisivo</span><b>${decisive?esc(decisive.title):'Nessun evento registrato'}</b><small>${decisive?`${decisive.choice?`${esc(decisive.choice)} · `:''}Giornata ${decisive.matchday} · impatto ${Number(decisive.score)>=0?'+':''}${Number(decisive.score)||0}`:'Il tracciamento partirà dal prossimo evento della stagione.'}</small></div><div class="season-report-item ${worst&&Number(worst.score)<0?'negative':''}"><span>Peggior decisione</span><b>${worst?esc(worst.choice||worst.title):'Nessuna decisione negativa'}</b><small>${worst?`${esc(worst.title)} · Giornata ${worst.matchday}`:'Nessuna scelta manuale registrata.'}</small></div><div class="season-report-item"><span>OVR iniziale → finale</span><b>${summary.initialOvr.toFixed(1)} → ${summary.finalOvr.toFixed(1)}</b><small>${summary.finalOvr-summary.initialOvr>=0?'+':''}${(summary.finalOvr-summary.initialOvr).toFixed(1)} OVR nel corso della stagione</small></div><div class="season-report-item"><span>Infortuni ed espulsioni</span><b>${summary.injuries} · ${summary.redCards}</b><small>Infortuni subiti · cartellini rossi ricevuti</small></div><div class="season-report-item wide"><span>Risultato più largo</span><b>${esc(seasonResultLabel(summary.biggest))}</b><small>${summary.biggest?`Giornata ${summary.biggest.matchday} · ${summary.biggest.home?'in casa':'in trasferta'}`:'Nessuna partita disputata.'}</small></div><div class="season-report-item positive"><span>Valutazione stagione</span><b>${esc(summary.grade.description)}</b><small>${summary.grade.score}/100 · voto ${esc(summary.grade.label)}</small></div></div><div class="season-report-actions"><button id="shareSeasonCard" class="btn gold" type="button">📤 Condividi scheda</button><button id="downloadSeasonCard" class="btn" type="button">🖼️ Scarica PNG</button></div></section>`;
 }
-function seasonSummaryText(summary){return [`⚽ ${summary.teamName}`,`${summary.mode} · ${summary.gameMode}`,`Posizione: ${summary.rankLabel} · ${summary.points} punti`,`Voto stagione: ${summary.grade.label} (${summary.grade.score}/100)`,`Miglior giocatore: ${summary.bestPlayer}`,`Capocannoniere: ${summary.topScorer} (${summary.topScorerGoals} gol)`,`OVR: ${summary.initialOvr.toFixed(1)} → ${summary.finalOvr.toFixed(1)}`,`Risultato più largo: ${seasonResultLabel(summary.biggest)}`,'#Fantaballa'].join('\n')}
+function seasonSummaryText(summary){return [`⚽ ${summary.teamName}`,`${summary.mode} · ${summary.gameMode}`,`Posizione: ${summary.rankLabel} · ${summary.points} punti`,`Trofei: ${summary.honour} · Coppa: ${summary.cupResult}`,`Voto stagione: ${summary.grade.label} (${summary.grade.score}/100)`,`Miglior giocatore: ${summary.bestPlayer}`,`Capocannoniere: ${summary.topScorer} (${summary.topScorerGoals} gol)`,`OVR: ${summary.initialOvr.toFixed(1)} → ${summary.finalOvr.toFixed(1)}`,`Risultato più largo: ${seasonResultLabel(summary.biggest)}`,'#Fantaballa'].join('\n')}
 function roundedCanvasRect(ctx,x,y,w,h,r){const radius=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+radius,y);ctx.arcTo(x+w,y,x+w,y+h,radius);ctx.arcTo(x+w,y+h,x,y+h,radius);ctx.arcTo(x,y+h,x,y,radius);ctx.arcTo(x,y,x+w,y,radius);ctx.closePath()}
 function canvasWrappedText(ctx,text,x,y,maxWidth,lineHeight,maxLines=2){const words=String(text||'').split(/\s+/),lines=[];let line='';for(const word of words){const test=line?`${line} ${word}`:word;if(ctx.measureText(test).width>maxWidth&&line){lines.push(line);line=word;if(lines.length>=maxLines-1)break}else line=test}if(line&&lines.length<maxLines)lines.push(line);lines.forEach((value,index)=>ctx.fillText(value,x,y+index*lineHeight));return lines.length}
 function createSeasonSummaryCanvas(summary){
@@ -5018,9 +5216,10 @@ function renderOpponentRoster(team){
  return `<details class="opponent-roster-details"><summary>${teamColorDot(team)}<span>Rosa di ${esc(team.name)} · ${players.length} giocatori</span></summary><div class="opponent-roster-list">${rows}</div></details>`;
 }
 function showSeason(){
+ if(state.matchday>=19&&parallelCupState().status==='pending')initializeParallelCup();
  prepareEvent();
  const fx=userFixture(),opp=teamById(fx.home===USER_ID?fx.away:fx.home),userTeam=teamById(USER_ID)||{id:USER_ID,name:state.teamName,clubId:state.userClubId,colors:activeUserClub().colorClub},homeTeam=teamById(fx.home),awayTeam=teamById(fx.away),standing=userStanding(),rank=sortedTable().findIndex(x=>x.id===USER_ID)+1;
- screen.innerHTML=`<section class="panel season-overview-panel" style="${teamCssVars(userTeam)}"><div class="season-strip"><div class="stat"><b>${state.matchday+1}</b><span>Giornata</span></div><div class="stat"><b>${rank}°</b><span>Posizione</span></div><div class="stat"><b>${standing.pts}</b><span>Punti</span></div><div class="stat"><b>${standing.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${standing.ga}</b><span>Gol subiti</span></div></div></section><div class="dashboard-grid season-dashboard-grid"><div class="season-main-column"><section class="panel season-match-panel"><div class="label">Prossima partita</div><div class="next-match"><div class="next-team-card" style="${teamCssVars(homeTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(homeTeam?.name||state.teamName)}px" title="${esc(homeTeam?.name||state.teamName)}">${esc(homeTeam?.name||state.teamName)}</div><div class="subline">${fx.home===USER_ID?'Casa':'Avversario'}</div></div><div class="versus">VS</div><div class="next-team-card" style="${teamCssVars(awayTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(awayTeam?.name||state.teamName)}px" title="${esc(awayTeam?.name||state.teamName)}">${esc(awayTeam?.name||state.teamName)}</div><div class="subline">${fx.away===USER_ID?'Trasferta':'Avversario'}</div></div></div><div style="margin-top:14px">${renderActiveQuest()}${renderEvent()}${renderChaosLeagueFeed()}</div><div class="match-play-actions"><button id="playRoundLive" class="btn match-live-button" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>🎙️ Gioca con cronaca</button><button id="playRoundInstant" class="btn match-instant-button" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>⚡ Simula subito</button></div><div class="match-play-note">La simulazione rapida mantiene il comportamento attuale.</div></section><section class="panel season-tabs-panel"><div class="tabs"><button class="tab active" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="roster">Rosa</button><button class="tab" data-tab="stats">Statistiche</button></div><div id="tab-table" class="tab-view active">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-roster" class="tab-view">${renderSeasonRosterField()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div></section></div><aside class="season-sidebar"><section class="panel season-availability-panel"><div class="label">Indisponibili</div><h3>Gestione formazione</h3>${renderAvailability()}<p style="font-size:12px"><b>Squalificato:</b> sostituzione automatica. <b>Infortunato:</b> può giocare con -20 Intesa oppure essere sostituito. Panchinaro fuori ruolo: -10 Intesa.</p></section><section class="panel season-lineup-panel"><div class="label">Formazione effettiva</div>${renderResolvedLineup()}</section><section class="panel opponent-club-panel season-opponent-panel" style="${teamCssVars(opp)}"><div class="label">Avversario reale</div><h3>${teamColorDot(opp)}${esc(opp.name)}</h3>${seasonRuleSummary()}${renderOpponentRoster(opp)}</section></aside></div>`;
+ screen.innerHTML=`<section class="panel season-overview-panel" style="${teamCssVars(userTeam)}"><div class="season-strip"><div class="stat"><b>${state.matchday+1}</b><span>Giornata</span></div><div class="stat"><b>${rank}°</b><span>Posizione</span></div><div class="stat"><b>${standing.pts}</b><span>Punti</span></div><div class="stat"><b>${standing.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${standing.ga}</b><span>Gol subiti</span></div></div></section><div class="dashboard-grid season-dashboard-grid"><div class="season-main-column"><section class="panel season-match-panel"><div class="label">Prossima partita</div><div class="next-match"><div class="next-team-card" style="${teamCssVars(homeTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(homeTeam?.name||state.teamName)}px" title="${esc(homeTeam?.name||state.teamName)}">${esc(homeTeam?.name||state.teamName)}</div><div class="subline">${fx.home===USER_ID?'Casa':'Avversario'}</div></div><div class="versus">VS</div><div class="next-team-card" style="${teamCssVars(awayTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(awayTeam?.name||state.teamName)}px" title="${esc(awayTeam?.name||state.teamName)}">${esc(awayTeam?.name||state.teamName)}</div><div class="subline">${fx.away===USER_ID?'Trasferta':'Avversario'}</div></div></div><div style="margin-top:14px">${renderParallelCupPanel()}${renderActiveQuest()}${renderEvent()}${renderChaosLeagueFeed()}</div><div class="match-play-actions"><button id="playRoundLive" class="btn match-live-button" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>🎙️ Gioca con cronaca</button><button id="playRoundInstant" class="btn match-instant-button" ${state.pendingEvent&&!state.pendingEvent.resolved?'disabled':''}>⚡ Simula subito</button></div><div class="match-play-note">La simulazione rapida mantiene il comportamento attuale.</div></section><section class="panel season-tabs-panel"><div class="tabs"><button class="tab active" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="roster">Rosa</button><button class="tab" data-tab="stats">Statistiche</button></div><div id="tab-table" class="tab-view active">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-roster" class="tab-view">${renderSeasonRosterField()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div></section></div><aside class="season-sidebar"><section class="panel season-availability-panel"><div class="label">Indisponibili</div><h3>Gestione formazione</h3>${renderAvailability()}<p style="font-size:12px"><b>Squalificato:</b> sostituzione automatica. <b>Infortunato:</b> può giocare con -20 Intesa oppure essere sostituito. Panchinaro fuori ruolo: -10 Intesa.</p></section><section class="panel season-lineup-panel"><div class="label">Formazione effettiva</div>${renderResolvedLineup()}</section><section class="panel opponent-club-panel season-opponent-panel" style="${teamCssVars(opp)}"><div class="label">Avversario reale</div><h3>${teamColorDot(opp)}${esc(opp.name)}</h3>${seasonRuleSummary()}${renderOpponentRoster(opp)}</section></aside></div>`;
  document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>resolveDecision(Number(b.dataset.choice)));
  document.querySelectorAll('[data-injured]').forEach(b=>b.onclick=()=>{const id=b.dataset.injured;state.playInjured[id]=!state.playInjured[id];save();render()});
  document.getElementById('playRoundLive').onclick=()=>playRound('live');
@@ -5447,7 +5646,7 @@ function postMatch(){
  if(result&&state.seasonRules.futureInjuryPenaltyNotice){if(state.standings?.[USER_ID])state.standings[USER_ID].pts=0;result.futureInjuryPenalty=state.seasonRules.futureInjuryPenaltyNotice;state.seasonRules.futureInjuryPenaltyNotice=''}
  tickEventChainsAfterMatch(result);
  tickSeasonQuestAfterMatch(result);
- state.activeEffects.forEach(effect=>effect.rounds--);state.activeEffects=state.activeEffects.filter(effect=>effect.rounds>0);activatePendingNationalBoost();state.playInjured={};tickChaosOpponentEffects();state.matchday++;state.pendingEvent=null;
+ state.activeEffects.forEach(effect=>effect.rounds--);state.activeEffects=state.activeEffects.filter(effect=>effect.rounds>0);activatePendingNationalBoost();state.playInjured={};tickChaosOpponentEffects();state.matchday++;state.pendingEvent=null;processParallelCupAfterLeagueRound(state.matchday,result);
  if(state.matchday===19){runChaosOpponentMidseason();const target=midseasonTarget(),auto=Boolean(state.seasonRules.autoMidseason||state.seasonRules.botMidseason),mandatoryIds=mandatoryMidseasonPlayerIds().filter(id=>rosterEntry(id)).slice(0,3),mandatory=mandatoryIds[0]||'';state.midseason={step:0,target:clamp(Math.max(target,mandatoryIds.length),1,3),outgoingId:mandatory,mandatoryOutgoingId:mandatory,mandatoryOutgoingIds:mandatoryIds,clubId:'',nation:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto,autoCompleted:false,changes:[]};state.phase='midseason';}
  else if(isTeamEliminated(USER_ID)||state.matchday>=seasonLength())state.phase='finished';else prepareEvent();
 }
@@ -5472,6 +5671,7 @@ function showResultModal(){
  const chickenTrainingLine=result.chickenTraining?`<div class="goal-line"><b>🐔 Allenamento del pollo</b><br>${esc(result.chickenTraining.playerName)} guadagna +${Number(result.chickenTraining.gain)||0} OVR e sale a ${Number(result.chickenTraining.newOvr)||1}.</div>`:'';
  const chickenGoalLine=result.chickenGoals?`<div class="goal-line"><b>🐔 Progresso del pollaio</b><br>${esc(result.chickenGoals.playerName)} ha segnato ${Number(result.chickenGoals.count)||0} ${Number(result.chickenGoals.count)===1?'gol':'gol'}${result.chickenGoals.double?' dal valore doppio':''}. Totale: ${Number(result.chickenGoals.total)||0}/3.</div>`:'';
  const questLine=(Array.isArray(result.questUpdates)?result.questUpdates:[]).map(update=>`<div class="goal-line ${update.success?'':'red-card-event'}"><b>${update.success?'✅':'❌'} Quest: ${esc(update.title||'Missione')}</b><br>${esc(update.message||'')}</div>`).join('');
+ const cupLine=renderParallelCupResult(result.cupReport);
  const champagneLine=result.champagneDrawLoss?`<div class="goal-line red-card-event"><b>🥂 Calcio champagne</b><br>Il pareggio è stato trasformato in sconfitta dalla penalità della quest.</div>`:'';
  const hungerLine=result.hungerWalkover?`<div class="goal-line"><b>🏹 Vittoria a tavolino</b><br>L’avversario era già stato eliminato dagli Hunger Games.</div>`:'';
  const subscriberLine=result.forcedSubscriberGoals?`<div class="goal-line"><b>⚽ Abbonati scatenati</b><br>${result.forcedSubscriberGoals} ${result.forcedSubscriberGoals===1?'abbonato ha':'abbonati hanno'} segnato almeno un gol.</div>`:'';
@@ -5484,7 +5684,7 @@ function showResultModal(){
  const mvpTeam=result.mvpTeamId?teamById(result.mvpTeamId):null;
  const mvpLine=mvpPlayer?`<div class="match-mvp" style="${teamCssVars(mvpTeam)}">${renderMiniAvatar(mvpPlayer,'small')}<div><span>⭐ MVP della partita</span><b>${esc(mvpPlayer.name)}</b><small>${mvpTeam?`${teamColorDot(mvpTeam)}${esc(mvpTeam.name)}`:''}</small></div></div>`:'';
  const scorersLine=`<div class="result-scorers">${renderResultScorers(result.goals,state.teamName)}${renderResultScorers(result.opponentGoals,result.opponent)}</div>`;
- modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${result.gf}–${result.ga}</div><button id="closeResult" class="btn primary result-continue-top">Continua</button>${scorersLine}${pinkLine}${redLine}${suspensionLine}${forcedLine}${pointsLine}${injuryLine}${futurePenaltyLine}${chickenTrainingLine}${chickenGoalLine}${questLine}${champagneLine}${hungerLine}${subscriberLine}<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>${mvpLine}</div></div></div>`;
+ modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${result.gf}–${result.ga}</div><button id="closeResult" class="btn primary result-continue-top">Continua</button>${scorersLine}${pinkLine}${redLine}${suspensionLine}${forcedLine}${pointsLine}${injuryLine}${futurePenaltyLine}${chickenTrainingLine}${chickenGoalLine}${questLine}${cupLine}${champagneLine}${hungerLine}${subscriberLine}<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>${mvpLine}</div></div></div>`;
  document.getElementById('closeResult').onclick=()=>{modalRoot.innerHTML='';render()};
 }
 
@@ -5555,6 +5755,7 @@ function continueAfterMidseasonSummary(){
  state.midseason.pendingCandidateId='';
  state.phase='season';
  state.seasonRules.botMidseason=false;
+ initializeParallelCup();
  const remainingMandatory=mandatoryMidseasonPlayerIds().filter(id=>rosterEntry(id));state.seasonRules.mandatoryMidseasonPlayerIds=remainingMandatory;state.seasonRules.mandatoryMidseasonPlayerId=remainingMandatory[0]||'';
  prepareEvent();
  save();
@@ -5738,7 +5939,7 @@ function userTeamGoalStats(){const totals={};(state.history||[]).forEach(match=>
 function teamTopScorer(){return userTeamGoalStats()[0]||null}
 function showFinished(){
  const table=sortedTable(),eliminated=isTeamEliminated(USER_ID),rank=eliminated?0:table.findIndex(x=>x.id===USER_ID)+1,rankLabel=eliminated?'—':`${rank}°`,s=userStanding(),rankedGoals=rankedGoalStats(),top=rankedGoals[0],topPlayer=top?statPlayerInfo(top[0]):null,userTop=teamTopScorer(),userTopPlayer=userTop?statPlayerInfo(userTop[0]):null,canSubmit=rank===1&&!eliminated,summary=buildSeasonSummary(rank,eliminated);
- screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Stagione conclusa</div><h2>${eliminated?'Eliminato dagli Hunger Games':canSubmit?'Campioni!':'Campionato terminato'}</h2><div class="final-position">${rankLabel}</div><p>${esc(state.teamName)} chiude la stagione dopo ${state.matchday} giornate.</p></div><div class="final-grid"><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div></div>${renderSeasonSummaryCard(summary)}<section class="panel"><h3>Capocannonieri</h3><p><b>Campionato:</b> ${topPlayer?`${esc(topPlayer.name)} — ${Number(top[1])||0} gol`:'Nessun marcatore'}</p><p><b>${esc(state.teamName)}:</b> ${userTopPlayer?`${esc(userTopPlayer.name)} — ${Number(userTop[1])||0} gol`:'Nessun marcatore'}</p>${canSubmit?`<p class="subline">La vittoria del Campionato può essere inviata alla classifica generale. Il miglior marcatore della tua squadra verrà sommato alla tabella Capocannonieri.</p>`:`<p class="subline"><b>Invio non disponibile:</b> solo chi conclude il Campionato al 1° posto può inviare il risultato.</p>`}<div class="top-actions">${canSubmit?`<button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultati inviati':'Invia vittoria'}</button>`:''}<button id="exportSeason" class="btn gold">Esporta risultati JSON</button></div></section>${renderFinalPlayerStats()}<div class="season-finished-table">${renderTable()}</div></section>`;
+ screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Stagione conclusa</div><h2>${seasonFinalHeadline(rank,eliminated)}</h2><div class="final-position">${rankLabel}</div><p>${esc(state.teamName)} chiude la stagione dopo ${state.matchday} giornate.</p></div><div class="final-grid"><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div></div>${renderSeasonSummaryCard(summary)}<section class="panel"><h3>Capocannonieri</h3><p><b>Campionato:</b> ${topPlayer?`${esc(topPlayer.name)} — ${Number(top[1])||0} gol`:'Nessun marcatore'}</p><p><b>${esc(state.teamName)}:</b> ${userTopPlayer?`${esc(userTopPlayer.name)} — ${Number(userTop[1])||0} gol`:'Nessun marcatore'}</p>${canSubmit?`<p class="subline">La vittoria del Campionato può essere inviata alla classifica generale. Il miglior marcatore della tua squadra verrà sommato alla tabella Capocannonieri.</p>`:`<p class="subline"><b>Invio non disponibile:</b> solo chi conclude il Campionato al 1° posto può inviare il risultato.</p>`}<div class="top-actions">${canSubmit?`<button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultati inviati':'Invia vittoria'}</button>`:''}<button id="exportSeason" class="btn gold">Esporta risultati JSON</button></div></section>${renderFinalPlayerStats()}<div class="season-finished-table">${renderTable()}</div></section>`;
  const sendButton=document.getElementById('sendSeason');if(sendButton)sendButton.onclick=sendSeason;document.getElementById('exportSeason').onclick=exportSeason;document.getElementById('shareSeasonCard').onclick=()=>shareSeasonSummary(summary);document.getElementById('downloadSeasonCard').onclick=()=>downloadSeasonSummary(summary);
 }
 
@@ -5898,13 +6099,14 @@ function exportSeason(){const blob=new Blob([JSON.stringify(state,null,2)],{type
 function render(){updateSaveStatus();if(!PLAYERS.length||!CLUBS.length){screen.innerHTML='<section class="panel"><h2>Caricamento database giocatori...</h2></section>';return}if(state.phase==='setup')showSetup();else if(state.phase==='draft')showDraft();else if(state.phase==='season')showSeason();else if(state.phase==='midseason')showMidseason();else if(state.phase==='finished')showFinished();updateSaveStatus()}
 async function boot(){
  try{
-   [PLAYERS,CLUBS,COMMENTARY,CLASSIC_PLAYERS]=await Promise.all([
+   [PLAYERS,CLUBS,COMMENTARY,CLASSIC_PLAYERS,OTHER_CLUBS]=await Promise.all([
      fetchJsonResource('data/giocatori-real.json','data/giocatori-real.json'),
      fetchJsonResource('data/club-real.json','data/club-real.json'),
      fetchJsonResource('data/cronaca-gol.json','data/cronaca-gol.json',{optional:true}),
-     fetchJsonResource('data/giocatori.json','data/giocatori.json',{optional:true})
+     fetchJsonResource('data/giocatori.json','data/giocatori.json',{optional:true}),
+     fetchJsonResource('data/club.json','data/club.json',{optional:true})
    ]);
-   REAL_PLAYERS=PLAYERS;CLASSIC_PLAYERS=Array.isArray(CLASSIC_PLAYERS)?CLASSIC_PLAYERS:[];
+   REAL_PLAYERS=PLAYERS;CLASSIC_PLAYERS=Array.isArray(CLASSIC_PLAYERS)?CLASSIC_PLAYERS:[];OTHER_CLUBS=Array.isArray(OTHER_CLUBS)?OTHER_CLUBS:[];
    dataDiagnostics=validateGameData(PLAYERS,CLUBS);
    if(dataDiagnostics.fatal.length)throw Error(dataDiagnostics.fatal.slice(0,12).join(' | ')+(dataDiagnostics.fatal.length>12?` | Altri ${dataDiagnostics.fatal.length-12} errori.`:''));
  }catch(error){
