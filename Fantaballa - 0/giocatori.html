@@ -111,6 +111,7 @@
     .subscriber-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border:1px solid #c79418;border-radius:999px;background:linear-gradient(135deg,#fff3a2,#e3c64d);color:#533600;font-size:9px;font-weight:1000;letter-spacing:.06em;box-shadow:0 2px 7px rgba(153,104,0,.22)}
     .subscriber-tag::before{content:"★";font-size:10px}
     .avatar.subscriber-avatar{background:linear-gradient(145deg,#7a4d00,#241600);color:#fff4a6;border-color:#ffe16a;box-shadow:0 0 0 3px rgba(227,198,77,.22),0 4px 12px rgba(76,45,0,.3)}
+    .avatar svg{width:100%;height:100%;display:block}
     tbody tr.subscriber-row{background:linear-gradient(90deg,#fff8d9 0%,#fffdf7 55%,#f7f1e4 100%);box-shadow:inset 5px 0 0 #e3c64d}
     tbody tr.subscriber-row:nth-child(even){background:linear-gradient(90deg,#fff4c2 0%,#fbf4df 55%,#f4ead2 100%)}
     .club-cell{display:flex;align-items:center;gap:9px;min-width:0}
@@ -253,6 +254,41 @@
     return values.some(value=>['si','sì','yes','true','1','tik tok','tiktok'].includes(value));
   };
 
+
+  const hashString=str=>{let h=2166136261>>>0;for(const ch of String(str||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
+  const seededChoice=(list,seed,shift=0)=>list[(Math.floor(seed/Math.pow(7,shift))>>>0)%list.length];
+  const avatarSeed=player=>{
+    const role=player?.Position||player?.role||'';
+    const seed=hashString(`${player?.name||''}|${player?.nation||''}|${role}`);
+    return {
+      seed,
+      skin:seededChoice(['#f4c7a1','#eab58d','#d89a72','#bb7d57','#8e5e43','#f2d1b0'],seed,1),
+      hair:seededChoice(['#171311','#3c2415','#6b4423','#c58b42','#d8d8d8','#0f1727','#7f1d1d'],seed,2),
+      shirtA:seededChoice(['#2753c7','#d64837','#1d8c4c','#7b4cb8','#0f172a','#d48a17','#0f766e'],seed,3),
+      shirtB:seededChoice(['#ffffff','#f5dc83','#d7e4ff','#f4d56c','#ecf2ff','#fde68a'],seed,4),
+      shirtC:seededChoice(['#10243a','#ffffff','#1f2937','#fef3c7','#173a58','#2e2151'],seed,5),
+      faceShape:seededChoice(['round','oval','square'],seed,6),
+      hairStyle:seededChoice(['crop','part','curly','spike','baldside'],seed,7),
+      eyeStyle:seededChoice(['dot','smile','focused'],seed,8),
+      mouthStyle:seededChoice(['smile','serious','grin'],seed,9),
+      beardStyle:seededChoice(['none','stubble','goatee','moustache'],seed,10),
+      accessory:seededChoice(['none','none','glasses','headband'],seed,11)
+    };
+  };
+  function renderPlayerAvatar(player,subscribed=false){
+    const a=avatarSeed(player);const id=`catav-${a.seed}`;
+    const face=a.faceShape==='square'
+      ? `<rect x="28" y="16" width="28" height="34" rx="10" fill="${a.skin}" stroke="rgba(90,52,31,.22)" stroke-width="1.3"/>`
+      : `<ellipse cx="42" cy="33" rx="${a.faceShape==='oval'?14:15}" ry="${a.faceShape==='oval'?18:17}" fill="${a.skin}" stroke="rgba(90,52,31,.22)" stroke-width="1.3"/>`;
+    const hair={crop:`<path d="M28 27c2-9 9-14 18-14 8 0 14 4 16 12-4-2-9-3-16-3-6 0-12 2-18 5z" fill="${a.hair}"/>`,part:`<path d="M26 28c3-10 11-15 19-15 7 0 13 3 16 12-4-2-9-3-12-3l-4 5-4-5c-6 0-10 2-15 6z" fill="${a.hair}"/>`,curly:`<path d="M26 29c3-10 10-15 18-15 7 0 13 3 16 11-2-1-4-2-6-2 0 0-1-4-4-4-2 0-3 2-3 2s-2-4-5-4-4 3-4 3-2-3-5-2c-3 1-4 5-4 5-1 1-2 2-3 6z" fill="${a.hair}"/>`,spike:`<path d="M27 30c1-4 3-8 6-12l4 4 3-6 5 5 4-5c3 2 6 7 7 12-5-3-11-4-14-4-6 0-10 2-15 6z" fill="${a.hair}"/>`,baldside:`<path d="M28 30c2-7 7-10 14-10 8 0 12 4 14 10-3-2-5-3-8-3 0-4-2-6-6-6s-6 2-6 6c-3 0-5 1-8 3z" fill="${a.hair}" opacity=".95"/>`}[a.hairStyle];
+    const eyes={dot:`<circle cx="36" cy="34" r="1.5" fill="#1c1712"/><circle cx="48" cy="34" r="1.5" fill="#1c1712"/>`,smile:`<path d="M33.8 34c1 1.2 1.8 1.7 2.8 1.7s1.8-.5 2.8-1.7" fill="none" stroke="#1c1712" stroke-width="1.2" stroke-linecap="round"/><path d="M45.8 34c1 1.2 1.8 1.7 2.8 1.7s1.8-.5 2.8-1.7" fill="none" stroke="#1c1712" stroke-width="1.2" stroke-linecap="round"/>`,focused:`<path d="M33.5 34h5" stroke="#1c1712" stroke-width="1.4" stroke-linecap="round"/><path d="M45.5 34h5" stroke="#1c1712" stroke-width="1.4" stroke-linecap="round"/><circle cx="36" cy="34.6" r="1.05" fill="#1c1712"/><circle cx="48" cy="34.6" r="1.05" fill="#1c1712"/>`}[a.eyeStyle];
+    const mouth={smile:`<path d="M36 43c2.1 2 4.2 2.8 6 2.8s3.9-.8 6-2.8" fill="none" stroke="rgba(98,43,32,.9)" stroke-width="1.5" stroke-linecap="round"/>`,serious:`<path d="M36.5 44.2h11" fill="none" stroke="rgba(98,43,32,.9)" stroke-width="1.5" stroke-linecap="round"/>`,grin:`<path d="M35.5 43c1.9 2.5 4.2 3.5 6.5 3.5s4.6-1 6.5-3.5" fill="#fff7ec" stroke="rgba(98,43,32,.9)" stroke-width="1.3" stroke-linejoin="round"/>`}[a.mouthStyle];
+    const beard={none:'',stubble:`<path d="M33 42c1.8 5.5 5.5 8.8 9 8.8 3.6 0 7.3-3.3 9-8.8" fill="rgba(58,37,23,.18)"/>`,goatee:`<path d="M38.5 45c1 3.7 2.2 6.8 3.5 8.2 1.2-1.4 2.5-4.5 3.5-8.2" fill="rgba(58,37,23,.58)"/><path d="M36 43c1.8 1.6 3.8 2.3 6 2.3s4.2-.7 6-2.3" fill="rgba(58,37,23,.5)"/>`,moustache:`<path d="M36 40.8c1.5 1.2 3.1 1.8 4.8 1.8 0 0 .4-1.2 1.2-1.2s1.2 1.2 1.2 1.2c1.7 0 3.3-.6 4.8-1.8-1.2 2-2.7 3.1-5 3.1h-2c-2.3 0-3.8-1.1-5-3.1z" fill="rgba(58,37,23,.7)"/>`}[a.beardStyle];
+    const accessory={none:'',glasses:`<g stroke="#111827" stroke-width="1.5" fill="rgba(220,238,255,.22)"><rect x="31" y="31.3" width="9" height="6.8" rx="2.4"/><rect x="44" y="31.3" width="9" height="6.8" rx="2.4"/><path d="M40 34.7h4"/></g>`,headband:`<path d="M29 26c4-2 9-3 13-3 5 0 10 1 14 3" fill="none" stroke="#e11d48" stroke-width="3.1" stroke-linecap="round" opacity=".9"/>`}[a.accessory];
+    return `<span class="avatar ${subscribed?'subscriber-avatar':''}" aria-hidden="true"><svg viewBox="0 0 84 84" focusable="false"><defs><linearGradient id="${id}-shirt" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${a.shirtA}"/><stop offset="58%" stop-color="${a.shirtB}"/><stop offset="100%" stop-color="${a.shirtC}"/></linearGradient><radialGradient id="${id}-shine" cx="50%" cy="15%" r="70%"><stop offset="0%" stop-color="rgba(255,255,255,.65)"/><stop offset="55%" stop-color="rgba(255,255,255,.08)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><ellipse cx="42" cy="75" rx="18" ry="6.6" fill="rgba(0,0,0,.18)"/><path d="M17 82c1-12 9-20 25-20s24 8 25 20" fill="url(#${id}-shirt)" stroke="rgba(255,255,255,.18)" stroke-width="1.1"/><path d="M32 63c3 4 6 6 10 6s7-2 10-6" fill="none" stroke="rgba(255,255,255,.42)" stroke-width="1.2"/><rect x="38.5" y="52" width="7" height="8" rx="3" fill="${a.skin}"/> <ellipse cx="24" cy="33" rx="3.4" ry="5.3" fill="${a.skin}" opacity=".95"/><ellipse cx="60" cy="33" rx="3.4" ry="5.3" fill="${a.skin}" opacity=".95"/>${face}${hair}${accessory}<path d="M32.5 29.5c1.5-1 3.2-1.5 5.2-1.5" fill="none" stroke="rgba(52,31,21,.78)" stroke-width="1.4" stroke-linecap="round"/><path d="M46.3 28c2 0 3.7.5 5.2 1.5" fill="none" stroke="rgba(52,31,21,.78)" stroke-width="1.4" stroke-linecap="round"/>${eyes}<path d="M42 36c1.4 2 1.8 4 0 5.4" fill="none" stroke="rgba(110,69,42,.4)" stroke-width="1.1" stroke-linecap="round"/>${mouth}${beard}<rect x="4" y="4" width="76" height="76" rx="22" fill="url(#${id}-shine)" opacity=".55"/></svg></span>`;
+  }
+
+
   async function loadJson(path){
     const response=await fetch(path,{cache:'no-store'});
     if(!response.ok)throw new Error(`Impossibile caricare ${path} (${response.status})`);
@@ -363,7 +399,7 @@
       const club=clubInfo(player);const colors=club.colorClub||{};const ovr=Number(player.ovr||0);const subscribed=isSubscriber(player);
       return `<tr class="${subscribed?'subscriber-row':''}">
         <td class="rank" data-label="Posizione">${start+index+1}</td>
-        <td class="player-td" data-label="Giocatore"><div class="player-cell"><span class="avatar ${subscribed?'subscriber-avatar':''}">${escapeHtml(initials(player.name))}</span><span class="player-copy"><span class="player-name ${subscribed?'subscriber-name':''}" title="${escapeHtml(player.name)}${subscribed?' · Abbonato':''}">${escapeHtml(player.name)}</span><span class="player-db"><span>${player.database==='real'?'Fantacampionato':'Fantaballa'}</span>${subscribed?'<span class="subscriber-tag">Abbonato</span>':''}</span></span></div></td>
+        <td class="player-td" data-label="Giocatore"><div class="player-cell">${renderPlayerAvatar(player,subscribed)}<span class="player-copy"><span class="player-name ${subscribed?'subscriber-name':''}" title="${escapeHtml(player.name)}${subscribed?' · Abbonato':''}">${escapeHtml(player.name)}</span><span class="player-db"><span>${player.database==='real'?'Fantacampionato':'Fantaballa'}</span>${subscribed?'<span class="subscriber-tag">Abbonato</span>':''}</span></span></div></td>
         <td class="club-td" data-label="Squadra"><div class="club-cell"><span class="club-swatch" style="--club-a:${escapeHtml(colors.primary||'#1769aa')};--club-b:${escapeHtml(colors.secondary||'#fff')};--club-accent:${escapeHtml(colors.accent||'#e3c64d')}"></span><span class="club-copy"><span class="club-name" title="${escapeHtml(club.name||player.club)}">${escapeHtml(club.name||player.club||'Senza squadra')}</span></span></div></td>
         <td class="nation-td" data-label="Nazionalità"><span class="nation">${escapeHtml(player.nation||'Non indicata')}</span></td>
         <td class="position-td" data-label="Ruolo"><span class="position">${escapeHtml(player.Position||player.role||'—')}</span></td>
