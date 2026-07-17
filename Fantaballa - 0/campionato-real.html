@@ -3055,8 +3055,8 @@ function teamColorsForPalette(id){const preset=teamPalettePreset(id);return{prim
 
 const COACH_PROFILES=[
  {id:'anonymous',name:'Anonimo',icon:'🥷',image:'assets/coach-profiles/anonymous.png',tagline:'Cialtrone',pro:'Nessun effetto.',con:'Nessun effetto.'},
- {id:'talent-scout',name:'Talent scout',icon:'🔎',image:'assets/coach-profiles/talent-scout.png',tagline:'Occhio al talento',pro:'Un re-roll aggiuntivo nei draft e maggiore probabilità di trovare giocatori con OVR alto.',con:'Nessun nuovo giocatore può arrivare fuori dal draft iniziale e da quello di metà stagione.'},
- {id:'motivator',name:'Motivatore',icon:'📣',image:'assets/coach-profiles/motivator.png',tagline:'Qui si realizzano i sogni',pro:'Dopo 2 sconfitte consecutive, +3 OVR alla squadra nella partita seguente.',con:'Dopo 3 vittorie consecutive, -3 OVR alla squadra nella partita seguente.'},
+ {id:'talent-scout',name:'Talent scout',icon:'🔎',image:'assets/coach-profiles/talent-scout.png',tagline:'Occhio al talento',pro:'Un re-roll aggiuntivo nei draft, maggiore probabilità di trovare giocatori con OVR alto e primo pack garantito dalla squadra del giocatore con lo stesso nome dell’allenatore.',con:'Nessun nuovo giocatore può arrivare fuori dal draft iniziale e da quello di metà stagione.'},
+ {id:'motivator',name:'Motivatore',icon:'📣',image:'assets/coach-profiles/motivator.png',tagline:'Qui si realizzano i sogni',pro:'Dopo 2 sconfitte consecutive, +3 OVR alla squadra nella partita seguente. Ogni nuovo bonus OVR o Intesa riceve anche +1 OVR e +1 Intesa aggiuntivi.',con:'Dopo 3 vittorie consecutive, -3 OVR alla squadra nella partita seguente.'},
  {id:'salvation',name:'Mister salvezza',icon:'🛟',image:'assets/coach-profiles/salvation.png',tagline:'Serenità.',pro:'Con OVR medio della rosa sotto 70, la squadra segna almeno un gol a partita.',con:'Con OVR medio della rosa sopra 80, la squadra subisce almeno un gol a partita.'}
 ];
 function normalizeCoachType(value){const id=String(value||'anonymous');return COACH_PROFILES.some(profile=>profile.id===id)?id:'anonymous'}
@@ -3079,7 +3079,7 @@ function setupTeamBadge(name){const words=String(name||'FAN').trim().split(/\s+/
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
 let PLAYERS=[];let CLASSIC_PLAYERS=[];let REAL_PLAYERS=[];let CLUBS=[];let OTHER_CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;let seasonEventMinimized=false;let seasonEventUiKey='';
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),coachType:normalizeCoachType(localStorage.getItem(SETUP_COACH_TYPE_KEY)||'anonymous'),formation:'4-3-3',gameMode:'normal',setupStep:1,teamPaletteId:String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa'),teamColors:teamColorsForPalette(String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa')),chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:''},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],equalOrBetterMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,marathon:false,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,federationGoalRule:'',dynamicLeague:'',dynamicLeagueLabel:'',dynamicLeagueAppliedAt:-1,dynamicLeagueTeamIds:[],nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[],laCurvaRewardActive:false},quest:{active:false,id:'',title:'',status:'idle',acceptedMatchday:-1,matchesPlayed:0,progress:0,target:0,deadlineMatches:0,targetPlayerId:'',targetPlayerName:'',targetTeamIds:[],facedTeamIds:[],rewardActive:false,objective:'',reward:'',penalty:'',summary:'',notice:''},eventChains:{mentalista:{active:false,stage:0,playerId:'',playerName:'',originalOvr:0,dueMatchday:-1,training:false,nature:false,goals:0,completed:false},general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false},pinguino:{active:false,stage:0,dueMatchday:-1,mode:'',completed:false,wins:0,nonWins:0}},analytics:{initialOvr:0,injuries:0,redCards:0,eventLog:[],biggestResult:null},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},cup:{status:'pending',qualifiedRank:0,currentCompetition:'',otherCompetition:'',participants:[],userParticipantId:'cup-user',userAlive:true,winnerId:'',rewardApplied:false,penaltyApplied:false,notice:'',history:[],stages:[],pendingMatch:null,lastResult:null},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),coachType:normalizeCoachType(localStorage.getItem(SETUP_COACH_TYPE_KEY)||'anonymous'),formation:'4-3-3',gameMode:'normal',setupStep:1,teamPaletteId:String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa'),teamColors:teamColorsForPalette(String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa')),chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:'',openingClubShown:false},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],equalOrBetterMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,marathon:false,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,federationGoalRule:'',dynamicLeague:'',dynamicLeagueLabel:'',dynamicLeagueAppliedAt:-1,dynamicLeagueTeamIds:[],nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[],laCurvaRewardActive:false,motivatorPermanentChemistry:{}},quest:{active:false,id:'',title:'',status:'idle',acceptedMatchday:-1,matchesPlayed:0,progress:0,target:0,deadlineMatches:0,targetPlayerId:'',targetPlayerName:'',targetTeamIds:[],facedTeamIds:[],rewardActive:false,objective:'',reward:'',penalty:'',summary:'',notice:''},eventChains:{mentalista:{active:false,stage:0,playerId:'',playerName:'',originalOvr:0,dueMatchday:-1,training:false,nature:false,goals:0,completed:false},general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false},pinguino:{active:false,stage:0,dueMatchday:-1,mode:'',completed:false,wins:0,nonWins:0}},analytics:{initialOvr:0,injuries:0,redCards:0,eventLog:[],biggestResult:null},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},cup:{status:'pending',qualifiedRank:0,currentCompetition:'',otherCompetition:'',participants:[],userParticipantId:'cup-user',userAlive:true,winnerId:'',rewardApplied:false,penaltyApplied:false,notice:'',history:[],stages:[],pendingMatch:null,lastResult:null},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
@@ -3313,6 +3313,7 @@ function normalizeCampionatoState(input){
  next.draft.candidates=Array.isArray(next.draft.candidates)?next.draft.candidates.map(String):[];
  if(!next.draft.clubId)next.draft.candidates=[];
  next.draft.pendingPlayerId=String(next.draft.pendingPlayerId||'');
+ next.draft.openingClubShown=Boolean(next.draft.openingClubShown||next.draft.roster.length||next.draft.clubId);
  const coachDraftLimit=initialDraftRerollLimit(next.coachType);
  next.draft.rerolls=Math.max(0,Math.min(coachDraftLimit,Number.isFinite(Number(next.draft.rerolls))?Number(next.draft.rerolls):coachDraftLimit));
  if(next.coachType==='talent-scout'&&next.phase==='draft'&&!next.draft.roster.length&&!next.draft.clubId&&next.draft.rerolls===3)next.draft.rerolls=4;
@@ -3392,6 +3393,7 @@ function normalizeCampionatoState(input){
  next.seasonRules.eliminatedTeamIds=[...new Set((Array.isArray(next.seasonRules.eliminatedTeamIds)?next.seasonRules.eliminatedTeamIds:[]).map(String).filter(Boolean))];
  next.seasonRules.generatedEventPlayers=Array.isArray(next.seasonRules.generatedEventPlayers)?next.seasonRules.generatedEventPlayers.filter(player=>player&&player.id).map(player=>({...player,id:String(player.id),ovr:Math.max(1,Number(player.ovr)||60)})):[];
  next.seasonRules.laCurvaRewardActive=Boolean(next.seasonRules.laCurvaRewardActive);
+ next.seasonRules.motivatorPermanentChemistry=next.seasonRules.motivatorPermanentChemistry&&typeof next.seasonRules.motivatorPermanentChemistry==='object'?Object.fromEntries(Object.entries(next.seasonRules.motivatorPermanentChemistry).map(([id,value])=>[String(id),Math.max(0,Number(value)||0)]).filter(([,value])=>value>0)):{};
  next.quest=next.quest&&typeof next.quest==='object'?next.quest:{};
  next.quest.active=Boolean(next.quest.active);next.quest.id=String(next.quest.id||'');next.quest.title=String(next.quest.title||'');next.quest.status=String(next.quest.status||'idle');next.quest.acceptedMatchday=Number.isFinite(Number(next.quest.acceptedMatchday))?Number(next.quest.acceptedMatchday):-1;next.quest.matchesPlayed=Math.max(0,Number(next.quest.matchesPlayed)||0);next.quest.progress=Math.max(0,Number(next.quest.progress)||0);next.quest.target=Math.max(0,Number(next.quest.target)||0);next.quest.deadlineMatches=Math.max(0,Number(next.quest.deadlineMatches)||0);next.quest.targetPlayerId=String(next.quest.targetPlayerId||'');next.quest.targetPlayerName=String(next.quest.targetPlayerName||'');next.quest.targetTeamIds=[...new Set((Array.isArray(next.quest.targetTeamIds)?next.quest.targetTeamIds:[]).map(String))];next.quest.facedTeamIds=[...new Set((Array.isArray(next.quest.facedTeamIds)?next.quest.facedTeamIds:[]).map(String))];next.quest.rewardActive=Boolean(next.quest.rewardActive);next.quest.objective=String(next.quest.objective||'');next.quest.reward=String(next.quest.reward||'');next.quest.penalty=String(next.quest.penalty||'');next.quest.summary=String(next.quest.summary||'');next.quest.notice=String(next.quest.notice||'');
  next.eventChains=next.eventChains&&typeof next.eventChains==='object'?next.eventChains:{};
@@ -3552,6 +3554,12 @@ function availableStarterSlotsForPlayer(player){return openStarterSlots().filter
 function draftPlayerIsValid(player){if(!player||usedDraftPlayerIds().has(String(player.id)))return false;const canStart=availableStarterSlotsForPlayer(player).length>0;const canBench=benchEntries().length<3;return canStart||canBench}
 function draftCandidatesForClub(clubId){return PLAYERS.filter(player=>String(player.club)===String(clubId)&&draftPlayerIsValid(player)).sort((a,b)=>{const pa=positions(a)[0]||'',pb=positions(b)[0]||'';return pa.localeCompare(pb,'it')||(Number(b.ovr)||0)-(Number(a.ovr)||0)||String(a.name).localeCompare(String(b.name),'it')})}
 function draftPossibleClubs(){const available=new Set();PLAYERS.forEach(player=>{if(player.club&&draftPlayerIsValid(player))available.add(String(player.club))});return CLUBS.map(club=>String(club.id)).filter(id=>available.has(id))}
+function talentScoutOpeningClub(possibleClubIds=[]){
+ if(!coachIs('talent-scout')||state.draft?.openingClubShown)return'';
+ const coachKey=normalizeName(state.coachName),allowed=new Set((possibleClubIds||[]).map(String));if(!coachKey||!allowed.size)return'';
+ const namesake=PLAYERS.find(player=>normalizeName(player?.name)===coachKey&&allowed.has(String(player?.club||''))&&draftPlayerIsValid(player))||PLAYERS.find(player=>normalizeName(player?.name)===coachKey&&allowed.has(String(player?.club||'')));
+ return namesake?String(namesake.club||''):'';
+}
 function drawnClub(){return clubById(state.draft.clubId)}
 function marketClub(){return clubById(state.midseason?.clubId)}
 function playerInitials(name){return String(name||'?').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'?'}
@@ -3820,7 +3828,8 @@ async function drawDraft(useReroll=false){
  const possibleBase=draftPossibleClubs();
  const possible=useReroll&&possibleBase.length>1?possibleBase.filter(id=>id!==state.draft.clubId):possibleBase;
  if(!possible.length)return toast('Non ci sono più giocatori validi per gli slot rimasti.');
- const finalClubId=coachIs('talent-scout')?coachHighOvrPick(possible.map(id=>{const candidates=draftCandidatesForClub(id),quality=candidates.length?Math.max(...candidates.map(player=>Number(player.ovr)||0)):0;return{id,ovr:quality}}))?.id:pick(possible);
+ const openingClubId=!useReroll?talentScoutOpeningClub(possible):'';
+ const finalClubId=openingClubId||(coachIs('talent-scout')?coachHighOvrPick(possible.map(id=>{const candidates=draftCandidatesForClub(id),quality=candidates.length?Math.max(...candidates.map(player=>Number(player.ovr)||0)):0;return{id,ovr:quality}}))?.id:pick(possible));
  const finalClub=clubById(finalClubId);
  draftRolling=true;
  state.draft.pendingPlayerId='';
@@ -3835,6 +3844,7 @@ async function drawDraft(useReroll=false){
    await playSeasonPackReveal(possible,finalClubId,useReroll);
    const drawn=draftCandidatesForClub(finalClubId);
    state.draft.clubId=finalClubId;
+   state.draft.openingClubShown=true;
    state.draft.candidates=drawn.map(player=>String(player.id));
    if(!state.draft.candidates.length)throw new Error(`Nessun giocatore disponibile per ${finalClub?.name||finalClubId}`);
    mobileDraftTab='players';
@@ -4747,7 +4757,9 @@ function seasonHonourLabel(rank,eliminated=false){const cupWon=parallelCupState(
 function seasonFinalHeadline(rank,eliminated=false){const cupWon=parallelCupState().winnerId===parallelCupUserId();if(eliminated)return'Eliminato dagli Hunger Games';if(rank===1&&cupWon)return'Double!';if(cupWon)return'Coppa vinta!';if(rank===1)return'Campioni!';return'Campionato terminato'}
 
 function getStarterEntries(){return rosterPlayers().filter(r=>!r.bench)}function getBenchEntries(){return rosterPlayers().filter(r=>r.bench)}
-function chemistryBaseRaw(player,list){const players=Array.isArray(list)?list:[];let v=nationChemistryBonus(player,players)+clubChemistryBonus(player,players);if(isSubscriber(player))v+=5;const subs=players.filter(o=>o.nation===player.nation&&isSubscriber(o)).length;if(isSubscriber(player)&&subs>=2)v+=10;if(normalizeName(player.name)===normalizeName(state.coachName))v+=10;return v}
+function motivatorPermanentChemistryBonus(player){return coachIs('motivator')?Math.max(0,Number(state.seasonRules?.motivatorPermanentChemistry?.[String(player?.id||'')])||0):0}
+function addMotivatorPermanentChemistry(playerId,value=1){if(!coachIs('motivator')||!playerId||Number(value)<=0)return 0;state.seasonRules.motivatorPermanentChemistry=state.seasonRules.motivatorPermanentChemistry&&typeof state.seasonRules.motivatorPermanentChemistry==='object'?state.seasonRules.motivatorPermanentChemistry:{};const id=String(playerId),next=Math.max(0,(Number(state.seasonRules.motivatorPermanentChemistry[id])||0)+Number(value));state.seasonRules.motivatorPermanentChemistry[id]=next;return next}
+function chemistryBaseRaw(player,list){const players=Array.isArray(list)?list:[];let v=nationChemistryBonus(player,players)+clubChemistryBonus(player,players);if(isSubscriber(player))v+=5;const subs=players.filter(o=>o.nation===player.nation&&isSubscriber(o)).length;if(isSubscriber(player)&&subs>=2)v+=10;if(normalizeName(player.name)===normalizeName(state.coachName))v+=10;v+=motivatorPermanentChemistryBonus(player);return v}
 function chemistryBase(player,list){return closedPortsAffects(player)?0:chemistryBaseRaw(player,list)}
 function activeChemistryEventBonus(player){
  let value=0;
@@ -4763,6 +4775,7 @@ function activeOvrBonus(player){
  let value=0;
  state.activeEffects.forEach(effect=>{
    if(effect.type==='teamOvr')value+=Number(effect.value)||0;
+   if(effect.type==='subscriberOvr'&&isSubscriber(player))value+=Number(effect.value)||0;
    if(effect.type==='playerOvr'&&String(effect.playerId)===String(player.id))value+=Number(effect.value)||0;
  });
  const status=state.statuses?.[String(player?.id||'')];
@@ -4788,8 +4801,20 @@ function effectiveChemistryFromBase(player,baseChem=0){
 }
 function effectiveChemistryBonus(player,players){return effectiveChemistryFromBase(player,chemistryBase(player,players||starterEntries().map(entry=>entry.player).filter(Boolean)))}
 function activeEffectBonus(player,baseChem=0){return activeOvrBonus(player)+(effectiveChemistryFromBase(player,baseChem)-(Number(baseChem)||0))}
+function motivatorBonusScope(type){
+ const scopes={teamOvr:{ovr:'teamOvr',chem:'teamChem',kind:'ovr'},playerOvr:{ovr:'playerOvr',chem:'playerChem',kind:'ovr'},teamChem:{ovr:'teamOvr',chem:'teamChem',kind:'chem'},subscriberChem:{ovr:'subscriberOvr',chem:'subscriberChem',kind:'chem'},playerChem:{ovr:'playerOvr',chem:'playerChem',kind:'chem'},teamChemMultiplier:{ovr:'teamOvr',chem:'teamChem',kind:'multiplier'},subscriberChemMultiplier:{ovr:'subscriberOvr',chem:'subscriberChem',kind:'multiplier'},playerChemMultiplier:{ovr:'playerOvr',chem:'playerChem',kind:'multiplier'}};
+ return scopes[String(type||'')]||null;
+}
 function pushEffect(type,value,rounds,extra={}){
- state.activeEffects.push({type,value,rounds,...extra});
+ const scope=motivatorBonusScope(type),enhance=coachIs('motivator')&&!extra?.motivatorExtra&&scope&&Number(value)>0;
+ const adjusted=enhance&&scope.kind!=='multiplier'?Number(value)+1:value;
+ state.activeEffects.push({type,value:adjusted,rounds,...extra});
+ if(!enhance)return;
+ const companionBase={rounds,source:'Motivatore',motivatorExtra:true};
+ if(extra?.playerId)companionBase.playerId=String(extra.playerId);
+ if(scope.kind==='ovr')state.activeEffects.push({type:scope.chem,value:1,...companionBase});
+ else if(scope.kind==='chem')state.activeEffects.push({type:scope.ovr,value:1,...companionBase});
+ else{state.activeEffects.push({type:scope.ovr,value:1,...companionBase});state.activeEffects.push({type:scope.chem,value:1,...companionBase})}
 }
 function midseasonTargetFrom(source=state){
  const delta=Number(source?.seasonRules?.midseasonPickDelta)||0;
@@ -5469,7 +5494,7 @@ function applyCoachGoalGuarantees(userEvents,opponentEvents,lineup,opponentLineu
 }
 function boostAllRosterPlayers(delta){
  const names=[];
- state.draft.roster.forEach(entry=>{const player=entry.player||playerById(entry.playerId);if(!player)return;const before=Number(player.ovr)||60;entry.player={...player,ovr:Math.max(1,before+delta)};names.push(player.name)});
+ state.draft.roster.forEach(entry=>{const player=entry.player||playerById(entry.playerId);if(!player)return;const before=Number(player.ovr)||60,change=setPermanentRosterOvr(entry,before+delta);if(change)names.push(change.player.name)});
  refreshOpponentClubRosters();
  return names;
 }
@@ -5529,10 +5554,8 @@ function activateDeathMatchClub(){
 }
 function permanentRandomPlayerBoost(delta,source='Magia nera'){
  const entry=randomOwnEntry();if(!entry)return 'Nessun giocatore disponibile.';
- const player=entry.player||playerById(entry.playerId),before=Number(player?.ovr)||60,after=Math.max(1,before+delta);
- const index=state.draft.roster.findIndex(item=>String(item.playerId)===String(entry.playerId));
- if(index>=0)state.draft.roster[index].player={...player,ovr:after};
- return `${player.name}: OVR ${before} → ${after} per il resto della stagione (${source}).`;
+ const player=entry.player||playerById(entry.playerId),before=Number(player?.ovr)||60,change=setPermanentRosterOvr(entry,before+delta);
+ return change?`${change.player.name}: OVR ${change.before} → ${change.after} per il resto della stagione (${source}).`:'Il bonus OVR non è stato applicato.';
 }
 function originalBaseOvr(player){
  const original=playerById(player?.id);
@@ -5543,8 +5566,10 @@ function setPermanentRosterOvr(entry,value){
  if(!entry)return null;
  const index=rosterEntryIndex(entry),player=entry.player||playerById(entry.playerId);
  if(index<0||!player)return null;
- const before=Number(player.ovr)||60,after=Math.max(1,Math.round(Number(value)||before));
+ const before=Number(player.ovr)||60,requested=Math.max(1,Math.round(Number(value)||before)),isPositive=requested>before;
+ const after=isPositive&&coachIs('motivator')?requested+1:requested;
  state.draft.roster[index].player={...player,ovr:after};
+ if(isPositive&&coachIs('motivator'))addMotivatorPermanentChemistry(player.id,1);
  return {player:state.draft.roster[index].player,before,after};
 }
 function empowerUnderdog(){
@@ -5672,7 +5697,7 @@ function resolveLineup(){enforceTipsterStarters();if(state.seasonRules?.autoOpti
 function coachRosterAverageOvr(){const values=rosterPlayers().map(entry=>Number(entry?.player?.ovr)||0).filter(value=>value>0);return values.length?avg(values):0}
 function coachTrailingStreak(){const history=Array.isArray(state?.history)?state.history:[];if(!history.length)return{type:'',count:0};const result=history[history.length-1],type=Number(result.gf)>Number(result.ga)?'win':Number(result.gf)<Number(result.ga)?'loss':'draw';let count=0;for(let index=history.length-1;index>=0;index--){const item=history[index],current=Number(item.gf)>Number(item.ga)?'win':Number(item.gf)<Number(item.ga)?'loss':'draw';if(current!==type)break;count++}return{type,count}}
 function coachMatchOvrModifier(){if(!coachIs('motivator'))return 0;const streak=coachTrailingStreak();if(streak.type==='loss'&&streak.count===2)return 3;if(streak.type==='win'&&streak.count===3)return-3;return 0}
-function coachCurrentEffectLabel(){if(coachIs('motivator')){const value=coachMatchOvrModifier();return value>0?'Motivatore: +3 OVR nella prossima partita':value<0?'Motivatore: -3 OVR nella prossima partita':'Motivatore: nessun bonus o malus attivo'}if(coachIs('salvation')){const value=coachRosterAverageOvr();return value<70?`Mister salvezza: gol segnato garantito (OVR rosa ${value.toFixed(1)})`:value>80?`Mister salvezza: gol subito garantito (OVR rosa ${value.toFixed(1)})`:`Mister salvezza: fascia neutra (OVR rosa ${value.toFixed(1)})`}if(coachIs('talent-scout'))return'Talent scout: scouting potenziato e mercato esterno bloccato';return'Anonimo: nessun effetto'}
+function coachCurrentEffectLabel(){if(coachIs('motivator')){const value=coachMatchOvrModifier(),boost='bonus OVR/Intesa potenziati di +1 OVR e +1 Intesa';return value>0?`Motivatore: +3 OVR nella prossima partita · ${boost}`:value<0?`Motivatore: -3 OVR nella prossima partita · ${boost}`:`Motivatore: ${boost}`}if(coachIs('salvation')){const value=coachRosterAverageOvr();return value<70?`Mister salvezza: gol segnato garantito (OVR rosa ${value.toFixed(1)})`:value>80?`Mister salvezza: gol subito garantito (OVR rosa ${value.toFixed(1)})`:`Mister salvezza: fascia neutra (OVR rosa ${value.toFixed(1)})`}if(coachIs('talent-scout'))return'Talent scout: primo pack dalla squadra dell’omonimo, scouting potenziato e mercato esterno bloccato';return'Anonimo: nessun effetto'}
 function teamPowerBase(){const list=getStarterEntries().map(r=>r.player);return avg(list.map(p=>Number(p.ovr)||70))}
 function matchPower(){const line=resolveLineup(),players=line.map(x=>x.player);let total=0;line.forEach(e=>{total+=(Number(e.player.ovr)||60)+(effectiveChemistryBonus(e.player,players)/5)+e.malus+activeOvrBonus(e.player)});return line.length?total/line.length:0}
 function unavailableList(){return rosterPlayers().filter(r=>{const s=statusOf(r.playerId);return s.injury>0||s.suspension>0})}
