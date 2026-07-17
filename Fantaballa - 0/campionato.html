@@ -3590,9 +3590,10 @@ function nationMirrorsClub(player){
 function nationChemistryBonus(player,list){
  if(!player||nationMirrorsClub(player))return 0;
  const playerId=String(player.id);
- const sameNation=(list||[]).filter(other=>other&&String(other.id)!==playerId&&other.nation===player.nation).length;
- const sameNationSameRole=(list||[]).filter(other=>other&&String(other.id)!==playerId&&other.nation===player.nation&&roleOf(other)===roleOf(player)).length;
- return Math.min(6,sameNation+sameNationSameRole);
+ const nationKey=normalizeName(player.nation||'');
+ if(!nationKey)return 0;
+ const sameNation=(list||[]).filter(other=>other&&String(other.id)!==playerId&&normalizeName(other.nation||'')===nationKey).length;
+ return Math.min(10,sameNation);
 }
 function clubChemistryBonus(player,list){
  if(!player)return 0;

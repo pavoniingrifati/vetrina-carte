@@ -15,7 +15,7 @@
   - Fantacampionato del Ca***: modalità REAL separata, accettata soltanto se vinta
   - Modalità Caos e Caos REAL: classifiche separate, accettate soltanto se vinte
   - Invio verificato dal browser tramite risposta iframe (niente falsi messaggi di successo)
-  - Fantacampionato REAL da 38 giornate o 76 con la regola Maratona
+  - Invio delle stagioni REAL senza limiti massimi di giornate
 */
 
 const SHEET_NAME = 'Classifica';
@@ -231,13 +231,6 @@ function doPost(e) {
     if (isChampionshipMode_(row.modalita_tipo) && !row.codice_vittoria) {
       return postOutput_(e, { ok:false, error:'Codice univoco della stagione mancante.' });
     }
-    if (row.modalita_tipo === 'campionato_real' || row.modalita_tipo === 'caos_real') {
-      const giornateReal = Number(row.giornate);
-      if (row.giornate !== '' && giornateReal !== 38 && giornateReal !== 76) {
-        return postOutput_(e, { ok:false, error:'Il Fantacampionato REAL deve risultare concluso dopo 38 giornate, oppure 76 con la regola Maratona.' });
-      }
-    }
-
     const sheet = getSheet_();
     const lastColumn = sheet.getLastColumn();
     const values = sheet.getDataRange().getValues();
