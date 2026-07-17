@@ -3643,37 +3643,58 @@ function isSubscriber(player){return String(player&&player.subscriber||'').trim(
 function hashString(str){let h=2166136261>>>0;for(const ch of String(str||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
 function seededChoice(list,seed,shift=0){return list[(Math.floor(seed/Math.pow(7,shift))>>>0)%list.length]}
 
+function avatarHexToRgb(color){
+ const value=String(color||'').trim();
+ const match=value.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+ if(!match)return null;
+ let hex=match[1];
+ if(hex.length===3)hex=hex.split('').map(ch=>ch+ch).join('');
+ return [parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16)];
+}
+function avatarRgbToHex(rgb){return `#${rgb.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('')}`}
+function avatarMix(a,b,t=.5){
+ const ra=avatarHexToRgb(a)||[24,44,74], rb=avatarHexToRgb(b)||[255,255,255];
+ return avatarRgbToHex(ra.map((v,i)=>v+(rb[i]-v)*t));
+}
+function avatarShade(color,amount=.15){return amount>=0?avatarMix(color,'#ffffff',amount):avatarMix(color,'#000000',Math.abs(amount))}
+function avatarLuma(color){const rgb=avatarHexToRgb(color)||[255,255,255];return (0.299*rgb[0]+0.587*rgb[1]+0.114*rgb[2])/255}
+function avatarTextColor(color){return avatarLuma(color)>.63?'#10243a':'#ffffff'}
+function avatarRoleCode(player){return String(player?.Position||player?.role||'').toUpperCase().split(',')[0].trim()||'--'}
+function avatarIsGoalkeeper(player){return /^(P|POR|GK)$/.test(avatarRoleCode(player))}
 function avatarSourceKey(player){
  const source=player?.clubName||player?.teamName||player?.squadra||player?.team||player?.club||player?.nation||'Fantaballa';
  return String(source);
 }
-function avatarPalette(player,seed){
- const role=String(player?.Position||player?.role||'').toUpperCase();
- const isGoalkeeper=/^(P|POR|GK)$/.test(role);
- const sourceSeed=hashString(avatarSourceKey(player));
- const palettes=isGoalkeeper
-  ? [
-     {bg1:'#143d7a',bg2:'#45b6ff',rim:'#b6ecff',shirt1:'#ff9f1c',shirt2:'#fff3d4',shirt3:'#ff6b35',accent:'#fff'},
-     {bg1:'#0d5c4a',bg2:'#39c5a4',rim:'#b7ffe8',shirt1:'#6d28d9',shirt2:'#ede9fe',shirt3:'#8b5cf6',accent:'#fff'},
-     {bg1:'#4a1850',bg2:'#ff5cc8',rim:'#ffd0f3',shirt1:'#0f172a',shirt2:'#fde047',shirt3:'#334155',accent:'#fff8c5'},
-     {bg1:'#073b4c',bg2:'#56cfe1',rim:'#d0f4ff',shirt1:'#ef476f',shirt2:'#fff1f3',shirt3:'#ff7b7b',accent:'#fff'}
-    ]
-  : [
-     {bg1:'#12386d',bg2:'#4f8df7',rim:'#d6e7ff',shirt1:'#0f56d9',shirt2:'#f8fafc',shirt3:'#f39c12',accent:'#fff'},
-     {bg1:'#7a1212',bg2:'#ef4444',rim:'#ffd7d7',shirt1:'#b91c1c',shirt2:'#fef2f2',shirt3:'#1f2937',accent:'#fff'},
-     {bg1:'#0f5132',bg2:'#2fbf71',rim:'#d5ffe7',shirt1:'#15803d',shirt2:'#effdf5',shirt3:'#0f172a',accent:'#fff'},
-     {bg1:'#40207a',bg2:'#8b5cf6',rim:'#eadbff',shirt1:'#5b21b6',shirt2:'#f5f3ff',shirt3:'#ec4899',accent:'#fff'},
-     {bg1:'#1f2937',bg2:'#64748b',rim:'#edf2f7',shirt1:'#0f172a',shirt2:'#f8fafc',shirt3:'#ef4444',accent:'#fff'},
-     {bg1:'#7c2d12',bg2:'#fb923c',rim:'#ffe2cf',shirt1:'#ea580c',shirt2:'#fff7ed',shirt3:'#7c2d12',accent:'#fff'},
-     {bg1:'#0f766e',bg2:'#2dd4bf',rim:'#d4fffb',shirt1:'#0f766e',shirt2:'#f0fdfa',shirt3:'#facc15',accent:'#fff'},
-     {bg1:'#4c1d95',bg2:'#c084fc',rim:'#f3e8ff',shirt1:'#7c3aed',shirt2:'#faf5ff',shirt3:'#1e293b',accent:'#fff'},
-     {bg1:'#113946',bg2:'#7db9b6',rim:'#e5fffe',shirt1:'#1d4ed8',shirt2:'#f8fafc',shirt3:'#16a34a',accent:'#fff'},
-     {bg1:'#6a040f',bg2:'#ff6b6b',rim:'#ffe2e2',shirt1:'#e63946',shirt2:'#fff5f5',shirt3:'#1d3557',accent:'#fff'}
-    ];
- return palettes[sourceSeed % palettes.length];
+function avatarClubInfo(player){
+ const clubId=player?.club||player?.clubId||'';
+ const club=clubId&&typeof clubById==='function'?clubById(clubId):null;
+ const colors=club?.colorClub||club?.colors||{};
+ const primary=colors.primary||'#1769AA';
+ const secondary=colors.secondary||avatarShade(primary,.45);
+ const accent=colors.accent||avatarMix(primary,secondary,.5);
+ const text=colors.text||avatarTextColor(primary);
+ return {name:club?.name||avatarSourceKey(player),shortName:club?.shortName||String(club?.name||avatarSourceKey(player)).slice(0,3).toUpperCase(),primary,secondary,accent,text};
+}
+function avatarTier(player){
+ const ovr=Number(player?.ovr)||0;
+ if(ovr>=90)return {key:'legend',glow:'#f6d365',rim:'#fff1a8',spark:'#fff8cf'};
+ if(ovr>=85)return {key:'elite',glow:'#b993ff',rim:'#eedcff',spark:'#f6efff'};
+ if(ovr>=80)return {key:'gold',glow:'#f7c948',rim:'#ffefad',spark:'#fff8da'};
+ if(ovr>=75)return {key:'silver',glow:'#b7c5d3',rim:'#eef4f8',spark:'#ffffff'};
+ return {key:'base',glow:'#8fb4d8',rim:'rgba(255,255,255,.4)',spark:'rgba(255,255,255,.8)'};
+}
+function avatarPalette(player){
+ const club=avatarClubInfo(player);
+ const tier=avatarTier(player);
+ const isGoalkeeper=avatarIsGoalkeeper(player);
+ const primary=isGoalkeeper?avatarMix(club.primary,'#16a34a',.28):club.primary;
+ const secondary=isGoalkeeper?avatarMix(club.secondary,'#facc15',.22):club.secondary;
+ const accent=isGoalkeeper?avatarMix(club.accent,'#ffffff',.18):club.accent;
+ const bg1=avatarShade(primary,-.16), bg2=avatarShade(secondary,.12), glow=avatarMix(primary,tier.glow,.38);
+ return {primary,secondary,accent,bg1,bg2,glow,rim:tier.rim,text:club.text,club};
 }
 function avatarSeed(player){
- const role=player?.Position||player?.role||'';
+ const role=avatarRoleCode(player);
  const source=avatarSourceKey(player);
  const seed=hashString(`${player?.name||''}|${player?.nation||''}|${role}|${source}`);
  return {
@@ -3691,12 +3712,11 @@ function avatarSeed(player){
  };
 }
 function renderAvatarSvg(player,sub=false){
- const a=avatarSeed(player), p=avatarPalette(player,a.seed);
- const id=`av-${a.seed}`;
+ const a=avatarSeed(player), p=avatarPalette(player), tier=avatarTier(player), id=`av-${a.seed}`, isGoalkeeper=avatarIsGoalkeeper(player), role=avatarRoleCode(player), roleText=role.slice(0,3), number=((a.seed%89)+1), shortClub=(p.club.shortName||'').slice(0,3).toUpperCase();
  const face=a.faceShape==='square'
-   ? `<rect x="26" y="15.5" width="32" height="36" rx="11" fill="${a.skin}" stroke="rgba(90,52,31,.18)" stroke-width="1.15"/>`
-   : `<ellipse cx="42" cy="33.5" rx="${a.faceShape==='oval'?15:16}" ry="${a.faceShape==='oval'?19:18}" fill="${a.skin}" stroke="rgba(90,52,31,.18)" stroke-width="1.15"/>`;
- const ears=`<ellipse cx="22.6" cy="33.6" rx="3.6" ry="5.8" fill="${a.skin}"/><ellipse cx="61.4" cy="33.6" rx="3.6" ry="5.8" fill="${a.skin}"/>`;
+   ? `<rect x="26" y="16" width="32" height="36" rx="11" fill="${a.skin}" stroke="rgba(90,52,31,.18)" stroke-width="1.15"/>`
+   : `<ellipse cx="42" cy="34" rx="${a.faceShape==='oval'?15:16}" ry="${a.faceShape==='oval'?19:18}" fill="${a.skin}" stroke="rgba(90,52,31,.18)" stroke-width="1.15"/>`;
+ const ears=`<ellipse cx="22.6" cy="34" rx="3.6" ry="5.8" fill="${a.skin}"/><ellipse cx="61.4" cy="34" rx="3.6" ry="5.8" fill="${a.skin}"/>`;
  const hairMap={
    crop:`<path d="M26 27c2-10 10-16 19-16 8 0 15 4 18 13-5-2-11-3-18-3-8 0-13 2-19 6z" fill="${a.hair}"/>`,
    part:`<path d="M25 27c4-10 12-16 20-16 7 0 13 4 17 13-4-2-8-3-12-3l-4 6-4-6c-6 0-11 2-17 6z" fill="${a.hair}"/>`,
@@ -3729,18 +3749,22 @@ function renderAvatarSvg(player,sub=false){
    glasses:`<g stroke="#0f172a" stroke-width="1.45" fill="rgba(219,234,254,.25)"><rect x="30.8" y="32" width="9.6" height="6.8" rx="2.4"/><rect x="43.6" y="32" width="9.6" height="6.8" rx="2.4"/><path d="M40.4 35.4h3.2"/></g>`,
    headband:`<path d="M28.5 26.5c4.6-2.2 8.8-3.2 13.5-3.2 4.7 0 8.9 1 13.5 3.2" fill="none" stroke="#ef4444" stroke-width="3.2" stroke-linecap="round" opacity=".92"/>`
  };
- const jerseyDeco={
-   stripe:`<><path d="M20 83c1-10 8-18 22-18 15 0 22 8 23 18" fill="url(#${id}-shirt)"/><path d="M38.2 65h7.6v18h-7.6z" fill="${p.accent}" opacity=".95"/></>`,
-   sash:`<><path d="M20 83c1-10 8-18 22-18 15 0 22 8 23 18" fill="url(#${id}-shirt)"/><path d="M28 64l8 0 16 19h-8z" fill="${p.accent}" opacity=".88"/></>`,
-   hoops:`<><path d="M20 83c1-10 8-18 22-18 15 0 22 8 23 18" fill="${p.shirt1}"/><path d="M23 68h38v4H23zm-2 8h42v4H21z" fill="${p.accent}" opacity=".9"/></>`,
-   split:`<><path d="M20 83c1-10 8-18 22-18 15 0 22 8 23 18" fill="${p.shirt1}"/><path d="M42 65h23c0 0 0 0 0 0v18H42z" fill="${p.shirt2}" opacity=".95"/></>`,
-   solid:`<><path d="M20 83c1-10 8-18 22-18 15 0 22 8 23 18" fill="url(#${id}-shirt)"/></>`
+ const jerseyMap={
+   stripe:`<path d="M20 83c1-10 8-18 22-18 15 0 22 8 23 18" fill="url(#${id}-shirt)"/><path d="M38.2 65h7.6v18h-7.6z" fill="${avatarTextColor(p.primary)}" opacity=".95"/>`,
+   sash:`<path d="M20 83c1-10 8-18 22-18 15 0 22 8 23 18" fill="url(#${id}-shirt)"/><path d="M28 64h8l16 19h-8z" fill="${avatarTextColor(p.primary)}" opacity=".88"/>`,
+   hoops:`<path d="M20 83c1-10 8-18 22-18 15 0 22 8 23 18" fill="${p.primary}"/><path d="M23 68h38v4H23zm-2 8h42v4H21z" fill="${avatarTextColor(p.primary)}" opacity=".9"/>`,
+   split:`<path d="M20 83c1-10 8-18 22-18 15 0 22 8 23 18" fill="${p.primary}"/><path d="M42 65h23v18H42z" fill="${p.secondary}" opacity=".95"/>`,
+   solid:`<path d="M20 83c1-10 8-18 22-18 15 0 22 8 23 18" fill="url(#${id}-shirt)"/>`
  };
- const jersey=(jerseyDeco[a.kitStyle]||jerseyDeco.solid).replace('<>','').replace('</>','')+`<path d="M32.5 66.3c2.8 4.2 5.9 6.2 9.5 6.2s6.7-2 9.5-6.2" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1.1"/>`;
- const role=String(player?.Position||player?.role||'').toUpperCase();
- const roleBadge=role?`<g><circle cx="68.5" cy="16" r="9" fill="rgba(15,23,42,.84)" stroke="rgba(255,255,255,.55)" stroke-width="1.1"/><text x="68.5" y="19.2" font-size="8" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-weight="800">${role.slice(0,2)}</text></g>`:'';
+ const gloves=isGoalkeeper?`<g><ellipse cx="24.6" cy="73" rx="4.4" ry="5.3" fill="#f8fafc" stroke="rgba(15,23,42,.25)" stroke-width="1"/><ellipse cx="59.4" cy="73" rx="4.4" ry="5.3" fill="#f8fafc" stroke="rgba(15,23,42,.25)" stroke-width="1"/></g>`:'';
+ const keeperBadge=isGoalkeeper?`<g><rect x="8" y="60.5" width="14" height="14" rx="5" fill="rgba(255,255,255,.85)"/><path d="M15 63l2 4.5 5 .4-3.8 3 1.3 4.7-4.5-2.6-4.5 2.6 1.3-4.7-3.8-3 5-.4z" fill="#f59e0b" transform="scale(.55) translate(11.5 53.5)"/></g>`:'';
+ const jersey=(jerseyMap[a.kitStyle]||jerseyMap.solid)+`<path d="M32.5 66.3c2.8 4.2 5.9 6.2 9.5 6.2s6.7-2 9.5-6.2" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1.1"/><text x="42" y="78" text-anchor="middle" font-size="10" font-weight="800" fill="${avatarTextColor(p.primary)}" font-family="system-ui, sans-serif">${String(number).padStart(2,'0')}</text>`;
+ const roleBadge=`<g><circle cx="68.5" cy="16" r="9" fill="rgba(15,23,42,.84)" stroke="rgba(255,255,255,.55)" stroke-width="1.1"/><text x="68.5" y="19.2" font-size="7.4" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-weight="800">${roleText}</text></g>`;
+ const clubBadge=shortClub?`<g><rect x="7.5" y="7.5" width="18" height="12" rx="5" fill="rgba(255,255,255,.16)" stroke="rgba(255,255,255,.38)" stroke-width=".8"/><text x="16.5" y="15.9" font-size="6.2" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-weight="800">${shortClub}</text></g>`:'';
  const crown=sub?`<g><circle cx="16" cy="16" r="10.2" fill="#f6c74e" stroke="#fff5bf" stroke-width="1.4"/><path d="M10.5 19l1.8-6 3.6 2.6 3.1-4 3.1 4 3.6-2.6 1.8 6z" fill="#8b5a00"/></g>`:'';
- return `<svg viewBox="0 0 84 84" aria-hidden="true" focusable="false"><defs><linearGradient id="${id}-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${p.bg1}"/><stop offset="100%" stop-color="${p.bg2}"/></linearGradient><linearGradient id="${id}-shirt" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${p.shirt1}"/><stop offset="52%" stop-color="${p.shirt2}"/><stop offset="100%" stop-color="${p.shirt3}"/></linearGradient><radialGradient id="${id}-light" cx="50%" cy="10%" r="80%"><stop offset="0%" stop-color="rgba(255,255,255,.8)"/><stop offset="52%" stop-color="rgba(255,255,255,.12)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><rect x="4" y="4" width="76" height="76" rx="22" fill="url(#${id}-bg)"/><circle cx="42" cy="33" r="22" fill="rgba(255,255,255,.16)"/><ellipse cx="42" cy="77" rx="20" ry="4.6" fill="rgba(0,0,0,.16)"/>${jersey}<rect x="38.2" y="52.2" width="7.6" height="10" rx="3.3" fill="${a.skin}"/>${ears}${face}${hairMap[a.hairStyle]||hairMap.crop}${accessoryMap[a.accessory]||''}${brows}${eyesMap[a.eyeStyle]||eyesMap.dot}${nose}${mouthMap[a.mouthStyle]||mouthMap.smile}${beardMap[a.beardStyle]||''}${roleBadge}${crown}<rect x="4" y="4" width="76" height="76" rx="22" fill="url(#${id}-light)" opacity=".58"/><rect x="4.7" y="4.7" width="74.6" height="74.6" rx="21.4" fill="none" stroke="${sub?'rgba(255,226,102,.95)':'rgba(255,255,255,.36)'}" stroke-width="${sub?'2.2':'1.1'}"/></svg>`;
+ const sparkles=tier.key!=='base'?`<g fill="${tier.spark}" opacity=".9"><circle cx="25" cy="13" r="1.5"/><circle cx="56" cy="10.5" r="1.2"/><path d="M60 24l1.1 2.8 2.8 1.1-2.8 1.1-1.1 2.8-1.1-2.8-2.8-1.1 2.8-1.1z"/></g>`:'';
+ const topRibbon=(Number(player?.ovr)||0)>=88?`<g><path d="M28 9h28l-3 7H31z" fill="${tier.glow}"/><text x="42" y="14.2" text-anchor="middle" font-size="6" font-weight="900" fill="#10243a" font-family="system-ui, sans-serif">TOP</text></g>`:'';
+ return `<svg viewBox="0 0 84 84" aria-hidden="true" focusable="false"><defs><linearGradient id="${id}-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${p.bg1}"/><stop offset="100%" stop-color="${p.bg2}"/></linearGradient><linearGradient id="${id}-shirt" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${p.primary}"/><stop offset="52%" stop-color="${p.secondary}"/><stop offset="100%" stop-color="${p.accent}"/></linearGradient><radialGradient id="${id}-light" cx="50%" cy="10%" r="80%"><stop offset="0%" stop-color="rgba(255,255,255,.8)"/><stop offset="52%" stop-color="rgba(255,255,255,.12)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient><radialGradient id="${id}-halo" cx="50%" cy="35%" r="55%"><stop offset="0%" stop-color="${avatarShade(p.glow,.35)}" stop-opacity=".95"/><stop offset="100%" stop-color="${avatarShade(p.glow,-.2)}" stop-opacity="0"/></radialGradient></defs><rect x="4" y="4" width="76" height="76" rx="22" fill="url(#${id}-bg)"/><circle cx="42" cy="34" r="24" fill="url(#${id}-halo)" opacity=".75"/><circle cx="42" cy="33" r="22" fill="rgba(255,255,255,.16)"/><ellipse cx="42" cy="77" rx="20" ry="4.6" fill="rgba(0,0,0,.16)"/>${jersey}${gloves}<rect x="38.2" y="52.2" width="7.6" height="10" rx="3.3" fill="${a.skin}"/>${ears}${face}${hairMap[a.hairStyle]||hairMap.crop}${accessoryMap[a.accessory]||''}${brows}${eyesMap[a.eyeStyle]||eyesMap.dot}${nose}${mouthMap[a.mouthStyle]||mouthMap.smile}${beardMap[a.beardStyle]||''}${clubBadge}${roleBadge}${keeperBadge}${crown}${sparkles}${topRibbon}<rect x="4" y="4" width="76" height="76" rx="22" fill="url(#${id}-light)" opacity=".58"/><rect x="4.7" y="4.7" width="74.6" height="74.6" rx="21.4" fill="none" stroke="${sub?'#ffe76a':tier.rim}" stroke-width="${sub?'2.3':Number(player?.ovr)>=85?'1.8':'1.1'}"/></svg>`;
 }
 function renderMiniAvatar(player,extra=''){
  const sub=isSubscriber(player);
