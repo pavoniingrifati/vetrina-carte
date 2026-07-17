@@ -3069,7 +3069,7 @@ const COACH_PROFILES=[
  {id:'anonymous',name:'Anonimo',icon:'🥷',image:'assets/coach-profiles/anonymous.png',tagline:'Cialtrone',pro:'Nessun effetto.',con:'Nessun effetto.'},
  {id:'talent-scout',name:'Talent scout',icon:'🔎',image:'assets/coach-profiles/talent-scout.png',tagline:'Occhio al talento',pro:'Un re-roll aggiuntivo nei draft, maggiore probabilità di trovare giocatori con OVR alto e primo pack garantito dalla squadra del giocatore con lo stesso nome dell’allenatore.',con:'Nessun nuovo giocatore può arrivare fuori dal draft iniziale e da quello di metà stagione.'},
  {id:'motivator',name:'Motivatore',icon:'📣',image:'assets/coach-profiles/motivator.png',tagline:'Qui si realizzano i sogni',pro:'Dopo 2 sconfitte consecutive, +3 OVR alla squadra nella partita seguente. Ogni nuovo bonus OVR o Intesa riceve anche +1 OVR e +1 Intesa aggiuntivi.',con:'Dopo 3 vittorie consecutive, -3 OVR alla squadra nella partita seguente.'},
- {id:'salvation',name:'Mister salvezza',icon:'🛟',image:'assets/coach-profiles/salvation.png',tagline:'Serenità.',pro:'Con OVR medio della rosa sotto 70, la squadra segna almeno un gol a partita.',con:'Con OVR medio della rosa sopra 80, la squadra subisce almeno un gol a partita.'}
+ {id:'salvation',name:'Mister salvezza',icon:'🛟',image:'assets/coach-profiles/salvation.png',tagline:'Serenità.',pro:'Con OVR medio della rosa sotto 70, la squadra segna un gol aggiuntivo a partita.',con:'Con OVR medio della rosa sopra 80, la squadra subisce almeno un gol a partita.'}
 ];
 function normalizeCoachType(value){const id=String(value||'anonymous');return COACH_PROFILES.some(profile=>profile.id===id)?id:'anonymous'}
 function coachProfile(value=state?.coachType){return COACH_PROFILES.find(profile=>profile.id===normalizeCoachType(value))||COACH_PROFILES[0]}
@@ -3592,7 +3592,7 @@ function nationChemistryBonus(player,list){
  const nationKey=normalizeName(player.nation||'');
  if(!nationKey)return 0;
  const sameNation=(list||[]).filter(other=>other&&String(other.id)!==playerId&&normalizeName(other.nation||'')===nationKey).length;
- return Math.min(10,sameNation);
+ return Math.min(8,sameNation);
 }
 function clubChemistryBonus(player,list){
  if(!player)return 0;
@@ -5606,7 +5606,7 @@ function coachGuaranteedGoalEvent(lineup,team,opponent,duration,reason){
 }
 function applyCoachGoalGuarantees(userEvents,opponentEvents,lineup,opponentLineup,userTeam,opponent,duration){
  const result={for:false,against:false,average:coachRosterAverageOvr()};if(!coachIs('salvation'))return result;
- if(result.average<70&&scoreGoalEvents(userEvents)<1){userEvents.push(coachGuaranteedGoalEvent(lineup,userTeam,opponent,duration,'Mister salvezza: con una rosa sotto 70 OVR, almeno un gol è garantito.'));result.for=true}
+ if(result.average<70){userEvents.push(coachGuaranteedGoalEvent(lineup,userTeam,opponent,duration,'Mister salvezza: con una rosa sotto 70 OVR, viene aggiunto un gol alla squadra.'));result.for=true}
  if(result.average>80&&scoreGoalEvents(opponentEvents)<1){opponentEvents.push(coachGuaranteedGoalEvent(opponentLineup,opponent,userTeam,duration,'Mister salvezza: con una rosa sopra 80 OVR, almeno un gol subito è garantito.'));result.against=true}
  return result;
 }
@@ -5815,7 +5815,7 @@ function resolveLineup(){enforceTipsterStarters();if(state.seasonRules?.autoOpti
 function coachRosterAverageOvr(){const values=rosterPlayers().map(entry=>Number(entry?.player?.ovr)||0).filter(value=>value>0);return values.length?avg(values):0}
 function coachTrailingStreak(){const history=Array.isArray(state?.history)?state.history:[];if(!history.length)return{type:'',count:0};const result=history[history.length-1],type=Number(result.gf)>Number(result.ga)?'win':Number(result.gf)<Number(result.ga)?'loss':'draw';let count=0;for(let index=history.length-1;index>=0;index--){const item=history[index],current=Number(item.gf)>Number(item.ga)?'win':Number(item.gf)<Number(item.ga)?'loss':'draw';if(current!==type)break;count++}return{type,count}}
 function coachMatchOvrModifier(){if(!coachIs('motivator'))return 0;const streak=coachTrailingStreak();if(streak.type==='loss'&&streak.count===2)return 3;if(streak.type==='win'&&streak.count===3)return-3;return 0}
-function coachCurrentEffectLabel(){if(coachIs('motivator')){const value=coachMatchOvrModifier(),boost='bonus OVR/Intesa potenziati di +1 OVR e +1 Intesa';return value>0?`Motivatore: +3 OVR nella prossima partita · ${boost}`:value<0?`Motivatore: -3 OVR nella prossima partita · ${boost}`:`Motivatore: ${boost}`}if(coachIs('salvation')){const value=coachRosterAverageOvr();return value<70?`Mister salvezza: gol segnato garantito (OVR rosa ${value.toFixed(1)})`:value>80?`Mister salvezza: gol subito garantito (OVR rosa ${value.toFixed(1)})`:`Mister salvezza: fascia neutra (OVR rosa ${value.toFixed(1)})`}if(coachIs('talent-scout'))return'Talent scout: primo pack dalla squadra dell’omonimo, scouting potenziato e mercato esterno bloccato';return'Anonimo: nessun effetto'}
+function coachCurrentEffectLabel(){if(coachIs('motivator')){const value=coachMatchOvrModifier(),boost='bonus OVR/Intesa potenziati di +1 OVR e +1 Intesa';return value>0?`Motivatore: +3 OVR nella prossima partita · ${boost}`:value<0?`Motivatore: -3 OVR nella prossima partita · ${boost}`:`Motivatore: ${boost}`}if(coachIs('salvation')){const value=coachRosterAverageOvr();return value<70?`Mister salvezza: +1 gol aggiuntivo a ogni partita (OVR rosa ${value.toFixed(1)})`:value>80?`Mister salvezza: gol subito garantito (OVR rosa ${value.toFixed(1)})`:`Mister salvezza: fascia neutra (OVR rosa ${value.toFixed(1)})`}if(coachIs('talent-scout'))return'Talent scout: primo pack dalla squadra dell’omonimo, scouting potenziato e mercato esterno bloccato';return'Anonimo: nessun effetto'}
 function teamPowerBase(){const list=getStarterEntries().map(r=>r.player);return avg(list.map(p=>Number(p.ovr)||70))}
 function matchPower(){const line=resolveLineup(),players=line.map(x=>x.player);let total=0;line.forEach(e=>{total+=(Number(e.player.ovr)||60)+(effectiveChemistryBonus(e.player,players)/5)+e.malus+activeOvrBonus(e.player)});return line.length?total/line.length:0}
 function unavailableList(){return rosterPlayers().filter(r=>{const s=statusOf(r.playerId);return s.injury>0||s.suspension>0})}
@@ -6685,9 +6685,9 @@ function playRound(mode='instant'){
  if(hungerWalkover){goalsFor=3;goalsAgainst=0}
  if(!federationOutcome&&!hungerWalkover&&coachIs('salvation')){
    const coachAverage=coachRosterAverageOvr();
-   if(coachAverage<70&&goalsFor<1){
-     if(scoreGoalEvents(userGoalEvents)<1)userGoalEvents.push(coachGuaranteedGoalEvent(lineup,userTeam,opponent,matchMinutes,'Mister salvezza garantisce almeno un gol.'));
-     userGoalEvents.sort((a,b)=>a.minute-b.minute);goalsFor=Math.max(1,scoreGoalEvents(userGoalEvents));coachGuarantees.for=true;
+   if(coachAverage<70){
+     if(!userGoalEvents.some(event=>event?.isCoachGoal))userGoalEvents.push(coachGuaranteedGoalEvent(lineup,userTeam,opponent,matchMinutes,'Mister salvezza aggiunge un gol alla squadra.'));
+     userGoalEvents.sort((a,b)=>a.minute-b.minute);goalsFor=scoreGoalEvents(userGoalEvents);coachGuarantees.for=true;
    }
    if(coachAverage>80&&goalsAgainst<1){
      if(scoreGoalEvents(opponentGoalEvents)<1)opponentGoalEvents.push(coachGuaranteedGoalEvent(opponentLineup,opponent,userTeam,matchMinutes,'Il malus di Mister salvezza garantisce almeno un gol subito.'));
