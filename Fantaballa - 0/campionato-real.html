@@ -2996,7 +2996,7 @@
 </div>
 <div id="modalRoot"></div><div id="toast" class="toast"></div>
 <script>
-const CURRENT_STATE_VERSION=30;
+const CURRENT_STATE_VERSION=31;
 const SAVE_BASE='fantaballa_campionato_real_v1';
 const AUTO_SAVE_KEY=`${SAVE_BASE}_autosave`;
 const LEGACY_SAVE_KEYS=[];
@@ -3250,6 +3250,10 @@ function statusOf(id){
 }
 function seasonLength(source=state){const configured=Math.max(1,Number(source?.seasonRules?.seasonLength)||38),scheduled=Array.isArray(source?.schedule)?source.schedule.length:0;return source?.seasonRules?.dynamicLeague?Math.max(configured,scheduled):Math.max(38,configured,scheduled)}
 function remainingSeasonMatches(){return Math.max(1,seasonLength()-(Number(state.matchday)||0))}
+const SEASON_LONG_EFFECT_SOURCES=new Set(['quest-like-a-bomber','quest-la-curva-penalty','quest-la-curva-reward','quest-ammazza-grandi','quest-ammazza-grandi-penalty','Controllo dei documenti','Generale cacciato','Ehi ma ti chiami come me','Sconfitta nella Coppa parallela','Vittoria della Coppa parallela']);
+function effectLastsUntilSeasonEnd(effect={}){return Boolean(effect?.untilSeasonEnd||Number(effect?.rounds)>=9999||SEASON_LONG_EFFECT_SOURCES.has(String(effect?.source||'')))}
+function normalizeActiveEffect(effect={}){const normalized={...effect,rounds:Math.max(1,Number(effect?.rounds)||1)};normalized.untilSeasonEnd=effectLastsUntilSeasonEnd(normalized);return normalized}
+function normalizeActiveEffects(effects=[]){const normalized=(Array.isArray(effects)?effects:[]).filter(effect=>effect&&typeof effect==='object').map(normalizeActiveEffect);normalized.forEach((effect,index)=>{if(!effect.motivatorExtra||effect.untilSeasonEnd)return;const parent=normalized.slice(Math.max(0,index-2),index).reverse().find(candidate=>!candidate.motivatorExtra&&candidate.untilSeasonEnd&&Number(candidate.rounds)===Number(effect.rounds)&&String(candidate.playerId||'')===String(effect.playerId||''));if(parent)effect.untilSeasonEnd=true});return normalized}
 function futureInjuryPenalty(playerName=''){
  if(!state.seasonRules?.futureInjuryZeroPoints)return false;
  const standing=userStanding();if(standing)standing.pts=0;
@@ -3346,7 +3350,7 @@ function normalizeCampionatoState(input){
    if(!found)found=layouts.find(slot=>!used.has(slot.instanceId));
    if(found){entry.slotId=found.instanceId;entry.slot=found.code;used.add(found.instanceId)}
  });
- next.activeEffects=Array.isArray(next.activeEffects)?next.activeEffects:[];
+ next.activeEffects=normalizeActiveEffects(next.activeEffects);
  next.seenDecisionEvents=Array.isArray(next.seenDecisionEvents)?[...new Set(next.seenDecisionEvents.map(String))]:[];
  next.statuses=next.statuses&&typeof next.statuses==='object'?next.statuses:{};
  Object.values(next.statuses).forEach(status=>{if(!status||typeof status!=='object')return;status.injury=Math.max(0,Number(status.injury)||0);status.suspension=Math.max(0,Number(status.suspension)||0);status.seasonOut=Boolean(status.seasonOut);status.seasonOutReason=String(status.seasonOutReason||'');});
@@ -4822,7 +4826,7 @@ function parallelCupApplyEliminationPenalty(){
  const cup=parallelCupState();if(cup.penaltyApplied)return;
  cup.penaltyApplied=true;cup.userAlive=false;
  const outcomes=[
-  {type:'ovr_minus_5',notice:'Eliminato dalla coppa: -5 OVR a tutta la squadra fino a fine stagione.',apply(){state.activeEffects.push({type:'teamOvr',value:-5,rounds:9999,source:'Sconfitta nella Coppa parallela'})}},
+  {type:'ovr_minus_5',notice:'Eliminato dalla coppa: -5 OVR a tutta la squadra fino a fine stagione.',apply(){pushSeasonEffect('teamOvr',-5,{source:'Sconfitta nella Coppa parallela'})}},
   {type:'chemistry_zero',notice:'Eliminato dalla coppa: Intesa azzerata fino a fine stagione.',apply(){}},
   {type:'none',notice:'Eliminato dalla coppa: nessun malus applicato.',apply(){}}
  ];
@@ -4832,7 +4836,7 @@ function parallelCupApplyWinnerReward(){
  const cup=parallelCupState();if(cup.rewardApplied)return;
  cup.rewardApplied=true;cup.userAlive=true;
  const outcomes=[
-  {type:'ovr_plus_10',notice:'Coppa vinta: +10 OVR a tutta la squadra fino a fine stagione.',apply(){state.activeEffects.push({type:'teamOvr',value:10,rounds:9999,source:'Vittoria della Coppa parallela'})}},
+  {type:'ovr_plus_10',notice:'Coppa vinta: +10 OVR a tutta la squadra fino a fine stagione.',apply(){pushSeasonEffect('teamOvr',10,{source:'Vittoria della Coppa parallela'})}},
   {type:'chemistry_x2',notice:'Coppa vinta: Intesa raddoppiata fino a fine stagione.',apply(){}},
   {type:'discipline_immunity',notice:'Coppa vinta: nessun tuo giocatore potrà infortunarsi o essere espulso fino a fine stagione.',apply(){}}
  ];
@@ -5351,15 +5355,16 @@ function motivatorBonusScope(type){
 }
 function pushEffect(type,value,rounds,extra={}){
  const scope=motivatorBonusScope(type),enhance=coachIs('motivator')&&!extra?.motivatorExtra&&scope&&Number(value)>0;
- const adjusted=enhance&&scope.kind!=='multiplier'?Number(value)+1:value;
- state.activeEffects.push({type,value:adjusted,rounds,...extra});
+ const adjusted=enhance&&scope.kind!=='multiplier'?Number(value)+1:value,untilSeasonEnd=Boolean(extra?.untilSeasonEnd),duration=Math.max(1,Number(rounds)||(untilSeasonEnd?remainingSeasonMatches():1));
+ state.activeEffects.push({type,value:adjusted,rounds:duration,...extra,untilSeasonEnd});
  if(!enhance)return;
- const companionBase={rounds,source:'Motivatore',motivatorExtra:true};
+ const companionBase={rounds:duration,source:'Motivatore',motivatorExtra:true,untilSeasonEnd};
  if(extra?.playerId)companionBase.playerId=String(extra.playerId);
  if(scope.kind==='ovr')state.activeEffects.push({type:scope.chem,value:1,...companionBase});
  else if(scope.kind==='chem')state.activeEffects.push({type:scope.ovr,value:1,...companionBase});
  else{state.activeEffects.push({type:scope.ovr,value:1,...companionBase});state.activeEffects.push({type:scope.chem,value:1,...companionBase})}
 }
+function pushSeasonEffect(type,value,extra={}){return pushEffect(type,value,remainingSeasonMatches(),{...extra,untilSeasonEnd:true})}
 function midseasonTargetFrom(source=state){
  const delta=Number(source?.seasonRules?.midseasonPickDelta)||0;
  const mandatoryCount=[...new Set([...(Array.isArray(source?.seasonRules?.mandatoryMidseasonPlayerIds)?source.seasonRules.mandatoryMidseasonPlayerIds:[]),source?.seasonRules?.mandatoryMidseasonPlayerId].map(String).filter(Boolean))].length;
@@ -5497,7 +5502,7 @@ function questState(){
 }
 function questIsActive(id=''){const q=questState();return Boolean(q.active&&(!id||String(q.id)===String(id)))}
 function questCanStart(matches=1){return !questState().active&&Number(state.matchday)+Math.max(1,Number(matches)||1)<=seasonLength()}
-function questPermanentRounds(){return Math.max(2,remainingSeasonMatches()+1)}
+function questPermanentRounds(){return 9999}
 function questBestAttacker(){return [...rosterPlayers()].filter(entry=>roleOf(entry.player)==='A').sort((a,b)=>(Number(b.player?.ovr)||0)-(Number(a.player?.ovr)||0))[0]||null}
 function questBestPlayer(){return [...rosterPlayers()].sort((a,b)=>(Number(b.player?.ovr)||0)-(Number(a.player?.ovr)||0))[0]||null}
 function questRivalKey(name=''){
@@ -5565,7 +5570,7 @@ function tickSeasonQuestAfterMatch(result){
  const q=questState();if(!q.active)return;
  if(q.id==='like-a-bomber'){
    q.matchesPlayed++;q.progress+=Math.max(0,Number(result.gf)||0);
-   if(q.progress>=q.target){const entry=questTargetRosterEntry(q);if(entry)pushEffect('playerOvr',8,questPermanentRounds(),{playerId:String(entry.playerId),source:'quest-like-a-bomber'});finishSeasonQuest(true,`${entry?.player?.name||q.targetPlayerName||'Il miglior attaccante'} ottiene +8 OVR fino a fine stagione.`,result)}
+   if(q.progress>=q.target){const entry=questTargetRosterEntry(q);if(entry)pushSeasonEffect('playerOvr',8,{playerId:String(entry.playerId),source:'quest-like-a-bomber'});finishSeasonQuest(true,`${entry?.player?.name||q.targetPlayerName||'Il miglior attaccante'} ottiene +8 OVR fino a fine stagione.`,result)}
    else if(q.matchesPlayed>=q.deadlineMatches){const entry=questTargetRosterEntry(q);if(entry)entry.player={...(entry.player||playerById(entry.playerId)),ovr:50,questOvrLock:50};finishSeasonQuest(false,`${entry?.player?.name||q.targetPlayerName||'Il miglior attaccante'} viene portato a 50 OVR fino a fine stagione.`,result)}
    return;
  }
@@ -5578,17 +5583,17 @@ function tickSeasonQuestAfterMatch(result){
  if(q.id==='la-curva'){
    const opponentId=String(result.opponentId||'');
    if(q.targetTeamIds.includes(opponentId)&&!q.facedTeamIds.includes(opponentId)){
-     if(Number(result.gf)<Number(result.ga)){pushEffect('teamOvr',-5,questPermanentRounds(),{source:'quest-la-curva-penalty'});finishSeasonQuest(false,'Hai perso contro una delle tre grandi: -5 OVR a tutta la squadra fino a fine stagione.',result);return}
+     if(Number(result.gf)<Number(result.ga)){pushSeasonEffect('teamOvr',-5,{source:'quest-la-curva-penalty'});finishSeasonQuest(false,'Hai perso contro una delle tre grandi: -5 OVR a tutta la squadra fino a fine stagione.',result);return}
      q.facedTeamIds.push(opponentId);q.progress=q.facedTeamIds.length;
-     if(q.facedTeamIds.length>=q.targetTeamIds.length){pushEffect('teamOvr',5,questPermanentRounds(),{source:'quest-la-curva-reward'});state.seasonRules.laCurvaRewardActive=true;finishSeasonQuest(true,'Fedeltà dimostrata: +5 OVR a tutta la squadra finché non perderai una partita.',result)}
+     if(q.facedTeamIds.length>=q.targetTeamIds.length){pushSeasonEffect('teamOvr',5,{source:'quest-la-curva-reward'});state.seasonRules.laCurvaRewardActive=true;finishSeasonQuest(true,'Fedeltà dimostrata: +5 OVR a tutta la squadra finché non perderai una partita.',result)}
    }
    return;
  }
  if(q.id==='ammazza-grandi'){
    q.matchesPlayed++;
    if(result.questOpponentTop3Before&&Number(result.gf)>Number(result.ga)){
-     q.progress=1;rosterPlayers().forEach(entry=>{const base=Number(playerById(entry.playerId)?.ovr??entry.player?.ovr)||0;if(base<80)pushEffect('playerOvr',5,questPermanentRounds(),{playerId:String(entry.playerId),source:'quest-ammazza-grandi'})});finishSeasonQuest(true,'Impresa riuscita: tutti i giocatori con OVR base inferiore a 80 ricevono +5 OVR fino a fine stagione.',result);
-   }else if(q.matchesPlayed>=q.deadlineMatches){const entry=questBestPlayer();if(entry)pushEffect('playerOvr',-6,questPermanentRounds(),{playerId:String(entry.playerId),source:'quest-ammazza-grandi-penalty'});finishSeasonQuest(false,`${entry?.player?.name||'Il miglior giocatore'} perde 6 OVR fino a fine stagione.`,result)}
+     q.progress=1;rosterPlayers().forEach(entry=>{const base=Number(playerById(entry.playerId)?.ovr??entry.player?.ovr)||0;if(base<80)pushSeasonEffect('playerOvr',5,{playerId:String(entry.playerId),source:'quest-ammazza-grandi'})});finishSeasonQuest(true,'Impresa riuscita: tutti i giocatori con OVR base inferiore a 80 ricevono +5 OVR fino a fine stagione.',result);
+   }else if(q.matchesPlayed>=q.deadlineMatches){const entry=questBestPlayer();if(entry)pushSeasonEffect('playerOvr',-6,{playerId:String(entry.playerId),source:'quest-ammazza-grandi-penalty'});finishSeasonQuest(false,`${entry?.player?.name||'Il miglior giocatore'} perde 6 OVR fino a fine stagione.`,result)}
    return;
  }
  if(q.id==='milanlab'){
@@ -5642,8 +5647,7 @@ function crownChickenKing(){
 }
 function collaborateWithGeneral(){
  const chain=generalChain(),italians=rosterPlayers().filter(entry=>isItalianPlayer(entry.player));
- const rounds=Math.max(1,seasonLength()-Number(state.matchday));
- italians.forEach(entry=>pushEffect('playerChem',3,rounds,{playerId:String(entry.playerId),source:'Controllo dei documenti'}));
+ italians.forEach(entry=>pushSeasonEffect('playerChem',3,{playerId:String(entry.playerId),source:'Controllo dei documenti'}));
  chain.active=true;chain.stage=2;chain.dueMatchday=Number(state.matchday)+chainedDelay(3,6);chain.completed=false;
  return `${italians.length} giocatori italiani ricevono +3 Intesa fino a fine stagione. Il generale continuerà a osservare la squadra.`;
 }
@@ -5666,7 +5670,7 @@ function hideForeignPlayerFromGeneral(){
 function dismissGeneral(){
  const chain=generalChain();let restored=0;
  (chain.replacements||[]).forEach(record=>{const index=findGeneralReplacementEntry(record);if(index<0||!record.originalPlayer)return;replaceUserRosterPlayer(index,{...record.originalPlayer,id:String(record.originalPlayer.id)});if(record.originalStatus)state.statuses[String(record.originalPlayer.id)]={...record.originalStatus};restored++;});
- const rounds=Math.max(1,seasonLength()-Number(state.matchday));pushEffect('teamChemMultiplier',.5,rounds,{source:'Generale cacciato'});
+ pushSeasonEffect('teamChemMultiplier',.5,{source:'Generale cacciato'});
  Object.assign(chain,{active:false,stage:0,dueMatchday:-1,nationalBoostPending:false,completed:true});refreshOpponentClubRosters();
  return `Il generale viene cacciato: ${restored} giocatori originali tornano in rosa, ma l’Intesa della squadra è dimezzata fino a fine stagione.`;
 }
@@ -6181,8 +6185,7 @@ function applySixtyPointFear(){
 function doubleCoachNamesakeChemistry(){
  const entry=coachNamedRosterEntry();
  if(!entry)return 'Non hai in rosa un giocatore con lo stesso nome dell’allenatore.';
- const remaining=remainingSeasonMatches();
- pushEffect('playerChemMultiplier',2,remaining,{playerId:String(entry.playerId),source:'Ehi ma ti chiami come me'});
+ pushSeasonEffect('playerChemMultiplier',2,{playerId:String(entry.playerId),source:'Ehi ma ti chiami come me'});
  return `${entry.player.name} avrà Intesa ×2 fino al termine della stagione.`;
 }
 function doubleTeamChemistryTwoMatches(){
@@ -7199,7 +7202,7 @@ function playRound(mode='instant'){
 }
 function postMatch(){
  const cardEffect=state.activeEffects.some(effect=>effect.type==='cards');
- Object.values(state.statuses).forEach(status=>{if(status.injury>0)status.injury--;if(status.suspension>0)status.suspension--;if(status.injury<=0){status.seasonOut=false;status.seasonOutReason='';}});
+ Object.values(state.statuses).forEach(status=>{if(status.seasonOut)status.injury=Math.max(1,Number(status.injury)||1);else if(status.injury>0)status.injury--;if(status.suspension>0)status.suspension--;if(!status.seasonOut&&status.injury<=0){status.seasonOut=false;status.seasonOutReason='';}});
  state.teams.filter(team=>team.id!==USER_ID).forEach(team=>{Object.values(team.statuses||{}).forEach(status=>{if(status.injury>0)status.injury--;if(status.suspension>0)status.suspension--;});});
  const result=state.lastResult;if(!parallelCupDisciplineImmunity()&&result?.ownSuspensionId)statusOf(result.ownSuspensionId).suspension=Math.max(1,statusOf(result.ownSuspensionId).suspension);
  if(!parallelCupDisciplineImmunity()&&Math.random()<(cardEffect?.18:.07)){const entry=pick(rosterPlayers());if(entry)statusOf(entry.playerId).suspension=Math.max(1,statusOf(entry.playerId).suspension);}
@@ -7212,7 +7215,7 @@ function postMatch(){
  tickFantaballopoliAfterMatch(result);
  tickEventChainsAfterMatch(result);
  tickSeasonQuestAfterMatch(result);
- state.activeEffects.forEach(effect=>effect.rounds--);state.activeEffects=state.activeEffects.filter(effect=>effect.rounds>0);activatePendingNationalBoost();state.playInjured={};tickChaosOpponentEffects();state.matchday++;state.pendingEvent=null;
+ state.activeEffects.forEach(effect=>{if(!effectLastsUntilSeasonEnd(effect))effect.rounds--});state.activeEffects=state.activeEffects.filter(effect=>effectLastsUntilSeasonEnd(effect)||effect.rounds>0);activatePendingNationalBoost();state.playInjured={};tickChaosOpponentEffects();state.matchday++;state.pendingEvent=null;
  if(state.matchday===19){runChaosOpponentMidseason();const target=midseasonTarget(),auto=Boolean(state.seasonRules.autoMidseason||state.seasonRules.botMidseason),mandatoryIds=mandatoryMidseasonPlayerIds().filter(id=>rosterEntry(id)).slice(0,3),mandatory=mandatoryIds[0]||'';state.midseason={step:0,target:clamp(Math.max(target,mandatoryIds.length),1,3),outgoingId:mandatory,mandatoryOutgoingId:mandatory,mandatoryOutgoingIds:mandatoryIds,clubId:'',nation:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto,autoCompleted:false,changes:[]};state.phase='midseason';}
  else if(isTeamEliminated(USER_ID)||state.matchday>=seasonLength()){if(!prepareMeritStoryFinale())state.phase='finished'}else prepareEvent();
 }
