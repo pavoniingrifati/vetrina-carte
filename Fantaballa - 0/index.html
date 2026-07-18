@@ -4523,6 +4523,94 @@
       font-size:12px;
       font-weight:800;
     }
+
+    /* ABBONATI: 20 giocatori, visualizzati 10 alla volta */
+    .home-subscribers { position:relative; }
+    .home-subscribers .home-new-players-title::after {
+      content:'★';
+      display:inline-block;
+      margin-left:7px;
+      color:#7554d8;
+      font-size:.82em;
+      vertical-align:.05em;
+    }
+    .home-subscribers-viewport {
+      min-width:0;
+      overflow:hidden;
+      border-radius:18px;
+    }
+    .home-subscribers-track {
+      display:flex;
+      align-items:stretch;
+      min-width:0;
+      transition:transform .58s cubic-bezier(.22,.8,.25,1);
+      will-change:transform;
+    }
+    .home-subscribers-page {
+      flex:0 0 100%;
+      min-width:0;
+    }
+    .home-new-player.is-subscriber {
+      border-color:rgba(117,84,216,.25);
+      background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(245,240,255,.76));
+    }
+    .home-new-player.is-subscriber .home-new-player-avatar {
+      box-shadow:0 0 0 2px rgba(117,84,216,.18);
+    }
+    .home-new-player.is-subscriber .home-new-player-overall {
+      background:#6545c4;
+    }
+    .home-subscriber-badge {
+      color:#6a49c7;
+      font-weight:1000;
+    }
+    .home-subscribers-controls {
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:7px;
+      margin-top:11px;
+    }
+    .home-subscribers-arrow {
+      width:29px;
+      height:29px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid rgba(103,88,57,.2);
+      border-radius:10px;
+      background:rgba(255,255,255,.78);
+      color:#554b3b;
+      font:1000 16px/1 system-ui,sans-serif;
+      cursor:pointer;
+    }
+    .home-subscribers-arrow:hover { background:#fff; }
+    .home-subscribers-dots { display:flex; align-items:center; gap:6px; }
+    .home-subscribers-dot {
+      width:8px;
+      height:8px;
+      padding:0;
+      border:0;
+      border-radius:999px;
+      background:rgba(103,88,57,.25);
+      cursor:pointer;
+      transition:width .2s ease,background .2s ease;
+    }
+    .home-subscribers-dot.active {
+      width:22px;
+      background:#7554d8;
+    }
+    .home-subscribers-counter {
+      min-width:29px;
+      color:#8a7d67;
+      font-size:10px;
+      font-weight:1000;
+      text-align:center;
+      letter-spacing:.04em;
+    }
+    @media (prefers-reduced-motion:reduce) {
+      .home-subscribers-track { transition:none; }
+    }
     @media (max-width:1100px) {
       .home-new-players-list { grid-template-columns:repeat(3,minmax(0,1fr)); }
     }
@@ -6588,6 +6676,28 @@
       </div>
     </section>
 
+    <section class="home-new-players home-subscribers" id="homeSubscribers" aria-labelledby="homeSubscribersTitle">
+      <div class="home-new-players-head">
+        <h2 class="home-new-players-title" id="homeSubscribersTitle">Abbonati</h2>
+        <span class="home-new-players-note">20 giocatori · 10 alla volta</span>
+      </div>
+      <div class="home-subscribers-viewport">
+        <div class="home-subscribers-track" id="homeSubscribersTrack" aria-live="polite">
+          <div class="home-subscribers-page">
+            <div class="home-new-players-list">
+              <span class="home-new-players-empty">Caricamento abbonati…</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="home-subscribers-controls" id="homeSubscribersControls" hidden>
+        <button class="home-subscribers-arrow" type="button" data-subscriber-prev aria-label="Mostra i 10 abbonati precedenti">‹</button>
+        <div class="home-subscribers-dots" id="homeSubscribersDots" aria-label="Gruppi abbonati"></div>
+        <span class="home-subscribers-counter" id="homeSubscribersCounter">1/2</span>
+        <button class="home-subscribers-arrow" type="button" data-subscriber-next aria-label="Mostra i 10 abbonati successivi">›</button>
+      </div>
+    </section>
+
     <div class="site-footer" aria-label="Link privacy">
       <a href="come-si-gioca.html">Come si gioca</a>
       <a href="privacy.html">Privacy</a>
@@ -6637,8 +6747,13 @@
 
 <script>
   (() => {
-    const list = document.getElementById('homeNewPlayersList');
-    if (!list) return;
+    const newestList = document.getElementById('homeNewPlayersList');
+    const subscribersRoot = document.getElementById('homeSubscribers');
+    const subscribersTrack = document.getElementById('homeSubscribersTrack');
+    const subscribersControls = document.getElementById('homeSubscribersControls');
+    const subscribersDots = document.getElementById('homeSubscribersDots');
+    const subscribersCounter = document.getElementById('homeSubscribersCounter');
+    if (!newestList && !subscribersTrack) return;
 
     const fallbackPlayers = [
       {id:'805',name:'Bobby Tavano',role:'A',Position:'AS, COC',nation:'Italia',ovr:60,club:'amaro-luciano'},
@@ -6652,6 +6767,7 @@
       {id:'797',name:'andrea fratus',role:'A',Position:'AD, COC, ATT',nation:'Italia',ovr:60,club:'borussia-porcmund'},
       {id:'796',name:'ddan_17',role:'D',Position:'DC, TD, CDC',nation:'Paesi Bassi',ovr:60,club:'coca-kolarov'}
     ];
+    const fallbackSubscribers = [{"id":"793","name":"Cardox_kl","role":"A","Position":"AS, AD, ATT","roleLabel":"Attaccante","nation":"Romania","ovr":60,"subscriber":"si","abbonato":"si","club":"patetico-miniero"},{"id":"696","name":"Alessio Vitrani","role":"C","Position":"COC","roleLabel":"Centrocampista","nation":"Olanda","ovr":60,"subscriber":"si","abbonato":"si","club":"manchester-simy"},{"id":"684","name":"popo_thom","role":"C","Position":"CC","roleLabel":"Centrocampista","nation":"Messico","ovr":80,"subscriber":"si","abbonato":"si","club":"aston-birra"},{"id":"672","name":"Alecolla","role":"C","Position":"CC, CDC","roleLabel":"Centrocampista","nation":"Germania","ovr":72,"subscriber":"no","abbonato":"Sì","club":"lino-banfield"},{"id":"645","name":"FireLuk29","role":"A","Position":"ATT, COC","roleLabel":"Attaccante","nation":"Francia","ovr":84,"subscriber":"si","abbonato":"si","club":"sporting-limoncello"},{"id":"555","name":"brun0_scarso","role":"C","Position":"CC","roleLabel":"Centrocampista","nation":"Spagna","ovr":82,"subscriber":"si","abbonato":"si","club":"dragon-ballotta"},{"id":"537","name":"Darkness","role":"A","Position":"AS, AD, COC","roleLabel":"Attaccante","nation":"Portogallo","ovr":84,"subscriber":"si","abbonato":"si","club":"dinamo-spritz"},{"id":"532","name":"diggodog30","role":"C","Position":"CC","roleLabel":"Centrocampista","nation":"Francia","ovr":88,"subscriber":"si","abbonato":"si","club":"infami-sempre"},{"id":"529","name":"Johnny","role":"C","Position":"CC, CDC","roleLabel":"Centrocampista","nation":"Spagna","ovr":88,"subscriber":"si","abbonato":"si","club":"psv-endovena"},{"id":"515","name":"justmario01","role":"C","Position":"CDC","roleLabel":"Centrocampista","nation":"Spagna","ovr":81,"subscriber":"si","abbonato":"si","club":"borussia-porcmund"},{"id":"495","name":"bboy_fili_","role":"P","Position":"P","roleLabel":"Portiere","nation":"Spagna","ovr":80,"subscriber":"si","abbonato":"si","club":"fiumi-di-parolo"},{"id":"464","name":"nathan2290","role":"P","Position":"P","roleLabel":"Portiere","nation":"Argentina","ovr":78,"subscriber":"si","abbonato":"si","club":"aston-birra"},{"id":"447","name":"andyrabe51","role":"C","Position":"CDC","roleLabel":"Centrocampista","nation":"Marocco","ovr":68,"subscriber":"si","abbonato":"si","club":"patetico-miniero"},{"id":"414","name":"bandolero__22","role":"C","Position":"CDC, CC","roleLabel":"Centrocampista","nation":"Spagna","ovr":88,"subscriber":"si","abbonato":"si","club":"real-madrink"},{"id":"384","name":"Fantaballa","role":"C","Position":"CC, COC","roleLabel":"Centrocampista","nation":"Francia","ovr":79,"subscriber":"si","abbonato":"si","club":"senatori-united"},{"id":"372","name":"patriziocaldoro07","role":"C","Position":"CC","roleLabel":"Centrocampista","nation":"Croazia","ovr":71,"subscriber":"si","abbonato":"si","club":"atletico-creator"},{"id":"339","name":"marcoprogame4","role":"C","Position":"COC, CC","roleLabel":"Centrocampista","nation":"Francia","ovr":83,"subscriber":"si","abbonato":"si","club":"olympique-maremma"},{"id":"157","name":"pizzaboyr0w","role":"D","Position":"TD","roleLabel":"Difensore","nation":"Francia","ovr":82,"subscriber":"si","abbonato":"si","club":"psv-endovena"},{"id":"88","name":"Attilio","role":"A","Position":"ATT, COC","roleLabel":"Attaccante","nation":"Francia","ovr":93,"subscriber":"si","abbonato":"si","club":"je-so-paz"},{"id":"73","name":"Blaze","role":"A","Position":"AS","roleLabel":"Attaccante","nation":"Argentina","ovr":86,"subscriber":"si","abbonato":"si","club":"o-solet-mio"}];
     const fallbackClubs = [
       {id:'amaro-luciano',name:'Amaro Luciano'},
       {id:'patetico-miniero',name:'Patetico Miniero'},
@@ -6673,11 +6789,12 @@
       return result >>> 0;
     };
 
-    const avatarSvg = (player) => {
+    const avatarSvg = (player, subscriber = false) => {
       const seed = hash(`${player.id}|${player.name}|${player.nation}`);
       const skins = ['#f3c7a2','#e7af83','#cf8c65','#ad6e4d','#895139','#efd2b7'];
       const hairs = ['#17120f','#382217','#69452e','#b27b45','#d4d0c8','#202938'];
       const shirts = ['#315f93','#8c3d34','#2f7656','#6b4b8e','#9a6c26','#33727b'];
+      const accessoryPalette = ['#f7d774','#6dc3ff','#ff8fb2','#86efac','#fca55d','#d8b4fe','#fef08a','#93c5fd'];
       const skin = skins[(seed >>> 2) % skins.length];
       const hair = hairs[(seed >>> 6) % hairs.length];
       const shirt = shirts[(seed >>> 10) % shirts.length];
@@ -6685,6 +6802,10 @@
       const eyeStyle = (seed >>> 18) % 3;
       const mouthStyle = (seed >>> 21) % 3;
       const hairStyle = (seed >>> 24) % 3;
+      const accessorySeed = hash(`${player.id}|${player.name}|subscriber-accessory`);
+      const accessoryColor = accessoryPalette[(accessorySeed >>> 4) % accessoryPalette.length];
+      const accentColor = accessoryPalette[(accessorySeed >>> 9) % accessoryPalette.length];
+      const accessoryType = accessorySeed % 4;
       const eyes = eyeStyle === 0
         ? '<circle cx="28" cy="34" r="2" fill="#1f1b18"/><circle cx="44" cy="34" r="2" fill="#1f1b18"/>'
         : eyeStyle === 1
@@ -6700,6 +6821,18 @@
         : hairStyle === 1
           ? 'M17 29c4-12 11-19 19-19 9 0 16 6 19 17-5-2-9-3-13-3l-6 7-5-7c-5 1-9 2-14 5z'
           : 'M18 30c3-11 10-18 18-18 9 0 16 5 19 15-2-1-4-1-5 0-1-4-5-5-7-2-2-4-7-4-8 0-3-3-7-2-8 3-4 1-7 4-9 7z';
+      const subscriberAccessory = !subscriber ? '' : (() => {
+        switch (accessoryType) {
+          case 0:
+            return `<rect x="21.5" y="29.5" width="13" height="8.5" rx="3.5" fill="#101214" opacity=".92"/><rect x="37.5" y="29.5" width="13" height="8.5" rx="3.5" fill="#101214" opacity=".92"/><rect x="34" y="32.3" width="4" height="2" rx="1" fill="#101214"/><path d="M21.5 31.5q-2.5 1-4 3.5" stroke="#101214" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M50.5 31.5q2.5 1 4 3.5" stroke="#101214" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+          case 1:
+            return `<circle cx="28" cy="34" r="5.4" fill="rgba(255,255,255,.08)" stroke="#ecf2ff" stroke-width="1.8"/><circle cx="44" cy="34" r="5.4" fill="rgba(255,255,255,.08)" stroke="#ecf2ff" stroke-width="1.8"/><path d="M33.2 34h5.6" stroke="#ecf2ff" stroke-width="1.6" stroke-linecap="round"/><path d="M22.8 32.2h-2.5M49.2 32.2h2.5" stroke="#ecf2ff" stroke-width="1.4" stroke-linecap="round"/>`;
+          case 2:
+            return `<path d="M26.5 43.5q2 2.7 4.5 0 1.8 2.5 5 2.5 3.2 0 5-2.5 2.5 2.7 4.5 0" fill="none" stroke="#3b2418" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M27 43q1.5-3.2 4.3-3.2 2 0 4.7 2.2 2.7-2.2 4.7-2.2 2.8 0 4.3 3.2" fill="none" stroke="#3b2418" stroke-width="1.7" stroke-linecap="round"/>`;
+          default:
+            return `<rect x="31.2" y="37.4" width="9.6" height="5.2" rx="2.2" fill="#f3eade" stroke="#bb8a67" stroke-width="1.1"/><circle cx="34" cy="40" r=".55" fill="#bb8a67"/><circle cx="38" cy="40" r=".55" fill="#bb8a67"/>`;
+        }
+      })();
       return `<svg viewBox="0 0 72 72" aria-hidden="true" focusable="false">
         <defs><linearGradient id="np-${seed}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${bg}"/><stop offset="1" stop-color="#17263a"/></linearGradient></defs>
         <rect width="72" height="72" rx="18" fill="url(#np-${seed})"/>
@@ -6711,6 +6844,7 @@
         ${eyes}
         <path d="M36 36q2 4 0 7" fill="none" stroke="rgba(120,70,45,.35)" stroke-width="1.5" stroke-linecap="round"/>
         ${mouth}
+        ${subscriberAccessory}
         <rect x="1" y="1" width="70" height="70" rx="17" fill="none" stroke="rgba(255,255,255,.42)" stroke-width="2"/>
       </svg>`;
     };
@@ -6719,44 +6853,106 @@
       const parsed = Number.parseInt(String(player?.id ?? '').trim(), 10);
       return Number.isFinite(parsed) ? parsed : -1;
     };
-
     const prettifySlug = (value) => String(value || 'Svincolato')
       .replace(/[-_]+/g, ' ')
       .replace(/\b\w/g, char => char.toUpperCase());
+    const isSubscriber = (player) => [player?.subscriber, player?.abbonato]
+      .some(value => ['si','sì','yes','true','1'].includes(String(value ?? '').trim().toLowerCase()));
+    const normalizedName = (player) => String(player?.name || '').trim().toLocaleLowerCase('it-IT').replace(/\s+/g, ' ');
 
-    const render = (players, clubs) => {
-      const clubNames = new Map((Array.isArray(clubs) ? clubs : fallbackClubs)
-        .filter(club => club && club.id)
-        .map(club => [String(club.id), String(club.name || prettifySlug(club.id))]));
+    const clubMap = (clubs) => new Map((Array.isArray(clubs) ? clubs : fallbackClubs)
+      .filter(club => club && club.id)
+      .map(club => [String(club.id), String(club.name || prettifySlug(club.id))]));
+
+    const cardHtml = (player, clubs, subscriber = false) => {
+      const role = String(player.Position || player.role || '—').split(',')[0].trim();
+      const nation = String(player.nation || '—');
+      const team = clubs.get(String(player.club || '')) || prettifySlug(player.club);
+      const overallValue = Number.parseInt(String(player.ovr ?? ''), 10);
+      const overall = Number.isFinite(overallValue) ? overallValue : '—';
+      const subscriberLabel = subscriber ? ' · <span class="home-subscriber-badge">ABBONATO</span>' : '';
+      return `<article class="home-new-player${subscriber ? ' is-subscriber' : ''}" title="ID ${escapeHtml(player.id)} · ${escapeHtml(player.name)} · ${escapeHtml(team)}">
+        <span class="home-new-player-avatar">${avatarSvg(player, subscriber)}</span>
+        <span class="home-new-player-copy">
+          <span class="home-new-player-top">
+            <span class="home-new-player-name">${escapeHtml(player.name || `Giocatore ${player.id}`)}</span>
+            <span class="home-new-player-overall" title="Overall">${escapeHtml(overall)}</span>
+          </span>
+          <span class="home-new-player-meta">ID ${escapeHtml(player.id)} · ${escapeHtml(role)}${subscriberLabel}</span>
+          <span class="home-new-player-details">
+            <span class="home-new-player-detail"><span class="home-new-player-detail-label">Nazionale</span><span class="home-new-player-detail-value">${escapeHtml(nation)}</span></span>
+            <span class="home-new-player-detail"><span class="home-new-player-detail-label">Squadra</span><span class="home-new-player-detail-value">${escapeHtml(team)}</span></span>
+          </span>
+        </span>
+      </article>`;
+    };
+
+    const renderNewest = (players, clubs) => {
+      if (!newestList) return;
+      const names = clubMap(clubs);
       const newest = [...players]
         .filter(player => player && numericId(player) >= 0)
         .sort((a, b) => numericId(b) - numericId(a))
         .slice(0, 10);
-      if (!newest.length) {
-        list.innerHTML = '<span class="home-new-players-empty">Nessun giocatore disponibile.</span>';
+      newestList.innerHTML = newest.length
+        ? newest.map(player => cardHtml(player, names)).join('')
+        : '<span class="home-new-players-empty">Nessun giocatore disponibile.</span>';
+    };
+
+    const renderSubscribers = (players, clubs) => {
+      if (!subscribersTrack) return;
+      const names = clubMap(clubs);
+      const unique = new Map();
+      [...players]
+        .filter(player => player && numericId(player) >= 0 && isSubscriber(player))
+        .sort((a, b) => numericId(b) - numericId(a))
+        .forEach(player => {
+          const key = normalizedName(player) || `id-${player.id}`;
+          if (!unique.has(key)) unique.set(key, player);
+        });
+      const subscribers = [...unique.values()].slice(0, 20);
+      if (!subscribers.length) {
+        subscribersTrack.innerHTML = '<div class="home-subscribers-page"><div class="home-new-players-list"><span class="home-new-players-empty">Nessun abbonato disponibile.</span></div></div>';
         return;
       }
-      list.innerHTML = newest.map(player => {
-        const role = String(player.Position || player.role || '—').split(',')[0].trim();
-        const nation = String(player.nation || '—');
-        const team = clubNames.get(String(player.club || '')) || prettifySlug(player.club);
-        const overallValue = Number.parseInt(String(player.ovr ?? ''), 10);
-        const overall = Number.isFinite(overallValue) ? overallValue : '—';
-        return `<article class="home-new-player" title="ID ${escapeHtml(player.id)} · ${escapeHtml(player.name)} · ${escapeHtml(team)}">
-          <span class="home-new-player-avatar">${avatarSvg(player)}</span>
-          <span class="home-new-player-copy">
-            <span class="home-new-player-top">
-              <span class="home-new-player-name">${escapeHtml(player.name || `Giocatore ${player.id}`)}</span>
-              <span class="home-new-player-overall" title="Overall">${escapeHtml(overall)}</span>
-            </span>
-            <span class="home-new-player-meta">ID ${escapeHtml(player.id)} · ${escapeHtml(role)}</span>
-            <span class="home-new-player-details">
-              <span class="home-new-player-detail"><span class="home-new-player-detail-label">Nazionale</span><span class="home-new-player-detail-value">${escapeHtml(nation)}</span></span>
-              <span class="home-new-player-detail"><span class="home-new-player-detail-label">Squadra</span><span class="home-new-player-detail-value">${escapeHtml(team)}</span></span>
-            </span>
-          </span>
-        </article>`;
-      }).join('');
+      const pages = [];
+      for (let index = 0; index < subscribers.length; index += 10) pages.push(subscribers.slice(index, index + 10));
+      subscribersTrack.innerHTML = pages.map((page, pageIndex) => `<div class="home-subscribers-page" aria-hidden="${pageIndex ? 'true' : 'false'}"><div class="home-new-players-list">${page.map(player => cardHtml(player, names, true)).join('')}</div></div>`).join('');
+      setupSubscriberSlider(pages.length);
+    };
+
+    const setupSubscriberSlider = (pageCount) => {
+      if (!subscribersRoot || !subscribersTrack || pageCount < 2) return;
+      subscribersControls.hidden = false;
+      subscribersDots.innerHTML = Array.from({length:pageCount}, (_, index) => `<button class="home-subscribers-dot${index === 0 ? ' active' : ''}" type="button" data-subscriber-go="${index}" aria-label="Mostra gruppo ${index + 1}" aria-selected="${index === 0 ? 'true' : 'false'}"></button>`).join('');
+      const dots = [...subscribersDots.querySelectorAll('[data-subscriber-go]')];
+      const pages = [...subscribersTrack.querySelectorAll('.home-subscribers-page')];
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let current = 0;
+      let timer = null;
+      const show = (index) => {
+        current = (index + pageCount) % pageCount;
+        subscribersTrack.style.transform = `translateX(-${current * 100}%)`;
+        pages.forEach((page, pageIndex) => page.setAttribute('aria-hidden', pageIndex === current ? 'false' : 'true'));
+        dots.forEach((dot, dotIndex) => {
+          const active = dotIndex === current;
+          dot.classList.toggle('active', active);
+          dot.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        subscribersCounter.textContent = `${current + 1}/${pageCount}`;
+      };
+      const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+      const start = () => { stop(); if (!reduced) timer = setInterval(() => show(current + 1), 6500); };
+      subscribersRoot.querySelector('[data-subscriber-prev]')?.addEventListener('click', () => { show(current - 1); start(); });
+      subscribersRoot.querySelector('[data-subscriber-next]')?.addEventListener('click', () => { show(current + 1); start(); });
+      dots.forEach(dot => dot.addEventListener('click', () => { show(Number(dot.dataset.subscriberGo) || 0); start(); }));
+      subscribersRoot.addEventListener('mouseenter', stop);
+      subscribersRoot.addEventListener('mouseleave', start);
+      subscribersRoot.addEventListener('focusin', stop);
+      subscribersRoot.addEventListener('focusout', event => { if (!subscribersRoot.contains(event.relatedTarget)) start(); });
+      document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+      show(0);
+      start();
     };
 
     Promise.all([
@@ -6769,8 +6965,15 @@
         return response.json();
       })
     ])
-      .then(([players, clubs]) => render(Array.isArray(players) ? players : fallbackPlayers, clubs))
-      .catch(() => render(fallbackPlayers, fallbackClubs));
+      .then(([players, clubs]) => {
+        const validPlayers = Array.isArray(players) ? players : fallbackPlayers;
+        renderNewest(validPlayers, clubs);
+        renderSubscribers(validPlayers, clubs);
+      })
+      .catch(() => {
+        renderNewest(fallbackPlayers, fallbackClubs);
+        renderSubscribers(fallbackSubscribers, fallbackClubs);
+      });
   })();
 </script>
 
