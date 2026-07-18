@@ -5478,7 +5478,7 @@ function secretRefereeDealState(source=state){
 function startSecretRefereeDeal(choice){
  const selected=choice==='refuse'?'refuse':'accept',deal=secretRefereeDealState();
  Object.assign(deal,{active:true,choice:selected,startedMatchday:Number(state.matchday)||0,earnedPoints:0,matchesChecked:0,discovered:false,discoveredMatchday:-1,lastAdjustment:0});
- return selected==='accept'?'L’accordo è attivo: riceverai un rigore a favore in ogni partita. Dopo ogni gara c’è il 10% di possibilità che le intercettazioni scoprano tutto.':'Hai rifiutato: riceverai un rigore contro in ogni partita. Dopo ogni gara c’è il 10% di possibilità che le intercettazioni rivelino la proposta.';
+ return selected==='accept'?'L’accordo è attivo: riceverai un rigore a favore in ogni partita.':'Hai rifiutato: riceverai un rigore contro in ogni partita.';
 }
 function secretRefereePenaltyEvent(lineup,team,opponent,duration=90,favour=true){
  const safe=(Array.isArray(lineup)?lineup:[]).filter(entry=>entry&&entry.player),scorer=safe.length?weightedScorer(safe):null;
@@ -6369,7 +6369,7 @@ function seasonRuleSummary(){
  const decisionMode=state.seasonRules.autoDecisions?'Mascotte / bot':'Allenatore';
  const marketMode=(state.seasonRules.autoMidseason||state.seasonRules.botMidseason)?'Automatico':'Manuale';
  const extras=[`Allenatore: ${coachProfile().name}`,coachCurrentEffectLabel()];
- const refereeDeal=secretRefereeDealState();if(refereeDeal.active)extras.push(`Arbitro ecuadoriano: rigore ${refereeDeal.choice==='accept'?'a favore':'contro'} ogni partita · ${refereeDeal.earnedPoints} punti accumulati · 10% intercettazioni dopo ogni gara`);
+ const refereeDeal=secretRefereeDealState();if(refereeDeal.active)extras.push(`Arbitro ecuadoriano: rigore ${refereeDeal.choice==='accept'?'a favore':'contro'} ogni partita`);
  if(state.seasonRules.marottaDoubleWins)extras.push('Marotta League attiva: vittoria +6, sconfitta -100');
  if(Number(state.seasonRules.winPoints)!==3||Number(state.seasonRules.drawPoints)!==1)extras.push(`Punteggio: vittoria +${Number(state.seasonRules.winPoints)} · pareggio +${Number(state.seasonRules.drawPoints)}`);
  if(currentMatchDuration()!==90)extras.push(`Durata tue partite: ${currentMatchDuration()} minuti`);
@@ -6608,9 +6608,9 @@ const DECISIONS=[
   {label:'È un povero pazzo',effect:'Al draft di metà stagione devi scambiarlo con un giocatore di pari o maggiore OVR',apply(context){if(!context?.playerId)return 'Nessun giocatore disponibile.';queueEqualOrBetterMidseasonPlayer(context.playerId);return `${context.playerName} dovrà essere scambiato al draft di metà stagione con un giocatore di pari o maggiore OVR.`}}
  ]},
 
- {id:'arbitro-ecuadoriano',userOnly:true,title:'Un misterioso arbitro ecuadoriano ti si avvicina',text:'Ti propone un aiuto segreto che potrebbe cambiare ogni partita. Le intercettazioni, però, potrebbero scoprire tutto dopo qualsiasi gara.',available(){return !secretRefereeDealState().active},choices:[
-  {label:'Accetta il suo aiuto',effect:'Ricevi un rigore a favore in ogni partita. Dopo ogni gara: 10% che l’accordo venga scoperto; in quel caso perdi tutti i punti conquistati dalle partite successive all’accordo.',apply(){return startSecretRefereeDeal('accept')}},
-  {label:'Rifiuta il suo aiuto',effect:'Ricevi un rigore contro in ogni partita. Dopo ogni gara: 10% che la proposta venga scoperta; in quel caso i punti conquistati dalle partite successive al rifiuto vengono raddoppiati.',apply(){return startSecretRefereeDeal('refuse')}}
+ {id:'arbitro-ecuadoriano',userOnly:true,title:'Un misterioso arbitro ecuadoriano ti si avvicina',text:'Ti propone il suo aiuto per le prossime partite.',available(){return !secretRefereeDealState().active},choices:[
+  {label:'Accetta il suo aiuto',effect:'Riceverai un rigore a favore in ogni partita.',apply(){return startSecretRefereeDeal('accept')}},
+  {label:'Rifiuta il suo aiuto',effect:'Riceverai un rigore contro in ogni partita.',apply(){return startSecretRefereeDeal('refuse')}}
  ]},
  {id:'maglie-nomi-sbagliati',userOnly:true,title:'Maglie con i nomi sbagliati',text:'Il magazziniere ha scambiato tutte le divise.',available(){return realCurrentLineupEntries().length>=2},choices:[
   {label:'Giocate comunque',effect:'Due titolari casuali si scambiano posizione. Entrambi ricevono -5 OVR se finiscono fuori ruolo.',apply(){return startWrongShirtsEvent()}},
