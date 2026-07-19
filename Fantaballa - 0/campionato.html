@@ -4574,7 +4574,7 @@ function applyChaosTeamDecision(team,decision,choiceIndex){
  if(id==='personaggio-capelli-bianchi'){if(choiceIndex===0){if(Math.random()<.5)opponentRosterPlayers(team).forEach(player=>chaosSetPlayerOvr(team,player.id,(Number(player.ovr)||60)+10));else chaosInjure(team,Math.max(1,team.roster.length),9999)}else{const target=chaosNextOpponent(team.id);if(target)pushChaosEffect(target,'power',10,1)}return text}
  if(id==='rissa-mascotte'&&choiceIndex===1){const targets=state.teams.filter(item=>item.id!==USER_ID&&item.id!==team.id);const target=targets.length?pick(targets):team;target.mascot={id:`chaos-mascot-${team.id}-${Date.now()}`,name:`Mascotte di ${team.name}`,ovr:99};return text}
  if(id==='drone-avversario'){const target=chaosNextOpponent(team.id);if(target){if(choiceIndex===0)pushChaosEffect(target,'power',-10,1);else chaosInjure(target,2,1)}return text}
- if(id==='aggiornamento-var'){if(choiceIndex===0)pushChaosEffect(team,'injuryRisk',1,1,{chance:.45});else pushChaosEffect(team,'redRisk',1,1,{chance:.35});return text}
+ if(id==='aggiornamento-var'){if(choiceIndex===0)pushChaosEffect(team,'randomResult',1,1);else pushChaosEffect(team,'redRisk',1,1,{chance:.70});return text}
  if(id==='mentalista'){
    if(choiceIndex===0){
      const attacker=chaosRandomRosterPlayer(team,player=>roleOf(player)==='A');
@@ -4637,10 +4637,11 @@ function renderChaosLeagueFeed(){
 }
 function chaosTeamMatchRules(team){
  const chaos=ensureChaosTeam(team),has=type=>chaos?.activeEffects.some(effect=>effect.type===type),find=type=>chaos?.activeEffects.find(effect=>effect.type===type)||null;
- return {forcedLoss:has('forcedLoss'),forcedWin:has('forcedWin'),maxDraw:has('maxDraw'),noGoals:has('noGoals'),forcedScore:find('forcedScore'),futureScorer:Boolean(chaos?.futureScorerId)};
+ return {forcedLoss:has('forcedLoss'),forcedWin:has('forcedWin'),maxDraw:has('maxDraw'),noGoals:has('noGoals'),randomResult:has('randomResult'),forcedScore:find('forcedScore'),futureScorer:Boolean(chaos?.futureScorerId)};
 }
 function applyChaosScoreRules(homeTeam,awayTeam,homeScore,awayScore){
  let home=Math.max(0,Number(homeScore)||0),away=Math.max(0,Number(awayScore)||0);const hr=chaosTeamMatchRules(homeTeam),ar=chaosTeamMatchRules(awayTeam);
+ if(hr.randomResult||ar.randomResult){home=Math.floor(Math.random()*6);away=Math.floor(Math.random()*6)}
  if(hr.futureScorer)home=Math.max(1,home);if(ar.futureScorer)away=Math.max(1,away);if(hr.noGoals)home=0;if(ar.noGoals)away=0;
  if(hr.forcedScore){home=Math.max(0,Number(hr.forcedScore.gf)||6);away=Math.max(0,Number(hr.forcedScore.ga)||0)}
  if(ar.forcedScore){away=Math.max(0,Number(ar.forcedScore.gf)||6);home=Math.max(0,Number(ar.forcedScore.ga)||0)}
@@ -4651,6 +4652,7 @@ function applyChaosScoreRules(homeTeam,awayTeam,homeScore,awayScore){
 }
 function applyChaosOpponentToUserScore(opponent,goalsFor,goalsAgainst){
  const rules=chaosTeamMatchRules(opponent);let gf=Math.max(0,Number(goalsFor)||0),ga=Math.max(0,Number(goalsAgainst)||0);
+ if(rules.randomResult){gf=Math.floor(Math.random()*6);ga=Math.floor(Math.random()*6)}
  if(rules.futureScorer)ga=Math.max(1,ga);if(rules.noGoals)ga=0;
  if(rules.forcedScore){ga=Math.max(0,Number(rules.forcedScore.gf)||6);gf=Math.max(0,Number(rules.forcedScore.ga)||0)}
  if(rules.forcedWin&&ga<=gf)ga=gf+1;if(rules.forcedLoss&&ga>=gf)gf=ga+1;if(rules.maxDraw&&ga>gf)ga=gf;
@@ -6627,8 +6629,8 @@ const DECISIONS=[
   {label:'Lo abbatti con un pallone',effect:'2 giocatori casuali del prossimo avversario saranno infortunati',apply(){return injureNextOpponentPlayers(2)}}
  ]},
  {id:'aggiornamento-var',title:'Il VAR deve installare un aggiornamento',text:'Il sistema operativo segnala: “Tempo rimanente: 4 ore e 37 minuti”.',choices:[
-  {label:'Aspetti pazientemente',effect:'Aumenta il rischio di infortunio nella prossima partita',apply(){pushEffect('injuryRisk',1,1,{chance:.45,count:1,duration:1,source:'Attesa aggiornamento VAR'});return 'Nella prossima partita c’è il 45% di rischio che un giocatore subisca un infortunio.'}},
-  {label:'Inizia la partita senza VAR',effect:'Aumenta la probabilità di un’espulsione avversaria, ma anche quella di una tua espulsione',apply(){pushEffect('refChaos',1,1,{opponentRedChance:.55,ownRedChance:.35,source:'Partita senza VAR'});return 'Nella prossima partita: 55% rosso avversario e 35% rosso per la tua squadra.'}}
+  {label:'Giochi col VAR non aggiornato',effect:'Nella prossima partita il risultato è totalmente casuale e non dipende dall’OVR.',apply(){pushEffect('varRandomResult',1,1,{source:'VAR non aggiornato'});return 'La prossima partita avrà un risultato completamente casuale, indipendente dall’OVR delle due squadre.'}},
+  {label:'Spegni il VAR',effect:'Nella prossima partita aumenta il rischio di espulsioni a sfavore.',apply(){pushEffect('refChaos',1,1,{opponentRedChance:0,ownRedChance:.70,source:'VAR spento'});return 'Nella prossima partita aumenta fortemente il rischio di un’espulsione per la tua squadra.'}}
  ]},
  {id:'crescita-personale',title:'Il capitano apre un corso di crescita personale',text:'Per tre ore ripete frasi come “il fuorigioco esiste solo nella tua mente”.',choices:[
   {label:'Obblighi tutti a partecipare',effect:'×2 Intesa per 1 giornata',apply(){pushEffect('teamChemMultiplier',2,1);return 'Tutti i bonus Intesa positivi dei titolari vengono raddoppiati nella prossima partita.'}},
@@ -7373,7 +7375,10 @@ function playRound(mode='instant'){
  const deathMatchBonus=String(state.seasonRules.deathMatchClubId||'')===String(opponent?.id||'')?Math.max(0,Number(state.seasonRules.deathMatchClubBonus)||10):0;
  const opponentPower=Math.max(1,opponentMatchPower(opponent)+opponentEventOvr+deathMatchBonus-(redCandidate?10:0)-fantaballopoliRisks.powerPenalty),userPower=Math.max(35,baseUserPower-(ownRedEntry?10:0));
  const smallGoalMultiplier=state.activeEffects.filter(effect=>effect.type==='smallGoals').reduce((value,effect)=>value*clamp(Number(effect.value)||.65,.1,1),1);
- let [homeBase,awayBase]=simulateScore(userHome?userPower:opponentPower,userHome?opponentPower:userPower,.18,matchMinutes,smallGoalMultiplier);
+ const varRandomResult=state.activeEffects.some(effect=>effect.type==='varRandomResult');
+ let [homeBase,awayBase]=varRandomResult
+   ? [Math.floor(Math.random()*6),Math.floor(Math.random()*6)]
+   : simulateScore(userHome?userPower:opponentPower,userHome?opponentPower:userPower,.18,matchMinutes,smallGoalMultiplier);
  let goalsFor=userHome?homeBase:awayBase,goalsAgainst=userHome?awayBase:homeBase;
  const forcedLoss=state.activeEffects.some(effect=>effect.type==='forcedLoss')||fantaballopoliRule.forcedLoss,forcedWin=state.activeEffects.some(effect=>effect.type==='forcedWin')||fantaballopoliRule.forcedWin,maxDraw=state.activeEffects.some(effect=>effect.type==='maxDraw'),forcedScoreEffect=state.activeEffects.find(effect=>effect.type==='forcedScore')||null;
  const capValues=state.activeEffects.filter(effect=>effect.type==='goalCap').map(effect=>Number(effect.value)).filter(Number.isFinite);

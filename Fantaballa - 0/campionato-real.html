@@ -4573,7 +4573,7 @@ function applyChaosTeamDecision(team,decision,choiceIndex){
  if(id==='personaggio-capelli-bianchi'){if(choiceIndex===0){if(Math.random()<.5)opponentRosterPlayers(team).forEach(player=>chaosSetPlayerOvr(team,player.id,(Number(player.ovr)||60)+10));else chaosInjure(team,Math.max(1,team.roster.length),9999)}else{const target=chaosNextOpponent(team.id);if(target)pushChaosEffect(target,'power',10,1)}return text}
  if(id==='rissa-mascotte'&&choiceIndex===1){const targets=state.teams.filter(item=>item.id!==USER_ID&&item.id!==team.id);const target=targets.length?pick(targets):team;target.mascot={id:`chaos-mascot-${team.id}-${Date.now()}`,name:`Mascotte di ${team.name}`,ovr:99};return text}
  if(id==='drone-avversario'){const target=chaosNextOpponent(team.id);if(target){if(choiceIndex===0)pushChaosEffect(target,'power',-10,1);else chaosInjure(target,2,1)}return text}
- if(id==='aggiornamento-var'){if(choiceIndex===0)pushChaosEffect(team,'injuryRisk',1,1,{chance:.45});else pushChaosEffect(team,'redRisk',1,1,{chance:.35});return text}
+ if(id==='aggiornamento-var'){if(choiceIndex===0)pushChaosEffect(team,'randomResult',1,1);else pushChaosEffect(team,'redRisk',1,1,{chance:.70});return text}
  if(id==='mentalista'){
    if(choiceIndex===0){
      const attacker=chaosRandomRosterPlayer(team,player=>roleOf(player)==='A');
@@ -4636,10 +4636,11 @@ function renderChaosLeagueFeed(){
 }
 function chaosTeamMatchRules(team){
  const chaos=ensureChaosTeam(team),has=type=>chaos?.activeEffects.some(effect=>effect.type===type),find=type=>chaos?.activeEffects.find(effect=>effect.type===type)||null;
- return {forcedLoss:has('forcedLoss'),forcedWin:has('forcedWin'),maxDraw:has('maxDraw'),noGoals:has('noGoals'),forcedScore:find('forcedScore'),futureScorer:Boolean(chaos?.futureScorerId)};
+ return {forcedLoss:has('forcedLoss'),forcedWin:has('forcedWin'),maxDraw:has('maxDraw'),noGoals:has('noGoals'),randomResult:has('randomResult'),forcedScore:find('forcedScore'),futureScorer:Boolean(chaos?.futureScorerId)};
 }
 function applyChaosScoreRules(homeTeam,awayTeam,homeScore,awayScore){
  let home=Math.max(0,Number(homeScore)||0),away=Math.max(0,Number(awayScore)||0);const hr=chaosTeamMatchRules(homeTeam),ar=chaosTeamMatchRules(awayTeam);
+ if(hr.randomResult||ar.randomResult){home=Math.floor(Math.random()*6);away=Math.floor(Math.random()*6)}
  if(hr.futureScorer)home=Math.max(1,home);if(ar.futureScorer)away=Math.max(1,away);if(hr.noGoals)home=0;if(ar.noGoals)away=0;
  if(hr.forcedScore){home=Math.max(0,Number(hr.forcedScore.gf)||6);away=Math.max(0,Number(hr.forcedScore.ga)||0)}
  if(ar.forcedScore){away=Math.max(0,Number(ar.forcedScore.gf)||6);home=Math.max(0,Number(ar.forcedScore.ga)||0)}
@@ -4650,6 +4651,7 @@ function applyChaosScoreRules(homeTeam,awayTeam,homeScore,awayScore){
 }
 function applyChaosOpponentToUserScore(opponent,goalsFor,goalsAgainst){
  const rules=chaosTeamMatchRules(opponent);let gf=Math.max(0,Number(goalsFor)||0),ga=Math.max(0,Number(goalsAgainst)||0);
+ if(rules.randomResult){gf=Math.floor(Math.random()*6);ga=Math.floor(Math.random()*6)}
  if(rules.futureScorer)ga=Math.max(1,ga);if(rules.noGoals)ga=0;
  if(rules.forcedScore){ga=Math.max(0,Number(rules.forcedScore.gf)||6);gf=Math.max(0,Number(rules.forcedScore.ga)||0)}
  if(rules.forcedWin&&ga<=gf)ga=gf+1;if(rules.forcedLoss&&ga>=gf)gf=ga+1;if(rules.maxDraw&&ga>gf)ga=gf;
@@ -6568,7 +6570,6 @@ const AUTO_EVENTS=[
  {title:'Problema muscolare',text:'Un titolare casuale si infortuna.',apply(){const r=pick(getStarterEntries());if(r){setOwnPlayerInjury(r,2);return `${r.player.name} è infortunato per 2 giornate.${state.seasonRules.futureInjuryZeroPoints?' Punti azzerati dalla regola del futuro.':''}`}return 'Nessun titolare disponibile.'}},
  {title:'Contusione',text:'Un giocatore casuale della rosa non è al meglio.',apply(){const r=pick(rosterPlayers());if(r){setOwnPlayerInjury(r,1);return `${r.player.name} è infortunato per 1 giornata.${state.seasonRules.futureInjuryZeroPoints?' Punti azzerati dalla regola del futuro.':''}`}return 'Nessun giocatore disponibile.'}},
  {title:'Settimana perfetta',text:'La squadra si allena alla grande.',apply(){state.activeEffects.push({type:'teamChem',value:5,rounds:1});return '+5 Intesa per la prossima partita.'}},
- {title:'Sostegno degli abbonati',text:'Gli abbonati trascinano il gruppo.',apply(){state.activeEffects.push({type:'subscriberChem',value:3,rounds:2});return '+3 Intesa agli abbonati per 2 giornate.'}},
  {title:'Arbitraggio severo',text:'La prossima gara si preannuncia nervosa.',apply(){state.activeEffects.push({type:'cards',value:1,rounds:1});return 'Probabilità di squalifica aumentata per la prossima partita.'}}
 ];
 const DECISIONS=[
@@ -6609,25 +6610,17 @@ const DECISIONS=[
   {label:'Rimani pacato in panca, applaudendo',effect:'+5 OVR a un giocatore casuale per la prossima partita',apply(){return applyPlayerEffect('playerOvr',5,1)}},
   {label:'Vai sotto la curva avversaria',effect:'+5 OVR a tutta la squadra, ma un giocatore casuale si infortuna',apply(){pushEffect('teamOvr',5,1);const entry=randomOwnEntry();if(!entry)return 'Nessun giocatore disponibile.';injureOwnPlayers([entry],1);return `${entry.player.name} si infortuna per 1 giornata.`}}
  ]},
- {id:'whatsapp-pubblicato',title:'Il gruppo WhatsApp della squadra viene pubblicato online',text:'Sono usciti gli screen delle vostre chat. E ora?',available(){return Number(state.matchday)<19},choices:[
-  {label:'Dici che sei stato hackerato',effect:'+10 Intesa agli abbonati nella prossima partita, ma il draft di metà stagione viene fatto casualmente dal bot',apply(){pushEffect('subscriberChem',10,1);state.seasonRules.botMidseason=true;return 'Il bot controllerà casualmente tutte le entrate e le uscite del draft di metà stagione.'}},
-  {label:'Chiedi pubblicamente scusa dicendo che hai un sacco di amici di colore',effect:'-5 Intesa a tutta la squadra per 2 giornate',apply(){pushEffect('teamChem',-5,2);return '-5 Intesa alla squadra per 2 giornate.'}}
- ]},
  {id:'rissa-mascotte',title:'Scoppia una rissa tra te e la mascotte della squadra',text:"La mascotte sostiene d’allenare meglio di te.",available(){return Number(state.matchday)<19},choices:[
   {label:'Allena lui la squadra',effect:'Non avrai più il controllo delle decisioni né del draft di metà stagione',apply(){state.seasonRules.autoDecisions=true;state.seasonRules.autoMidseason=true;state.seasonRules.botMidseason=true;return 'Da ora tutte le decisioni e il draft di metà stagione saranno gestiti casualmente dalla mascotte.'}},
   {label:'Lo fai licenziare',effect:'La mascotte appare come calciatore da 99 OVR in una squadra casuale',apply(){return addMascotToRandomTeam()}}
- ]},
- {id:'cuggino-influencer',title:'Il presidente ingaggia suo cuggino influencer',text:'Non ha mai giocato a calcio, ma ha due milioni di follower e una videocamera sempre accesa.',choices:[
-  {label:'Lo mandi a fare contenuti con gli abbonati',effect:'+10 Intesa a tutti gli abbonati per 1 giornata',apply(){pushEffect('subscriberChem',10,1);return '+10 Intesa agli abbonati nella prossima partita.'}},
-  {label:'Lo fai partecipare all’allenamento',effect:'+5 OVR a tutta la squadra nella prossima partita, ma tutti gli abbonati sono infortunati',apply(){pushEffect('teamOvr',5,1);const entries=rosterPlayers().filter(entry=>isSubscriber(entry.player));const names=injureOwnPlayers(entries,1);return names.length?`Abbonati infortunati per 1 giornata: ${names.join(', ')}.`:'Non ci sono abbonati in rosa.'}}
  ]},
  {id:'drone-avversario',title:'Un drone avversario spia l’allenamento',text:'Il drone è fermo sopra il campo e sta trasmettendo in diretta tutte le tattiche.',choices:[
   {label:'Gli mostri deliberatamente una tattica falsa',effect:'OVR del prossimo avversario ridotto di 10 punti',apply(){pushEffect('opponentOvr',-10,1);const opponent=nextOpponentTeam();return opponent?`${opponent.name} riceve -10 OVR nella prossima partita.`:'Il prossimo avversario riceve -10 OVR.'}},
   {label:'Lo abbatti con un pallone',effect:'2 giocatori casuali del prossimo avversario saranno infortunati',apply(){return injureNextOpponentPlayers(2)}}
  ]},
  {id:'aggiornamento-var',title:'Il VAR deve installare un aggiornamento',text:'Il sistema operativo segnala: “Tempo rimanente: 4 ore e 37 minuti”.',choices:[
-  {label:'Aspetti pazientemente',effect:'Aumenta il rischio di infortunio nella prossima partita',apply(){pushEffect('injuryRisk',1,1,{chance:.45,count:1,duration:1,source:'Attesa aggiornamento VAR'});return 'Nella prossima partita c’è il 45% di rischio che un giocatore subisca un infortunio.'}},
-  {label:'Inizia la partita senza VAR',effect:'Aumenta la probabilità di un’espulsione avversaria, ma anche quella di una tua espulsione',apply(){pushEffect('refChaos',1,1,{opponentRedChance:.55,ownRedChance:.35,source:'Partita senza VAR'});return 'Nella prossima partita: 55% rosso avversario e 35% rosso per la tua squadra.'}}
+  {label:'Giochi col VAR non aggiornato',effect:'Nella prossima partita il risultato è totalmente casuale e non dipende dall’OVR.',apply(){pushEffect('varRandomResult',1,1,{source:'VAR non aggiornato'});return 'La prossima partita avrà un risultato completamente casuale, indipendente dall’OVR delle due squadre.'}},
+  {label:'Spegni il VAR',effect:'Nella prossima partita aumenta il rischio di espulsioni a sfavore.',apply(){pushEffect('refChaos',1,1,{opponentRedChance:0,ownRedChance:.70,source:'VAR spento'});return 'Nella prossima partita aumenta fortemente il rischio di un’espulsione per la tua squadra.'}}
  ]},
  {id:'crescita-personale',title:'Il capitano apre un corso di crescita personale',text:'Per tre ore ripete frasi come “il fuorigioco esiste solo nella tua mente”.',choices:[
   {label:'Obblighi tutti a partecipare',effect:'×2 Intesa per 1 giornata',apply(){pushEffect('teamChemMultiplier',2,1);return 'Tutti i bonus Intesa positivi dei titolari vengono raddoppiati nella prossima partita.'}},
@@ -6679,10 +6672,6 @@ const DECISIONS=[
   {label:'Ti rifiuti di fare sta pagliacciata',effect:'1 punto di penalizzazione in classifica',apply(){const standing=userStanding();if(standing)standing.pts-=1;return 'È stato applicato 1 punto di penalizzazione in classifica.'}},
   {label:'Accetti ma il tifoso è Gullo',effect:'Nella prossima partita puoi al massimo pareggiare',apply(){pushEffect('maxDraw',1,1);return 'La prossima partita non potrà essere vinta: il risultato massimo sarà un pareggio.'}}
  ]},
- {id:'tiktok-boomer',title:'Il preparatore atletico boomer scopre TikTok',text:'Sostituisce l’allenamento con balletti sincronizzati e challenge.',choices:[
-  {label:'Registrate la challenge',effect:'Abbonati ×2 Intesa per 2 giornate, squadra -5 OVR per 2 giornate',apply(){pushEffect('subscriberChemMultiplier',2,2);pushEffect('teamOvr',-5,2);return 'Intesa positiva degli abbonati raddoppiata e -5 OVR alla squadra per 2 giornate.'}},
-  {label:'Lo fai tornare su Facebook',effect:'+5 OVR alla squadra, ma Intesa azzerata per 1 giornata',apply(){pushEffect('teamOvr',5,1);pushEffect('teamChemZero',1,1);return '+5 OVR alla squadra e Intesa azzerata nella prossima partita.'}}
- ]},
  {id:'marotta-league',title:'La Marotta League',text:'Un misterioso personaggio ti si avvicina.',choices:[
   {label:'Le vittorie valgono doppio',effect:'Ogni vittoria vale 6 punti fino a fine stagione, ma ogni sconfitta comporta 100 punti di penalità',apply(){state.seasonRules.marottaDoubleWins=true;state.seasonRules.marottaLossPenalty=100;return 'Da ora fino a fine stagione: +6 punti per ogni vittoria e -100 punti per ogni sconfitta.'}},
   {label:'Vittoria assicurata',effect:'Vinci sicuramente la prossima partita, ma aumenta drasticamente la probabilità di infortunio',apply(){pushEffect('forcedWin',1,1);pushEffect('injuryRisk',1,1,{chance:.80,count:1,duration:2,source:'Vittoria assicurata'});return 'La prossima partita sarà vinta, ma c’è l’80% di rischio di un infortunio da 2 giornate.'}}
@@ -6690,10 +6679,6 @@ const DECISIONS=[
  {id:'corto-muso',title:'Corto Muso',text:'Un misterioso personaggio ti si avvicina.',choices:[
   {label:'Te ne intendi di ippica?',effect:'Puoi segnare al massimo 1 gol nella prossima partita, ma se vinci ottieni 9 punti',apply(){pushEffect('goalCap',1,1);pushEffect('winPoints',9,1);return 'Nella prossima partita massimo 1 gol segnato; un’eventuale vittoria vale 9 punti.'}},
   {label:'Il miglior attacco è la difesa',effect:'Non subisci gol per le prossime 2 partite, ma tutti i tuoi attaccanti sono squalificati',apply(){pushEffect('cleanSheet',1,2);const entries=rosterPlayers().filter(entry=>roleOf(entry.player)==='A');entries.forEach(entry=>statusOf(entry.playerId).suspension=Math.max(statusOf(entry.playerId).suspension,1));return entries.length?`Porta inviolata garantita per 2 partite. Attaccanti squalificati per la prossima giornata: ${entries.map(entry=>entry.player.name).join(', ')}.`:'Porta inviolata garantita per 2 partite.'}}
- ]},
- {id:'ma-che-mollo',title:'Ma che mollo',text:'Un misterioso personaggio ti si avvicina.',choices:[
-  {label:'Siamo pazzi qua?',effect:'×3 Intesa nella prossima partita, ma subisci almeno 1 gol per 2 partite',apply(){pushEffect('teamChemMultiplier',3,1);pushEffect('minimumGoalsAgainst',1,2);return 'Intesa positiva triplicata nella prossima partita; almeno 1 gol subito nelle prossime 2.'}},
-  {label:'Chi fa sto mestiere non è mollo',effect:'Segnano tutti gli abbonati nella prossima partita e perdi il controllo delle decisioni fino a fine stagione',apply(){pushEffect('forceSubscriberGoals',1,1);state.seasonRules.autoDecisions=true;return 'Nella prossima partita ogni abbonato presente in campo segnerà almeno un gol. Le decisioni future saranno automatiche.'}}
  ]},
  {id:'var-misterioso',title:'VAR',text:'Un misterioso personaggio ti si avvicina.',choices:[
   {label:'Favori rischiosi',effect:'5 squadre casuali tra tutte le partecipanti vanno a 0 punti; la tua può essere sorteggiata',apply(){const names=zeroFiveTeamsIncluding(USER_ID);return names.length?`${names.join(', ')} vanno a 0 punti in classifica.`:'Nessuna squadra disponibile.'}},
@@ -7372,7 +7357,10 @@ function playRound(mode='instant'){
  const deathMatchBonus=String(state.seasonRules.deathMatchClubId||'')===String(opponent?.id||'')?Math.max(0,Number(state.seasonRules.deathMatchClubBonus)||10):0;
  const opponentPower=Math.max(1,opponentMatchPower(opponent)+opponentEventOvr+deathMatchBonus-(redCandidate?10:0)-fantaballopoliRisks.powerPenalty),userPower=Math.max(35,baseUserPower-(ownRedEntry?10:0));
  const smallGoalMultiplier=state.activeEffects.filter(effect=>effect.type==='smallGoals').reduce((value,effect)=>value*clamp(Number(effect.value)||.65,.1,1),1);
- let [homeBase,awayBase]=simulateScore(userHome?userPower:opponentPower,userHome?opponentPower:userPower,.18,matchMinutes,smallGoalMultiplier);
+ const varRandomResult=state.activeEffects.some(effect=>effect.type==='varRandomResult');
+ let [homeBase,awayBase]=varRandomResult
+   ? [Math.floor(Math.random()*6),Math.floor(Math.random()*6)]
+   : simulateScore(userHome?userPower:opponentPower,userHome?opponentPower:userPower,.18,matchMinutes,smallGoalMultiplier);
  let goalsFor=userHome?homeBase:awayBase,goalsAgainst=userHome?awayBase:homeBase;
  const forcedLoss=state.activeEffects.some(effect=>effect.type==='forcedLoss')||fantaballopoliRule.forcedLoss,forcedWin=state.activeEffects.some(effect=>effect.type==='forcedWin')||fantaballopoliRule.forcedWin,maxDraw=state.activeEffects.some(effect=>effect.type==='maxDraw'),forcedScoreEffect=state.activeEffects.find(effect=>effect.type==='forcedScore')||null;
  const capValues=state.activeEffects.filter(effect=>effect.type==='goalCap').map(effect=>Number(effect.value)).filter(Number.isFinite);
