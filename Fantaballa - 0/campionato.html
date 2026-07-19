@@ -3006,12 +3006,13 @@
 <div class="app">
   <header class="topbar">
     <div class="brand"><img src="assets/fantaballa-logo.png" alt="Fantaballa"><div><b>Campionato del Ca***</b><span>Una stagione · 38 giornate · Regole Gary MEDel</span></div></div>
-    <div class="top-actions"><span id="saveStatus" class="save-status">Salvataggio automatico attivo</span><a class="btn compact" href="index.html">Menu modalità</a><button id="resetBtn" class="btn red compact" type="button">Azzera stagione</button></div>
+    <div class="top-actions"><span id="saveStatus" class="save-status">Salvataggio automatico attivo</span><a class="btn gold compact" href="achievement.html">Achievement</a><a class="btn compact" href="index.html">Menu modalità</a><button id="resetBtn" class="btn red compact" type="button">Azzera stagione</button></div>
   </header>
   <section class="hero hero-season"><div class="hero-season-inner"><div class="hero-season-copy"><div class="hero-kicker">Modalità stagione</div><h1>Campionato del Ca***</h1><p>Draft iniziale, 11 titolari e 3 panchinari. Posizioni precise, infortuni, squalifiche, eventi e decisioni casuali. Dopo la giornata 19 il draft permette da 1 a 3 cambi, in base agli eventi della stagione.</p></div></div></section>
   <main id="screen"></main>
 </div>
 <div id="modalRoot"></div><div id="toast" class="toast"></div>
+<script src="assets/achievements.js"></script>
 <script>
 const CURRENT_STATE_VERSION=33;
 const SAVE_BASE='fantaballa_campionato_v7';
@@ -3037,6 +3038,60 @@ function cleanupLegacySaveArtifacts(){
 }
 const VICTORY_ENDPOINT='https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
 const USER_ID='fantaballa-xi';
+
+function achievementModeLabel(){return location.pathname.includes('campionato-real')?'fantacampionato':'campionato'}
+function achievementCareerId(){return `${achievementModeLabel()}|${String(state?.meta?.createdAt||state?.meta?.submissionCode||'carriera')}`}
+function achievementContext(extra={}){return{mode:achievementModeLabel(),teamName:String(state?.teamName||''),coachName:String(state?.coachName||''),season:1,matchday:Number(state?.matchday)||0,...extra}}
+function unlockAchievement(id,extra={}){return Boolean(window.FantaballaAchievements?.unlock?.(id,achievementContext(extra)))}
+function addAchievementProgress(id,amount=1,extra={}){return window.FantaballaAchievements?.addProgress?.(id,amount,achievementContext(extra))||0}
+function setAchievementCareerFlag(key,value=true){return window.FantaballaAchievements?.setCareerFlag?.(achievementCareerId(),key,value)}
+function getAchievementCareerFlag(key){return window.FantaballaAchievements?.getCareerFlag?.(achievementCareerId(),key)}
+function clearAchievementCareerFlag(key){return window.FantaballaAchievements?.clearCareerFlag?.(achievementCareerId(),key)}
+function achievementGoalValue(event){return Math.max(1,Number(event?.goalValue)||1)}
+function achievementWasRemuntada(userGoals=[],opponentGoals=[],gf=0,ga=0){
+ if(Number(gf)<=Number(ga))return false;
+ const timeline=[
+  ...(Array.isArray(userGoals)?userGoals:[]).map((event,index)=>({minute:Number(event?.minute)||0,order:index,delta:achievementGoalValue(event)})),
+  ...(Array.isArray(opponentGoals)?opponentGoals:[]).map((event,index)=>({minute:Number(event?.minute)||0,order:index,delta:-achievementGoalValue(event)}))
+ ].sort((a,b)=>a.minute-b.minute||(a.delta-b.delta)||a.order-b.order);
+ let difference=0,trailedByTwo=false;
+ timeline.forEach(event=>{difference+=event.delta;if(difference<=-2)trailedByTwo=true});
+ return trailedByTwo;
+}
+function checkPostMatchAchievements({gf=0,ga=0,userGoals=[],opponentGoals=[],varRandomResult=false,ductilityBoosts=[]}={}){
+ const won=Number(gf)>Number(ga),result=state.lastResult||{};
+ if(state.history.length===1&&won)unlockAchievement('buona-la-prima');
+ if(won&&Number(gf)-Number(ga)>=5)unlockAchievement('cappotto');
+ if(achievementWasRemuntada(userGoals,opponentGoals,gf,ga))unlockAchievement('remuntada');
+ if(won&&Number(ga)===0)unlockAchievement('clin-shit');
+ if(coachIs('ductility')&&won)unlockAchievement('zero-intesa');
+ const outOfRoleGoals=(Array.isArray(ductilityBoosts)?ductilityBoosts:[]).reduce((sum,item)=>sum+Math.max(0,Number(item?.gain)||Number(item?.goals)||0),0);
+ if(outOfRoleGoals>0)addAchievementProgress('fuori-dagli-schemi',outOfRoleGoals);
+ if(varRandomResult&&won)unlockAchievement('non-doveva-finire-cosi');
+ if(result?.secretRefereeDeal?.discovered)unlockAchievement('arbitro-venduto');
+ if(result?.curvaContestSuccess)unlockAchievement('scudetto-sotto-pressione');
+ const parityFlag=getAchievementCareerFlag('parityReset');
+ if(parityFlag&&Number(state.matchday)>Number(parityFlag.resetMatchday)){
+  const rank=sortedTable().findIndex(row=>String(row.id)===String(USER_ID))+1;
+  if(rank>0&&rank<=2){unlockAchievement('da-zero-alla-gloria');clearAchievementCareerFlag('parityReset')}
+ }
+}
+function checkSeasonAchievements(rank,eliminated=false){
+ if(eliminated||Number(rank)<=0)return;
+ const table=sortedTable(),standing=userStanding(),matches=Array.isArray(state.history)?state.history:[],cupWon=parallelCupState().winnerId===parallelCupUserId();
+ const wonTitle=Number(rank)===1;
+ if(wonTitle)unlockAchievement('campeones');
+ if(wonTitle&&cupWon)unlockAchievement('double');
+ if(matches.length&&matches.every(match=>Number(match.gf)>=Number(match.ga)))unlockAchievement('invincibili');
+ if(matches.reduce((sum,match)=>sum+Math.max(0,Number(match.gf)||0),0)>=100)unlockAchievement('attacco-atomico');
+ const runnerUp=table.find(row=>String(row.id)!==String(USER_ID));
+ if(wonTitle&&runnerUp&&Number(standing?.pts)-Number(runnerUp?.pts)<=1)unlockAchievement('fotofinish');
+ if(wonTitle&&coachIs('young-beautiful'))unlockAchievement('giovani-promesse');
+ if(allRosterItalian())unlockAchievement('il-generale');
+ const contest=curvaContestState();
+ if(wonTitle&&contest.status==='lost'&&contest.switchedFromTeamName&&contest.switchedToTeamName)unlockAchievement('cambio-di-panchina');
+}
+
 const FORMATIONS={
  '4-3-3':['AS','ATT','AD','CC','CDC','CC','TS','DC','DC','TD','P'],
  '4-4-2':['ATT','ATT','AS','CC','CC','AD','TS','DC','DC','TD','P'],
@@ -6030,7 +6085,7 @@ function resetStandingsByParity(parity='even'){
    const standing=state.standings?.[id],points=Number(standing?.pts);
    if(!standing||!Number.isFinite(points)||!Number.isInteger(points)||Math.abs(points)%2!==wanted)return;
    matching++;
-   if(points!==0){standing.pts=0;reset++}
+   if(points!==0){if(String(id)===String(USER_ID))setAchievementCareerFlag('parityReset',{resetMatchday:(Number(state.matchday)||0)+1,parity:normalized});standing.pts=0;reset++}
  });
  const label=normalized==='even'?'pari':'dispari';
  if(!matching)return`Nessuna squadra aveva un punteggio ${label}: la classifica non cambia.`;
@@ -7595,7 +7650,7 @@ function playRound(mode='instant'){
    const sixtyFearNote=applySixtyPointFear();if(sixtyFearNote)userPoints.note=[userPoints.note,sixtyFearNote].filter(Boolean).join(' ');
    const allHighlights=[...userGoalEvents,...opponentGoalEvents].sort((a,b)=>a.minute-b.minute);state.lastRoundResults=roundResults;
    state.history.push({matchday:state.matchday+1,opponent:opponent.name,opponentId:opponent.id,home:userHome,gf:goalsFor,ga:goalsAgainst,goals:userGoalEvents,opponentGoals:opponentGoalEvents,highlights:allHighlights,commentary,power:Math.round(userPower*10)/10,opponentPower:Math.round(opponentPower*10)/10,opponentRedCard:Boolean(redCandidate),opponentRedPlayer:redCandidate?.name||'',ownRedCard:Boolean(ownRedEntry),ownSuspensionId:ownRedEntry?.playerId||'',ownSuspensionPlayer:ownRedEntry?.player?.name||'',goalkeeperId:userHome?userAwards?.homeGoalkeeperId:userAwards?.awayGoalkeeperId,opponentGoalkeeperId:userHome?userAwards?.awayGoalkeeperId:userAwards?.homeGoalkeeperId,cleanSheet:Number(goalsAgainst)===0,opponentCleanSheet:Number(goalsFor)===0,mvpId:userAwards?.mvpId||'',mvpScore:userAwards?.mvpScore||0,mvpTeamId:userAwards?.mvpTeamId||'',lineup:safeMatchLineup(lineup),opponentLineup:safeMatchLineup(opponentLineup),forcedLoss,forcedWin,maxDraw,forcedScore:Boolean(forcedScoreEffect),forcedScoreData:forcedScoreEffect?{gf:Math.max(0,Number(forcedScoreEffect.gf)||0),ga:Math.max(0,Number(forcedScoreEffect.ga)||0),source:String(forcedScoreEffect.source||'')}:null,pointsAwarded:userPoints.awarded,pointsAdjustment:userPoints.adjustment,pointsNote:userPoints.note,forcedSubscriberGoals:forcedSubscribers.length,playMode:mode,matchDuration:matchMinutes,pinkCardMinute,opponentYellowRed,ownYellowRed,deathMatchBonus,hungerWalkover,futureScorerGoal:Boolean(futureGoal),meritStoryGoal:Boolean(meritStoryGoal),fantaballopoliForcedLoss:Boolean(fantaballopoliRule.forcedLoss),fantaballopoliForcedWin:Boolean(fantaballopoliRule.forcedWin),fantaballopoliNegativeGoals:Boolean(fantaballopoliRule.negativeOpponentGoals),fantaballopoliExpulsions:fantaballopoliRisks.expelled.map(entry=>entry.player?.name||'Giocatore'),fantaballopoliInjuries:fantaballopoliRisks.injured.map(entry=>entry.player?.name||'Giocatore'),coachType:normalizeCoachType(state.coachType),coachOvrModifier:coachMatchOvrModifier(),coachGoalForGuaranteed:Boolean(coachGuarantees.for),coachGoalAgainstGuaranteed:Boolean(coachGuarantees.against),coachRosterAverage:Math.round(Number(coachGuarantees.average||coachRosterAverageOvr())*10)/10,ductilityBoosts:Array.isArray(userAwards?.ductilityBoosts)?userAwards.ductilityBoosts:[],curvaContestVenueMode:curvaContestVenueMode(),secretRefereePenalty,questOpponentTop3Before,champagneDrawLoss,federationGoalRule:federationOutcome?.rule||'',federationGoalRuleNote:federationOutcome?.note||'',federationGoalWinnerId:federationOutcome?.winnerId||''});
-   state.lastResult=state.history[state.history.length-1];const analyticsBeforePostMatch=analyticsStatusSnapshot();postMatch();updateSeasonMatchAnalytics(state.lastResult,analyticsBeforePostMatch);save();showResultModal();
+   state.lastResult=state.history[state.history.length-1];const analyticsBeforePostMatch=analyticsStatusSnapshot();postMatch();checkPostMatchAchievements({gf:goalsFor,ga:goalsAgainst,userGoals:userGoalEvents,opponentGoals:opponentGoalEvents,varRandomResult:Boolean(varRandomResult),ductilityBoosts:Array.isArray(userAwards?.ductilityBoosts)?userAwards.ductilityBoosts:[]});updateSeasonMatchAnalytics(state.lastResult,analyticsBeforePostMatch);save();showResultModal();
  };
  if(mode==='live')playLiveMatch({commentary,homeTeam,awayTeam,homeGoals,awayGoals,matchday:state.matchday+1,duration:matchMinutes},finishRound);
  else{modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal"><div class="label">Giornata ${state.matchday+1}</div><h2>Partita in corso...</h2><div class="sim"><span></span></div><p>Il campionato sta simulando tutte le partite della giornata usando le rose reali dei club.</p></div></div>`;setTimeout(finishRound,1250)}
@@ -7939,6 +7994,7 @@ function userTeamGoalStats(){const totals={};(state.history||[]).forEach(match=>
 function teamTopScorer(){return userTeamGoalStats()[0]||null}
 function showFinished(){
  const table=sortedTable(),eliminated=isTeamEliminated(USER_ID),rank=eliminated?0:table.findIndex(x=>x.id===USER_ID)+1,rankLabel=eliminated?'—':`${rank}°`,s=userStanding(),rankedGoals=rankedGoalStats(),top=rankedGoals[0],topPlayer=top?statPlayerInfo(top[0]):null,userTop=teamTopScorer(),userTopPlayer=userTop?statPlayerInfo(userTop[0]):null,canSubmit=rank===1&&!eliminated,summary=buildSeasonSummary(rank,eliminated);
+ checkSeasonAchievements(rank,eliminated);
  screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Stagione conclusa</div><h2>${seasonFinalHeadline(rank,eliminated)}</h2><div class="final-position">${rankLabel}</div><p>${esc(state.teamName)} chiude la stagione dopo ${state.matchday} giornate.</p></div><div class="final-grid"><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div></div>${renderSeasonSummaryCard(summary)}<section class="panel"><h3>Capocannonieri</h3><p><b>Campionato:</b> ${topPlayer?`${esc(topPlayer.name)} — ${Number(top[1])||0} gol`:'Nessun marcatore'}</p><p><b>${esc(state.teamName)}:</b> ${userTopPlayer?`${esc(userTopPlayer.name)} — ${Number(userTop[1])||0} gol`:'Nessun marcatore'}</p>${canSubmit?`<p class="subline">La vittoria del Campionato può essere inviata alla classifica generale. Il miglior marcatore della tua squadra verrà sommato alla tabella Capocannonieri.</p>`:`<p class="subline"><b>Invio non disponibile:</b> solo chi conclude il Campionato al 1° posto può inviare il risultato.</p>`}<div class="top-actions">${canSubmit?`<button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultati inviati':'Invia vittoria'}</button>`:''}<button id="exportSeason" class="btn gold">Esporta risultati JSON</button></div></section>${renderFinalPlayerStats()}<div class="season-finished-table">${renderTable()}</div></section>`;
  const sendButton=document.getElementById('sendSeason');if(sendButton)sendButton.onclick=sendSeason;document.getElementById('exportSeason').onclick=exportSeason;document.getElementById('shareSeasonCard').onclick=()=>shareSeasonSummary(summary);document.getElementById('downloadSeasonCard').onclick=()=>downloadSeasonSummary(summary);
 }
