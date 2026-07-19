@@ -52,7 +52,9 @@
     { id:'cambio-di-panchina', category:'Eventi', icon:'🔄', title:'Cambio di panchina', description:'Perdi la sfida della curva, prendi una nuova squadra e vinci il campionato.' },
     { id:'da-zero-alla-gloria', category:'Eventi', icon:'0️⃣', title:'Da zero alla gloria', description:'Dopo essere stato azzerato dall’evento Pari o Dispari, torna nelle prime due posizioni.' },
     { id:'arbitro-venduto', category:'Eventi', icon:'⚖️', title:'Arbitro venduto', description:'Sopravvivi alle conseguenze dell’arbitro ecuadoriano.' },
-    { id:'scudetto-sotto-pressione', category:'Eventi', icon:'📣', title:'Scudetto sotto pressione', description:'Supera la sfida delle cinque giornate della curva.' }
+    { id:'scudetto-sotto-pressione', category:'Eventi', icon:'📣', title:'Scudetto sotto pressione', description:'Supera la sfida delle cinque giornate della curva.' },
+
+    { id:'zero-zero-zero', category:'Definitivi', icon:'0️⃣', title:'0-0-0', description:'Vinci il campionato senza vincere una partita, senza segnare gol e senza subirne.', ultimate:true }
   ];
 
   const byId = new Map(definitions.map(item => [item.id, item]));
@@ -104,6 +106,9 @@
     style.textContent = `
       .fantaballa-achievement-popup{position:fixed;right:18px;bottom:18px;z-index:100000;width:min(370px,calc(100vw - 28px));padding:4px;border-radius:22px;background:linear-gradient(135deg,#f7d85d,#ef7b37 48%,#7443a8);box-shadow:0 22px 60px rgba(6,15,28,.42);transform:translateY(24px) scale(.96);opacity:0;transition:transform .26s ease,opacity .26s ease;pointer-events:none}
       .fantaballa-achievement-popup.show{transform:translateY(0) scale(1);opacity:1}
+      .fantaballa-achievement-popup.ultimate{padding:5px;background:linear-gradient(135deg,#70e1f5,#7443a8 35%,#f5d45c 68%,#ef7b37);box-shadow:0 0 0 3px rgba(255,255,255,.9),0 22px 70px rgba(79,46,140,.55)}
+      .fantaballa-achievement-popup.ultimate .fantaballa-achievement-popup-inner{background:linear-gradient(145deg,#081727,#172d4a 58%,#301c50)}
+      .fantaballa-achievement-popup.ultimate .fantaballa-achievement-popup-icon{background:linear-gradient(145deg,#fff,#f5d45c 55%,#70e1f5);font-weight:1000}
       .fantaballa-achievement-popup-inner{display:grid;grid-template-columns:58px minmax(0,1fr);gap:13px;align-items:center;padding:14px;border-radius:18px;background:#10243a;color:#fff}
       .fantaballa-achievement-popup-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:16px;background:linear-gradient(145deg,#fff8cd,#f7d85d);color:#10243a;font-size:30px;box-shadow:inset 0 0 0 2px rgba(16,36,58,.12)}
       .fantaballa-achievement-popup small{display:block;margin-bottom:3px;color:#f7d85d;font:900 10px/1.2 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase}
@@ -121,7 +126,7 @@
     ensurePopupStyles();
     const achievement = popupQueue.shift();
     const popup = document.createElement('div');
-    popup.className = 'fantaballa-achievement-popup';
+    popup.className = `fantaballa-achievement-popup${achievement.ultimate ? ' ultimate' : ''}`;
     popup.setAttribute('role', 'status');
     popup.setAttribute('aria-live', 'polite');
     popup.innerHTML = `<div class="fantaballa-achievement-popup-inner"><div class="fantaballa-achievement-popup-icon">${achievement.icon}</div><div><small>Achievement sbloccato</small><b>${achievement.title}</b><span>${achievement.description}</span></div></div>`;
