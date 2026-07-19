@@ -3013,7 +3013,7 @@
 </div>
 <div id="modalRoot"></div><div id="toast" class="toast"></div>
 <script>
-const CURRENT_STATE_VERSION=32;
+const CURRENT_STATE_VERSION=33;
 const SAVE_BASE='fantaballa_campionato_real_v1';
 const AUTO_SAVE_KEY=`${SAVE_BASE}_autosave`;
 const LEGACY_SAVE_KEYS=[];
@@ -3114,7 +3114,7 @@ function setupTeamBadge(name){const words=String(name||'FAN').trim().split(/\s+/
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
 let PLAYERS=[];let CLASSIC_PLAYERS=[];let REAL_PLAYERS=[];let CLUBS=[];let OTHER_CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;let seasonEventMinimized=false;let seasonEventUiKey='';
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),coachType:normalizeCoachType(localStorage.getItem(SETUP_COACH_TYPE_KEY)||'anonymous'),formation:'4-3-3',gameMode:'normal',setupStep:1,teamPaletteId:String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa'),teamColors:teamColorsForPalette(String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa')),chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:'',openingClubShown:false},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],equalOrBetterMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,marathon:false,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,federationGoalRule:'',fgciPointsRule:'',dynamicLeague:'',dynamicLeagueLabel:'',dynamicLeagueAppliedAt:-1,dynamicLeagueTeamIds:[],nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[],laCurvaRewardActive:false,motivatorPermanentChemistry:{},ductilityScorerOvr:{},pendingParityReset:{active:false,parity:'',dueMatchday:-1,scheduledAt:-1,appliedMatchday:-1,lastResult:''},secretRefereeDeal:{active:false,choice:'',startedMatchday:-1,earnedPoints:0,matchesChecked:0,discovered:false,discoveredMatchday:-1,lastAdjustment:0}},quest:{active:false,id:'',title:'',status:'idle',acceptedMatchday:-1,matchesPlayed:0,progress:0,target:0,deadlineMatches:0,targetPlayerId:'',targetPlayerName:'',targetTeamIds:[],facedTeamIds:[],rewardActive:false,objective:'',reward:'',penalty:'',summary:'',notice:''},eventChains:{mentalista:{active:false,stage:0,playerId:'',playerName:'',originalOvr:0,dueMatchday:-1,training:false,nature:false,goals:0,completed:false},general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false},pinguino:{active:false,stage:0,dueMatchday:-1,mode:'',completed:false,wins:0,nonWins:0}},analytics:{initialOvr:0,injuries:0,redCards:0,eventLog:[],biggestResult:null},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},cup:{status:'pending',qualifiedRank:0,currentCompetition:'',otherCompetition:'',participants:[],userParticipantId:'cup-user',userAlive:true,winnerId:'',rewardApplied:false,penaltyApplied:false,rewardType:'',penaltyType:'',notice:'',history:[],stages:[],pendingMatch:null,lastResult:null},story:{merit:{initialized:false,scheduled:false,triggerMatchday:-1,stage:'idle',playerId:'',playerName:'',recipientTeamId:'',recipientTeamName:'',promoted:false,guaranteedGoalPending:false,transferred:false,branch:'',postMidseasonShown:false,challenge:{active:false,status:'idle',attackerId:'',attackerName:'',matchesPlayed:0,goals:0},ovrModifiers:{},finale:{eligible:false,opponent:'',nation:'',played:false,userGoals:0,opponentGoals:0,won:false,pointsDelta:0,pointsApplied:false}},fantaballopoli:{initialized:false,scheduled:false,triggerMatchday:-1,stage:'idle',forcedLossPending:false,targetPlayerId:'',targetPlayerName:'',targetRole:'',midseasonResolved:false,giudaId:'',curseActive:false,negativeOvrAllowed:false,curseMatches:0,satisfactionAfter:0,corruptionFull:false,corruptionMatchIndex:0,investigatorDueMatchday:0,investigatorShown:false,abruptEnd:false,completed:false,finale:{eligible:false,played:false,userGoals:0,opponentGoals:0,won:false,pointsApplied:false}}},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),coachType:normalizeCoachType(localStorage.getItem(SETUP_COACH_TYPE_KEY)||'anonymous'),formation:'4-3-3',gameMode:'normal',setupStep:1,teamPaletteId:String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa'),teamColors:teamColorsForPalette(String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa')),chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:'',openingClubShown:false},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],equalOrBetterMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,marathon:false,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,federationGoalRule:'',fgciPointsRule:'',dynamicLeague:'',dynamicLeagueLabel:'',dynamicLeagueAppliedAt:-1,dynamicLeagueTeamIds:[],nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[],laCurvaRewardActive:false,motivatorPermanentChemistry:{},ductilityScorerOvr:{},pendingParityReset:{active:false,parity:'',dueMatchday:-1,scheduledAt:-1,appliedMatchday:-1,lastResult:''},curvaContest:{active:false,mode:'',status:'idle',startedMatchday:-1,deadlineMatchday:-1,pendingTeamId:'',lastResult:'',switchedFromTeamName:'',switchedToTeamName:''},secretRefereeDeal:{active:false,choice:'',startedMatchday:-1,earnedPoints:0,matchesChecked:0,discovered:false,discoveredMatchday:-1,lastAdjustment:0}},quest:{active:false,id:'',title:'',status:'idle',acceptedMatchday:-1,matchesPlayed:0,progress:0,target:0,deadlineMatches:0,targetPlayerId:'',targetPlayerName:'',targetTeamIds:[],facedTeamIds:[],rewardActive:false,objective:'',reward:'',penalty:'',summary:'',notice:''},eventChains:{mentalista:{active:false,stage:0,playerId:'',playerName:'',originalOvr:0,dueMatchday:-1,training:false,nature:false,goals:0,completed:false},general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false},pinguino:{active:false,stage:0,dueMatchday:-1,mode:'',completed:false,wins:0,nonWins:0}},analytics:{initialOvr:0,injuries:0,redCards:0,eventLog:[],biggestResult:null},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},cup:{status:'pending',qualifiedRank:0,currentCompetition:'',otherCompetition:'',participants:[],userParticipantId:'cup-user',userAlive:true,winnerId:'',rewardApplied:false,penaltyApplied:false,rewardType:'',penaltyType:'',notice:'',history:[],stages:[],pendingMatch:null,lastResult:null},story:{merit:{initialized:false,scheduled:false,triggerMatchday:-1,stage:'idle',playerId:'',playerName:'',recipientTeamId:'',recipientTeamName:'',promoted:false,guaranteedGoalPending:false,transferred:false,branch:'',postMidseasonShown:false,challenge:{active:false,status:'idle',attackerId:'',attackerName:'',matchesPlayed:0,goals:0},ovrModifiers:{},finale:{eligible:false,opponent:'',nation:'',played:false,userGoals:0,opponentGoals:0,won:false,pointsDelta:0,pointsApplied:false}},fantaballopoli:{initialized:false,scheduled:false,triggerMatchday:-1,stage:'idle',forcedLossPending:false,targetPlayerId:'',targetPlayerName:'',targetRole:'',midseasonResolved:false,giudaId:'',curseActive:false,negativeOvrAllowed:false,curseMatches:0,satisfactionAfter:0,corruptionFull:false,corruptionMatchIndex:0,investigatorDueMatchday:0,investigatorShown:false,abruptEnd:false,completed:false,finale:{eligible:false,played:false,userGoals:0,opponentGoals:0,won:false,pointsApplied:false}}},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
@@ -3447,6 +3447,18 @@ function normalizeCampionatoState(input){
  pendingParity.lastResult=String(pendingParity.lastResult||'');
  if(!pendingParity.parity||pendingParity.dueMatchday<0)pendingParity.active=false;
  next.seasonRules.pendingParityReset=pendingParity;
+ const curvaContest=next.seasonRules.curvaContest&&typeof next.seasonRules.curvaContest==='object'?next.seasonRules.curvaContest:{};
+ curvaContest.active=Boolean(curvaContest.active);
+ curvaContest.mode=['title','away'].includes(String(curvaContest.mode))?String(curvaContest.mode):'';
+ curvaContest.status=['idle','active','won','lost','away'].includes(String(curvaContest.status))?String(curvaContest.status):'idle';
+ curvaContest.startedMatchday=Number.isFinite(Number(curvaContest.startedMatchday))?Number(curvaContest.startedMatchday):-1;
+ curvaContest.deadlineMatchday=Number.isFinite(Number(curvaContest.deadlineMatchday))?Number(curvaContest.deadlineMatchday):-1;
+ curvaContest.pendingTeamId=String(curvaContest.pendingTeamId||'');
+ curvaContest.lastResult=String(curvaContest.lastResult||'');
+ curvaContest.switchedFromTeamName=String(curvaContest.switchedFromTeamName||'');
+ curvaContest.switchedToTeamName=String(curvaContest.switchedToTeamName||'');
+ if(!curvaContest.mode)curvaContest.active=false;
+ next.seasonRules.curvaContest=curvaContest;
  const secretDeal=next.seasonRules.secretRefereeDeal&&typeof next.seasonRules.secretRefereeDeal==='object'?next.seasonRules.secretRefereeDeal:{};
  secretDeal.active=Boolean(secretDeal.active);
  secretDeal.choice=['accept','refuse'].includes(String(secretDeal.choice))?String(secretDeal.choice):'';
@@ -3632,6 +3644,7 @@ function normalizeCampionatoState(input){
      team.mascot.id=String(team.mascot.id||`mascot-${team.id}`);
      team.mascot.ovr=99;
    }
+   team.controlSwapLockedRoster=Boolean(team.controlSwapLockedRoster);
    team.strength=Number(team.strength)||(config?clubStrength(config.id):nationalStrength(team.name));
  });
  if(!next.leagueClubIds.length&&next.teams.length)next.leagueClubIds=next.teams.map(team=>String(team.clubId||team.id)).filter(id=>id!==String(next.userClubId)&&clubById(id)).slice(0,19);
@@ -4435,7 +4448,7 @@ function currentUserPlayerIds(){return state?.draft?.roster?.map(entry=>String(e
 function refreshOpponentClubRosters(){
  const excluded=currentUserPlayerIds(),meritTransfer=meritStoryState();if(meritTransfer.transferred&&meritTransfer.playerId)excluded.add(String(meritTransfer.playerId));
  (state.teams||[]).forEach(team=>{
-   if(!team||team.id===USER_ID||!team.clubId||team.externalCompetition)return;
+   if(!team||team.id===USER_ID||!team.clubId||team.externalCompetition||team.controlSwapLockedRoster)return;
    team.roster=buildClubRoster(team.clubId,excluded);
    team.strength=clubStrength(team.clubId,excluded);
  });
@@ -6448,12 +6461,111 @@ function boostCoachNamedPlayer(){
  const index=state.draft.roster.findIndex(item=>String(item.playerId)===String(entry.playerId));if(index>=0)state.draft.roster[index].player={...player,ovr:after};
  return `${player.name} riceve +10 OVR fino al termine della stagione.`;
 }
+
+function curvaContestState(source=state){
+ const rules=source?.seasonRules||(source.seasonRules={});
+ const contest=rules.curvaContest&&typeof rules.curvaContest==='object'?rules.curvaContest:(rules.curvaContest={});
+ contest.active=Boolean(contest.active);
+ contest.mode=['title','away'].includes(String(contest.mode))?String(contest.mode):'';
+ contest.status=['idle','active','won','lost','away'].includes(String(contest.status))?String(contest.status):'idle';
+ contest.startedMatchday=Number.isFinite(Number(contest.startedMatchday))?Number(contest.startedMatchday):-1;
+ contest.deadlineMatchday=Number.isFinite(Number(contest.deadlineMatchday))?Number(contest.deadlineMatchday):-1;
+ contest.pendingTeamId=String(contest.pendingTeamId||'');
+ contest.lastResult=String(contest.lastResult||'');
+ contest.switchedFromTeamName=String(contest.switchedFromTeamName||'');
+ contest.switchedToTeamName=String(contest.switchedToTeamName||'');
+ if(!contest.mode)contest.active=false;
+ rules.curvaContest=contest;
+ return contest;
+}
+function curvaContestCanAppear(){
+ const completed=Math.max(0,Number(state.matchday)||0),total=seasonLength(),contest=curvaContestState();
+ if(contest.active||contest.pendingTeamId)return false;
+ if(completed+5>=total)return false;
+ if(completed<19&&completed+5>=19)return false;
+ return true;
+}
+function activateCurvaTitleChallenge(){
+ const contest=curvaContestState();
+ contest.active=true;contest.mode='title';contest.status='active';contest.startedMatchday=Math.max(0,Number(state.matchday)||0);contest.deadlineMatchday=contest.startedMatchday+5;contest.pendingTeamId='';contest.lastResult='';contest.switchedFromTeamName='';contest.switchedToTeamName='';
+ return `Sfida accettata: per le prossime 5 giornate ogni partita avrà il vantaggio di una gara in casa. Al termine della giornata ${contest.deadlineMatchday} dovrai essere tra le prime 2.`;
+}
+function activateCurvaAwayPenalty(){
+ const contest=curvaContestState();
+ contest.active=true;contest.mode='away';contest.status='away';contest.startedMatchday=Math.max(0,Number(state.matchday)||0);contest.deadlineMatchday=seasonLength();contest.pendingTeamId='';contest.lastResult='Ogni partita sarà trattata come una trasferta fino a fine stagione.';contest.switchedFromTeamName='';contest.switchedToTeamName='';
+ return 'Ignori la contestazione: da questo momento ogni partita di campionato avrà lo svantaggio di una gara in trasferta fino a fine stagione.';
+}
+function curvaContestVenueMode(){const contest=curvaContestState();return contest.active?contest.mode:''}
+function curvaContestHomeAdvantage(userHome){
+ const mode=curvaContestVenueMode();
+ if(mode==='title')return userHome?.18:-.18;
+ if(mode==='away')return userHome?-.18:.18;
+ return .18;
+}
+function curvaContestFutureTeamCandidates(){
+ const futureIds=new Set();
+ (state.schedule||[]).slice(Math.max(0,(Number(state.matchday)||0)+1)).forEach(round=>(round||[]).forEach(match=>{futureIds.add(String(match?.home||''));futureIds.add(String(match?.away||''))}));
+ return (state.teams||[]).filter(team=>team&&String(team.id)!==USER_ID&&!isTeamEliminated(team.id)&&(!futureIds.size||futureIds.has(String(team.id))));
+}
+function resolveCurvaContestAfterRound(result){
+ const contest=curvaContestState();if(!contest.active||contest.mode!=='title'||!result)return '';
+ const completedMatchday=(Number(state.matchday)||0)+1;if(completedMatchday<contest.deadlineMatchday)return '';
+ const rank=sortedTable().findIndex(row=>String(row.id)===USER_ID)+1;
+ contest.active=false;
+ if(rank>0&&rank<=2){
+   contest.status='won';contest.lastResult=`Obiettivo raggiunto: ${state.teamName} è ${rank}ª in classifica dopo 5 giornate. Mantieni il controllo della squadra.`;
+   result.curvaContestNotice=contest.lastResult;result.curvaContestSuccess=true;return contest.lastResult;
+ }
+ const candidates=curvaContestFutureTeamCandidates(),target=candidates.length?pick(candidates):null;
+ contest.status='lost';contest.pendingTeamId=String(target?.id||'');contest.switchedFromTeamName=String(state.teamName||'La tua squadra');contest.switchedToTeamName=String(target?.name||'');
+ contest.lastResult=target?`Obiettivo fallito: ${state.teamName} è ${rank>0?`${rank}ª`:'fuori dalle prime 2'}. Dopo il riepilogo perderai la squadra e prenderai il controllo di ${target.name}.`:`Obiettivo fallito: ${state.teamName} non è tra le prime 2, ma non esiste un'altra squadra disponibile da controllare.`;
+ result.curvaContestNotice=contest.lastResult;result.curvaContestSuccess=false;result.curvaContestPendingTeamId=contest.pendingTeamId;return contest.lastResult;
+}
+function plainClone(value,fallback={}){try{return JSON.parse(JSON.stringify(value??fallback))}catch{return fallback}}
+function userRosterOverridesForBot(entries){
+ const overrides={};(entries||[]).forEach(entry=>{const id=String(entry?.playerId||entry?.player?.id||''),player=entry?.player||playerById(id),base=playerById(id);if(!id||!player)return;const currentOvr=Number(player.ovr),baseOvr=Number(base?.ovr);if(Number.isFinite(currentOvr)&&(!Number.isFinite(baseOvr)||currentOvr!==baseOvr))overrides[id]={ovr:currentOvr}});return overrides;
+}
+function buildControlledRosterEntries(players){
+ const source=(Array.isArray(players)?players:[]).filter(Boolean).slice(0,14),slots=formationSlots(),unused=[...source],entries=[];
+ const ordered=slots.map((slot,index)=>({slot,index,count:unused.filter(player=>userCompatible(player,slot.code)).length})).sort((a,b)=>a.count-b.count||a.index-b.index);
+ const assigned=new Map();
+ ordered.forEach(item=>{const byOvr=(a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0);let candidates=unused.filter(player=>userCompatible(player,item.slot.code)).sort(byOvr);if(!candidates.length)candidates=unused.filter(player=>roleOf(player)===POSITION_ROLE[item.slot.code]).sort(byOvr);if(!candidates.length)candidates=[...unused].sort(byOvr);const selected=candidates[0];if(!selected)return;assigned.set(item.slot.instanceId,selected);unused.splice(unused.indexOf(selected),1)});
+ slots.forEach(slot=>{const player=assigned.get(slot.instanceId);if(player)entries.push({playerId:String(player.id),slotId:slot.instanceId,slot:slot.code,bench:false,player:{...player}})});
+ unused.sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0)).forEach((player,index)=>entries.push({playerId:String(player.id),slotId:`bench-${index+1}`,slot:`PAN${index+1}`,bench:true,player:{...player}}));
+ return entries;
+}
+function swapFutureScheduleControl(targetId){
+ const id=String(targetId||'');if(!id)return;
+ for(let index=Math.max(0,Number(state.matchday)||0);index<(state.schedule||[]).length;index++){
+   (state.schedule[index]||[]).forEach(match=>{if(String(match.home)===USER_ID)match.home=id;else if(String(match.home)===id)match.home=USER_ID;if(String(match.away)===USER_ID)match.away=id;else if(String(match.away)===id)match.away=USER_ID});
+ }
+}
+function performPendingCurvaTeamSwitch(){
+ const contest=curvaContestState(),targetId=String(contest.pendingTeamId||'');if(!targetId)return null;
+ const userTeam=teamById(USER_ID),target=teamById(targetId);if(!userTeam||!target){contest.pendingTeamId='';return null}
+ const oldUserEntries=rosterPlayers(),oldUserIds=oldUserEntries.map(entry=>String(entry.playerId)),oldUserStatuses=plainClone(state.statuses,{}),oldUserOverrides=userRosterOverridesForBot(oldUserEntries),oldUserStrength=teamPowerBase();
+ const oldIdentity={clubId:String(userTeam.clubId||state.userClubId||''),name:String(userTeam.name||state.teamName||'Squadra'),shortName:String(userTeam.shortName||''),colors:plainClone(userTeam.colors||state.teamColors||null,null),externalCompetition:String(userTeam.externalCompetition||''),originalClubId:String(userTeam.originalClubId||'')};
+ const targetPlayers=opponentRosterPlayers(target).filter(player=>!player?.isMascot).map(player=>({...player})),targetStatuses=plainClone(target.statuses,{}),targetStrength=Number(target.strength)||avg(targetPlayers.slice(0,11).map(player=>Number(player.ovr)||60));
+ const newIdentity={clubId:String(target.clubId||target.id||''),name:String(target.name||'Nuova squadra'),shortName:String(target.shortName||''),colors:plainClone(target.colors||null,null),externalCompetition:String(target.externalCompetition||''),originalClubId:String(target.originalClubId||'')};
+ const oldStanding=plainClone(state.standings?.[USER_ID],{id:USER_ID,name:oldIdentity.name,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0}),targetStanding=plainClone(state.standings?.[targetId],{id:targetId,name:newIdentity.name,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0});
+ swapFutureScheduleControl(targetId);
+ state.standings[USER_ID]={...targetStanding,id:USER_ID,name:newIdentity.name};state.standings[targetId]={...oldStanding,id:targetId,name:oldIdentity.name};
+ target.clubId=oldIdentity.clubId;target.name=oldIdentity.name;target.shortName=oldIdentity.shortName;target.colors=oldIdentity.colors;target.strength=oldUserStrength;target.roster=oldUserIds;target.statuses=oldUserStatuses;target.playerOverrides=oldUserOverrides;target.mascot=null;target.externalCompetition=oldIdentity.externalCompetition;target.originalClubId=oldIdentity.originalClubId;target.controlSwapLockedRoster=true;target.chaos={activeEffects:[],seenDecisionEvents:[],decisions:0,midseasonPickDelta:0,matchDuration:90,futureScorerId:'',futureInjuryZeroPoints:false,sixtyPointFear:false,eventChanceMultiplier:1,nonItalianChemZero:false,formation:'',latestDecision:null};
+ userTeam.clubId=newIdentity.clubId;userTeam.name=newIdentity.name;userTeam.shortName=newIdentity.shortName;userTeam.colors=newIdentity.colors;userTeam.strength=targetStrength;userTeam.externalCompetition=newIdentity.externalCompetition;userTeam.originalClubId=newIdentity.originalClubId;delete userTeam.roster;delete userTeam.statuses;delete userTeam.playerOverrides;delete userTeam.mascot;delete userTeam.chaos;delete userTeam.controlSwapLockedRoster;
+ state.userClubId=newIdentity.clubId;state.teamName=newIdentity.name;if(newIdentity.colors)state.teamColors=normalizeClubColors(newIdentity.colors);state.statuses=targetStatuses;state.playInjured={};state.draft.roster=buildControlledRosterEntries(targetPlayers);state.draft.clubId='';state.draft.candidates=[];state.draft.pendingPlayerId='';
+ if(state.stats?.playerTeams){oldUserIds.forEach(id=>{state.stats.playerTeams[id]=targetId;state.stats.playerTeamNames[id]=oldIdentity.name});targetPlayers.forEach(player=>{const id=String(player.id);state.stats.playerTeams[id]=USER_ID;state.stats.playerTeamNames[id]=newIdentity.name})}
+ (state.cup?.participants||[]).forEach(participant=>{if(String(participant.teamId)===USER_ID){participant.name=newIdentity.name;participant.clubId=newIdentity.clubId;participant.strength=targetStrength}else if(String(participant.teamId)===targetId){participant.name=oldIdentity.name;participant.clubId=oldIdentity.clubId;participant.strength=oldUserStrength}});
+ contest.pendingTeamId='';contest.switchedFromTeamName=oldIdentity.name;contest.switchedToTeamName=newIdentity.name;contest.lastResult=`Hai perso il controllo di ${oldIdentity.name}. Ora alleni ${newIdentity.name}, mantenendo la sua posizione in classifica e il suo calendario.`;
+ return{from:oldIdentity.name,to:newIdentity.name};
+}
+
 function seasonRuleSummary(){
  const target=midseasonTarget();
  const decisionMode=state.seasonRules.autoDecisions?'Mascotte / bot':'Allenatore';
  const marketMode=(state.seasonRules.autoMidseason||state.seasonRules.botMidseason)?'Automatico':'Manuale';
  const extras=[`Allenatore: ${coachProfile().name}`,coachCurrentEffectLabel()];
  const refereeDeal=secretRefereeDealState();if(refereeDeal.active)extras.push(`Arbitro ecuadoriano: rigore ${refereeDeal.choice==='accept'?'a favore':'contro'} ogni partita`);
+ const curvaContest=curvaContestState();if(curvaContest.active&&curvaContest.mode==='title')extras.push(`Contestazione curva: obiettivo top 2 entro la giornata ${curvaContest.deadlineMatchday}; ogni gara vale come in casa`);if(curvaContest.active&&curvaContest.mode==='away')extras.push('Contestazione curva: ogni gara vale come in trasferta fino a fine stagione');
  if(state.seasonRules.marottaDoubleWins)extras.push('Marotta League attiva: vittoria +6, sconfitta -100');
  if(Number(state.seasonRules.winPoints)!==3||Number(state.seasonRules.drawPoints)!==1)extras.push(`Punteggio: vittoria +${Number(state.seasonRules.winPoints)} · pareggio +${Number(state.seasonRules.drawPoints)}`);
  if(currentMatchDuration()!==90)extras.push(`Durata tue partite: ${currentMatchDuration()} minuti`);
@@ -6824,6 +6936,10 @@ const DECISIONS=[
  {id:'fgci-punti-gol',title:'Nuova regola FGCI',text:'La federazione introduce una nuova regola di classifica che colpisce tutte le squadre fino a fine stagione.',available(){return !state.seasonRules.fgciPointsRule},choices:[
   {label:'Gol pesanti',effect:'Ogni gol subito vale -1 punto in classifica per tutte le squadre.',apply(){return activateFgciPointsRule('heavy-goals')}},
   {label:'Porta inviolata',effect:'Ogni squadra che non subisce gol ottiene +1 punto in classifica.',apply(){return activateFgciPointsRule('clean-sheet')}}
+ ]},
+ {id:'curva-contestazione',userOnly:true,title:'La curva sta contestando',describe(){const mister=String(state.coachName||'Mister').trim()||'Mister';return `${mister}, devi vendere! Vattene, vattene!`},available(){return curvaContestCanAppear()},choices:[
+  {label:'Puntiamo allora allo scudetto',effect:'Entro 5 giornate devi essere tra le prime 2. Durante la sfida ogni partita è trattata come una gara in casa. Se fallisci, perdi la squadra e passi a una squadra casuale del campionato.',apply(){return activateCurvaTitleChallenge()}},
+  {label:'Non ascoltarli',effect:'Ogni partita di campionato è trattata come una gara in trasferta fino a fine stagione.',apply(){return activateCurvaAwayPenalty()}}
  ]},
  {id:'punti-pari-dispari',title:'Punti pari o dispari',text:'Una nuova regola straordinaria colpirà la classifica soltanto dopo la prossima giornata.',available(){return Number(state.matchday)>0&&Number(state.matchday)<seasonLength()},choices:[
   {label:'Pari',effect:'Dopo la prossima giornata, le squadre con punti pari verranno portate a 0. Fino ad allora la classifica resta invariata.',apply(){return scheduleStandingsResetByParity('even')}},
@@ -7396,7 +7512,7 @@ function playRound(mode='instant'){
  const varRandomResult=state.activeEffects.some(effect=>effect.type==='varRandomResult');
  let [homeBase,awayBase]=varRandomResult
    ? [Math.floor(Math.random()*6),Math.floor(Math.random()*6)]
-   : simulateScore(userHome?userPower:opponentPower,userHome?opponentPower:userPower,.18,matchMinutes,smallGoalMultiplier);
+   : simulateScore(userHome?userPower:opponentPower,userHome?opponentPower:userPower,curvaContestHomeAdvantage(userHome),matchMinutes,smallGoalMultiplier);
  let goalsFor=userHome?homeBase:awayBase,goalsAgainst=userHome?awayBase:homeBase;
  const forcedLoss=state.activeEffects.some(effect=>effect.type==='forcedLoss')||fantaballopoliRule.forcedLoss,forcedWin=state.activeEffects.some(effect=>effect.type==='forcedWin')||fantaballopoliRule.forcedWin,maxDraw=state.activeEffects.some(effect=>effect.type==='maxDraw'),forcedScoreEffect=state.activeEffects.find(effect=>effect.type==='forcedScore')||null;
  const capValues=state.activeEffects.filter(effect=>effect.type==='goalCap').map(effect=>Number(effect.value)).filter(Number.isFinite);
@@ -7460,7 +7576,7 @@ function playRound(mode='instant'){
    });
    const sixtyFearNote=applySixtyPointFear();if(sixtyFearNote)userPoints.note=[userPoints.note,sixtyFearNote].filter(Boolean).join(' ');
    const allHighlights=[...userGoalEvents,...opponentGoalEvents].sort((a,b)=>a.minute-b.minute);state.lastRoundResults=roundResults;
-   state.history.push({matchday:state.matchday+1,opponent:opponent.name,opponentId:opponent.id,home:userHome,gf:goalsFor,ga:goalsAgainst,goals:userGoalEvents,opponentGoals:opponentGoalEvents,highlights:allHighlights,commentary,power:Math.round(userPower*10)/10,opponentPower:Math.round(opponentPower*10)/10,opponentRedCard:Boolean(redCandidate),opponentRedPlayer:redCandidate?.name||'',ownRedCard:Boolean(ownRedEntry),ownSuspensionId:ownRedEntry?.playerId||'',ownSuspensionPlayer:ownRedEntry?.player?.name||'',goalkeeperId:userHome?userAwards?.homeGoalkeeperId:userAwards?.awayGoalkeeperId,opponentGoalkeeperId:userHome?userAwards?.awayGoalkeeperId:userAwards?.homeGoalkeeperId,cleanSheet:Number(goalsAgainst)===0,opponentCleanSheet:Number(goalsFor)===0,mvpId:userAwards?.mvpId||'',mvpScore:userAwards?.mvpScore||0,mvpTeamId:userAwards?.mvpTeamId||'',lineup:safeMatchLineup(lineup),opponentLineup:safeMatchLineup(opponentLineup),forcedLoss,forcedWin,maxDraw,forcedScore:Boolean(forcedScoreEffect),forcedScoreData:forcedScoreEffect?{gf:Math.max(0,Number(forcedScoreEffect.gf)||0),ga:Math.max(0,Number(forcedScoreEffect.ga)||0),source:String(forcedScoreEffect.source||'')}:null,pointsAwarded:userPoints.awarded,pointsAdjustment:userPoints.adjustment,pointsNote:userPoints.note,forcedSubscriberGoals:forcedSubscribers.length,playMode:mode,matchDuration:matchMinutes,pinkCardMinute,opponentYellowRed,ownYellowRed,deathMatchBonus,hungerWalkover,futureScorerGoal:Boolean(futureGoal),meritStoryGoal:Boolean(meritStoryGoal),fantaballopoliForcedLoss:Boolean(fantaballopoliRule.forcedLoss),fantaballopoliForcedWin:Boolean(fantaballopoliRule.forcedWin),fantaballopoliNegativeGoals:Boolean(fantaballopoliRule.negativeOpponentGoals),fantaballopoliExpulsions:fantaballopoliRisks.expelled.map(entry=>entry.player?.name||'Giocatore'),fantaballopoliInjuries:fantaballopoliRisks.injured.map(entry=>entry.player?.name||'Giocatore'),coachType:normalizeCoachType(state.coachType),coachOvrModifier:coachMatchOvrModifier(),coachGoalForGuaranteed:Boolean(coachGuarantees.for),coachGoalAgainstGuaranteed:Boolean(coachGuarantees.against),coachRosterAverage:Math.round(Number(coachGuarantees.average||coachRosterAverageOvr())*10)/10,ductilityBoosts:Array.isArray(userAwards?.ductilityBoosts)?userAwards.ductilityBoosts:[],secretRefereePenalty,questOpponentTop3Before,champagneDrawLoss,federationGoalRule:federationOutcome?.rule||'',federationGoalRuleNote:federationOutcome?.note||'',federationGoalWinnerId:federationOutcome?.winnerId||''});
+   state.history.push({matchday:state.matchday+1,opponent:opponent.name,opponentId:opponent.id,home:userHome,gf:goalsFor,ga:goalsAgainst,goals:userGoalEvents,opponentGoals:opponentGoalEvents,highlights:allHighlights,commentary,power:Math.round(userPower*10)/10,opponentPower:Math.round(opponentPower*10)/10,opponentRedCard:Boolean(redCandidate),opponentRedPlayer:redCandidate?.name||'',ownRedCard:Boolean(ownRedEntry),ownSuspensionId:ownRedEntry?.playerId||'',ownSuspensionPlayer:ownRedEntry?.player?.name||'',goalkeeperId:userHome?userAwards?.homeGoalkeeperId:userAwards?.awayGoalkeeperId,opponentGoalkeeperId:userHome?userAwards?.awayGoalkeeperId:userAwards?.homeGoalkeeperId,cleanSheet:Number(goalsAgainst)===0,opponentCleanSheet:Number(goalsFor)===0,mvpId:userAwards?.mvpId||'',mvpScore:userAwards?.mvpScore||0,mvpTeamId:userAwards?.mvpTeamId||'',lineup:safeMatchLineup(lineup),opponentLineup:safeMatchLineup(opponentLineup),forcedLoss,forcedWin,maxDraw,forcedScore:Boolean(forcedScoreEffect),forcedScoreData:forcedScoreEffect?{gf:Math.max(0,Number(forcedScoreEffect.gf)||0),ga:Math.max(0,Number(forcedScoreEffect.ga)||0),source:String(forcedScoreEffect.source||'')}:null,pointsAwarded:userPoints.awarded,pointsAdjustment:userPoints.adjustment,pointsNote:userPoints.note,forcedSubscriberGoals:forcedSubscribers.length,playMode:mode,matchDuration:matchMinutes,pinkCardMinute,opponentYellowRed,ownYellowRed,deathMatchBonus,hungerWalkover,futureScorerGoal:Boolean(futureGoal),meritStoryGoal:Boolean(meritStoryGoal),fantaballopoliForcedLoss:Boolean(fantaballopoliRule.forcedLoss),fantaballopoliForcedWin:Boolean(fantaballopoliRule.forcedWin),fantaballopoliNegativeGoals:Boolean(fantaballopoliRule.negativeOpponentGoals),fantaballopoliExpulsions:fantaballopoliRisks.expelled.map(entry=>entry.player?.name||'Giocatore'),fantaballopoliInjuries:fantaballopoliRisks.injured.map(entry=>entry.player?.name||'Giocatore'),coachType:normalizeCoachType(state.coachType),coachOvrModifier:coachMatchOvrModifier(),coachGoalForGuaranteed:Boolean(coachGuarantees.for),coachGoalAgainstGuaranteed:Boolean(coachGuarantees.against),coachRosterAverage:Math.round(Number(coachGuarantees.average||coachRosterAverageOvr())*10)/10,ductilityBoosts:Array.isArray(userAwards?.ductilityBoosts)?userAwards.ductilityBoosts:[],curvaContestVenueMode:curvaContestVenueMode(),secretRefereePenalty,questOpponentTop3Before,champagneDrawLoss,federationGoalRule:federationOutcome?.rule||'',federationGoalRuleNote:federationOutcome?.note||'',federationGoalWinnerId:federationOutcome?.winnerId||''});
    state.lastResult=state.history[state.history.length-1];const analyticsBeforePostMatch=analyticsStatusSnapshot();postMatch();updateSeasonMatchAnalytics(state.lastResult,analyticsBeforePostMatch);save();showResultModal();
  };
  if(mode==='live')playLiveMatch({commentary,homeTeam,awayTeam,homeGoals,awayGoals,matchday:state.matchday+1,duration:matchMinutes},finishRound);
@@ -7483,9 +7599,9 @@ function postMatch(){
  tickEventChainsAfterMatch(result);
  tickSeasonQuestAfterMatch(result);
  resolveSecretRefereeAfterMatch(result);
- state.activeEffects.forEach(effect=>{if(!effectLastsUntilSeasonEnd(effect))effect.rounds--});state.activeEffects=state.activeEffects.filter(effect=>effectLastsUntilSeasonEnd(effect)||effect.rounds>0);activateRestRewards(classicRestRewards,result);activatePendingNationalBoost();state.playInjured={};tickChaosOpponentEffects();resolvePendingParityResetAfterRound(result);state.matchday++;state.pendingEvent=null;
+ state.activeEffects.forEach(effect=>{if(!effectLastsUntilSeasonEnd(effect))effect.rounds--});state.activeEffects=state.activeEffects.filter(effect=>effectLastsUntilSeasonEnd(effect)||effect.rounds>0);activateRestRewards(classicRestRewards,result);activatePendingNationalBoost();state.playInjured={};tickChaosOpponentEffects();resolvePendingParityResetAfterRound(result);resolveCurvaContestAfterRound(result);state.matchday++;state.pendingEvent=null;
  if(state.matchday===19){runChaosOpponentMidseason();const target=midseasonTarget(),auto=Boolean(state.seasonRules.autoMidseason||state.seasonRules.botMidseason),mandatoryIds=mandatoryMidseasonPlayerIds().filter(id=>rosterEntry(id)).slice(0,3),mandatory=mandatoryIds[0]||'';state.midseason={step:0,target:clamp(Math.max(target,mandatoryIds.length),1,3),outgoingId:mandatory,mandatoryOutgoingId:mandatory,mandatoryOutgoingIds:mandatoryIds,clubId:'',nation:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto,autoCompleted:false,changes:[]};state.phase='midseason';}
- else if(isTeamEliminated(USER_ID)||state.matchday>=seasonLength()){if(!prepareMeritStoryFinale())state.phase='finished'}else prepareEvent();
+ else if(isTeamEliminated(USER_ID)||state.matchday>=seasonLength()){if(!prepareMeritStoryFinale())state.phase='finished'}else if(!curvaContestState().pendingTeamId)prepareEvent();
 }
 function renderResultScorers(goals,teamName){
  const grouped=new Map();(Array.isArray(goals)?goals:[]).forEach(goal=>{const name=String(goal?.player||'Marcatore');if(!grouped.has(name))grouped.set(name,[]);grouped.get(name).push({minute:Number(goal?.minute)||0,value:Math.max(1,Number(goal?.goalValue)||1)});});
@@ -7507,6 +7623,8 @@ function showResultModal(){
  const federationLine=result.federationGoalRuleNote?`<div class="goal-line"><b>⚽ Regola FIGC · ${esc(federationGoalRuleLabel(result.federationGoalRule))}</b><br>${esc(result.federationGoalRuleNote)}</div>`:'';
  const pointsLine=result.pointsNote?`<div class="goal-line"><b>🏆 Punti campionato</b><br>${esc(result.pointsNote)}</div>`:'';
  const parityResetLine=result.parityResetNotice?`<div class="goal-line red-card-event"><b>🔢 Punti pari o dispari · effetto applicato</b><br>${esc(result.parityResetNotice)} La classifica è stata aggiornata al termine della giornata ${Number(result.parityResetMatchday)||Number(state.matchday)||0}.</div>`:'';
+ const curvaContestLine=result.curvaContestNotice?`<div class="goal-line ${result.curvaContestSuccess?'':'red-card-event'}"><b>📣 La curva sta contestando</b><br>${esc(result.curvaContestNotice)}</div>`:'';
+ const curvaVenueLine=result.curvaContestVenueMode?`<div class="goal-line"><b>🏟️ Pressione della curva</b><br>${result.curvaContestVenueMode==='title'?'Questa gara è stata simulata con il vantaggio di una partita in casa.':'Questa gara è stata simulata con lo svantaggio di una partita in trasferta.'}</div>`:'';
  const injuryLine=result.eventInjuries?.length?`<div class="goal-line"><b>🚑 Conseguenza dell’imprevisto</b><br>${result.eventInjuries.map(item=>`${esc(item.name)}: ${item.duration} ${item.duration===1?'giornata':'giornate'}`).join(' · ')}</div>`:'';
  const ductilityLine=Array.isArray(result.ductilityBoosts)&&result.ductilityBoosts.length?`<div class="goal-line"><b>🔀 Duttilità · bonus fuori ruolo</b><br>${result.ductilityBoosts.map(item=>`${esc(item.playerName)}: +${Number(item.gain)||1} OVR permanente (totale +${Number(item.total)||0})`).join(' · ')}</div>`:'';
  const secretRefereeLine=result.secretRefereePenalty?`<div class="goal-line"><b>⚖️ Arbitro ecuadoriano</b><br>${result.secretRefereePenalty==='for'?'Rigore garantito a favore applicato in questa partita.':'Rigore garantito contro applicato in questa partita.'}</div>`:'';
@@ -7531,8 +7649,8 @@ function showResultModal(){
  const mvpTeam=result.mvpTeamId?teamById(result.mvpTeamId):null;
  const mvpLine=mvpPlayer?`<div class="match-mvp" style="${teamCssVars(mvpTeam)}">${renderMiniAvatar(mvpPlayer,'small')}<div><span>⭐ MVP della partita</span><b>${esc(mvpPlayer.name)}</b><small>${mvpTeam?`${teamColorDot(mvpTeam)}${esc(mvpTeam.name)}`:''}</small></div></div>`:'';
  const scorersLine=`<div class="result-scorers">${renderResultScorers(result.goals,state.teamName)}${renderResultScorers(result.opponentGoals,result.opponent)}</div>`;
- modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${result.gf}–${result.ga}</div><button id="closeResult" class="btn primary result-continue-top">Continua</button>${scorersLine}${pinkLine}${redLine}${suspensionLine}${forcedLine}${fantaballopoliMatchLine}${fantaballopoliDisciplineLine}${federationLine}${pointsLine}${parityResetLine}${injuryLine}${ductilityLine}${secretRefereeLine}${classicEventLine}${futurePenaltyLine}${chickenTrainingLine}${chickenGoalLine}${penguinLine}${storyLine}${questLine}${cupLine}${champagneLine}${hungerLine}${subscriberLine}${coachResultLine}<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>${mvpLine}</div></div></div>`;
- document.getElementById('closeResult').onclick=()=>{modalRoot.innerHTML='';render()};
+ modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${result.gf}–${result.ga}</div><button id="closeResult" class="btn primary result-continue-top">Continua</button>${scorersLine}${pinkLine}${redLine}${suspensionLine}${forcedLine}${fantaballopoliMatchLine}${fantaballopoliDisciplineLine}${federationLine}${pointsLine}${parityResetLine}${curvaContestLine}${curvaVenueLine}${injuryLine}${ductilityLine}${secretRefereeLine}${classicEventLine}${futurePenaltyLine}${chickenTrainingLine}${chickenGoalLine}${penguinLine}${storyLine}${questLine}${cupLine}${champagneLine}${hungerLine}${subscriberLine}${coachResultLine}<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>${mvpLine}</div></div></div>`;
+ document.getElementById('closeResult').onclick=()=>{modalRoot.innerHTML='';const switched=performPendingCurvaTeamSwitch();if(switched){state.pendingEvent=null;if(state.phase==='season')prepareEvent();save();toast(`Ora alleni ${switched.to}.`)}render()};
 }
 
 function isFlexibleMidseason(){return !state.midseason?.auto&&!state.seasonRules.autoMidseason&&!state.seasonRules.botMidseason&&mandatoryMidseasonPlayerIds().filter(id=>rosterEntry(id)).length===0}
