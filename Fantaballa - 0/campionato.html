@@ -3087,7 +3087,8 @@ const COACH_PROFILES=[
  {id:'talent-scout',name:'Talent scout',icon:'🔎',image:'assets/coach-profiles/talent-scout.png',tagline:'Occhio al talento',pro:'Un re-roll aggiuntivo nei draft, maggiore probabilità di trovare giocatori con OVR alto e primo pack garantito dalla squadra del giocatore con lo stesso nome dell’allenatore.',con:'Nessun nuovo giocatore può arrivare fuori dal draft iniziale e da quello di metà stagione.'},
  {id:'motivator',name:'Motivatore',icon:'📣',image:'assets/coach-profiles/motivator.png',tagline:'Qui si realizzano i sogni',pro:'Dopo 2 sconfitte consecutive, +3 OVR alla squadra nella partita seguente. Ogni nuovo bonus OVR o Intesa riceve anche +1 OVR e +1 Intesa aggiuntivi.',con:'Dopo 3 vittorie consecutive, -3 OVR alla squadra nella partita seguente.'},
  {id:'salvation',name:'Mister salvezza',icon:'🛟',image:'assets/coach-profiles/salvation.png',tagline:'Serenità.',pro:'Con OVR medio della rosa sotto 70, la squadra segna un gol aggiuntivo a partita.',con:'Con OVR medio della rosa sopra 80, la squadra subisce almeno un gol a partita.'},
- {id:'young-beautiful',name:'Giovani e belli',icon:'✨',image:'assets/coach-profiles/giovani-e-belli.webp',tagline:'La meglio gioventù',pro:'I giocatori con OVR base da 60 a 69 ricevono +20 Intesa. Quelli con OVR base da 70 a 75 ricevono +10 Intesa.',con:'Non puoi avere giocatori con OVR base pari o superiore a 85: non appaiono nei draft e ogni loro arrivo durante la stagione viene bloccato.'}
+ {id:'young-beautiful',name:'Giovani e belli',icon:'✨',image:'assets/coach-profiles/giovani-e-belli.webp',tagline:'La meglio gioventù',pro:'I giocatori con OVR base da 60 a 69 ricevono +20 Intesa. Quelli con OVR base da 70 a 75 ricevono +10 Intesa.',con:'Non puoi avere giocatori con OVR base pari o superiore a 85: non appaiono nei draft e ogni loro arrivo durante la stagione viene bloccato.'},
+ {id:'ductility',name:'Duttilità',icon:'🔀',image:'assets/coach-profiles/duttilita.webp',tagline:'Tutti dappertutto',pro:'I giocatori possono essere schierati in qualsiasi ruolo senza malus. Ogni gol segnato da un giocatore schierato fuori ruolo gli assegna +1 OVR permanente fino a fine stagione.',con:'I giocatori non ricevono alcun bonus di Intesa e non possono ottenere altri potenziamenti positivi di OVR durante la stagione.'}
 ];
 function normalizeCoachType(value){const id=String(value||'anonymous');return COACH_PROFILES.some(profile=>profile.id===id)?id:'anonymous'}
 function coachProfile(value=state?.coachType){return COACH_PROFILES.find(profile=>profile.id===normalizeCoachType(value))||COACH_PROFILES[0]}
@@ -3113,7 +3114,7 @@ function setupTeamBadge(name){const words=String(name||'FAN').trim().split(/\s+/
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
 let PLAYERS=[];let CLASSIC_PLAYERS=[];let REAL_PLAYERS=[];let CLUBS=[];let OTHER_CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;let seasonEventMinimized=false;let seasonEventUiKey='';
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-fc',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa FC'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),coachType:normalizeCoachType(localStorage.getItem(SETUP_COACH_TYPE_KEY)||'anonymous'),formation:'4-3-3',gameMode:'normal',setupStep:1,teamPaletteId:String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa'),teamColors:teamColorsForPalette(String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa')),chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:'',openingClubShown:false},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],equalOrBetterMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,marathon:false,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,federationGoalRule:'',fgciPointsRule:'',dynamicLeague:'',dynamicLeagueLabel:'',dynamicLeagueAppliedAt:-1,dynamicLeagueTeamIds:[],nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[],laCurvaRewardActive:false,motivatorPermanentChemistry:{},secretRefereeDeal:{active:false,choice:'',startedMatchday:-1,earnedPoints:0,matchesChecked:0,discovered:false,discoveredMatchday:-1,lastAdjustment:0}},quest:{active:false,id:'',title:'',status:'idle',acceptedMatchday:-1,matchesPlayed:0,progress:0,target:0,deadlineMatches:0,targetPlayerId:'',targetPlayerName:'',targetTeamIds:[],facedTeamIds:[],rewardActive:false,objective:'',reward:'',penalty:'',summary:'',notice:''},eventChains:{mentalista:{active:false,stage:0,playerId:'',playerName:'',originalOvr:0,dueMatchday:-1,training:false,nature:false,goals:0,completed:false},general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false},pinguino:{active:false,stage:0,dueMatchday:-1,mode:'',completed:false,wins:0,nonWins:0}},analytics:{initialOvr:0,injuries:0,redCards:0,eventLog:[],biggestResult:null},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},cup:{status:'pending',qualifiedRank:0,currentCompetition:'',otherCompetition:'',participants:[],userParticipantId:'cup-user',userAlive:true,winnerId:'',rewardApplied:false,penaltyApplied:false,rewardType:'',penaltyType:'',notice:'',history:[],stages:[],pendingMatch:null,lastResult:null},story:{merit:{initialized:false,scheduled:false,triggerMatchday:-1,stage:'idle',playerId:'',playerName:'',recipientTeamId:'',recipientTeamName:'',promoted:false,guaranteedGoalPending:false,transferred:false,branch:'',postMidseasonShown:false,challenge:{active:false,status:'idle',attackerId:'',attackerName:'',matchesPlayed:0,goals:0},ovrModifiers:{},finale:{eligible:false,opponent:'',nation:'',played:false,userGoals:0,opponentGoals:0,won:false,pointsDelta:0,pointsApplied:false}},fantaballopoli:{initialized:false,scheduled:false,triggerMatchday:-1,stage:'idle',forcedLossPending:false,targetPlayerId:'',targetPlayerName:'',targetRole:'',midseasonResolved:false,giudaId:'',curseActive:false,negativeOvrAllowed:false,curseMatches:0,satisfactionAfter:0,corruptionFull:false,corruptionMatchIndex:0,investigatorDueMatchday:0,investigatorShown:false,abruptEnd:false,completed:false,finale:{eligible:false,played:false,userGoals:0,opponentGoals:0,won:false,pointsApplied:false}}},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-fc',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa FC'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),coachType:normalizeCoachType(localStorage.getItem(SETUP_COACH_TYPE_KEY)||'anonymous'),formation:'4-3-3',gameMode:'normal',setupStep:1,teamPaletteId:String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa'),teamColors:teamColorsForPalette(String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa')),chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:'',openingClubShown:false},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],equalOrBetterMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,marathon:false,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,federationGoalRule:'',fgciPointsRule:'',dynamicLeague:'',dynamicLeagueLabel:'',dynamicLeagueAppliedAt:-1,dynamicLeagueTeamIds:[],nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[],laCurvaRewardActive:false,motivatorPermanentChemistry:{},ductilityScorerOvr:{},secretRefereeDeal:{active:false,choice:'',startedMatchday:-1,earnedPoints:0,matchesChecked:0,discovered:false,discoveredMatchday:-1,lastAdjustment:0}},quest:{active:false,id:'',title:'',status:'idle',acceptedMatchday:-1,matchesPlayed:0,progress:0,target:0,deadlineMatches:0,targetPlayerId:'',targetPlayerName:'',targetTeamIds:[],facedTeamIds:[],rewardActive:false,objective:'',reward:'',penalty:'',summary:'',notice:''},eventChains:{mentalista:{active:false,stage:0,playerId:'',playerName:'',originalOvr:0,dueMatchday:-1,training:false,nature:false,goals:0,completed:false},general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false},pinguino:{active:false,stage:0,dueMatchday:-1,mode:'',completed:false,wins:0,nonWins:0}},analytics:{initialOvr:0,injuries:0,redCards:0,eventLog:[],biggestResult:null},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},cup:{status:'pending',qualifiedRank:0,currentCompetition:'',otherCompetition:'',participants:[],userParticipantId:'cup-user',userAlive:true,winnerId:'',rewardApplied:false,penaltyApplied:false,rewardType:'',penaltyType:'',notice:'',history:[],stages:[],pendingMatch:null,lastResult:null},story:{merit:{initialized:false,scheduled:false,triggerMatchday:-1,stage:'idle',playerId:'',playerName:'',recipientTeamId:'',recipientTeamName:'',promoted:false,guaranteedGoalPending:false,transferred:false,branch:'',postMidseasonShown:false,challenge:{active:false,status:'idle',attackerId:'',attackerName:'',matchesPlayed:0,goals:0},ovrModifiers:{},finale:{eligible:false,opponent:'',nation:'',played:false,userGoals:0,opponentGoals:0,won:false,pointsDelta:0,pointsApplied:false}},fantaballopoli:{initialized:false,scheduled:false,triggerMatchday:-1,stage:'idle',forcedLossPending:false,targetPlayerId:'',targetPlayerName:'',targetRole:'',midseasonResolved:false,giudaId:'',curseActive:false,negativeOvrAllowed:false,curseMatches:0,satisfactionAfter:0,corruptionFull:false,corruptionMatchIndex:0,investigatorDueMatchday:0,investigatorShown:false,abruptEnd:false,completed:false,finale:{eligible:false,played:false,userGoals:0,opponentGoals:0,won:false,pointsApplied:false}}},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
@@ -3228,7 +3229,9 @@ function showBootError(error){
 }
 
 function positions(p){return String(p.Position||p.position||p.role||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean)}
-function compatible(p,code){return positions(p).includes(code)}
+function naturalCompatible(p,code){return positions(p).includes(code)}
+function compatible(p,code){return naturalCompatible(p,code)}
+function userCompatible(p,code){return coachIs('ductility')||naturalCompatible(p,code)}
 function roleOf(p){return p.role||POSITION_ROLE[positions(p)[0]]||'C'}
 const DRAFT_ROLE_ORDER={P:0,D:1,C:2,A:3};
 const DRAFT_POSITION_ORDER=['P','DC','TS','TD','DC/TS','DC/TD','TS/TD','CDC','CC','COC','CC/CDC','CC/COC','ATT','AS','AD','AS/ATT','AD/ATT','ATT/COC','AS/COC','AD/COC'];
@@ -3435,6 +3438,7 @@ function normalizeCampionatoState(input){
  next.seasonRules.generatedEventPlayers=Array.isArray(next.seasonRules.generatedEventPlayers)?next.seasonRules.generatedEventPlayers.filter(player=>player&&player.id).map(player=>({...player,id:String(player.id),ovr:Math.max(1,Number(player.ovr)||60)})):[];
  next.seasonRules.laCurvaRewardActive=Boolean(next.seasonRules.laCurvaRewardActive);
  next.seasonRules.motivatorPermanentChemistry=next.seasonRules.motivatorPermanentChemistry&&typeof next.seasonRules.motivatorPermanentChemistry==='object'?Object.fromEntries(Object.entries(next.seasonRules.motivatorPermanentChemistry).map(([id,value])=>[String(id),Math.max(0,Number(value)||0)]).filter(([,value])=>value>0)):{};
+ next.seasonRules.ductilityScorerOvr=next.seasonRules.ductilityScorerOvr&&typeof next.seasonRules.ductilityScorerOvr==='object'?Object.fromEntries(Object.entries(next.seasonRules.ductilityScorerOvr).map(([id,value])=>[String(id),Math.max(0,Math.floor(Number(value)||0))]).filter(([,value])=>value>0)):{};
  const secretDeal=next.seasonRules.secretRefereeDeal&&typeof next.seasonRules.secretRefereeDeal==='object'?next.seasonRules.secretRefereeDeal:{};
  secretDeal.active=Boolean(secretDeal.active);
  secretDeal.choice=['accept','refuse'].includes(String(secretDeal.choice))?String(secretDeal.choice):'';
@@ -3675,7 +3679,7 @@ function benchDraftPhase(){return starterEntries().length>=11}
 function usedDraftPlayerIds(){return new Set(state.draft.roster.map(r=>String(r.playerId)))}
 function occupiedStarterSlotIds(){return new Set(state.draft.roster.filter(r=>!r.bench).map(r=>String(r.slotId)))}
 function openStarterSlots(){const used=occupiedStarterSlotIds();return formationSlots().filter(slot=>!used.has(slot.instanceId))}
-function availableStarterSlotsForPlayer(player){return openStarterSlots().filter(slot=>compatible(player,slot.code))}
+function availableStarterSlotsForPlayer(player){return openStarterSlots().filter(slot=>userCompatible(player,slot.code))}
 function draftPlayerIsValid(player){if(!player||!youngBeautifulAllowsPlayer(player)||usedDraftPlayerIds().has(String(player.id)))return false;const canStart=availableStarterSlotsForPlayer(player).length>0;const canBench=benchEntries().length<3;return canStart||canBench}
 function draftCandidatesForClub(clubId){return PLAYERS.filter(player=>String(player.club)===String(clubId)&&draftPlayerIsValid(player)).sort((a,b)=>{const pa=positions(a)[0]||'',pb=positions(b)[0]||'';return pa.localeCompare(pb,'it')||(Number(b.ovr)||0)-(Number(a.ovr)||0)||String(a.name).localeCompare(String(b.name),'it')})}
 function draftPossibleClubs(){const available=new Set();PLAYERS.forEach(player=>{if(player.club&&draftPlayerIsValid(player))available.add(String(player.club))});return CLUBS.map(club=>String(club.id)).filter(id=>available.has(id))}
@@ -3743,7 +3747,7 @@ function draftChemistry(source=starterEntries()){
    playerCoachBonus[playerId]=coachBonus;
    playerBonus[playerId]=base+clubBonus+subscriberTotal+coachBonus;
  });
- if(parallelCupChemistryZero()){
+ if(parallelCupChemistryZero()||coachIs('ductility')){
    [playerBonus,playerBaseBonus,playerClubBonus,playerSubscriberBonus,playerCoachBonus].forEach(map=>Object.keys(map).forEach(key=>map[key]=0));
  }else{
    const cupMultiplier=parallelCupChemistryMultiplier();
@@ -3759,7 +3763,7 @@ function draftChemistry(source=starterEntries()){
  return {players,playerBonus,playerBaseBonus,playerClubBonus,playerSubscriberBonus,playerCoachBonus,totalBonus,baseTotalBonus,clubTotalBonus,subscriberTotalBonus,coachTotalBonus,averageBonus,score};
 }
 function draftEffectiveAverageOvr(chem=draftChemistry()){
- return chem.players.length?avg(chem.players.map(player=>(Number(player.ovr)||0)+(chem.playerBonus[String(player.id)]||0))):0;
+ return chem.players.length?avg(chem.players.map(player=>ductilityEffectiveBaseOvr(player)+(chem.playerBonus[String(player.id)]||0))):0;
 }
 function draftCandidateChemPreview(player){
  if(!player||benchDraftPhase())return 0;
@@ -3935,9 +3939,9 @@ function jerseyNumberColor(color){
  return brightness<150?'#FFFFFF':'#111111';
 }
 function renderPlayerJersey(player,extra='',chemistryBonus=0){
- const pal=clubPalette(activeUserClub()); const sub=isSubscriber(player); const currentChem=effectiveChemistryFromBase(player,chemistryBonus); const shownOvr=Math.round((Number(player?.ovr)||0)+currentChem+activeOvrBonus(player));
+ const pal=clubPalette(activeUserClub()); const sub=isSubscriber(player); const currentChem=effectiveChemistryFromBase(player,chemistryBonus); const shownOvr=Math.round(ductilityEffectiveBaseOvr(player)+currentChem+activeOvrBonus(player));
  const numberColor=jerseyNumberColor(pal.b||pal.secondary||pal.a);
- return `<span class="season-jersey-wrap ${sub?'subscriber':''} ${extra}" style="--nation-a:${pal.a};--nation-b:${pal.b};--nation-c:${pal.c};--nation-ink:${pal.ink};--jersey-number-color:${numberColor}" title="OVR base ${Math.round(Number(player?.ovr)||0)} · Intesa attuale ${formatSignedIntesa(currentChem)}"><span class="season-jersey"><span class="season-jersey-number">${shownOvr}</span></span>${sub?'<span class="season-jersey-sub-star">★</span>':''}</span>`
+ return `<span class="season-jersey-wrap ${sub?'subscriber':''} ${extra}" style="--nation-a:${pal.a};--nation-b:${pal.b};--nation-c:${pal.c};--nation-ink:${pal.ink};--jersey-number-color:${numberColor}" title="OVR base ${Math.round(ductilityEffectiveBaseOvr(player))} · Intesa attuale ${formatSignedIntesa(currentChem)}"><span class="season-jersey"><span class="season-jersey-number">${shownOvr}</span></span>${sub?'<span class="season-jersey-sub-star">★</span>':''}</span>`
 }
 
 function persistSetupIdentity(teamInput,coachInput,saveState=true){
@@ -4697,9 +4701,9 @@ function buildFullyRandomDraftRoster(){
  const slots=formationSlots();
  const used=new Set();
  const starters=[];
- const orderedSlots=slots.map((slot,index)=>({slot,index,count:PLAYERS.filter(player=>youngBeautifulAllowsPlayer(player)&&compatible(player,slot.code)).length})).sort((a,b)=>a.count-b.count||a.index-b.index);
+ const orderedSlots=slots.map((slot,index)=>({slot,index,count:PLAYERS.filter(player=>youngBeautifulAllowsPlayer(player)&&userCompatible(player,slot.code)).length})).sort((a,b)=>a.count-b.count||a.index-b.index);
  for(const item of orderedSlots){
-   const candidates=shuffle(PLAYERS.filter(player=>youngBeautifulAllowsPlayer(player)&&!used.has(String(player.id))&&compatible(player,item.slot.code)));
+   const candidates=shuffle(PLAYERS.filter(player=>youngBeautifulAllowsPlayer(player)&&!used.has(String(player.id))&&userCompatible(player,item.slot.code)));
    const player=coachHighOvrPick(candidates);
    if(!player)return false;
    used.add(String(player.id));
@@ -5185,7 +5189,7 @@ function meritCompatibleStarters(){
  const story=meritStoryState(),player=rosterEntry(story.playerId)?.player||playerById(story.playerId);
  if(!player)return[];
  const starters=starterEntries();
- const compatibleStarters=starters.filter(entry=>compatible(player,entry.slot));
+ const compatibleStarters=starters.filter(entry=>userCompatible(player,entry.slot));
  return (compatibleStarters.length?compatibleStarters:starters).sort((a,b)=>(Number(a.player?.ovr)||0)-(Number(b.player?.ovr)||0));
 }
 function prepareMeritStoryEvent(){
@@ -5336,9 +5340,10 @@ function showMeritStoryFinale(){
 function getStarterEntries(){return rosterPlayers().filter(r=>!r.bench)}function getBenchEntries(){return rosterPlayers().filter(r=>r.bench)}
 function motivatorPermanentChemistryBonus(player){return coachIs('motivator')?Math.max(0,Number(state.seasonRules?.motivatorPermanentChemistry?.[String(player?.id||'')])||0):0}
 function addMotivatorPermanentChemistry(playerId,value=1){if(!coachIs('motivator')||!playerId||Number(value)<=0)return 0;state.seasonRules.motivatorPermanentChemistry=state.seasonRules.motivatorPermanentChemistry&&typeof state.seasonRules.motivatorPermanentChemistry==='object'?state.seasonRules.motivatorPermanentChemistry:{};const id=String(playerId),next=Math.max(0,(Number(state.seasonRules.motivatorPermanentChemistry[id])||0)+Number(value));state.seasonRules.motivatorPermanentChemistry[id]=next;return next}
-function chemistryBaseRaw(player,list){const players=Array.isArray(list)?list:[];let v=nationChemistryBonus(player,players)+clubChemistryBonus(player,players)+youngBeautifulChemistryBonus(player);if(isSubscriber(player))v+=5;const subs=players.filter(o=>o.nation===player.nation&&isSubscriber(o)).length;if(isSubscriber(player)&&subs>=2)v+=10;if(normalizeName(player.name)===normalizeName(state.coachName))v+=10;v+=motivatorPermanentChemistryBonus(player);return v}
-function chemistryBase(player,list){return closedPortsAffects(player)?0:chemistryBaseRaw(player,list)}
+function chemistryBaseRaw(player,list){if(coachIs('ductility'))return 0;const players=Array.isArray(list)?list:[];let v=nationChemistryBonus(player,players)+clubChemistryBonus(player,players)+youngBeautifulChemistryBonus(player);if(isSubscriber(player))v+=5;const subs=players.filter(o=>o.nation===player.nation&&isSubscriber(o)).length;if(isSubscriber(player)&&subs>=2)v+=10;if(normalizeName(player.name)===normalizeName(state.coachName))v+=10;v+=motivatorPermanentChemistryBonus(player);return v}
+function chemistryBase(player,list){return coachIs('ductility')||closedPortsAffects(player)?0:chemistryBaseRaw(player,list)}
 function activeChemistryEventBonus(player){
+ if(coachIs('ductility'))return 0;
  let value=0;
  state.activeEffects.forEach(effect=>{
    if(effect.type==='teamChem')value+=Number(effect.value)||0;
@@ -5349,19 +5354,21 @@ function activeChemistryEventBonus(player){
 }
 function activeOvrBonus(player){
  if(state.activeEffects.some(effect=>effect.type==='baseOvrOnly'))return 0;
- let value=0;
+ const ductility=coachIs('ductility');let value=0;
+ const include=amount=>{const number=Number(amount)||0;if(!ductility||number<0)value+=number};
  state.activeEffects.forEach(effect=>{
-   if(effect.type==='teamOvr')value+=Number(effect.value)||0;
-   if(effect.type==='subscriberOvr'&&isSubscriber(player))value+=Number(effect.value)||0;
-   if(effect.type==='playerOvr'&&String(effect.playerId)===String(player.id))value+=Number(effect.value)||0;
-   if(effect.type==='goalkeeperOvr'&&roleOf(player)==='P')value+=Number(effect.value)||0;
+   if(effect.type==='teamOvr')include(effect.value);
+   if(effect.type==='subscriberOvr'&&isSubscriber(player))include(effect.value);
+   if(effect.type==='playerOvr'&&String(effect.playerId)===String(player.id))include(effect.value);
+   if(effect.type==='goalkeeperOvr'&&roleOf(player)==='P')include(effect.value);
  });
- value+=meritStoryOvrModifier(player);
+ include(meritStoryOvrModifier(player));
  const status=state.statuses?.[String(player?.id||'')];
- if(status&&Number(status.injury)>0)value+=Math.max(0,Number(state.seasonRules.injuredOvrBonus)||0);
+ if(status&&Number(status.injury)>0&&!ductility)value+=Math.max(0,Number(state.seasonRules.injuredOvrBonus)||0);
  return value;
 }
 function activeChemistryMultiplier(player){
+ if(coachIs('ductility'))return 1;
  let multiplier=parallelCupChemistryMultiplier();
  state.activeEffects.forEach(effect=>{
    if(effect.type==='teamChemMultiplier')multiplier*=Math.max(.1,Number(effect.value)||1);
@@ -5370,9 +5377,9 @@ function activeChemistryMultiplier(player){
  });
  return clamp(multiplier,.1,6);
 }
-function chemistryIsZeroed(){return parallelCupChemistryZero()||state.activeEffects.some(effect=>effect.type==='teamChemZero')}
+function chemistryIsZeroed(){return coachIs('ductility')||parallelCupChemistryZero()||state.activeEffects.some(effect=>effect.type==='teamChemZero')}
 function effectiveChemistryFromBase(player,baseChem=0){
- if(state.activeEffects.some(effect=>effect.type==='baseOvrOnly'))return 0;
+ if(coachIs('ductility')||state.activeEffects.some(effect=>effect.type==='baseOvrOnly'))return 0;
  if(chemistryIsZeroed()||closedPortsAffects(player))return 0;
  const raw=(Number(baseChem)||0)+activeChemistryEventBonus(player);
  const multiplier=activeChemistryMultiplier(player);
@@ -5441,8 +5448,8 @@ function applyWrongShirtSwap(lineup){
  first.slot=second.slot;first.slotId=second.slotId;
  second.slot=firstSlot;second.slotId=firstSlotId;
  first.wrongShirtSwap=true;second.wrongShirtSwap=true;
- if(!compatible(first.player,first.slot))first.malus=(Number(first.malus)||0)-5;
- if(!compatible(second.player,second.slot))second.malus=(Number(second.malus)||0)-5;
+ if(!userCompatible(first.player,first.slot))first.malus=(Number(first.malus)||0)-5;
+ if(!userCompatible(second.player,second.slot))second.malus=(Number(second.malus)||0)-5;
  return rows;
 }
 function startWrongShirtsEvent(){
@@ -5451,7 +5458,7 @@ function startWrongShirtsEvent(){
  const selected=shuffle(candidates).slice(0,2),first=selected[0],second=selected[1];
  [first,second].forEach(item=>{const entry=rosterEntry(item.playerId);if(entry){entry.tipsterForced=true;entry.tipsterForcedMatches=Math.max(1,Number(entry.tipsterForcedMatches)||0)}});
  pushEffect('wrongShirts',1,1,{firstPlayerId:String(first.playerId),secondPlayerId:String(second.playerId),firstPlayerName:first.player.name,secondPlayerName:second.player.name,source:'Maglie con i nomi sbagliati'});
- const firstPenalty=compatible(first.player,second.slot)?0:-5,secondPenalty=compatible(second.player,first.slot)?0:-5;
+ const firstPenalty=userCompatible(first.player,second.slot)?0:-5,secondPenalty=userCompatible(second.player,first.slot)?0:-5;
  const details=[`${first.player.name} va in ${second.slot}${firstPenalty?' e riceve -5 OVR':''}`,`${second.player.name} va in ${first.slot}${secondPenalty?' e riceve -5 OVR':''}`];
  return `${details.join(' · ')} nella prossima partita.`;
 }
@@ -5586,10 +5593,10 @@ function enforceTipsterStarters(){
  forced.forEach(entry=>{
    const player=entry.player||playerById(entry.playerId);if(!player)return;
    const used=new Set(state.draft.roster.filter(item=>item&&!item.bench).map(item=>String(item.slotId)));
-   const empty=formationSlots().find(slot=>!used.has(String(slot.instanceId))&&compatible(player,slot.code));
+   const empty=formationSlots().find(slot=>!used.has(String(slot.instanceId))&&userCompatible(player,slot.code));
    if(empty){entry.bench=false;entry.slot=empty.code;entry.slotId=empty.instanceId;return}
    const starters=state.draft.roster.filter(item=>item&&!item.bench&&Number(item.tipsterForcedMatches)<=0).map(item=>({entry:item,player:item.player||playerById(item.playerId)})).filter(item=>item.player);
-   let target=starters.filter(item=>compatible(player,item.entry.slot)).sort((a,b)=>(Number(a.player.ovr)||0)-(Number(b.player.ovr)||0))[0];
+   let target=starters.filter(item=>userCompatible(player,item.entry.slot)).sort((a,b)=>(Number(a.player.ovr)||0)-(Number(b.player.ovr)||0))[0];
    if(!target)target=starters.filter(item=>roleOf(item.player)===roleOf(player)).sort((a,b)=>(Number(a.player.ovr)||0)-(Number(b.player.ovr)||0))[0];
    if(!target)target=starters.sort((a,b)=>(Number(a.player.ovr)||0)-(Number(b.player.ovr)||0))[0];
    if(!target)return;
@@ -5619,7 +5626,7 @@ function removeGamblingPlayer(){
  const chosen=pick(items),lost=chosen.player,lostEntry=chosen.entry;
  if(!lostEntry.bench){
    const bench=items.filter(item=>item.entry.bench&&item.index!==chosen.index);
-   let replacement=bench.filter(item=>compatible(item.player,lostEntry.slot)).sort((a,b)=>(Number(b.player.ovr)||0)-(Number(a.player.ovr)||0))[0];
+   let replacement=bench.filter(item=>userCompatible(item.player,lostEntry.slot)).sort((a,b)=>(Number(b.player.ovr)||0)-(Number(a.player.ovr)||0))[0];
    if(!replacement)replacement=bench.filter(item=>roleOf(item.player)===POSITION_ROLE[lostEntry.slot]).sort((a,b)=>(Number(b.player.ovr)||0)-(Number(a.player.ovr)||0))[0];
    if(!replacement)replacement=bench.sort((a,b)=>(Number(b.player.ovr)||0)-(Number(a.player.ovr)||0))[0];
    if(replacement)Object.assign(replacement.entry,{bench:false,slot:lostEntry.slot,slotId:lostEntry.slotId});
@@ -5635,7 +5642,7 @@ function tipsterVictoryPlayer(){
  const starters=state.draft.roster.filter(entry=>entry&&!entry.bench).map(entry=>({entry,player:entry.player||playerById(entry.playerId)})).filter(item=>item.player);
  if(!starters.length)return{type:'tipster',message:'Il Tipster non trova un titolare da sostituire.'};
  const freeTargets=starters.filter(item=>Number(item.entry.tipsterForcedMatches)<=0),target=pick(freeTargets.length?freeTargets:starters),rosterIds=new Set(state.draft.roster.map(entry=>String(entry.playerId))),rosterNames=new Set(rosterPlayers().map(item=>normalizeName(item.player.name)));
- let candidates=(PLAYERS||[]).filter(player=>player&&player.id&&youngBeautifulAllowsPlayer(player)&&!rosterIds.has(String(player.id))&&!rosterNames.has(normalizeName(player.name))&&compatible(player,target.entry.slot));
+ let candidates=(PLAYERS||[]).filter(player=>player&&player.id&&youngBeautifulAllowsPlayer(player)&&!rosterIds.has(String(player.id))&&!rosterNames.has(normalizeName(player.name))&&userCompatible(player,target.entry.slot));
  if(!candidates.length)candidates=(PLAYERS||[]).filter(player=>player&&player.id&&youngBeautifulAllowsPlayer(player)&&!rosterIds.has(String(player.id))&&!rosterNames.has(normalizeName(player.name))&&roleOf(player)===POSITION_ROLE[target.entry.slot]);
  if(!candidates.length)candidates=(PLAYERS||[]).filter(player=>player&&player.id&&youngBeautifulAllowsPlayer(player)&&!rosterIds.has(String(player.id))&&!rosterNames.has(normalizeName(player.name)));
  if(!candidates.length)return{type:'tipster',message:'Il Tipster non trova nuovi giocatori disponibili nel database.'};
@@ -5927,7 +5934,7 @@ function multiverseReal(){return replaceWeakestWithUniverse(REAL_PLAYERS,'Fantac
 function italianPlayerPools(){const pools=[PLAYERS,PLAYERS===CLASSIC_PLAYERS?REAL_PLAYERS:CLASSIC_PLAYERS,CLASSIC_PLAYERS,REAL_PLAYERS];const seen=new Set();return pools.map(pool=>(Array.isArray(pool)?pool:[]).filter(player=>{const key=`${String(player?.id||'')}|${normalizeName(player?.name||'')}|${normalizeName(player?.nation||'')}`;if(!player||!player.id||!isItalianPlayer(player)||!youngBeautifulAllowsPlayer(player)||seen.has(key))return false;seen.add(key);return true})).filter(pool=>pool.length)}
 function italianReplacementForEntry(entry,usedSources=new Set()){
  const pools=italianPlayerPools();
- const chooseFrom=pool=>{let candidates=pool.filter(player=>!usedSources.has(`${String(player.id)}|${normalizeName(player.name)}`));if(!entry?.bench)candidates=candidates.filter(player=>compatible(player,entry.slot));if(!candidates.length&&!entry?.bench)candidates=pool.filter(player=>!usedSources.has(`${String(player.id)}|${normalizeName(player.name)}`)&&roleOf(player)===POSITION_ROLE[entry.slot]);return candidates.length?pick(candidates):null};
+ const chooseFrom=pool=>{let candidates=pool.filter(player=>!usedSources.has(`${String(player.id)}|${normalizeName(player.name)}`));if(!entry?.bench)candidates=candidates.filter(player=>userCompatible(player,entry.slot));if(!candidates.length&&!entry?.bench)candidates=pool.filter(player=>!usedSources.has(`${String(player.id)}|${normalizeName(player.name)}`)&&roleOf(player)===POSITION_ROLE[entry.slot]);return candidates.length?pick(candidates):null};
  for(const pool of pools){const found=chooseFrom(pool);if(found)return found}return null;
 }
 function replaceNonItalianWithItalians(){
@@ -6147,7 +6154,7 @@ function rebuildWeakestStarters(){
  const used=new Set(state.draft.roster.map(entry=>String(entry.playerId)));
  const changes=[];
  starters.forEach(item=>{
-   let pool=PLAYERS.filter(player=>youngBeautifulAllowsPlayer(player)&&!used.has(String(player.id))&&compatible(player,item.entry.slot));
+   let pool=PLAYERS.filter(player=>youngBeautifulAllowsPlayer(player)&&!used.has(String(player.id))&&userCompatible(player,item.entry.slot));
    if(!pool.length)pool=PLAYERS.filter(player=>youngBeautifulAllowsPlayer(player)&&!used.has(String(player.id))&&roleOf(player)===POSITION_ROLE[item.entry.slot]);
    const replacement=pool.length?pick(pool):null;
    if(!replacement)return;
@@ -6168,7 +6175,7 @@ function runMisterFmExperiment(){
  selected.entry.player={...selected.player,ovr:after};
  return `${selected.player.name}: OVR ${before} → ${after} (${delta>0?'+20':'-20'}) fino al termine della stagione.`;
 }
-function tacticianPlayerOvr(player){return Math.max(1,(Number(player?.ovr)||60)+activeOvrBonus(player))}
+function tacticianPlayerOvr(player){return Math.max(1,ductilityEffectiveBaseOvr(player)+activeOvrBonus(player))}
 function optimizeLineupWithBench(){
  const roster=state.draft.roster;
  const changes=[];
@@ -6178,7 +6185,7 @@ function optimizeLineupWithBench(){
    let swap=null;
    for(const bench of benches){
      const benchOvr=tacticianPlayerOvr(bench.player);
-     const targets=roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>!item.entry.bench&&Number(item.entry.tipsterForcedMatches)<=0&&item.player&&compatible(bench.player,item.entry.slot)&&tacticianPlayerOvr(item.player)<benchOvr).sort((a,b)=>tacticianPlayerOvr(a.player)-tacticianPlayerOvr(b.player));
+     const targets=roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>!item.entry.bench&&Number(item.entry.tipsterForcedMatches)<=0&&item.player&&userCompatible(bench.player,item.entry.slot)&&tacticianPlayerOvr(item.player)<benchOvr).sort((a,b)=>tacticianPlayerOvr(a.player)-tacticianPlayerOvr(b.player));
      if(targets.length){swap={bench,target:targets[0]};break}
    }
    if(!swap)break;
@@ -6248,10 +6255,10 @@ function applyUserFormationLayout(key){
  const slots=formationSlots(key),all=state.draft.roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>item.player);
  if(all.length<slots.length)return `Non ci sono abbastanza giocatori per applicare il ${key}.`;
  const unused=[...all],assignments=[];
- const orderedSlots=slots.map((slot,index)=>({slot,index,compatibleCount:unused.filter(item=>compatible(item.player,slot.code)).length})).sort((a,b)=>a.compatibleCount-b.compatibleCount||a.index-b.index);
+ const orderedSlots=slots.map((slot,index)=>({slot,index,compatibleCount:unused.filter(item=>userCompatible(item.player,slot.code)).length})).sort((a,b)=>a.compatibleCount-b.compatibleCount||a.index-b.index);
  orderedSlots.forEach(item=>{
    const byOvr=(a,b)=>(Number(b.player.ovr)||0)-(Number(a.player.ovr)||0);
-   let candidates=unused.filter(candidate=>compatible(candidate.player,item.slot.code)).sort(byOvr);
+   let candidates=unused.filter(candidate=>userCompatible(candidate.player,item.slot.code)).sort(byOvr);
    if(!candidates.length)candidates=unused.filter(candidate=>roleOf(candidate.player)===POSITION_ROLE[item.slot.code]).sort(byOvr);
    if(!candidates.length)candidates=[...unused].sort(byOvr);
    const selected=candidates[0];if(!selected)return;
@@ -6303,12 +6310,17 @@ function originalBaseOvr(player){
  const stored=Number(original?.baseOvr);if(Number.isFinite(stored)&&stored>0)return Math.max(1,stored);
  return Math.max(1,Number(original?.ovr??player?.ovr)||60);
 }
+function ductilityScorerOvrBonus(player){if(!coachIs('ductility')||!player)return 0;return Math.max(0,Math.floor(Number(state.seasonRules?.ductilityScorerOvr?.[String(player.id||'')])||0))}
+function ductilityEffectiveBaseOvr(player){const current=Math.max(1,Number(player?.ovr)||originalBaseOvr(player)),base=originalBaseOvr(player);if(!coachIs('ductility'))return current;return Math.max(1,Math.min(current,base)+ductilityScorerOvrBonus(player))}
+function ductilityEntryIsOutOfRole(entry){return Boolean(coachIs('ductility')&&entry?.player&&!isEmergencyYouthEntry(entry)&&entry.slot&&!naturalCompatible(entry.player,entry.slot))}
+function addDuctilityScorerOvr(playerId,value=1){if(!coachIs('ductility')||!playerId||Number(value)<=0)return 0;state.seasonRules.ductilityScorerOvr=state.seasonRules.ductilityScorerOvr&&typeof state.seasonRules.ductilityScorerOvr==='object'?state.seasonRules.ductilityScorerOvr:{};const id=String(playerId),next=Math.max(0,(Number(state.seasonRules.ductilityScorerOvr[id])||0)+Math.floor(Number(value)||0));state.seasonRules.ductilityScorerOvr[id]=next;return next}
 function rosterEntryIndex(entry){return state.draft.roster.findIndex(item=>String(item.playerId)===String(entry?.playerId||''))}
 function setPermanentRosterOvr(entry,value){
  if(!entry)return null;
  const index=rosterEntryIndex(entry),player=entry.player||playerById(entry.playerId);
  if(index<0||!player)return null;
  const before=Number(player.ovr)||60,requested=Math.max(1,Math.round(Number(value)||before)),isPositive=requested>before;
+ if(isPositive&&coachIs('ductility'))return null;
  const after=isPositive&&coachIs('motivator')?requested+1:requested;
  state.draft.roster[index].player={...player,ovr:after};
  if(isPositive&&coachIs('motivator'))addMotivatorPermanentChemistry(player.id,1);
@@ -6338,7 +6350,7 @@ function removeOwnRosterPlayerPermanently(entry,reason=''){
  const index=rosterEntryIndex(entry),player=entry.player||playerById(entry.playerId);if(index<0||!player)return 'Nessun giocatore disponibile.';
  if(!entry.bench){
    const bench=state.draft.roster.map((item,itemIndex)=>({entry:item,index:itemIndex,player:item.player||playerById(item.playerId)})).filter(item=>item.player&&item.entry.bench&&item.index!==index);
-   let replacement=bench.filter(item=>compatible(item.player,entry.slot)).sort((a,b)=>(Number(b.player.ovr)||0)-(Number(a.player.ovr)||0))[0];
+   let replacement=bench.filter(item=>userCompatible(item.player,entry.slot)).sort((a,b)=>(Number(b.player.ovr)||0)-(Number(a.player.ovr)||0))[0];
    if(!replacement)replacement=bench.filter(item=>roleOf(item.player)===POSITION_ROLE[entry.slot]).sort((a,b)=>(Number(b.player.ovr)||0)-(Number(a.player.ovr)||0))[0];
    if(!replacement)replacement=bench.sort((a,b)=>(Number(b.player.ovr)||0)-(Number(a.player.ovr)||0))[0];
    if(replacement)Object.assign(replacement.entry,{bench:false,slot:entry.slot,slotId:entry.slotId});
@@ -6446,7 +6458,7 @@ function resolveRosterLineup(entries=rosterPlayers(),options={}){
  const entryStatus=entry=>ignoreStatuses?{injury:0,suspension:0,seasonOut:false}:statusOf(entry.playerId||entry.player?.id);
  const temporarilyBlocked=entry=>!ignoreStatuses&&temporaryEventBlocksPlayer(entry.playerId||entry.player?.id);
  const availableEntry=entry=>{const st=entryStatus(entry);return !temporarilyBlocked(entry)&&!st.seasonOut&&Number(st.suspension)<=0&&Number(st.injury)<=0};
- const chooseBench=slot=>{const available=bench.filter(entry=>!usedPlayers.has(String(entry.playerId))&&availableEntry(entry));let sub=available.find(entry=>compatible(entry.player,slot.code));if(!sub)sub=available.find(entry=>roleOf(entry.player)===POSITION_ROLE[slot.code]);if(!sub)sub=available[0];return sub||null};
+ const chooseBench=slot=>{const available=bench.filter(entry=>!usedPlayers.has(String(entry.playerId))&&availableEntry(entry));let sub=available.find(entry=>userCompatible(entry.player,slot.code));if(!sub)sub=available.find(entry=>roleOf(entry.player)===POSITION_ROLE[slot.code]);if(!sub)sub=available[0];return sub||null};
  slots.forEach((slot,index)=>{
    let starter=starters.find(entry=>!usedStarters.has(entry)&&String(entry.slotId)===String(slot.instanceId));
    if(!starter)starter=starters.find(entry=>!usedStarters.has(entry)&&String(entry.slot)===String(slot.code));
@@ -6454,16 +6466,16 @@ function resolveRosterLineup(entries=rosterPlayers(),options={}){
    const st=starter?entryStatus(starter):null,starterUnavailable=Boolean(starter&&(temporarilyBlocked(starter)||st.seasonOut||Number(st.suspension)>0||(Number(st.injury)>0&&!state.playInjured[String(starter.playerId)])));
    if(starter&&!starterUnavailable&&!usedPlayers.has(String(starter.playerId))){usedPlayers.add(String(starter.playerId));out.push({...starter,slot:slot.code,slotId:slot.instanceId,bench:false,malus:Number(st.injury)>0?-20:0,replaces:''});return}
    const sub=chooseBench(slot);
-   if(sub){usedPlayers.add(String(sub.playerId));out.push({...sub,slot:slot.code,slotId:slot.instanceId,bench:false,malus:compatible(sub.player,slot.code)?0:-10,replaces:starter?.player?.name||''});return}
+   if(sub){usedPlayers.add(String(sub.playerId));out.push({...sub,slot:slot.code,slotId:slot.instanceId,bench:false,malus:userCompatible(sub.player,slot.code)?0:-10,replaces:starter?.player?.name||''});return}
    const youth=makeEmergencyYouthEntry(slot,index,'user',slot.instanceId);youth.replaces=starter?.player?.name||'';out.push(youth);
  });
  return out;
 }
 function resolveLineup(){enforceTipsterStarters();if(state.seasonRules?.autoOptimizeLineup)optimizeLineupWithBench();return applyWrongShirtSwap(resolveRosterLineup(rosterPlayers()))}
-function coachRosterAverageOvr(){const values=rosterPlayers().map(entry=>Number(entry?.player?.ovr)||0).filter(value=>value>0);return values.length?avg(values):0}
+function coachRosterAverageOvr(){const values=rosterPlayers().map(entry=>ductilityEffectiveBaseOvr(entry?.player)).filter(value=>value>0);return values.length?avg(values):0}
 function coachTrailingStreak(){const history=Array.isArray(state?.history)?state.history:[];if(!history.length)return{type:'',count:0};const result=history[history.length-1],type=Number(result.gf)>Number(result.ga)?'win':Number(result.gf)<Number(result.ga)?'loss':'draw';let count=0;for(let index=history.length-1;index>=0;index--){const item=history[index],current=Number(item.gf)>Number(item.ga)?'win':Number(item.gf)<Number(item.ga)?'loss':'draw';if(current!==type)break;count++}return{type,count}}
 function coachMatchOvrModifier(){if(!coachIs('motivator'))return 0;const streak=coachTrailingStreak();if(streak.type==='loss'&&streak.count===2)return 3;if(streak.type==='win'&&streak.count===3)return-3;return 0}
-function coachCurrentEffectLabel(){if(coachIs('motivator')){const value=coachMatchOvrModifier(),boost='bonus OVR/Intesa potenziati di +1 OVR e +1 Intesa';return value>0?`Motivatore: +3 OVR nella prossima partita · ${boost}`:value<0?`Motivatore: -3 OVR nella prossima partita · ${boost}`:`Motivatore: ${boost}`}if(coachIs('salvation')){const value=coachRosterAverageOvr();return value<70?`Mister salvezza: +1 gol aggiuntivo a ogni partita (OVR rosa ${value.toFixed(1)})`:value>80?`Mister salvezza: gol subito garantito (OVR rosa ${value.toFixed(1)})`:`Mister salvezza: fascia neutra (OVR rosa ${value.toFixed(1)})`}if(coachIs('talent-scout'))return'Talent scout: primo pack dalla squadra dell’omonimo, scouting potenziato e mercato esterno bloccato';if(coachIs('young-beautiful'))return'Giovani e belli: +20 Intesa agli OVR base 60–69, +10 agli OVR base 70–75, vietati gli OVR base da 85 in su';return'Anonimo: nessun effetto'}
+function coachCurrentEffectLabel(){if(coachIs('motivator')){const value=coachMatchOvrModifier(),boost='bonus OVR/Intesa potenziati di +1 OVR e +1 Intesa';return value>0?`Motivatore: +3 OVR nella prossima partita · ${boost}`:value<0?`Motivatore: -3 OVR nella prossima partita · ${boost}`:`Motivatore: ${boost}`}if(coachIs('salvation')){const value=coachRosterAverageOvr();return value<70?`Mister salvezza: +1 gol aggiuntivo a ogni partita (OVR rosa ${value.toFixed(1)})`:value>80?`Mister salvezza: gol subito garantito (OVR rosa ${value.toFixed(1)})`:`Mister salvezza: fascia neutra (OVR rosa ${value.toFixed(1)})`}if(coachIs('talent-scout'))return'Talent scout: primo pack dalla squadra dell’omonimo, scouting potenziato e mercato esterno bloccato';if(coachIs('young-beautiful'))return'Giovani e belli: +20 Intesa agli OVR base 60–69, +10 agli OVR base 70–75, vietati gli OVR base da 85 in su';if(coachIs('ductility'))return'Duttilità: nessun malus fuori ruolo, Intesa sempre 0, nessun altro bonus OVR; chi segna fuori ruolo guadagna +1 OVR fino a fine stagione';return'Anonimo: nessun effetto'}
 function teamPowerBase(){return resolvedLineupAverage(resolveRosterLineup(rosterPlayers(),{ignoreStatuses:true}))}
 function matchPower(){return resolvedLineupAverage(resolveLineup())}
 function unavailableList(){return rosterPlayers().filter(r=>{const s=statusOf(r.playerId);return s.injury>0||s.suspension>0})}
@@ -7016,7 +7028,7 @@ function resolvedPlayerFinalOvr(entry,lineup){
  if(isEmergencyYouthEntry(entry))return 50;
  const player=entry?.player||{};
  const fx=lineupEffects(entry,lineup);
- const rawFinalOvr=Math.round((Number(player.ovr)||0)+fx.total);
+ const rawFinalOvr=Math.round(ductilityEffectiveBaseOvr(player)+fx.total);
  return fantaballopoliAllowsNegativeOvr()?rawFinalOvr:Math.max(1,rawFinalOvr);
 }
 function resolvedLineupAverage(lineup){const rows=(Array.isArray(lineup)?lineup:[]).filter(entry=>entry&&entry.player);return rows.length?avg(rows.map(entry=>resolvedPlayerFinalOvr(entry,rows))):0}
@@ -7125,6 +7137,14 @@ function playerPerformanceScores(lineup,goalsFor,goalsAgainst,events,won){
    return {id,player:entry.player,entry,score,goals,assists};
  });
 }
+function applyDuctilityOutOfRoleGoalBoosts(team,lineup,events){
+ if(!coachIs('ductility')||String(team?.id||'')!==String(USER_ID))return[];
+ const safeLineup=(Array.isArray(lineup)?lineup:[]).filter(entry=>entry&&entry.player),counts={};
+ (events||[]).forEach(event=>{const id=String(event?.playerId||'');if(id)counts[id]=(counts[id]||0)+1});
+ const updates=[];
+ Object.entries(counts).forEach(([id,count])=>{const entry=safeLineup.find(item=>String(item.playerId||item.player?.id||'')===id);if(!entry||!ductilityEntryIsOutOfRole(entry))return;const total=addDuctilityScorerOvr(id,count);updates.push({playerId:id,playerName:String(entry.player?.name||'Giocatore'),goals:count,gain:count,total,slot:String(entry.slot||''),naturalPositions:positions(entry.player).join(', ')});});
+ return updates;
+}
 function recordTeamPlayerStats(team,lineup,goalsFor,goalsAgainst,events){
  const safeLineup=(Array.isArray(lineup)?lineup:[]).filter(entry=>entry&&entry.player);
  safeLineup.forEach(entry=>{
@@ -7139,7 +7159,8 @@ function recordTeamPlayerStats(team,lineup,goalsFor,goalsAgainst,events){
  });
  const goalkeeper=safeLineup.find(entry=>entry.slot==='P'||roleOf(entry.player)==='P')||null;
  if(Number(goalsAgainst)===0&&goalkeeper)incrementPlayerStat('cleanSheets',goalkeeper.playerId||goalkeeper.player.id,1);
- return {goalkeeperId:goalkeeper?String(goalkeeper.playerId||goalkeeper.player.id||''):'',cleanSheet:Number(goalsAgainst)===0};
+ const ductilityBoosts=applyDuctilityOutOfRoleGoalBoosts(team,safeLineup,events);
+ return {goalkeeperId:goalkeeper?String(goalkeeper.playerId||goalkeeper.player.id||''):'',cleanSheet:Number(goalsAgainst)===0,ductilityBoosts};
 }
 function recordLeagueMatchPlayerStats({homeTeam,awayTeam,homeLineup,awayLineup,homeScore,awayScore,homeEvents,awayEvents}){
  const homeBase=recordTeamPlayerStats(homeTeam,homeLineup,homeScore,awayScore,homeEvents);
@@ -7163,7 +7184,8 @@ function recordLeagueMatchPlayerStats({homeTeam,awayTeam,homeLineup,awayLineup,h
    awayCleanSheet:awayBase.cleanSheet,
    mvpId:best?.id||'',
    mvpScore:best?Math.round(best.score*10)/10:0,
-   mvpTeamId:String(best?.team?.id||'')
+   mvpTeamId:String(best?.team?.id||''),
+   ductilityBoosts:String(homeTeam?.id||'')===String(USER_ID)?homeBase.ductilityBoosts:String(awayTeam?.id||'')===String(USER_ID)?awayBase.ductilityBoosts:[]
  };
 }
 function recordMatchPlayerStats(lineup,goalsFor,goalsAgainst,goalEvents){
@@ -7415,7 +7437,7 @@ function playRound(mode='instant'){
    });
    const sixtyFearNote=applySixtyPointFear();if(sixtyFearNote)userPoints.note=[userPoints.note,sixtyFearNote].filter(Boolean).join(' ');
    const allHighlights=[...userGoalEvents,...opponentGoalEvents].sort((a,b)=>a.minute-b.minute);state.lastRoundResults=roundResults;
-   state.history.push({matchday:state.matchday+1,opponent:opponent.name,opponentId:opponent.id,home:userHome,gf:goalsFor,ga:goalsAgainst,goals:userGoalEvents,opponentGoals:opponentGoalEvents,highlights:allHighlights,commentary,power:Math.round(userPower*10)/10,opponentPower:Math.round(opponentPower*10)/10,opponentRedCard:Boolean(redCandidate),opponentRedPlayer:redCandidate?.name||'',ownRedCard:Boolean(ownRedEntry),ownSuspensionId:ownRedEntry?.playerId||'',ownSuspensionPlayer:ownRedEntry?.player?.name||'',goalkeeperId:userHome?userAwards?.homeGoalkeeperId:userAwards?.awayGoalkeeperId,opponentGoalkeeperId:userHome?userAwards?.awayGoalkeeperId:userAwards?.homeGoalkeeperId,cleanSheet:Number(goalsAgainst)===0,opponentCleanSheet:Number(goalsFor)===0,mvpId:userAwards?.mvpId||'',mvpScore:userAwards?.mvpScore||0,mvpTeamId:userAwards?.mvpTeamId||'',lineup:safeMatchLineup(lineup),opponentLineup:safeMatchLineup(opponentLineup),forcedLoss,forcedWin,maxDraw,forcedScore:Boolean(forcedScoreEffect),forcedScoreData:forcedScoreEffect?{gf:Math.max(0,Number(forcedScoreEffect.gf)||0),ga:Math.max(0,Number(forcedScoreEffect.ga)||0),source:String(forcedScoreEffect.source||'')}:null,pointsAwarded:userPoints.awarded,pointsAdjustment:userPoints.adjustment,pointsNote:userPoints.note,forcedSubscriberGoals:forcedSubscribers.length,playMode:mode,matchDuration:matchMinutes,pinkCardMinute,opponentYellowRed,ownYellowRed,deathMatchBonus,hungerWalkover,futureScorerGoal:Boolean(futureGoal),meritStoryGoal:Boolean(meritStoryGoal),fantaballopoliForcedLoss:Boolean(fantaballopoliRule.forcedLoss),fantaballopoliForcedWin:Boolean(fantaballopoliRule.forcedWin),fantaballopoliNegativeGoals:Boolean(fantaballopoliRule.negativeOpponentGoals),fantaballopoliExpulsions:fantaballopoliRisks.expelled.map(entry=>entry.player?.name||'Giocatore'),fantaballopoliInjuries:fantaballopoliRisks.injured.map(entry=>entry.player?.name||'Giocatore'),coachType:normalizeCoachType(state.coachType),coachOvrModifier:coachMatchOvrModifier(),coachGoalForGuaranteed:Boolean(coachGuarantees.for),coachGoalAgainstGuaranteed:Boolean(coachGuarantees.against),coachRosterAverage:Math.round(Number(coachGuarantees.average||coachRosterAverageOvr())*10)/10,secretRefereePenalty,questOpponentTop3Before,champagneDrawLoss,federationGoalRule:federationOutcome?.rule||'',federationGoalRuleNote:federationOutcome?.note||'',federationGoalWinnerId:federationOutcome?.winnerId||''});
+   state.history.push({matchday:state.matchday+1,opponent:opponent.name,opponentId:opponent.id,home:userHome,gf:goalsFor,ga:goalsAgainst,goals:userGoalEvents,opponentGoals:opponentGoalEvents,highlights:allHighlights,commentary,power:Math.round(userPower*10)/10,opponentPower:Math.round(opponentPower*10)/10,opponentRedCard:Boolean(redCandidate),opponentRedPlayer:redCandidate?.name||'',ownRedCard:Boolean(ownRedEntry),ownSuspensionId:ownRedEntry?.playerId||'',ownSuspensionPlayer:ownRedEntry?.player?.name||'',goalkeeperId:userHome?userAwards?.homeGoalkeeperId:userAwards?.awayGoalkeeperId,opponentGoalkeeperId:userHome?userAwards?.awayGoalkeeperId:userAwards?.homeGoalkeeperId,cleanSheet:Number(goalsAgainst)===0,opponentCleanSheet:Number(goalsFor)===0,mvpId:userAwards?.mvpId||'',mvpScore:userAwards?.mvpScore||0,mvpTeamId:userAwards?.mvpTeamId||'',lineup:safeMatchLineup(lineup),opponentLineup:safeMatchLineup(opponentLineup),forcedLoss,forcedWin,maxDraw,forcedScore:Boolean(forcedScoreEffect),forcedScoreData:forcedScoreEffect?{gf:Math.max(0,Number(forcedScoreEffect.gf)||0),ga:Math.max(0,Number(forcedScoreEffect.ga)||0),source:String(forcedScoreEffect.source||'')}:null,pointsAwarded:userPoints.awarded,pointsAdjustment:userPoints.adjustment,pointsNote:userPoints.note,forcedSubscriberGoals:forcedSubscribers.length,playMode:mode,matchDuration:matchMinutes,pinkCardMinute,opponentYellowRed,ownYellowRed,deathMatchBonus,hungerWalkover,futureScorerGoal:Boolean(futureGoal),meritStoryGoal:Boolean(meritStoryGoal),fantaballopoliForcedLoss:Boolean(fantaballopoliRule.forcedLoss),fantaballopoliForcedWin:Boolean(fantaballopoliRule.forcedWin),fantaballopoliNegativeGoals:Boolean(fantaballopoliRule.negativeOpponentGoals),fantaballopoliExpulsions:fantaballopoliRisks.expelled.map(entry=>entry.player?.name||'Giocatore'),fantaballopoliInjuries:fantaballopoliRisks.injured.map(entry=>entry.player?.name||'Giocatore'),coachType:normalizeCoachType(state.coachType),coachOvrModifier:coachMatchOvrModifier(),coachGoalForGuaranteed:Boolean(coachGuarantees.for),coachGoalAgainstGuaranteed:Boolean(coachGuarantees.against),coachRosterAverage:Math.round(Number(coachGuarantees.average||coachRosterAverageOvr())*10)/10,ductilityBoosts:Array.isArray(userAwards?.ductilityBoosts)?userAwards.ductilityBoosts:[],secretRefereePenalty,questOpponentTop3Before,champagneDrawLoss,federationGoalRule:federationOutcome?.rule||'',federationGoalRuleNote:federationOutcome?.note||'',federationGoalWinnerId:federationOutcome?.winnerId||''});
    state.lastResult=state.history[state.history.length-1];const analyticsBeforePostMatch=analyticsStatusSnapshot();postMatch();updateSeasonMatchAnalytics(state.lastResult,analyticsBeforePostMatch);save();showResultModal();
  };
  if(mode==='live')playLiveMatch({commentary,homeTeam,awayTeam,homeGoals,awayGoals,matchday:state.matchday+1,duration:matchMinutes},finishRound);
@@ -7462,6 +7484,7 @@ function showResultModal(){
  const federationLine=result.federationGoalRuleNote?`<div class="goal-line"><b>⚽ Regola FIGC · ${esc(federationGoalRuleLabel(result.federationGoalRule))}</b><br>${esc(result.federationGoalRuleNote)}</div>`:'';
  const pointsLine=result.pointsNote?`<div class="goal-line"><b>🏆 Punti campionato</b><br>${esc(result.pointsNote)}</div>`:'';
  const injuryLine=result.eventInjuries?.length?`<div class="goal-line"><b>🚑 Conseguenza dell’imprevisto</b><br>${result.eventInjuries.map(item=>`${esc(item.name)}: ${item.duration} ${item.duration===1?'giornata':'giornate'}`).join(' · ')}</div>`:'';
+ const ductilityLine=Array.isArray(result.ductilityBoosts)&&result.ductilityBoosts.length?`<div class="goal-line"><b>🔀 Duttilità · bonus fuori ruolo</b><br>${result.ductilityBoosts.map(item=>`${esc(item.playerName)}: +${Number(item.gain)||1} OVR permanente (totale +${Number(item.total)||0})`).join(' · ')}</div>`:'';
  const secretRefereeLine=result.secretRefereePenalty?`<div class="goal-line"><b>⚖️ Arbitro ecuadoriano</b><br>${result.secretRefereePenalty==='for'?'Rigore garantito a favore applicato in questa partita.':'Rigore garantito contro applicato in questa partita.'}</div>`:'';
  const classicEventLine=(Array.isArray(result.eventUpdates)?result.eventUpdates:[]).map(update=>`<div class="goal-line ${update.success?'':'red-card-event'}"><b>${update.success?'✨':'🌙'} ${esc(update.title||'Evento')}</b><br>${esc(update.message||'')}</div>`).join('');
  const futurePenaltyLine=result.futureInjuryPenalty?`<div class="goal-line red-card-event"><b>⏳ Paradosso temporale</b><br>${esc(result.futureInjuryPenalty)}</div>`:'';
@@ -7484,7 +7507,7 @@ function showResultModal(){
  const mvpTeam=result.mvpTeamId?teamById(result.mvpTeamId):null;
  const mvpLine=mvpPlayer?`<div class="match-mvp" style="${teamCssVars(mvpTeam)}">${renderMiniAvatar(mvpPlayer,'small')}<div><span>⭐ MVP della partita</span><b>${esc(mvpPlayer.name)}</b><small>${mvpTeam?`${teamColorDot(mvpTeam)}${esc(mvpTeam.name)}`:''}</small></div></div>`:'';
  const scorersLine=`<div class="result-scorers">${renderResultScorers(result.goals,state.teamName)}${renderResultScorers(result.opponentGoals,result.opponent)}</div>`;
- modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${result.gf}–${result.ga}</div><button id="closeResult" class="btn primary result-continue-top">Continua</button>${scorersLine}${pinkLine}${redLine}${suspensionLine}${forcedLine}${fantaballopoliMatchLine}${fantaballopoliDisciplineLine}${federationLine}${pointsLine}${injuryLine}${secretRefereeLine}${classicEventLine}${futurePenaltyLine}${chickenTrainingLine}${chickenGoalLine}${penguinLine}${storyLine}${questLine}${cupLine}${champagneLine}${hungerLine}${subscriberLine}${coachResultLine}<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>${mvpLine}</div></div></div>`;
+ modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${result.gf}–${result.ga}</div><button id="closeResult" class="btn primary result-continue-top">Continua</button>${scorersLine}${pinkLine}${redLine}${suspensionLine}${forcedLine}${fantaballopoliMatchLine}${fantaballopoliDisciplineLine}${federationLine}${pointsLine}${injuryLine}${ductilityLine}${secretRefereeLine}${classicEventLine}${futurePenaltyLine}${chickenTrainingLine}${chickenGoalLine}${penguinLine}${storyLine}${questLine}${cupLine}${champagneLine}${hungerLine}${subscriberLine}${coachResultLine}<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>${mvpLine}</div></div></div>`;
  document.getElementById('closeResult').onclick=()=>{modalRoot.innerHTML='';render()};
 }
 
@@ -7577,7 +7600,7 @@ function runBotMidseason(){
    const selected=mandatoryId?(possibleIndexes.find(item=>String(item.entry.playerId)===mandatoryId)||pick(possibleIndexes)):pick(possibleIndexes);
    const outgoing=selected.entry;
    const usedIds=new Set(state.draft.roster.map(entry=>String(entry.playerId)));
-   let pool=PLAYERS.filter(player=>youngBeautifulAllowsPlayer(player)&&!usedIds.has(String(player.id))&&(outgoing.bench||compatible(player,outgoing.slot)));
+   let pool=PLAYERS.filter(player=>youngBeautifulAllowsPlayer(player)&&!usedIds.has(String(player.id))&&(outgoing.bench||userCompatible(player,outgoing.slot)));
    if(requiresEqualOrBetterMidseason(outgoing.playerId)){
      const compatiblePool=[...pool],threshold=Number(outgoing.player?.ovr||playerById(outgoing.playerId)?.ovr)||0;pool=pool.filter(player=>(Number(player.ovr)||0)>=threshold);
      if(!pool.length&&compatiblePool.length){const source=[...compatiblePool].sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0))[0],boosted=registerGeneratedEventPlayer({...source,baseOvr:originalBaseOvr(source),id:`event-alien-auto-${source.id}-${Date.now()}`,ovr:threshold,eventPlayer:true,eventUniverse:'alien-market'});pool=[boosted];}
@@ -7603,7 +7626,7 @@ function continueAfterBotMarket(){continueAfterMidseasonSummary()}
 function midseasonDrawLimit(){return 1+Math.max(0,Number(state.seasonRules?.midseasonExtraRerolls)||0)+(coachIs('talent-scout')?1:0)}
 function midseasonCanDraw(){return Math.max(0,Number(state.midseason?.drawsUsed)||0)<midseasonDrawLimit()}
 function midseasonDisplayedOvr(player,entry=null){
- const base=Math.round(Number(player?.ovr)||0);
+ const base=Math.round(ductilityEffectiveBaseOvr(player));
  const starters=starterEntries().map(item=>item.player).filter(Boolean);
  const baseChem=entry&&!entry.bench?Math.round(chemistryBase(player,starters)||0):0;
  const value=Math.round(base+effectiveChemistryFromBase(player,baseChem)+activeOvrBonus(player));return fantaballopoliAllowsNegativeOvr()?value:Math.max(1,value);
@@ -7670,7 +7693,7 @@ function drawMarket(){
  }
  if(!midseasonCanDraw())return toast(coachIs('talent-scout')?'Hai già utilizzato anche il re-roll aggiuntivo del Talent scout.':'L’estrazione è definitiva: non puoi cambiare club.');
  const used=new Set(state.draft.roster.map(entry=>String(entry.playerId)));
- let base=PLAYERS.filter(player=>player.club&&youngBeautifulAllowsPlayer(player)&&!used.has(String(player.id))&&(outgoing.bench||compatible(player,outgoing.slot)));
+ let base=PLAYERS.filter(player=>player.club&&youngBeautifulAllowsPlayer(player)&&!used.has(String(player.id))&&(outgoing.bench||userCompatible(player,outgoing.slot)));
  const equalStrengthRequired=requiresEqualOrBetterMidseason(outgoing.playerId),outgoingOvr=Number(outgoing.player?.ovr||playerById(outgoing.playerId)?.ovr)||0;
  if(equalStrengthRequired){
    const compatiblePool=[...base];base=base.filter(player=>(Number(player.ovr)||0)>=outgoingOvr);
