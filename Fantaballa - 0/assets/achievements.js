@@ -36,6 +36,8 @@
     { id:'quota-cento', category:'Stagionali', icon:'💯', title:'Quota cento', description:'Termina il campionato con almeno 100 punti.' },
     { id:'attacco-atomico-ii', category:'Stagionali', icon:'☄️', title:'Attacco atomico II', description:'Segna almeno 150 gol in una stagione.' },
     { id:'difesa-acciaio', category:'Stagionali', icon:'🔩', title:'Difesa d’acciaio', description:'Subisci meno di 20 gol in una stagione.' },
+    { id:'campione-al-minimo', category:'Stagionali', icon:'🪙', title:'Campione al minimo', description:'Vinci il campionato con al massimo 50 punti.' },
+    { id:'attacco-col-contagocce', category:'Stagionali', icon:'💧', title:'Attacco col contagocce', description:'Vinci il campionato segnando al massimo 38 gol.' },
 
     { id:'giovani-promesse', category:'Allenatori', icon:'✨', title:'Giovani promesse', description:'Vinci il campionato con “Giovani e belli”.' },
     { id:'fuori-dagli-schemi', category:'Allenatori', icon:'🔀', title:'Fuori dagli schemi', description:'Segna 10 gol con giocatori schierati fuori ruolo usando “Duttilità”.', target:10 },

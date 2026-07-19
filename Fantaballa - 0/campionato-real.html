@@ -3020,7 +3020,7 @@
 <div id="modalRoot"></div><div id="toast" class="toast"></div>
 <script src="assets/achievements.js"></script>
 <script>
-const CURRENT_STATE_VERSION=33;
+const CURRENT_STATE_VERSION=34;
 const SAVE_BASE='fantaballa_campionato_real_v1';
 const AUTO_SAVE_KEY=`${SAVE_BASE}_autosave`;
 const LEGACY_SAVE_KEYS=[];
@@ -3193,6 +3193,8 @@ function checkSeasonAchievements(rank,eliminated=false){
  if(Number(standing?.pts)>=100)unlockAchievement('quota-cento');
  if(Number(standing?.gf)>=150)unlockAchievement('attacco-atomico-ii');
  if(matches.length&&Number(standing?.ga)<20)unlockAchievement('difesa-acciaio');
+ if(wonTitle&&Number(standing?.pts)<=50)unlockAchievement('campione-al-minimo');
+ if(wonTitle&&Number(standing?.gf)<=38)unlockAchievement('attacco-col-contagocce');
  if(wonTitle&&coachIs('young-beautiful'))unlockAchievement('giovani-promesse');
  if(wonTitle&&coachIs('young-beautiful')&&achievementAllUsedPlayersUnder76(matches))unlockAchievement('fascia-verde');
  if(wonTitle&&achievementChangedAtLeastHalfRoster())unlockAchievement('nessuno-indispensabile');
@@ -3277,9 +3279,38 @@ function coachHighOvrSample(pool,count=1){
 function setupTeamBadge(name){const words=String(name||'FAN').trim().split(/\s+/).filter(Boolean);return (words.length>1?words.slice(0,3).map(word=>word[0]).join(''):words[0]?.slice(0,3)||'FAN').toUpperCase()}
 
 const POSITION_ROLE={P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'};
+
+const TEARLESS_EVENT_PLAYER={id:'mystery-tearless',name:'Tearless',role:'A',Position:'ATT',roleLabel:'Attaccante',nation:'Italia',ovr:51,baseOvr:51,subscriber:'no',abbonato:'no',club:'tearless-channel'};
+const ITALIA_2006_EVENT_PLAYERS=[
+ {id:'italia-2006-buffon',name:'Gianluigi Buffon',role:'P',Position:'P',roleLabel:'Portiere',nation:'Italia',ovr:99,baseOvr:99,club:'italia-2006'},
+ {id:'italia-2006-peruzzi',name:'Angelo Peruzzi',role:'P',Position:'P',roleLabel:'Portiere',nation:'Italia',ovr:80,baseOvr:80,club:'italia-2006'},
+ {id:'italia-2006-amelia',name:'Marco Amelia',role:'P',Position:'P',roleLabel:'Portiere',nation:'Italia',ovr:75,baseOvr:75,club:'italia-2006'},
+ {id:'italia-2006-cannavaro',name:'Fabio Cannavaro',role:'D',Position:'DC',roleLabel:'Difensore',nation:'Italia',ovr:99,baseOvr:99,club:'italia-2006'},
+ {id:'italia-2006-nesta',name:'Alessandro Nesta',role:'D',Position:'DC',roleLabel:'Difensore',nation:'Italia',ovr:97,baseOvr:97,club:'italia-2006'},
+ {id:'italia-2006-materazzi',name:'Marco Materazzi',role:'D',Position:'DC',roleLabel:'Difensore',nation:'Italia',ovr:85,baseOvr:85,club:'italia-2006'},
+ {id:'italia-2006-barzagli',name:'Andrea Barzagli',role:'D',Position:'DC',roleLabel:'Difensore',nation:'Italia',ovr:76,baseOvr:76,club:'italia-2006'},
+ {id:'italia-2006-grosso',name:'Fabio Grosso',role:'D',Position:'TS',roleLabel:'Difensore',nation:'Italia',ovr:89,baseOvr:89,club:'italia-2006'},
+ {id:'italia-2006-zambrotta',name:'Gianluca Zambrotta',role:'D',Position:'TD, TS',roleLabel:'Difensore',nation:'Italia',ovr:90,baseOvr:90,club:'italia-2006'},
+ {id:'italia-2006-zaccardo',name:'Cristian Zaccardo',role:'D',Position:'TD, DC',roleLabel:'Difensore',nation:'Italia',ovr:76,baseOvr:76,club:'italia-2006'},
+ {id:'italia-2006-oddo',name:'Massimo Oddo',role:'D',Position:'TD',roleLabel:'Difensore',nation:'Italia',ovr:80,baseOvr:80,club:'italia-2006'},
+ {id:'italia-2006-pirlo',name:'Andrea Pirlo',role:'C',Position:'CC, CDC, COC',roleLabel:'Centrocampista',nation:'Italia',ovr:99,baseOvr:99,club:'italia-2006'},
+ {id:'italia-2006-gattuso',name:'Gennaro Gattuso',role:'C',Position:'CDC, CC',roleLabel:'Centrocampista',nation:'Italia',ovr:99,baseOvr:99,club:'italia-2006'},
+ {id:'italia-2006-de-rossi',name:'Daniele De Rossi',role:'C',Position:'CDC, CC',roleLabel:'Centrocampista',nation:'Italia',ovr:92,baseOvr:92,club:'italia-2006'},
+ {id:'italia-2006-perrotta',name:'Simone Perrotta',role:'C',Position:'CC, COC',roleLabel:'Centrocampista',nation:'Italia',ovr:81,baseOvr:81,club:'italia-2006'},
+ {id:'italia-2006-camoranesi',name:'Mauro German Camoranesi',role:'C',Position:'CC, COC',roleLabel:'Centrocampista',nation:'Italia',ovr:88,baseOvr:88,club:'italia-2006'},
+ {id:'italia-2006-barone',name:'Simone Barone',role:'C',Position:'CC',roleLabel:'Centrocampista',nation:'Italia',ovr:75,baseOvr:75,club:'italia-2006'},
+ {id:'italia-2006-totti',name:'Francesco Totti',role:'C',Position:'COC, ATT',roleLabel:'Centrocampista',nation:'Italia',ovr:99,baseOvr:99,club:'italia-2006'},
+ {id:'italia-2006-toni',name:'Luca Toni',role:'A',Position:'ATT',roleLabel:'Attaccante',nation:'Italia',ovr:95,baseOvr:95,club:'italia-2006'},
+ {id:'italia-2006-gilardino',name:'Alberto Gilardino',role:'A',Position:'ATT',roleLabel:'Attaccante',nation:'Italia',ovr:88,baseOvr:88,club:'italia-2006'},
+ {id:'italia-2006-del-piero',name:'Alessandro Del Piero',role:'A',Position:'AS, ATT, COC',roleLabel:'Attaccante',nation:'Italia',ovr:99,baseOvr:99,club:'italia-2006'},
+ {id:'italia-2006-inzaghi',name:'Filippo Inzaghi',role:'A',Position:'ATT',roleLabel:'Attaccante',nation:'Italia',ovr:99,baseOvr:99,club:'italia-2006'},
+ {id:'italia-2006-iaquinta',name:'Vincenzo Iaquinta',role:'A',Position:'ATT, AD',roleLabel:'Attaccante',nation:'Italia',ovr:82,baseOvr:82,club:'italia-2006'}
+];
+const ITALIA_2006_FINAL_XI=['Gianluigi Buffon','Gianluca Zambrotta','Fabio Cannavaro','Alessandro Nesta','Fabio Grosso','Gennaro Gattuso','Andrea Pirlo','Daniele De Rossi','Francesco Totti','Luca Toni','Alessandro Del Piero'];
+
 let PLAYERS=[];let CLASSIC_PLAYERS=[];let REAL_PLAYERS=[];let CLUBS=[];let OTHER_CLUBS=[];let COMMENTARY=null;let state=loadState()||freshState();let draftRolling=false;let mobileDraftTab='players';let lastPlacedDraftSlotId='';let lastPlacedDraftTimer=null;let setupIdentitySaveTimer=null;let seasonEventMinimized=false;let seasonEventUiKey='';
 const screen=document.getElementById('screen'),modalRoot=document.getElementById('modalRoot'),toastEl=document.getElementById('toast');
-function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),coachType:normalizeCoachType(localStorage.getItem(SETUP_COACH_TYPE_KEY)||'anonymous'),formation:'4-3-3',gameMode:'normal',setupStep:1,teamPaletteId:String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa'),teamColors:teamColorsForPalette(String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa')),chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:'',openingClubShown:false},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],equalOrBetterMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,marathon:false,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,federationGoalRule:'',fgciPointsRule:'',fgciResultRule:'',italiaCatenaccioRule:'',dynamicLeague:'',dynamicLeagueLabel:'',dynamicLeagueAppliedAt:-1,dynamicLeagueTeamIds:[],nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[],laCurvaRewardActive:false,motivatorPermanentChemistry:{},ductilityScorerOvr:{},pendingParityReset:{active:false,parity:'',dueMatchday:-1,scheduledAt:-1,appliedMatchday:-1,lastResult:''},curvaContest:{active:false,mode:'',status:'idle',startedMatchday:-1,deadlineMatchday:-1,pendingTeamId:'',lastResult:'',switchedFromTeamName:'',switchedToTeamName:''},secretRefereeDeal:{active:false,choice:'',startedMatchday:-1,earnedPoints:0,matchesChecked:0,discovered:false,discoveredMatchday:-1,lastAdjustment:0}},quest:{active:false,id:'',title:'',status:'idle',acceptedMatchday:-1,matchesPlayed:0,progress:0,target:0,deadlineMatches:0,targetPlayerId:'',targetPlayerName:'',targetTeamIds:[],facedTeamIds:[],rewardActive:false,objective:'',reward:'',penalty:'',summary:'',notice:''},eventChains:{mentalista:{active:false,stage:0,playerId:'',playerName:'',originalOvr:0,dueMatchday:-1,training:false,nature:false,goals:0,completed:false},general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false},pinguino:{active:false,stage:0,dueMatchday:-1,mode:'',completed:false,wins:0,nonWins:0}},analytics:{initialOvr:0,injuries:0,redCards:0,eventLog:[],biggestResult:null},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},cup:{status:'pending',qualifiedRank:0,currentCompetition:'',otherCompetition:'',participants:[],userParticipantId:'cup-user',userAlive:true,winnerId:'',rewardApplied:false,penaltyApplied:false,rewardType:'',penaltyType:'',notice:'',history:[],stages:[],pendingMatch:null,lastResult:null},story:{merit:{initialized:false,scheduled:false,triggerMatchday:-1,stage:'idle',playerId:'',playerName:'',recipientTeamId:'',recipientTeamName:'',promoted:false,guaranteedGoalPending:false,transferred:false,branch:'',postMidseasonShown:false,challenge:{active:false,status:'idle',attackerId:'',attackerName:'',matchesPlayed:0,goals:0},ovrModifiers:{},finale:{eligible:false,opponent:'',nation:'',played:false,userGoals:0,opponentGoals:0,won:false,pointsDelta:0,pointsApplied:false}},fantaballopoli:{initialized:false,scheduled:false,triggerMatchday:-1,stage:'idle',forcedLossPending:false,targetPlayerId:'',targetPlayerName:'',targetRole:'',midseasonResolved:false,giudaId:'',curseActive:false,negativeOvrAllowed:false,curseMatches:0,satisfactionAfter:0,corruptionFull:false,corruptionMatchIndex:0,investigatorDueMatchday:0,investigatorShown:false,abruptEnd:false,completed:false,finale:{eligible:false,played:false,userGoals:0,opponentGoals:0,won:false,pointsApplied:false}}},lastResult:null,submitted:false};}
+function freshState(){return{version:CURRENT_STATE_VERSION,meta:{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),autosave:true,submissionCode:'',submittedAt:''},phase:'setup',userClubId:'fantaballa-real',teamName:String(localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL'),coachName:String(localStorage.getItem(SETUP_COACH_NAME_KEY)||''),coachType:normalizeCoachType(localStorage.getItem(SETUP_COACH_TYPE_KEY)||'anonymous'),formation:'4-3-3',gameMode:'normal',setupStep:1,teamPaletteId:String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa'),teamColors:teamColorsForPalette(String(localStorage.getItem(SETUP_PALETTE_KEY)||'fantaballa')),chaos:{lastPreparedMatchday:-1,totalDecisions:0,currentRound:null,latest:[],midseasonDone:false},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:'',openingClubShown:false},leagueClubIds:[],teams:[],schedule:[],standings:{},matchday:0,history:[],statuses:{},playInjured:{},pendingEvent:null,seenDecisionEvents:[],activeEffects:[],seasonRules:{midseasonPickDelta:0,midseasonExtraRerolls:0,autoDecisions:false,autoMidseason:false,botMidseason:false,mandatoryMidseasonPlayerId:'',mandatoryMidseasonPlayerIds:[],equalOrBetterMidseasonPlayerIds:[],marottaDoubleWins:false,marottaLossPenalty:0,winPoints:3,drawPoints:1,seasonLength:38,marathon:false,matchDuration:90,longMatchRisk:false,deathMatchClubId:'',deathMatchClubName:'',deathMatchClubBonus:10,sixtyPointFear:false,sixtyPointFearTriggered:false,redCardGoals:false,pointsEqualGoals:false,yellowEqualsRed:false,pinkCardEndsMatch:false,federationGoalRule:'',fgciPointsRule:'',fgciResultRule:'',italiaCatenaccioRule:'',dynamicLeague:'',dynamicLeagueLabel:'',dynamicLeagueAppliedAt:-1,dynamicLeagueTeamIds:[],nonItalianChemZero:false,eventChanceMultiplier:1,leagueFormation:'',userFormationOverride:'',injuredOvrBonus:0,lateGoalsDouble:false,zeroZeroNoPoints:false,topPlayerAfterMandatoryId:'',guaranteedTopPlayerNextMidseason:false,coachTopSwapPlayerId:'',fantaguruBetterMidseason:false,autoOptimizeLineup:false,futureScorerPlayerId:'',futureScorerPlayerName:'',futureInjuryZeroPoints:false,futureInjuryPenaltyNotice:'',hungerGames:false,eliminatedTeamIds:[],generatedEventPlayers:[],laCurvaRewardActive:false,motivatorPermanentChemistry:{},ductilityScorerOvr:{},pendingParityReset:{active:false,parity:'',dueMatchday:-1,scheduledAt:-1,appliedMatchday:-1,lastResult:''},curvaContest:{active:false,mode:'',status:'idle',startedMatchday:-1,deadlineMatchday:-1,pendingTeamId:'',lastResult:'',switchedFromTeamName:'',switchedToTeamName:''},secretRefereeDeal:{active:false,choice:'',startedMatchday:-1,earnedPoints:0,matchesChecked:0,discovered:false,discoveredMatchday:-1,lastAdjustment:0}},quest:{active:false,id:'',title:'',status:'idle',acceptedMatchday:-1,matchesPlayed:0,progress:0,target:0,deadlineMatches:0,targetPlayerId:'',targetPlayerName:'',targetTeamIds:[],facedTeamIds:[],rewardActive:false,objective:'',reward:'',penalty:'',summary:'',notice:''},eventChains:{mentalista:{active:false,stage:0,playerId:'',playerName:'',originalOvr:0,dueMatchday:-1,training:false,nature:false,goals:0,completed:false},general:{active:false,stage:0,dueMatchday:-1,replacements:[],nationalBoostPending:false,completed:false},pinguino:{active:false,stage:0,dueMatchday:-1,mode:'',completed:false,wins:0,nonWins:0},mysteryCharacter:{active:false,stage:0,branch:'',playerId:'',playerName:'',dueMatchday:-1,completed:false,finale:{eligible:false,categories:[],played:false,userGoals:0,opponentGoals:0,won:false,pointsDelta:0,pointsApplied:false}}},analytics:{initialOvr:0,injuries:0,redCards:0,eventLog:[],biggestResult:null},stats:{goals:{},assists:{},appearances:{},cleanSheets:{},mvpVotes:{},mvpPoints:{},playerNames:{},playerTeams:{},playerTeamNames:{}},midseason:{step:0,target:2,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto:false,autoCompleted:false,changes:[]},cup:{status:'pending',qualifiedRank:0,currentCompetition:'',otherCompetition:'',participants:[],userParticipantId:'cup-user',userAlive:true,winnerId:'',rewardApplied:false,penaltyApplied:false,rewardType:'',penaltyType:'',notice:'',history:[],stages:[],pendingMatch:null,lastResult:null},story:{merit:{initialized:false,scheduled:false,triggerMatchday:-1,stage:'idle',playerId:'',playerName:'',recipientTeamId:'',recipientTeamName:'',promoted:false,guaranteedGoalPending:false,transferred:false,branch:'',postMidseasonShown:false,challenge:{active:false,status:'idle',attackerId:'',attackerName:'',matchesPlayed:0,goals:0},ovrModifiers:{},finale:{eligible:false,opponent:'',nation:'',played:false,userGoals:0,opponentGoals:0,won:false,pointsDelta:0,pointsApplied:false}},fantaballopoli:{initialized:false,scheduled:false,triggerMatchday:-1,stage:'idle',forcedLossPending:false,targetPlayerId:'',targetPlayerName:'',targetRole:'',midseasonResolved:false,giudaId:'',curseActive:false,negativeOvrAllowed:false,curseMatches:0,satisfactionAfter:0,corruptionFull:false,corruptionMatchIndex:0,investigatorDueMatchday:0,investigatorShown:false,abruptEnd:false,completed:false,finale:{eligible:false,played:false,userGoals:0,opponentGoals:0,won:false,pointsApplied:false}}},lastResult:null,submitted:false};}
 function parseStoredState(raw,key){
  if(!raw)return null;
  try{return JSON.parse(raw)}catch(error){
@@ -3666,6 +3697,26 @@ function normalizeCampionatoState(input){
  next.eventChains.pinguino.completed=Boolean(next.eventChains.pinguino.completed);
  next.eventChains.pinguino.wins=Math.max(0,Number(next.eventChains.pinguino.wins)||0);
  next.eventChains.pinguino.nonWins=Math.max(0,Number(next.eventChains.pinguino.nonWins)||0);
+
+ next.eventChains.mysteryCharacter=next.eventChains.mysteryCharacter&&typeof next.eventChains.mysteryCharacter==='object'?next.eventChains.mysteryCharacter:{};
+ const mysteryCharacterState=next.eventChains.mysteryCharacter;
+ mysteryCharacterState.active=Boolean(mysteryCharacterState.active);
+ mysteryCharacterState.stage=Math.max(0,Number(mysteryCharacterState.stage)||0);
+ mysteryCharacterState.branch=['tearless','champion'].includes(String(mysteryCharacterState.branch))?String(mysteryCharacterState.branch):'';
+ mysteryCharacterState.playerId=String(mysteryCharacterState.playerId||'');
+ mysteryCharacterState.playerName=String(mysteryCharacterState.playerName||'');
+ mysteryCharacterState.dueMatchday=Number.isFinite(Number(mysteryCharacterState.dueMatchday))?Number(mysteryCharacterState.dueMatchday):-1;
+ mysteryCharacterState.completed=Boolean(mysteryCharacterState.completed);
+ mysteryCharacterState.finale=mysteryCharacterState.finale&&typeof mysteryCharacterState.finale==='object'?mysteryCharacterState.finale:{};
+ mysteryCharacterState.finale.eligible=Boolean(mysteryCharacterState.finale.eligible);
+ mysteryCharacterState.finale.categories=[...new Set((Array.isArray(mysteryCharacterState.finale.categories)?mysteryCharacterState.finale.categories:[]).map(String).filter(Boolean))];
+ mysteryCharacterState.finale.played=Boolean(mysteryCharacterState.finale.played);
+ mysteryCharacterState.finale.userGoals=Math.max(0,Number(mysteryCharacterState.finale.userGoals)||0);
+ mysteryCharacterState.finale.opponentGoals=Math.max(0,Number(mysteryCharacterState.finale.opponentGoals)||0);
+ mysteryCharacterState.finale.won=Boolean(mysteryCharacterState.finale.won);
+ mysteryCharacterState.finale.pointsDelta=Number(mysteryCharacterState.finale.pointsDelta)||0;
+ mysteryCharacterState.finale.pointsApplied=Boolean(mysteryCharacterState.finale.pointsApplied);
+
  (Array.isArray(next.draft?.roster)?next.draft.roster:[]).forEach(entry=>{entry.tipsterForcedMatches=Math.max(0,Number(entry.tipsterForcedMatches)||0);entry.tipsterForced=entry.tipsterForcedMatches>0;});
 
  next.story=next.story&&typeof next.story==='object'?next.story:{};
@@ -5776,6 +5827,105 @@ function penguinChain(){
  state.eventChains.pinguino=state.eventChains.pinguino&&typeof state.eventChains.pinguino==='object'?state.eventChains.pinguino:{active:false,stage:0,dueMatchday:-1,mode:'',completed:false,wins:0,nonWins:0};
  return state.eventChains.pinguino;
 }
+
+function mysteryCharacterChain(){
+ state.eventChains=state.eventChains&&typeof state.eventChains==='object'?state.eventChains:{};
+ state.eventChains.mysteryCharacter=state.eventChains.mysteryCharacter&&typeof state.eventChains.mysteryCharacter==='object'?state.eventChains.mysteryCharacter:{active:false,stage:0,branch:'',playerId:'',playerName:'',dueMatchday:-1,completed:false,finale:{eligible:false,categories:[],played:false,userGoals:0,opponentGoals:0,won:false,pointsDelta:0,pointsApplied:false}};
+ const chain=state.eventChains.mysteryCharacter;
+ chain.finale=chain.finale&&typeof chain.finale==='object'?chain.finale:{eligible:false,categories:[],played:false,userGoals:0,opponentGoals:0,won:false,pointsDelta:0,pointsApplied:false};
+ return chain;
+}
+function mysteryGeneratedPlayer(source,tag='guest'){
+ const stamp=`${Date.now()}-${Math.floor(Math.random()*1000000)}`;
+ return registerGeneratedEventPlayer({...source,id:`event-${tag}-${String(source.id||'player')}-${stamp}`,baseOvr:Math.max(1,Number(source.baseOvr??source.ovr)||60),eventPlayer:true,eventUniverse:tag,club:String(source.club||tag)});
+}
+function replaceRandomRosterWithMysteryPlayer(source,tag){
+ if(talentScoutBlocksExternalArrival())return{blocked:true,message:talentScoutBlockMessage()};
+ if(!youngBeautifulAllowsPlayer(source))return{blocked:true,message:youngBeautifulBlockMessage(source)};
+ const candidates=state.draft.roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>item.player);
+ if(!candidates.length)return{blocked:true,message:'Nessun giocatore disponibile da sostituire.'};
+ const target=pick(candidates),incoming=mysteryGeneratedPlayer(source,tag),change=replaceUserRosterPlayer(target.index,incoming);
+ if(!change||change.blocked)return{blocked:true,message:change?.message||'Il nuovo giocatore non può essere registrato.'};
+ refreshOpponentClubRosters();
+ return{...change,index:target.index};
+}
+function randomFutureMysteryMatchday(){
+ const first=Math.min(seasonLength()-1,Number(state.matchday)+1),last=Math.max(first,seasonLength()-1);
+ return first+Math.floor(Math.random()*Math.max(1,last-first+1));
+}
+function recruitTearless(){
+ const change=replaceRandomRosterWithMysteryPlayer(TEARLESS_EVENT_PLAYER,'tearless');
+ if(change.blocked)return change.message;
+ const chain=mysteryCharacterChain();
+ Object.assign(chain,{active:true,stage:1,branch:'tearless',playerId:String(change.incoming.id),playerName:String(change.incoming.name),dueMatchday:randomFutureMysteryMatchday(),completed:false,finale:{eligible:false,categories:[],played:false,userGoals:0,opponentGoals:0,won:false,pointsDelta:0,pointsApplied:false}});
+ return `${change.outgoing?.name||'Un giocatore casuale'} lascia il posto a Tearless (51 OVR). Il suo futuro nella squadra si deciderà in un momento casuale della stagione.`;
+}
+function recruitWorldChampion(){
+ if(talentScoutBlocksExternalArrival())return talentScoutBlockMessage();
+ const available=ITALIA_2006_EVENT_PLAYERS.filter(player=>youngBeautifulAllowsPlayer(player));
+ if(!available.length)return 'Nessun campione del mondo è compatibile con le regole del tuo allenatore.';
+ const source=pick(available),change=replaceRandomRosterWithMysteryPlayer(source,'italia-2006');
+ if(change.blocked)return change.message;
+ const chain=mysteryCharacterChain();
+ Object.assign(chain,{active:true,stage:2,branch:'champion',playerId:String(change.incoming.id),playerName:String(change.incoming.name),dueMatchday:-1,completed:false,finale:{eligible:false,categories:[],played:false,userGoals:0,opponentGoals:0,won:false,pointsDelta:0,pointsApplied:false}});
+ return `${change.outgoing?.name||'Un giocatore casuale'} lascia la rosa: arriva ${change.incoming.name} (${Number(change.incoming.ovr)||0} OVR), campione del mondo 2006. Se chiuderà al primo posto in una classifica individuale finale, affronterai l’Italia 2006.`;
+}
+function updateMysteryGeneratedPlayerOvr(playerId,value){
+ const id=String(playerId||''),entry=rosterEntry(id),player=entry?.player||playerById(id);if(!entry||!player)return null;
+ const after=Math.max(1,Math.round(Number(value)||Number(player.ovr)||60));entry.player={...player,ovr:after};
+ const generated=(state.seasonRules.generatedEventPlayers||[]).find(item=>String(item.id)===id);if(generated)generated.ovr=after;
+ return entry.player;
+}
+function resolveTearlessSecondAct(){
+ const chain=mysteryCharacterChain(),entry=rosterEntry(chain.playerId);
+ chain.active=false;chain.stage=3;chain.dueMatchday=-1;chain.completed=true;
+ if(!entry)return{title:'Tearless è introvabile',text:'Il misterioso YouTuber non è più presente nella rosa.',result:'Tearless era già uscito dalla squadra: nessun effetto.'};
+ if(Math.random()<.5){
+   if(coachIs('ductility'))return{title:'Tearless sa giocare molto bene a 0-0-0',text:'Tearless sostiene di essersi potenziato fino a 150 OVR.',result:'Duttilità impedisce qualsiasi potenziamento esterno: Tearless resta a 51 OVR.'};
+   const boosted=updateMysteryGeneratedPlayerOvr(chain.playerId,150);
+   return{title:'Tearless sa giocare molto bene a 0-0-0',text:'Tearless ha finalmente capito tutti i segreti del gioco.',result:`${boosted?.name||'Tearless'} si potenzia fino a 150 OVR per il resto della stagione!`};
+ }
+ const result=removeOwnRosterPlayerPermanently(entry,'la sua completa avversione per 0-0-0');
+ return{title:'A Tearless fa schifo questo gioco',text:'Tearless non vuole più sentir parlare di 0-0-0.',result};
+}
+function mysteryPlayerLeadingBuckets(playerId){
+ const labels={goals:'Capocannonieri',assists:'Assist',mvpVotes:'MVP',cleanSheets:'Porte inviolate'};
+ return Object.keys(labels).filter(bucket=>meritPlayerLeadsBucket(playerId,bucket)).map(bucket=>labels[bucket]);
+}
+function prepareMysteryCharacterFinale(){
+ const chain=mysteryCharacterChain();
+ if(isTeamEliminated(USER_ID)||chain.branch!=='champion'||chain.finale?.played||chain.finale?.eligible)return false;
+ const categories=mysteryPlayerLeadingBuckets(chain.playerId);
+ if(!categories.length){chain.active=false;chain.completed=true;return false}
+ chain.active=false;chain.stage=3;chain.finale={eligible:true,categories,played:false,userGoals:0,opponentGoals:0,won:false,pointsDelta:0,pointsApplied:false};
+ state.phase='italia-2006-final';return true;
+}
+function italia2006OpponentPower(){
+ const lineup=ITALIA_2006_FINAL_XI.map(name=>ITALIA_2006_EVENT_PLAYERS.find(player=>player.name===name)).filter(Boolean);
+ return lineup.length?lineup.reduce((sum,player)=>sum+(Number(player.ovr)||0),0)/lineup.length:96;
+}
+function italia2006RosterHtml(){
+ const groups=[['Portieri','P'],['Difensori','D'],['Centrocampisti','C'],['Attaccanti','A']];
+ return `<div class="final-player-stats-grid">${groups.map(([title,role])=>`<div class="season-report-item"><span>${title}</span><small>${ITALIA_2006_EVENT_PLAYERS.filter(player=>player.role===role).map(player=>`${esc(player.name)} <b>${Number(player.ovr)||0}</b>`).join(' · ')}</small></div>`).join('')}</div>`;
+}
+function playItalia2006Final(){
+ const chain=mysteryCharacterChain(),finale=chain.finale;if(!finale?.eligible||finale.played)return;
+ let [gf,ga]=simulateScore(Math.max(35,matchPower()),Math.max(35,italia2006OpponentPower()),.03,90);if(gf===ga){if(Math.random()<.5)gf++;else ga++}
+ finale.played=true;finale.userGoals=gf;finale.opponentGoals=ga;finale.won=gf>ga;finale.pointsDelta=finale.won?30:0;
+ if(finale.won&&!finale.pointsApplied&&userStanding()){userStanding().pts+=30;finale.pointsApplied=true}
+ save();render();
+}
+function finishItalia2006Final(){
+ const chain=mysteryCharacterChain();chain.completed=true;
+ if(!prepareMeritStoryFinale())state.phase='finished';
+ save();render();
+}
+function showItalia2006Final(){
+ const chain=mysteryCharacterChain(),finale=chain.finale,categories=(finale.categories||[]).join(', ')||'classifica individuale';
+ if(!finale.played){screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Sfida speciale · Italia 2006</div><h2>Campioni del mondo</h2><div class="final-position">VS</div><p>${esc(chain.playerName||'Il giocatore ricevuto')} ha chiuso al primo posto in: <b>${esc(categories)}</b>.</p></div><div class="panel"><h3>Affronta l’Italia del 2006</h3><p>Se vinci, ottieni <b>+30 punti</b> nella classifica del campionato appena concluso. Una sconfitta non assegna penalità.</p>${italia2006RosterHtml()}<button id="playItalia2006Final" class="btn primary">Gioca la sfida</button></div></section>`;document.getElementById('playItalia2006Final').onclick=playItalia2006Final;return}
+ screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Sfida Italia 2006 conclusa</div><h2>${finale.won?'Hai battuto i campioni del mondo!':'L’Italia 2006 resiste'}</h2><div class="final-position">${finale.userGoals}–${finale.opponentGoals}</div><p>${esc(state.teamName)} contro l’Italia campione del mondo.</p></div><div class="panel"><h3>${finale.won?'+30 punti in campionato':'Nessun punto bonus'}</h3><p>${finale.won?'Il premio è stato aggiunto alla classifica prima del riepilogo finale.':'La classifica del campionato non viene modificata.'}</p><button id="finishItalia2006Final" class="btn primary">Vai al recap finale</button></div></section>`;document.getElementById('finishItalia2006Final').onclick=finishItalia2006Final;
+}
+
 function normalizeTipsterBenchSlots(){
  const bench=state.draft.roster.filter(entry=>entry&&entry.bench);
  bench.forEach((entry,index)=>{entry.slot=`PAN${index+1}`;entry.slotId=`bench-${index+1}`});
@@ -6053,8 +6203,9 @@ function queueChainedAuto(title,text,result){
  const before=analyticsSnapshot();recordSeasonEvent({kind:'auto',title,choice:'Evento concatenato',effect:text,result,automatic:true},before);state.pendingEvent={kind:'auto',chained:true,resolved:true,title,text,result};return true;
 }
 function prepareChainedEvent(){
- const mental=mentalistaChain(),general=generalChain(),penguin=penguinChain(),day=Number(state.matchday);
+ const mental=mentalistaChain(),general=generalChain(),penguin=penguinChain(),mystery=mysteryCharacterChain(),day=Number(state.matchday);
  if(mental.active&&mental.stage===3&&day>=Number(mental.dueMatchday)){return queueChainedAuto('Il re del pollaio','Il pollo ha segnato almeno tre gol e completa la sua trasformazione.',crownChickenKing())}
+ if(mystery.active&&mystery.branch==='tearless'&&mystery.stage===1&&day>=Number(mystery.dueMatchday)){const outcome=resolveTearlessSecondAct();return queueChainedAuto(outcome.title,outcome.text,outcome.result)}
  if(mental.active&&mental.stage===1&&day>=Number(mental.dueMatchday)){if(!chickenRosterEntry()){Object.assign(mental,{active:false,stage:0,dueMatchday:-1,completed:true});return false}return queueChainedDecision('mentalista-pollaio')}
  if(penguin.active&&penguin.stage===1&&day>=Number(penguin.dueMatchday))return queueChainedAuto('Ludopatia','Il misterioso pinguino torna per rivelare le conseguenze della scommessa.',resolvePenguinLudopatia());
  if(general.active&&general.stage===1&&day>=Number(general.dueMatchday))return queueChainedDecision('generale-documenti');
@@ -6980,6 +7131,11 @@ const DECISIONS=[
   {label:'Obblighi tutti a partecipare',effect:'×2 Intesa per 1 giornata',apply(){pushEffect('teamChemMultiplier',2,1);return 'Tutti i bonus Intesa positivi dei titolari vengono raddoppiati nella prossima partita.'}},
   {label:'Interrompi il seminario e fate allenamento',effect:'+6 OVR, ma Intesa azzerata nella prossima partita',apply(){pushEffect('teamOvr',6,1);pushEffect('teamChemZero',1,1);return '+6 OVR alla squadra e Intesa azzerata nella prossima partita.'}}
  ]},
+
+ {id:'personaggio-misterioso-tearless-italia-2006',userOnly:true,title:'Un misterioso personaggio ti si avvicina',text:'«Ehi, sai chi sono?»',available(){const chain=mysteryCharacterChain();return Number(state.matchday)<seasonLength()-2&&!chain.active&&!chain.completed},choices:[
+  {label:'Ah sì, sei un famoso YouTuber!',effect:'Tearless (51 OVR) arriva in squadra al posto di un giocatore casuale.',apply(){return recruitTearless()}},
+  {label:'Non sei un campione del mondo?',effect:'Uno dei campioni del mondo 2006 arriva al posto di un giocatore casuale. Se vincerà una classifica individuale finale, affronterai l’Italia 2006 per ottenere 30 punti.',apply(){return recruitWorldChampion()}}
+ ]},
  {id:'cassaaa-pinguino',userOnly:true,title:'Capitolo 1: Cassaaa',text:'Arriva un misterioso pinguino e ti propone una scommessa decisamente sospetta.',available(){return Number(state.matchday)<seasonLength()-3&&!penguinChain().active&&!penguinChain().completed},choices:[
   {label:'1+over 5,3 x Steell cage',effect:'La prossima partita finisce 3-2 per te, ma devi iscriverti al suo canale. In seguito si attiverà il Capitolo 2.',apply(){return acceptCassaaaBet()}},
   {label:'Scrolla',effect:'Non lo ascolti e ti concentri sulla prossima partita',apply(){return scrollPenguin()}}
@@ -7829,7 +7985,7 @@ function postMatch(){
  resolveSecretRefereeAfterMatch(result);
  state.activeEffects.forEach(effect=>{if(!effectLastsUntilSeasonEnd(effect))effect.rounds--});state.activeEffects=state.activeEffects.filter(effect=>effectLastsUntilSeasonEnd(effect)||effect.rounds>0);activateRestRewards(classicRestRewards,result);activatePendingNationalBoost();state.playInjured={};tickChaosOpponentEffects();resolvePendingParityResetAfterRound(result);resolveCurvaContestAfterRound(result);state.matchday++;state.pendingEvent=null;
  if(state.matchday===19){runChaosOpponentMidseason();const target=midseasonTarget(),auto=Boolean(state.seasonRules.autoMidseason||state.seasonRules.botMidseason),mandatoryIds=mandatoryMidseasonPlayerIds().filter(id=>rosterEntry(id)).slice(0,3),mandatory=mandatoryIds[0]||'';state.midseason={step:0,target:clamp(Math.max(target,mandatoryIds.length),1,3),outgoingId:mandatory,mandatoryOutgoingId:mandatory,mandatoryOutgoingIds:mandatoryIds,clubId:'',nation:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto,autoCompleted:false,changes:[]};state.phase='midseason';}
- else if(isTeamEliminated(USER_ID)||state.matchday>=seasonLength()){if(!prepareMeritStoryFinale())state.phase='finished'}else if(!curvaContestState().pendingTeamId)prepareEvent();
+ else if(isTeamEliminated(USER_ID)||state.matchday>=seasonLength()){if(!prepareMysteryCharacterFinale()&&!prepareMeritStoryFinale())state.phase='finished'}else if(!curvaContestState().pendingTeamId)prepareEvent();
 }
 function renderResultScorers(goals,teamName){
  const grouped=new Map();(Array.isArray(goals)?goals:[]).forEach(goal=>{const name=String(goal?.player||'Marcatore');if(!grouped.has(name))grouped.set(name,[]);grouped.get(name).push({minute:Number(goal?.minute)||0,value:Math.max(1,Number(goal?.goalValue)||1)});});
@@ -8308,7 +8464,7 @@ async function sendSeason(){
  }
 }
 function exportSeason(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fantaballa-campionato-risultati.json';a.click();URL.revokeObjectURL(a.href)}
-function render(){updateSaveStatus();if(!PLAYERS.length||!CLUBS.length){screen.innerHTML='<section class="panel"><h2>Caricamento database giocatori...</h2></section>';return}if(state.phase==='setup')showSetup();else if(state.phase==='draft')showDraft();else if(state.phase==='season')showSeason();else if(state.phase==='midseason')showMidseason();else if(state.phase==='story-final')showMeritStoryFinale();else if(state.phase==='fantaballopoli-final')showFantaballopoliFinal();else if(state.phase==='fantaballopoli-restart')showFantaballopoliRestart();else if(state.phase==='finished')showFinished();updateSaveStatus()}
+function render(){updateSaveStatus();if(!PLAYERS.length||!CLUBS.length){screen.innerHTML='<section class="panel"><h2>Caricamento database giocatori...</h2></section>';return}if(state.phase==='setup')showSetup();else if(state.phase==='draft')showDraft();else if(state.phase==='season')showSeason();else if(state.phase==='midseason')showMidseason();else if(state.phase==='story-final')showMeritStoryFinale();else if(state.phase==='italia-2006-final')showItalia2006Final();else if(state.phase==='fantaballopoli-final')showFantaballopoliFinal();else if(state.phase==='fantaballopoli-restart')showFantaballopoliRestart();else if(state.phase==='finished')showFinished();updateSaveStatus()}
 async function boot(){
  try{
    [PLAYERS,CLUBS,COMMENTARY,CLASSIC_PLAYERS,OTHER_CLUBS]=await Promise.all([
