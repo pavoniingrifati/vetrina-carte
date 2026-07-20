@@ -74,6 +74,15 @@
     { id:'trenta-denari', category:'Tearless e Italia 2006', icon:'🪙', title:'Trenta denari', description:'Vinci il campionato grazie ai 30 punti ottenuti contro l’Italia 2006.' },
     { id:'eroe-nazionale', category:'Tearless e Italia 2006', icon:'🏅', title:'Eroe nazionale', description:'Il campione del mondo ricevuto vince almeno due classifiche individuali.' },
 
+    { id:'benvenuti-a-fantaballopoli', category:'Fantaballopoli', icon:'🕴️', title:'Benvenuti a Fantaballopoli', description:'Avvia per la prima volta la storia principale Fantaballopoli.' },
+    { id:'mani-pulite', category:'Fantaballopoli', icon:'🧼', title:'Mani pulite', description:'Completa Fantaballopoli rifiutando ogni proposta illecita.' },
+    { id:'dentro-fino-al-collo', category:'Fantaballopoli', icon:'🕳️', title:'Dentro fino al collo', description:'Accetta tutte le proposte compromettenti della storia.' },
+    { id:'giuda', category:'Fantaballopoli', icon:'💋', title:'Giuda', description:'Subisci il tradimento del giocatore scelto dalla storia.' },
+    { id:'il-bacio-di-giuda', category:'Fantaballopoli', icon:'🏆', title:'Il bacio di Giuda', description:'Vinci comunque il campionato dopo il tradimento.' },
+    { id:'scudetto-di-cartone', category:'Fantaballopoli', icon:'📦', title:'Scudetto di cartone', description:'Vinci il campionato dopo aver ottenuto punti o vantaggi tramite Fantaballopoli.' },
+    { id:'sistema-abbattuto', category:'Fantaballopoli', icon:'⚒️', title:'Sistema abbattuto', description:'Completa la strada più onesta e vinci il campionato.' },
+    { id:'intercettazioni', category:'Fantaballopoli', icon:'🎙️', title:'Intercettazioni', description:'Vieni scoperto dopo aver accettato un accordo illecito.' },
+
     { id:'non-doveva-finire-cosi', category:'Eventi', icon:'📺', title:'Non doveva finire così', description:'Ottieni una vittoria con il risultato casuale del VAR non aggiornato.' },
     { id:'cambio-di-panchina', category:'Eventi', icon:'🔄', title:'Cambio di panchina', description:'Perdi la sfida della curva, prendi una nuova squadra e vinci il campionato.' },
     { id:'da-zero-alla-gloria', category:'Eventi', icon:'0️⃣', title:'Da zero alla gloria', description:'Dopo essere stato azzerato dall’evento Pari o Dispari, torna nelle prime due posizioni.' },

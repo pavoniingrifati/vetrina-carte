@@ -3053,6 +3053,32 @@ function addAchievementProgress(id,amount=1,extra={}){return window.FantaballaAc
 function setAchievementCareerFlag(key,value=true){return window.FantaballaAchievements?.setCareerFlag?.(achievementCareerId(),key,value)}
 function getAchievementCareerFlag(key){return window.FantaballaAchievements?.getCareerFlag?.(achievementCareerId(),key)}
 function clearAchievementCareerFlag(key){return window.FantaballaAchievements?.clearCareerFlag?.(achievementCareerId(),key)}
+function achievementFantaballopoliOpeningAccepted(){
+ const story=fantaballopoliState();
+ return Boolean(getAchievementCareerFlag('fantaballopoliOpeningAccepted')||story.forcedLossPending||story.targetPlayerId||story.giudaId||story.corruptionFull||story.investigatorShown||['forced_loss_pending','part2_waiting','awaiting_midseason','curse','satisfaction_waiting','corruption','investigator_waiting','accusation','juventus_final','restart_message','confessed','ended_denial_no_title'].includes(String(story.stage||'')));
+}
+function achievementFantaballopoliBetrayal(){
+ const story=fantaballopoliState();
+ return Boolean(getAchievementCareerFlag('fantaballopoliGiudaBetrayal')||story.giudaId||story.curseMatches>0||story.curseActive||story.corruptionFull);
+}
+function achievementFantaballopoliAcceptedAll(){
+ const story=fantaballopoliState(),opening=achievementFantaballopoliOpeningAccepted(),trade=Boolean(getAchievementCareerFlag('fantaballopoliTradeComplied')||story.giudaId),more=Boolean(getAchievementCareerFlag('fantaballopoliAcceptedMore')||story.corruptionFull||story.investigatorShown||['corruption','investigator_waiting','accusation','juventus_final','restart_message','confessed','ended_denial_no_title'].includes(String(story.stage||'')));
+ return opening&&trade&&more;
+}
+function achievementFantaballopoliUsedAdvantages(matches=[]){
+ const story=fantaballopoliState();
+ const matchAdvantage=(Array.isArray(matches)?matches:[]).some(match=>Boolean(match?.fantaballopoliForcedWin||match?.fantaballopoliNegativeGoals||(Array.isArray(match?.fantaballopoliExpulsions)&&match.fantaballopoliExpulsions.length)||(Array.isArray(match?.fantaballopoliInjuries)&&match.fantaballopoliInjuries.length)));
+ return Boolean(matchAdvantage||story.finale?.pointsApplied);
+}
+function syncFantaballopoliAchievements(){
+ const story=fantaballopoliState(),stage=String(story.stage||'');
+ const started=!['','idle','inactive','waiting'].includes(stage);
+ if(started)unlockAchievement('benvenuti-a-fantaballopoli');
+ if(stage==='rejected'||getAchievementCareerFlag('fantaballopoliOpeningRejected'))unlockAchievement('mani-pulite');
+ if(achievementFantaballopoliBetrayal())unlockAchievement('giuda');
+ if(achievementFantaballopoliAcceptedAll())unlockAchievement('dentro-fino-al-collo');
+ if(story.investigatorShown||getAchievementCareerFlag('fantaballopoliInvestigatorReached')||['investigator_waiting','accusation','juventus_final','restart_message','confessed','ended_denial_no_title'].includes(stage))unlockAchievement('intercettazioni');
+}
 function achievementGoalValue(event){return Math.max(1,Number(event?.goalValue)||1)}
 function achievementWasRemuntada(userGoals=[],opponentGoals=[],gf=0,ga=0){
  if(Number(gf)<=Number(ga))return false;
@@ -3257,6 +3283,11 @@ function checkSeasonAchievements(rank,eliminated=false){
  if(wonTitle&&mystery.branch==='champion'&&mysteryAppearances>0)unlockAchievement('campione-del-mondo');
  if(mystery.branch==='champion'&&mysteryCategories.length>=2)unlockAchievement('eroe-nazionale');
  if(wonTitle&&mystery.finale?.won&&mystery.finale?.pointsApplied&&Number(mystery.finale.rankBeforeBonus)>1&&Number(mystery.finale.rankAfterBonus)===1)unlockAchievement('trenta-denari');
+ syncFantaballopoliAchievements();
+ const fantaballopoliStory=fantaballopoliState();
+ if(wonTitle&&achievementFantaballopoliBetrayal())unlockAchievement('il-bacio-di-giuda');
+ if(wonTitle&&(String(fantaballopoliStory.stage||'')==='rejected'||getAchievementCareerFlag('fantaballopoliOpeningRejected')))unlockAchievement('sistema-abbattuto');
+ if(wonTitle&&achievementFantaballopoliUsedAdvantages(matches))unlockAchievement('scudetto-di-cartone');
  if(allRosterItalian())unlockAchievement('il-generale');
  const contest=curvaContestState();
  if(wonTitle&&contest.status==='lost'&&contest.switchedFromTeamName&&contest.switchedToTeamName)unlockAchievement('cambio-di-panchina');
@@ -5430,7 +5461,7 @@ function fantaballopoliHighestRosterEntry(){
 }
 function prepareFantaballopoliStoryEvent(){
  const story=fantaballopoliState();if(state.phase!=='season'||state.pendingEvent||!story.initialized||!story.scheduled||story.completed)return false;
- if(story.stage==='waiting'&&Number(state.matchday)>=Number(story.triggerMatchday)&&Number(state.matchday)<19){story.stage='opening';state.pendingEvent={kind:'storyFantaballopoli',storyType:'opening',resolved:false,title:'Fantaballopoli',text:'Un personaggio misterioso ti chiede di perdere la prossima partita.'};return true}
+ if(story.stage==='waiting'&&Number(state.matchday)>=Number(story.triggerMatchday)&&Number(state.matchday)<19){story.stage='opening';state.pendingEvent={kind:'storyFantaballopoli',storyType:'opening',resolved:false,title:'Fantaballopoli',text:'Un personaggio misterioso ti chiede di perdere la prossima partita.'};setAchievementCareerFlag('fantaballopoliStarted',true);unlockAchievement('benvenuti-a-fantaballopoli');return true}
  if(story.stage==='part2_waiting'){
    const target=rosterEntry(story.targetPlayerId);if(!target){story.stage='ended';story.completed=true;return false}
    state.pendingEvent={kind:'storyFantaballopoli',storyType:'part2',resolved:false,title:'Il giocatore scomodo',text:`Il personaggio misterioso ritorna. «${story.targetPlayerName} è scomodo ai poteri forti. Scambialo al prossimo draft di metà campionato.»`};return true
@@ -5438,7 +5469,7 @@ function prepareFantaballopoliStoryEvent(){
  if(story.stage==='curse'&&story.curseMatches>=story.satisfactionAfter){story.stage='satisfaction_waiting'}
  if(story.stage==='satisfaction_waiting'){state.pendingEvent={kind:'storyFantaballopoli',storyType:'satisfaction',resolved:false,title:'Sei soddisfatto?',text:'Il personaggio misterioso ritorna. «Sei soddisfatto del nostro accordo?»'};return true}
  if(story.stage==='corruption'&&!story.investigatorShown&&Number(state.matchday)>=Number(story.investigatorDueMatchday||30))story.stage='investigator_waiting';
- if(story.stage==='investigator_waiting'){story.investigatorShown=true;state.pendingEvent={kind:'storyFantaballopoli',storyType:'investigator',resolved:false,title:'L’investigatore',text:'Un investigatore arriva nel tuo ufficio. «Forse questo campionato è truccato.»'};return true}
+ if(story.stage==='investigator_waiting'){story.investigatorShown=true;state.pendingEvent={kind:'storyFantaballopoli',storyType:'investigator',resolved:false,title:'L’investigatore',text:'Un investigatore arriva nel tuo ufficio. «Forse questo campionato è truccato.»'};setAchievementCareerFlag('fantaballopoliInvestigatorReached',true);unlockAchievement('intercettazioni');return true}
  return false;
 }
 function fantaballopoliForcesLoss(){const story=fantaballopoliState();return Boolean(story.forcedLossPending&&story.stage==='forced_loss_pending')}
@@ -5476,7 +5507,7 @@ function resolveFantaballopoliMidseason(){
  const giuda=createGiudaForEntry(state.draft.roster[index]);if(!giuda)return false;
  state.draft.roster[index].playerId=String(giuda.id);state.draft.roster[index].player={...giuda};
  change.incomingId=String(giuda.id);change.incoming='Giuda';change.incomingOvr=Number(giuda.ovr)||666;
- story.curseActive=true;story.negativeOvrAllowed=true;story.curseMatches=0;story.satisfactionAfter=3+Math.floor(Math.random()*3);story.stage='curse';story.completed=false;refreshOpponentClubRosters();return true;
+ story.curseActive=true;story.negativeOvrAllowed=true;story.curseMatches=0;story.satisfactionAfter=3+Math.floor(Math.random()*3);story.stage='curse';story.completed=false;setAchievementCareerFlag('fantaballopoliTradeComplied',true);setAchievementCareerFlag('fantaballopoliGiudaBetrayal',true);unlockAchievement('giuda');refreshOpponentClubRosters();return true;
 }
 function applyFantaballopoliCurse(result){
  const story=fantaballopoliState();if(!story.curseActive||!story.giudaId)return;
@@ -5506,14 +5537,14 @@ function restartLeagueAfterFantaballopoli(){
 function resolveFantaballopoliAction(action){
  const event=state.pendingEvent,story=fantaballopoliState();if(!event||event.kind!=='storyFantaballopoli'||event.resolved)return;
  if(event.storyType==='opening'){
-   if(action==='accept'){story.forcedLossPending=true;story.stage='forced_loss_pending';event.result='Accordo accettato. La prossima partita è già decisa.'}
-   else{story.stage='rejected';story.completed=true;event.result='Hai rifiutato. La storia Fantaballopoli termina qui.'}
+   if(action==='accept'){setAchievementCareerFlag('fantaballopoliOpeningAccepted',true);story.forcedLossPending=true;story.stage='forced_loss_pending';event.result='Accordo accettato. La prossima partita è già decisa.'}
+   else{setAchievementCareerFlag('fantaballopoliOpeningRejected',true);story.stage='rejected';story.completed=true;unlockAchievement('mani-pulite');event.result='Hai rifiutato. La storia Fantaballopoli termina qui.'}
    event.resolved=true;
  }else if(event.storyType==='part2'){
    story.stage='awaiting_midseason';event.resolved=true;event.result=`Al draft di metà campionato potrai decidere se scambiare ${story.targetPlayerName}.`;
  }else if(event.storyType==='satisfaction'){
    if(action==='stop'){removeGiudaFromRoster();story.curseActive=false;story.stage='ended_deal';story.completed=true;event.result='Giuda scompare e la maledizione termina. Il suo posto resta vuoto.'}
-   else{story.corruptionFull=true;story.corruptionMatchIndex=0;story.investigatorDueMatchday=29+Math.floor(Math.random()*6);story.stage='corruption';event.result='Hai chiesto di più. Il personaggio misterioso sorride.'}
+   else{setAchievementCareerFlag('fantaballopoliAcceptedMore',true);story.corruptionFull=true;story.corruptionMatchIndex=0;story.investigatorDueMatchday=29+Math.floor(Math.random()*6);story.stage='corruption';if(achievementFantaballopoliAcceptedAll())unlockAchievement('dentro-fino-al-collo');event.result='Hai chiesto di più. Il personaggio misterioso sorride.'}
    event.resolved=true;
  }else if(event.storyType==='investigator'){
    if(action==='confess'){if(userStanding())userStanding().pts=-30;story.stage='confessed';story.completed=true;story.curseActive=false;story.corruptionFull=false;event.resolved=true;event.result='Hai ammesso le tue colpe: la squadra scende a -30 punti. La storia termina.'}
@@ -5541,7 +5572,7 @@ function renderFantaballopoliEvent(event){
 }
 function bindFantaballopoliControls(){document.querySelectorAll('[data-fanta-action]').forEach(button=>button.onclick=()=>resolveFantaballopoliAction(button.dataset.fantaAction))}
 function renderFantaballopoliPanel(){
- const story=fantaballopoliState();if(!story.scheduled||story.completed||['idle','inactive','waiting','opening','rejected'].includes(story.stage))return'';
+ const story=fantaballopoliState();syncFantaballopoliAchievements();if(!story.scheduled||story.completed||['idle','inactive','waiting','opening','rejected'].includes(story.stage))return'';
  if(story.stage==='awaiting_midseason'||story.stage==='part2_waiting')return `<section class="event-card"><div class="label">Storia · Fantaballopoli</div><h3>${esc(story.targetPlayerName||'Il giocatore scomodo')}</h3><p>I poteri forti vogliono che venga scambiato al draft di metà campionato.</p></section>`;
  if(['curse','satisfaction_waiting'].includes(story.stage))return `<section class="event-card"><div class="label">Storia · Fantaballopoli</div><h3>Giuda · OVR 666</h3><p>Il nuovo giocatore è entrato nella rosa. Il personaggio misterioso tornerà presto.</p></section>`;
  if(['corruption','investigator_waiting'].includes(story.stage))return `<section class="event-card"><div class="label">Storia · Fantaballopoli</div><h3>L’accordo con i poteri forti</h3><p>Il campionato sta prendendo una piega sempre più sospetta.</p></section>`;
