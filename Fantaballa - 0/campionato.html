@@ -3090,7 +3090,7 @@
 <div id="modalRoot"></div><div id="toast" class="toast"></div>
 <script src="assets/achievements.js"></script>
 <script>
-const CURRENT_STATE_VERSION=40;
+const CURRENT_STATE_VERSION=41;
 const SAVE_BASE='fantaballa_campionato_v7';
 const AUTO_SAVE_KEY=`${SAVE_BASE}_autosave`;
 const LEGACY_SAVE_KEYS=['fantaballa_campionato_v1'];
@@ -6699,7 +6699,7 @@ function activateFigcCompetitionRule(rule='formula-one'){
  const normalized=rule==='no-draw'?'no-draw':'formula-one';
  state.seasonRules.figcCompetitionRule=normalized;
  return normalized==='formula-one'
-  ?'Formato Formula 1 attivo fino a fine stagione: al termine di ogni giornata le squadre vengono ordinate per qualità del risultato e le prime dieci ricevono 25, 18, 15, 12, 10, 8, 6, 4, 2 e 1 punto. Tutte le altre ricevono 0 punti. Inoltre, una squadra con almeno un giocatore infortunato perde automaticamente 0-3 a tavolino la partita successiva.'
+  ?'Formato Formula 1 attivo fino a fine stagione: al termine di ogni giornata le squadre vengono ordinate per qualità del risultato e le prime dieci ricevono 25, 18, 15, 12, 10, 8, 6, 4, 2 e 1 punto. Tutte le altre ricevono 0 punti. Inoltre, una squadra con almeno un giocatore infortunato perde automaticamente 0-3 a tavolino la partita successiva. Espulsioni e squalifiche non provocano la sconfitta a tavolino.'
   :'Niente pareggio attivo fino a fine stagione: ogni partita in parità continua ai supplementari e, se serve, ai calci di rigore.';
 }
 function figcCompetitionRuleLabel(rule=state.seasonRules?.figcCompetitionRule){return rule==='formula-one'?'Formato Formula 1':rule==='no-draw'?'Niente pareggio':''}
@@ -6711,7 +6711,8 @@ function formulaOneInjuredRoster(teamId){
  const statuses=isUser?(state.statuses||{}):(team?.statuses||{});
  return rosterIds.map(playerId=>{
    const status=statuses[String(playerId)]||{};
-   if(!(Boolean(status.seasonOut)||Number(status.injury)>0))return null;
+   const hasInjury=Boolean(status.seasonOut)||Number(status.injury)>0;
+   if(!hasInjury)return null; // Espulsioni e squalifiche non causano il tavolino.
    const player=isUser?(rosterEntry(playerId)?.player||playerById(playerId)):chaosPlayer(team,playerId);
    return{playerId:String(playerId),name:String(player?.name||'Giocatore'),injury:Math.max(0,Number(status.injury)||0),seasonOut:Boolean(status.seasonOut)};
  }).filter(Boolean);
@@ -7482,7 +7483,7 @@ function seasonRuleSummary(){
  if(state.seasonRules.yellowEqualsRed)extras.push('Giallo = espulsione diretta');
  if(state.seasonRules.pinkCardEndsMatch)extras.push('Cartellino rosa: partita conclusa a un minuto casuale');
  if(state.seasonRules.federationGoalRule)extras.push(`Regola FIGC: ${federationGoalRuleLabel()}`);
- if(state.seasonRules.figcCompetitionRule)extras.push(`Regolamento FIGC: ${figcCompetitionRuleLabel()}`);
+ if(state.seasonRules.figcCompetitionRule)extras.push(state.seasonRules.figcCompetitionRule==='formula-one'?`Regolamento FIGC: ${figcCompetitionRuleLabel()} · tavolino solo per infortuni, non per espulsioni o squalifiche`:`Regolamento FIGC: ${figcCompetitionRuleLabel()}`);
  if(state.seasonRules.fgciPointsRule)extras.push(`Regola FGCI: ${fgciPointsRuleLabel()}`);
  if(state.seasonRules.fgciResultRule)extras.push(`Regola FGCI: ${fgciResultRuleLabel()}`);
  if(state.seasonRules.fantaballaVideoRule)extras.push(`Video di Fantaballa: ${fantaballaVideoRuleLabel()}`);
@@ -7875,7 +7876,7 @@ const DECISIONS=[
   {label:'Bib Bip!',effect:'Fino a fine stagione ogni partita inizia da un minuto casuale tra 0 e la durata prevista: 30, 90 o 120 minuti in base agli altri regolamenti.',apply(){return activateSpaceJamRandomKickoff()}}
  ]},
  {id:'figc-formula-uno-niente-pareggio',title:'Nuovo regolamento FIGC',text:'La federazione presenta due nuovi modi di assegnare vittorie e punti, con effetto immediato fino a fine stagione.',available(){return !state.seasonRules.figcCompetitionRule},choices:[
-  {label:'Formato Formula 1',effect:'Ogni giornata le squadre vengono ordinate per qualità del risultato: 25, 18, 15, 12, 10, 8, 6, 4, 2 e 1 punto alle prime 10. Con anche un solo infortunato, la partita successiva è persa 0-3 a tavolino.',apply(){return activateFigcCompetitionRule('formula-one')}},
+  {label:'Formato Formula 1',effect:'Ogni giornata le squadre vengono ordinate per qualità del risultato: 25, 18, 15, 12, 10, 8, 6, 4, 2 e 1 punto alle prime 10. Con anche un solo infortunato, la partita successiva è persa 0-3 a tavolino. Espulsioni e squalifiche non fanno perdere a tavolino.',apply(){return activateFigcCompetitionRule('formula-one')}},
   {label:'Niente pareggio',effect:'Ogni partita pari continua con i tempi supplementari e, se resta in parità, con i calci di rigore.',apply(){return activateFigcCompetitionRule('no-draw')}}
  ]},
  {id:'figura-pelata-misteriosa',title:'Una figura pelata misteriosa ti si avvicina',text:'Con aria solenne propone di cambiare immediatamente il numero delle squadre che partecipano al campionato.',available(){return !state.seasonRules.dynamicLeague},choices:[
