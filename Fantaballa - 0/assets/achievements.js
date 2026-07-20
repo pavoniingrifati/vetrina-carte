@@ -50,6 +50,21 @@
     { id:'sergente-di-ferro', category:'Allenatori', icon:'🪖', title:'Il sergente di ferro', description:'Vinci cinque partite consecutive dopo l’evento del generale.' },
     { id:'talento-grezzo', category:'Allenatori', icon:'🌱', title:'Talento grezzo', description:'Vinci una partita con “Giovani e belli” schierando almeno tre titolari con OVR base tra 60 e 69.' },
 
+    { id:'qualita-ballarini', category:'Sponsor', icon:'🍳', title:'Qualità Ballarini', description:'Porta un giocatore ad almeno 100 OVR grazie al bonus dello sponsor Padelle Ballarini.' },
+    { id:'non-si-attacca-niente', category:'Sponsor', icon:'🥚', title:'Non si attacca niente', description:'Ricevi almeno 5 potenziamenti OVR durante una stagione con Padelle Ballarini.' },
+    { id:'database-umano', category:'Sponsor', icon:'🧠', title:'Database umano', description:'Vinci 10 partite con la formazione scelta automaticamente dal Tattico di Football Manager.' },
+    { id:'infermeria-vuota', category:'Sponsor', icon:'🏥', title:'Infermeria vuota', description:'Completa una stagione con Football Manager senza infortuni.' },
+    { id:'manager-dell-anno', category:'Sponsor', icon:'💼', title:'Manager dell’anno', description:'Vinci il campionato con lo sponsor Football Manager.' },
+    { id:'prodotto-premium', category:'Sponsor', icon:'⭐', title:'Prodotto premium', description:'Vinci campionato e coppa con Padelle Ballarini.' },
+
+    { id:'tearless-supremacy', category:'Tearless e Italia 2006', icon:'📹', title:'Tearless supremacy', description:'Vinci una partita con Tearless OVR 150 titolare.' },
+    { id:'da-51-a-leggenda', category:'Tearless e Italia 2006', icon:'📈', title:'Da 51 a leggenda', description:'Tearless parte da 51 OVR e vince una classifica individuale.' },
+    { id:'questo-gioco-fa-schifo', category:'Tearless e Italia 2006', icon:'🚪', title:'Questo gioco fa schifo', description:'Tearless lascia la squadra prima di aver giocato una partita.' },
+    { id:'campione-del-mondo', category:'Tearless e Italia 2006', icon:'🌍', title:'Campione del mondo', description:'Vinci il campionato con uno dei giocatori dell’Italia 2006 ricevuti dall’evento.' },
+    { id:'berlino-ancora-azzurra', category:'Tearless e Italia 2006', icon:'🇮🇹', title:'Berlino è ancora azzurra', description:'Batti l’Italia 2006 nella partita speciale.' },
+    { id:'trenta-denari', category:'Tearless e Italia 2006', icon:'🪙', title:'Trenta denari', description:'Vinci il campionato grazie ai 30 punti ottenuti contro l’Italia 2006.' },
+    { id:'eroe-nazionale', category:'Tearless e Italia 2006', icon:'🏅', title:'Eroe nazionale', description:'Il campione del mondo ricevuto vince almeno due classifiche individuali.' },
+
     { id:'non-doveva-finire-cosi', category:'Eventi', icon:'📺', title:'Non doveva finire così', description:'Ottieni una vittoria con il risultato casuale del VAR non aggiornato.' },
     { id:'cambio-di-panchina', category:'Eventi', icon:'🔄', title:'Cambio di panchina', description:'Perdi la sfida della curva, prendi una nuova squadra e vinci il campionato.' },
     { id:'da-zero-alla-gloria', category:'Eventi', icon:'0️⃣', title:'Da zero alla gloria', description:'Dopo essere stato azzerato dall’evento Pari o Dispari, torna nelle prime due posizioni.' },
