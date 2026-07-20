@@ -3081,6 +3081,35 @@ function achievementHasLateWinningGoal(userGoals=[],opponentGoals=[],gf=0,ga=0,d
  }
  return false;
 }
+function achievementHasLateEqualizer(userGoals=[],opponentGoals=[],gf=0,ga=0,duration=90){
+ if(Number(gf)!==Number(ga))return false;
+ const finalMinute=Math.max(1,Number(duration)||90),lateFrom=Math.max(1,finalMinute-10);
+ const timeline=[
+  ...(Array.isArray(userGoals)?userGoals:[]).map((event,index)=>({minute:Number(event?.minute)||0,order:index,user:true,delta:achievementGoalValue(event)})),
+  ...(Array.isArray(opponentGoals)?opponentGoals:[]).map((event,index)=>({minute:Number(event?.minute)||0,order:index,user:false,delta:-achievementGoalValue(event)}))
+ ].sort((a,b)=>a.minute-b.minute||a.order-b.order||(a.user?-1:1));
+ let difference=0;
+ for(const event of timeline){const before=difference;difference+=event.delta;if(event.user&&event.minute>=lateFrom&&before<0&&difference===0)return true}
+ return false;
+}
+function achievementScorerCounts(goals=[]){
+ const counts=new Map();
+ (Array.isArray(goals)?goals:[]).forEach(event=>{const id=String(event?.playerId||'').trim(),name=String(event?.player||'Marcatore').trim().toLocaleLowerCase('it-IT'),key=id?`id:${id}`:`name:${name}`;counts.set(key,(counts.get(key)||0)+1)});
+ return counts;
+}
+function achievementNaturalGoalkeeperScored(goals=[],lineup=[]){
+ const players=new Map((Array.isArray(lineup)?lineup:[]).filter(entry=>entry?.player).map(entry=>[String(entry.playerId||entry.player?.id||''),entry.player]));
+ return (Array.isArray(goals)?goals:[]).some(event=>{const player=players.get(String(event?.playerId||''))||playerById(event?.playerId);return player&&roleOf(player)==='P'});
+}
+function achievementGalacticosLineup(rows=[]){
+ const starters=(Array.isArray(rows)?rows:[]).filter(row=>Number.isFinite(Number(row?.finalOvr))).slice(0,11);
+ return starters.length===11&&starters.every(row=>Number(row.finalOvr)>=90);
+}
+function achievementBeatPreviousTeam(result={}){
+ const previousId=String(getAchievementCareerFlag('previousControlledTeamId')||''),previousName=String(getAchievementCareerFlag('previousControlledTeamName')||curvaContestState().switchedFromTeamName||'').trim().toLocaleLowerCase('it-IT');
+ const opponentId=String(result?.opponentId||''),opponentName=String(result?.opponent||'').trim().toLocaleLowerCase('it-IT');
+ return Boolean((previousId&&opponentId===previousId)||(previousName&&opponentName===previousName));
+}
 function achievementLineupHasOutOfRole(lineup=[]){
  return (Array.isArray(lineup)?lineup:[]).some(entry=>entry?.player&&!isEmergencyYouthEntry(entry)&&!naturalCompatible(entry.player,String(entry.slot||'')));
 }
@@ -3153,6 +3182,16 @@ function checkPostMatchAchievements({gf=0,ga=0,userGoals=[],opponentGoals=[],var
  if(sponsorFootballManagerActive()&&won){state.seasonRules.fmTacticianWins=Math.max(0,(Number(state.seasonRules.fmTacticianWins)||0)+1);if(state.seasonRules.fmTacticianWins>=10)unlockAchievement('database-umano')}
  const mysteryChain=mysteryCharacterChain();if(won&&mysteryChain.branch==='tearless'&&(Array.isArray(lineup)?lineup:[]).some(entry=>String(entry?.player?.id||entry?.playerId||'')===String(mysteryChain.playerId)&&Number(entry?.player?.ovr)>=150))unlockAchievement('tearless-supremacy');
  if(won&&scored-conceded>=7)unlockAchievement('esagerato');
+ if(achievementHasLateEqualizer(userGoals,opponentGoals,scored,conceded,matchDuration))unlockAchievement('zona-cesarini');
+ if(won&&Boolean(result?.ownRedCard))unlockAchievement('uno-in-meno-uno-in-piu');
+ if(won&&Number(result.opponentPower)-Number(result.power)>=25)unlockAchievement('davide-estremo');
+ if(won&&achievementBeatPreviousTeam(result))unlockAchievement('vendetta-perfetta');
+ const scorerCounts=achievementScorerCounts(userGoals),bestPersonalGoals=Math.max(0,...scorerCounts.values());
+ if(bestPersonalGoals>=3)unlockAchievement('il-pallone-e-mio');
+ if(bestPersonalGoals>=5)unlockAchievement('manita-personale');
+ if(won&&scorerCounts.size>=3)unlockAchievement('cooperativa-del-gol');
+ if(achievementNaturalGoalkeeperScored(userGoals,lineup))unlockAchievement('portiere-goleador');
+ if(won&&achievementGalacticosLineup(finalOvrRows))unlockAchievement('galacticos');
  if(coachIs('ductility')&&won)unlockAchievement('zero-intesa');
  if(coachIs('ductility')&&won&&achievementOutOfRoleCount(lineup)>=11)unlockAchievement('tutti-possono-tutto');
  if(coachIs('young-beautiful')&&won&&achievementBaseOvrInRangeCount(lineup,60,69)>=3)unlockAchievement('talento-grezzo');
@@ -7090,6 +7129,7 @@ function performPendingCurvaTeamSwitch(){
  if(state.stats?.playerTeams){oldUserIds.forEach(id=>{state.stats.playerTeams[id]=targetId;state.stats.playerTeamNames[id]=oldIdentity.name});targetPlayers.forEach(player=>{const id=String(player.id);state.stats.playerTeams[id]=USER_ID;state.stats.playerTeamNames[id]=newIdentity.name})}
  (state.cup?.participants||[]).forEach(participant=>{if(String(participant.teamId)===USER_ID){participant.name=newIdentity.name;participant.clubId=newIdentity.clubId;participant.strength=targetStrength}else if(String(participant.teamId)===targetId){participant.name=oldIdentity.name;participant.clubId=oldIdentity.clubId;participant.strength=oldUserStrength}});
  contest.pendingTeamId='';contest.switchedFromTeamName=oldIdentity.name;contest.switchedToTeamName=newIdentity.name;contest.lastResult=`Hai perso il controllo di ${oldIdentity.name}. Ora alleni ${newIdentity.name}, mantenendo la sua posizione in classifica e il suo calendario.`;
+ setAchievementCareerFlag('previousControlledTeamId',targetId);setAchievementCareerFlag('previousControlledTeamName',oldIdentity.name);
  return{from:oldIdentity.name,to:newIdentity.name};
 }
 
