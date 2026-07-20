@@ -3020,7 +3020,7 @@
 <div id="modalRoot"></div><div id="toast" class="toast"></div>
 <script src="assets/achievements.js"></script>
 <script>
-const CURRENT_STATE_VERSION=34;
+const CURRENT_STATE_VERSION=35;
 const SAVE_BASE='fantaballa_campionato_real_v1';
 const AUTO_SAVE_KEY=`${SAVE_BASE}_autosave`;
 const LEGACY_SAVE_KEYS=[];
@@ -3255,11 +3255,19 @@ const COACH_PROFILES=[
  {id:'motivator',name:'Motivatore',icon:'📣',image:'assets/coach-profiles/motivator.png',tagline:'Qui si realizzano i sogni',pro:'Dopo 2 sconfitte consecutive, +3 OVR alla squadra nella partita seguente. Ogni nuovo bonus OVR o Intesa riceve anche +1 OVR e +1 Intesa aggiuntivi.',con:'Dopo 3 vittorie consecutive, -3 OVR alla squadra nella partita seguente.'},
  {id:'salvation',name:'Mister salvezza',icon:'🛟',image:'assets/coach-profiles/salvation.png',tagline:'Serenità.',pro:'Con OVR medio della rosa sotto 70, la squadra segna un gol aggiuntivo a partita.',con:'Con OVR medio della rosa sopra 80, la squadra subisce almeno un gol a partita.'},
  {id:'young-beautiful',name:'Giovani e belli',icon:'✨',image:'assets/coach-profiles/giovani-e-belli.webp',tagline:'La meglio gioventù',pro:'I giocatori con OVR base da 60 a 69 ricevono +20 Intesa. Quelli con OVR base da 70 a 75 ricevono +10 Intesa.',con:'Non puoi avere giocatori con OVR base pari o superiore a 85: non appaiono nei draft e ogni loro arrivo durante la stagione viene bloccato.'},
- {id:'ductility',name:'Duttilità',icon:'🔀',image:'assets/coach-profiles/duttilita.webp',tagline:'Tutti dappertutto',pro:'I giocatori possono essere schierati in qualsiasi ruolo senza malus. Ogni gol segnato da un giocatore schierato fuori ruolo gli assegna +1 OVR permanente fino a fine stagione.',con:'I giocatori non ricevono alcun bonus di Intesa e non possono ottenere altri potenziamenti positivi di OVR durante la stagione.'}
+ {id:'ductility',name:'Duttilità',icon:'🔀',image:'assets/coach-profiles/duttilita.webp',tagline:'Tutti dappertutto',pro:'I giocatori possono essere schierati in qualsiasi ruolo senza malus. Ogni gol segnato da un giocatore schierato fuori ruolo gli assegna +1 OVR permanente fino a fine stagione.',con:'I giocatori non ricevono alcun bonus di Intesa e non possono ottenere altri potenziamenti positivi di OVR durante la stagione.'},
+ {id:'three-five-two',name:'3-5-2',icon:'🧠',image:'assets/coach-profiles/tre-cinque-due.webp',tagline:'Una sola idea, quattordici uomini',pro:'Il primo club estratto nel draft genera automaticamente una rosa di 14 giocatori casuali. Gli undici titolari vengono scelti prima nei ruoli corretti del 3-5-2; se il club non li possiede, il gioco completa i ruoli con giocatori casuali.',con:'La probabilità degli eventi è dimezzata e puoi utilizzare soltanto il modulo 3-5-2 per tutta la stagione.'}
 ];
 function normalizeCoachType(value){const id=String(value||'anonymous');return COACH_PROFILES.some(profile=>profile.id===id)?id:'anonymous'}
 function coachProfile(value=state?.coachType){return COACH_PROFILES.find(profile=>profile.id===normalizeCoachType(value))||COACH_PROFILES[0]}
 function coachIs(value){return normalizeCoachType(state?.coachType)===String(value)}
+function syncCoachRestrictions(){
+ if(!state)return;
+ state.seasonRules=state.seasonRules&&typeof state.seasonRules==='object'?state.seasonRules:{};
+ if(coachIs('three-five-two')){state.formation='3-5-2';state.seasonRules.userFormationOverride='3-5-2'}
+ else if(state.phase==='setup'&&state.seasonRules.userFormationOverride==='3-5-2')state.seasonRules.userFormationOverride='';
+}
+function coachEventChanceFactor(){return coachIs('three-five-two')?.5:1}
 function youngBeautifulBaseOvr(player){return originalBaseOvr(player)}
 function youngBeautifulChemistryBonus(player){if(!coachIs('young-beautiful')||!player)return 0;const base=youngBeautifulBaseOvr(player);return base>=60&&base<=69?20:base>=70&&base<=75?10:0}
 function youngBeautifulAllowsPlayer(player){return !coachIs('young-beautiful')||youngBeautifulBaseOvr(player)<85}
@@ -3876,6 +3884,7 @@ function normalizeCampionatoState(input){
  next.submitted=Boolean(next.submitted);
  next.meta.saveSlot=activeSaveSlot;
  if(!FORMATIONS[next.formation])next.formation='4-3-3';
+ if(next.coachType==='three-five-two'){next.formation='3-5-2';next.seasonRules.userFormationOverride='3-5-2'}
  if(!next.seasonRules.leagueFormation)next.seasonRules.leagueFormation=next.formation;
  if(next.seasonRules.userFormationOverride&&next.formation!==next.seasonRules.userFormationOverride)next.formation=next.seasonRules.userFormationOverride;
  if(!['setup','draft','season','midseason','story-final','finished'].includes(next.phase))next.phase='setup';
@@ -3923,6 +3932,55 @@ function availableStarterSlotsForPlayer(player){return openStarterSlots().filter
 function draftPlayerIsValid(player){if(!player||!youngBeautifulAllowsPlayer(player)||usedDraftPlayerIds().has(String(player.id)))return false;const canStart=availableStarterSlotsForPlayer(player).length>0;const canBench=benchEntries().length<3;return canStart||canBench}
 function draftCandidatesForClub(clubId){return PLAYERS.filter(player=>String(player.club)===String(clubId)&&draftPlayerIsValid(player)).sort((a,b)=>{const pa=positions(a)[0]||'',pb=positions(b)[0]||'';return pa.localeCompare(pb,'it')||(Number(b.ovr)||0)-(Number(a.ovr)||0)||String(a.name).localeCompare(String(b.name),'it')})}
 function draftPossibleClubs(){const available=new Set();PLAYERS.forEach(player=>{if(player.club&&draftPlayerIsValid(player))available.add(String(player.club))});return CLUBS.map(club=>String(club.id)).filter(id=>available.has(id))}
+function threeFiveTwoDraftPick(clubId,used,{slotCode='',role=''}={}){
+ const valid=player=>player&&youngBeautifulAllowsPlayer(player)&&!used.has(String(player.id));
+ const clubKey=String(clubId||'');
+ const macro=slotCode?POSITION_ROLE[slotCode]:role;
+ const tests=[];
+ if(slotCode){
+   tests.push(player=>String(player.club||'')===clubKey&&naturalCompatible(player,slotCode));
+   tests.push(player=>naturalCompatible(player,slotCode));
+ }
+ if(macro){
+   tests.push(player=>String(player.club||'')===clubKey&&roleOf(player)===macro);
+   tests.push(player=>roleOf(player)===macro);
+ }
+ tests.push(player=>String(player.club||'')===clubKey);
+ tests.push(()=>true);
+ for(const test of tests){
+   const candidates=shuffle(PLAYERS.filter(player=>valid(player)&&test(player)));
+   if(candidates.length)return pick(candidates);
+ }
+ return null;
+}
+function buildThreeFiveTwoOpeningRoster(clubId){
+ state.formation='3-5-2';
+ state.seasonRules=state.seasonRules&&typeof state.seasonRules==='object'?state.seasonRules:{};
+ state.seasonRules.userFormationOverride='3-5-2';
+ const slots=formationSlots('3-5-2'),used=new Set(),starters=[];
+ const ordered=slots.map((slot,index)=>({slot,index,count:PLAYERS.filter(player=>String(player.club||'')===String(clubId||'')&&naturalCompatible(player,slot.code)).length})).sort((a,b)=>a.count-b.count||a.index-b.index);
+ for(const item of ordered){
+   const player=threeFiveTwoDraftPick(clubId,used,{slotCode:item.slot.code});
+   if(!player)return false;
+   used.add(String(player.id));
+   starters[item.index]={playerId:String(player.id),slotId:item.slot.instanceId,slot:item.slot.code,bench:false,player:{...player}};
+ }
+ const benchRoles=['P','D','A'],bench=[];
+ for(let index=0;index<benchRoles.length;index++){
+   const player=threeFiveTwoDraftPick(clubId,used,{role:benchRoles[index]});
+   if(!player)return false;
+   used.add(String(player.id));
+   bench.push({playerId:String(player.id),slotId:`bench-${index+1}`,slot:`PAN${index+1}`,bench:true,player:{...player}});
+ }
+ state.draft.roster=[...starters,...bench];
+ state.draft.clubId=String(clubId||'');
+ state.draft.openingClubShown=true;
+ state.draft.candidates=[];
+ state.draft.pendingPlayerId='';
+ state.draft.rerolls=0;
+ mobileDraftTab='roster';
+ return true;
+}
 function talentScoutOpeningClub(possibleClubIds=[]){
  if(!coachIs('talent-scout')||state.draft?.openingClubShown)return'';
  const coachKey=normalizeName(state.coachName),allowed=new Set((possibleClubIds||[]).map(String));if(!coachKey||!allowed.size)return'';
@@ -4215,23 +4273,25 @@ function showSetup(){
  const step=clamp(Number(state.setupStep)||1,1,4),userClub=activeUserClub(),userPal=clubPalette(userClub);
  const teamValue=String(state.teamName||localStorage.getItem(SETUP_TEAM_NAME_KEY)||'Fantaballa REAL');
  const coachValue=String(state.coachName||localStorage.getItem(SETUP_COACH_NAME_KEY)||'');
- const formations=Object.keys(FORMATIONS).filter(form=>!['2-4-4','4-4-4','3-3-3'].includes(form));
+ const allFormations=Object.keys(FORMATIONS).filter(form=>!['2-4-4','4-4-4','3-3-3'].includes(form));
+ if(coachIs('three-five-two'))state.formation='3-5-2';
+ const formations=coachIs('three-five-two')?['3-5-2']:allFormations;
  screen.innerHTML=`<div class="season-setup-flow">${renderSetupProgress(step)}
  <section class="panel season-setup-step" id="setupModeStep" data-step-label="Passo 1 di 4"><div class="season-setup-step-head"><span class="season-setup-step-number">1</span><div><div class="season-setup-kicker">Fantacampionato del Ca***</div><h2>Scegli la modalità</h2><p>Prima di creare la squadra, scegli come devono comportarsi gli eventi durante la stagione.</p></div></div><div class="season-mode-grid"><button type="button" class="season-mode-btn ${step>1&&state.gameMode!=='chaos'?'active':''}" data-game-mode="normal"><b>Normale</b><small>Gli eventi, le quest e le decisioni riguardano <strong>soltanto la tua squadra</strong>. Le 19 avversarie disputano normalmente il campionato.</small></button><button type="button" class="season-mode-btn ${step>1&&state.gameMode==='chaos'?'active':''}" data-game-mode="chaos"><b>🌀 Caos</b><small>Anche le <strong>19 avversarie</strong> ricevono eventi, prendono decisioni e subiscono conseguenze reali sulle proprie rose.</small></button></div></section>
  ${step>=2?`<section class="panel season-setup-step" id="setupIdentityStep" data-step-label="Passo 2 di 4"><div class="season-setup-step-head"><span class="season-setup-step-number">2</span><div><h2>Identità della squadra</h2><p>Scegli nome della squadra, nome dell’allenatore, colori sociali e il profilo con cui affronterai la stagione.</p></div></div><div class="season-identity-grid"><div><div class="season-identity-fields"><div class="field"><label>Nome squadra</label><input id="teamName" maxlength="32" value="${esc(teamValue)}" placeholder="Fantaballa REAL" autocomplete="organization"></div><div class="field"><label>Nome allenatore</label><input id="coachName" maxlength="32" value="${esc(coachValue)}" placeholder="Il tuo nome" autocomplete="name"></div></div><div class="season-setup-tip">Se il nome dell’allenatore coincide con quello di un calciatore scelto, quel giocatore ottiene +10 OVR bonus di Intesa.</div><div class="season-palette-title">Palette sociali</div><div class="season-palette-grid">${renderPaletteButtons()}</div><div class="season-coach-title">Tipo di allenatore</div><div class="season-coach-selector">${renderCoachCarousel()}</div></div><aside class="season-identity-preview"><div class="season-club-preview custom-preview" style="--club-primary:${userPal.primary};--club-secondary:${userPal.secondary};--club-accent:${userPal.accent};--club-text:${userPal.text}"><span class="season-club-preview-badge" id="setupPreviewBadge">${esc(setupTeamBadge(teamValue))}</span><div><small>Anteprima squadra</small><b id="setupPreviewName">${esc(teamValue||'Fantaballa REAL')}</b><em id="setupPreviewCoach">Allenatore: ${esc(coachValue||'da inserire')}</em><em class="season-preview-coach-type">Profilo: ${esc(coachProfile().name)}</em></div></div><div class="season-setup-tip secondary">Questi colori verranno usati nei box della tua squadra e sulle maglie dei giocatori posizionati in campo durante il draft e la stagione.</div></aside></div><div class="season-step-actions"><button id="continueIdentity" class="btn primary" type="button">Continua ai moduli →</button></div></section>`:''}
  ${step>=3?`<section class="panel season-setup-step" id="setupFormationStep" data-step-label="Passo 3 di 4"><div class="season-setup-step-head"><span class="season-setup-step-number">3</span><div><h2>Scegli il modulo</h2><p>Il modulo determina gli undici slot da completare e i ruoli richiesti nel draft.</p></div></div><div class="season-formation-grid">${formations.map(form=>`<button type="button" class="season-formation-btn ${state.formation===form?'active':''}" data-form="${form}"><b>${form}</b><small>${esc(formationPositionSummary(form))}</small></button>`).join('')}</div><div class="season-selected-summary"><span>${state.gameMode==='chaos'?'🌀 Caos':'Normale'}</span><span id="setupIdentitySummary">${esc(teamValue)} · ${esc(coachValue)}</span><span>${esc(coachProfile().name)}</span></div></section>`:''}
- ${step>=4?`<section class="panel season-setup-step" id="setupDraftStep" data-step-label="Passo 4 di 4"><div class="season-setup-step-head"><span class="season-setup-step-number">4</span><div><h2>Come vuoi fare il draft?</h2><p>Scegli il controllo completo oppure avvia subito la stagione con una rosa generata casualmente.</p></div></div><div class="season-draft-choice-grid"><button id="startDraft" class="season-draft-choice" type="button"><span class="season-draft-choice-icon">🎯</span><b>Draft manuale</b><p>Spacchetti i club, scegli ogni giocatore e lo posizioni personalmente in uno slot compatibile. Completi 11 titolari e 3 riserve.</p><span>Inizia il draft manuale →</span></button><button id="startRandomDraft" class="season-draft-choice" type="button"><span class="season-draft-choice-icon">🎲</span><b>Draft automatico</b><p>Il gioco crea subito una rosa casuale. Gli undici titolari rispettano i ruoli del modulo; con Talent scout aumenta la probabilità di ottenere OVR elevati.</p><span>Genera e avvia →</span></button></div><div class="season-selected-summary"><span>${state.gameMode==='chaos'?'🌀 Caos':'Normale'}</span><span>${esc(state.formation)}</span><span>${esc(teamValue)}</span><span>${esc(coachProfile().name)}</span></div></section>`:''}
+ ${step>=4?`<section class="panel season-setup-step" id="setupDraftStep" data-step-label="Passo 4 di 4"><div class="season-setup-step-head"><span class="season-setup-step-number">4</span><div><h2>Come vuoi fare il draft?</h2><p>Scegli il controllo completo oppure avvia subito la stagione con una rosa generata casualmente.</p></div></div><div class="season-draft-choice-grid"><button id="startDraft" class="season-draft-choice" type="button"><span class="season-draft-choice-icon">🎯</span><b>Draft manuale</b><p>${coachIs('three-five-two')?'Apri il primo pack club: quel club genera immediatamente i tuoi 14 giocatori, completando casualmente gli eventuali ruoli mancanti.':'Spacchetti i club, scegli ogni giocatore e lo posizioni personalmente in uno slot compatibile. Completi 11 titolari e 3 riserve.'}</p><span>Inizia il draft manuale →</span></button><button id="startRandomDraft" class="season-draft-choice" type="button"><span class="season-draft-choice-icon">🎲</span><b>Draft automatico</b><p>${coachIs('three-five-two')?'Il gioco estrae subito un club e genera i 14 giocatori con le stesse regole del primo pack.':'Il gioco crea subito una rosa casuale. Gli undici titolari rispettano i ruoli del modulo; con Talent scout aumenta la probabilità di ottenere OVR elevati.'}</p><span>Genera e avvia →</span></button></div><div class="season-selected-summary"><span>${state.gameMode==='chaos'?'🌀 Caos':'Normale'}</span><span>${esc(state.formation)}</span><span>${esc(teamValue)}</span><span>${esc(coachProfile().name)}</span></div></section>`:''}
  </div>`;
  const teamInput=document.getElementById('teamName'),coachInput=document.getElementById('coachName');
  const refreshIdentityPreview=()=>{const teamName=String(teamInput?.value||'').trim()||'Fantaballa REAL',coachName=String(coachInput?.value||'').trim()||'da inserire';const nameEl=document.getElementById('setupPreviewName'),coachEl=document.getElementById('setupPreviewCoach'),badgeEl=document.getElementById('setupPreviewBadge');if(nameEl)nameEl.textContent=teamName;if(coachEl)coachEl.textContent=`Allenatore: ${coachName}`;if(badgeEl)badgeEl.textContent=setupTeamBadge(teamName)};
  [teamInput,coachInput].filter(Boolean).forEach(input=>input.addEventListener('input',()=>{scheduleSetupIdentitySave(teamInput,coachInput);refreshIdentityPreview()}));
  document.querySelectorAll('[data-game-mode]').forEach(button=>button.onclick=()=>{state.gameMode=button.dataset.gameMode==='chaos'?'chaos':'normal';state.setupStep=Math.max(2,step);save();showSetup();setupScrollTo('setupIdentityStep')});
  document.querySelectorAll('[data-team-palette]').forEach(button=>button.onclick=()=>{persistSetupIdentity(teamInput,coachInput,false);state.teamPaletteId=String(button.dataset.teamPalette||'fantaballa');state.teamColors=teamColorsForPalette(state.teamPaletteId);try{localStorage.setItem(SETUP_PALETTE_KEY,state.teamPaletteId)}catch{}save();showSetup();setupScrollTo('setupIdentityStep')});
- document.querySelectorAll('[data-coach-type]').forEach(button=>{button.onpointerdown=event=>event.preventDefault();button.onclick=event=>{event.preventDefault();const coachScrollTop=window.scrollY;const coachSelectorTop=captureCoachSelectorViewport();persistSetupIdentity(teamInput,coachInput,false);state.coachType=normalizeCoachType(button.dataset.coachType);try{localStorage.setItem(SETUP_COACH_TYPE_KEY,state.coachType)}catch{}save();showSetup();restoreSetupScroll(coachScrollTop);restoreCoachSelectorViewport(coachSelectorTop)};button.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();button.click()}}});
- document.querySelectorAll('[data-coach-nav]').forEach(button=>{button.onpointerdown=event=>event.preventDefault();button.onclick=event=>{event.preventDefault();const coachScrollTop=window.scrollY;const coachSelectorTop=captureCoachSelectorViewport();persistSetupIdentity(teamInput,coachInput,false);const direction=Number(button.dataset.coachNav||0)||0;const currentIndex=coachProfileIndex();const nextProfile=COACH_PROFILES[(currentIndex+direction+COACH_PROFILES.length)%COACH_PROFILES.length]||COACH_PROFILES[0];state.coachType=normalizeCoachType(nextProfile.id);try{localStorage.setItem(SETUP_COACH_TYPE_KEY,state.coachType)}catch{}save();showSetup();restoreSetupScroll(coachScrollTop);restoreCoachSelectorViewport(coachSelectorTop)}});
+ document.querySelectorAll('[data-coach-type]').forEach(button=>{button.onpointerdown=event=>event.preventDefault();button.onclick=event=>{event.preventDefault();const coachScrollTop=window.scrollY;const coachSelectorTop=captureCoachSelectorViewport();persistSetupIdentity(teamInput,coachInput,false);state.coachType=normalizeCoachType(button.dataset.coachType);syncCoachRestrictions();try{localStorage.setItem(SETUP_COACH_TYPE_KEY,state.coachType)}catch{}save();showSetup();restoreSetupScroll(coachScrollTop);restoreCoachSelectorViewport(coachSelectorTop)};button.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();button.click()}}});
+ document.querySelectorAll('[data-coach-nav]').forEach(button=>{button.onpointerdown=event=>event.preventDefault();button.onclick=event=>{event.preventDefault();const coachScrollTop=window.scrollY;const coachSelectorTop=captureCoachSelectorViewport();persistSetupIdentity(teamInput,coachInput,false);const direction=Number(button.dataset.coachNav||0)||0;const currentIndex=coachProfileIndex();const nextProfile=COACH_PROFILES[(currentIndex+direction+COACH_PROFILES.length)%COACH_PROFILES.length]||COACH_PROFILES[0];state.coachType=normalizeCoachType(nextProfile.id);syncCoachRestrictions();try{localStorage.setItem(SETUP_COACH_TYPE_KEY,state.coachType)}catch{}save();showSetup();restoreSetupScroll(coachScrollTop);restoreCoachSelectorViewport(coachSelectorTop)}});
  const continueIdentity=document.getElementById('continueIdentity');if(continueIdentity)continueIdentity.onclick=()=>{const teamName=String(teamInput?.value||'').trim(),coachName=String(coachInput?.value||'').trim();if(!teamName||!coachName)return toast('Inserisci sia il nome della squadra sia il nome dell’allenatore.');clearTimeout(setupIdentitySaveTimer);persistSetupIdentity(teamInput,coachInput,false);state.setupStep=3;save();showSetup();setupScrollTo('setupFormationStep')};
- document.querySelectorAll('[data-form]').forEach(button=>button.onclick=()=>{clearTimeout(setupIdentitySaveTimer);persistSetupIdentity(teamInput,coachInput,false);state.formation=button.dataset.form;state.setupStep=4;save();showSetup();setupScrollTo('setupDraftStep')});
- const beginDraft=automatic=>{clearTimeout(setupIdentitySaveTimer);persistSetupIdentity(teamInput,coachInput,false);if(!String(state.teamName||'').trim()||!String(state.coachName||'').trim())return toast('Completa nome squadra e allenatore prima di iniziare.');state.coachName=String(state.coachName).trim();state.coachType=normalizeCoachType(state.coachType);try{localStorage.setItem(SETUP_COACH_NAME_KEY,state.coachName);localStorage.setItem(SETUP_COACH_TYPE_KEY,state.coachType);localStorage.setItem(SETUP_PALETTE_KEY,state.teamPaletteId||'fantaballa')}catch{}if(automatic)return startFullyRandomDraft();state.phase='draft';state.draft=freshState().draft;state.draft.rerolls=initialDraftRerollLimit();save();render()};
+ document.querySelectorAll('[data-form]').forEach(button=>button.onclick=()=>{clearTimeout(setupIdentitySaveTimer);persistSetupIdentity(teamInput,coachInput,false);state.formation=coachIs('three-five-two')?'3-5-2':button.dataset.form;state.setupStep=4;save();showSetup();setupScrollTo('setupDraftStep')});
+ const beginDraft=automatic=>{clearTimeout(setupIdentitySaveTimer);persistSetupIdentity(teamInput,coachInput,false);if(!String(state.teamName||'').trim()||!String(state.coachName||'').trim())return toast('Completa nome squadra e allenatore prima di iniziare.');state.coachName=String(state.coachName).trim();state.coachType=normalizeCoachType(state.coachType);syncCoachRestrictions();try{localStorage.setItem(SETUP_COACH_NAME_KEY,state.coachName);localStorage.setItem(SETUP_COACH_TYPE_KEY,state.coachType);localStorage.setItem(SETUP_PALETTE_KEY,state.teamPaletteId||'fantaballa')}catch{}if(automatic)return startFullyRandomDraft();state.phase='draft';state.draft=freshState().draft;state.draft.rerolls=initialDraftRerollLimit();save();render()};
  const manual=document.getElementById('startDraft'),automatic=document.getElementById('startRandomDraft');if(manual)manual.onclick=()=>beginDraft(false);if(automatic)automatic.onclick=()=>beginDraft(true);
 }
 
@@ -4323,6 +4383,14 @@ async function drawDraft(useReroll=false){
  });
  try{
    await playSeasonPackReveal(possible,finalClubId,useReroll);
+   if(coachIs('three-five-two')&&!state.draft.roster.length&&!useReroll){
+     if(!buildThreeFiveTwoOpeningRoster(finalClubId))throw new Error(`Impossibile generare la rosa 3-5-2 da ${finalClub?.name||finalClubId}`);
+     draftRolling=false;
+     save();
+     render();
+     toast(`3-5-2: ${finalClub?.name||'il primo club'} ha generato automaticamente la rosa di 14 giocatori.`);
+     return;
+   }
    const drawn=draftCandidatesForClub(finalClubId);
    state.draft.clubId=finalClubId;
    state.draft.openingClubShown=true;
@@ -4968,6 +5036,14 @@ function buildFullyRandomDraftRoster(){
  return true;
 }
 function startFullyRandomDraft(){
+ if(coachIs('three-five-two')){
+   const possible=draftPossibleClubs(),clubId=possible.length?pick(possible):'';
+   if(!clubId||!buildThreeFiveTwoOpeningRoster(clubId))return toast('Non ci sono abbastanza giocatori per creare la rosa del 3-5-2.');
+   const club=clubById(clubId);
+   finalizeDraft();
+   toast(`3-5-2: rosa automatica generata dal primo club ${club?.name||clubId}. Il campionato è iniziato.`);
+   return;
+ }
  if(!buildFullyRandomDraftRoster())return toast('Non ci sono abbastanza giocatori per creare una rosa casuale.');
  finalizeDraft();
  toast('Rosa casuale con ruoli corretti generata: il campionato è iniziato.');
@@ -4978,8 +5054,9 @@ function finalizeDraft(){
  const userClub=activeUserClub();
  state.userClubId=userClub.id;
  state.teamName=String(state.teamName||userClub.name).trim()||userClub.name;
+ if(coachIs('three-five-two'))state.formation='3-5-2';
  state.seasonRules.leagueFormation=state.formation;
- state.seasonRules.userFormationOverride='';
+ state.seasonRules.userFormationOverride=coachIs('three-five-two')?'3-5-2':'';
  const draftedIds=currentUserPlayerIds();
  setAchievementCareerFlag('initialRosterIds',draftedIds.map(String));
  const opponents=shuffle(CLUBS.filter(club=>club.id!==userClub.id)).slice(0,19);
@@ -5269,7 +5346,8 @@ function initializeFantaballopoliStory(scheduled=true){
 }
 function initializeStoryArc(){
  initializeMeritStory(false);initializeFantaballopoliStory(false);
- if(Math.random()>=.2)return;
+ const storyChance=.2*coachEventChanceFactor();
+ if(Math.random()>=storyChance)return;
  if(Math.random()<.5)initializeMeritStory(true);else initializeFantaballopoliStory(true);
 }
 function fantaballopoliAllowsNegativeOvr(){return Boolean(fantaballopoliState().negativeOvrAllowed)}
@@ -6689,6 +6767,7 @@ function ruleOutAllRosterPlayers(reason='Bevanda energetica'){
 function coachNamedRosterEntry(){const coach=normalizeName(state.coachName);return coach?rosterPlayers().find(entry=>normalizeName(entry.player?.name)===coach)||null:null}
 function centralDefenderRosterEntry(){return rosterPlayers().find(entry=>!entry.bench&&(entry.slot==='DC'||positions(entry.player).includes('DC')))||rosterPlayers().find(entry=>entry.slot==='DC'||positions(entry.player).includes('DC'))||null}
 function applyUserFormationLayout(key){
+ if(coachIs('three-five-two'))key='3-5-2';
  if(!FORMATION_LAYOUTS[key])return 'Modulo non disponibile.';
  const slots=formationSlots(key),all=state.draft.roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>item.player);
  if(all.length<slots.length)return `Non ci sono abbastanza giocatori per applicare il ${key}.`;
@@ -6720,6 +6799,11 @@ function forceSeasonFormation(key){
  return `Nuova regola ${key}: le squadre giocano con ${(FORMATION_LAYOUTS[key]||[]).length} giocatori in campo.${exception}`;
 }
 function forceUserFormation(key){
+ if(coachIs('three-five-two')){
+   state.seasonRules.userFormationOverride='3-5-2';
+   const locked=applyUserFormationLayout('3-5-2');
+   return typeof locked==='string'?locked:'3-5-2: il contratto dell’allenatore impedisce qualsiasi cambio di modulo.';
+ }
  if(!FORMATION_LAYOUTS[key])return 'Modulo non disponibile.';
  state.seasonRules.userFormationOverride=key;
  const result=applyUserFormationLayout(key);
@@ -7015,7 +7099,7 @@ function resolveLineup(){enforceTipsterStarters();if(state.seasonRules?.autoOpti
 function coachRosterAverageOvr(){const values=rosterPlayers().map(entry=>ductilityEffectiveBaseOvr(entry?.player)).filter(value=>value>0);return values.length?avg(values):0}
 function coachTrailingStreak(){const history=Array.isArray(state?.history)?state.history:[];if(!history.length)return{type:'',count:0};const result=history[history.length-1],type=Number(result.gf)>Number(result.ga)?'win':Number(result.gf)<Number(result.ga)?'loss':'draw';let count=0;for(let index=history.length-1;index>=0;index--){const item=history[index],current=Number(item.gf)>Number(item.ga)?'win':Number(item.gf)<Number(item.ga)?'loss':'draw';if(current!==type)break;count++}return{type,count}}
 function coachMatchOvrModifier(){if(!coachIs('motivator'))return 0;const streak=coachTrailingStreak();if(streak.type==='loss'&&streak.count===2)return 3;if(streak.type==='win'&&streak.count===3)return-3;return 0}
-function coachCurrentEffectLabel(){if(coachIs('motivator')){const value=coachMatchOvrModifier(),boost='bonus OVR/Intesa potenziati di +1 OVR e +1 Intesa';return value>0?`Motivatore: +3 OVR nella prossima partita · ${boost}`:value<0?`Motivatore: -3 OVR nella prossima partita · ${boost}`:`Motivatore: ${boost}`}if(coachIs('salvation')){const value=coachRosterAverageOvr();return value<70?`Mister salvezza: +1 gol aggiuntivo a ogni partita (OVR rosa ${value.toFixed(1)})`:value>80?`Mister salvezza: gol subito garantito (OVR rosa ${value.toFixed(1)})`:`Mister salvezza: fascia neutra (OVR rosa ${value.toFixed(1)})`}if(coachIs('talent-scout'))return'Talent scout: primo pack dalla squadra dell’omonimo, scouting potenziato e mercato esterno bloccato';if(coachIs('young-beautiful'))return'Giovani e belli: +20 Intesa agli OVR base 60–69, +10 agli OVR base 70–75, vietati gli OVR base da 85 in su';if(coachIs('ductility'))return'Duttilità: nessun malus fuori ruolo, Intesa sempre 0, nessun altro bonus OVR; chi segna fuori ruolo guadagna +1 OVR fino a fine stagione';return'Anonimo: nessun effetto'}
+function coachCurrentEffectLabel(){if(coachIs('motivator')){const value=coachMatchOvrModifier(),boost='bonus OVR/Intesa potenziati di +1 OVR e +1 Intesa';return value>0?`Motivatore: +3 OVR nella prossima partita · ${boost}`:value<0?`Motivatore: -3 OVR nella prossima partita · ${boost}`:`Motivatore: ${boost}`}if(coachIs('salvation')){const value=coachRosterAverageOvr();return value<70?`Mister salvezza: +1 gol aggiuntivo a ogni partita (OVR rosa ${value.toFixed(1)})`:value>80?`Mister salvezza: gol subito garantito (OVR rosa ${value.toFixed(1)})`:`Mister salvezza: fascia neutra (OVR rosa ${value.toFixed(1)})`}if(coachIs('talent-scout'))return'Talent scout: primo pack dalla squadra dell’omonimo, scouting potenziato e mercato esterno bloccato';if(coachIs('young-beautiful'))return'Giovani e belli: +20 Intesa agli OVR base 60–69, +10 agli OVR base 70–75, vietati gli OVR base da 85 in su';if(coachIs('ductility'))return'Duttilità: nessun malus fuori ruolo, Intesa sempre 0, nessun altro bonus OVR; chi segna fuori ruolo guadagna +1 OVR fino a fine stagione';if(coachIs('three-five-two'))return'3-5-2: rosa di 14 giocatori generata dal primo club del draft, modulo bloccato sul 3-5-2 e probabilità eventi dimezzata';return'Anonimo: nessun effetto'}
 function teamPowerBase(){return resolvedLineupAverage(resolveRosterLineup(rosterPlayers(),{ignoreStatuses:true}))}
 function matchPower(){return resolvedLineupAverage(resolveLineup())}
 function unavailableList(){return rosterPlayers().filter(r=>{const s=statusOf(r.playerId);return s.injury>0||s.suspension>0})}
@@ -7379,7 +7463,7 @@ function prepareEvent(){
  questState().notice='';
  if(chaosEnabled())prepareChaosOpponentEvents();
  if(prepareChainedEvent()){save();return;}
- const multiplier=clamp(Number(state.seasonRules.eventChanceMultiplier)||1,1,2),normalChance=Math.max(0,1-(.45*multiplier)),autoLimit=normalChance+(.10*multiplier),roll=Math.random();
+ const multiplier=clamp((Number(state.seasonRules.eventChanceMultiplier)||1)*coachEventChanceFactor(),.25,2),normalChance=Math.max(0,1-(.45*multiplier)),autoLimit=normalChance+(.10*multiplier),roll=Math.random();
  if(roll<normalChance){
    state.pendingEvent={kind:'none',resolved:true,title:'Settimana normale',text:'Nessun evento particolare. La squadra pensa solo alla partita.'};
  }else if(roll<autoLimit){
