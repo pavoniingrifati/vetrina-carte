@@ -16,6 +16,7 @@
   - Modalità Caos e Caos REAL: classifiche separate, accettate soltanto se vinte
   - Invio verificato dal browser tramite risposta iframe (niente falsi messaggi di successo)
   - Invio delle stagioni REAL senza limiti massimi di giornate
+  - Salvataggio del tipo di allenatore scelto dall'utente
 */
 
 const SHEET_NAME = 'Classifica';
@@ -25,6 +26,7 @@ const HEADERS = [
   'codice_vittoria',
   'squadra',
   'allenatore',
+  'tipo_allenatore',
   'modalita',
   'modalita_tipo',
   'posizione_finale',
@@ -148,6 +150,7 @@ function normalizePayload_(payload) {
     codice_vittoria: String(firstValue_(payload, ['victoryCode', 'codice_vittoria'], '')).trim(),
     squadra: String(firstValue_(payload, ['squadra', 'nome_squadra', 'teamName', 'team_name'], '')).trim(),
     allenatore: String(firstValue_(payload, ['allenatore', 'coachName', 'coach_name', 'nome_allenatore', 'coach'], '')).trim(),
+    tipo_allenatore: String(firstValue_(payload, ['tipo_allenatore', 'tipoAllenatore', 'coachType', 'coach_type', 'profilo_allenatore', 'coachProfile'], '')).trim(),
     modalita: modeInfo.label,
     modalita_tipo: modeInfo.type,
     posizione_finale: safeNumber_(firstValue_(payload, ['posizione_finale', 'piazzamento_finale', 'finalPosition', 'final_position'], ''), ''),
@@ -298,6 +301,7 @@ function doGet(e) {
       return {
         squadra: item.squadra || '',
         allenatore: item.allenatore || '',
+        tipo_allenatore: item.tipo_allenatore || '',
         modalita: modeInfo.label,
         modalita_tipo: modeInfo.type,
         posizione_finale: item.posizione_finale === '' ? '' : Number(item.posizione_finale || 0),
