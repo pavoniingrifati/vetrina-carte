@@ -739,6 +739,17 @@
       background:linear-gradient(180deg,#3e2371 0%,#17113d 100%);
     }
     .season-mini-avatar .av-subscriber-badge{position:absolute;top:1px;right:1px;width:13px;height:13px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#ffe78d,#f3be31);color:#5b3c00;font-size:9px;font-weight:900;box-shadow:0 1px 3px rgba(0,0,0,.22);z-index:5}
+    .season-mini-avatar.creator{
+      border-color:#8be9ff;
+      box-shadow:
+        0 0 0 2px rgba(148,232,255,.42),
+        0 0 0 5px rgba(30,136,229,.20),
+        0 0 16px rgba(74,196,255,.28),
+        inset 0 1px 0 rgba(255,255,255,.12),
+        0 3px 8px rgba(0,0,0,.22);
+      background:linear-gradient(180deg,#0e3356 0%,#10243a 100%);
+    }
+    .season-mini-avatar .av-creator-badge{position:absolute;top:1px;right:1px;min-width:13px;height:13px;padding:0 3px;border-radius:999px;display:grid;place-items:center;background:linear-gradient(180deg,#9be7ff,#32b9ff);color:#05243d;font-size:7px;font-weight:1000;letter-spacing:.03em;box-shadow:0 1px 3px rgba(0,0,0,.22);z-index:5}
 
     .season-jersey-wrap{position:relative;width:56px;height:54px;margin:0 auto;display:grid;place-items:center;overflow:visible;z-index:2}
     .season-jersey{
@@ -4306,6 +4317,7 @@ function teamNameFontSize(name){const len=String(name||'').trim().length;if(len<
 function applyPackNationLabel(el,name){if(!el)return;el.textContent=name;el.style.fontSize=`${packNationFontSize(name)}px`;el.title=name}
 
 function isSubscriber(player){return String(player&&player.subscriber||'').trim().toLowerCase()==='si'}
+function isCreator(player){return String(player&&player.creator||'').trim().toLowerCase()==='si'}
 function hashString(str){let h=2166136261>>>0;for(const ch of String(str||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
 function seededChoice(list,seed,shift=0){return list[(Math.floor(seed/Math.pow(7,shift))>>>0)%list.length]}
 function avatarHexToRgb(color){
@@ -4362,7 +4374,7 @@ function avatarSeed(player){
  const role=avatarRoleCode(player);
  const source=avatarSourceKey(player);
  const seed=hashString(`${player?.name||''}|${player?.nation||''}|${role}|${source}`);
- return {
+ const preset={
   seed,
   skin:seededChoice(['#f6caa5','#edb98f','#d99870','#be805b','#915b40','#f0d5bb'],seed,1),
   hair:seededChoice(['#1b1512','#432818','#6f4e37','#c18f59','#d8d8d8','#111827','#7f1d1d','#312e81'],seed,2),
@@ -4375,6 +4387,20 @@ function avatarSeed(player){
   accessory:seededChoice(['none','none','glasses','headband'],seed,9),
   kitStyle:seededChoice(['stripe','sash','hoops','split','solid'],seed,10)
  };
+ const creatorStyle=String(player?.creatorStyle||'').trim().toLowerCase();
+ if(creatorStyle==='barone-sportivo'){
+  preset.skin='#f0d5bb';
+  preset.hair='#8a5a33';
+  preset.eyebrows='#5a371d';
+  preset.faceShape='oval';
+  preset.hairStyle='part';
+  preset.eyeStyle='focused';
+  preset.mouthStyle='serious';
+  preset.beardStyle='stubble';
+  preset.accessory='topHat';
+  preset.kitStyle='solid';
+ }
+ return preset;
 }
 function renderAvatarSvg(player,sub=false){
  const a=avatarSeed(player), p=avatarPalette(player), tier=avatarTier(player), id=`av-${a.seed}`, overall=Number(player?.ovr)||0;
@@ -4424,8 +4450,9 @@ function renderAvatarSvg(player,sub=false){
  return `<svg viewBox="0 0 84 84" aria-hidden="true" focusable="false"><defs><linearGradient id="${id}-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${avatarShade(p.bg1,.08)}"/><stop offset="100%" stop-color="${avatarShade(p.bg2,.02)}"/></linearGradient><radialGradient id="${id}-halo" cx="50%" cy="38%" r="60%"><stop offset="0%" stop-color="${avatarShade(p.glow,.42)}" stop-opacity=".82"/><stop offset="100%" stop-color="${avatarShade(p.glow,-.18)}" stop-opacity="0"/></radialGradient><radialGradient id="${id}-shine" cx="28%" cy="18%" r="70%"><stop offset="0%" stop-color="rgba(255,255,255,.38)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><rect x="4.5" y="4.5" width="75" height="75" rx="22" fill="url(#${id}-bg)"/><circle cx="42" cy="40" r="29" fill="url(#${id}-halo)"/>${collar}${neck}${ears}${face}${hairMap[a.hairStyle]||hairMap.crop}${cheeks}${accessoryMap[a.accessory]||''}${brows}${eyesMap[a.eyeStyle]||eyesMap.dot}${nose}${mouthMap[a.mouthStyle]||mouthMap.smile}${beardMap[a.beardStyle]||''}${sparkles}${crown}${topMark}<rect x="4.5" y="4.5" width="75" height="75" rx="22" fill="url(#${id}-shine)" opacity=".55"/><rect x="4.5" y="4.5" width="75" height="75" rx="22" fill="none" stroke="${rimColor}" stroke-width="${sub?'2.2':overall>=85?'1.7':'1.2'}"/></svg>`;
 }
 function renderMiniAvatar(player,extra=''){
- const sub=isSubscriber(player);
- return `<span class="season-mini-avatar ${sub?'subscriber':''} ${extra}" style="background:transparent!important">${renderAvatarSvg(player,sub)}${sub?'<span class="av-subscriber-badge">★</span>':''}</span>`;
+ const sub=isSubscriber(player), creator=isCreator(player);
+ const badge=sub?'<span class="av-subscriber-badge">★</span>':creator?'<span class="av-creator-badge">CR</span>':'';
+ return `<span class="season-mini-avatar ${sub?'subscriber':''} ${creator?'creator':''} ${extra}" style="background:transparent!important">${renderAvatarSvg(player,sub)}${badge}</span>`;
 }
 
 function nationPalette(name){
@@ -6060,6 +6087,18 @@ function pushEffect(type,value,rounds,extra={}){
  else{state.activeEffects.push({type:scope.ovr,value:1,...companionBase});state.activeEffects.push({type:scope.chem,value:1,...companionBase})}
 }
 function pushSeasonEffect(type,value,extra={}){return pushEffect(type,value,remainingSeasonMatches(),{...extra,untilSeasonEnd:true})}
+function applyCreatorMvpBoostAfterMatch(result){
+ if(!result)return;
+ const mvpId=String(result?.mvpId||'').trim();
+ if(!mvpId)return;
+ const userIds=new Set(rosterPlayers().map(entry=>String(entry.playerId||'')));
+ if(!userIds.has(mvpId))return;
+ const player=playerById(mvpId)||statPlayerInfo(mvpId);
+ if(!player||!isCreator(player))return;
+ state.activeEffects=state.activeEffects.filter(effect=>String(effect?.source||'')!=='creator-mvp-boost');
+ pushEffect('teamOvr',1,2,{source:'creator-mvp-boost',label:'Uomo immagine'});
+ result.creatorMvpBoost={active:true,playerId:mvpId,playerName:String(player.name||'Creator'),value:1};
+}
 function midseasonTargetFrom(source=state){
  const delta=Number(source?.seasonRules?.midseasonPickDelta)||0;
  const mandatoryCount=[...new Set([...(Array.isArray(source?.seasonRules?.mandatoryMidseasonPlayerIds)?source.seasonRules.mandatoryMidseasonPlayerIds:[]),source?.seasonRules?.mandatoryMidseasonPlayerId].map(String).filter(Boolean))].length;
@@ -8799,6 +8838,7 @@ function postMatch(){
  tickSeasonQuestAfterMatch(result);
  resolveSecretRefereeAfterMatch(result);
  if(!matchWasFormulaOneWalkover)resolveSpaceJamTalentChallenge(result);
+ if(!matchWasFormulaOneWalkover)applyCreatorMvpBoostAfterMatch(result);
  state.activeEffects.forEach(effect=>{if(!effectLastsUntilSeasonEnd(effect))effect.rounds--});state.activeEffects=state.activeEffects.filter(effect=>effectLastsUntilSeasonEnd(effect)||effect.rounds>0);activateRestRewards(classicRestRewards,result);activatePendingNationalBoost();state.playInjured={};tickChaosOpponentEffects();resolvePendingParityResetAfterRound(result);resolveCurvaContestAfterRound(result);state.matchday++;state.pendingEvent=null;
  if(state.matchday===19){runChaosOpponentMidseason();if(coachIs('three-five-two')){state.midseason={...state.midseason,step:0,target:0,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',nation:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:true,auto:false,autoCompleted:true,changes:[]};if(isTeamEliminated(USER_ID)||state.matchday>=seasonLength()){advanceAfterRegularSeason()}else if(!curvaContestState().pendingTeamId)prepareEvent();}else{const target=midseasonTarget(),auto=Boolean(state.seasonRules.autoMidseason||state.seasonRules.botMidseason),mandatoryIds=mandatoryMidseasonPlayerIds().filter(id=>rosterEntry(id)).slice(0,3),mandatory=mandatoryIds[0]||'';state.midseason={step:0,target:clamp(Math.max(target,mandatoryIds.length),1,3),outgoingId:mandatory,mandatoryOutgoingId:mandatory,mandatoryOutgoingIds:mandatoryIds,clubId:'',nation:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto,autoCompleted:false,changes:[]};state.phase='midseason';}}
  else if(isTeamEliminated(USER_ID)||state.matchday>=seasonLength()){advanceAfterRegularSeason()}else if(!curvaContestState().pendingTeamId)prepareEvent();
@@ -8847,6 +8887,7 @@ function showResultModal(){
  const champagneLine=result.champagneDrawLoss?`<div class="goal-line red-card-event"><b>🥂 Calcio champagne</b><br>Il pareggio è stato trasformato in sconfitta dalla penalità della quest.</div>`:'';
  const hungerLine=result.hungerWalkover?`<div class="goal-line"><b>🏹 Vittoria a tavolino</b><br>L’avversario era già stato eliminato dagli Hunger Games.</div>`:'';
  const subscriberLine=result.forcedSubscriberGoals?`<div class="goal-line"><b>⚽ Abbonati scatenati</b><br>${result.forcedSubscriberGoals} ${result.forcedSubscriberGoals===1?'abbonato ha':'abbonati hanno'} segnato almeno un gol.</div>`:'';
+ const creatorBoostLine=result.creatorMvpBoost?.active?`<div class="goal-line"><b>🎬 Uomo immagine</b><br>${esc(result.creatorMvpBoost.playerName)} è stato nominato MVP: tutta la squadra riceve +${Number(result.creatorMvpBoost.value)||1} OVR per la prossima partita.</div>`:'';
  const coachResultLine=result.coachOvrModifier||result.coachGoalForGuaranteed||result.coachGoalAgainstGuaranteed?`<div class="goal-line"><b>${esc(coachProfile(result.coachType).icon)} ${esc(coachProfile(result.coachType).name)}</b><br>${result.coachOvrModifier?`${result.coachOvrModifier>0?'+':''}${Number(result.coachOvrModifier)} OVR applicato alla squadra. `:''}${result.coachGoalForGuaranteed?'Gol segnato garantito attivato. ':''}${result.coachGoalAgainstGuaranteed?'Gol subito garantito attivato. ':''}</div>`:'';
  let commentary=Array.isArray(result.commentary)?result.commentary:[];
  if(!commentary.length){
@@ -8857,7 +8898,7 @@ function showResultModal(){
  const mvpTeam=result.mvpTeamId?teamById(result.mvpTeamId):null;
  const mvpLine=mvpPlayer?`<div class="match-mvp" style="${teamCssVars(mvpTeam)}">${renderMiniAvatar(mvpPlayer,'small')}<div><span>⭐ MVP della partita</span><b>${esc(mvpPlayer.name)}</b><small>${mvpTeam?`${teamColorDot(mvpTeam)}${esc(mvpTeam.name)}`:''}</small></div></div>`:'';
  const scorersLine=`<div class="result-scorers">${renderResultScorers(result.goals,state.teamName)}${renderResultScorers(result.opponentGoals,result.opponent)}</div>`;
- modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${Number.isFinite(Number(result.displayGf))?Number(result.displayGf):result.gf}–${Number.isFinite(Number(result.displayGa))?Number(result.displayGa):result.ga}${result.penalties?` <small>(${Number(result.penalties.for)||0}–${Number(result.penalties.against)||0} d.c.r.)</small>`:''}</div><button id="closeResult" class="btn primary result-continue-top">Continua</button>${scorersLine}${pinkLine}${redLine}${suspensionLine}${forcedLine}${fantaballopoliMatchLine}${fantaballopoliDisciplineLine}${error404Line}${spaceJamStartLine}${spaceJamOutcomeLine}${frenchLateBoostLine}${federationLine}${pointsLine}${noDrawLine}${formulaOneWalkoverLine}${formulaOneLine}${italiaCatenaccioLine}${parityResetLine}${curvaContestLine}${curvaVenueLine}${injuryLine}${ductilityLine}${secretRefereeLine}${classicEventLine}${futurePenaltyLine}${chickenTrainingLine}${chickenGoalLine}${penguinLine}${storyLine}${questLine}${cupLine}${champagneLine}${hungerLine}${subscriberLine}${coachResultLine}<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>${mvpLine}</div></div></div>`;
+ modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">Risultato finale</div><div class="match-result"><div class="team-name">${esc(state.teamName)} vs ${esc(result.opponent)}</div><div class="score">${Number.isFinite(Number(result.displayGf))?Number(result.displayGf):result.gf}–${Number.isFinite(Number(result.displayGa))?Number(result.displayGa):result.ga}${result.penalties?` <small>(${Number(result.penalties.for)||0}–${Number(result.penalties.against)||0} d.c.r.)</small>`:''}</div><button id="closeResult" class="btn primary result-continue-top">Continua</button>${scorersLine}${pinkLine}${redLine}${suspensionLine}${forcedLine}${fantaballopoliMatchLine}${fantaballopoliDisciplineLine}${error404Line}${spaceJamStartLine}${spaceJamOutcomeLine}${frenchLateBoostLine}${federationLine}${pointsLine}${noDrawLine}${formulaOneWalkoverLine}${formulaOneLine}${italiaCatenaccioLine}${parityResetLine}${curvaContestLine}${curvaVenueLine}${injuryLine}${ductilityLine}${secretRefereeLine}${classicEventLine}${futurePenaltyLine}${chickenTrainingLine}${chickenGoalLine}${penguinLine}${storyLine}${questLine}${cupLine}${champagneLine}${hungerLine}${subscriberLine}${creatorBoostLine}${coachResultLine}<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>${mvpLine}</div></div></div>`;
  document.getElementById('closeResult').onclick=()=>{modalRoot.innerHTML='';const switched=performPendingCurvaTeamSwitch();if(switched){state.pendingEvent=null;if(state.phase==='season')prepareEvent();save();toast(`Ora alleni ${switched.to}.`)}render()};
 }
 
