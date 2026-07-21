@@ -1,29 +1,51 @@
-# Architettura condivisa dei Campionati
+# Architettura modulare dei Campionati
 
-Le due modalità continuano ad avere pagine, grafica, database, salvataggi e contenuti differenti, ma usano un unico motore JavaScript.
+Le modalità **Campionato Community** e **Fantacampionato REAL** condividono lo stesso motore, ma conservano database, salvataggi, testi, validazioni ed eventi esclusivi differenti.
 
-## File
+Il precedente file monolitico `assets/season-engine.js` è stato rimosso. La logica condivisa è ora nella cartella `assets/season/`.
 
-- `assets/season-engine.js`: tutta la logica condivisa della stagione.
-- `assets/season-config-community.js`: configurazione del Campionato Community.
-- `assets/season-config-real.js`: configurazione del Fantacampionato REAL.
-- `campionato.html`: interfaccia e grafica Community; carica la configurazione Community.
-- `campionato-real.html`: interfaccia e grafica REAL; carica la configurazione REAL.
+## Configurazioni delle modalità
+
+- `assets/season-config-community.js`: differenze del Campionato Community.
+- `assets/season-config-real.js`: differenze del Fantacampionato REAL.
+- `campionato.html`: grafica e configurazione Community.
+- `campionato-real.html`: grafica e configurazione REAL.
+
+## Moduli del motore
+
+I moduli vengono caricati come script classici e devono mantenere questo ordine:
+
+1. `01-bootstrap.js` — configurazione e chiavi dei salvataggi.
+2. `02-achievements.js` — achievement di partita e stagione.
+3. `03-state-and-data.js` — stato, salvataggi, database e normalizzazione.
+4. `04-setup-and-draft.js` — configurazione squadra e draft iniziale.
+5. `05-opponents-and-chaos.js` — avversari e modalità Caos.
+6. `06-competitions-and-stories.js` — calendario, coppe e archi narrativi.
+7. `07-effects-quests-chains.js` — intesa, sponsor, effetti, quest e catene.
+8. `08-special-rules.js` — regolamenti speciali, playoff e modificatori.
+9. `09-analytics-and-summary.js` — formazione, potenza, analytics e riepilogo.
+10. `10-events.js` — catalogo e risoluzione di eventi e decisioni.
+11. `11-season-ui-and-lineup.js` — schermata stagione e formazione.
+12. `12-match-simulation.js` — simulazione, cronaca e risultato.
+13. `13-market-and-finish.js` — mercato, conclusione e invio risultati.
+14. `14-runtime.js` — rendering, avvio e gestori globali.
 
 ## Differenze preservate
 
-Le configurazioni separano:
+Le due configurazioni continuano a separare:
 
 - chiavi e migrazione dei salvataggi;
-- identificativi della squadra utente;
-- nomi e fallback della squadra;
-- database principale e database secondario per gli eventi Multiverso;
-- regole di validazione dei club e delle rose;
+- identificativi e nome predefinito della squadra utente;
+- database principale e database secondario degli eventi Multiverso;
+- validazione di club e rose;
 - testi specifici della modalità;
-- codici e categorie per l'invio delle vittorie;
-- eventi presenti solo nella modalità Community.
+- categorie e codici per l'invio delle vittorie;
+- eventi disponibili soltanto nella modalità Community.
 
-## Regola di manutenzione
+## Regole di manutenzione
 
-Le modifiche alla simulazione, al draft, alle quest, agli eventi condivisi e alle finali vanno fatte una sola volta in `season-engine.js`.
-Una differenza intenzionale tra le modalità va aggiunta nel relativo file `season-config-*.js`, evitando di duplicare il motore.
+- Una modifica condivisa va eseguita nel modulo della relativa responsabilità.
+- Una differenza intenzionale Community/REAL va inserita nel rispettivo `season-config-*.js`.
+- Non creare copie alternative dei moduli per la modalità REAL.
+- Non cambiare l'ordine degli script senza eseguire i test automatici.
+- Le funzioni di supporto di un evento vanno tenute in `07-effects-quests-chains.js` o `08-special-rules.js`; la definizione dell'evento va in `10-events.js`.
