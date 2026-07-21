@@ -6363,6 +6363,11 @@
       background:#14161a;border-radius:3px 3px 1px 1px;box-shadow:0 7px 0 -3px #282b31,0 8px 0 1px #101216;
     }
     .mini-avatar.barone-sportivo .av-extra{left:50%!important;top:19px!important;width:10px!important;height:5px!important;transform:translateX(-50%)!important;background:rgba(138,90,51,.48)!important;border-radius:0 0 8px 8px!important}
+    .mini-avatar.stefano-finari .av-hair{top:12px!important;left:17px!important;width:38px!important;height:16px!important;border-radius:14px 14px 8px 8px!important;background:#2d2019!important;box-shadow:none!important}
+    .mini-avatar.stefano-finari .av-extra{left:50%!important;top:22px!important;width:14px!important;height:6px!important;transform:translateX(-50%)!important;background:transparent!important;border-radius:0!important;box-shadow:none!important}
+    .mini-avatar.stefano-finari .av-extra::before,.mini-avatar.stefano-finari .av-extra::after{content:'';position:absolute;top:0;width:6px;height:3px;border-bottom:2px solid #3b2418;border-radius:0 0 6px 6px}
+    .mini-avatar.stefano-finari .av-extra::before{left:0;transform:rotate(8deg)}
+    .mini-avatar.stefano-finari .av-extra::after{right:0;transform:rotate(-8deg)}
 
 </style>
 </head>
@@ -7616,14 +7621,18 @@
       const skin = skinTones[hash % skinTones.length];
       const hair = hairTones[(hash >> 2) % hairTones.length];
       const [shirtA, shirtB, shirtC] = nationPalette(player.nation);
-      const baroneSportivo=String(player?.creatorStyle||'').trim().toLowerCase()==='barone-sportivo'||String(player?.id||'')==='850'||String(player?.name||'').trim().toLowerCase()==='barone sportivo';
-      const faceShape = baroneSportivo?'oval':['round','oval','square'][(hash >> 1) % 3];
-      const hairStyle = baroneSportivo?'top':['short','top','full','side'][(hash >> 3) % 4];
-      const extra = baroneSportivo?'beard':['none','brow','beard'][(hash >> 5) % 3];
+      const creatorKey=String(player?.creatorStyle||'').trim().toLowerCase();
+      const creatorName=String(player?.name||'').trim().toLowerCase();
+      const baroneSportivo=creatorKey==='barone-sportivo'||String(player?.id||'')==='850'||creatorName==='barone sportivo';
+      const stefanoFinari=creatorKey==='stefano-finari'||String(player?.id||'')==='851'||creatorName==='stefano finari';
+      const faceShape = baroneSportivo||stefanoFinari?'oval':['round','oval','square'][(hash >> 1) % 3];
+      const hairStyle = baroneSportivo?'top':stefanoFinari?'short':['short','top','full','side'][(hash >> 3) % 4];
+      const extra = baroneSportivo?'beard':stefanoFinari?'moustache':['none','brow','beard'][(hash >> 5) % 3];
       const subscriber = isChannelSubscriber(player);
       const creator = isChannelCreator(player);
-      const finalHair=baroneSportivo?'#8a5a33':hair;
-      return `<span class="mini-avatar ${subscriber ? 'subscriber' : ''} ${creator ? 'creator' : ''} ${baroneSportivo?'barone-sportivo':''} ${faceShape} hair-${hairStyle} extra-${extra}" style="--skin:${skin};--hair:${finalHair};--shirt-a:${shirtA};--shirt-b:${shirtB};--shirt-c:${shirtC};--shirt-ink:${readableInk(shirtA, shirtB)};">
+      const finalHair=baroneSportivo?'#8a5a33':stefanoFinari?'#2d2019':hair;
+      const finalSkin=stefanoFinari?'#f0c39f':skin;
+      return `<span class="mini-avatar ${subscriber ? 'subscriber' : ''} ${creator ? 'creator' : ''} ${baroneSportivo?'barone-sportivo':''} ${stefanoFinari?'stefano-finari':''} ${faceShape} hair-${hairStyle} extra-${extra}" style="--skin:${finalSkin};--hair:${finalHair};--shirt-a:${shirtA};--shirt-b:${shirtB};--shirt-c:${shirtC};--shirt-ink:${readableInk(shirtA, shirtB)};">
         <span class="av-head"></span>
         <span class="av-hair"></span>
         <span class="av-eye av-eye-l"></span>
