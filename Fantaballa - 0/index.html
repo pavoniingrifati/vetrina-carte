@@ -4574,6 +4574,37 @@
       color:#6a49c7;
       font-weight:1000;
     }
+    .home-creators { position:relative; }
+    .home-creators .home-new-players-title::after {
+      content:'CREATOR';
+      margin-left:8px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.12em;
+      background:linear-gradient(180deg,#ff5d5d,#d40000);
+      color:#fff;
+      box-shadow:0 1px 0 rgba(255,255,255,.18) inset;
+    }
+    .home-new-player.is-creator {
+      border-color:rgba(220,38,38,.28);
+      background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(255,240,240,.78));
+    }
+    .home-new-player.is-creator .home-new-player-avatar {
+      box-shadow:0 0 0 2px rgba(220,38,38,.24);
+    }
+    .home-new-player.is-creator .home-new-player-overall {
+      background:#d70b0b;
+      color:#fff;
+    }
+    .home-creator-badge {
+      color:#d70b0b;
+      font-weight:1000;
+    }
     .home-subscribers-controls {
       display:flex;
       align-items:center;
@@ -6667,6 +6698,28 @@
       </div>
     </section>
 
+    <section class="home-new-players home-subscribers home-creators" id="homeCreators" aria-labelledby="homeCreatorsTitle">
+      <div class="home-new-players-head">
+        <h2 class="home-new-players-title" id="homeCreatorsTitle">Tutti i creator</h2>
+        <span class="home-new-players-note">Creator presenti nel gioco · 10 alla volta</span>
+      </div>
+      <div class="home-subscribers-viewport">
+        <div class="home-subscribers-track" id="homeCreatorsTrack" aria-live="polite">
+          <div class="home-subscribers-page">
+            <div class="home-new-players-list">
+              <span class="home-new-players-empty">Caricamento creator…</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="home-subscribers-controls" id="homeCreatorsControls" hidden>
+        <button class="home-subscribers-arrow" type="button" data-creator-prev aria-label="Mostra i 10 creator precedenti">‹</button>
+        <div class="home-subscribers-dots" id="homeCreatorsDots" aria-label="Gruppi creator"></div>
+        <span class="home-subscribers-counter" id="homeCreatorsCounter">1/1</span>
+        <button class="home-subscribers-arrow" type="button" data-creator-next aria-label="Mostra i 10 creator successivi">›</button>
+      </div>
+    </section>
+
     <div class="site-footer" aria-label="Link privacy">
       <a href="achievement.html">Achievement</a>
       <a href="come-si-gioca.html">Come si gioca</a>
@@ -6723,10 +6776,16 @@
     const subscribersControls = document.getElementById('homeSubscribersControls');
     const subscribersDots = document.getElementById('homeSubscribersDots');
     const subscribersCounter = document.getElementById('homeSubscribersCounter');
-    if (!newestList && !subscribersTrack) return;
+    const creatorsRoot = document.getElementById('homeCreators');
+    const creatorsTrack = document.getElementById('homeCreatorsTrack');
+    const creatorsControls = document.getElementById('homeCreatorsControls');
+    const creatorsDots = document.getElementById('homeCreatorsDots');
+    const creatorsCounter = document.getElementById('homeCreatorsCounter');
+    if (!newestList && !subscribersTrack && !creatorsTrack) return;
 
     const fallbackPlayers = [{"id":"828","name":"Manuel Buratti","role":"P","Position":"P","roleLabel":"Portiere","nation":"Italia","ovr":68,"subscriber":"no","abbonato":"no","club":"nottingham-paura"},{"id":"827","name":"Frankie Watusso","role":"A","Position":"ATT","roleLabel":"Attaccante","nation":"Italia","ovr":66,"subscriber":"no","abbonato":"no","club":"je-so-paz"},{"id":"826","name":"Geppo","role":"C","Position":"CC, COC, ATT","roleLabel":"Centrocampista","nation":"Italia","ovr":84,"subscriber":"no","abbonato":"no","club":"real-madrink"},{"id":"825","name":"Hamok","role":"P","Position":"P","roleLabel":"Portiere","nation":"Corea del Sud","ovr":70,"subscriber":"no","abbonato":"no","club":"inter-me-manda"},{"id":"824","name":"Minkyo Nello","role":"D","Position":"TS, AS","roleLabel":"Difensore","nation":"Corea del Sud","ovr":67,"subscriber":"no","abbonato":"no","club":"lokomotiv-mojito"},{"id":"823","name":"ManuF","role":"D","Position":"DC, TD, TS","roleLabel":"Difensore","nation":"Italia","ovr":76,"subscriber":"no","abbonato":"no","club":"lino-banfield"},{"id":"822","name":"Francesco Delfini","role":"A","Position":"AD, COC, ATT","roleLabel":"Attaccante","nation":"Italia","ovr":81,"subscriber":"no","abbonato":"no","club":"paris-saint-gennar"},{"id":"821","name":"Kevin civitas","role":"A","Position":"AS, AD, ATT","roleLabel":"Attaccante","nation":"Italia","ovr":77,"subscriber":"no","abbonato":"no","club":"a-musso-duro"},{"id":"820","name":"gdelca","role":"A","Position":"AS, AD, ATT","roleLabel":"Attaccante","nation":"Italia","ovr":74,"subscriber":"no","abbonato":"no","club":"atletico-ma-non-troppo"},{"id":"819","name":"gabigol","role":"A","Position":"AS, COC, ATT","roleLabel":"Attaccante","nation":"Brasile","ovr":82,"subscriber":"no","abbonato":"no","club":"milan-e-shiro"}];
     const fallbackSubscribers = [{"id":"817","name":"Antonio Adamo","role":"A","Position":"AS, AD, COC","roleLabel":"Attaccante","nation":"Italia","ovr":90,"subscriber":"si","abbonato":"si","club":"balordi-fc"},{"id":"793","name":"Cardox_kl","role":"A","Position":"AS, AD, ATT","roleLabel":"Attaccante","nation":"Romania","ovr":60,"subscriber":"si","abbonato":"si","club":"patetico-miniero"},{"id":"696","name":"Alessio Vitrani","role":"C","Position":"COC","roleLabel":"Centrocampista","nation":"Olanda","ovr":60,"subscriber":"si","abbonato":"si","club":"manchester-simy"},{"id":"684","name":"popo_thom","role":"C","Position":"CC","roleLabel":"Centrocampista","nation":"Messico","ovr":80,"subscriber":"si","abbonato":"si","club":"aston-birra"},{"id":"672","name":"Alecolla","role":"C","Position":"CC, CDC","roleLabel":"Centrocampista","nation":"Germania","ovr":72,"subscriber":"no","abbonato":"Sì","club":"lino-banfield"},{"id":"645","name":"FireLuk29","role":"A","Position":"ATT, COC","roleLabel":"Attaccante","nation":"Francia","ovr":84,"subscriber":"si","abbonato":"si","club":"sporting-limoncello"},{"id":"555","name":"brun0_scarso","role":"C","Position":"CC","roleLabel":"Centrocampista","nation":"Spagna","ovr":82,"subscriber":"si","abbonato":"si","club":"dragon-ballotta"},{"id":"537","name":"Darkness","role":"A","Position":"AS, AD, COC","roleLabel":"Attaccante","nation":"Portogallo","ovr":84,"subscriber":"si","abbonato":"si","club":"gotham-city"},{"id":"532","name":"diggodog30","role":"C","Position":"CC","roleLabel":"Centrocampista","nation":"Francia","ovr":88,"subscriber":"si","abbonato":"si","club":"infami-sempre"},{"id":"529","name":"Johnny","role":"C","Position":"CC, CDC","roleLabel":"Centrocampista","nation":"Spagna","ovr":88,"subscriber":"si","abbonato":"si","club":"psv-endovena"},{"id":"515","name":"justmario01","role":"C","Position":"CDC","roleLabel":"Centrocampista","nation":"Spagna","ovr":81,"subscriber":"si","abbonato":"si","club":"borussia-porcmund"},{"id":"495","name":"bboy_fili_","role":"P","Position":"P","roleLabel":"Portiere","nation":"Spagna","ovr":80,"subscriber":"si","abbonato":"si","club":"fiumi-di-parolo"},{"id":"464","name":"nathan2290","role":"P","Position":"P","roleLabel":"Portiere","nation":"Argentina","ovr":78,"subscriber":"si","abbonato":"si","club":"aston-birra"},{"id":"447","name":"andyrabe51","role":"C","Position":"CDC","roleLabel":"Centrocampista","nation":"Marocco","ovr":68,"subscriber":"si","abbonato":"si","club":"patetico-miniero"},{"id":"414","name":"bandolero__22","role":"C","Position":"CDC, CC","roleLabel":"Centrocampista","nation":"Spagna","ovr":88,"subscriber":"si","abbonato":"si","club":"gotham-city"},{"id":"384","name":"Fantaballa","role":"C","Position":"CC, COC","roleLabel":"Centrocampista","nation":"Francia","ovr":79,"subscriber":"si","abbonato":"si","club":"fantaballa-fc"},{"id":"372","name":"patriziocaldoro07","role":"C","Position":"CC","roleLabel":"Centrocampista","nation":"Croazia","ovr":71,"subscriber":"si","abbonato":"si","club":"atletico-creator"},{"id":"339","name":"marcoprogame4","role":"C","Position":"COC, CC","roleLabel":"Centrocampista","nation":"Francia","ovr":83,"subscriber":"si","abbonato":"si","club":"olympique-maremma"},{"id":"157","name":"pizzaboyr0w","role":"D","Position":"TD","roleLabel":"Difensore","nation":"Francia","ovr":82,"subscriber":"si","abbonato":"si","club":"psv-endovena"},{"id":"88","name":"Attilio","role":"A","Position":"ATT, COC","roleLabel":"Attaccante","nation":"Francia","ovr":93,"subscriber":"si","abbonato":"si","club":"gotham-city"},{"id":"73","name":"Blaze","role":"A","Position":"AS","roleLabel":"Attaccante","nation":"Argentina","ovr":86,"subscriber":"si","abbonato":"si","club":"o-solet-mio"}];
+    const fallbackCreators = [{"id":"850","name":"Barone Sportivo","role":"C","Position":"TRQ","roleLabel":"Centrocampista","nation":"Italia","ovr":74,"subscriber":"no","abbonato":"no","creator":"si","creatorStyle":"barone-sportivo","club":"atletico-creator"}];
     const fallbackClubs = [{"id":"fantaballa-fc","name":"Fantaballa FC"},{"id":"gotham-city","name":"Gotham City"},{"id":"infami-sempre","name":"Infami Sempre"},{"id":"balordi-fc","name":"Balordi FC"},{"id":"atletico-ma-non-troppo","name":"Atletico Ma Non Troppo"},{"id":"a-musso-duro","name":"A Musso Duro"},{"id":"amaro-luciano","name":"Amaro Luciano"},{"id":"aston-birra","name":"Aston Birra"},{"id":"coca-kolarov","name":"Coca Kolarov"},{"id":"dragon-ballotta","name":"Dragon Ballotta"},{"id":"dybala-coi-lupi","name":"Dybala Coi Lupi"},{"id":"fiumi-di-parolo","name":"Fiumi di Parolo"},{"id":"je-so-paz","name":"Je So Paz"},{"id":"lino-banfield","name":"Lino Banfield"},{"id":"lionel-ricci","name":"Lionel Ricci"},{"id":"manchester-simy","name":"Manchester Simy"},{"id":"milan-e-shiro","name":"Milan e Shiro"},{"id":"patetico-miniero","name":"Patetico Miniero"},{"id":"perder-brema","name":"Perder Brema"},{"id":"o-solet-mio","name":"O Solet Mio"},{"id":"real-madrink","name":"Real Madrink"},{"id":"borussia-porcmund","name":"Borussia Porcmund"},{"id":"bayer-leverduren","name":"Bayer Leverdüren"},{"id":"paris-saint-gennar","name":"Paris Saint Gennar"},{"id":"ajax-tavernello","name":"Ajax Tavernello"},{"id":"dinamo-spritz","name":"Dinamo Spritz"},{"id":"lokomotiv-mojito","name":"Lokomotiv Mojito"},{"id":"nottingham-paura","name":"Nottingham Paura"},{"id":"sporting-limoncello","name":"Sporting Limoncello"},{"id":"psv-endovena","name":"PSV Endovena"},{"id":"olympique-maremma","name":"Olympique Maremma"},{"id":"inter-me-manda","name":"Inter Me Manda"},{"id":"senatori-united","name":"Senatori United"},{"id":"atletico-creator","name":"Atletico Creator"},{"id":"dinamo-twitch","name":"Dinamo Twitch"},{"id":"real-fuorigioco","name":"Real Fuorigioco"}];
 
     const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, char => ({
@@ -6742,7 +6801,7 @@
       return result >>> 0;
     };
 
-    const avatarSvg = (player, subscriber = false) => {
+    const avatarSvg = (player, subscriber = false, creator = false) => {
       const seed = hash(`${player.id}|${player.name}|${player.nation}`);
       const skins = ['#f3c7a2','#e7af83','#cf8c65','#ad6e4d','#895139','#efd2b7'];
       const hairs = ['#17120f','#382217','#69452e','#b27b45','#d4d0c8','#202938'];
@@ -6759,6 +6818,8 @@
       const accessoryColor = accessoryPalette[(accessorySeed >>> 4) % accessoryPalette.length];
       const accentColor = accessoryPalette[(accessorySeed >>> 9) % accessoryPalette.length];
       const accessoryType = accessorySeed % 4;
+      const creatorStyle = String(player?.creatorStyle || '').trim().toLowerCase();
+      const isBaroneCreator = creator && (creatorStyle === 'barone-sportivo' || normalizedName(player) === 'barone sportivo');
       const eyes = eyeStyle === 0
         ? '<circle cx="28" cy="34" r="2" fill="#1f1b18"/><circle cx="44" cy="34" r="2" fill="#1f1b18"/>'
         : eyeStyle === 1
@@ -6774,6 +6835,12 @@
         : hairStyle === 1
           ? 'M17 29c4-12 11-19 19-19 9 0 16 6 19 17-5-2-9-3-13-3l-6 7-5-7c-5 1-9 2-14 5z'
           : 'M18 30c3-11 10-18 18-18 9 0 16 5 19 15-2-1-4-1-5 0-1-4-5-5-7-2-2-4-7-4-8 0-3-3-7-2-8 3-4 1-7 4-9 7z';
+      const creatorAccessory = !creator ? '' : (() => {
+        if (isBaroneCreator) {
+          return `<g><ellipse cx="36" cy="16" rx="17.5" ry="4.4" fill="#101114" opacity=".98"/><path d="M23 16.6V8.8c0-1.9 1.5-3.4 3.4-3.4h19.2c1.9 0 3.4 1.5 3.4 3.4v7.8z" fill="#1b1d22"/><rect x="22" y="15.3" width="28" height="2.8" rx="1.4" fill="#2b2f36"/><path d="M25 8.8h22" stroke="rgba(255,255,255,.15)" stroke-width=".9" stroke-linecap="round"/></g>`;
+        }
+        return `<rect x="47.5" y="7" width="17" height="11" rx="5.5" fill="url(#creator-pill-${seed})" stroke="rgba(255,255,255,.65)" stroke-width="1"/><text x="56" y="14.6" text-anchor="middle" font-size="6.6" font-weight="900" fill="#ffffff" letter-spacing=".08em">CR</text>`;
+      })();
       const subscriberAccessory = !subscriber ? '' : (() => {
         switch (accessoryType) {
           case 0:
@@ -6786,17 +6853,24 @@
             return `<rect x="31.2" y="37.4" width="9.6" height="5.2" rx="2.2" fill="#f3eade" stroke="#bb8a67" stroke-width="1.1"/><circle cx="34" cy="40" r=".55" fill="#bb8a67"/><circle cx="38" cy="40" r=".55" fill="#bb8a67"/>`;
         }
       })();
+      const finalSkin = isBaroneCreator ? '#f0d5bb' : skin;
+      const finalHair = isBaroneCreator ? '#8a5a33' : hair;
+      const finalBg = creator ? '#c81414' : bg;
+      const finalShirt = creator ? '#8f0f0f' : shirt;
+      const beard = isBaroneCreator ? '<path d="M27.8 51.8c3.1 7.6 8.7 11.8 14.2 11.8s11.1-4.2 14.2-11.8" fill="rgba(138,90,51,.34)"/><path d="M29.2 54.1c2.8 4.1 7.6 6.6 12.8 6.6s10-2.5 12.8-6.6" fill="none" stroke="rgba(138,90,51,.58)" stroke-width="1.35" stroke-linecap="round"/>' : '';
       return `<svg viewBox="0 0 72 72" aria-hidden="true" focusable="false">
-        <defs><linearGradient id="np-${seed}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${bg}"/><stop offset="1" stop-color="#17263a"/></linearGradient></defs>
+        <defs><linearGradient id="np-${seed}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${finalBg}"/><stop offset="1" stop-color="#17263a"/></linearGradient><linearGradient id="creator-pill-${seed}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff5f5f"/><stop offset="1" stop-color="#d60000"/></linearGradient></defs>
         <rect width="72" height="72" rx="18" fill="url(#np-${seed})"/>
         <circle cx="36" cy="34" r="22" fill="rgba(255,255,255,.10)"/>
-        <path d="M18 72c2-16 9-23 18-23s16 7 18 23" fill="${shirt}"/>
-        <rect x="32" y="47" width="8" height="10" rx="4" fill="${skin}"/>
-        <ellipse cx="36" cy="34" rx="20" ry="23" fill="${skin}"/>
-        <path d="${hairPath}" fill="${hair}"/>
+        <path d="M18 72c2-16 9-23 18-23s16 7 18 23" fill="${finalShirt}"/>
+        <rect x="32" y="47" width="8" height="10" rx="4" fill="${finalSkin}"/>
+        <ellipse cx="36" cy="34" rx="20" ry="23" fill="${finalSkin}"/>
+        <path d="${hairPath}" fill="${finalHair}"/>
         ${eyes}
         <path d="M36 36q2 4 0 7" fill="none" stroke="rgba(120,70,45,.35)" stroke-width="1.5" stroke-linecap="round"/>
         ${mouth}
+        ${beard}
+        ${creatorAccessory}
         ${subscriberAccessory}
         <rect x="1" y="1" width="70" height="70" rx="17" fill="none" stroke="rgba(255,255,255,.42)" stroke-width="2"/>
       </svg>`;
@@ -6811,21 +6885,24 @@
       .replace(/\b\w/g, char => char.toUpperCase());
     const isSubscriber = (player) => [player?.subscriber, player?.abbonato]
       .some(value => ['si','sì','yes','true','1'].includes(String(value ?? '').trim().toLowerCase()));
+    const isCreator = (player) => ['si','sì','yes','true','1'].includes(String(player?.creator ?? '').trim().toLowerCase()) || ['barone sportivo'].includes(String(player?.name || '').trim().toLocaleLowerCase('it-IT'));
     const normalizedName = (player) => String(player?.name || '').trim().toLocaleLowerCase('it-IT').replace(/\s+/g, ' ');
 
     const clubMap = (clubs) => new Map((Array.isArray(clubs) ? clubs : fallbackClubs)
       .filter(club => club && club.id)
       .map(club => [String(club.id), String(club.name || prettifySlug(club.id))]));
 
-    const cardHtml = (player, clubs, subscriber = false) => {
+    const cardHtml = (player, clubs, options = {}) => {
+      const subscriber = !!options.subscriber;
+      const creator = !!options.creator;
       const role = String(player.Position || player.role || '—').split(',')[0].trim();
       const nation = String(player.nation || '—');
       const team = clubs.get(String(player.club || '')) || prettifySlug(player.club);
       const overallValue = Number.parseInt(String(player.ovr ?? ''), 10);
       const overall = Number.isFinite(overallValue) ? overallValue : '—';
-      const subscriberLabel = subscriber ? ' · <span class="home-subscriber-badge">ABBONATO</span>' : '';
-      return `<article class="home-new-player${subscriber ? ' is-subscriber' : ''}" title="ID ${escapeHtml(player.id)} · ${escapeHtml(player.name)} · ${escapeHtml(team)}">
-        <span class="home-new-player-avatar">${avatarSvg(player, subscriber)}</span>
+      const subscriberLabel = subscriber ? ' · <span class="home-subscriber-badge">ABBONATO</span>' : creator ? ' · <span class="home-creator-badge">CREATOR</span>' : '';
+      return `<article class="home-new-player${subscriber ? ' is-subscriber' : ''}${creator ? ' is-creator' : ''}" title="ID ${escapeHtml(player.id)} · ${escapeHtml(player.name)} · ${escapeHtml(team)}">
+        <span class="home-new-player-avatar">${avatarSvg(player, subscriber, creator)}</span>
         <span class="home-new-player-copy">
           <span class="home-new-player-top">
             <span class="home-new-player-name">${escapeHtml(player.name || `Giocatore ${player.id}`)}</span>
@@ -6848,8 +6925,43 @@
         .sort((a, b) => numericId(b) - numericId(a))
         .slice(0, 10);
       newestList.innerHTML = newest.length
-        ? newest.map(player => cardHtml(player, names)).join('')
+        ? newest.map(player => cardHtml(player, names, {})).join('')
         : '<span class="home-new-players-empty">Nessun giocatore disponibile.</span>';
+    };
+
+    const setupPagedSlider = ({root, track, controls, dotsWrap, counter, prevSelector, nextSelector, dotAttr, pageCount}) => {
+      if (!root || !track) return;
+      if (!pageCount || pageCount < 2) { if (controls) controls.hidden = true; if (counter) counter.textContent = pageCount ? `1/${pageCount}` : '1/1'; return; }
+      controls.hidden = false;
+      dotsWrap.innerHTML = Array.from({length:pageCount}, (_, index) => `<button class="home-subscribers-dot${index === 0 ? ' active' : ''}" type="button" ${dotAttr}="${index}" aria-label="Mostra gruppo ${index + 1}" aria-selected="${index === 0 ? 'true' : 'false'}"></button>`).join('');
+      const dots = [...dotsWrap.querySelectorAll(`[${dotAttr}]`)];
+      const pages = [...track.querySelectorAll('.home-subscribers-page')];
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let current = 0;
+      let timer = null;
+      const show = (index) => {
+        current = (index + pageCount) % pageCount;
+        track.style.transform = `translateX(-${current * 100}%)`;
+        pages.forEach((page, pageIndex) => page.setAttribute('aria-hidden', pageIndex === current ? 'false' : 'true'));
+        dots.forEach((dot, dotIndex) => {
+          const active = dotIndex === current;
+          dot.classList.toggle('active', active);
+          dot.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        if (counter) counter.textContent = `${current + 1}/${pageCount}`;
+      };
+      const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+      const start = () => { stop(); if (!reduced) timer = setInterval(() => show(current + 1), 6500); };
+      root.querySelector(prevSelector)?.addEventListener('click', () => { show(current - 1); start(); });
+      root.querySelector(nextSelector)?.addEventListener('click', () => { show(current + 1); start(); });
+      dots.forEach(dot => dot.addEventListener('click', () => { show(Number(dot.getAttribute(dotAttr)) || 0); start(); }));
+      root.addEventListener('mouseenter', stop);
+      root.addEventListener('mouseleave', start);
+      root.addEventListener('focusin', stop);
+      root.addEventListener('focusout', event => { if (!root.contains(event.relatedTarget)) start(); });
+      document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+      show(0);
+      start();
     };
 
     const renderSubscribers = (players, clubs) => {
@@ -6870,42 +6982,30 @@
       }
       const pages = [];
       for (let index = 0; index < subscribers.length; index += 10) pages.push(subscribers.slice(index, index + 10));
-      subscribersTrack.innerHTML = pages.map((page, pageIndex) => `<div class="home-subscribers-page" aria-hidden="${pageIndex ? 'true' : 'false'}"><div class="home-new-players-list">${page.map(player => cardHtml(player, names, true)).join('')}</div></div>`).join('');
-      setupSubscriberSlider(pages.length);
+      subscribersTrack.innerHTML = pages.map((page, pageIndex) => `<div class="home-subscribers-page" aria-hidden="${pageIndex ? 'true' : 'false'}"><div class="home-new-players-list">${page.map(player => cardHtml(player, names, {subscriber:true})).join('')}</div></div>`).join('');
+      setupPagedSlider({root:subscribersRoot, track:subscribersTrack, controls:subscribersControls, dotsWrap:subscribersDots, counter:subscribersCounter, prevSelector:'[data-subscriber-prev]', nextSelector:'[data-subscriber-next]', dotAttr:'data-subscriber-go', pageCount:pages.length});
     };
 
-    const setupSubscriberSlider = (pageCount) => {
-      if (!subscribersRoot || !subscribersTrack || pageCount < 2) return;
-      subscribersControls.hidden = false;
-      subscribersDots.innerHTML = Array.from({length:pageCount}, (_, index) => `<button class="home-subscribers-dot${index === 0 ? ' active' : ''}" type="button" data-subscriber-go="${index}" aria-label="Mostra gruppo ${index + 1}" aria-selected="${index === 0 ? 'true' : 'false'}"></button>`).join('');
-      const dots = [...subscribersDots.querySelectorAll('[data-subscriber-go]')];
-      const pages = [...subscribersTrack.querySelectorAll('.home-subscribers-page')];
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      let current = 0;
-      let timer = null;
-      const show = (index) => {
-        current = (index + pageCount) % pageCount;
-        subscribersTrack.style.transform = `translateX(-${current * 100}%)`;
-        pages.forEach((page, pageIndex) => page.setAttribute('aria-hidden', pageIndex === current ? 'false' : 'true'));
-        dots.forEach((dot, dotIndex) => {
-          const active = dotIndex === current;
-          dot.classList.toggle('active', active);
-          dot.setAttribute('aria-selected', active ? 'true' : 'false');
+    const renderCreators = (players, clubs) => {
+      if (!creatorsTrack) return;
+      const names = clubMap(clubs);
+      const unique = new Map();
+      [...players]
+        .filter(player => player && numericId(player) >= 0 && isCreator(player))
+        .sort((a, b) => numericId(b) - numericId(a))
+        .forEach(player => {
+          const key = normalizedName(player) || `id-${player.id}`;
+          if (!unique.has(key)) unique.set(key, player);
         });
-        subscribersCounter.textContent = `${current + 1}/${pageCount}`;
-      };
-      const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
-      const start = () => { stop(); if (!reduced) timer = setInterval(() => show(current + 1), 6500); };
-      subscribersRoot.querySelector('[data-subscriber-prev]')?.addEventListener('click', () => { show(current - 1); start(); });
-      subscribersRoot.querySelector('[data-subscriber-next]')?.addEventListener('click', () => { show(current + 1); start(); });
-      dots.forEach(dot => dot.addEventListener('click', () => { show(Number(dot.dataset.subscriberGo) || 0); start(); }));
-      subscribersRoot.addEventListener('mouseenter', stop);
-      subscribersRoot.addEventListener('mouseleave', start);
-      subscribersRoot.addEventListener('focusin', stop);
-      subscribersRoot.addEventListener('focusout', event => { if (!subscribersRoot.contains(event.relatedTarget)) start(); });
-      document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
-      show(0);
-      start();
+      const creators = [...unique.values()];
+      if (!creators.length) {
+        creatorsTrack.innerHTML = '<div class="home-subscribers-page"><div class="home-new-players-list"><span class="home-new-players-empty">Nessun creator disponibile.</span></div></div>';
+        return;
+      }
+      const pages = [];
+      for (let index = 0; index < creators.length; index += 10) pages.push(creators.slice(index, index + 10));
+      creatorsTrack.innerHTML = pages.map((page, pageIndex) => `<div class="home-subscribers-page" aria-hidden="${pageIndex ? 'true' : 'false'}"><div class="home-new-players-list">${page.map(player => cardHtml(player, names, {creator:true})).join('')}</div></div>`).join('');
+      setupPagedSlider({root:creatorsRoot, track:creatorsTrack, controls:creatorsControls, dotsWrap:creatorsDots, counter:creatorsCounter, prevSelector:'[data-creator-prev]', nextSelector:'[data-creator-next]', dotAttr:'data-creator-go', pageCount:pages.length});
     };
 
     Promise.all([
@@ -6922,10 +7022,12 @@
         const validPlayers = Array.isArray(players) ? players : fallbackPlayers;
         renderNewest(validPlayers, clubs);
         renderSubscribers(validPlayers, clubs);
+        renderCreators(validPlayers, clubs);
       })
       .catch(() => {
         renderNewest(fallbackPlayers, fallbackClubs);
         renderSubscribers(fallbackSubscribers, fallbackClubs);
+        renderCreators(fallbackCreators, fallbackClubs);
       });
   })();
 </script>
