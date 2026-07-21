@@ -6337,7 +6337,34 @@
     .slot.creator-player::after{content:'CR';position:absolute;left:calc(50% + 27px);top:-11px;min-width:23px;height:21px;padding:0 3px;border-radius:999px;display:grid;place-items:center;background:linear-gradient(180deg,#b7f1ff,#38c8ff);color:#05304a;border:2px solid #e9fbff;font-size:8px;font-weight:1000;box-shadow:0 3px 9px rgba(0,0,0,.28);z-index:15}
     .slot.creator-player .tag{color:#d4f7ff!important;text-shadow:0 0 10px rgba(56,200,255,.75)}
 
-  </style>
+  
+
+    /* Creator YouTube */
+    .player-row.creator{
+      border-color:#ffffff!important;
+      background:linear-gradient(90deg,rgba(239,0,0,.96),rgba(145,0,0,.92))!important;
+      box-shadow:inset 5px 0 0 #ffffff,0 7px 20px rgba(100,0,0,.32)!important;
+      color:#ffffff!important;
+    }
+    .player-row.creator:hover,.player-row.creator.active{background:linear-gradient(90deg,#ff1111,#a70000)!important;box-shadow:inset 6px 0 0 #ffffff,0 10px 25px rgba(100,0,0,.42)!important}
+    .player-row.creator *{color:#ffffff!important}
+    .player-row.creator .row-name{color:#ffffff!important;text-shadow:0 2px 5px rgba(70,0,0,.8)!important}
+    .creator-badge,.mini-avatar .av-creator-badge{
+      background:linear-gradient(180deg,#ff1a1a,#bd0000)!important;
+      border:1px solid #ffffff!important;
+      color:#ffffff!important;
+    }
+    .mini-avatar.creator{border-color:#ffffff!important;background:linear-gradient(145deg,#ff1717,#920000)!important;box-shadow:0 0 0 3px rgba(255,255,255,.36),0 0 0 6px rgba(255,0,0,.24),0 5px 14px rgba(90,0,0,.36)!important}
+    .slot.creator-player .jersey{box-shadow:0 0 0 5px rgba(255,0,0,.56),0 0 0 9px rgba(255,255,255,.22),0 7px 16px rgba(0,0,0,.30)!important}
+    .slot.creator-player::after{background:linear-gradient(180deg,#ff1a1a,#bd0000)!important;color:#ffffff!important;border-color:#ffffff!important}
+    .slot.creator-player .tag{color:#ffffff!important;text-shadow:0 2px 5px rgba(70,0,0,.85),0 0 10px rgba(255,0,0,.8)!important}
+    .mini-avatar.barone-sportivo::before{
+      content:'';position:absolute;z-index:8;left:50%;top:-7px;transform:translateX(-50%);width:24px;height:12px;
+      background:#14161a;border-radius:3px 3px 1px 1px;box-shadow:0 7px 0 -3px #282b31,0 8px 0 1px #101216;
+    }
+    .mini-avatar.barone-sportivo .av-extra{left:50%!important;top:19px!important;width:10px!important;height:5px!important;transform:translateX(-50%)!important;background:rgba(138,90,51,.48)!important;border-radius:0 0 8px 8px!important}
+
+</style>
 </head>
 <body class="world-cup-page">
 
@@ -7589,12 +7616,14 @@
       const skin = skinTones[hash % skinTones.length];
       const hair = hairTones[(hash >> 2) % hairTones.length];
       const [shirtA, shirtB, shirtC] = nationPalette(player.nation);
-      const faceShape = ['round','oval','square'][(hash >> 1) % 3];
-      const hairStyle = ['short','top','full','side'][(hash >> 3) % 4];
-      const extra = ['none','brow','beard'][(hash >> 5) % 3];
+      const baroneSportivo=String(player?.creatorStyle||'').trim().toLowerCase()==='barone-sportivo'||String(player?.id||'')==='850'||String(player?.name||'').trim().toLowerCase()==='barone sportivo';
+      const faceShape = baroneSportivo?'oval':['round','oval','square'][(hash >> 1) % 3];
+      const hairStyle = baroneSportivo?'top':['short','top','full','side'][(hash >> 3) % 4];
+      const extra = baroneSportivo?'beard':['none','brow','beard'][(hash >> 5) % 3];
       const subscriber = isChannelSubscriber(player);
       const creator = isChannelCreator(player);
-      return `<span class="mini-avatar ${subscriber ? 'subscriber' : ''} ${creator ? 'creator' : ''} ${faceShape} hair-${hairStyle} extra-${extra}" style="--skin:${skin};--hair:${hair};--shirt-a:${shirtA};--shirt-b:${shirtB};--shirt-c:${shirtC};--shirt-ink:${readableInk(shirtA, shirtB)};">
+      const finalHair=baroneSportivo?'#8a5a33':hair;
+      return `<span class="mini-avatar ${subscriber ? 'subscriber' : ''} ${creator ? 'creator' : ''} ${baroneSportivo?'barone-sportivo':''} ${faceShape} hair-${hairStyle} extra-${extra}" style="--skin:${skin};--hair:${finalHair};--shirt-a:${shirtA};--shirt-b:${shirtB};--shirt-c:${shirtC};--shirt-ink:${readableInk(shirtA, shirtB)};">
         <span class="av-head"></span>
         <span class="av-hair"></span>
         <span class="av-eye av-eye-l"></span>
