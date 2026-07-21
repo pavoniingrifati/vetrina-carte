@@ -26,3 +26,12 @@ Le differenze tra Community e REAL rimangono nei rispettivi file `season-config-
 - Inserire ogni nuova funzione nel modulo della sua responsabilità.
 - Evitare dipendenze circolari e non cambiare l’ordine degli script senza eseguire i test.
 - Non ricreare un secondo motore per la modalità REAL: usare le configurazioni.
+
+## Suite di test
+
+Il file `15-test-api.js` non fa parte del caricamento normale del gioco.
+Viene caricato soltanto da `test-season-runner.html` e rende disponibili i controlli automatici alla pagina `test-season.html`.
+
+- Non aggiungerlo a `campionato.html` o `campionato-real.html`.
+- I test usano chiavi `localStorage` isolate con suffisso `_test_runner`.
+- La suite prova entrambe le configurazioni usando gli stessi 14 moduli del gioco.
