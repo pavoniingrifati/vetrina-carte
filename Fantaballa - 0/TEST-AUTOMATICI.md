@@ -38,9 +38,16 @@ Al termine della suite queste chiavi vengono eliminate. I salvataggi Community e
 
 - struttura completa di una nuova stagione;
 - migrazione di un salvataggio vecchio;
-- scrittura e rilettura del salvataggio;
+- envelope di formato 2 e modalità corretta;
+- conservazione del `seasonId`;
+- scrittura e rilettura senza perdita di dati;
+- rotazione automatica del backup;
+- recupero del temporaneo più recente;
+- recupero dal backup quando il primario è corrotto;
+- migrazione dei vecchi stati senza envelope;
+- rifiuto dei salvataggi dell'altra modalità;
 - isolamento di JSON corrotti;
-- assenza di `NaN`, `Infinity` e strutture non serializzabili.
+- blocco di `NaN`, `Infinity` e strutture non serializzabili.
 
 ### Draft e formazioni
 

@@ -25,8 +25,8 @@ window.FANTABALLA_SEASON_CONFIG=Object.freeze({
  validation:{
   minimumClubCount:20,
   minimumClubMessage:'Sono presenti soltanto {count} club: ne servono almeno 20.',
-  expectedClubCount:36,
-  expectedClubMessage:'Sono presenti {count} club invece dei 36 configurati.',
+  expectedClubCount:37,
+  expectedClubMessage:'Sono presenti {count} club invece dei 37 configurati.',
   excludeClubId:'',
   minimumRosterSize:11,
   warningRosterUnder:14
@@ -43,6 +43,8 @@ window.FANTABALLA_SEASON_CONFIG=Object.freeze({
   chaosType:'caos'
  },
  events:{
+  commonCatalog:'data/events/events-common.json',
+  modeCatalog:'data/events/events-community.json',
   excludedAutoEventTitles:[],
   excludedDecisionIds:[]
  }

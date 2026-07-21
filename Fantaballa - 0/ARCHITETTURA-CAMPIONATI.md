@@ -15,20 +15,21 @@ Il precedente file monolitico `assets/season-engine.js` è stato rimosso. La log
 
 I moduli vengono caricati come script classici e devono mantenere questo ordine:
 
-1. `01-bootstrap.js` — configurazione e chiavi dei salvataggi.
+1. `01-bootstrap.js` — configurazione e costanti condivise.
 2. `02-achievements.js` — achievement di partita e stagione.
-3. `03-state-and-data.js` — stato, salvataggi, database e normalizzazione.
-4. `04-setup-and-draft.js` — configurazione squadra e draft iniziale.
-5. `05-opponents-and-chaos.js` — avversari e modalità Caos.
-6. `06-competitions-and-stories.js` — calendario, coppe e archi narrativi.
-7. `07-effects-quests-chains.js` — intesa, sponsor, effetti, quest e catene.
-8. `08-special-rules.js` — regolamenti speciali, playoff e modificatori.
-9. `09-analytics-and-summary.js` — formazione, potenza, analytics e riepilogo.
-10. `10-events.js` — catalogo e risoluzione di eventi e decisioni.
-11. `11-season-ui-and-lineup.js` — schermata stagione e formazione.
-12. `12-match-simulation.js` — simulazione, cronaca e risultato.
-13. `13-market-and-finish.js` — mercato, conclusione e invio risultati.
-14. `14-runtime.js` — rendering, avvio e gestori globali.
+3. `03-save-system.js` — salvataggi versionati, backup, recupero e migrazione.
+4. `03-state-and-data.js` — stato, database e normalizzazione.
+5. `04-setup-and-draft.js` — configurazione squadra e draft iniziale.
+6. `05-opponents-and-chaos.js` — avversari e modalità Caos.
+7. `06-competitions-and-stories.js` — calendario, coppe e archi narrativi.
+8. `07-effects-quests-chains.js` — intesa, sponsor, effetti, quest e catene.
+9. `08-special-rules.js` — regolamenti speciali, playoff e modificatori.
+10. `09-analytics-and-summary.js` — formazione, potenza, analytics e riepilogo.
+11. `10-events.js` — catalogo e risoluzione di eventi e decisioni.
+12. `11-season-ui-and-lineup.js` — schermata stagione e formazione.
+13. `12-match-simulation.js` — simulazione, cronaca e risultato.
+14. `13-market-and-finish.js` — mercato, conclusione e invio risultati.
+15. `14-runtime.js` — rendering, avvio e gestori globali.
 
 ## Differenze preservate
 

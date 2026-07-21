@@ -3,7 +3,7 @@
  * Non viene inclusa nelle pagine di gioco pubbliche.
  */
 (() => {
-  const TEST_API_VERSION = 1;
+  const TEST_API_VERSION = 3;
   const MODE = String(SEASON_CONFIG?.mode || 'unknown');
   const expected = MODE === 'real'
     ? { players: 455, clubs: 21, autoEvents: 4, decisions: 65 }
@@ -257,7 +257,7 @@
   async function waitUntilReady(timeoutMs = 15000) {
     const started = performance.now();
     while (performance.now() - started < timeoutMs) {
-      if (PLAYERS.length && CLUBS.length && window.FANTABALLA_SEASON_CONFIG) return true;
+      if (PLAYERS.length && CLUBS.length && DECISIONS.length && AUTO_EVENTS.length && window.FANTABALLA_SEASON_CONFIG) return true;
       await sleep(50);
     }
     throw new Error('Timeout durante il caricamento del motore e dei database');
@@ -266,6 +266,8 @@
   function storageKeysForTest() {
     return [
       AUTO_SAVE_KEY,
+      SAVE_BACKUP_KEY,
+      SAVE_TEMP_KEY,
       ACTIVE_SLOT_KEY,
       SETUP_TEAM_NAME_KEY,
       SETUP_COACH_NAME_KEY,
@@ -283,7 +285,7 @@
     const allKeys = [];
     for (let index = 0; index < localStorage.length; index += 1) allKeys.push(localStorage.key(index));
     allKeys.filter(Boolean).forEach(key => {
-      if (prefixes.includes(key) || prefixes.some(prefix => key.startsWith(`${prefix}_corrotto_`))) localStorage.removeItem(key);
+      if (prefixes.includes(key) || key.startsWith(`${AUTO_SAVE_KEY}_`) || prefixes.some(prefix => key.startsWith(`${prefix}_corrotto_`))) localStorage.removeItem(key);
     });
   }
 
@@ -380,6 +382,15 @@
         assert(!missing.length, 'Alcuni giocatori fanno riferimento a club inesistenti', missing.map(player => `${player.name}: ${player.club}`).join('\n'));
         return { uniquePlayers: playerIds.length, uniqueClubs: clubIds.length };
       }),
+      testDefinition('database-quality', 'Database', 'Schema completo e normalizzazione idempotente', () => {
+        const validator = window.FantaballaDatabaseValidator;
+        assert(validator && typeof validator.validateMode === 'function', 'Modulo database-validator.js non caricato');
+        const report = validator.validateMode(PLAYERS, CLUBS, MODE);
+        assert(!report.summary.errors, `Il validatore avanzato segnala ${report.summary.errors} errori bloccanti`, report.issues.filter(item => item.severity === 'error').map(item => `${item.code}: ${item.message}`).join('\n'));
+        assertEqual(report.changes.length, 0, 'I file live contengono ancora correzioni automatiche pendenti');
+        const manualReview = report.issues.filter(item => item.detail?.manualReview).length;
+        return { errors: report.summary.errors, warnings: report.summary.warnings, manualReview, pendingSafeFixes: report.changes.length };
+      }),
       testDefinition('fresh-state', 'Stato', 'Struttura di una nuova stagione', () => {
         const fresh = freshState();
         assertEqual(fresh.version, CURRENT_STATE_VERSION, 'Versione iniziale dello stato errata');
@@ -408,20 +419,114 @@
         assertSerializable(normalized, 'Stato migrato');
         return { from: 1, to: normalized.version };
       }),
-      testDefinition('storage-roundtrip', 'Salvataggi', 'Salvataggio e rilettura senza perdita di dati', () => {
+      testDefinition('storage-roundtrip', 'Salvataggi', 'Formato versionato e rilettura senza perdita di dati', () => {
+        clearTestStorage();
         resetEngineState();
         state.teamName = `Roundtrip ${MODE}`;
         state.coachName = 'Tester';
         state.meta.marker = `marker-${MODE}`;
+        const seasonId = state.meta.seasonId;
         assert(save(), 'La funzione save() ha restituito false');
         const raw = localStorage.getItem(AUTO_SAVE_KEY);
         assert(raw, 'Il salvataggio non è stato scritto in localStorage');
         const parsed = JSON.parse(raw);
-        assertEqual(parsed.teamName, state.teamName, 'Nome squadra perso nel salvataggio');
-        assertEqual(parsed.meta.marker, state.meta.marker, 'Metadato perso nel salvataggio');
+        assertEqual(parsed.version, SAVE_FORMAT_VERSION, 'Versione del formato errata');
+        assertEqual(parsed.mode, MODE, 'Modalità del salvataggio errata');
+        assertEqual(parsed.seasonId, seasonId, 'Season ID cambiato durante il salvataggio');
+        assertEqual(parsed.state.teamName, state.teamName, 'Nome squadra perso nel salvataggio');
+        assertEqual(parsed.state.meta.marker, state.meta.marker, 'Metadato perso nel salvataggio');
         const loaded = loadState();
         assertEqual(loaded.teamName, state.teamName, 'loadState() non rilegge il salvataggio corretto');
-        return { bytes: raw.length, key: AUTO_SAVE_KEY };
+        assertEqual(loaded.meta.seasonId, seasonId, 'Season ID perso durante il caricamento');
+        assert(!localStorage.getItem(SAVE_TEMP_KEY), 'Il salvataggio temporaneo non è stato eliminato');
+        return { bytes: raw.length, key: AUTO_SAVE_KEY, format: parsed.version, seasonId };
+      }),
+      testDefinition('storage-backup', 'Salvataggi', 'Rotazione automatica del backup', async () => {
+        clearTestStorage();
+        resetEngineState();
+        state.teamName = 'Versione primaria 1';
+        assert(save(), 'Primo salvataggio fallito');
+        const firstRaw = localStorage.getItem(AUTO_SAVE_KEY);
+        await sleep(2);
+        state.teamName = 'Versione primaria 2';
+        assert(save(), 'Secondo salvataggio fallito');
+        const backupRaw = localStorage.getItem(SAVE_BACKUP_KEY);
+        assert(backupRaw, 'Backup non creato');
+        assertEqual(JSON.parse(backupRaw).state.teamName, 'Versione primaria 1', 'Il backup non contiene la versione precedente');
+        assertEqual(JSON.parse(localStorage.getItem(AUTO_SAVE_KEY)).state.teamName, 'Versione primaria 2', 'Il primario non contiene la versione più recente');
+        assertEqual(backupRaw, firstRaw, 'Il backup non coincide con il precedente salvataggio primario');
+        return { backup: true };
+      }),
+      testDefinition('storage-temporary-recovery', 'Salvataggi', 'Recupero della scrittura temporanea più recente', async () => {
+        clearTestStorage();
+        resetEngineState();
+        state.teamName = 'Primario precedente';
+        assert(save(), 'Salvataggio primario fallito');
+        await sleep(2);
+        state.teamName = 'Temporaneo più recente';
+        const temporaryEnvelope = buildSaveEnvelope(state, new Date(Date.now() + 1000).toISOString());
+        localStorage.setItem(SAVE_TEMP_KEY, JSON.stringify(temporaryEnvelope));
+        const recovered = loadState();
+        assertEqual(recovered.teamName, 'Temporaneo più recente', 'Il temporaneo più recente non è stato recuperato');
+        assertEqual(lastLoadedSaveInfo.source, 'temporary', 'La fonte recuperata non è il temporaneo');
+        return { recovered: true, source: lastLoadedSaveInfo.source };
+      }),
+      testDefinition('storage-backup-recovery', 'Salvataggi', 'Recupero automatico dal backup', () => {
+        clearTestStorage();
+        resetEngineState();
+        state.teamName = 'Backup recuperabile';
+        assert(save(), 'Salvataggio base fallito');
+        state.teamName = 'Primario successivo';
+        assert(save(), 'Salvataggio successivo fallito');
+        localStorage.setItem(AUTO_SAVE_KEY, '{primario corrotto');
+        const recovered = loadState();
+        assertEqual(recovered.teamName, 'Backup recuperabile', 'Non è stato recuperato il backup precedente');
+        assertEqual(lastLoadedSaveInfo.source, 'backup', 'La fonte recuperata non è il backup');
+        return { recovered: true, source: lastLoadedSaveInfo.source };
+      }),
+      testDefinition('storage-legacy-migration', 'Salvataggi', 'Migrazione del vecchio stato senza contenitore', () => {
+        clearTestStorage();
+        const legacy = freshState();
+        legacy.teamName = 'Salvataggio legacy';
+        delete legacy.meta.seasonId;
+        localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(legacy));
+        const migrated = loadState();
+        assertEqual(migrated.teamName, 'Salvataggio legacy', 'Il vecchio stato non è stato caricato');
+        assert(migrated.meta.seasonId, 'La migrazione non ha creato il seasonId');
+        state = normalizeCampionatoState(migrated);
+        assert(save(), 'Riscrittura del salvataggio migrato fallita');
+        const envelope = JSON.parse(localStorage.getItem(AUTO_SAVE_KEY));
+        assertEqual(envelope.version, SAVE_FORMAT_VERSION, 'Il legacy non è stato convertito al formato corrente');
+        assertEqual(envelope.mode, MODE, 'Modalità non impostata durante la migrazione');
+        return { migrated: true, seasonId: envelope.seasonId };
+      }),
+      testDefinition('storage-mode-isolation', 'Salvataggi', 'Rifiuto di un salvataggio dell’altra modalità', () => {
+        clearTestStorage();
+        resetEngineState();
+        const wrongMode = MODE === 'real' ? 'community' : 'real';
+        const envelope = buildSaveEnvelope(state);
+        envelope.mode = wrongMode;
+        localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(envelope));
+        const loaded = loadState();
+        assertEqual(loaded, null, 'Un salvataggio dell’altra modalità non deve essere caricato');
+        assert(!localStorage.getItem(AUTO_SAVE_KEY), 'Il salvataggio incompatibile non è stato isolato');
+        const keys = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index));
+        assert(keys.some(key => key && key.startsWith(`${AUTO_SAVE_KEY}_incompatibile_`)), 'Manca la copia isolata del salvataggio incompatibile');
+        return { rejectedMode: wrongMode };
+      }),
+      testDefinition('storage-nonfinite', 'Salvataggi', 'Blocco di NaN e Infinity prima della scrittura', () => {
+        clearTestStorage();
+        resetEngineState();
+        assert(save(), 'Salvataggio valido iniziale fallito');
+        const previousRaw = localStorage.getItem(AUTO_SAVE_KEY);
+        state.matchday = Number.NaN;
+        assertEqual(save(), false, 'Un valore NaN non deve essere salvato');
+        assertEqual(localStorage.getItem(AUTO_SAVE_KEY), previousRaw, 'Il salvataggio valido è stato sovrascritto da dati non validi');
+        state.matchday = 0;
+        state.seasonRules.winPoints = Number.POSITIVE_INFINITY;
+        assertEqual(save(), false, 'Un valore Infinity non deve essere salvato');
+        assertEqual(localStorage.getItem(AUTO_SAVE_KEY), previousRaw, 'Infinity ha sovrascritto il salvataggio valido');
+        return { blocked: ['NaN', 'Infinity'] };
       }),
       testDefinition('storage-corruption', 'Salvataggi', 'Isolamento di un salvataggio corrotto', () => {
         const key = `${AUTO_SAVE_KEY}_corruption_probe`;
@@ -436,7 +541,7 @@
         localStorage.removeItem(isolated);
         return { isolated: true };
       }),
-      testDefinition('formations', 'Formazioni', 'Coerenza tra moduli e posizioni grafiche', () => {
+      testDefinition('formations' , 'Formazioni', 'Coerenza tra moduli e posizioni grafiche', () => {
         const formationKeys = Object.keys(FORMATIONS);
         assertEqual(new Set(formationKeys).size, formationKeys.length, 'Formazioni duplicate');
         formationKeys.forEach(key => {
@@ -447,7 +552,9 @@
         });
         return { formations: formationKeys.length };
       }),
-      testDefinition('catalog-contract', 'Eventi', 'Contratto del catalogo eventi', () => {
+      testDefinition('catalog-contract', 'Eventi', 'Contratto del catalogo eventi data-driven', () => {
+        assert(Array.isArray(SEASON_EVENT_CATALOG_REPORT?.errors), 'Rapporto catalogo eventi non disponibile');
+        assertEqual(SEASON_EVENT_CATALOG_REPORT.errors.length, 0, 'Il catalogo eventi contiene errori');
         assertEqual(AUTO_EVENTS.length, expected.autoEvents, 'Numero eventi automatici inatteso');
         assertEqual(DECISIONS.length, expected.decisions, 'Numero decisioni inatteso');
         const ids = DECISIONS.map(decision => String(decision.id || ''));
@@ -464,7 +571,7 @@
           ['whatsapp-pubblicato', 'cuggino-influencer', 'tiktok-boomer', 'ma-che-mollo'].forEach(id => assert(!ids.includes(id), `${id} non deve comparire nel REAL`));
           assert(!AUTO_EVENTS.some(event => event.title === 'Sostegno degli abbonati'), 'Evento abbonati presente nel REAL');
         }
-        return { autoEvents: AUTO_EVENTS.length, decisions: DECISIONS.length, choices: DECISIONS.reduce((sum, decision) => sum + decision.choices.length, 0) };
+        return { autoEvents: AUTO_EVENTS.length, decisions: DECISIONS.length, choices: DECISIONS.reduce((sum, decision) => sum + decision.choices.length, 0), catalogWarnings: SEASON_EVENT_CATALOG_REPORT.warnings.length };
       }),
       testDefinition('draft-random', 'Draft', 'Generazione automatica di una rosa valida', async () => {
         resetEngineState();
@@ -596,7 +703,8 @@
         clubs: CLUBS.length,
         autoEvents: AUTO_EVENTS.length,
         decisions: DECISIONS.length,
-        engineVersion: CURRENT_STATE_VERSION
+        engineVersion: CURRENT_STATE_VERSION,
+        saveFormatVersion: SAVE_FORMAT_VERSION
       },
       results
     };
@@ -614,7 +722,8 @@
       clubs: CLUBS.length,
       autoEvents: AUTO_EVENTS.length,
       decisions: DECISIONS.length,
-      stateVersion: CURRENT_STATE_VERSION
+      stateVersion: CURRENT_STATE_VERSION,
+      saveFormatVersion: SAVE_FORMAT_VERSION
     })
   };
 

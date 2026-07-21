@@ -43,6 +43,8 @@ window.FANTABALLA_SEASON_CONFIG=Object.freeze({
   chaosType:'caos_real'
  },
  events:{
+  commonCatalog:'data/events/events-common.json',
+  modeCatalog:'data/events/events-real.json',
   excludedAutoEventTitles:['Sostegno degli abbonati'],
   excludedDecisionIds:['whatsapp-pubblicato','cuggino-influencer','tiktok-boomer','ma-che-mollo']
  }

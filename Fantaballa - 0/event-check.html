@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fantaballa · Controllo eventi</title>
+  <style>
+    :root{color-scheme:dark;--bg:#08111f;--panel:#111d31;--line:#29405e;--text:#eef5ff;--muted:#9cb0c9;--ok:#46d38b;--bad:#ff6677;--warn:#ffc857;--accent:#55a8ff}
+    *{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#07101d,#101c30);color:var(--text);font:15px/1.5 system-ui,sans-serif;min-height:100vh}
+    main{width:min(1100px,calc(100% - 28px));margin:28px auto 60px}.head{display:flex;gap:18px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}.head h1{margin:0 0 6px;font-size:clamp(25px,5vw,40px)}.head p{margin:0;color:var(--muted);max-width:720px}.actions{display:flex;gap:10px}.btn{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:#172944;color:var(--text);font-weight:700;cursor:pointer}.btn:hover{border-color:var(--accent)}
+    .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:24px 0}.metric,.panel{background:rgba(17,29,49,.94);border:1px solid var(--line);border-radius:14px}.metric{padding:16px}.metric span{display:block;color:var(--muted);font-size:13px}.metric b{font-size:27px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.panel{padding:18px}.panel h2{margin:0 0 12px;font-size:19px}.status{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:6px 10px;font-weight:800}.status.ok{background:rgba(70,211,139,.13);color:var(--ok)}.status.bad{background:rgba(255,102,119,.13);color:var(--bad)}.status.loading{background:rgba(85,168,255,.14);color:var(--accent)}ul{padding-left:20px;margin:12px 0 0}.muted{color:var(--muted)}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);font-size:14px}th{color:var(--muted)}.full{grid-column:1/-1}.good{color:var(--ok)}.badtext{color:var(--bad)}.warn{color:var(--warn)}
+    @media(max-width:760px){.metrics{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}.full{grid-column:auto}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="head">
+    <div><h1>Controllo cataloghi eventi</h1><p>Verifica struttura JSON, ID, ordine, handler, opzioni e separazione tra Community e REAL. Questa pagina non modifica il gioco.</p></div>
+    <div class="actions"><button id="runBtn" class="btn" type="button">Esegui di nuovo</button><a class="btn" href="index.html">Torna al menu</a></div>
+  </div>
+  <div id="status" class="status loading">Caricamento…</div>
+  <section id="content" aria-live="polite"></section>
+</main>
+<script src="assets/season/event-handlers.js"></script>
+<script src="assets/event-validator.js"></script>
+<script>
+  const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  async function readJson(path){const response=await fetch(path,{cache:'no-store'});if(!response.ok)throw new Error(`${path}: HTTP ${response.status}`);return response.json()}
+  async function run(){
+    const status=document.getElementById('status'),content=document.getElementById('content');status.className='status loading';status.textContent='Controllo in corso…';content.innerHTML='';
+    try{
+      const catalogs=await Promise.all(['common','community','real'].map(name=>readJson(`data/events/events-${name}.json`)));
+      const report=FantaballaEventValidator.validateCatalogs(catalogs,SEASON_EVENT_HANDLER_IDS);
+      status.className=`status ${report.ok?'ok':'bad'}`;status.textContent=report.ok?'Cataloghi validi':'Sono presenti errori';
+      const issueList=(items,empty)=>items.length?`<ul>${items.map(item=>`<li>${esc(item)}</li>`).join('')}</ul>`:`<p class="muted">${empty}</p>`;
+      const rows=report.details.sort((a,b)=>a.order-b.order).map(item=>`<tr><td>${item.order+1}</td><td><b>${esc(item.id)}</b></td><td>${esc(item.catalog)}</td><td>${item.choices}</td><td>${item.dynamic?'Sì':'No'}</td></tr>`).join('');
+      content.innerHTML=`
+        <div class="metrics">
+          <div class="metric"><span>Decisioni Community</span><b>${report.stats.communityDecisions}</b></div>
+          <div class="metric"><span>Decisioni REAL</span><b>${report.stats.realDecisions}</b></div>
+          <div class="metric"><span>Errori</span><b class="${report.errors.length?'badtext':'good'}">${report.errors.length}</b></div>
+          <div class="metric"><span>Avvisi</span><b class="${report.warnings.length?'warn':'good'}">${report.warnings.length}</b></div>
+        </div>
+        <div class="grid">
+          <article class="panel"><h2>Errori bloccanti</h2>${issueList(report.errors,'Nessun errore bloccante.')}</article>
+          <article class="panel"><h2>Avvisi</h2>${issueList(report.warnings,'Nessun avviso.')}</article>
+          <article class="panel full"><h2>Riepilogo</h2><p>Comuni: <b>${report.stats.commonDecisions}</b> decisioni e <b>${report.stats.commonAuto}</b> eventi automatici. Esclusivi Community: <b>${report.stats.communityDecisions-report.stats.commonDecisions}</b> decisioni e <b>${report.stats.communityAuto-report.stats.commonAuto}</b> evento automatico. Decisioni con condizioni o testi dinamici: <b>${report.stats.dynamicDecisions}</b>.</p></article>
+          <article class="panel full"><h2>Catalogo decisioni</h2><div style="overflow:auto"><table><thead><tr><th>#</th><th>ID</th><th>Catalogo</th><th>Opzioni</th><th>Dinamica</th></tr></thead><tbody>${rows}</tbody></table></div></article>
+        </div>`;
+    }catch(error){status.className='status bad';status.textContent='Controllo non riuscito';content.innerHTML=`<article class="panel"><h2>Errore</h2><p class="badtext">${esc(error.message||error)}</p><p class="muted">Apri questa pagina tramite un server web, non direttamente come file locale.</p></article>`}
+  }
+  document.getElementById('runBtn').addEventListener('click',run);run();
+</script>
+</body>
+</html>

@@ -10,7 +10,8 @@ async function boot(){
      fetchJsonResource(SEASON_CONFIG.data.primaryClubs,SEASON_CONFIG.data.primaryClubs),
      fetchJsonResource(SEASON_CONFIG.data.commentary,SEASON_CONFIG.data.commentary,{optional:true}),
      fetchJsonResource(SEASON_CONFIG.data.secondaryPlayers,SEASON_CONFIG.data.secondaryPlayers,{optional:true}),
-     fetchJsonResource(SEASON_CONFIG.data.secondaryClubs,SEASON_CONFIG.data.secondaryClubs,{optional:true})
+     fetchJsonResource(SEASON_CONFIG.data.secondaryClubs,SEASON_CONFIG.data.secondaryClubs,{optional:true}),
+     SEASON_EVENTS_READY
    ]);
    PLAYERS=primaryPlayers;CLUBS=primaryClubs;COMMENTARY=commentary;OTHER_CLUBS=Array.isArray(secondaryClubs)?secondaryClubs:[];
    if(SEASON_CONFIG.mode==='real'){REAL_PLAYERS=PLAYERS;CLASSIC_PLAYERS=Array.isArray(secondaryPlayers)?secondaryPlayers:[]}
@@ -32,9 +33,9 @@ async function boot(){
  }
 }
 document.getElementById('resetBtn').onclick=async()=>{
- const confirmed=await openConfirm({title:'Azzera stagione',message:'La stagione corrente verrà cancellata definitivamente. Non esistono backup o possibilità di ripristino.',confirmText:'Azzera definitivamente',danger:true});
+ const confirmed=await openConfirm({title:'Azzera stagione',message:'La stagione corrente, il salvataggio temporaneo e il backup automatico verranno cancellati definitivamente.',confirmText:'Azzera definitivamente',danger:true});
  if(!confirmed)return;
- localStorage.removeItem(AUTO_SAVE_KEY);state=freshState();save();render();toast('Stagione azzerata definitivamente.')
+ clearCurrentSaveArtifacts();state=freshState();save();render();toast('Stagione e backup azzerati definitivamente.')
 };
 window.addEventListener('pagehide',()=>save());
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save()});

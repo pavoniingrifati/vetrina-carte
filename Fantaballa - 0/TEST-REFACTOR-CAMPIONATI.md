@@ -4,11 +4,11 @@ Data test: 21 luglio 2026
 
 ## Controlli strutturali
 
-- Il motore condiviso è stato suddiviso in 14 moduli.
-- I corpi dei 14 moduli, concatenati nel loro ordine, ricostruiscono esattamente i 687.993 caratteri del precedente `season-engine.js`.
+- Il motore condiviso è ora suddiviso in 15 moduli pubblici, incluso il nuovo sistema di salvataggio.
+- Il refactor iniziale ricostruiva il monolite originale; successivamente il modulo salvataggi è stato evoluto con formato versionato e backup.
 - `node --check` non segnala errori di sintassi in nessun modulo.
 - Il parser JavaScript non segnala diagnostiche.
-- Entrambi gli HTML caricano una sola configurazione e gli stessi 14 moduli nello stesso ordine.
+- Entrambi gli HTML caricano una sola configurazione e gli stessi 15 moduli nello stesso ordine.
 - Il vecchio file monolitico non è più distribuito nel progetto.
 
 ## Test in Chromium

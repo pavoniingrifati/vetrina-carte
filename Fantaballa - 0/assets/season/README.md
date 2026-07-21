@@ -1,37 +1,61 @@
 # Motore stagione modulare
 
 Il precedente `assets/season-engine.js` è stato diviso in moduli classici caricati in ordine.
-Il comportamento resta invariato: le dichiarazioni globali continuano a condividere lo stesso ambiente JavaScript del browser.
 Le differenze tra Community e REAL rimangono nei rispettivi file `season-config-*.js`.
 
 ## Ordine di caricamento obbligatorio
 
-1. `01-bootstrap.js` — Configurazione, chiavi di salvataggio e bootstrap condiviso.
-2. `02-achievements.js` — Integrazione achievement e controlli di fine partita/stagione.
-3. `03-state-and-data.js` — Formazioni, profili allenatore, stato, salvataggi, caricamento e normalizzazione dati.
-4. `04-setup-and-draft.js` — Configurazione squadra, interfaccia del draft, intesa e costruzione della rosa.
-5. `05-opponents-and-chaos.js` — Rose avversarie, modalità Caos, potenza squadre e chiusura del draft.
-6. `06-competitions-and-stories.js` — Calendario, coppa parallela e archi narrativi principali.
-7. `07-effects-quests-chains.js` — Intesa, effetti, sponsor, quest e catene di eventi.
-8. `08-special-rules.js` — Azioni degli eventi, regolamenti speciali, playoff e modificatori persistenti.
-9. `09-analytics-and-summary.js` — Risoluzione formazione, potenza, analytics e riepilogo condivisibile della stagione.
-10. `10-events.js` — Catalogo eventi/decisioni e relativa interfaccia di risoluzione.
-11. `11-season-ui-and-lineup.js` — Schermata della stagione, disponibilità, avversari, formazione ed effetti sulla rosa.
-12. `12-match-simulation.js` — Simulazione, gol, statistiche, cronaca live, giornata e risultato partita.
-13. `13-market-and-finish.js` — Mercato di metà stagione, conclusione campionato, invio ed esportazione risultati.
-14. `14-runtime.js` — Router di rendering, avvio applicazione e gestori globali.
+1. `01-bootstrap.js` — configurazione, costanti e chiavi condivise.
+2. `02-achievements.js` — integrazione achievement.
+3. `03-save-system.js` — formato versionato, migrazione, backup, recupero e scrittura verificata.
+4. `03-state-and-data.js` — formazioni, profili allenatore, stato, database e normalizzazione.
+5. `04-setup-and-draft.js` — configurazione squadra e draft.
+6. `05-opponents-and-chaos.js` — avversari e modalità Caos.
+7. `06-competitions-and-stories.js` — calendario, coppe e archi narrativi.
+8. `07-effects-quests-chains.js` — effetti, sponsor, quest e catene.
+9. `08-special-rules.js` — regole speciali, playoff e modificatori.
+10. `09-analytics-and-summary.js` — formazione, analytics e riepilogo.
+11. `event-handlers.js` — registro esplicito della logica eseguibile degli eventi.
+12. `10-events.js` — caricamento, validazione e risoluzione dei cataloghi JSON.
+13. `11-season-ui-and-lineup.js` — schermata stagione e formazione.
+14. `12-match-simulation.js` — simulazione, cronaca e risultati.
+15. `13-market-and-finish.js` — mercato, conclusione e invio.
+16. `14-runtime.js` — rendering, avvio e gestori globali.
 
-## Regola di manutenzione
+## Salvataggi
+
+Il motore usa un envelope di formato `2`, separato dalla versione interna dello stato (`44`).
+
+- scrittura temporanea e rilettura di verifica;
+- backup automatico del primario precedente;
+- recupero del temporaneo più recente o del backup;
+- `seasonId` stabile per ogni run;
+- isolamento dei salvataggi corrotti, futuri o dell'altra modalità;
+- migrazione automatica dei vecchi salvataggi;
+- blocco di `NaN` e `Infinity`.
+
+## Regole di manutenzione
 
 - Inserire ogni nuova funzione nel modulo della sua responsabilità.
-- Evitare dipendenze circolari e non cambiare l’ordine degli script senza eseguire i test.
-- Non ricreare un secondo motore per la modalità REAL: usare le configurazioni.
+- Non cambiare l'ordine degli script senza eseguire la suite.
+- Non ricreare un secondo motore per REAL: usare le configurazioni.
 
 ## Suite di test
 
-Il file `15-test-api.js` non fa parte del caricamento normale del gioco.
-Viene caricato soltanto da `test-season-runner.html` e rende disponibili i controlli automatici alla pagina `test-season.html`.
+`15-test-api.js` è caricato soltanto da `test-season-runner.html`, mai dalle pagine pubbliche.
+La suite usa chiavi `localStorage` isolate con suffisso `_test_runner` e prova gli stessi 15 moduli pubblici in Community e REAL.
 
-- Non aggiungerlo a `campionato.html` o `campionato-real.html`.
-- I test usano chiavi `localStorage` isolate con suffisso `_test_runner`.
-- La suite prova entrambe le configurazioni usando gli stessi 14 moduli del gioco.
+Il runner carica inoltre `assets/database-validator.js` e verifica che i database attivi non contengano errori bloccanti o correzioni sicure ancora pendenti. Gli avvisi che richiedono una decisione editoriale non bloccano il gioco.
+
+## Eventi data-driven
+
+I contenuti degli eventi non sono più dichiarati dentro il motore:
+
+- `data/events/events-common.json` — eventi condivisi;
+- `data/events/events-community.json` — contenuti esclusivi Community;
+- `data/events/events-real.json` — estensioni specifiche REAL;
+- `assets/season/event-handlers.js` — sola logica eseguibile;
+- `event-check.html` — pannello di validazione;
+- `tools/validate-events.js` — validazione da terminale.
+
+Ogni catalogo usa `schemaVersion: 1`. Gli eventi sono ordinati tramite `order`, quindi la separazione tra file non modifica l'ordine storico né la selezione casuale. I JSON possono cambiare testi, etichette, descrizioni e associazione agli handler; nessun valore del JSON viene eseguito come codice.
