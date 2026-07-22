@@ -34,6 +34,9 @@
 
     { id:'campeones', category:'Stagionali', icon:'🏆', title:'Campeones', description:'Vinci il campionato.' },
     { id:'double', category:'Stagionali', icon:'👑', title:'Double', description:'Vinci campionato e coppa nella stessa stagione.' },
+    { id:'chi-perde-vince', category:'Stagionali', icon:'🔄', title:'Chi perde...vince!', description:'Vinci il campionato facendo più sconfitte che vittorie.' },
+    { id:'zero-vittorie-un-titolo', category:'Stagionali', icon:'0️⃣', title:'0 vittorie, 1 titolo', description:'Vinci il campionato con 0 vittorie.' },
+    { id:'coppa-di-consolazione', category:'Stagionali', icon:'🥈', title:'Coppa di consolazione', description:'Vinci la coppa ma non il campionato.' },
     { id:'invincibili', category:'Stagionali', icon:'🛡️', title:'Invincibili', description:'Termina una stagione senza sconfitte.' },
     { id:'attacco-atomico', category:'Stagionali', icon:'☢️', title:'Attacco atomico', description:'Segna almeno 100 gol in una stagione.' },
     { id:'fotofinish', category:'Stagionali', icon:'📸', title:'Fotofinish', description:'Vinci il titolo con un punto o meno di vantaggio.' },

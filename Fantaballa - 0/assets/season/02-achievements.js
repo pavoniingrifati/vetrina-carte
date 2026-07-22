@@ -222,6 +222,9 @@ function checkSeasonAchievements(rank,eliminated=false){
  const allWins=matches.length>0&&matches.every(match=>Number(match.gf)>Number(match.ga));
  if(wonTitle)unlockAchievement('campeones');
  if(wonTitle&&cupWon)unlockAchievement('double');
+ if(wonTitle&&Number(standing?.l)>Number(standing?.w))unlockAchievement('chi-perde-vince');
+ if(wonTitle&&Number(standing?.w)===0)unlockAchievement('zero-vittorie-un-titolo');
+ if(cupWon&&!wonTitle)unlockAchievement('coppa-di-consolazione');
  if(matches.length&&matches.every(match=>Number(match.gf)>=Number(match.ga)))unlockAchievement('invincibili');
  if(Number(standing?.gf)>=100)unlockAchievement('attacco-atomico');
  if(wonTitle&&runnerUp&&Number(standing?.pts)-Number(runnerUp?.pts)<=1)unlockAchievement('fotofinish');
