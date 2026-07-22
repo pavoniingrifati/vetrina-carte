@@ -19,13 +19,13 @@
 <main>
   <div class="head">
     <div><h1>Controllo cataloghi eventi</h1><p>Verifica struttura JSON, ID, ordine, handler, opzioni e separazione tra Community e REAL. Questa pagina non modifica il gioco.</p></div>
-    <div class="actions"><button id="runBtn" class="btn" type="button">Esegui di nuovo</button><a class="btn" href="index.html">Torna al menu</a></div>
+    <div class="actions"><a class="btn" href="event-editor.html">Editor eventi</a><button id="runBtn" class="btn" type="button">Esegui di nuovo</button><a class="btn" href="index.html">Torna al menu</a></div>
   </div>
   <div id="status" class="status loading">Caricamento…</div>
   <section id="content" aria-live="polite"></section>
 </main>
 <script src="assets/season/event-handlers.js?v=20260722-1"></script>
-<script src="assets/event-validator.js?v=20260722-1"></script>
+<script src="assets/event-validator.js?v=20260722-2"></script>
 <script>
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   async function readJson(path){const response=await fetch(path,{cache:'no-store'});if(!response.ok)throw new Error(`${path}: HTTP ${response.status}`);return response.json()}
@@ -47,7 +47,7 @@
         <div class="grid">
           <article class="panel"><h2>Errori bloccanti</h2>${issueList(report.errors,'Nessun errore bloccante.')}</article>
           <article class="panel"><h2>Avvisi</h2>${issueList(report.warnings,'Nessun avviso.')}</article>
-          <article class="panel full"><h2>Riepilogo</h2><p>Comuni: <b>${report.stats.commonDecisions}</b> decisioni e <b>${report.stats.commonAuto}</b> eventi automatici. Esclusivi Community: <b>${report.stats.communityDecisions-report.stats.commonDecisions}</b> decisioni e <b>${report.stats.communityAuto-report.stats.commonAuto}</b> evento automatico. Decisioni con condizioni o testi dinamici: <b>${report.stats.dynamicDecisions}</b>.</p></article>
+          <article class="panel full"><h2>Riepilogo</h2><p>Comuni: <b>${report.stats.commonDecisions}</b> decisioni e <b>${report.stats.commonAuto}</b> eventi automatici. Esclusivi Community: <b>${report.stats.communityDecisions-report.stats.commonDecisions}</b> decisioni e <b>${report.stats.communityAuto-report.stats.commonAuto}</b> evento automatico. Decisioni con condizioni o testi dinamici: <b>${report.stats.dynamicDecisions}</b>. Elementi disattivati: <b>${report.stats.disabledDecisions + report.stats.disabledAuto}</b>.</p></article>
           <article class="panel full"><h2>Catalogo decisioni</h2><div style="overflow:auto"><table><thead><tr><th>#</th><th>ID</th><th>Catalogo</th><th>Opzioni</th><th>Dinamica</th></tr></thead><tbody>${rows}</tbody></table></div></article>
         </div>`;
     }catch(error){status.className='status bad';status.textContent='Controllo non riuscito';content.innerHTML=`<article class="panel"><h2>Errore</h2><p class="badtext">${esc(error.message||error)}</p><p class="muted">Apri questa pagina tramite un server web, non direttamente come file locale.</p></article>`}

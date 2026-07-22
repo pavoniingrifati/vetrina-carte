@@ -14,12 +14,13 @@ function validateSeasonEventCatalog(catalogs){
   if(Array.isArray(catalog.autoEvents))auto.push(...catalog.autoEvents);else errors.push('Catalogo senza autoEvents valido.');
   if(Array.isArray(catalog.decisions))decisions.push(...catalog.decisions);else errors.push('Catalogo senza decisions valido.');
  }
- const autoIds=new Set(),decisionIds=new Set(),orders=new Set();
+ const autoIds=new Set(),autoOrders=new Set(),decisionIds=new Set(),orders=new Set();
  for(const item of auto){
   const id=String(item?.id||'').trim();
   if(!id)errors.push('Evento automatico senza id.');else if(autoIds.has(id))errors.push(`ID evento automatico duplicato: ${id}.`);else autoIds.add(id);
   if(!String(item?.title||'').trim())errors.push(`Evento automatico ${id||'?'} senza titolo.`);
   if(!String(item?.text||'').trim())errors.push(`Evento automatico ${id||'?'} senza testo.`);
+  const autoOrder=Number(item?.order);if(!Number.isFinite(autoOrder))errors.push(`Evento automatico ${id||'?'} senza ordine numerico.`);else if(autoOrders.has(autoOrder))errors.push(`Ordine evento automatico duplicato: ${autoOrder}.`);else autoOrders.add(autoOrder);
   if(!SEASON_EVENT_HANDLERS.autoApply[item?.applyHandler])errors.push(`Handler automatico mancante: ${item?.applyHandler||'?'} (${id||'?'}).`);
  }
  for(const item of decisions){
@@ -62,8 +63,8 @@ async function loadSeasonEventCatalog(){
  const catalogs=await Promise.all([fetchJsonResource(commonPath,commonPath),fetchJsonResource(modePath,modePath)]);
  const report=validateSeasonEventCatalog(catalogs);SEASON_EVENT_CATALOG_REPORT=report;
  if(report.errors.length)throw Error(`Catalogo eventi non valido: ${report.errors.slice(0,12).join(' | ')}`);
- const autoData=catalogs.flatMap(catalog=>catalog.autoEvents||[]).sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0));
- const decisionData=catalogs.flatMap(catalog=>catalog.decisions||[]).sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0));
+ const autoData=catalogs.flatMap(catalog=>catalog.autoEvents||[]).filter(item=>item?.disabled!==true).sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0));
+ const decisionData=catalogs.flatMap(catalog=>catalog.decisions||[]).filter(item=>item?.disabled!==true).sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0));
  AUTO_EVENTS=autoData.map(buildAutoEventFromData).filter(event=>!EXCLUDED_AUTO_EVENT_TITLES.has(String(event?.title||'')));
  DECISIONS=decisionData.map(buildDecisionFromData).filter(decision=>!EXCLUDED_DECISION_IDS.has(String(decision?.id||'')));
  return report;

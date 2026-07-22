@@ -4,7 +4,7 @@
     return new Set(Array.isArray(values) ? values.map(String) : []);
   }
 
-  function validateCatalogs(catalogs, handlerIds = {}) {
+  function validateCatalogs(catalogs, handlerIds = {}, policy = {}) {
     const errors = [];
     const warnings = [];
     const details = [];
@@ -18,6 +18,9 @@
     };
     const allAuto = [];
     const allDecisions = [];
+    const strictCounts = policy.strictCounts === true;
+    const enforceMinimumCounts = policy.enforceMinimumCounts !== false;
+    const strictModeSeparation = policy.strictModeSeparation !== false;
 
     for (const catalog of catalogs || []) {
       const name = String(catalog?.catalog || 'sconosciuto');
@@ -32,6 +35,7 @@
     }
 
     const autoIds = new Set();
+    const autoOrders = new Set();
     for (const item of allAuto) {
       const id = String(item?.id || '').trim();
       if (!id) errors.push(`${item.__catalog}: evento automatico senza id.`);
@@ -39,7 +43,10 @@
       else autoIds.add(id);
       if (!String(item?.title || '').trim()) errors.push(`${id || '?'}: titolo mancante.`);
       if (!String(item?.text || '').trim()) errors.push(`${id || '?'}: testo mancante.`);
-      if (!Number.isFinite(Number(item?.order))) errors.push(`${id || '?'}: order non numerico.`);
+      const autoOrder = Number(item?.order);
+      if (!Number.isFinite(autoOrder)) errors.push(`${id || '?'}: order non numerico.`);
+      else if (autoOrders.has(autoOrder)) errors.push(`Ordine evento automatico duplicato: ${autoOrder}.`);
+      else autoOrders.add(autoOrder);
       if (!handlerSets.autoApply.has(String(item?.applyHandler || ''))) errors.push(`${id || '?'}: handler automatico mancante (${item?.applyHandler || '?'}).`);
     }
 
@@ -79,13 +86,17 @@
     const community = (catalogs || []).find(item => item?.catalog === 'community') || { autoEvents: [], decisions: [] };
     const real = (catalogs || []).find(item => item?.catalog === 'real') || { autoEvents: [], decisions: [] };
     const communityDecisionIds = new Set((community.decisions || []).map(item => String(item.id)));
-    const expectedCommunityOnly = ['whatsapp-pubblicato', 'cuggino-influencer', 'tiktok-boomer', 'ma-che-mollo'];
-    for (const id of expectedCommunityOnly) {
-      if (!communityDecisionIds.has(id)) errors.push(`Evento esclusivo Community mancante: ${id}.`);
+    const expectedCommunityOnly = Array.isArray(policy.expectedCommunityOnly)
+      ? policy.expectedCommunityOnly.map(String)
+      : ['whatsapp-pubblicato', 'cuggino-influencer', 'tiktok-boomer', 'ma-che-mollo'];
+    if (strictModeSeparation) {
+      for (const id of expectedCommunityOnly) {
+        if (!communityDecisionIds.has(id)) errors.push(`Evento esclusivo Community mancante: ${id}.`);
+      }
+      if ((real.decisions || []).some(item => expectedCommunityOnly.includes(String(item.id)))) errors.push('Il catalogo REAL contiene eventi esclusivi Community.');
+      if (!(community.autoEvents || []).some(item => item.title === 'Sostegno degli abbonati')) errors.push('Evento automatico abbonati mancante dal catalogo Community.');
+      if ((real.autoEvents || []).some(item => item.title === 'Sostegno degli abbonati')) errors.push('Evento automatico abbonati presente nel catalogo REAL.');
     }
-    if ((real.decisions || []).some(item => expectedCommunityOnly.includes(String(item.id)))) errors.push('Il catalogo REAL contiene eventi esclusivi Community.');
-    if (!(community.autoEvents || []).some(item => item.title === 'Sostegno degli abbonati')) errors.push('Evento automatico abbonati mancante dal catalogo Community.');
-    if ((real.autoEvents || []).some(item => item.title === 'Sostegno degli abbonati')) errors.push('Evento automatico abbonati presente nel catalogo REAL.');
 
     const stats = {
       catalogs: (catalogs || []).length,
@@ -96,12 +107,23 @@
       realAuto: (common.autoEvents || []).length + (real.autoEvents || []).length,
       realDecisions: (common.decisions || []).length + (real.decisions || []).length,
       choices: allDecisions.reduce((sum, item) => sum + (item.choices?.length || 0), 0),
-      dynamicDecisions: details.filter(item => item.dynamic).length
+      dynamicDecisions: details.filter(item => item.dynamic).length,
+      disabledAuto: allAuto.filter(item => item.disabled === true).length,
+      disabledDecisions: allDecisions.filter(item => item.disabled === true).length
     };
-    if (stats.communityAuto !== 5) errors.push(`Community: attesi 5 eventi automatici, trovati ${stats.communityAuto}.`);
-    if (stats.communityDecisions !== 69) errors.push(`Community: attese 69 decisioni, trovate ${stats.communityDecisions}.`);
-    if (stats.realAuto !== 4) errors.push(`REAL: attesi 4 eventi automatici, trovati ${stats.realAuto}.`);
-    if (stats.realDecisions !== 65) errors.push(`REAL: attese 65 decisioni, trovate ${stats.realDecisions}.`);
+    const baseline = { communityAuto: 5, communityDecisions: 69, realAuto: 4, realDecisions: 65, ...(policy.expectedCounts || {}) };
+    if (enforceMinimumCounts) {
+      if (stats.communityAuto < baseline.communityAuto) errors.push(`Community: attesi almeno ${baseline.communityAuto} eventi automatici, trovati ${stats.communityAuto}.`);
+      if (stats.communityDecisions < baseline.communityDecisions) errors.push(`Community: attese almeno ${baseline.communityDecisions} decisioni, trovate ${stats.communityDecisions}.`);
+      if (stats.realAuto < baseline.realAuto) errors.push(`REAL: attesi almeno ${baseline.realAuto} eventi automatici, trovati ${stats.realAuto}.`);
+      if (stats.realDecisions < baseline.realDecisions) errors.push(`REAL: attese almeno ${baseline.realDecisions} decisioni, trovate ${stats.realDecisions}.`);
+    }
+    if (strictCounts) {
+      if (stats.communityAuto !== baseline.communityAuto) errors.push(`Community: attesi esattamente ${baseline.communityAuto} eventi automatici, trovati ${stats.communityAuto}.`);
+      if (stats.communityDecisions !== baseline.communityDecisions) errors.push(`Community: attese esattamente ${baseline.communityDecisions} decisioni, trovate ${stats.communityDecisions}.`);
+      if (stats.realAuto !== baseline.realAuto) errors.push(`REAL: attesi esattamente ${baseline.realAuto} eventi automatici, trovati ${stats.realAuto}.`);
+      if (stats.realDecisions !== baseline.realDecisions) errors.push(`REAL: attese esattamente ${baseline.realDecisions} decisioni, trovate ${stats.realDecisions}.`);
+    }
 
     return { ok: errors.length === 0, errors, warnings, stats, details };
   }

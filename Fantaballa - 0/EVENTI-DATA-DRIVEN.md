@@ -73,3 +73,13 @@ node tools/validate-events.js
 ```
 
 Il controllo verifica schema, ID duplicati, ordine, opzioni, handler mancanti, conteggi e separazione Community/REAL.
+
+## Editor grafico
+
+I cataloghi possono essere modificati anche tramite:
+
+```text
+event-editor.html
+```
+
+L'editor consente anteprima mobile, validazione, importazione, duplicazione, disattivazione temporanea ed esportazione dei tre JSON. La guida completa è disponibile in `EVENT-EDITOR.md`.
