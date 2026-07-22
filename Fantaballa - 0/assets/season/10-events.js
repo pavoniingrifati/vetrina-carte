@@ -167,6 +167,11 @@ function bindSeasonEventControls(){
    event.stopPropagation();
    setSeasonEventMinimized(false);
  };
+ const skipWithWhistle=document.querySelector('[data-skip-event-with-whistle]');
+ if(skipWithWhistle)skipWithWhistle.onclick=event=>{
+   event.preventDefault();event.stopPropagation();
+   const message=useCollinaWhistleToSkipEvent();save();render();toast(message);
+ };
  /* Allinea sempre DOM e variabile, anche sui browser che ignorano [hidden]. */
  setSeasonEventMinimized(seasonEventMinimized,{focus:false});
 }
@@ -186,7 +191,9 @@ function renderEvent(){
    const eventKey=JSON.stringify([e.decisionId||'',e.decisionIndex??'',e.title||'',e.text||'',state.matchday,e.chained||false,e.context||{}]);
    if(seasonEventUiKey!==eventKey){seasonEventUiKey=eventKey;seasonEventMinimized=false}
    const choices=d.choices.map((c,i)=>`<div class="season-event-choice-float"><button class="choice season-event-choice ${i%2===0?'tone-blue':'tone-red'}" data-choice="${i}" type="button"><span class="season-event-option-label">Opzione ${String.fromCharCode(65+i)}</span><b>${esc(c.label)}</b><small>${esc(c.effect)}</small></button></div>`).join('');
-   return `<div class="season-event-overlay" role="presentation" ${seasonEventMinimized?'hidden':''}><section class="season-event-dialog" role="dialog" aria-modal="true" aria-labelledby="seasonEventTitle" aria-describedby="seasonEventCopy"><button class="season-event-minimize" data-event-minimize type="button" aria-label="Riduci l’evento e consulta la pagina">━ Riduci</button><div class="season-event-head"><div class="season-event-kicker">${esc(eventLabel)}</div><h2 class="season-event-title" id="seasonEventTitle">${esc(e.title)}</h2><p class="season-event-copy" id="seasonEventCopy">${esc(e.text)}</p></div><div class="choice-grid season-event-choice-grid">${choices}</div><p class="season-event-hint">Riduci il box per consultare Rosa, Classifica, Calendario e Statistiche; potrai riaprirlo in qualsiasi momento.</p></section></div><aside class="season-event-dock" ${seasonEventMinimized?'':'hidden'} aria-label="Evento in attesa di una decisione"><button class="season-event-dock-button" data-event-expand type="button"><span class="season-event-dock-pulse" aria-hidden="true"></span><span class="season-event-dock-copy"><span>Evento in attesa</span><b>${esc(e.title)}</b></span><span class="season-event-dock-open">Riapri ↑</span></button></aside>`;
+   const whistleQuantity=typeof seasonItemQuantity==='function'?seasonItemQuantity('collina-whistle'):0,canWhistle=typeof collinaWhistleCanSkipEvent==='function'&&collinaWhistleCanSkipEvent(e);
+   const whistleAction=canWhistle?`<button class="season-event-whistle" data-skip-event-with-whistle type="button"><span aria-hidden="true">◉</span><b>Usa il Fischietto di Collina</b><small>Salta questo evento senza applicare nessuna scelta · disponibile x${whistleQuantity}</small></button>`:'';
+   return `<div class="season-event-overlay" role="presentation" ${seasonEventMinimized?'hidden':''}><section class="season-event-dialog" role="dialog" aria-modal="true" aria-labelledby="seasonEventTitle" aria-describedby="seasonEventCopy"><button class="season-event-minimize" data-event-minimize type="button" aria-label="Riduci l’evento e consulta la pagina">━ Riduci</button><div class="season-event-head"><div class="season-event-kicker">${esc(eventLabel)}</div><h2 class="season-event-title" id="seasonEventTitle">${esc(e.title)}</h2><p class="season-event-copy" id="seasonEventCopy">${esc(e.text)}</p></div><div class="choice-grid season-event-choice-grid">${choices}</div>${whistleAction}<p class="season-event-hint">Riduci il box per consultare Rosa, Classifica, Calendario e Statistiche; potrai riaprirlo in qualsiasi momento.</p></section></div><aside class="season-event-dock" ${seasonEventMinimized?'':'hidden'} aria-label="Evento in attesa di una decisione"><button class="season-event-dock-button" data-event-expand type="button"><span class="season-event-dock-pulse" aria-hidden="true"></span><span class="season-event-dock-copy"><span>Evento in attesa</span><b>${esc(e.title)}</b></span><span class="season-event-dock-open">Riapri ↑</span></button></aside>`;
  }
  const notice=questState().notice;
  return `<div class="event-card"><div class="label">${e.chained?'Evento concatenato':(e.kind==='auto'?'Evento casuale':'Settimana')}</div><h3>${esc(e.title)}</h3><p>${esc(e.text)}</p>${e.result?`<b>${esc(e.result)}</b>`:''}${notice?`<div class="quest-notice">${esc(notice)}</div>`:''}</div>`

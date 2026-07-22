@@ -3,7 +3,8 @@
  * Il modulo è condiviso dalle modalità Community e REAL.
  */
 const SEASON_ITEM_DEFINITIONS=Object.freeze({
- 'captain-armband':Object.freeze({id:'captain-armband',name:'Fascia del capitano',icon:'©',rarity:'Comune',type:'Consumabile condizionato',description:'Assegna +5 OVR a un titolare per la prossima partita. Se il capitano segna o viene nominato MVP, la fascia torna nell’inventario; altrimenti viene consumata.'})
+ 'captain-armband':Object.freeze({id:'captain-armband',name:'Fascia del capitano',icon:'©',rarity:'Comune',type:'Consumabile condizionato',description:'Assegna +5 OVR a un titolare per la prossima partita. Se il capitano segna o viene nominato MVP, la fascia torna nell’inventario; altrimenti viene consumata.'}),
+ 'collina-whistle':Object.freeze({id:'collina-whistle',name:'Fischietto di Collina',icon:'◉',rarity:'Raro',type:'Consumabile',description:'Durante una decisione casuale compatibile, salta l’evento senza applicare nessuna delle opzioni. Dopo l’utilizzo il fischietto viene consumato.'})
 });
 function seasonItemDefinition(id=''){return SEASON_ITEM_DEFINITIONS[String(id)]||null}
 function seasonInventory(){
@@ -25,6 +26,24 @@ function addSeasonItem(id,quantity=1,extra={}){
 function removeSeasonItem(id,quantity=1){
  const inventory=seasonInventory(),item=inventory.items.find(entry=>String(entry.id)===String(id)),amount=Math.max(1,Math.floor(Number(quantity)||1));if(!item||Number(item.quantity)<amount)return false;
  item.quantity-=amount;inventory.items=inventory.items.filter(entry=>Number(entry.quantity)>0);return true;
+}
+function collinaWhistleRewardReserved(){return seasonItemQuantity('collina-whistle-reserved')>0}
+function reserveCollinaWhistleReward(){
+ const inventory=seasonInventory();if(collinaWhistleRewardReserved())return true;if(seasonInventoryUsedSlots()>=inventory.capacity)return false;
+ inventory.items.push({id:'collina-whistle-reserved',quantity:1,acquiredMatchday:Number(state.matchday)||0,source:'Designazione arbitrale'});return true;
+}
+function releaseCollinaWhistleRewardReservation(){return removeSeasonItem('collina-whistle-reserved',1)}
+function collinaWhistleCanSkipEvent(event=state.pendingEvent){
+ if(seasonItemQuantity('collina-whistle')<1||!event||event.resolved||event.kind!=='decision'||event.chained)return false;
+ const decision=typeof decisionFromPending==='function'?decisionFromPending(event):null;return Boolean(decision);
+}
+function useCollinaWhistleToSkipEvent(){
+ const event=state.pendingEvent;if(!collinaWhistleCanSkipEvent(event))return'Il Fischietto di Collina non può essere utilizzato su questo evento.';
+ if(!removeSeasonItem('collina-whistle',1))return'Non possiedi il Fischietto di Collina.';
+ const before=analyticsSnapshot(),title=String(event.title||'Evento');
+ event.resolved=true;event.skippedWithItem='collina-whistle';event.result=`Il Fischietto di Collina interrompe ${title}: nessuna opzione viene applicata.`;
+ recordSeasonEvent({kind:'decision',title,choice:'Fischietto di Collina',effect:'Evento saltato senza applicare alcuna scelta.',result:event.result,automatic:false},before);
+ seasonEventMinimized=false;seasonEventUiKey='';return event.result;
 }
 function captainArmbandActive(){const active=seasonInventory().active;return active&&String(active.id)==='captain-armband'?active:null}
 function captainEligibleEntries(){
@@ -66,12 +85,14 @@ function resolveCaptainArmbandAfterMatch(result){
  recordSeasonEvent({kind:'item',title:'Fascia del capitano',choice:retained?'Oggetto conservato':'Oggetto consumato',effect:'+5 OVR al capitano',result:message,automatic:true},analyticsSnapshot());return update;
 }
 function renderSeasonInventory(){
- const inventory=seasonInventory(),used=seasonInventoryUsedSlots(),active=captainArmbandActive(),quantity=seasonItemQuantity('captain-armband'),definition=seasonItemDefinition('captain-armband'),eligible=captainEligibleEntries();
+ const inventory=seasonInventory(),used=seasonInventoryUsedSlots(),active=captainArmbandActive(),armbandQuantity=seasonItemQuantity('captain-armband'),whistleQuantity=seasonItemQuantity('collina-whistle'),reserved=collinaWhistleRewardReserved(),armband=seasonItemDefinition('captain-armband'),whistle=seasonItemDefinition('collina-whistle'),eligible=captainEligibleEntries();
  const activeHtml=active?`<div class="season-item-active"><span>In uso nella prossima partita</span><b>${esc(active.playerName)}</b><small>+5 OVR · deve partire titolare</small></div>`:'';
+ const reservedHtml=reserved?'<div class="season-item-active season-item-reward-pending"><span>Dono speciale in palio</span><b>Fischietto di Collina</b><small>Non perdere nelle 3 partite della designazione arbitrale.</small></div>':'';
  const options=eligible.map(entry=>`<option value="${esc(entry.playerId)}">${esc(entry.player.name)} · ${esc(entry.slot||entry.player.Position||'')} · ${Number(entry.player.ovr)||0} OVR</option>`).join('');
- const ownedHtml=quantity?`<div class="season-item-row"><div class="season-item-icon">${definition.icon}</div><div class="season-item-copy"><div class="season-item-name"><b>${esc(definition.name)}</b><span>${esc(definition.rarity)} · x${quantity}</span></div><p>${esc(definition.description)}</p>${!active?(eligible.length?`<div class="season-item-use"><label for="captainArmbandPlayer">Assegna a un titolare</label><select id="captainArmbandPlayer">${options}</select><button class="btn season-item-use-button" type="button" data-use-season-item="captain-armband">Usa oggetto</button></div>`:'<small class="season-item-warning">Nessun titolare disponibile: l’oggetto non verrà consumato.</small>'):''}</div></div>`:'';
- const empty=!active&&!quantity?'<p class="season-items-empty">Non possiedi ancora oggetti. Alcune quest e situazioni speciali possono aggiungerli alla tua run.</p>':'';
- return `<details class="season-items-card" ${active||quantity?'open':''}><summary><span>🎒 Oggetti della run</span><b>${used}/${inventory.capacity}</b></summary><div class="season-items-body">${activeHtml}${ownedHtml}${empty}</div></details>`;
+ const armbandHtml=armbandQuantity?`<div class="season-item-row"><div class="season-item-icon">${armband.icon}</div><div class="season-item-copy"><div class="season-item-name"><b>${esc(armband.name)}</b><span>${esc(armband.rarity)} · x${armbandQuantity}</span></div><p>${esc(armband.description)}</p>${!active?(eligible.length?`<div class="season-item-use"><label for="captainArmbandPlayer">Assegna a un titolare</label><select id="captainArmbandPlayer">${options}</select><button class="btn season-item-use-button" type="button" data-use-season-item="captain-armband">Usa oggetto</button></div>`:'<small class="season-item-warning">Nessun titolare disponibile: l’oggetto non verrà consumato.</small>'):''}</div></div>`:'';
+ const whistleHtml=whistleQuantity?`<div class="season-item-row is-rare"><div class="season-item-icon">${whistle.icon}</div><div class="season-item-copy"><div class="season-item-name"><b>${esc(whistle.name)}</b><span>${esc(whistle.rarity)} · x${whistleQuantity}</span></div><p>${esc(whistle.description)}</p><small class="season-item-event-note">Quando compare un evento compatibile, troverai il pulsante per fischiare e saltarlo.</small></div></div>`:'';
+ const empty=!active&&!armbandQuantity&&!whistleQuantity&&!reserved?'<p class="season-items-empty">Non possiedi ancora oggetti. Alcune quest e situazioni speciali possono aggiungerli alla tua run.</p>':'';
+ return `<details class="season-items-card" ${active||armbandQuantity||whistleQuantity||reserved?'open':''}><summary><span>🎒 Oggetti della run</span><b>${used}/${inventory.capacity}</b></summary><div class="season-items-body">${activeHtml}${reservedHtml}${armbandHtml}${whistleHtml}${empty}</div></details>`;
 }
 function bindSeasonInventoryControls(){
  document.querySelectorAll('[data-use-season-item]').forEach(button=>button.onclick=()=>{const id=String(button.dataset.useSeasonItem||'');if(id!=='captain-armband')return;const select=document.getElementById('captainArmbandPlayer'),message=useCaptainArmband(select?.value||'');save();render();toast(message)});

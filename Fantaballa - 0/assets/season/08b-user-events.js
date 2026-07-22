@@ -187,8 +187,39 @@ function resolveConcededGoalPointsAfterMatch(result){
  const message=bonus?`Hai subito ${goals} ${goals===1?'gol':'gol'} e ricevi +${bonus} ${bonus===1?'punto':'punti'} aggiuntivi.`:'Non hai subito gol: nessun punto aggiuntivo.';result.pointsNote=[result.pointsNote,message].filter(Boolean).join(' ');userEventUpdate(result,bonus>0,'Punti per ogni gol subito',`${message} ${rule.matchesRemaining>0?`Restano ${rule.matchesRemaining} partite.`:'La regola al contrario termina.'}`);
 }
 
+/* Designazione arbitrale */
+function refereeDesignationState(){return userEventState('refereeDesignation',{active:false,branch:'',matchesRemaining:0,matchesPlayed:0,startedMatchday:-1,failed:false,rewardGranted:false,lastOutcome:''})}
+function refereeDesignationAvailable(){const challenge=refereeDesignationState(),inventory=seasonInventory();return Boolean(!challenge.active&&Number(state.matchday)<seasonLength()-2&&seasonInventoryUsedSlots()<inventory.capacity)}
+function acceptMariaSoleDesignation(){
+ if(!reserveCollinaWhistleReward())return'L’inventario è pieno: non c’è spazio per riservare il dono speciale.';
+ Object.assign(refereeDesignationState(),{active:true,branch:'maria-sole',matchesRemaining:3,matchesPlayed:0,startedMatchday:Number(state.matchday),failed:false,rewardGranted:false,lastOutcome:''});
+ pushEffect('refChaos',1,3,{opponentRedChance:0,ownRedChance:1,source:'Designazione arbitrale · Maria Sole'});
+ return 'Maria Sole dirigerà le prossime 3 partite: riceverai almeno un’espulsione in ogni gara. Se non perdi mai, otterrai un dono speciale.';
+}
+function acceptRosarioDesignation(){
+ const challenge=refereeDesignationState();Object.assign(challenge,{active:false,branch:'rosario',matchesRemaining:0,matchesPlayed:0,startedMatchday:Number(state.matchday),failed:false,rewardGranted:false,lastOutcome:'Rischio di espulsione aumentato fino a fine stagione.'});
+ pushSeasonEffect('refChaos',1,{opponentRedChance:0,ownRedChance:.12,source:'Designazione arbitrale · Rosario'});
+ return 'Rosario viene scelto: la probabilità di ricevere cartellini rossi aumenta leggermente fino a fine stagione.';
+}
+function ensureMariaSoleExpulsion(result){
+ if(!result||result.ownRedCard||result.formulaOneInjuryWalkover?.active)return null;
+ const lineup=Array.isArray(result.lineup)?result.lineup:[],selected=pick(lineup.filter(entry=>entry&&entry.playerId));if(!selected)return null;
+ const playerId=String(selected.playerId),playerName=String(selected.playerName||selected.name||playerById(playerId)?.name||'Un tuo giocatore');
+ result.ownRedCard=true;result.ownSuspensionId=playerId;result.ownSuspensionPlayer=playerName;statusOf(playerId).suspension=Math.max(1,Number(statusOf(playerId).suspension)||0);return {playerId,playerName};
+}
+function resolveRefereeDesignationAfterMatch(result){
+ const challenge=refereeDesignationState();if(!result||!challenge.active||challenge.branch!=='maria-sole')return;
+ const forced=ensureMariaSoleExpulsion(result),lost=Number(result.gf)<Number(result.ga);challenge.matchesPlayed=Math.max(0,Number(challenge.matchesPlayed)||0)+1;challenge.matchesRemaining=Math.max(0,Number(challenge.matchesRemaining||0)-1);if(lost)challenge.failed=true;
+ const redName=String(result.ownSuspensionPlayer||forced?.playerName||'un tuo giocatore'),progress=`Prova: ${challenge.matchesPlayed}/3 partite · ${challenge.failed?'almeno una sconfitta':'ancora imbattuto'}.`;
+ if(challenge.matchesRemaining>0){challenge.lastOutcome=`${redName} viene espulso. ${progress}`;userEventUpdate(result,!lost,'Designazione arbitrale',challenge.lastOutcome);return}
+ challenge.active=false;releaseCollinaWhistleRewardReservation();
+ if(!challenge.failed){const granted=addSeasonItem('collina-whistle',1,{source:'Designazione arbitrale'});challenge.rewardGranted=Boolean(granted);challenge.lastOutcome=granted?'Tre partite, tre espulsioni e nessuna sconfitta: hai ricevuto il Fischietto di Collina.':'Hai superato la prova, ma l’inventario non ha spazio per il Fischietto di Collina.';userEventUpdate(result,Boolean(granted),'Designazione arbitrale',challenge.lastOutcome)}
+ else{challenge.lastOutcome='La prova termina: hai perso almeno una delle tre partite e il dono speciale non viene consegnato.';userEventUpdate(result,false,'Designazione arbitrale',challenge.lastOutcome)}
+}
+
 function tickAdditionalUserEventsAfterMatch(result){
  if(!result)return;
+ resolveRefereeDesignationAfterMatch(result);
  resolvePermanentAppealAfterMatch(result);
  resolveConcededGoalPointsAfterMatch(result);
  const penalty=result.improvisedPenalty;
