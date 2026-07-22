@@ -259,6 +259,7 @@ function avatarSeed(player){
  const isBaroneSportivo=creatorStyle==='barone-sportivo'||String(player?.id||'')==='850'||creatorName==='barone sportivo';
  const isStefanoFinari=creatorStyle==='stefano-finari'||String(player?.id||'')==='851'||creatorName==='stefano finari';
  const isFantaballa=creatorStyle==='fantaballa'||String(player?.id||'')==='384'||creatorName==='fantaballa';
+ const isMisterFm=creatorStyle==='misterfm'||String(player?.id||'')==='852'||creatorName==='misterfm';
  if(isBaroneSportivo){
   preset.skin='#f0d5bb';
   preset.hair='#8a5a33';
@@ -294,6 +295,19 @@ function avatarSeed(player){
   preset.mouthStyle='serious';
   preset.beardStyle='shortBeard';
   preset.accessory='none';
+  preset.kitStyle='solid';
+ }
+ if(isMisterFm){
+  preset.skin='#eeb991';
+  preset.hair='#4b301f';
+  preset.eyebrows='#382316';
+  preset.eyeColor='#473124';
+  preset.faceShape='oval';
+  preset.hairStyle='crop';
+  preset.eyeStyle='wide';
+  preset.mouthStyle='smile';
+  preset.beardStyle='stubble';
+  preset.accessory='capGlasses';
   preset.kitStyle='solid';
  }
  return preset;
@@ -341,7 +355,8 @@ function renderAvatarSvg(player,sub=false){
    none:'',
    glasses:`<g stroke="#0f172a" stroke-width="1.9" fill="rgba(219,234,254,.25)"><rect x="25.4" y="38.2" width="13.4" height="9.6" rx="3.2"/><rect x="45.2" y="38.2" width="13.4" height="9.6" rx="3.2"/><path d="M38.8 43h6.4"/></g>`,
    headband:`<path d="M23.2 31.4c6-2.8 12-4.1 18.8-4.1 6.8 0 12.8 1.3 18.8 4.1" fill="none" stroke="#ef4444" stroke-width="4.2" stroke-linecap="round" opacity=".92"/>`,
-   topHat:`<g><ellipse cx="42" cy="20.2" rx="22.5" ry="5.6" fill="#0f1115" opacity=".98"/><path d="M26 21V9.8c0-2.5 2-4.5 4.5-4.5h23c2.5 0 4.5 2 4.5 4.5V21z" fill="#15171c"/><rect x="24.5" y="19.2" width="35" height="3.6" rx="1.8" fill="#292c32"/><path d="M27 9.6h30" stroke="rgba(255,255,255,.18)" stroke-width="1.1" stroke-linecap="round"/></g>`
+   topHat:`<g><ellipse cx="42" cy="20.2" rx="22.5" ry="5.6" fill="#0f1115" opacity=".98"/><path d="M26 21V9.8c0-2.5 2-4.5 4.5-4.5h23c2.5 0 4.5 2 4.5 4.5V21z" fill="#15171c"/><rect x="24.5" y="19.2" width="35" height="3.6" rx="1.8" fill="#292c32"/><path d="M27 9.6h30" stroke="rgba(255,255,255,.18)" stroke-width="1.1" stroke-linecap="round"/></g>`,
+  capGlasses:`<g><path d="M20.5 26.8c5.6-8.4 13.4-12.9 21.5-12.9 8.3 0 16.6 4.6 21.5 12.9l-4 2.5c-5.1-5.9-11.1-8.9-17.5-8.9-6.3 0-12.5 3-17.5 8.9z" fill="#f0b83e"/><path d="M24.2 28.2h35.6v5.2H24.2z" fill="#fffdf8" stroke="rgba(75,48,31,.18)" stroke-width=".7"/><path d="M24.8 26.8c4.6-5.2 10.6-7.8 17.2-7.8 6.6 0 12.6 2.6 17.2 7.8" fill="none" stroke="rgba(255,255,255,.48)" stroke-width="1.1" stroke-linecap="round"/><g stroke="#524036" stroke-width="1.9" fill="rgba(219,234,254,.22)"><rect x="24.8" y="38.2" width="14.2" height="10" rx="3.4"/><rect x="45" y="38.2" width="14.2" height="10" rx="3.4"/><path d="M39 43h6"/></g></g>`
  };
  const sparkles=tier.stars?`<g fill="${tier.spark}" opacity=".86"><circle cx="21" cy="15" r="1.4"/><circle cx="61" cy="14" r="1.2"/><path d="M63 26l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z"/></g>`:'';
  const crown=sub?`<g><circle cx="15" cy="15" r="8.8" fill="#f6c74e" stroke="#fff5bf" stroke-width="1.1"/><path d="M10.2 17.5l1.5-5 3 2.2 2.6-3.3 2.6 3.3 3-2.2 1.5 5z" fill="#8b5a00"/></g>`:'';
