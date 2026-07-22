@@ -143,6 +143,54 @@ function loadState(){
  lastLoadedSaveInfo={source:'none',legacy:false,recovered:false,envelope:null};
  return null;
 }
+function isStorageQuotaError(error){
+ const name=String(error?.name||''),message=String(error?.message||'').toLowerCase();
+ return name==='QuotaExceededError'||name==='NS_ERROR_DOM_QUOTA_REACHED'||Number(error?.code)===22||Number(error?.code)===1014||message.includes('quota')||message.includes('storage');
+}
+function storageClone(value){
+ try{if(typeof structuredClone==='function')return structuredClone(value)}catch{}
+ return JSON.parse(JSON.stringify(value));
+}
+function compactGoalForStorage(goal){
+ if(!goal||typeof goal!=='object')return goal;
+ const allowed=['minute','type','icon','teamId','playerId','player','playerName','scorer','assist','goalValue','scoreAfter'];
+ const compact={};for(const key of allowed)if(goal[key]!==undefined)compact[key]=goal[key];
+ return compact;
+}
+function compactMatchForStorage(match){
+ if(!match||typeof match!=='object')return match;
+ const compact={...match};
+ for(const key of ['commentary','highlights','lineup','opponentLineup','formulaOneRanking','ductilityBoosts','frenchLateBoosts'])delete compact[key];
+ if(Array.isArray(compact.goals))compact.goals=compact.goals.map(compactGoalForStorage);
+ if(Array.isArray(compact.opponentGoals))compact.opponentGoals=compact.opponentGoals.map(compactGoalForStorage);
+ return compact;
+}
+function buildStorageStateSnapshot(candidate){
+ const snapshot=storageClone(candidate);
+ snapshot.history=Array.isArray(snapshot.history)?snapshot.history.map(compactMatchForStorage):[];
+ snapshot.lastResult=snapshot.lastResult?(snapshot.history[snapshot.history.length-1]||compactMatchForStorage(snapshot.lastResult)):null;
+ snapshot.lastRoundResults=[];
+ if(snapshot.chaos&&typeof snapshot.chaos==='object'&&Array.isArray(snapshot.chaos.latest))snapshot.chaos.latest=snapshot.chaos.latest.slice(-12);
+ return snapshot;
+}
+function removeSaveStorageDebris({removeBackup=false,removeQuarantine=false}={}){
+ try{localStorage.removeItem(SAVE_TEMP_KEY)}catch{}
+ if(removeBackup){try{localStorage.removeItem(SAVE_BACKUP_KEY)}catch{}}
+ if(removeQuarantine){
+  try{
+   const keys=[];for(let index=0;index<localStorage.length;index++)keys.push(localStorage.key(index));
+   keys.filter(key=>key&&key.startsWith(`${AUTO_SAVE_KEY}_`)&&key!==SAVE_BACKUP_KEY&&key!==SAVE_TEMP_KEY).forEach(key=>localStorage.removeItem(key));
+  }catch{}
+ }
+}
+function tryWriteBackup(currentRaw,newRaw){
+ if(!currentRaw||currentRaw===newRaw)return false;
+ /* Con stringhe molto grandi il backup completo consumerebbe quasi tutta la quota.
+    In quel caso è più sicuro mantenere soltanto il salvataggio principale verificato. */
+ if(currentRaw.length+newRaw.length>1800000){try{localStorage.removeItem(SAVE_BACKUP_KEY)}catch{}return false}
+ try{localStorage.setItem(SAVE_BACKUP_KEY,currentRaw);verifySerializedEnvelope(localStorage.getItem(SAVE_BACKUP_KEY));return true}
+ catch(error){try{localStorage.removeItem(SAVE_BACKUP_KEY)}catch{};if(!isStorageQuotaError(error))console.warn('Backup del salvataggio non creato.',error);return false}
+}
 function buildSaveEnvelope(candidate,now=new Date().toISOString()){
  candidate.version=CURRENT_STATE_VERSION;
  candidate.meta=candidate.meta&&typeof candidate.meta==='object'?candidate.meta:{};
@@ -154,7 +202,8 @@ function buildSaveEnvelope(candidate,now=new Date().toISOString()){
  candidate.meta.gameVersion=SEASON_ENGINE_VERSION;
  candidate.meta.autosave=true;
  delete candidate.meta.saveSlot;
- return{version:SAVE_FORMAT_VERSION,mode:SAVE_MODE,seasonId:candidate.meta.seasonId,createdAt:candidate.meta.createdAt,updatedAt:now,gameVersion:SEASON_ENGINE_VERSION,state:candidate};
+ const storageState=buildStorageStateSnapshot(candidate);
+ return{version:SAVE_FORMAT_VERSION,mode:SAVE_MODE,seasonId:candidate.meta.seasonId,createdAt:candidate.meta.createdAt,updatedAt:now,gameVersion:SEASON_ENGINE_VERSION,state:storageState};
 }
 function verifySerializedEnvelope(raw){
  const decoded=decodeStoredSave(raw);
@@ -174,18 +223,28 @@ function save(){
   const envelope=buildSaveEnvelope(state);
   const raw=JSON.stringify(envelope);
   verifySerializedEnvelope(raw);
-  localStorage.setItem(SAVE_TEMP_KEY,raw);
-  verifySerializedEnvelope(localStorage.getItem(SAVE_TEMP_KEY));
-  if(currentValid)localStorage.setItem(SAVE_BACKUP_KEY,currentRaw);
-  localStorage.setItem(AUTO_SAVE_KEY,raw);
+
+  /* localStorage.setItem sostituisce atomicamente il valore della stessa chiave.
+     Non salviamo più tre copie complete (temp + backup + principale), causa del superamento quota. */
+  removeSaveStorageDebris();
+  try{localStorage.setItem(AUTO_SAVE_KEY,raw)}catch(error){
+   if(!isStorageQuotaError(error))throw error;
+   /* Un vecchio backup o salvataggi isolati possono occupare la quota: li rimuoviamo
+      e riproviamo senza cancellare il salvataggio principale ancora valido. */
+   removeSaveStorageDebris({removeBackup:true,removeQuarantine:true});
+   localStorage.setItem(AUTO_SAVE_KEY,raw);
+  }
   verifySerializedEnvelope(localStorage.getItem(AUTO_SAVE_KEY));
-  localStorage.removeItem(SAVE_TEMP_KEY);
-  lastLoadedSaveInfo={source:'primary',legacy:false,recovered:false,envelope};
+  const backupWritten=currentValid?tryWriteBackup(currentRaw,raw):false;
+  lastLoadedSaveInfo={source:'primary',legacy:false,recovered:false,envelope,backupWritten};
   updateSaveStatus();
   return true;
  }catch(error){
   console.error('Salvataggio automatico non riuscito',error);
-  try{toast(`Salvataggio automatico non riuscito: ${error.message||'dato non valido o spazio insufficiente.'}`)}catch{}
+  const message=isStorageQuotaError(error)
+   ?'spazio del browser esaurito. Il salvataggio precedente è rimasto intatto.'
+   :(error.message||'dato non valido o spazio insufficiente.');
+  try{toast(`Salvataggio automatico non riuscito: ${message}`)}catch{}
   return false;
  }
 }
