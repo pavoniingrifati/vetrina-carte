@@ -228,17 +228,25 @@ function updateStanding(id,gf,ga,outcome={}){
 }
 function applyUserPointRules(gf,ga){
  if(formulaOneRuleActive())return{adjustment:0,awarded:0,note:'Formato Formula 1: i punti vengono assegnati dopo la simulazione completa della giornata.'};
- if(bottomHelpRoundEligible(USER_ID)){const points=bottomHelpPoints(gf,ga,state.lastResult?.winnerId||'',USER_ID);return{adjustment:0,awarded:points,note:`Aiuto dal fondo: eri dal 10° posto in giù prima della giornata e ricevi +${points} ${points===1?'punto':'punti'}.`};}
+ if(bottomHelpRoundEligible(USER_ID)){const basePoints=bottomHelpPoints(gf,ga,state.lastResult?.winnerId||'',USER_ID),marottaDoubled=Boolean(state.seasonRules.marottaDoubleWins&&Number(gf)>Number(ga)),points=marottaDoubled?basePoints*2:basePoints,adjustment=points-basePoints,standing=userStanding();if(standing&&adjustment)standing.pts+=adjustment;return{adjustment,awarded:points,marottaDoubled,marottaBasePoints:marottaDoubled?basePoints:0,note:marottaDoubled?`Aiuto dal fondo: la vittoria vale ${basePoints} punti. Marotta League li raddoppia a ${points}.`:`Aiuto dal fondo: eri dal 10° posto in giù prima della giornata e ricevi +${points} ${points===1?'punto':'punti'}.`};}
  const standing=userStanding(),base=baseLeaguePoints(gf,ga),standard=fgciResultRuleTarget(gf,ga,base),fgciAdjustment=fgciPointsAdjustment(gf,ga),fgciNote=fgciPointsRuleNote(gf,ga),resultRuleNote=fgciResultRuleNote(gf,ga),videoRuleNote=fantaballaVideoPointsNote(gf,ga);
- if(state.seasonRules.pointsEqualGoals&&String(state.seasonRules?.fantaballaVideoRule)!=='reverse-points')return{adjustment:0,awarded:standard+fgciAdjustment,note:[`Regolamento FGCI: ${base} punti, pari ai gol segnati.`,resultRuleNote,videoRuleNote,fgciNote].filter(Boolean).join(' ')};
+ const pointsEqualGoals=Boolean(state.seasonRules.pointsEqualGoals&&String(state.seasonRules?.fantaballaVideoRule)!=='reverse-points');
  const globalWinPoints=Number.isFinite(Number(state.seasonRules.winPoints))?Math.max(0,Number(state.seasonRules.winPoints)):3;
  const globalDrawPoints=Number.isFinite(Number(state.seasonRules.drawPoints))?Math.max(0,Number(state.seasonRules.drawPoints)):1,zeroZero=Boolean(state.seasonRules.zeroZeroNoPoints&&Number(gf)===0&&Number(ga)===0);
- if(!standing)return{adjustment:0,awarded:standard+fgciAdjustment,note:[resultRuleNote,videoRuleNote,fgciNote].filter(Boolean).join(' ')};
- let target=standard,note=zeroZero&&!resultRuleNote?'Pareggio 0-0: nessun punto assegnato.':'';
- if(gf>ga){if(state.seasonRules.marottaDoubleWins)target=Math.max(target,6);const special=Math.max(0,...state.activeEffects.filter(effect=>effect.type==='winPoints').map(effect=>Number(effect.value)||0));target=Math.max(target,special);const questExtra=state.activeEffects.filter(effect=>effect.type==='extraWinPoint').reduce((sum,effect)=>sum+(Number(effect.value)||0),0);if(questExtra>0)target+=questExtra;if(target!==standard||globalWinPoints!==3)note=`Vittoria: +${target} punti${questExtra>0?' (bonus Calcio champagne incluso)':''}.`;}
+ let target=standard,note=zeroZero&&!resultRuleNote?'Pareggio 0-0: nessun punto assegnato.':'',marottaDoubled=false,marottaBasePoints=0;
+ if(gf>ga){
+   const special=Math.max(0,...state.activeEffects.filter(effect=>effect.type==='winPoints').map(effect=>Number(effect.value)||0));
+   target=Math.max(target,special);
+   const questExtra=state.activeEffects.filter(effect=>effect.type==='extraWinPoint').reduce((sum,effect)=>sum+(Number(effect.value)||0),0);
+   if(questExtra>0)target+=questExtra;
+   if(state.seasonRules.marottaDoubleWins){marottaBasePoints=target;target*=2;marottaDoubled=true;}
+   const victoryNote=marottaDoubled?`Marotta League: la vittoria passa da ${marottaBasePoints} a ${target} punti.`:(target!==standard||globalWinPoints!==3?`Vittoria: +${target} punti${questExtra>0?' (bonus Calcio champagne incluso)':''}.`:'');
+   note=[pointsEqualGoals?`Regolamento FGCI: ${base} punti, pari ai gol segnati.`:'',victoryNote].filter(Boolean).join(' ');
+ }
  else if(gf===ga&&!zeroZero&&globalDrawPoints!==1&&!resultRuleNote){target=globalDrawPoints;note=`Pareggio: +${target} punti a entrambe le squadre.`;}
  else if(gf<ga&&Number(state.seasonRules.marottaLossPenalty)>0){target=-Number(state.seasonRules.marottaLossPenalty);note=`Penalità Marotta League: -${state.seasonRules.marottaLossPenalty} punti.`;}
- const adjustment=target-standard;standing.pts+=adjustment;return{adjustment,awarded:target+fgciAdjustment,note:[note,resultRuleNote,videoRuleNote,fgciNote].filter(Boolean).join(' ')};
+ if(!standing)return{adjustment:0,awarded:target+fgciAdjustment,note:[note,resultRuleNote,videoRuleNote,fgciNote].filter(Boolean).join(' '),marottaDoubled,marottaBasePoints};
+ const adjustment=target-standard;standing.pts+=adjustment;return{adjustment,awarded:target+fgciAdjustment,note:[note,resultRuleNote,videoRuleNote,fgciNote].filter(Boolean).join(' '),marottaDoubled,marottaBasePoints};
 }
 function uniqueMatchMinute(min,max,used){
  const low=Math.max(1,Math.floor(min));
@@ -432,7 +440,7 @@ function playRound(mode='instant'){
      const awards=roundFormulaWalkover?emptyLeagueMatchAwards():recordLeagueMatchPlayerStats({homeTeam:roundHomeTeam,awayTeam:roundAwayTeam,homeLineup:roundHomeLineup,awayLineup:roundAwayLineup,homeScore,awayScore,homeEvents:roundHomeEvents,awayEvents:roundAwayEvents});
      roundResults.push({matchday:state.matchday+1,homeId:match.home,awayId:match.away,homeName:roundHomeTeam?.name||'',awayName:roundAwayTeam?.name||'',homeScore,awayScore,winnerId:roundWinnerId,noDrawOutcome:roundNoDrawOutcome,spaceJamStartMinute:roundStartMinute,spaceJamScheduledDuration:roundDurationUsed,homeGoals:roundHomeEvents,awayGoals:roundAwayEvents,mvpId:awards.mvpId,mvpScore:awards.mvpScore,mvpTeamId:awards.mvpTeamId,formulaOneInjuryWalkover:roundFormulaWalkover?{...roundFormulaWalkover}:null,eliminationNote});if(match===fixture){userAwards=awards;if(eliminationNote)userPoints.note=[userPoints.note,eliminationNote].filter(Boolean).join(' ')};
    });
-   formulaOneRound=applyFormulaOneRoundPoints(roundResults);if(formulaOneRuleActive()){const earned=Number(formulaOneRound.user?.points)||0,position=Number(formulaOneRound.user?.position)||0;userPoints={adjustment:0,awarded:earned,note:`Formato Formula 1: ${position?`${position}° posto di giornata, +${earned} punti.`:'fuori dalla classifica di giornata, 0 punti.'} ${formulaOneRankingSummary(formulaOneRound.ranking)}`};}
+   formulaOneRound=applyFormulaOneRoundPoints(roundResults);if(formulaOneRuleActive()){const earned=Number(formulaOneRound.user?.points)||0,baseEarned=Number(formulaOneRound.user?.basePoints)||0,position=Number(formulaOneRound.user?.position)||0,marottaDoubled=Boolean(formulaOneRound.user?.marottaDoubled);userPoints={adjustment:0,awarded:earned,marottaDoubled,marottaBasePoints:baseEarned,note:`Formato Formula 1: ${position?`${position}° posto di giornata, +${earned} punti.`:'fuori dalla classifica di giornata, 0 punti.'}${marottaDoubled?` Marotta League: i ${baseEarned} punti della vittoria vengono raddoppiati a ${earned}.`:''} ${formulaOneRankingSummary(formulaOneRound.ranking)}`};}
    const italiaCatenaccioPenalty=applyItaliaCatenaccioPointPenalty(officialGoalsFor);if(italiaCatenaccioPenalty){userPoints.adjustment+=italiaCatenaccioPenalty;userPoints.awarded+=italiaCatenaccioPenalty;userPoints.note=[userPoints.note,`Il gol? Che schifo!: hai segnato più di 3 gol e perdi 6 punti.`].filter(Boolean).join(' ');}
    const sixtyFearNote=applySixtyPointFear();if(sixtyFearNote)userPoints.note=[userPoints.note,sixtyFearNote].filter(Boolean).join(' ');
    const frenchLateBoosts=!formulaOneWalkoverView?applyFrenchLateAttackerBoosts(userGoalEvents,lineup):[];

@@ -307,7 +307,14 @@ function formulaOnePerformanceEntries(roundResults=[]){
 }
 function applyFormulaOneRoundPoints(roundResults=[]){
  if(!formulaOneRuleActive())return{ranking:[],user:null};
- const ranking=formulaOnePerformanceEntries(roundResults);ranking.forEach((entry,index)=>{entry.position=index+1;entry.points=Number(FORMULA_ONE_POINTS[index]||0);if(state.standings?.[entry.teamId])state.standings[entry.teamId].pts+=entry.points;});
+ const ranking=formulaOnePerformanceEntries(roundResults);ranking.forEach((entry,index)=>{
+   entry.position=index+1;
+   entry.basePoints=Number(FORMULA_ONE_POINTS[index]||0);
+   const marottaVictory=Boolean(state.seasonRules?.marottaDoubleWins&&String(entry.teamId)===String(USER_ID)&&Number(entry.outcome)===3);
+   entry.marottaDoubled=marottaVictory;
+   entry.points=marottaVictory?entry.basePoints*2:entry.basePoints;
+   if(state.standings?.[entry.teamId])state.standings[entry.teamId].pts+=entry.points;
+ });
  return{ranking,user:ranking.find(entry=>String(entry.teamId)===String(USER_ID))||null};
 }
 function formulaOneRankingSummary(ranking=[]){return(ranking||[]).slice(0,10).map(entry=>`${entry.position}. ${entry.name} +${entry.points}`).join(' · ')}

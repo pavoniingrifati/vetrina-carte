@@ -175,7 +175,7 @@ function checkPostMatchAchievements({gf=0,ga=0,userGoals=[],opponentGoals=[],var
  if(won&&scorerCounts.size>=3)unlockAchievement('cooperativa-del-gol');
  if(achievementNaturalGoalkeeperScored(userGoals,lineup))unlockAchievement('portiere-goleador');
  if(won&&achievementGalacticosLineup(finalOvrRows))unlockAchievement('galacticos');
- if(won&&state.seasonRules.marottaDoubleWins&&String(result?.pointsNote||'').includes('Vittoria: +6 punti'))unlockAchievement('marotta-league');
+ if(won&&state.seasonRules.marottaDoubleWins&&String(result?.pointsNote||'').includes('Marotta League'))unlockAchievement('marotta-league');
  if(won&&scored===1&&conceded===0&&String(result?.pointsNote||'').includes('Vittoria: +9 punti'))unlockAchievement('ippica-italiana');
  if(won&&Boolean(result?.baseOvrOnlyActive))unlockAchievement('nessun-bonus-nessun-problema');
  if(won&&Number(state.seasonRules?.matchDuration)===30)unlockAchievement('trenta-minuti-bastano');

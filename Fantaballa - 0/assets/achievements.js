@@ -95,7 +95,7 @@
     { id:'calcio-champagne', category:'Eventi', icon:'🥂', title:'Calcio champagne', description:'Segna almeno 2 gol in ciascuna delle 3 partite richieste.' },
     { id:'il-pollo-d-oro', category:'Eventi', icon:'🐔', title:'Il pollo d’oro', description:'Segna con il giocatore trasformato in pollo da 1 OVR.' },
     { id:'nottata-produttiva', category:'Eventi', icon:'🌙', title:'Nottata produttiva', description:'Il giocatore insonne segna nonostante il −12 OVR.' },
-    { id:'marotta-league', category:'Eventi', icon:'💼', title:'Marotta League', description:'Ottieni 6 punti da una singola vittoria.' },
+    { id:'marotta-league', category:'Eventi', icon:'💼', title:'Marotta League', description:'Ottieni il raddoppio dei punti di una vittoria nella Marotta League.' },
     { id:'ippica-italiana', category:'Eventi', icon:'🐎', title:'Ippica italiana', description:'Vinci 1-0 e ottieni i 9 punti del Corto Muso.' },
     { id:'nessun-bonus-nessun-problema', category:'Eventi', icon:'🚫', title:'Nessun bonus, nessun problema', description:'Vinci usando soltanto gli OVR base.' },
     { id:'trenta-minuti-bastano', category:'Eventi', icon:'⏱️', title:'Trenta minuti bastano', description:'Vinci una partita della durata di 30 minuti.' },

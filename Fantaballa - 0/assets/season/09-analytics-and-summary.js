@@ -9,7 +9,7 @@ function seasonRuleSummary(){
  const extras=[`Allenatore: ${coachProfile().name}`,coachCurrentEffectLabel()];
  const refereeDeal=secretRefereeDealState();if(refereeDeal.active)extras.push(`Arbitro ecuadoriano: rigore ${refereeDeal.choice==='accept'?'a favore':'contro'} ogni partita`);
  const curvaContest=curvaContestState();if(curvaContest.active&&curvaContest.mode==='title')extras.push(`Contestazione curva: obiettivo top 2 entro la giornata ${curvaContest.deadlineMatchday}; nessun vantaggio durante la sfida`);if(curvaContest.active&&curvaContest.mode==='home')extras.push('Contestazione curva superata: ogni gara vale come in casa fino a fine stagione');if(curvaContest.active&&curvaContest.mode==='away')extras.push('Contestazione curva: ogni gara vale come in trasferta fino a fine stagione');
- if(state.seasonRules.marottaDoubleWins)extras.push('Marotta League attiva: vittoria +6, sconfitta -100');
+ if(state.seasonRules.marottaDoubleWins)extras.push('Marotta League attiva: punti vittoria ×2, sconfitta -100');
  if(Number(state.seasonRules.winPoints)!==3||Number(state.seasonRules.drawPoints)!==1)extras.push(`Punteggio: vittoria +${Number(state.seasonRules.winPoints)} · pareggio +${Number(state.seasonRules.drawPoints)}`);
  if(currentMatchDuration()!==90)extras.push(`Durata tue partite: ${currentMatchDuration()} minuti`);
  if(state.seasonRules.deathMatchClubId)extras.push(`${state.seasonRules.deathMatchClubName||'Club speciale'}: +${Number(state.seasonRules.deathMatchClubBonus)||10} OVR contro di te`);
