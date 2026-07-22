@@ -2,8 +2,13 @@
  * Router di rendering, avvio applicazione e gestori globali.
  * Modulo classico: l'ordine di caricamento è definito negli HTML del Campionato.
  */
+function showBootProgress(title,detail){
+ const target=document.getElementById('screen');if(!target)return;
+ target.innerHTML=`<section class="panel season-boot-status" role="status" aria-live="polite" aria-atomic="true"><div class="label">Avvio del gioco</div><h2>${esc(title)}</h2><p>${esc(detail||'')}</p></section>`;
+}
 function render(){updateSaveStatus();if(!PLAYERS.length||!CLUBS.length){screen.innerHTML='<section class="panel"><h2>Caricamento database giocatori...</h2></section>';applyError404VisualState();return}if(state.phase==='setup')showSetup();else if(state.phase==='draft')showDraft();else if(state.phase==='season')showSeason();else if(state.phase==='midseason')showMidseason();else if(state.phase==='story-final')showMeritStoryFinale();else if(state.phase==='italia-2006-final')showItalia2006Final();else if(state.phase==='fantaballopoli-final')showFantaballopoliFinal();else if(state.phase==='fantaballopoli-restart')showFantaballopoliRestart();else if(state.phase==='playoffs')showLeaguePlayoffs();else if(state.phase==='finished')showFinished();applyError404VisualState();updateSaveStatus()}
 async function boot(){
+ showBootProgress('Caricamento database…','Giocatori, club, cronaca ed eventi.');
  try{
    const [primaryPlayers,primaryClubs,commentary,secondaryPlayers,secondaryClubs]=await Promise.all([
      fetchJsonResource(SEASON_CONFIG.data.primaryPlayers,SEASON_CONFIG.data.primaryPlayers),
@@ -13,6 +18,7 @@ async function boot(){
      fetchJsonResource(SEASON_CONFIG.data.secondaryClubs,SEASON_CONFIG.data.secondaryClubs,{optional:true}),
      SEASON_EVENTS_READY
    ]);
+   showBootProgress('Controllo dei dati…','Verifica di giocatori, club e regole della modalità.');
    PLAYERS=primaryPlayers;CLUBS=primaryClubs;COMMENTARY=commentary;OTHER_CLUBS=Array.isArray(secondaryClubs)?secondaryClubs:[];
    if(SEASON_CONFIG.mode==='real'){REAL_PLAYERS=PLAYERS;CLASSIC_PLAYERS=Array.isArray(secondaryPlayers)?secondaryPlayers:[]}
    else{CLASSIC_PLAYERS=PLAYERS;REAL_PLAYERS=Array.isArray(secondaryPlayers)?secondaryPlayers:[]}
@@ -22,6 +28,7 @@ async function boot(){
    console.error('Errore caricamento database',error);showBootError(error);return;
  }
  try{
+   showBootProgress('Avvio della stagione…','Ripristino del salvataggio e preparazione dell’interfaccia.');
    state=normalizeCampionatoState(state);save();cleanupLegacySaveArtifacts();render();
    if(startupNotice)toast(startupNotice);
    else if(dataDiagnostics.warnings.length)toast(`Database caricato con ${dataDiagnostics.warnings.length} avvisi.`);

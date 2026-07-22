@@ -48,10 +48,10 @@ function teamPalettePreset(id){return TEAM_PALETTES.find(item=>item.id===String(
 function teamColorsForPalette(id){const preset=teamPalettePreset(id);return{primary:preset.primary,secondary:preset.secondary,accent:preset.secondary,text:preset.text||'#FFFFFF'}}
 
 const COACH_PROFILES=[
- {id:'anonymous',name:'Anonimo',icon:'🥷',image:'assets/coach-profiles/anonymous.png',tagline:'Cialtrone',pro:'Nessun effetto.',con:'Nessun effetto.'},
- {id:'talent-scout',name:'Talent scout',icon:'🔎',image:'assets/coach-profiles/talent-scout.png',tagline:'Occhio al talento',pro:'Un re-roll aggiuntivo nei draft, maggiore probabilità di trovare giocatori con OVR alto e primo pack garantito dalla squadra del giocatore con lo stesso nome dell’allenatore.',con:'Nessun nuovo giocatore può arrivare fuori dal draft iniziale e da quello di metà stagione.'},
- {id:'motivator',name:'Motivatore',icon:'📣',image:'assets/coach-profiles/motivator.png',tagline:'Qui si realizzano i sogni',pro:'Dopo 2 sconfitte consecutive, +3 OVR alla squadra nella partita seguente. Ogni nuovo bonus OVR o Intesa riceve anche +1 OVR e +1 Intesa aggiuntivi.',con:'Dopo 3 vittorie consecutive, -3 OVR alla squadra nella partita seguente.'},
- {id:'salvation',name:'Mister salvezza',icon:'🛟',image:'assets/coach-profiles/salvation.png',tagline:'Serenità.',pro:'Con OVR medio della rosa sotto 70, la squadra segna un gol aggiuntivo a partita.',con:'Con OVR medio della rosa sopra 80, la squadra subisce almeno un gol a partita.'},
+ {id:'anonymous',name:'Anonimo',icon:'🥷',image:'assets/coach-profiles/anonymous.webp',tagline:'Cialtrone',pro:'Nessun effetto.',con:'Nessun effetto.'},
+ {id:'talent-scout',name:'Talent scout',icon:'🔎',image:'assets/coach-profiles/talent-scout.webp',tagline:'Occhio al talento',pro:'Un re-roll aggiuntivo nei draft, maggiore probabilità di trovare giocatori con OVR alto e primo pack garantito dalla squadra del giocatore con lo stesso nome dell’allenatore.',con:'Nessun nuovo giocatore può arrivare fuori dal draft iniziale e da quello di metà stagione.'},
+ {id:'motivator',name:'Motivatore',icon:'📣',image:'assets/coach-profiles/motivator.webp',tagline:'Qui si realizzano i sogni',pro:'Dopo 2 sconfitte consecutive, +3 OVR alla squadra nella partita seguente. Ogni nuovo bonus OVR o Intesa riceve anche +1 OVR e +1 Intesa aggiuntivi.',con:'Dopo 3 vittorie consecutive, -3 OVR alla squadra nella partita seguente.'},
+ {id:'salvation',name:'Mister salvezza',icon:'🛟',image:'assets/coach-profiles/salvation.webp',tagline:'Serenità.',pro:'Con OVR medio della rosa sotto 70, la squadra segna un gol aggiuntivo a partita.',con:'Con OVR medio della rosa sopra 80, la squadra subisce almeno un gol a partita.'},
  {id:'young-beautiful',name:'Giovani e belli',icon:'✨',image:'assets/coach-profiles/giovani-e-belli.webp',tagline:'La meglio gioventù',pro:'I giocatori con OVR base da 60 a 69 ricevono +20 Intesa. Quelli con OVR base da 70 a 75 ricevono +10 Intesa.',con:'Non puoi avere giocatori con OVR base pari o superiore a 85: non appaiono nei draft e ogni loro arrivo durante la stagione viene bloccato.'},
  {id:'ductility',name:'Duttilità',icon:'🔀',image:'assets/coach-profiles/duttilita.webp',tagline:'Tutti dappertutto',pro:'I giocatori possono essere schierati in qualsiasi ruolo senza malus. Ogni gol segnato da un giocatore schierato fuori ruolo gli assegna +1 OVR permanente fino a fine stagione.',con:'I giocatori non ricevono alcun bonus di Intesa e non possono ottenere altri potenziamenti positivi di OVR durante la stagione.'},
  {id:'three-five-two',name:'3-5-2',icon:'🧠',image:'assets/coach-profiles/tre-cinque-due.webp',tagline:'Una sola idea, quattordici uomini',pro:'Il primo club estratto nel draft genera automaticamente una rosa di 14 giocatori casuali. Gli undici titolari vengono scelti prima nei ruoli corretti del 3-5-2; se il club non li possiede, il gioco completa i ruoli con giocatori casuali.',con:'La probabilità degli eventi è dimezzata, puoi utilizzare soltanto il modulo 3-5-2 per tutta la stagione e non hai il draft di metà stagione.'}
@@ -176,10 +176,11 @@ function validateGameData(players,clubs){
  });
  return{fatal,warnings};
 }
+function versionedResourceUrl(url){const value=String(url||'');if(!value||/^(?:https?:|data:|blob:)/i.test(value))return value;const sep=value.includes('?')?'&':'?';return `${value}${sep}v=20260722-1`}
 async function fetchJsonResource(url,label,{optional=false}={}){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
  try{
-   const response=await fetch(url,{cache:'no-store',signal:controller.signal});
+   const response=await fetch(versionedResourceUrl(url),{cache:'default',signal:controller.signal});
    if(!response.ok)throw Error(`${label}: risposta HTTP ${response.status}`);
    const raw=await response.text();
    try{return JSON.parse(raw)}catch{throw Error(`${label}: il file non contiene JSON valido`)}
