@@ -128,8 +128,6 @@ function resolveDecision(i){
  const pendingDecision=decisionFromPending(state.pendingEvent);
  if(pendingDecision&&!state.seenDecisionEvents.includes(pendingDecision.id))state.seenDecisionEvents.push(pendingDecision.id);
  const choice=pendingDecision?.choices?.[i],before=analyticsSnapshot();
- state.pendingEvent.choiceLabel=choice?.label||'';
- state.pendingEvent.choiceEffect=choice?.effect||'';
  state.pendingEvent.result=applyDecisionChoice(state.pendingEvent.decisionIndex,i,state.pendingEvent.context||{},state.pendingEvent.decisionId||'');
  recordSeasonEvent({kind:'decision',title:state.pendingEvent.title||pendingDecision?.title||'Decisione',choice:choice?.label||'',effect:choice?.effect||'',result:state.pendingEvent.result,automatic:false},before);
  state.pendingEvent.resolved=true;
@@ -171,79 +169,6 @@ function bindSeasonEventControls(){
  };
  /* Allinea sempre DOM e variabile, anche sui browser che ignorano [hidden]. */
  setSeasonEventMinimized(seasonEventMinimized,{focus:false});
-}
-function eventPresentationMeta(event,decision){
- if(event?.kind==='decision')return {icon:'🎲',label:decision?.questEvent?'Evento quest':(event?.chained?'Evento concatenato':'Decisione casuale'),resultClass:'season-event-result--decision'};
- if(event?.kind==='auto')return {icon:'✨',label:'Evento casuale',resultClass:'season-event-result--auto'};
- if(event?.kind==='none')return {icon:'📅',label:'Settimana',resultClass:'season-event-result--week'};
- if(String(event?.kind||'').startsWith('story'))return {icon:'📖',label:'Storia',resultClass:'season-event-result--story'};
- return {icon:'✦',label:'Evento',resultClass:'season-event-result--week'};
-}
-function renderResolvedEventCard(event,{resultOverride=''}={}){
- const decision=event?.kind==='decision'?decisionFromPending(event):null;
- const meta=eventPresentationMeta(event,decision);
- const notice=questState().notice;
- const choiceLine=event?.choiceLabel?`<div class="season-event-result-choice">Scelta <small>${esc(event.choiceLabel)}</small></div>`:'';
- const resultText=resultOverride||event?.result||'';
- return `<section class="event-card season-event-result-card ${meta.resultClass}"><div class="season-event-result-head"><div class="season-event-result-icon">${meta.icon}</div><div><div class="season-event-result-overline">${esc(meta.label)}</div><h3 class="season-event-result-title">${esc(event?.title||'Evento')}</h3></div></div><p class="season-event-result-copy">${esc(event?.text||'')}</p>${choiceLine}${resultText?`<div class="season-event-result-box">${esc(resultText)}</div>`:''}${notice?`<div class="season-event-result-note">${esc(notice)}</div>`:''}</section>`;
-}
-function renderDecisionChoiceButton(choice,index){
- const riskLabel=choice?.effect?choice.effect.split(/[.!?]/)[0].slice(0,56):'Conseguenza da scoprire';
- return `<div class="season-event-choice-float"><button class="choice season-event-choice ${index%2===0?'tone-blue':'tone-red'}" data-choice="${index}" type="button"><div class="season-event-choice-top"><span class="season-event-option-label">Opzione ${String.fromCharCode(65+index)}</span><span class="season-event-choice-risk">${esc(riskLabel||'Scelta')}</span></div><b>${esc(choice?.label||'Scelta')}</b><small>${esc(choice?.effect||'Esito non specificato')}</small><span class="season-event-choice-cta">Scegli</span></button></div>`;
-}
-function renderEvent(){
- const e=state.pendingEvent;
- if(!e)return'';
- if(e.kind==='storyError404'&&!e.resolved)return renderError404StoryEvent(e);
- if(e.kind==='storyError404')return renderResolvedEventCard({kind:'storyError404',title:e.title,text:e.text,result:e.result,choiceLabel:e.choiceLabel});
- if(e.kind==='storyFantaballopoli'&&!e.resolved)return renderFantaballopoliEvent(e);
- if(e.kind==='storyFantaballopoli')return renderResolvedEventCard({kind:'storyFantaballopoli',title:e.title,text:e.text,result:e.result,choiceLabel:e.choiceLabel});
- if(e.kind==='storyMerit'&&!e.resolved)return renderMeritStoryEvent(e);
- if(e.kind==='storyMerit')return renderResolvedEventCard({kind:'storyMerit',title:e.title,text:e.text,result:e.result,choiceLabel:e.choiceLabel});
- if(e.kind==='decision'&&!e.resolved){
-   const d=decisionFromPending(e);
-   if(!d)return'';
-   const eventLabel=d.questEvent?'Evento quest':(e.chained?'Evento concatenato':'Decisione casuale');
-   const eventKey=JSON.stringify([e.decisionId||'',e.decisionIndex??'',e.title||'',e.text||'',state.matchday,e.chained||false,e.context||{}]);
-   if(seasonEventUiKey!==eventKey){seasonEventUiKey=eventKey;seasonEventMinimized=false}
-   const choices=d.choices.map((c,i)=>renderDecisionChoiceButton(c,i)).join('');
-   return `<div class="season-event-overlay" role="presentation" ${seasonEventMinimized?'hidden':''}><section class="season-event-dialog" role="dialog" aria-modal="true" aria-labelledby="seasonEventTitle" aria-describedby="seasonEventCopy"><button class="season-event-minimize" data-event-minimize type="button" aria-label="Riduci l’evento e consulta la pagina">━ Riduci</button><div class="season-event-head"><div class="season-event-meta-row"><div class="season-event-crest" aria-hidden="true">${d.questEvent?'🎯':(e.chained?'🔗':'🎲')}</div><div class="season-event-kicker">${esc(eventLabel)}</div></div><h2 class="season-event-title" id="seasonEventTitle">${esc(e.title)}</h2><p class="season-event-copy" id="seasonEventCopy">${esc(e.text)}</p><div class="season-event-subcopy">Scegli un’opzione. Le conseguenze appariranno subito dopo la decisione.</div></div><div class="choice-grid season-event-choice-grid">${choices}</div><p class="season-event-hint">Riduci il box per consultare Rosa, Classifica, Calendario e Statistiche; potrai riaprirlo in qualsiasi momento.</p></section></div><aside class="season-event-dock" ${seasonEventMinimized?'':'hidden'} aria-label="Evento in attesa di una decisione"><button class="season-event-dock-button" data-event-expand type="button"><span class="season-event-dock-pulse" aria-hidden="true"></span><span class="season-event-dock-copy"><span>Evento in attesa</span><b>${esc(e.title)}</b></span><span class="season-event-dock-open">Riapri ↑</span></button></aside>`;
- }
- return renderResolvedEventCard(e);
-}
-function bindSeasonEventControls(){
- const minimize=document.querySelector('[data-event-minimize]'),expand=document.querySelector('[data-event-expand]');
- if(minimize)minimize.onclick=event=>{
-   event.preventDefault();
-   event.stopPropagation();
-   setSeasonEventMinimized(true);
- };
- if(expand)expand.onclick=event=>{
-   event.preventDefault();
-   event.stopPropagation();
-   setSeasonEventMinimized(false);
- };
- /* Allinea sempre DOM e variabile, anche sui browser che ignorano [hidden]. */
- setSeasonEventMinimized(seasonEventMinimized,{focus:false});
-}
-function eventPresentationMeta(event,decision){
- if(event?.kind==='decision')return {icon:'🎲',label:decision?.questEvent?'Evento quest':(event?.chained?'Evento concatenato':'Decisione casuale'),resultClass:'season-event-result--decision'};
- if(event?.kind==='auto')return {icon:'✨',label:'Evento casuale',resultClass:'season-event-result--auto'};
- if(event?.kind==='none')return {icon:'📅',label:'Settimana',resultClass:'season-event-result--week'};
- if(String(event?.kind||'').startsWith('story'))return {icon:'📖',label:'Storia',resultClass:'season-event-result--story'};
- return {icon:'✦',label:'Evento',resultClass:'season-event-result--week'};
-}
-function renderResolvedEventCard(event,{resultOverride=''}={}){
- const decision=event?.kind==='decision'?decisionFromPending(event):null;
- const meta=eventPresentationMeta(event,decision);
- const notice=questState().notice;
- const choiceLine=event?.choiceLabel?`<div class="season-event-result-choice">Scelta <small>${esc(event.choiceLabel)}</small></div>`:'';
- const resultText=resultOverride||event?.result||'';
- return `<section class="event-card season-event-result-card ${meta.resultClass}"><div class="season-event-result-head"><div class="season-event-result-icon">${meta.icon}</div><div><div class="season-event-result-overline">${esc(meta.label)}</div><h3 class="season-event-result-title">${esc(event?.title||'Evento')}</h3></div></div><p class="season-event-result-copy">${esc(event?.text||'')}</p>${choiceLine}${resultText?`<div class="season-event-result-box">${esc(resultText)}</div>`:''}${notice?`<div class="season-event-result-note">${esc(notice)}</div>`:''}</section>`;
-}
-function renderDecisionChoiceButton(choice,index){
- const riskLabel=choice?.effect?choice.effect.split(/[.!?]/)[0].slice(0,56):'Conseguenza da scoprire';
- return `<div class="season-event-choice-float"><button class="choice season-event-choice ${index%2===0?'tone-blue':'tone-red'}" data-choice="${index}" type="button"><div class="season-event-choice-top"><span class="season-event-option-label">Opzione ${String.fromCharCode(65+index)}</span><span class="season-event-choice-risk">${esc(riskLabel||'Scelta')}</span></div><b>${esc(choice?.label||'Scelta')}</b><small>${esc(choice?.effect||'Esito non specificato')}</small><span class="season-event-choice-cta">Scegli</span></button></div>`;
 }
 function renderEvent(){
  const e=state.pendingEvent;
