@@ -1,44 +1,28 @@
-# Restyling schermata partita e post-partita
+# Restyling schermata partita
 
-## Obiettivo
-Rendere la presentazione delle partite più coinvolgente e più leggibile senza appesantire l'interfaccia e senza cambiare la logica di gioco.
+## Stato attuale
+Il restyling resta applicato esclusivamente alla schermata della partita live.
 
-## Interventi applicati
+Il recap finale del risultato è stato ripristinato alla versione precedente, come richiesto.
 
-### Diretta partita
-- nuovo header in stile telecronaca;
-- scoreboard più evidente con etichetta "Diretta";
-- nomi delle squadre più leggibili;
-- pulsante "Vai al risultato finale" più chiaro;
-- nota d'uso compatta sotto ai controlli;
-- cronaca con carte evento più leggibili;
-- migliore evidenza di gol, cartellini e punteggio aggiornato.
+## Rimane aggiornato
+- header della diretta;
+- scoreboard live;
+- cronaca minuto per minuto;
+- evidenza di gol e cartellini;
+- pulsante per andare direttamente al risultato finale;
+- adattamento mobile della schermata live.
 
-### Post-partita
-- nuovo hero iniziale con punteggio centrale;
-- badge della giornata e verdetto (vittoria, pareggio, sconfitta);
-- informazioni rapide su modalità, durata e potenza delle squadre;
-- sezione marcatori separata;
-- cronaca completa in sezione dedicata;
-- MVP isolato in un blocco dedicato;
-- note, conseguenze ed effetti raccolti in una sezione distinta;
-- pulsante principale "Continua stagione" più chiaro.
+## Ripristinato
+Il recap finale torna alla struttura precedente con:
+- etichetta "Risultato finale";
+- nomi delle squadre su una sola riga;
+- punteggio centrale;
+- pulsante "Continua";
+- marcatori;
+- conseguenze degli eventi;
+- cronaca;
+- MVP.
 
-## File modificati
-- `campionato.html`
-- `campionato-real.html`
-- `assets/match-restyling.css`
-- `assets/season/12-match-simulation.js`
-
-## Salvataggi
-Nessuna modifica al sistema di salvataggio.
-Tutto continua a usare il salvataggio versionato nel `localStorage` già presente.
-
-## Gameplay
-Nessuna modifica a:
-- risultati;
-- probabilità;
-- eventi;
-- regole;
-- classifiche;
-- salvataggi.
+## Salvataggi e gameplay
+Nessuna modifica al sistema di salvataggio, alle probabilità, agli eventi o alle regole del motore.
