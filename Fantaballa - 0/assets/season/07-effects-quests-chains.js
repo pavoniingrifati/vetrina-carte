@@ -461,7 +461,7 @@ function tickPenguinAfterMatch(result){
 }
 
 function questState(){
- state.quest=state.quest&&typeof state.quest==='object'?state.quest:{active:false,id:'',title:'',status:'idle',acceptedMatchday:-1,matchesPlayed:0,progress:0,target:0,deadlineMatches:0,targetPlayerId:'',targetPlayerName:'',targetTeamIds:[],facedTeamIds:[],rewardActive:false,objective:'',reward:'',penalty:'',summary:'',notice:''};
+ state.quest=state.quest&&typeof state.quest==='object'?state.quest:{active:false,id:'',title:'',status:'idle',acceptedMatchday:-1,matchesPlayed:0,progress:0,target:0,deadlineMatches:0,targetPlayerId:'',targetPlayerName:'',targetTeamIds:[],facedTeamIds:[],rewardActive:false,objective:'',reward:'',penalty:'',summary:'',notice:'',awaitingPlayerSelection:false};
  return state.quest;
 }
 function questIsActive(id=''){const q=questState();return Boolean(q.active&&(!id||String(q.id)===String(id)))}
@@ -485,11 +485,11 @@ function questCurveAvailable(){
 }
 function startSeasonQuest(config={}){
  const q=questState();if(q.active)return'Hai già una quest attiva: completala prima di accettarne un’altra.';
- Object.assign(q,{active:true,id:String(config.id||''),title:String(config.title||'Quest'),status:'active',acceptedMatchday:Number(state.matchday),matchesPlayed:0,progress:0,target:Math.max(0,Number(config.target)||0),deadlineMatches:Math.max(0,Number(config.deadlineMatches)||0),targetPlayerId:String(config.targetPlayerId||''),targetPlayerName:String(config.targetPlayerName||''),targetTeamIds:(config.targetTeamIds||[]).map(String),facedTeamIds:[],rewardActive:false,objective:String(config.objective||''),reward:String(config.reward||''),penalty:String(config.penalty||''),summary:'',notice:''});
+ Object.assign(q,{active:true,id:String(config.id||''),title:String(config.title||'Quest'),status:'active',acceptedMatchday:Number(state.matchday),matchesPlayed:0,progress:0,target:Math.max(0,Number(config.target)||0),deadlineMatches:Math.max(0,Number(config.deadlineMatches)||0),targetPlayerId:String(config.targetPlayerId||''),targetPlayerName:String(config.targetPlayerName||''),targetTeamIds:(config.targetTeamIds||[]).map(String),facedTeamIds:[],rewardActive:false,objective:String(config.objective||''),reward:String(config.reward||''),penalty:String(config.penalty||''),summary:'',notice:'',awaitingPlayerSelection:false});
  return `Quest accettata: ${q.title}. ${q.objective}`;
 }
 function finishSeasonQuest(success,message,result=null){
- const q=questState();q.active=false;q.status=success?'success':'failure';q.summary=String(message||'');q.completedMatchday=Number(state.matchday)+1;
+ const q=questState();q.active=false;q.awaitingPlayerSelection=false;q.status=success?'success':'failure';q.summary=String(message||'');q.completedMatchday=Number(state.matchday)+1;
  const update={success:Boolean(success),title:q.title,message:q.summary};
  if(success){
    const achievementByQuest={
@@ -524,12 +524,13 @@ function questProgressText(q=questState()){
  if(q.id==='milanlab')return `${q.matchesPlayed}/${q.deadlineMatches} giornate senza infortuni`;
  if(q.id==='calcio-champagne')return `${q.progress}/${q.target} partite con almeno 2 gol`;
  if(q.id==='barone-sportivo')return `${q.progress}/${q.target} marcatori diversi · ${q.matchesPlayed}/${q.deadlineMatches} partite`;
+ if(q.id==='un-leader-per-la-squadra')return q.awaitingPlayerSelection?'Leader da scegliere':`${q.progress}/${q.target} punti · ${q.matchesPlayed}/${q.deadlineMatches} partite`;
  return `${q.matchesPlayed}/${q.deadlineMatches}`;
 }
 function renderActiveQuest(){
  const q=questState();if(!q.active)return'';
  const ratio=q.id==='la-curva'?(q.targetTeamIds.length?q.facedTeamIds.length/q.targetTeamIds.length:0):(q.target?Math.min(1,q.progress/q.target):(q.deadlineMatches?Math.min(1,q.matchesPlayed/q.deadlineMatches):0));
- return `<div class="quest-card"><div class="quest-card-head"><span>🎯 Quest attiva</span><b>${esc(q.title)}</b></div><p>${esc(q.objective)}</p><div class="quest-progress"><span style="width:${Math.round(clamp(ratio,0,1)*100)}%"></span></div><div class="quest-progress-copy"><strong>${esc(questProgressText(q))}</strong>${q.deadlineMatches?`<span>${Math.max(0,q.deadlineMatches-q.matchesPlayed)} giornate rimaste</span>`:''}</div><div class="quest-stakes"><small><b>Successo:</b> ${esc(q.reward)}</small><small><b>Fallimento:</b> ${esc(q.penalty)}</small></div>${q.notice?`<div class="quest-notice">${esc(q.notice)}</div>`:''}</div>`;
+ return `<div class="quest-card"><div class="quest-card-head"><span>🎯 Quest attiva</span><b>${esc(q.title)}</b></div><p>${esc(q.objective)}</p><div class="quest-progress"><span style="width:${Math.round(clamp(ratio,0,1)*100)}%"></span></div><div class="quest-progress-copy"><strong>${esc(questProgressText(q))}</strong>${q.deadlineMatches?`<span>${Math.max(0,q.deadlineMatches-q.matchesPlayed)} giornate rimaste</span>`:''}</div><div class="quest-stakes"><small><b>Successo:</b> ${esc(q.reward)}</small><small><b>Fallimento:</b> ${esc(q.penalty)}</small></div>${q.notice?`<div class="quest-notice">${esc(q.notice)}</div>`:''}${typeof renderLeaderQuestSelection==='function'?renderLeaderQuestSelection(q):''}</div>`;
 }
 function failMilanLabForInjury(entry,rounds){
  const q=questState();if(!questIsActive('milanlab'))return Math.max(1,Number(rounds)||1);
@@ -544,6 +545,7 @@ function tickSeasonQuestAfterMatch(result){
    result.questUpdates=Array.isArray(result.questUpdates)?result.questUpdates:[];result.questUpdates.push({success:false,title:'La curva',message:'La serie positiva è terminata: rimosso il bonus di +5 OVR.'});
  }
  const q=questState();if(!q.active)return;
+ if(q.id==='un-leader-per-la-squadra'){if(typeof tickLeaderQuestAfterMatch==='function')tickLeaderQuestAfterMatch(result);return}
  if(q.id==='barone-sportivo'){
    q.matchesPlayed++;
    q.scorerIds=Array.isArray(q.scorerIds)?q.scorerIds.map(String):[];

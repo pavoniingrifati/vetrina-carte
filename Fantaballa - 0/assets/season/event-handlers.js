@@ -17,6 +17,7 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "quest-ammazza-grandi":function(){return questCanStart(6)},
 "quest-milanlab":function(){return questCanStart(5)},
 "quest-calcio-champagne":function(){return questCanStart(3)},
+"quest-un-leader":function(){return questCanStart(2)&&seasonInventoryUsedSlots()<seasonInventory().capacity},
 "pulmino-bordello":function(){return Number(state.matchday)<19},
 "figlio-presidente":function(){return Number(state.matchday)<19},
 "whatsapp-pubblicato":function(){return Number(state.matchday)<19},
@@ -53,7 +54,9 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "portiere-vuole-segnare":function(){return goalkeeperScorerAvailable()},
 "contratto-scritto-male":function(){return badContractAvailable()},
 "modulo-football-manager":function(){return internetFormationAvailable()},
-"giocatore-porta-sfortuna":function(){return badLuckPlayerAvailable()}
+"giocatore-porta-sfortuna":function(){return badLuckPlayerAvailable()},
+"ricorso-permanente":function(){return permanentAppealAvailable()},
+"punti-gol-subiti":function(){return concededGoalPointsAvailable()}
  }),
  title:Object.freeze({
 "omonimo-allenatore":function(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`}
@@ -95,6 +98,8 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "quest-milanlab:1":function(){return'Non affidi la squadra al medico rossonero. Nessun effetto.'},
 "quest-calcio-champagne:0":function(){return acceptChampagneQuest()},
 "quest-calcio-champagne:1":function(){return'Rifiuti l’investimento. Nessun effetto.'},
+"quest-un-leader:0":function(){return acceptLeaderQuest()},
+"quest-un-leader:1":function(){return'Rinunci a cercare un leader. Nessun effetto.'},
 "pulmino-bordello:0":function(){pushEffect('teamChem',5,2);return applyPlayerEffect('playerOvr',-10,1)},
 "pulmino-bordello:1":function(){pushEffect('teamOvr',10,1);return changeMidseasonPicks(-1)},
 "figlio-presidente:0":function(){pushEffect('forcedLoss',1,1);return changeMidseasonPicks(1)},
@@ -236,7 +241,11 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "modulo-football-manager:0":function(){return acceptInternetFormation()},
 "modulo-football-manager:1":function(){return rejectInternetFormation()},
 "giocatore-porta-sfortuna:0":function(context){return benchBadLuckPlayer(context)},
-"giocatore-porta-sfortuna:1":function(context){return startBadLuckPlayer(context)}
+"giocatore-porta-sfortuna:1":function(context){return startBadLuckPlayer(context)},
+"ricorso-permanente:0":function(){return acceptPermanentAppeal()},
+"ricorso-permanente:1":function(){return rejectPermanentAppeal()},
+"punti-gol-subiti:0":function(){return acceptConcededGoalPoints()},
+"punti-gol-subiti:1":function(){return rejectConcededGoalPoints()}
  })
 });
 const SEASON_EVENT_HANDLER_IDS=Object.freeze({

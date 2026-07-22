@@ -160,8 +160,37 @@ function benchBadLuckPlayer(context){const entry=userEventEntryById(context?.pla
 function startBadLuckPlayer(context){const entry=userEventEntryById(context?.playerId),player=userEventPlayerByEntry(entry);if(!entry||!player)return'Il giocatore non è più disponibile.';const values=[-5,-4,-3,-2,-1,1,2,3,4,5],value=pick(values);Object.assign(badLuckPlayerState(),{active:true,playerId:String(entry.playerId),playerName:player.name,mode:'starter',startedMatchday:Number(state.matchday),teamOvrEffect:value});userEventMoveToStarter(entry.playerId);pushEffect('teamOvr',value,1,{source:'Giocatore che porta sfortuna'});return `${player.name} deve partire titolare. La squadra riceve ${value>0?'+':''}${value} OVR nella prossima partita.`}
 function enforceBadLuckPlayerLineup(){const challenge=badLuckPlayerState();if(!challenge.active)return;if(challenge.mode==='bench')userEventMoveToBench(challenge.playerId);if(challenge.mode==='starter')userEventMoveToStarter(challenge.playerId)}
 
+/* Il ricorso permanente */
+function permanentAppealState(){return userEventState('permanentAppeal',{active:false,matchesRemaining:0,startedMatchday:-1,totalCompensation:0,totalOpponentPenalty:0,winPointsWaived:0})}
+function permanentAppealAvailable(){return Boolean(!permanentAppealState().active&&Number(state.matchday)<seasonLength()-2)}
+function acceptPermanentAppeal(){Object.assign(permanentAppealState(),{active:true,matchesRemaining:3,startedMatchday:Number(state.matchday),totalCompensation:0,totalOpponentPenalty:0,winPointsWaived:0});return 'L’avvocato viene assunto per le prossime 3 partite: nelle sconfitte ricevi 1 punto e l’avversario ne perde 3; nelle vittorie non ottieni punti.'}
+function rejectPermanentAppeal(){const leader=(typeof sortedTable==='function'?sortedTable()[0]:null)||Object.values(state.standings||{}).sort((a,b)=>(Number(b?.pts)||0)-(Number(a?.pts)||0))[0];if(!leader)return 'Nessuna squadra disponibile in classifica.';leader.pts=(Number(leader.pts)||0)+3;return `${leader.name||'La squadra prima in classifica'} riceve immediatamente +3 punti.`}
+function resolvePermanentAppealAfterMatch(result){
+ const appeal=permanentAppealState();if(!appeal.active||!result)return;
+ const user=userStanding(),opponent=state.standings?.[String(result.opponentId||'')];
+ const won=Number(result.gf)>Number(result.ga),lost=Number(result.gf)<Number(result.ga);let message='Pareggio: il ricorso non modifica i punti della partita.';
+ if(lost){if(user)user.pts=(Number(user.pts)||0)+1;if(opponent)opponent.pts=(Number(opponent.pts)||0)-3;result.pointsAwarded=(Number(result.pointsAwarded)||0)+1;result.pointsAdjustment=(Number(result.pointsAdjustment)||0)+1;appeal.totalCompensation=(Number(appeal.totalCompensation)||0)+1;appeal.totalOpponentPenalty=(Number(appeal.totalOpponentPenalty)||0)+3;message=`Sconfitta confermata: +1 punto di risarcimento per te${opponent?` e -3 punti a ${opponent.name||'l’avversario'}`:''}.`;}
+ else if(won){const removed=Math.max(0,Number(result.pointsAwarded)||0);if(user&&removed)user.pts=(Number(user.pts)||0)-removed;result.pointsAwarded=Math.max(0,(Number(result.pointsAwarded)||0)-removed);result.pointsAdjustment=(Number(result.pointsAdjustment)||0)-removed;appeal.winPointsWaived=(Number(appeal.winPointsWaived)||0)+removed;message=removed?`Hai vinto, ma il ricorso annulla i ${removed} punti ottenuti dalla partita.`:'Hai vinto, ma il ricorso non ti assegna alcun punto.';}
+ appeal.matchesRemaining=Math.max(0,(Number(appeal.matchesRemaining)||0)-1);if(appeal.matchesRemaining<=0)appeal.active=false;
+ result.pointsNote=[result.pointsNote,message].filter(Boolean).join(' ');userEventUpdate(result,!lost,'Il ricorso permanente',`${message} ${appeal.matchesRemaining>0?`Restano ${appeal.matchesRemaining} partite.`:'L’accordo con l’avvocato termina.'}`);
+}
+
+/* Punti per ogni gol subito */
+function concededGoalPointsState(){return userEventState('concededGoalPoints',{active:false,matchesRemaining:0,startedMatchday:-1,totalBonus:0})}
+function concededGoalPointsAvailable(){return Boolean(!concededGoalPointsState().active&&Number(state.matchday)<seasonLength()-2)}
+function acceptConcededGoalPoints(){Object.assign(concededGoalPointsState(),{active:true,matchesRemaining:3,startedMatchday:Number(state.matchday),totalBonus:0});return 'Per le prossime 3 partite ogni gol subito assegna +1 punto, fino a un massimo di 4 punti per gara.'}
+function rejectConcededGoalPoints(){const standing=userStanding();if(standing)standing.pts=(Number(standing.pts)||0)-2;return 'Il documento viene corretto, ma ricevi immediatamente una penalizzazione di 2 punti.'}
+function resolveConcededGoalPointsAfterMatch(result){
+ const rule=concededGoalPointsState();if(!rule.active||!result)return;
+ const goals=Math.max(0,Math.floor(Number.isFinite(Number(result.displayGa))?Number(result.displayGa):Number(result.ga)||0)),bonus=Math.min(4,goals),standing=userStanding();
+ if(standing&&bonus)standing.pts=(Number(standing.pts)||0)+bonus;result.pointsAwarded=(Number(result.pointsAwarded)||0)+bonus;result.pointsAdjustment=(Number(result.pointsAdjustment)||0)+bonus;rule.totalBonus=(Number(rule.totalBonus)||0)+bonus;rule.matchesRemaining=Math.max(0,(Number(rule.matchesRemaining)||0)-1);if(rule.matchesRemaining<=0)rule.active=false;
+ const message=bonus?`Hai subito ${goals} ${goals===1?'gol':'gol'} e ricevi +${bonus} ${bonus===1?'punto':'punti'} aggiuntivi.`:'Non hai subito gol: nessun punto aggiuntivo.';result.pointsNote=[result.pointsNote,message].filter(Boolean).join(' ');userEventUpdate(result,bonus>0,'Punti per ogni gol subito',`${message} ${rule.matchesRemaining>0?`Restano ${rule.matchesRemaining} partite.`:'La regola al contrario termina.'}`);
+}
+
 function tickAdditionalUserEventsAfterMatch(result){
  if(!result)return;
+ resolvePermanentAppealAfterMatch(result);
+ resolveConcededGoalPointsAfterMatch(result);
  const penalty=result.improvisedPenalty;
  if(penalty){if(penalty.missing)userEventUpdate(result,false,'Il rigorista improvvisato',`${penalty.playerName} non era disponibile e la prova viene annullata.`);else if(!penalty.awarded)userEventUpdate(result,true,'Il rigorista improvvisato',`Nessun rigore assegnato: ${penalty.playerName} non ha potuto dimostrare nulla.`);else if(penalty.scored)userEventUpdate(result,true,'Il rigorista improvvisato',`${penalty.playerName} segna il rigore e ottiene +5 OVR permanente: nuovo OVR ${penalty.newOvr}.`);else userEventUpdate(result,false,'Il rigorista improvvisato',`${penalty.playerName} sbaglia il rigore e perde 5 OVR permanente: nuovo OVR ${penalty.newOvr}.`)}
  if(result.weakBrotherGoal)userEventUpdate(result,false,'Il fratello scarso',`${result.weakBrotherGoal.playerName} mantiene la promessa e segna per ${result.weakBrotherGoal.teamName}.`);

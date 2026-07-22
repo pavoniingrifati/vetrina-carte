@@ -30,6 +30,8 @@
     { id:'portiere-goleador', category:'Immediati', icon:'🧤', title:'Portiere goleador', description:'Un portiere segna un gol.' },
     { id:'galacticos', category:'Immediati', icon:'🌟', title:'Galácticos', description:'Vinci con tutti gli undici titolari ad almeno 90 OVR totale.' },
 
+    { id:'capitano-mio-capitano', category:'Oggetti', icon:'©', title:'Capitano, mio capitano', description:'Fai indossare la Fascia del capitano a un giocatore per la prima volta.' },
+
     { id:'campeones', category:'Stagionali', icon:'🏆', title:'Campeones', description:'Vinci il campionato.' },
     { id:'double', category:'Stagionali', icon:'👑', title:'Double', description:'Vinci campionato e coppa nella stessa stagione.' },
     { id:'invincibili', category:'Stagionali', icon:'🛡️', title:'Invincibili', description:'Termina una stagione senza sconfitte.' },

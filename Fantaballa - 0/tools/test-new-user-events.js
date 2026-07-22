@@ -10,7 +10,7 @@ function makeState(){
   makePlayer('b1','Riserva 1',66,'CC','C'),makePlayer('b2','Riserva 2',67,'ATT','A'),makePlayer('b3','Riserva 3',68,'P','P')
  ];
  const roster=players.map((player,index)=>({playerId:player.id,player:{...player},bench:index>=11,slot:index>=11?`R${index-10}`:(index===0?'P':index===2?'ATT':index===3?'AS':'CC'),slotId:index>=11?`bench-${index-10}`:`starter-${index}`,malus:0}));
- return{matchday:2,formation:'4-3-3',teamName:'Test Team',draft:{roster},statuses:{},playInjured:{},seasonRules:{generatedEventPlayers:[]},teams:[{id:'user',name:'Test Team',roster:[]},{id:'opp1',name:'Avversari',clubId:'opp1',roster:[]}],activeEffects:[]};
+ return{matchday:2,formation:'4-3-3',teamName:'Test Team',draft:{roster},statuses:{},playInjured:{},seasonRules:{generatedEventPlayers:[]},teams:[{id:'user',name:'Test Team',roster:[]},{id:'opp1',name:'Avversari',clubId:'opp1',roster:[]}],standings:{user:{id:'user',name:'Test Team',pts:10,p:0,w:0,d:0,l:0,gf:0,ga:0},opp1:{id:'opp1',name:'Avversari',pts:12,p:0,w:0,d:0,l:0,gf:0,ga:0}},activeEffects:[]};
 }
 const context={console,Set,Map,Number,String,Array,Object,Boolean,Date,Error,JSON,Math:Object.create(Math),USER_ID:'user',POSITION_ROLE:{P:'P',CC:'C',ATT:'A',AS:'A',AD:'A',DC:'D',TS:'D',TD:'D',CDC:'C',COC:'C'}};
 context.globalThis=context;context.window=context;context.state=makeState();
@@ -28,6 +28,8 @@ context.rosterPlayers=()=>context.state.draft.roster.map(e=>({...e,player:e.play
 context.getStarterEntries=()=>context.rosterPlayers().filter(e=>!e.bench);
 context.startingGoalkeeperEntry=()=>context.getStarterEntries().find(e=>context.roleOf(e.player)==='P')||null;
 context.seasonLength=()=>38;
+context.userStanding=()=>context.state.standings.user;
+context.sortedTable=()=>Object.values(context.state.standings).sort((a,b)=>Number(b.pts)-Number(a.pts));
 context.registerGeneratedEventPlayer=player=>{const p={...player,id:String(player.id)};const i=context.state.seasonRules.generatedEventPlayers.findIndex(x=>String(x.id)===p.id);if(i>=0)context.state.seasonRules.generatedEventPlayers[i]=p;else context.state.seasonRules.generatedEventPlayers.push(p);return p};
 context.refreshOpponentClubRosters=()=>{};
 context.talentScoutBlocksExternalArrival=()=>false;context.talentScoutBlockMessage=()=>'';
@@ -59,5 +61,13 @@ test('contratto: gol doppio e uscita dopo 3 partite',()=>{context.acceptBadContr
 test('modulo internet: ripristino e bonus vittoria',()=>{const old=context.state.formation;context.acceptInternetFormation();const chosen=context.state.formation;assert(chosen!==old,'Il modulo non è cambiato');const before=context.rosterEntry('p2').player.ovr;context.tickAdditionalUserEventsAfterMatch({gf:2,ga:0,lineup:context.getStarterEntries().map(e=>({playerId:e.playerId})),eventUpdates:[]});assert(context.state.formation===old,'Il modulo originale non è stato ripristinato');assert(context.rosterEntry('p2').player.ovr===before+2,'Bonus rosa +2 non applicato')});
 
 test('sfortuna: panchina e uscita dopo sconfitta',()=>{context.benchBadLuckPlayer({playerId:'p2',playerName:'Scarso'});assert(context.rosterEntry('p2').bench,'Il giocatore non è stato messo in panchina');context.tickAdditionalUserEventsAfterMatch({gf:0,ga:1,eventUpdates:[]});assert(!context.rosterEntry('p2'),'Il giocatore non ha lasciato la rosa dopo la sconfitta')});
+
+
+
+test('ricorso permanente: sconfitta risarcita e vittoria senza punti',()=>{context.acceptPermanentAppeal();let result={gf:0,ga:1,opponentId:'opp1',pointsAwarded:0,pointsAdjustment:0,pointsNote:'',eventUpdates:[]};context.tickAdditionalUserEventsAfterMatch(result);assert(context.state.standings.user.pts===11,'Manca il punto di risarcimento');assert(context.state.standings.opp1.pts===9,'Manca la penalizzazione di 3 punti all’avversario');context.state.standings.user.pts+=3;result={gf:2,ga:0,opponentId:'opp1',pointsAwarded:3,pointsAdjustment:0,pointsNote:'',eventUpdates:[]};context.tickAdditionalUserEventsAfterMatch(result);assert(context.state.standings.user.pts===11,'I punti della vittoria non sono stati annullati');assert(result.pointsAwarded===0,'Il recap deve mostrare 0 punti ottenuti nella vittoria')});
+
+test('ricorso permanente rifiutato: +3 alla capolista',()=>{context.rejectPermanentAppeal();assert(context.state.standings.opp1.pts===15,'La capolista non ha ricevuto +3 punti')});
+
+test('punti per gol subito: massimo 4 e penalizzazione alternativa',()=>{context.acceptConcededGoalPoints();const result={gf:1,ga:5,displayGa:5,opponentId:'opp1',pointsAwarded:0,pointsAdjustment:0,pointsNote:'',eventUpdates:[]};context.tickAdditionalUserEventsAfterMatch(result);assert(context.state.standings.user.pts===14,'Il bonus massimo di 4 punti non è stato applicato');assert(result.pointsAwarded===4,'Il recap non riporta i 4 punti aggiuntivi');reset();context.rejectConcededGoalPoints();assert(context.state.standings.user.pts===8,'La penalizzazione immediata di 2 punti non è stata applicata')});
 
 console.log(JSON.stringify({ok:true,tests:tests.length,names:tests},null,2));

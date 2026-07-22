@@ -614,7 +614,7 @@ function optimizeLineupWithBench(){
    let swap=null;
    for(const bench of benches){
      const benchOvr=tacticianPlayerOvr(bench.player);
-     const targets=roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>!item.entry.bench&&Number(item.entry.tipsterForcedMatches)<=0&&item.player&&userCompatible(bench.player,item.entry.slot)&&tacticianPlayerOvr(item.player)<benchOvr).sort((a,b)=>tacticianPlayerOvr(a.player)-tacticianPlayerOvr(b.player));
+     const targets=roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>!item.entry.bench&&Number(item.entry.tipsterForcedMatches)<=0&&Number(item.entry.captainForcedMatches)<=0&&Number(item.entry.leaderQuestForcedMatches)<=0&&item.player&&userCompatible(bench.player,item.entry.slot)&&tacticianPlayerOvr(item.player)<benchOvr).sort((a,b)=>tacticianPlayerOvr(a.player)-tacticianPlayerOvr(b.player));
      if(targets.length){swap={bench,target:targets[0]};break}
    }
    if(!swap)break;
