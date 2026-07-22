@@ -456,6 +456,7 @@ function postMatch(){
  tickFantaballopoliAfterMatch(result);
  tickEventChainsAfterMatch(result);
  tickSeasonQuestAfterMatch(result);
+ tickCreatorEventsAfterMatch(result);
  resolveSecretRefereeAfterMatch(result);
  if(!matchWasFormulaOneWalkover)resolveSpaceJamTalentChallenge(result);
  if(!matchWasFormulaOneWalkover)applyCreatorMvpBoostAfterMatch(result);

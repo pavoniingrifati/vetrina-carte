@@ -3,7 +3,8 @@
  * Modulo classico: l'ordine di caricamento è definito negli HTML del Campionato.
  */
 function buildClubRoster(clubId,excludedIds=[]){
- const excluded=new Set((excludedIds||[]).map(String));
+ const persistentExcluded=Array.isArray(state?.seasonRules?.opponentExcludedPlayerIds)?state.seasonRules.opponentExcludedPlayerIds:[];
+ const excluded=new Set([...(excludedIds||[]),...persistentExcluded].map(String));
  const pool=PLAYERS.filter(player=>String(player.club)===String(clubId)&&!excluded.has(String(player.id))).sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0)||String(a.name).localeCompare(String(b.name),'it'));
  const selected=[];const used=new Set();
  [['P',2],['D',5],['C',4],['A',3]].forEach(([role,count])=>{

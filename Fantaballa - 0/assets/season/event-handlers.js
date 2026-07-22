@@ -45,7 +45,9 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "italia-pizza-catenaccio":function(){return !state.seasonRules.italiaCatenaccioRule},
 "fgci-punti-gol":function(){return !state.seasonRules.fgciPointsRule},
 "curva-contestazione":function(){return curvaContestCanAppear()},
-"punti-pari-dispari":function(){return Number(state.matchday)>0&&Number(state.matchday)<seasonLength()}
+"punti-pari-dispari":function(){return Number(state.matchday)>0&&Number(state.matchday)<seasonLength()},
+"barone-sportivo-sfida":function(){return questCanStart(3)&&!creatorInUserRoster('850')},
+"stefano-finari-roma":function(){return Number(state.matchday)<seasonLength()&&!creatorInUserRoster('851')&&!stefanoFinariChallengeState().active}
  }),
  title:Object.freeze({
 "omonimo-allenatore":function(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`}
@@ -54,7 +56,8 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "rapito-alieni":function(context){return context?.playerName?`${this.text} Il giocatore coinvolto è ${context.playerName}.`:this.text},
 "giocatore-insonne":function(context){return context?.playerName?`${this.text} Il giocatore coinvolto è ${context.playerName}.`:this.text},
 "anvedi-goicoechea":function(context){return context?.goalkeeperName?`${this.text} Il portiere coinvolto è ${context.goalkeeperName}.`:this.text},
-"curva-contestazione":function(){const mister=String(state.coachName||'Mister').trim()||'Mister';return `${mister}, devi vendere! Vattene, vattene!`}
+"curva-contestazione":function(){const mister=String(state.coachName||'Mister').trim()||'Mister';return `${mister}, devi vendere! Vattene, vattene!`},
+"stefano-finari-roma":function(){return `Stefano Finari arriva con la sciarpa giallorossa. «${String(state.teamName||'La tua squadra')} è la mia seconda squadra preferita!»`}
  }),
  createContext:Object.freeze({
 "rapito-alieni":function(){const entry=randomOwnEntry();return entry?{playerId:String(entry.playerId),playerName:entry.player.name}:{}},
@@ -201,7 +204,11 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "punti-pari-dispari:0":function(){return scheduleStandingsResetByParity('even')},
 "punti-pari-dispari:1":function(){return scheduleStandingsResetByParity('odd')},
 "fgci-cartellini-estremi:0":function(){return activateYellowEqualsRed()},
-"fgci-cartellini-estremi:1":function(){return activatePinkCardRule()}
+"fgci-cartellini-estremi:1":function(){return activatePinkCardRule()},
+"barone-sportivo-sfida:0":function(){return acceptBaroneSportivoChallenge()},
+"barone-sportivo-sfida:1":function(){return sendBaroneSportivoToRandomTeam()},
+"stefano-finari-roma:0":function(){return acceptStefanoFinariChallenge()},
+"stefano-finari-roma:1":function(){return guaranteeNextMatchExpulsion()}
  })
 });
 const SEASON_EVENT_HANDLER_IDS=Object.freeze({

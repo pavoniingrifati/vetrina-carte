@@ -513,6 +513,7 @@ function acceptCurvaQuest(){const rivals=questCurveTeams();if(rivals.length!==3)
 function acceptAmmazzaGrandiQuest(){return startSeasonQuest({id:'ammazza-grandi',title:'Ammazza grandi',target:1,deadlineMatches:6,objective:'Nelle prossime 6 giornate batti almeno una squadra che, prima della partita, si trova nelle prime 3 posizioni.',reward:'+5 OVR fino a fine stagione a tutti i giocatori con OVR base inferiore a 80.',penalty:'Il tuo miglior giocatore perde 6 OVR fino a fine stagione.'})}
 function acceptMilanLabQuest(){return startSeasonQuest({id:'milanlab',title:'MilanLab',target:5,deadlineMatches:5,objective:'Completa 5 giornate senza nuovi infortuni.',reward:'Immunità dagli infortuni per le successive 5 giornate.',penalty:'Il primo infortunio dura il doppio del previsto.'})}
 function acceptChampagneQuest(){return startSeasonQuest({id:'calcio-champagne',title:'Calcio champagne',target:3,deadlineMatches:3,objective:'Segna almeno 2 gol in ciascuna delle prossime 3 partite.',reward:'Ogni vittoria nelle successive 6 giornate vale 1 punto aggiuntivo.',penalty:'Ogni pareggio nelle successive 6 giornate viene trasformato in sconfitta.'})}
+function acceptBaroneSportivoChallenge(){const response=startSeasonQuest({id:'barone-sportivo',title:'La sfida del Barone Sportivo',target:5,deadlineMatches:3,objective:'Fai segnare almeno 5 giocatori diversi nelle prossime 3 partite.',reward:'+5 OVR fino a fine stagione ai primi 5 marcatori diversi.',penalty:'Nessun bonus.'});const q=questState();if(q.id==='barone-sportivo'&&q.active){q.scorerIds=[];q.scorerNames={}}return response}
 function questTargetRosterEntry(q=questState(),fallback=questBestAttacker()){return rosterEntry(q.targetPlayerId)||fallback||null}
 function questOpponentIsTopThree(opponentId){return questIsActive('ammazza-grandi')&&sortedTable().slice(0,3).some(row=>String(row.id)===String(opponentId))}
 function questProgressText(q=questState()){
@@ -522,6 +523,7 @@ function questProgressText(q=questState()){
  if(q.id==='ammazza-grandi')return `${q.matchesPlayed}/${q.deadlineMatches} giornate · ${q.progress}/${q.target} vittorie contro una top 3`;
  if(q.id==='milanlab')return `${q.matchesPlayed}/${q.deadlineMatches} giornate senza infortuni`;
  if(q.id==='calcio-champagne')return `${q.progress}/${q.target} partite con almeno 2 gol`;
+ if(q.id==='barone-sportivo')return `${q.progress}/${q.target} marcatori diversi · ${q.matchesPlayed}/${q.deadlineMatches} partite`;
  return `${q.matchesPlayed}/${q.deadlineMatches}`;
 }
 function renderActiveQuest(){
@@ -542,6 +544,16 @@ function tickSeasonQuestAfterMatch(result){
    result.questUpdates=Array.isArray(result.questUpdates)?result.questUpdates:[];result.questUpdates.push({success:false,title:'La curva',message:'La serie positiva è terminata: rimosso il bonus di +5 OVR.'});
  }
  const q=questState();if(!q.active)return;
+ if(q.id==='barone-sportivo'){
+   q.matchesPlayed++;
+   q.scorerIds=Array.isArray(q.scorerIds)?q.scorerIds.map(String):[];
+   q.scorerNames=q.scorerNames&&typeof q.scorerNames==='object'?q.scorerNames:{};
+   (Array.isArray(result.goals)?result.goals:[]).forEach(goal=>{const id=String(goal?.playerId||'');if(!id||q.scorerIds.includes(id))return;q.scorerIds.push(id);q.scorerNames[id]=String(goal?.player||playerById(id)?.name||'Marcatore')});
+   q.progress=q.scorerIds.length;
+   if(q.progress>=q.target){const rewarded=q.scorerIds.slice(0,5);rewarded.forEach(id=>pushSeasonEffect('playerOvr',5,{playerId:id,source:'Sfida Barone Sportivo'}));const names=rewarded.map(id=>q.scorerNames[id]||playerById(id)?.name||'Giocatore');finishSeasonQuest(true,`Sfida vinta: ${names.join(', ')} ricevono +5 OVR fino a fine stagione.`,result)}
+   else if(q.matchesPlayed>=q.deadlineMatches)finishSeasonQuest(false,`Sfida fallita: hanno segnato ${q.progress} giocatori diversi su 5. Nessun bonus assegnato.`,result);
+   return;
+ }
  if(q.id==='like-a-bomber'){
    q.matchesPlayed++;q.progress+=Math.max(0,Number(result.gf)||0);
    if(q.progress>=q.target){const entry=questTargetRosterEntry(q);if(entry)pushSeasonEffect('playerOvr',8,{playerId:String(entry.playerId),source:'quest-like-a-bomber'});finishSeasonQuest(true,`${entry?.player?.name||q.targetPlayerName||'Il miglior attaccante'} ottiene +8 OVR fino a fine stagione.`,result)}
