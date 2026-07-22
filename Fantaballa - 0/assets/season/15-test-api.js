@@ -648,6 +648,22 @@
         { slow: true }
       ));
     }
+    tests.push(testDefinition('season-journey-storage', 'UX', 'Percorso stagionale compatto e persistente', async () => {
+      await buildSeason(5051);
+      await withSeed(5052, async () => playOneTestRound());
+      const beforeEvent = analyticsSnapshot();
+      recordSeasonEvent({ kind: 'decision', title: 'Evento test percorso', choice: 'Scelta test', effect: '+1 OVR', result: 'Effetto registrato' }, beforeEvent);
+      save();
+      const journeyHtml = renderSeasonJourney();
+      assert(journeyHtml.includes('Ultima partita'), 'Il percorso non mostra l’ultima partita');
+      assert(journeyHtml.includes('Storico partite'), 'Lo storico partite non è disponibile');
+      assert(journeyHtml.includes('Eventi e decisioni'), 'Lo storico eventi non è disponibile');
+      const envelope = decodeStoredSave(localStorage.getItem(AUTO_SAVE_KEY));
+      assert(envelope?.state, 'Il salvataggio versionato del percorso non è leggibile');
+      assertEqual(envelope.state.history.length, state.history.length, 'Lo storico partite non è stato salvato nel localStorage');
+      assertEqual(envelope.state.analytics.eventLog.length, state.analytics.eventLog.length, 'Lo storico eventi non è stato salvato nel localStorage');
+      return { history: state.history.length, events: state.analytics.eventLog.length, storageKey: AUTO_SAVE_KEY };
+    }));
     tests.push(testDefinition('runtime-errors', 'Runtime', 'Assenza di errori JavaScript non gestiti', () => {
       const errors = Array.isArray(window.__FANTABALLA_TEST_RUNTIME_ERRORS) ? window.__FANTABALLA_TEST_RUNTIME_ERRORS : [];
       assert(!errors.length, `${errors.length} errori JavaScript non gestiti`, errors.map(item => `${item.type}: ${item.message}`).join('\n'));
