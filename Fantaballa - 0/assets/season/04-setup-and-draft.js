@@ -178,8 +178,12 @@ function packNationFontSize(name){const len=String(name||'').trim().length;if(le
 function teamNameFontSize(name){const len=String(name||'').trim().length;if(len<=10)return 34;if(len<=14)return 29;if(len<=18)return 24;if(len<=22)return 20;return 16}
 function applyPackNationLabel(el,name){if(!el)return;el.textContent=name;el.style.fontSize=`${packNationFontSize(name)}px`;el.title=name}
 
-function isSubscriber(player){return String(player&&player.subscriber||'').trim().toLowerCase()==='si'}
-function isCreator(player){return String(player&&player.creator||'').trim().toLowerCase()==='si'}
+function isFantaballaCreator(player){
+ const id=String(player?.id||'').trim(),name=String(player?.name||'').trim().toLowerCase(),style=String(player?.creatorStyle||'').trim().toLowerCase();
+ return id==='384'||name==='fantaballa'||style==='fantaballa';
+}
+function isSubscriber(player){return !isFantaballaCreator(player)&&String(player&&player.subscriber||'').trim().toLowerCase()==='si'}
+function isCreator(player){return isFantaballaCreator(player)||String(player&&player.creator||'').trim().toLowerCase()==='si'}
 function hashString(str){let h=2166136261>>>0;for(const ch of String(str||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
 function seededChoice(list,seed,shift=0){return list[(Math.floor(seed/Math.pow(7,shift))>>>0)%list.length]}
 function avatarHexToRgb(color){
@@ -241,6 +245,7 @@ function avatarSeed(player){
   skin:seededChoice(['#f6caa5','#edb98f','#d99870','#be805b','#915b40','#f0d5bb'],seed,1),
   hair:seededChoice(['#1b1512','#432818','#6f4e37','#c18f59','#d8d8d8','#111827','#7f1d1d','#312e81'],seed,2),
   eyebrows:seededChoice(['#2a1a12','#4a2d1d','#6b4423','#40240f'],seed,3),
+  eyeColor:'#1b1a17',
   faceShape:seededChoice(['round','oval','square'],seed,4),
   hairStyle:seededChoice(['crop','part','curly','spike','fade','long'],seed,5),
   eyeStyle:seededChoice(['dot','smile','focused','wide'],seed,6),
@@ -253,6 +258,7 @@ function avatarSeed(player){
  const creatorName=String(player?.name||'').trim().toLowerCase();
  const isBaroneSportivo=creatorStyle==='barone-sportivo'||String(player?.id||'')==='850'||creatorName==='barone sportivo';
  const isStefanoFinari=creatorStyle==='stefano-finari'||String(player?.id||'')==='851'||creatorName==='stefano finari';
+ const isFantaballa=creatorStyle==='fantaballa'||String(player?.id||'')==='384'||creatorName==='fantaballa';
  if(isBaroneSportivo){
   preset.skin='#f0d5bb';
   preset.hair='#8a5a33';
@@ -277,6 +283,19 @@ function avatarSeed(player){
   preset.accessory='none';
   preset.kitStyle='solid';
  }
+ if(isFantaballa){
+  preset.skin='#efbf9a';
+  preset.hair='#30231d';
+  preset.eyebrows='#3b2921';
+  preset.eyeColor='#79b8dc';
+  preset.faceShape='oval';
+  preset.hairStyle='sideSweep';
+  preset.eyeStyle='azureWide';
+  preset.mouthStyle='serious';
+  preset.beardStyle='shortBeard';
+  preset.accessory='none';
+  preset.kitStyle='solid';
+ }
  return preset;
 }
 function renderAvatarSvg(player,sub=false){
@@ -291,6 +310,7 @@ function renderAvatarSvg(player,sub=false){
  const hairMap={
    crop:`<path d="M18.5 31c2.6-13.4 12.4-21.4 23.5-21.4 10.8 0 19.8 5.6 23.3 18.8-6.4-2.9-13.8-4.1-23.3-4.1-9.8 0-16.8 2.5-23.5 6.7z" fill="${a.hair}"/>`,
    part:`<path d="M18.4 31c4.8-12.8 14.6-20.8 23.6-20.8 8.6 0 16.6 5.2 21.8 18-5.5-2.4-10.8-3.6-15.7-3.6l-5.8 8-5.8-8c-6.8 0-12.6 2.2-18.1 6.4z" fill="${a.hair}"/>`,
+   sideSweep:`<path d="M18.1 32.4c2.8-13.1 12.9-22.1 25.2-22.1 10.4 0 18.2 5.8 21.5 17.5-6.9-3.1-13.8-3.8-20.8-2.4-8.7 1.7-14.3 6.8-19.7 13.8-.8-1.6-1.4-3.9-1.3-6.2-1.8.5-3.4.3-4.9-.6z" fill="${a.hair}"/><path d="M21.5 29.9c8.9-10.8 21-15.3 35.4-10.1-8.4-.2-15.9 2.1-22 7.1-4.2 3.4-7.4 7.4-10.2 11.9-2.2-1.9-3.3-5-3.2-8.9z" fill="${avatarShade(a.hair,.08)}" opacity=".82"/>`,
    curly:`<path d="M18.9 32c3.8-12.6 12.2-20.5 22-20.5 10.5 0 18.6 5.4 22.1 16.5-1.4-.6-2.8-.8-4.5-.8 0 0-1.2-5-4.9-5-2.5 0-3.8 2.5-3.8 2.5s-2.3-5-6.5-5-5.4 3.5-5.4 3.5-2.2-3.2-5.9-2.2c-4 1.1-5.4 6-5.4 6s-2.8 1.2-3.7 5z" fill="${a.hair}"/>`,
    spike:`<path d="M19.2 33c1.4-5.2 5.2-12.8 10.2-18.2l5 4.8 5.2-7.6 6.2 7.2 4.8-6c5.2 4 9.2 10.5 10.4 19-6.4-4.2-12.8-6.4-21.6-6.4-8.4 0-14.8 2.4-20.2 7.2z" fill="${a.hair}"/>`,
    fade:`<path d="M22.3 31.5C26 20 33.7 14.2 42 14.2c9.3 0 16.7 5.5 20.3 15.7-4.9-2.1-10.6-3-18.9-3-8.5 0-14.4 1.8-21.1 4.6z" fill="${a.hair}"/><path d="M20.6 32.5c1.3-5 3.5-9.5 6-12-2.3 6.2-2.4 10.5-.9 15.4-1.8.8-3.4 1.4-5.1 2.2z" fill="${a.hair}" opacity=".32"/><path d="M58.8 20.5c2.4 2.8 4.8 7.4 5.7 11.8-1.8-.8-3.7-1.4-5.5-1.8 1-4.7.7-7.6-.2-10z" fill="${a.hair}" opacity=".32"/>`,
@@ -298,10 +318,11 @@ function renderAvatarSvg(player,sub=false){
  };
  const brows=`<path d="M26.6 34.5c3-1.8 6.2-2.6 9.7-2.4" fill="none" stroke="${a.eyebrows}" stroke-width="2" stroke-linecap="round"/><path d="M47 32.1c3.5-.2 6.7.6 9.7 2.4" fill="none" stroke="${a.eyebrows}" stroke-width="2" stroke-linecap="round"/>`;
  const eyesMap={
-   dot:`<circle cx="33.2" cy="42.3" r="2.1" fill="#1b1a17"/><circle cx="50.8" cy="42.3" r="2.1" fill="#1b1a17"/>`,
+   dot:`<circle cx="33.2" cy="42.3" r="2.1" fill="${a.eyeColor}"/><circle cx="50.8" cy="42.3" r="2.1" fill="${a.eyeColor}"/>`,
    smile:`<path d="M30 42.5c1.5 1.9 3 2.6 4.6 2.6 1.5 0 3-.7 4.5-2.6" fill="none" stroke="#1b1a17" stroke-width="1.55" stroke-linecap="round"/><path d="M45 42.5c1.5 1.9 3 2.6 4.6 2.6 1.5 0 3-.7 4.5-2.6" fill="none" stroke="#1b1a17" stroke-width="1.55" stroke-linecap="round"/>`,
-   focused:`<path d="M30 42.1h6.8" stroke="#1b1a17" stroke-width="1.65" stroke-linecap="round"/><path d="M47.2 42.1H54" stroke="#1b1a17" stroke-width="1.65" stroke-linecap="round"/><circle cx="33.2" cy="42.8" r="1.2" fill="#1b1a17"/><circle cx="50.8" cy="42.8" r="1.2" fill="#1b1a17"/>`,
-   wide:`<ellipse cx="33.2" cy="42.3" rx="3.1" ry="2.6" fill="#fff"/><ellipse cx="50.8" cy="42.3" rx="3.1" ry="2.6" fill="#fff"/><circle cx="33.2" cy="42.3" r="1.5" fill="#1b1a17"/><circle cx="50.8" cy="42.3" r="1.5" fill="#1b1a17"/>`
+   focused:`<path d="M30 42.1h6.8" stroke="#1b1a17" stroke-width="1.65" stroke-linecap="round"/><path d="M47.2 42.1H54" stroke="#1b1a17" stroke-width="1.65" stroke-linecap="round"/><circle cx="33.2" cy="42.8" r="1.2" fill="${a.eyeColor}"/><circle cx="50.8" cy="42.8" r="1.2" fill="${a.eyeColor}"/>`,
+   wide:`<ellipse cx="33.2" cy="42.3" rx="3.1" ry="2.6" fill="#fff"/><ellipse cx="50.8" cy="42.3" rx="3.1" ry="2.6" fill="#fff"/><circle cx="33.2" cy="42.3" r="1.5" fill="${a.eyeColor}"/><circle cx="50.8" cy="42.3" r="1.5" fill="${a.eyeColor}"/>`,
+   azureWide:`<ellipse cx="33.2" cy="42.2" rx="3.7" ry="3.15" fill="#fff" stroke="rgba(90,52,31,.2)" stroke-width=".65"/><ellipse cx="50.8" cy="42.2" rx="3.7" ry="3.15" fill="#fff" stroke="rgba(90,52,31,.2)" stroke-width=".65"/><circle cx="33.2" cy="42.2" r="2" fill="${a.eyeColor}"/><circle cx="50.8" cy="42.2" r="2" fill="${a.eyeColor}"/><circle cx="33.2" cy="42.2" r=".8" fill="#17202a"/><circle cx="50.8" cy="42.2" r=".8" fill="#17202a"/><circle cx="32.6" cy="41.5" r=".45" fill="#fff"/><circle cx="50.2" cy="41.5" r=".45" fill="#fff"/>`
  };
  const nose=`<path d="M42 45c1.9 2.8 2 5.8-.1 7.4" fill="none" stroke="rgba(119,74,46,.32)" stroke-width="1.45" stroke-linecap="round"/>`;
  const mouthMap={
@@ -312,6 +333,7 @@ function renderAvatarSvg(player,sub=false){
  const beardMap={
    none:'',
    stubble:`<path d="M28.2 52.8c3 8.4 8.4 13.2 13.8 13.2 5.5 0 10.8-4.8 13.8-13.2" fill="rgba(138,90,51,.38)"/><path d="M30 55.5c2.8 4.6 7.2 7.5 12 7.5s9.2-2.9 12-7.5" fill="none" stroke="rgba(169,112,65,.72)" stroke-width="1.45" stroke-linecap="round"/>`,
+   shortBeard:`<path d="M27.4 51.7c1.1 8.9 7.1 15.2 14.6 15.2s13.5-6.3 14.6-15.2c-2.6 2.5-5 3.9-7.6 4.8-2.1.7-4.3 1-7 1-2.8 0-5-.3-7.1-1-2.5-.9-4.9-2.3-7.5-4.8z" fill="${avatarMix(a.hair,a.skin,.28)}" opacity=".76"/><path d="M31.7 52.3c2.5 2 5.4 2.8 8.3 2.8h4c2.9 0 5.8-.8 8.3-2.8-1.3 2.8-4.5 4.4-8.2 4.4h-4.2c-3.7 0-6.9-1.6-8.2-4.4z" fill="${a.hair}" opacity=".88"/><path d="M31.3 58.2c3 3.6 6.6 5.4 10.7 5.4 4.1 0 7.7-1.8 10.7-5.4" fill="none" stroke="${avatarShade(a.hair,.15)}" stroke-width="1.15" stroke-linecap="round" opacity=".78"/>`,
    goatee:`<path d="M37.1 57c1.3 5.6 3 10 4.9 12.3 1.9-2.3 3.6-6.7 4.9-12.3" fill="rgba(58,37,23,.58)"/><path d="M34.4 54.6c2.4 2.3 5.1 3.3 7.6 3.3 2.5 0 5.2-.9 7.6-3.3" fill="rgba(58,37,23,.46)"/>`,
    moustache:`<path d="M33.8 51c1.9 2 4.3 2.8 6.6 2.8 0 0 .5-1.5 1.6-1.5 1.2 0 1.6 1.5 1.6 1.5 2.3 0 4.7-.8 6.6-2.8-1.9 3.2-4.2 4.8-7.4 4.8h-1.6c-3.2 0-5.5-1.6-7.4-4.8z" fill="rgba(58,37,23,.72)"/>`
  };
