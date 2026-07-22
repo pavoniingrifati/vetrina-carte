@@ -47,7 +47,13 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "curva-contestazione":function(){return curvaContestCanAppear()},
 "punti-pari-dispari":function(){return Number(state.matchday)>0&&Number(state.matchday)<seasonLength()},
 "barone-sportivo-sfida":function(){return questCanStart(3)&&!creatorInUserRoster('850')},
-"stefano-finari-roma":function(){return Number(state.matchday)<seasonLength()&&!creatorInUserRoster('851')&&!stefanoFinariChallengeState().active}
+"stefano-finari-roma":function(){return Number(state.matchday)<seasonLength()&&!creatorInUserRoster('851')&&!stefanoFinariChallengeState().active},
+"rigorista-improvvisato":function(){return improvisedPenaltyAvailable()},
+"fratello-scarso":function(){return weakBrotherAvailable()},
+"portiere-vuole-segnare":function(){return goalkeeperScorerAvailable()},
+"contratto-scritto-male":function(){return badContractAvailable()},
+"modulo-football-manager":function(){return internetFormationAvailable()},
+"giocatore-porta-sfortuna":function(){return badLuckPlayerAvailable()}
  }),
  title:Object.freeze({
 "omonimo-allenatore":function(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`}
@@ -57,12 +63,22 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "giocatore-insonne":function(context){return context?.playerName?`${this.text} Il giocatore coinvolto è ${context.playerName}.`:this.text},
 "anvedi-goicoechea":function(context){return context?.goalkeeperName?`${this.text} Il portiere coinvolto è ${context.goalkeeperName}.`:this.text},
 "curva-contestazione":function(){const mister=String(state.coachName||'Mister').trim()||'Mister';return `${mister}, devi vendere! Vattene, vattene!`},
-"stefano-finari-roma":function(){return `Stefano Finari arriva con la sciarpa giallorossa. «${String(state.teamName||'La tua squadra')} è la mia seconda squadra preferita!»`}
+"stefano-finari-roma":function(){return `Stefano Finari arriva con la sciarpa giallorossa. «${String(state.teamName||'La tua squadra')} è la mia seconda squadra preferita!»`},
+"rigorista-improvvisato":function(context){return improvisedPenaltyDescription(context)},
+"fratello-scarso":function(context){return weakBrotherDescription(context)},
+"portiere-vuole-segnare":function(context){return goalkeeperScorerDescription(context)},
+"contratto-scritto-male":function(context){return badContractDescription(context)},
+"giocatore-porta-sfortuna":function(context){return badLuckPlayerDescription(context)}
  }),
  createContext:Object.freeze({
 "rapito-alieni":function(){const entry=randomOwnEntry();return entry?{playerId:String(entry.playerId),playerName:entry.player.name}:{}},
 "giocatore-insonne":function(){const entry=randomRealCurrentLineupEntry();return entry?{playerId:String(entry.playerId),playerName:entry.player.name}:{}},
-"anvedi-goicoechea":function(){const entry=startingGoalkeeperEntry();return entry?{goalkeeperId:String(entry.playerId),goalkeeperName:entry.player.name}:{}}
+"anvedi-goicoechea":function(){const entry=startingGoalkeeperEntry();return entry?{goalkeeperId:String(entry.playerId),goalkeeperName:entry.player.name}:{}},
+"rigorista-improvvisato":function(){return improvisedPenaltyContext()},
+"fratello-scarso":function(){return weakBrotherContext()},
+"portiere-vuole-segnare":function(){return goalkeeperScorerContext()},
+"contratto-scritto-male":function(){return badContractContext()},
+"giocatore-porta-sfortuna":function(){return badLuckPlayerContext()}
  }),
  choiceApply:Object.freeze({
 "nuovo-sponsor:0":function(){return activateBallariniSponsor()},
@@ -208,7 +224,19 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "barone-sportivo-sfida:0":function(){return acceptBaroneSportivoChallenge()},
 "barone-sportivo-sfida:1":function(){return sendBaroneSportivoToRandomTeam()},
 "stefano-finari-roma:0":function(){return acceptStefanoFinariChallenge()},
-"stefano-finari-roma:1":function(){return guaranteeNextMatchExpulsion()}
+"stefano-finari-roma:1":function(){return guaranteeNextMatchExpulsion()},
+"rigorista-improvvisato:0":function(context){return acceptImprovisedPenalty(context)},
+"rigorista-improvvisato:1":function(context){return rejectImprovisedPenalty(context)},
+"fratello-scarso:0":function(context){return acceptWeakBrother(context)},
+"fratello-scarso:1":function(context){return rejectWeakBrother(context)},
+"portiere-vuole-segnare:0":function(context){return acceptGoalkeeperScorer(context)},
+"portiere-vuole-segnare:1":function(context){return rejectGoalkeeperScorer(context)},
+"contratto-scritto-male:0":function(context){return acceptBadContract(context)},
+"contratto-scritto-male:1":function(context){return rejectBadContract(context)},
+"modulo-football-manager:0":function(){return acceptInternetFormation()},
+"modulo-football-manager:1":function(){return rejectInternetFormation()},
+"giocatore-porta-sfortuna:0":function(context){return benchBadLuckPlayer(context)},
+"giocatore-porta-sfortuna:1":function(context){return startBadLuckPlayer(context)}
  })
 });
 const SEASON_EVENT_HANDLER_IDS=Object.freeze({

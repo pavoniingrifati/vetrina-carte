@@ -111,7 +111,7 @@
       disabledAuto: allAuto.filter(item => item.disabled === true).length,
       disabledDecisions: allDecisions.filter(item => item.disabled === true).length
     };
-    const baseline = { communityAuto: 5, communityDecisions: 69, realAuto: 4, realDecisions: 65, ...(policy.expectedCounts || {}) };
+    const baseline = { communityAuto: 5, communityDecisions: 77, realAuto: 4, realDecisions: 71, ...(policy.expectedCounts || {}) };
     if (enforceMinimumCounts) {
       if (stats.communityAuto < baseline.communityAuto) errors.push(`Community: attesi almeno ${baseline.communityAuto} eventi automatici, trovati ${stats.communityAuto}.`);
       if (stats.communityDecisions < baseline.communityDecisions) errors.push(`Community: attese almeno ${baseline.communityDecisions} decisioni, trovate ${stats.communityDecisions}.`);

@@ -74,7 +74,7 @@ function resolveRosterLineup(entries=rosterPlayers(),options={}){
  });
  return out;
 }
-function resolveLineup(){enforceTipsterStarters();if(state.seasonRules?.autoOptimizeLineup)optimizeLineupWithBench();enforceFrenchFlyingPositions();return applyWrongShirtSwap(resolveRosterLineup(rosterPlayers()))}
+function resolveLineup(){enforceTipsterStarters();if(state.seasonRules?.autoOptimizeLineup)optimizeLineupWithBench();enforceFrenchFlyingPositions();if(typeof enforceBadLuckPlayerLineup==='function')enforceBadLuckPlayerLineup();return applyWrongShirtSwap(resolveRosterLineup(rosterPlayers()))}
 function coachRosterAverageOvr(){const values=rosterPlayers().map(entry=>ductilityEffectiveBaseOvr(entry?.player)).filter(value=>value>0);return values.length?avg(values):0}
 function coachTrailingStreak(){const history=Array.isArray(state?.history)?state.history:[];if(!history.length)return{type:'',count:0};const result=history[history.length-1],type=Number(result.gf)>Number(result.ga)?'win':Number(result.gf)<Number(result.ga)?'loss':'draw';let count=0;for(let index=history.length-1;index>=0;index--){const item=history[index],current=Number(item.gf)>Number(item.ga)?'win':Number(item.gf)<Number(item.ga)?'loss':'draw';if(current!==type)break;count++}return{type,count}}
 function coachMatchOvrModifier(){if(!coachIs('motivator'))return 0;const streak=coachTrailingStreak();if(streak.type==='loss'&&streak.count===2)return 3;if(streak.type==='win'&&streak.count===3)return-3;return 0}

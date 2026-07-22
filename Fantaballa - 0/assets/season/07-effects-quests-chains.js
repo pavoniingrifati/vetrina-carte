@@ -682,6 +682,7 @@ function queueChainedAuto(title,text,result){
  const before=analyticsSnapshot();recordSeasonEvent({kind:'auto',title,choice:'Evento concatenato',effect:text,result,automatic:true},before);state.pendingEvent={kind:'auto',chained:true,resolved:true,title,text,result};return true;
 }
 function prepareChainedEvent(){
+ if(typeof prepareCustomUserChainedEvent==='function'&&prepareCustomUserChainedEvent())return true;
  const mental=mentalistaChain(),general=generalChain(),penguin=penguinChain(),mystery=mysteryCharacterChain(),day=Number(state.matchday);
  if(mental.active&&mental.stage===3&&day>=Number(mental.dueMatchday)){return queueChainedAuto('Il re del pollaio','Il pollo ha segnato almeno tre gol e completa la sua trasformazione.',crownChickenKing())}
  if(mystery.active&&mystery.branch==='tearless'&&mystery.stage===1&&day>=Number(mystery.dueMatchday)){const outcome=resolveTearlessSecondAct();return queueChainedAuto(outcome.title,outcome.text,outcome.result)}

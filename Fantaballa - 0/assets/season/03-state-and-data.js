@@ -176,7 +176,7 @@ function validateGameData(players,clubs){
  });
  return{fatal,warnings};
 }
-function versionedResourceUrl(url){const value=String(url||'');if(!value||/^(?:https?:|data:|blob:)/i.test(value))return value;const sep=value.includes('?')?'&':'?';return `${value}${sep}v=20260722-1`}
+function versionedResourceUrl(url){const value=String(url||'');if(!value||/^(?:https?:|data:|blob:)/i.test(value))return value;const sep=value.includes('?')?'&':'?';return `${value}${sep}v=20260722-3`}
 async function fetchJsonResource(url,label,{optional=false}={}){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
  try{

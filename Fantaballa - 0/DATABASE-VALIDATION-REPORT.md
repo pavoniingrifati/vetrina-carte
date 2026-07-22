@@ -1,12 +1,12 @@
 # Rapporto validazione database Fantaballa
 
-Generato: `2026-07-22T11:43:41.030332Z`
+Generato: `2026-07-22T12:37:39.275887Z`
 
 ## Riepilogo
 
 | Dataset | Record | Errori | Avvisi | Informazioni | Correzioni sicure |
 |---|---:|---:|---:|---:|---:|
-| community | 717 giocatori · 37 club | 0 | 9 | 0 | 1 |
+| community | 717 giocatori · 37 club | 0 | 8 | 0 | 0 |
 | real | 455 giocatori · 21 club | 0 | 0 | 0 | 0 |
 | commentary | cronaca gol | 0 | 0 | 0 | 0 |
 | ranking-fallback | 0 righe | 0 | 0 | 1 | 0 |
@@ -26,7 +26,7 @@ Le copie in `data/normalized/` applicano solo trasformazioni deterministiche: sp
 
 ## Tutte le anomalie
 
-### WARNING (9)
+### WARNING (8)
 
 - `community` · `PLAYER_NAME_DUPLICATE` — Nome giocatore duplicato: emadk_ [70 · inter-me-manda · A], Emadk [578 · fiumi-di-parolo · C].
 - `community` · `PLAYER_NAME_DUPLICATE` — Nome giocatore duplicato: ale 💎 [83 · borussia-porcmund · A], Ale [830 · new-entry-team · D].
@@ -35,7 +35,6 @@ Le copie in `data/normalized/` applicano solo trasformazioni deterministiche: sp
 - `community` · `PLAYER_NAME_DUPLICATE` — Nome giocatore duplicato: Giulio valbo [244 · borussia-porcmund · D], Giulio Valbo [676 · bayer-leverduren · D].
 - `community` · `PLAYER_NAME_DUPLICATE` — Nome giocatore duplicato: cristiano.vadala [367 · o-solet-mio · C], Cristiano vadala' [536 · atletico-ma-non-troppo · C].
 - `community` · `CLUB_ROLE_DISTRIBUTION_FRAGILE` — Fantaballa FC: distribuzione ruoli fragile (P 1, D 3, C 4, A 6).
-- `community` · `CLUB_ROSTER_SIZE_MISMATCH` — Inter Me Manda: rosterSize è 19, ma i giocatori presenti sono 20.
 - `community` · `DATASET_PLAYER_COUNT_UNEXPECTED` — Numero giocatori inatteso: 717, attesi 716.
 
 ### INFO (1)
@@ -44,7 +43,7 @@ Le copie in `data/normalized/` applicano solo trasformazioni deterministiche: sp
 
 ## Correzioni sicure generate
 
-- `community` · `club:inter-me-manda` · `rosterSize`: `19` → `20` (conteggio sincronizzato con i giocatori presenti)
+Nessuna correzione necessaria.
 
 ## File generati
 

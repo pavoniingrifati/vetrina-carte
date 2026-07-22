@@ -240,7 +240,7 @@
       if (entries.length > 1) issues.push(makeIssue('warning', 'CLUB_NAME_DUPLICATE', dataset, `Nome club duplicato: ${entries.map(entry => entry.name).join(', ')}.`, { entries, manualReview: true }));
     });
 
-    const expectedPlayers = dataset === 'real' ? 455 : 716;
+    const expectedPlayers = dataset === 'real' ? 455 : 717;
     const expectedClubs = dataset === 'real' ? 21 : 37;
     if (players.length !== expectedPlayers) issues.push(makeIssue('warning', 'DATASET_PLAYER_COUNT_UNEXPECTED', dataset, `Numero giocatori inatteso: ${players.length}, attesi ${expectedPlayers}.`, { actual: players.length, expected: expectedPlayers }));
     if (clubs.length !== expectedClubs) issues.push(makeIssue('warning', 'DATASET_CLUB_COUNT_UNEXPECTED', dataset, `Numero club inatteso: ${clubs.length}, attesi ${expectedClubs}.`, { actual: clubs.length, expected: expectedClubs }));
