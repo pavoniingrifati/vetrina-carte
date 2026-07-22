@@ -59,3 +59,15 @@ I contenuti degli eventi non sono più dichiarati dentro il motore:
 - `tools/validate-events.js` — validazione da terminale.
 
 Ogni catalogo usa `schemaVersion: 1`. Gli eventi sono ordinati tramite `order`, quindi la separazione tra file non modifica l'ordine storico né la selezione casuale. I JSON possono cambiare testi, etichette, descrizioni e associazione agli handler; nessun valore del JSON viene eseguito come codice.
+
+## Balance Lab
+
+`16-balance-api.js` è un modulo esclusivamente diagnostico, caricato da `balance-runner.html` e mai dalle pagine pubbliche del Campionato.
+
+- usa gli stessi database, draft, profili, formazioni, eventi e regole del motore;
+- isola completamente il `localStorage` con suffisso `_balance_runner`;
+- supporta seed ripetibili;
+- offre un motore rapido statistico e uno completo basato su `playRound('instant')`;
+- produce aggregazioni per allenatore, modulo, eventi e giocatori estratti;
+- può esportare report JSON e CSV;
+- non modifica i moduli pubblici `01–14` né i salvataggi degli utenti.

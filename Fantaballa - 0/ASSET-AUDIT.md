@@ -2,7 +2,7 @@
 
 - Asset trovati: **17**
 - Peso totale asset: **3.02 MB**
-- Riferimenti locali controllati: **51**
+- Riferimenti locali controllati: **53**
 - File mancanti: **0**
 - Immagini oltre 500 KB: **0**
 - Gruppi duplicati esatti: **0**
