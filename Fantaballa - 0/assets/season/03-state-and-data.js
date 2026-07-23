@@ -177,7 +177,7 @@ function validateGameData(players,clubs,validationConfig=SEASON_CONFIG.validatio
  });
  return{fatal,warnings};
 }
-function versionedResourceUrl(url){const value=String(url||'');if(!value||/^(?:https?:|data:|blob:)/i.test(value))return value;const sep=value.includes('?')?'&':'?';return `${value}${sep}v=20260723-legend40`}
+function versionedResourceUrl(url){const value=String(url||'');if(!value||/^(?:https?:|data:|blob:)/i.test(value))return value;const sep=value.includes('?')?'&':'?';return `${value}${sep}v=20260723-pills1`}
 async function fetchJsonResource(url,label,{optional=false}={}){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
  try{
@@ -280,6 +280,7 @@ function setOwnPlayerInjury(entry,rounds=1){
  if(!entry)return false;const player=entry.player||playerById(entry.playerId);if(!player)return false;
  if(parallelCupDisciplineImmunity()){const cup=parallelCupState();cup.notice=`Protezione Coppa: evitato l’infortunio di ${player.name}.`;return false;}
  if(state.activeEffects.some(effect=>effect.type==='injuryImmunity')){const q=questState();q.notice=`MilanLab ha evitato l’infortunio di ${player.name}.`;return false;}
+ if(typeof redPillProtectsPlayer==='function'&&redPillProtectsPlayer(entry.playerId)){state.seasonRules.redPillLastProtection=`La Pillola rossa ha evitato l’infortunio di ${player.name}.`;return false;}
  const adjustedRounds=failMilanLabForInjury(entry,rounds),status=statusOf(entry.playerId),before=Number(status.injury)||0;status.injury=Math.max(before,adjustedRounds);
  if(status.injury>before){if(sponsorFootballManagerActive())state.seasonRules.fmInjuryOccurred=true;futureInjuryPenalty(player.name)}
  return true;

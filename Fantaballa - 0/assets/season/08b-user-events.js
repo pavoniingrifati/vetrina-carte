@@ -242,6 +242,7 @@ function resolveRefereeDesignationAfterMatch(result){
 
 function tickAdditionalUserEventsAfterMatch(result){
  if(!result)return;
+ if(typeof tickPillEffectsAfterMatch==='function')tickPillEffectsAfterMatch(result);
  resolveRefereeDesignationAfterMatch(result);
  resolvePermanentAppealAfterMatch(result);
  resolveConcededGoalPointsAfterMatch(result);

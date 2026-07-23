@@ -62,7 +62,8 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "ricorso-permanente":function(){return permanentAppealAvailable()},
 "punti-gol-subiti":function(){return concededGoalPointsAvailable()},
 "designazione-arbitrale":function(){return refereeDesignationAvailable()},
-"posto-fisso":function(){return fixedJobAvailable()}
+"posto-fisso":function(){return fixedJobAvailable()},
+"pillola-rossa-pillola-blu":function(){return pillInventoryEventAvailable()}
  }),
  title:Object.freeze({
 "omonimo-allenatore":function(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`}
@@ -263,7 +264,9 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "designazione-arbitrale:0":function(){return acceptMariaSoleDesignation()},
 "designazione-arbitrale:1":function(){return acceptRosarioDesignation()},
 "posto-fisso:0":function(){return applyFixedJobRoleRule()},
-"posto-fisso:1":function(){return retireSingleRolePlayers()}
+"posto-fisso:1":function(){return retireSingleRolePlayers()},
+"pillola-rossa-pillola-blu:0":function(){return receivePillItem('red-pill')},
+"pillola-rossa-pillola-blu:1":function(){return receivePillItem('blue-pill')}
  })
 });
 const SEASON_EVENT_HANDLER_IDS=Object.freeze({

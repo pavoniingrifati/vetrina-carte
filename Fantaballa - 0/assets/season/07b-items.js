@@ -8,7 +8,9 @@ const SEASON_ITEM_DEFINITIONS=Object.freeze({
  'buffon-gloves':Object.freeze({id:'buffon-gloves',name:'Guanti di Buffon',icon:'🧤',rarity:'Raro',type:'Permanente',description:'La tua squadra può subire al massimo 2 gol in ogni partita. L’effetto rimane attivo fino al termine della stagione.'}),
  'var-token':Object.freeze({id:'var-token',name:'Gettone VAR',icon:'VAR',rarity:'Raro',type:'Consumabile post-partita',description:'Nel riepilogo di una partita puoi cancellare un cartellino rosso ricevuto oppure annullare un infortunio causato durante quella gara.'}),
  'blessed-ball':Object.freeze({id:'blessed-ball',name:'Pallone benedetto',icon:'⚽',rarity:'Raro',type:'Consumabile',description:'Usalo prima di una partita. Se dopo l’80° minuto non hai ancora segnato, ottieni un gol garantito tra l’81° e il 90°.'}),
- 'panini-pack':Object.freeze({id:'panini-pack',name:'Bustina Panini',icon:'▣',rarity:'Epico',type:'Consumabile mercato',description:'Aprila per ricevere 3 giocatori casuali compatibili. Scegline uno e sostituisci immediatamente un giocatore della tua rosa.'})
+ 'panini-pack':Object.freeze({id:'panini-pack',name:'Bustina Panini',icon:'▣',rarity:'Epico',type:'Consumabile mercato',description:'Aprila per ricevere 3 giocatori casuali compatibili. Scegline uno e sostituisci immediatamente un giocatore della tua rosa.'}),
+ 'red-pill':Object.freeze({id:'red-pill',name:'Pillola rossa',icon:'●',rarity:'Epico',type:'Consumabile permanente',description:'Ringiovanisce un calciatore: perde 5 OVR permanentemente, guarisce dagli infortuni e non potrà più infortunarsi per il resto della stagione.'}),
+ 'blue-pill':Object.freeze({id:'blue-pill',name:'Pillola blu',icon:'●',rarity:'Epico',type:'Consumabile rischioso',description:'Invecchia un calciatore: guadagna 10 OVR permanentemente, ma dopo ogni partita potrebbe annunciare improvvisamente il ritiro.'})
 });
 function seasonItemDefinition(id=''){return SEASON_ITEM_DEFINITIONS[String(id)]||null}
 function seasonInventory(){
@@ -189,9 +191,57 @@ function showPaniniPackModal(){
  document.querySelectorAll('[data-choose-panini]').forEach(button=>button.onclick=()=>{const id=String(button.dataset.choosePanini),select=[...document.querySelectorAll('[data-panini-outgoing]')].find(node=>String(node.dataset.paniniOutgoing)===id),message=completePaniniPackSwap(id,select?.value||'');save();modalRoot.innerHTML='';render();toast(message)});
 }
 
+/* Pillola rossa e Pillola blu */
+function pillEffectsState(){
+ const rules=state.seasonRules||(state.seasonRules={}),current=rules.pillEffects&&typeof rules.pillEffects==='object'?rules.pillEffects:{};rules.pillEffects=current;
+ Object.keys(current).forEach(playerId=>{const effect=current[playerId];if(!effect||typeof effect!=='object'){delete current[playerId];return}effect.type=effect.type==='red'?'red':effect.type==='blue'?'blue':'';effect.playerId=String(effect.playerId||playerId);effect.playerName=String(effect.playerName||playerById(playerId)?.name||'Giocatore');effect.appliedMatchday=Math.max(0,Number(effect.appliedMatchday)||0);effect.matchesPlayed=Math.max(0,Number(effect.matchesPlayed)||0);effect.retireAfterMatches=Math.max(1,Number(effect.retireAfterMatches)||1);effect.retired=Boolean(effect.retired);if(!effect.type)delete current[playerId]});
+ return current;
+}
+function pillEffectForPlayer(playerId){return pillEffectsState()[String(playerId||'')]||null}
+function redPillProtectsPlayer(playerId){const effect=pillEffectForPlayer(playerId);return Boolean(effect&&effect.type==='red'&&!effect.retired&&rosterEntry(playerId))}
+function pillEligibleEntries(){return rosterPlayers().filter(entry=>!pillEffectForPlayer(entry.playerId))}
+function pillInventoryEventAvailable(){return Boolean(seasonInventoryUsedSlots()<seasonInventory().capacity&&seasonItemQuantity('red-pill')<1&&seasonItemQuantity('blue-pill')<1)}
+function receivePillItem(itemId){
+ const item=seasonItemDefinition(itemId);if(!item)return'Oggetto non valido.';
+ const granted=addSeasonItem(itemId,1,{source:'Pillola rossa o pillola blu'});return granted?`${item.name} aggiunta all’inventario. Potrai darla a qualunque calciatore della rosa.`:`Inventario pieno: ${item.name} non può essere raccolta.`;
+}
+function applyPermanentPillOvr(entry,delta){const player=entry?.player||playerById(entry?.playerId);if(!entry||!player)return null;return setPermanentRosterOvr(entry,(Number(player.ovr)||60)+Number(delta||0))}
+function useRedPill(playerId){
+ if(seasonItemQuantity('red-pill')<1)return'Non possiedi la Pillola rossa.';
+ const entry=rosterEntry(String(playerId||'')),player=entry?.player||playerById(entry?.playerId);if(!entry||!player)return'Scegli un calciatore presente nella rosa.';
+ if(pillEffectForPlayer(entry.playerId))return'Questo calciatore ha già assunto una pillola.';
+ if(!removeSeasonItem('red-pill',1))return'La Pillola rossa non è disponibile.';
+ const change=applyPermanentPillOvr(entry,-5),status=statusOf(entry.playerId);status.injury=0;status.seasonOut=false;status.seasonOutReason='';delete state.playInjured[String(entry.playerId)];
+ pillEffectsState()[String(entry.playerId)]={type:'red',playerId:String(entry.playerId),playerName:String(player.name),appliedMatchday:Number(state.matchday)||0,matchesPlayed:0,retireAfterMatches:1,retired:false};
+ const message=`${player.name} assume la Pillola rossa: ${change?.before??Number(player.ovr)+5} → ${change?.after??Number(player.ovr)} OVR. È guarito e non potrà più infortunarsi per il resto della stagione.`;
+ recordSeasonEvent({kind:'item',title:'Pillola rossa',choice:player.name,effect:'-5 OVR permanente e immunità totale agli infortuni',result:message,automatic:false},analyticsSnapshot());return message;
+}
+function useBluePill(playerId){
+ if(seasonItemQuantity('blue-pill')<1)return'Non possiedi la Pillola blu.';
+ const entry=rosterEntry(String(playerId||'')),player=entry?.player||playerById(entry?.playerId);if(!entry||!player)return'Scegli un calciatore presente nella rosa.';
+ if(pillEffectForPlayer(entry.playerId))return'Questo calciatore ha già assunto una pillola.';
+ if(!removeSeasonItem('blue-pill',1))return'La Pillola blu non è disponibile.';
+ const change=applyPermanentPillOvr(entry,10),retireAfterMatches=1+Math.floor(Math.random()*12);
+ pillEffectsState()[String(entry.playerId)]={type:'blue',playerId:String(entry.playerId),playerName:String(player.name),appliedMatchday:Number(state.matchday)||0,matchesPlayed:0,retireAfterMatches,retired:false};
+ const message=`${player.name} assume la Pillola blu: ${change?.before??Number(player.ovr)-10} → ${change?.after??Number(player.ovr)} OVR. Da ora potrebbe ritirarsi improvvisamente dopo qualsiasi partita.`;
+ recordSeasonEvent({kind:'item',title:'Pillola blu',choice:player.name,effect:'+10 OVR permanente con rischio di ritiro improvviso',result:message,automatic:false},analyticsSnapshot());return message;
+}
+function tickPillEffectsAfterMatch(result){
+ if(!result)return null;const effects=pillEffectsState();let retirement=null;
+ Object.values(effects).filter(effect=>effect.type==='blue'&&!effect.retired).forEach(effect=>{
+  const entry=rosterEntry(effect.playerId);if(!entry){effect.retired=true;return}
+  effect.matchesPlayed=Math.max(0,Number(effect.matchesPlayed)||0)+1;
+  if(!retirement&&effect.matchesPlayed>=effect.retireAfterMatches){const player=entry.player||playerById(entry.playerId),name=String(player?.name||effect.playerName||'Il calciatore'),exit=removeOwnRosterPlayerPermanently(entry,'il ritiro improvviso causato dalla Pillola blu');effect.retired=true;effect.retiredMatchday=Number(result.matchday)||Number(state.matchday)+1;const message=`${name} annuncia il ritiro senza preavviso. ${exit}`;result.itemUpdates=Array.isArray(result.itemUpdates)?result.itemUpdates:[];result.itemUpdates.push({id:'blue-pill',title:'Pillola blu',success:false,message});recordSeasonEvent({kind:'item',title:'Pillola blu',choice:'Ritiro improvviso',effect:'Il giocatore lascia definitivamente la rosa',result:message,automatic:true},analyticsSnapshot());retirement={playerId:String(effect.playerId),playerName:name,message}}
+ });return retirement;
+}
+function renderPillEffects(){
+ const active=Object.values(pillEffectsState()).filter(effect=>!effect.retired&&rosterEntry(effect.playerId));if(!active.length)return'';
+ return `<div class="season-pill-effects">${active.map(effect=>effect.type==='red'?`<div class="season-item-active season-pill-effect red"><span>Pillola rossa attiva</span><b>${esc(effect.playerName)}</b><small>-5 OVR · immune a ogni infortunio</small></div>`:`<div class="season-item-active season-pill-effect blue"><span>Pillola blu attiva</span><b>${esc(effect.playerName)}</b><small>+10 OVR · ritiro possibile dopo ogni partita</small></div>`).join('')}</div>`;
+}
+
 /* Inventario UI */
 function renderSeasonInventory(){
- const inventory=seasonInventory(),used=seasonInventoryUsedSlots(),active=inventory.active,armbandQuantity=seasonItemQuantity('captain-armband'),whistleQuantity=seasonItemQuantity('collina-whistle'),glovesQuantity=seasonItemQuantity('buffon-gloves'),varQuantity=seasonItemQuantity('var-token'),ballQuantity=seasonItemQuantity('blessed-ball'),packQuantity=seasonItemQuantity('panini-pack'),reserved=collinaWhistleRewardReserved(),eligible=captainEligibleEntries(),pendingPack=paniniPackPending();
+ const inventory=seasonInventory(),used=seasonInventoryUsedSlots(),active=inventory.active,armbandQuantity=seasonItemQuantity('captain-armband'),whistleQuantity=seasonItemQuantity('collina-whistle'),glovesQuantity=seasonItemQuantity('buffon-gloves'),varQuantity=seasonItemQuantity('var-token'),ballQuantity=seasonItemQuantity('blessed-ball'),packQuantity=seasonItemQuantity('panini-pack'),redPillQuantity=seasonItemQuantity('red-pill'),bluePillQuantity=seasonItemQuantity('blue-pill'),reserved=collinaWhistleRewardReserved(),eligible=captainEligibleEntries(),pillEligible=pillEligibleEntries(),pendingPack=paniniPackPending(),pillEffectsHtml=renderPillEffects();
  const activeHtml=active?(String(active.id)==='captain-armband'?`<div class="season-item-active"><span>In uso nella prossima partita</span><b>${esc(active.playerName)}</b><small>Fascia del capitano · +5 OVR</small></div>`:`<div class="season-item-active"><span>In uso nella prossima partita</span><b>Pallone benedetto</b><small>Gol garantito tra 81° e 90° se all’80° non hai segnato</small></div>`):'';
  const reservedHtml=reserved?'<div class="season-item-active season-item-reward-pending"><span>Dono speciale in palio</span><b>Fischietto di Collina</b><small>Non perdere nelle 3 partite della designazione arbitrale.</small></div>':'';
  const pendingHtml=pendingPack?'<div class="season-item-active season-item-pack-pending"><span>Bustina aperta</span><b>Tre giocatori ti aspettano</b><button class="btn gold" type="button" data-continue-panini>Continua la scelta</button></div>':'';
@@ -203,11 +253,14 @@ function renderSeasonInventory(){
  const varHtml=row('var-token',varQuantity,'<small class="season-item-event-note">Il pulsante VAR appare nel riepilogo quando ricevi un rosso o un nuovo infortunio.</small>','is-rare');
  const ballHtml=row('blessed-ball',ballQuantity,!active?'<button class="btn gold season-item-use-button" type="button" data-use-season-item="blessed-ball">Usa nella prossima partita</button>':'','is-rare');
  const packHtml=row('panini-pack',packQuantity,!pendingPack?'<button class="btn gold season-item-use-button" type="button" data-use-season-item="panini-pack">Apri bustina</button>':'','is-epic');
- const empty=!active&&!armbandQuantity&&!whistleQuantity&&!glovesQuantity&&!varQuantity&&!ballQuantity&&!packQuantity&&!reserved&&!pendingPack?'<p class="season-items-empty">Non possiedi ancora oggetti. Alcune quest e situazioni speciali possono aggiungerli alla tua run.</p>':'';
- return `<details class="season-items-card" ${used||reserved||pendingPack?'open':''}><summary><span>🎒 Oggetti della run</span><b>${used}/${inventory.capacity}</b></summary><div class="season-items-body">${activeHtml}${reservedHtml}${pendingHtml}${armbandHtml}${whistleHtml}${glovesHtml}${varHtml}${ballHtml}${packHtml}${empty}</div></details>`;
+ const pillOptions=pillEligible.map(entry=>`<option value="${esc(entry.playerId)}">${esc(entry.player.name)} · ${esc(entry.slot||entry.player.Position||'')} · ${Number(entry.player.ovr)||0} OVR</option>`).join('');
+ const redPillHtml=row('red-pill',redPillQuantity,pillEligible.length?`<div class="season-item-use"><label for="redPillPlayer">Scegli chi ringiovanire</label><select id="redPillPlayer">${pillOptions}</select><button class="btn season-item-use-button" type="button" data-use-season-item="red-pill">Somministra</button></div>`:'<small class="season-item-warning">Nessun calciatore idoneo.</small>','is-red-pill');
+ const bluePillHtml=row('blue-pill',bluePillQuantity,pillEligible.length?`<div class="season-item-use"><label for="bluePillPlayer">Scegli chi invecchiare</label><select id="bluePillPlayer">${pillOptions}</select><button class="btn season-item-use-button" type="button" data-use-season-item="blue-pill">Somministra</button></div>`:'<small class="season-item-warning">Nessun calciatore idoneo.</small>','is-blue-pill');
+ const empty=!active&&!armbandQuantity&&!whistleQuantity&&!glovesQuantity&&!varQuantity&&!ballQuantity&&!packQuantity&&!redPillQuantity&&!bluePillQuantity&&!reserved&&!pendingPack&&!pillEffectsHtml?'<p class="season-items-empty">Non possiedi ancora oggetti. Alcune quest e situazioni speciali possono aggiungerli alla tua run.</p>':'';
+ return `<details class="season-items-card" ${used||reserved||pendingPack||pillEffectsHtml?'open':''}><summary><span>🎒 Oggetti della run</span><b>${used}/${inventory.capacity}</b></summary><div class="season-items-body">${activeHtml}${pillEffectsHtml}${reservedHtml}${pendingHtml}${armbandHtml}${whistleHtml}${glovesHtml}${varHtml}${ballHtml}${packHtml}${redPillHtml}${bluePillHtml}${empty}</div></details>`;
 }
 function bindSeasonInventoryControls(){
- document.querySelectorAll('[data-use-season-item]').forEach(button=>button.onclick=()=>{const id=String(button.dataset.useSeasonItem||'');let message='Oggetto non disponibile.';if(id==='captain-armband')message=useCaptainArmband(document.getElementById('captainArmbandPlayer')?.value||'');if(id==='blessed-ball')message=useBlessedBall();if(id==='panini-pack'){message=openPaniniPack();save();render();toast(message);if(paniniPackPending())showPaniniPackModal();return}save();render();toast(message)});
+ document.querySelectorAll('[data-use-season-item]').forEach(button=>button.onclick=()=>{const id=String(button.dataset.useSeasonItem||'');let message='Oggetto non disponibile.';if(id==='captain-armband')message=useCaptainArmband(document.getElementById('captainArmbandPlayer')?.value||'');if(id==='blessed-ball')message=useBlessedBall();if(id==='red-pill')message=useRedPill(document.getElementById('redPillPlayer')?.value||'');if(id==='blue-pill')message=useBluePill(document.getElementById('bluePillPlayer')?.value||'');if(id==='panini-pack'){message=openPaniniPack();save();render();toast(message);if(paniniPackPending())showPaniniPackModal();return}save();render();toast(message)});
  const resume=document.querySelector('[data-continue-panini]');if(resume)resume.onclick=showPaniniPackModal;
 }
 
