@@ -24,7 +24,7 @@ async function boot(){
    showBootProgress('Controllo dei dati…','Verifica di Serie A, Legend, giocatori e regole della modalità.');
    SEASON_DATASETS={
     'serie-a':{players:serieAPlayers,clubs:serieAClubs,validation:SEASON_CONFIG.validation},
-    legend:{players:legendPlayers,clubs:legendClubs,validation:SEASON_CONFIG.validation}
+    legend:{players:legendPlayers,clubs:legendClubs,validation:{...(SEASON_CONFIG.validation||{}),maximumOvr:120}}
    };
    COMMENTARY=commentary;OTHER_CLUBS=Array.isArray(secondaryClubs)?secondaryClubs:[];CLASSIC_PLAYERS=Array.isArray(secondaryPlayers)?secondaryPlayers:[];
    applyCompetitionVariantData(state?.competitionVariant);

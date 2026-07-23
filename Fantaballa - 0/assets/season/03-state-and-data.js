@@ -159,7 +159,7 @@ function validateGameData(players,clubs,validationConfig=SEASON_CONFIG.validatio
    if(!id)fatal.push(`Giocatore ${index+1}: id mancante.`);else if(playerIds.has(id))fatal.push(`ID giocatore duplicato: ${id}.`);else playerIds.add(id);
    if(!String(player?.name||'').trim())fatal.push(`Giocatore ${id||index+1}: nome mancante.`);
    if(!String(player?.Position||'').trim())fatal.push(`${player?.name||id}: Position mancante.`);
-   const ovr=Number(player?.ovr);if(!Number.isFinite(ovr)||ovr<1||ovr>100)fatal.push(`${player?.name||id}: OVR non valido.`);
+   const ovr=Number(player?.ovr),maximumOvr=Math.max(100,Number(validationConfig?.maximumOvr)||100);if(!Number.isFinite(ovr)||ovr<1||ovr>maximumOvr)fatal.push(`${player?.name||id}: OVR non valido (massimo ${maximumOvr}).`);
    const club=String(player?.club||'').trim();if(!clubIds.has(club))fatal.push(`${player?.name||id}: club “${club||'mancante'}” non presente in club.json.`);
  });
  const validation=validationConfig||{};
@@ -195,7 +195,7 @@ function showBootError(error){
 function updateCompetitionChrome(){
  const profile=competitionVariantProfile(state?.competitionVariant),legend=profile.id==='legend';
  document.body?.classList.toggle('competition-legend',legend);
- const meta=document.getElementById('competitionHeaderMeta');if(meta)meta.textContent=legend?'Legend · 38 giornate · 20 squadre storiche · 400 campioni':'Serie A · 38 giornate · 20 club · 455 calciatori reali';
+ const meta=document.getElementById('competitionHeaderMeta');if(meta)meta.textContent=legend?'Legend · 38 giornate · 20 squadre storiche · 400 campioni · OVR fino a 116':'Serie A · 38 giornate · 20 club · 455 calciatori reali';
  const hero=document.getElementById('competitionHeroText');if(hero)hero.textContent=legend?'Le squadre che hanno fatto la storia del calcio mondiale dentro il Fantacampionato: draft tra 20 club leggendari, 38 giornate, eventi, infortuni, squalifiche e mercato di metà stagione.':'I calciatori e i club della stagione 2025/26 dentro il Campionato di Fantaballa: draft, 38 giornate, eventi, infortuni, squalifiche e mercato di metà stagione.';
 }
 function applyCompetitionVariantData(value){

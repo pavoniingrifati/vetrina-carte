@@ -219,7 +219,11 @@ function avatarClubInfo(player){
  return {name:club?.name||avatarSourceKey(player),shortName:club?.shortName||String(club?.name||avatarSourceKey(player)).slice(0,3).toUpperCase(),primary,secondary,accent,text};
 }
 function avatarTier(player){
- const ovr=Number(player?.ovr)||0;
+ const ovr=Number(player?.ovr)||0,legend=state?.competitionVariant==='legend';
+ if(legend&&ovr>=113)return {key:'legend',glow:'#fff0a0',rim:'#ffffff',spark:'#fffbe0',stars:5,label:'GOAT'};
+ if(legend&&ovr>=108)return {key:'legend',glow:'#9ff3ff',rim:'#f6feff',spark:'#ffffff',stars:5,label:'DIA'};
+ if(legend&&ovr>=101)return {key:'legend',glow:'#8ae8ff',rim:'#eefcff',spark:'#ffffff',stars:4,label:'DIA'};
+ if(ovr>=95)return {key:'legend',glow:'#86e7ff',rim:'#ecfcff',spark:'#ffffff',stars:4,label:'DIA'};
  if(ovr>=90)return {key:'legend',glow:'#f6d365',rim:'#fff1a8',spark:'#fff8cf',stars:4,label:'LEG'};
  if(ovr>=85)return {key:'elite',glow:'#b993ff',rim:'#eedcff',spark:'#f6efff',stars:3,label:'ELI'};
  if(ovr>=80)return {key:'gold',glow:'#f7c948',rim:'#ffefad',spark:'#fff8da',stars:2,label:'GLD'};
@@ -656,6 +660,15 @@ function renderSeasonBench(){
 
 function draftRarityMeta(ovr){
  const value=Number(ovr)||0;
+ if(state?.competitionVariant==='legend'){
+  if(value>=113)return {key:'icon',label:'GOAT',sound:4};
+  if(value>=108)return {key:'icon',label:'Leggenda',sound:4};
+  if(value>=101)return {key:'icon',label:'Icona',sound:4};
+  if(value>=96)return {key:'elite',label:'Fuoriclasse',sound:3};
+  if(value>=90)return {key:'gold',label:'Élite storica',sound:2};
+  if(value>=82)return {key:'silver',label:'Storico',sound:1};
+  return {key:'bronze',label:'Rosa',sound:0};
+ }
  if(value>=85)return {key:'icon',label:'Icona',sound:4};
  if(value>=80)return {key:'elite',label:'Élite',sound:3};
  if(value>=75)return {key:'gold',label:'Oro',sound:2};
@@ -733,8 +746,11 @@ function animateMidseasonCandidateReveal(){
  },100+index*150));
 }
 
+function hasDiamondOvr(ovr){return Number(ovr)||0 >= 95}
+
 function draftCandidateOvrStyle(ovr){
- const value=Math.max(40,Math.min(99,Number(ovr)||40));
+ const raw=Math.max(40,Number(ovr)||40),scaleMax=state?.competitionVariant==='legend'?116:100;
+ const value=40+Math.max(0,Math.min(1,(raw-40)/(scaleMax-40)))*59;
  const ratio=Math.max(0,Math.min(1,(value-50)/49));
  const lightness=Math.round(94-ratio*54);
  const saturation=Math.round(34+ratio*38);
@@ -749,9 +765,11 @@ function draftCandidateOvrStyle(ovr){
  const subBg=dark?'rgba(221,201,255,.24)':'rgba(217,199,255,.95)';
  const subText=dark?'#f5eaff':'#402062';
  const avatarBg=veryDark?'linear-gradient(145deg,#0c1725,#172e49)':dark?'linear-gradient(145deg,#2d1f4d,#10243a)':'linear-gradient(145deg,#304f70,#10243a)';
- const ovrBg=dark?'#ffe96c':'#10243a';
- const ovrText=dark?'#10243a':'#ffffff';
- return `--candidate-bg:hsl(207 ${saturation}% ${lightness}%);--candidate-border:hsl(207 ${Math.min(82,saturation+8)}% ${borderLightness}%);--candidate-text:${text};--candidate-chip-bg:${chipBg};--candidate-chip-text:${chipText};--candidate-position-bg:${positionBg};--candidate-position-text:${positionText};--candidate-sub-bg:${subBg};--candidate-sub-text:${subText};--candidate-avatar-bg:${avatarBg};--candidate-avatar-text:#fff;--candidate-ovr-bg:${ovrBg};--candidate-ovr-text:${ovrText};--candidate-ovr-border:${dark?'rgba(16,36,58,.2)':'rgba(255,255,255,.28)'};--candidate-shadow:${dark?'0 1px 2px rgba(0,0,0,.26)':'none'}`;
+ const diamond=hasDiamondOvr(raw);
+ const ovrBg=diamond?'linear-gradient(180deg,#dffcff,#81ecff)':(dark?'#ffe96c':'#10243a');
+ const ovrText=diamond?'#08344d':(dark?'#10243a':'#ffffff');
+ const ovrBorder=diamond?'rgba(223,252,255,.95)':(dark?'rgba(16,36,58,.2)':'rgba(255,255,255,.28)');
+ return `--candidate-bg:hsl(207 ${saturation}% ${lightness}%);--candidate-border:hsl(207 ${Math.min(82,saturation+8)}% ${borderLightness}%);--candidate-text:${text};--candidate-chip-bg:${chipBg};--candidate-chip-text:${chipText};--candidate-position-bg:${positionBg};--candidate-position-text:${positionText};--candidate-sub-bg:${subBg};--candidate-sub-text:${subText};--candidate-avatar-bg:${avatarBg};--candidate-avatar-text:#fff;--candidate-ovr-bg:${ovrBg};--candidate-ovr-text:${ovrText};--candidate-ovr-border:${ovrBorder};--candidate-shadow:${dark?'0 1px 2px rgba(0,0,0,.26)':'none'}`;
 }
 
 function renderDraftCandidates(){
@@ -759,7 +777,7 @@ function renderDraftCandidates(){
  if(!state.draft.clubId)return '<div class="season-empty">Premi <b>Apri pack club</b>. Verranno mostrati tutti i giocatori compatibili appartenenti al club estratto. Più l’OVR è alto, più il box diventa scuro.</div>';
  const candidates=sortPlayersByRole(state.draft.candidates.map(playerById).filter(Boolean));
  if(!candidates.length)return '<div class="season-empty">Nessun giocatore valido in questo club. Usa il re-roll.</div>';
- return candidates.map((p,index)=>{const ovr=Math.max(0,Math.min(100,Number(p.ovr)||0));const sub=isSubscriber(p),creator=isCreator(p);const chemPreview=draftCandidateChemPreview(p);const rarity=draftRarityMeta(p.ovr);return `<button type="button" class="season-candidate rarity-${rarity.key} ${sub?'subscriber':''} ${creator?'creator':''} ${state.draft.pendingPlayerId===String(p.id)?'active':''}" data-candidate="${esc(p.id)}" data-ovr="${ovr}" style="${draftCandidateOvrStyle(p.ovr)}" aria-label="${esc(p.name)}, overall ${esc(p.ovr)}, rarità ${esc(rarity.label)}, intesa ${chemPreview}"><span class="season-candidate-rank">#${index+1}</span>${renderMiniAvatar(p)}<span class="season-candidate-body"><span class="season-candidate-name">${esc(p.name)}</span><span class="season-candidate-meter" aria-hidden="true"><i style="width:${ovr}%"></i></span><span class="season-candidate-meta"><span class="season-chip position">${esc(p.Position)}</span><span class="season-rarity-badge">${esc(rarity.label)}</span>${sub?'<span class="season-chip sub">ABBONATO</span>':''}${creator?'<span class="season-chip creator">CREATOR</span>':''}<span class="season-chip chemistry ${benchDraftPhase()?'bench':''}">${benchDraftPhase()?'PAN':`${formatSignedIntesa(chemPreview)} INT`}</span></span></span><span class="season-chip ovr">${esc(p.ovr)}</span></button>`}).join('')
+ return candidates.map((p,index)=>{const rawOvr=Math.max(0,Number(p.ovr)||0),ovrScaleMax=state?.competitionVariant==='legend'?116:100,ovr=Math.max(0,Math.min(100,(rawOvr/ovrScaleMax)*100));const sub=isSubscriber(p),creator=isCreator(p);const chemPreview=draftCandidateChemPreview(p);const rarity=draftRarityMeta(p.ovr);return `<button type="button" class="season-candidate rarity-${rarity.key} ${sub?'subscriber':''} ${creator?'creator':''} ${state.draft.pendingPlayerId===String(p.id)?'active':''}" data-candidate="${esc(p.id)}" data-ovr="${rawOvr}" style="${draftCandidateOvrStyle(p.ovr)}" aria-label="${esc(p.name)}, overall ${esc(p.ovr)}, rarità ${esc(rarity.label)}, intesa ${chemPreview}"><span class="season-candidate-rank">#${index+1}</span>${renderMiniAvatar(p)}<span class="season-candidate-body"><span class="season-candidate-name">${esc(p.name)}</span><span class="season-candidate-meter" aria-hidden="true"><i style="width:${ovr}%"></i></span><span class="season-candidate-meta"><span class="season-chip position">${esc(p.Position)}</span><span class="season-rarity-badge">${esc(rarity.label)}</span>${sub?'<span class="season-chip sub">ABBONATO</span>':''}${creator?'<span class="season-chip creator">CREATOR</span>':''}<span class="season-chip chemistry ${benchDraftPhase()?'bench':''}">${benchDraftPhase()?'PAN':`${formatSignedIntesa(chemPreview)} INT`}</span></span></span><span class="season-chip ovr ${hasDiamondOvr(p.ovr)?'diamond-ovr':''}">${esc(p.ovr)}</span></button>`}).join('')
 }
 function renderRosterMini(){
  const rows=rosterPlayers();
@@ -769,7 +787,7 @@ function renderRosterMini(){
    const chemistry=draftChemistry(starters);
    const slotRows=formationSlots().map(slot=>({slot:slot.code,slotId:slot.instanceId,bench:false,entry:starters.find(r=>String(r.slotId)===String(slot.instanceId))||null}));
    const benchRows=[1,2,3].map(i=>({slot:`PAN${i}`,slotId:`bench-${i}`,bench:true,entry:bench.find(r=>String(r.slotId)===`bench-${i}`)||null}));
-   return `<div class="season-roster-mini">${slotRows.concat(benchRows).map(row=>{const entry=row.entry;const sub=entry&&isSubscriber(entry.player),creator=entry&&isCreator(entry.player);const chemBonus=entry&&!row.bench?(chemistry.playerBonus[String(entry.player.id)]||0):null;return `<div class="season-roster-line ${row.bench?'bench':''} ${entry?'filled':'empty'} ${sub?'subscriber':''} ${creator?'creator':''}"><span class="season-roster-slot">${esc(row.slot)}</span>${entry?renderMiniAvatar(entry.player,'small'):''}<div class="season-roster-player">${entry?`<b>${sub?'<span class="season-inline-sub-star">★</span>':''}${creator?'<span class="season-inline-creator">CR</span>':''}${esc(entry.player.name)}</b><small>${esc(entry.player.nation)} · ${esc(entry.player.Position)}${chemBonus!==null?` · <span class="season-roster-chem">${formatSignedIntesa(chemBonus)} INT</span>`:''}</small>`:`<b>—</b><small>${row.bench?'Riserva da scegliere':'Slot disponibile'}</small>`}</div><span class="season-roster-ovr">${entry?esc(entry.player.ovr):'—'}</span></div>`}).join('')}</div>`;
+   return `<div class="season-roster-mini">${slotRows.concat(benchRows).map(row=>{const entry=row.entry;const sub=entry&&isSubscriber(entry.player),creator=entry&&isCreator(entry.player);const chemBonus=entry&&!row.bench?(chemistry.playerBonus[String(entry.player.id)]||0):null;return `<div class="season-roster-line ${row.bench?'bench':''} ${entry?'filled':'empty'} ${sub?'subscriber':''} ${creator?'creator':''}"><span class="season-roster-slot">${esc(row.slot)}</span>${entry?renderMiniAvatar(entry.player,'small'):''}<div class="season-roster-player">${entry?`<b>${sub?'<span class="season-inline-sub-star">★</span>':''}${creator?'<span class="season-inline-creator">CR</span>':''}${esc(entry.player.name)}</b><small>${esc(entry.player.nation)} · ${esc(entry.player.Position)}${chemBonus!==null?` · <span class="season-roster-chem">${formatSignedIntesa(chemBonus)} INT</span>`:''}</small>`:`<b>—</b><small>${row.bench?'Riserva da scegliere':'Slot disponibile'}</small>`}</div><span class="season-roster-ovr ${entry&&hasDiamondOvr(entry.player.ovr)?'diamond-ovr':''}">${entry?esc(entry.player.ovr):'—'}</span></div>`}).join('')}</div>`;
  }
  return `<div class="roster-list">${rows.length?rows.map(r=>`<div class="roster-row ${r.bench?'bench':''}"><span class="slot-code">${esc(r.slot)}</span>${renderMiniAvatar(r.player,'small')}<div><b>${esc(r.player.name)}</b><small>${esc(r.player.nation)} · ${esc(r.player.Position)}</small></div><span class="chip ovr">${r.player.ovr}</span></div>`).join(''):'<p>Nessun giocatore scelto.</p>'}</div>`
 }
@@ -781,7 +799,7 @@ function renderSeasonRosterField(){
  const slots=formationSlots();
  const starterTarget=seasonStarterTarget(),benchTarget=seasonBenchTarget(),benchNumbers=seasonBenchNumbers();
  const avgOverall=resolvedLineup.length?resolvedLineupAverage(resolvedLineup).toFixed(1):'—',emergencyYouthCount=resolvedLineup.filter(isEmergencyYouthEntry).length;
- const benchMarkup=benchTarget?`<div class="season-roster-bench-wrap"><div class="season-roster-bench-title">Panchina</div><div class="season-roster-bench-grid">${benchNumbers.map(i=>{const entry=bench.find(r=>String(r.slotId)===`bench-${i}`);const sub=entry&&isSubscriber(entry.player),creator=entry&&isCreator(entry.player);return `<div class="season-roster-bench-card ${entry?'filled':''} ${sub?'subscriber':''} ${creator?'creator':''}">${entry?`${renderMiniAvatar(entry.player,'small')}<div class="season-roster-bench-copy"><b>${sub?'<span class="season-inline-sub-star">★</span>':''}${creator?'<span class="season-inline-creator">CR</span>':''}${esc(entry.player.name)}</b><small>${esc(entry.player.nation)} · ${esc(entry.player.Position)}</small></div><span class="season-roster-ovr">${esc(entry.player.ovr)}</span>`:`<b>Riserva ${i}</b><small>Slot panchina vuoto</small>`}</div>`}).join('')}</div></div>`:`<div class="season-roster-bench-wrap"><div class="season-roster-bench-title">Panchina</div><div class="season-empty">La regola ${esc(state.formation)} porta tutti i 14 giocatori in campo: nessun panchinaro disponibile.</div></div>`;
+ const benchMarkup=benchTarget?`<div class="season-roster-bench-wrap"><div class="season-roster-bench-title">Panchina</div><div class="season-roster-bench-grid">${benchNumbers.map(i=>{const entry=bench.find(r=>String(r.slotId)===`bench-${i}`);const sub=entry&&isSubscriber(entry.player),creator=entry&&isCreator(entry.player);return `<div class="season-roster-bench-card ${entry?'filled':''} ${sub?'subscriber':''} ${creator?'creator':''}">${entry?`${renderMiniAvatar(entry.player,'small')}<div class="season-roster-bench-copy"><b>${sub?'<span class="season-inline-sub-star">★</span>':''}${creator?'<span class="season-inline-creator">CR</span>':''}${esc(entry.player.name)}</b><small>${esc(entry.player.nation)} · ${esc(entry.player.Position)}</small></div><span class="season-roster-ovr ${hasDiamondOvr(entry.player.ovr)?'diamond-ovr':''}">${esc(entry.player.ovr)}</span>`:`<b>Riserva ${i}</b><small>Slot panchina vuoto</small>`}</div>`}).join('')}</div></div>`:`<div class="season-roster-bench-wrap"><div class="season-roster-bench-title">Panchina</div><div class="season-empty">La regola ${esc(state.formation)} porta tutti i 14 giocatori in campo: nessun panchinaro disponibile.</div></div>`;
  return `<div class="season-roster-board"><div class="season-roster-board-head"><div><div class="label">Rosa titolare</div><h3>Modulo ${esc(state.formation)}</h3></div><div class="season-roster-board-meta"><span class="season-board-pill">OVR partita ${avgOverall}</span><span class="season-board-pill">Intesa ${chemistry.score}/100</span>${emergencyYouthCount?`<span class="season-board-pill">Primavera ${emergencyYouthCount}</span>`:``}<span class="season-board-pill">${starters.length}/${starterTarget} titolari</span><span class="season-board-pill">${bench.length}/${benchTarget} riserve</span></div></div><div class="season-roster-shell">${renderPitchBoardStrip()}<div class="season-roster-middle">${renderPitchBoardSide('left')}<div class="season-roster-pitch"><svg class="season-pitch-svg" viewBox="0 0 100 120" preserveAspectRatio="none" aria-hidden="true"><rect x="1" y="1" width="98" height="118" fill="none" stroke="rgba(255,255,255,.8)" stroke-width=".8"/><rect x="21" y="1" width="58" height="18" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".6"/><rect x="34" y="1" width="32" height="8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><rect x="21" y="101" width="58" height="18" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".6"/><rect x="34" y="111" width="32" height="8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><line x1="1" y1="60" x2="99" y2="60" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><circle cx="50" cy="60" r="12" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/></svg>${slots.map(slot=>{const entry=assigned.get(String(slot.instanceId));if(!entry)return `<div class="season-roster-field-slot empty" style="left:${slot.x}%;top:${slot.y}%"><span class="season-slot-badge">${esc(slot.code)}</span><span class="season-slot-name">${esc(slot.code)}</span></div>`;const sub=isSubscriber(entry.player),creator=isCreator(entry.player);const chemBonus=chemistry.playerBonus[String(entry.player.id)]||0;const portsZero=closedPortsAffects(entry.player);return `<div class="season-roster-field-slot filled ${sub?'subscriber-player':''} ${creator?'creator-player':''}" style="left:${slot.x}%;top:${slot.y}%">${renderPlayerJersey(entry.player,'',chemBonus)}<span class="season-slot-name">${sub?'<span class="season-field-sub-star">★</span>':''}${creator?'<span class="season-inline-creator">CR</span>':''}${esc(entry.player.name)}</span><span class="season-slot-role">${esc(slot.code)}</span><span class="season-slot-chem ${portsZero?'zeroed':chemBonus>0?'positive':''}">${portsZero?'⛔ 0 INT':`${formatSignedIntesa(chemBonus)} INT`}</span></div>`}).join('')}</div>${renderPitchBoardSide('right')}</div>${renderPitchBoardStrip()}</div>${benchMarkup}</div>`
 }
 

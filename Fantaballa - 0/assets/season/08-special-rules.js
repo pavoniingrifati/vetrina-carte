@@ -213,9 +213,9 @@ function playLeaguePlayoffStage(){
  if(p.stageIndex>=2){p.status='completed';p.championId=String(winners[0]||'');p.ties=[];p.stageName='Play off conclusi';}
  else{p.stageIndex++;p.stageName=leaguePlayoffStageName(p.stageIndex);p.ties=buildNextLeaguePlayoffTies(winners)}
  save();
- const rows=results.map(result=>`<div class="goal-line"><b>${result.homeSeed}ª ${esc(result.homeName)} ${Number(result.homeGoals)}–${Number(result.awayGoals)} ${esc(result.awayName)} ${result.awaySeed}ª</b>${result.penalties?`<br>Rigori: ${Number(result.penalties.home)}–${Number(result.penalties.away)}.`:result.extraTime?'<br>Decisa dopo i tempi supplementari.':''}</div>`).join('');
+ const rows=`<div class="playoff-stage-rows">${results.map(result=>`<div class="playoff-stage-row"><b>${result.homeSeed}ª ${esc(result.homeName)} ${Number(result.homeGoals)}–${Number(result.awayGoals)} ${esc(result.awayName)} ${result.awaySeed}ª</b><small>${result.penalties?`Rigori: ${Number(result.penalties.home)}–${Number(result.penalties.away)}.`:result.extraTime?'Decisa dopo i tempi supplementari.':'Partita decisa nei tempi regolamentari.'}</small></div>`).join('')}</div>`;
  const completed=p.status==='completed',champion=teamById(p.championId);
- modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded"><div class="label">🏆 ${esc(stageName)}</div><h2>${completed?`${esc(champion?.name||'La squadra vincitrice')} è campione`:'Turno completato'}</h2>${rows}<button id="continueLeaguePlayoffs" class="btn primary">${completed?'Vai al finale di stagione':'Continua i play off'}</button></div></div>`;
+ modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded playoff-stage-modal"><div class="label">🏆 ${esc(stageName)}</div><h2>${completed?`${esc(champion?.name||'La squadra vincitrice')} è campione`:'Turno completato'}</h2>${rows}<button id="continueLeaguePlayoffs" class="btn primary">${completed?'Vai al finale di stagione':'Continua i play off'}</button></div></div>`;
  document.getElementById('continueLeaguePlayoffs').onclick=()=>{modalRoot.innerHTML='';if(completed)finishAfterLeaguePlayoffs();save();render()};
 }
 function renderLeaguePlayoffHistory(){
