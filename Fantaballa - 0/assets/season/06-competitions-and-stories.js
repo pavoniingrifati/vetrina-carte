@@ -18,7 +18,7 @@ function parallelCupState(){
 function parallelCupChemistryMultiplier(){return parallelCupState().rewardType==='chemistry_x2'?2:1}
 function parallelCupChemistryZero(){return parallelCupState().penaltyType==='chemistry_zero'}
 function parallelCupDisciplineImmunity(){return parallelCupState().rewardType==='discipline_immunity'}
-function currentCompetitionName(){return PLAYERS===REAL_PLAYERS?'Fantacampionato del Ca***':'Campionato del Ca***'}
+function currentCompetitionName(){if(PLAYERS===REAL_PLAYERS&&state?.competitionVariant==='legend')return'Fantacampionato Legend';return PLAYERS===REAL_PLAYERS?'Fantacampionato del Ca***':'Campionato del Ca***'}
 function otherCompetitionName(){return PLAYERS===REAL_PLAYERS?'Campionato del Ca***':'Fantacampionato del Ca***'}
 function otherCompetitionPlayers(){return PLAYERS===REAL_PLAYERS?CLASSIC_PLAYERS:REAL_PLAYERS}
 function otherClubPlayerPool(clubId){return (otherCompetitionPlayers()||[]).filter(player=>String(player.club)===String(clubId)).sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0))}

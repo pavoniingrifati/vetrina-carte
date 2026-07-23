@@ -6,23 +6,28 @@ function showBootProgress(title,detail){
  const target=document.getElementById('screen');if(!target)return;
  target.innerHTML=`<section class="panel season-boot-status" role="status" aria-live="polite" aria-atomic="true"><div class="label">Avvio del gioco</div><h2>${esc(title)}</h2><p>${esc(detail||'')}</p></section>`;
 }
-function render(){updateSaveStatus();if(!PLAYERS.length||!CLUBS.length){screen.innerHTML='<section class="panel"><h2>Caricamento database giocatori...</h2></section>';applyError404VisualState();return}if(state.phase==='setup')showSetup();else if(state.phase==='draft')showDraft();else if(state.phase==='season')showSeason();else if(state.phase==='midseason')showMidseason();else if(state.phase==='story-final')showMeritStoryFinale();else if(state.phase==='italia-2006-final')showItalia2006Final();else if(state.phase==='fantaballopoli-final')showFantaballopoliFinal();else if(state.phase==='fantaballopoli-restart')showFantaballopoliRestart();else if(state.phase==='playoffs')showLeaguePlayoffs();else if(state.phase==='finished')showFinished();applyError404VisualState();updateSaveStatus()}
+function render(){updateCompetitionChrome();updateSaveStatus();if(!PLAYERS.length||!CLUBS.length){screen.innerHTML='<section class="panel"><h2>Caricamento database giocatori...</h2></section>';applyError404VisualState();return}if(state.phase==='setup')showSetup();else if(state.phase==='draft')showDraft();else if(state.phase==='season')showSeason();else if(state.phase==='midseason')showMidseason();else if(state.phase==='story-final')showMeritStoryFinale();else if(state.phase==='italia-2006-final')showItalia2006Final();else if(state.phase==='fantaballopoli-final')showFantaballopoliFinal();else if(state.phase==='fantaballopoli-restart')showFantaballopoliRestart();else if(state.phase==='playoffs')showLeaguePlayoffs();else if(state.phase==='finished')showFinished();applyError404VisualState();updateSaveStatus()}
 async function boot(){
  showBootProgress('Caricamento database…','Giocatori, club, cronaca ed eventi.');
  try{
-   const [primaryPlayers,primaryClubs,commentary,secondaryPlayers,secondaryClubs]=await Promise.all([
-     fetchJsonResource(SEASON_CONFIG.data.primaryPlayers,SEASON_CONFIG.data.primaryPlayers),
-     fetchJsonResource(SEASON_CONFIG.data.primaryClubs,SEASON_CONFIG.data.primaryClubs),
+   const serieAProfile=competitionVariantProfile('serie-a'),legendProfile=competitionVariantProfile('legend');
+   const [serieAPlayers,serieAClubs,legendPlayers,legendClubs,commentary,secondaryPlayers,secondaryClubs]=await Promise.all([
+     fetchJsonResource(serieAProfile.players,serieAProfile.players),
+     fetchJsonResource(serieAProfile.clubs,serieAProfile.clubs),
+     fetchJsonResource(legendProfile.players,legendProfile.players),
+     fetchJsonResource(legendProfile.clubs,legendProfile.clubs),
      fetchJsonResource(SEASON_CONFIG.data.commentary,SEASON_CONFIG.data.commentary,{optional:true}),
      fetchJsonResource(SEASON_CONFIG.data.secondaryPlayers,SEASON_CONFIG.data.secondaryPlayers,{optional:true}),
      fetchJsonResource(SEASON_CONFIG.data.secondaryClubs,SEASON_CONFIG.data.secondaryClubs,{optional:true}),
      SEASON_EVENTS_READY
    ]);
-   showBootProgress('Controllo dei dati…','Verifica di giocatori, club e regole della modalità.');
-   PLAYERS=primaryPlayers;CLUBS=primaryClubs;COMMENTARY=commentary;OTHER_CLUBS=Array.isArray(secondaryClubs)?secondaryClubs:[];
-   if(SEASON_CONFIG.mode==='real'){REAL_PLAYERS=PLAYERS;CLASSIC_PLAYERS=Array.isArray(secondaryPlayers)?secondaryPlayers:[]}
-   else{CLASSIC_PLAYERS=PLAYERS;REAL_PLAYERS=Array.isArray(secondaryPlayers)?secondaryPlayers:[]}
-   dataDiagnostics=validateGameData(PLAYERS,CLUBS);
+   showBootProgress('Controllo dei dati…','Verifica di Serie A, Legend, giocatori e regole della modalità.');
+   SEASON_DATASETS={
+    'serie-a':{players:serieAPlayers,clubs:serieAClubs,validation:SEASON_CONFIG.validation},
+    legend:{players:legendPlayers,clubs:legendClubs,validation:SEASON_CONFIG.validation}
+   };
+   COMMENTARY=commentary;OTHER_CLUBS=Array.isArray(secondaryClubs)?secondaryClubs:[];CLASSIC_PLAYERS=Array.isArray(secondaryPlayers)?secondaryPlayers:[];
+   applyCompetitionVariantData(state?.competitionVariant);
    if(dataDiagnostics.fatal.length)throw Error(dataDiagnostics.fatal.slice(0,12).join(' | ')+(dataDiagnostics.fatal.length>12?` | Altri ${dataDiagnostics.fatal.length-12} errori.`:''));
  }catch(error){
    console.error('Errore caricamento database',error);showBootError(error);return;

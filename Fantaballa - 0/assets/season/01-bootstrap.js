@@ -45,4 +45,7 @@ function cleanupLegacySaveArtifacts(){
 }
 const VICTORY_ENDPOINT='https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
 const USER_ID=SEASON_CONFIG.user.teamId;
+const COMPETITION_VARIANT_CONFIG=SEASON_CONFIG.data?.variants||{};
+function normalizeCompetitionVariant(value){return String(value||'').toLowerCase()==='legend'?'legend':'serie-a'}
+function competitionVariantProfile(value){const id=normalizeCompetitionVariant(value??state?.competitionVariant);return COMPETITION_VARIANT_CONFIG[id]||COMPETITION_VARIANT_CONFIG['serie-a']||{id:'serie-a',label:'Serie A',players:SEASON_CONFIG.data.primaryPlayers,clubs:SEASON_CONFIG.data.primaryClubs,playerCount:0,description:''}}
 
