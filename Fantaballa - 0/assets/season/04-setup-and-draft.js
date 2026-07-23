@@ -746,7 +746,7 @@ function animateMidseasonCandidateReveal(){
  },100+index*150));
 }
 
-function hasDiamondOvr(ovr){return Number(ovr)||0 >= 95}
+function hasDiamondOvr(ovr){return (Number(ovr)||0) >= 95}
 
 function draftCandidateOvrStyle(ovr){
  const raw=Math.max(40,Number(ovr)||40),scaleMax=state?.competitionVariant==='legend'?116:100;
