@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Fantaballa Balance Runner</title>
+  <style>html,body{margin:0;background:#07111f;color:#eef5ff;font:14px/1.45 system-ui,sans-serif}#screen{padding:16px}.runner-status{padding:14px;border:1px solid #30435f;border-radius:12px;background:#101d31}#resetBtn,.toast{display:none}</style>
+  <link rel="stylesheet" href="assets/accessibility.css?v=20260722-1">
+  <script defer src="assets/accessibility.js?v=20260722-1"></script>
+</head>
+<body>
+  <span id="saveStatus" hidden></span>
+  <button id="resetBtn" type="button">Reset</button>
+  <main id="screen"><div class="runner-status">Caricamento Balance Lab…</div></main>
+  <div id="modalRoot"></div>
+  <div id="toast" class="toast"></div>
+  <script>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const mode = params.get('mode') === 'real' ? 'real' : 'community';
+      const configFile = mode === 'real' ? 'assets/season-config-real.js' : 'assets/season-config-community.js';
+      const runtimeErrors = [];
+      window.__FANTABALLA_BALANCE_RUNTIME_ERRORS = runtimeErrors;
+
+      window.addEventListener('error', event => runtimeErrors.push({ type: 'error', message: event.message || String(event.error || 'Errore sconosciuto') }));
+      window.addEventListener('unhandledrejection', event => runtimeErrors.push({ type: 'unhandledrejection', message: String(event.reason?.message || event.reason || 'Promise rifiutata') }));
+
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = src;
+          script.async = false;
+          script.onload = resolve;
+          script.onerror = () => reject(new Error(`Impossibile caricare ${src}`));
+          document.body.appendChild(script);
+        });
+      }
+
+      async function loadRunner() {
+        try {
+          await loadScript('assets/achievements.js');
+          await loadScript('assets/database-validator.js');
+          await loadScript(configFile);
+          const original = window.FANTABALLA_SEASON_CONFIG;
+          const isolated = JSON.parse(JSON.stringify(original));
+          const prefix = `${original.storage.saveBase}_balance_runner`;
+          isolated.storage = {
+            ...isolated.storage,
+            saveBase: prefix,
+            legacySaveKeys: [],
+            activeSlotKey: `${prefix}_active_slot`,
+            teamNameKey: `${prefix}_team_name`,
+            coachNameKey: `${prefix}_coach_name`,
+            paletteKey: `${prefix}_team_palette`
+          };
+          window.FANTABALLA_SEASON_CONFIG = Object.freeze(isolated);
+          const modules = [
+            '01-bootstrap.js','02-achievements.js','03-save-system.js','03-state-and-data.js','04-setup-and-draft.js','05-opponents-and-chaos.js','06-competitions-and-stories.js','07-effects-quests-chains.js','08-special-rules.js','09-analytics-and-summary.js','event-handlers.js','10-events.js','11-season-ui-and-lineup.js','12-match-simulation.js','13-market-and-finish.js','14-runtime.js','16-balance-api.js'
+          ];
+          for (const file of modules) await loadScript(`assets/season/${file}`);
+          await window.FantaballaBalanceAPI.ready();
+          parent.postMessage({ type: 'fantaballa-balance-runner-ready', mode, overview: window.FantaballaBalanceAPI.getOverview() }, '*');
+        } catch (error) {
+          document.getElementById('screen').innerHTML = `<div class="runner-status">Errore runner: ${String(error.message || error)}</div>`;
+          parent.postMessage({ type: 'fantaballa-balance-runner-error', mode, message: error.message || String(error), stack: error.stack || '' }, '*');
+        }
+      }
+
+      window.addEventListener('message', async event => {
+        const message = event.data || {};
+        if (message.mode !== mode) return;
+        if (message.type === 'fantaballa-cancel-balance') {
+          window.FantaballaBalanceAPI?.cancel();
+          return;
+        }
+        if (message.type !== 'fantaballa-run-balance') return;
+        try {
+          const report = await window.FantaballaBalanceAPI.runBalance(message.options || {}, progress => {
+            parent.postMessage({ type: 'fantaballa-balance-progress', mode, runId: message.runId || '', progress }, '*');
+          });
+          report.runId = message.runId || '';
+          report.runtimeErrors = runtimeErrors.slice();
+          parent.postMessage({ type: 'fantaballa-balance-report', mode, runId: message.runId || '', report }, '*');
+        } catch (error) {
+          parent.postMessage({ type: error?.name === 'AbortError' ? 'fantaballa-balance-cancelled' : 'fantaballa-balance-runner-error', mode, runId: message.runId || '', message: error.message || String(error), stack: error.stack || '' }, '*');
+        }
+      });
+
+      loadRunner();
+    })();
+  </script>
+</body>
+</html>

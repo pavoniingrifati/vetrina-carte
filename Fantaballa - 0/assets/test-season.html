@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover">
+  <title>Test automatici motore stagione · Fantaballa</title>
+  <style>
+    :root{--bg:#07111f;--panel:#101d31;--panel2:#162641;--line:#30435f;--text:#eef5ff;--muted:#9fb0c8;--accent:#f0c94b;--good:#32d583;--bad:#f97066;--running:#53b1fd}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#152843 0,#07111f 48%);color:var(--text);font:15px/1.5 Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+    button{font:inherit}.page{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:28px 0 60px}.hero{display:flex;gap:22px;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.eyebrow{color:var(--accent);font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:12px}.hero h1{font-size:clamp(28px,5vw,48px);line-height:1.05;margin:7px 0 10px}.hero p{max-width:760px;color:var(--muted);margin:0}.hero-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.back{color:var(--text);text-decoration:none;border:1px solid var(--line);padding:9px 13px;border-radius:10px;white-space:nowrap}.toolbar{display:flex;flex-wrap:wrap;gap:10px;padding:15px;background:rgba(16,29,49,.94);border:1px solid var(--line);border-radius:16px;margin-bottom:16px}.btn{border:1px solid var(--line);background:#1b2e4c;color:var(--text);border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:750}.btn:hover{border-color:#6f89ac}.btn.primary{background:var(--accent);color:#1e2430;border-color:var(--accent)}.btn:disabled{opacity:.45;cursor:not-allowed}.toolbar-note{margin-left:auto;color:var(--muted);align-self:center;font-size:13px}.modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:16px}.mode-card{background:rgba(16,29,49,.96);border:1px solid var(--line);border-radius:16px;padding:16px}.mode-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.mode-title{font-size:19px;font-weight:850}.badge{font-size:12px;font-weight:800;border-radius:999px;padding:5px 9px;background:#263a58;color:var(--muted)}.badge.running{background:rgba(83,177,253,.16);color:var(--running)}.badge.pass{background:rgba(50,213,131,.15);color:var(--good)}.badge.fail{background:rgba(249,112,102,.15);color:var(--bad)}.progress{height:10px;border-radius:99px;background:#07111f;overflow:hidden;margin:13px 0 8px}.progress span{display:block;height:100%;width:0;background:var(--running);transition:width .18s ease}.mode-meta{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:13px}.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}.metric{background:rgba(16,29,49,.96);border:1px solid var(--line);border-radius:14px;padding:14px}.metric small{display:block;color:var(--muted)}.metric strong{display:block;font-size:27px;margin-top:2px}.metric.good strong{color:var(--good)}.metric.bad strong{color:var(--bad)}.results-panel{background:rgba(16,29,49,.97);border:1px solid var(--line);border-radius:16px;overflow:hidden}.results-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:16px;border-bottom:1px solid var(--line)}.results-head h2{font-size:20px;margin:0}.filters{display:flex;gap:8px;flex-wrap:wrap}.filter{background:#14243c;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:6px 10px;cursor:pointer}.filter.active{color:#111827;background:var(--accent);border-color:var(--accent)}.empty{padding:38px 18px;text-align:center;color:var(--muted)}.group{border-bottom:1px solid var(--line)}.group:last-child{border-bottom:0}.group-title{padding:11px 16px;background:#0d192b;font-weight:850;color:#c8d6e9}.test-row{display:grid;grid-template-columns:25px minmax(0,1fr) auto;gap:11px;align-items:start;padding:12px 16px;border-top:1px solid rgba(48,67,95,.52)}.test-row:first-of-type{border-top:0}.status-icon{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:13px}.status-icon.pass{color:#061b11;background:var(--good)}.status-icon.fail{color:#260806;background:var(--bad)}.test-name{font-weight:750}.test-sub{color:var(--muted);font-size:13px;margin-top:2px;white-space:pre-wrap}.test-duration{color:var(--muted);font-size:12px;white-space:nowrap}.failure-detail{margin-top:8px;padding:9px 10px;background:rgba(249,112,102,.08);border:1px solid rgba(249,112,102,.25);border-radius:8px;color:#ffd3cf;font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;max-height:220px;overflow:auto}.hidden-runners{position:absolute;left:-99999px;width:1px;height:1px;overflow:hidden}.run-note{padding:11px 16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}.fatal{margin-bottom:16px;padding:13px 15px;border:1px solid rgba(249,112,102,.45);background:rgba(249,112,102,.1);border-radius:12px;color:#ffd3cf;display:none}
+    @media(max-width:760px){.hero{display:block}.back{display:inline-block;margin-top:16px}.modes,.summary{grid-template-columns:1fr 1fr}.toolbar-note{width:100%;margin-left:0}.results-head{display:block}.filters{margin-top:10px}.test-row{grid-template-columns:25px minmax(0,1fr)}.test-duration{grid-column:2}.summary .metric strong{font-size:22px}}
+    @media(max-width:480px){.modes,.summary{grid-template-columns:1fr}.page{width:min(100% - 18px,1180px);padding-top:18px}}
+  </style>
+  <link rel="stylesheet" href="assets/mobile-responsive.css?v=20260722-1">
+  <script defer src="assets/mobile-responsive.js?v=20260722-1"></script>
+  <link rel="stylesheet" href="assets/accessibility.css?v=20260722-1">
+  <script defer src="assets/accessibility.js?v=20260722-1"></script>
+</head>
+<body class="page-tests">
+  <div class="page">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">Strumento interno · noindex</div>
+        <h1>Test automatici del motore</h1>
+        <p>Controlla Community e REAL senza usare i salvataggi reali. Verifica database, stato, draft, calendario, eventi, simulazione e una stagione completa di 38 giornate.</p>
+      </div>
+      <div class="hero-actions"><a class="back" href="balance-lab.html">Balance Lab</a><a class="back" href="event-editor.html">Editor eventi</a><a class="back" href="event-check.html">Controllo eventi</a><a class="back" href="database-check.html">Controllo database</a><a class="back" href="index.html">← Torna al gioco</a></div>
+    </header>
+
+    <div id="fatal" class="fatal"></div>
+
+    <section class="toolbar" aria-label="Comandi test">
+      <button id="quickBtn" class="btn" type="button">Test rapidi</button>
+      <button id="fullBtn" class="btn primary" type="button">Test completi</button>
+      <button id="stressBtn" class="btn" type="button">Stress: 3 stagioni extra</button>
+      <button id="downloadBtn" class="btn" type="button" disabled>Scarica report JSON</button>
+      <span class="toolbar-note">I test usano chiavi localStorage isolate con suffisso <b>test_runner</b>.</span>
+    </section>
+
+    <section class="modes">
+      <article class="mode-card" data-mode-card="community">
+        <div class="mode-head"><span class="mode-title">Community</span><span class="badge" data-badge>In attesa</span></div>
+        <div class="progress"><span data-progress></span></div>
+        <div class="mode-meta"><span data-current>Nessun test avviato</span><span data-count>0/0</span></div>
+      </article>
+      <article class="mode-card" data-mode-card="real">
+        <div class="mode-head"><span class="mode-title">REAL</span><span class="badge" data-badge>In attesa</span></div>
+        <div class="progress"><span data-progress></span></div>
+        <div class="mode-meta"><span data-current>Nessun test avviato</span><span data-count>0/0</span></div>
+      </article>
+    </section>
+
+    <section class="summary" aria-label="Riepilogo">
+      <article class="metric"><small>Test totali</small><strong id="metricTotal">0</strong></article>
+      <article class="metric good"><small>Superati</small><strong id="metricPassed">0</strong></article>
+      <article class="metric bad"><small>Falliti</small><strong id="metricFailed">0</strong></article>
+      <article class="metric"><small>Durata</small><strong id="metricDuration">—</strong></article>
+    </section>
+
+    <section class="results-panel">
+      <div class="results-head">
+        <h2>Risultati</h2>
+        <div class="filters" role="group" aria-label="Filtra risultati">
+          <button class="filter active" data-filter="all" type="button">Tutti</button>
+          <button class="filter" data-filter="fail" type="button">Solo errori</button>
+          <button class="filter" data-filter="community" type="button">Community</button>
+          <button class="filter" data-filter="real" type="button">REAL</button>
+        </div>
+      </div>
+      <div id="results"><div class="empty">Avvia i test per visualizzare il report.</div></div>
+      <div id="runNote" class="run-note">La suite completa include anche l’esecuzione delle scelte evento eleggibili e una stagione intera.</div>
+    </section>
+  </div>
+
+  <div id="runners" class="hidden-runners" aria-hidden="true"></div>
+
+  <script>
+    (() => {
+      const modeState = {
+        community: { frame: null, ready: false, report: null },
+        real: { frame: null, ready: false, report: null }
+      };
+      let activeRunId = '';
+      let running = false;
+      let combinedReport = null;
+      let activeFilter = 'all';
+
+      const buttons = ['quickBtn', 'fullBtn', 'stressBtn'].map(id => document.getElementById(id));
+      const downloadBtn = document.getElementById('downloadBtn');
+      const resultsEl = document.getElementById('results');
+      const fatalEl = document.getElementById('fatal');
+
+      function modeCard(mode) {
+        const card = document.querySelector(`[data-mode-card="${mode}"]`);
+        return {
+          card,
+          badge: card.querySelector('[data-badge]'),
+          progress: card.querySelector('[data-progress]'),
+          current: card.querySelector('[data-current]'),
+          count: card.querySelector('[data-count]')
+        };
+      }
+
+      function setRunning(value) {
+        running = value;
+        buttons.forEach(button => button.disabled = value);
+        if (value) downloadBtn.disabled = true;
+      }
+
+      function resetModeUi(mode) {
+        const ui = modeCard(mode);
+        ui.badge.className = 'badge running';
+        ui.badge.textContent = 'Avvio…';
+        ui.progress.style.width = '0%';
+        ui.current.textContent = 'Caricamento runner';
+        ui.count.textContent = '0/0';
+      }
+
+      function setModeError(mode, message) {
+        const ui = modeCard(mode);
+        ui.badge.className = 'badge fail';
+        ui.badge.textContent = 'Errore';
+        ui.current.textContent = message;
+      }
+
+      function createRunner(mode, runId, options) {
+        const old = modeState[mode].frame;
+        if (old) old.remove();
+        const frame = document.createElement('iframe');
+        frame.title = `Runner test ${mode}`;
+        frame.src = `test-season-runner.html?mode=${encodeURIComponent(mode)}&run=${encodeURIComponent(runId)}`;
+        modeState[mode] = { frame, ready: false, report: null, options };
+        document.getElementById('runners').appendChild(frame);
+      }
+
+      function detailText(detail) {
+        if (detail === null || detail === undefined) return '';
+        if (typeof detail === 'string') return detail;
+        return Object.entries(detail).map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`).join(' · ');
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+      }
+
+      function filteredResults() {
+        if (!combinedReport) return [];
+        return combinedReport.results.filter(item => {
+          if (activeFilter === 'all') return true;
+          if (activeFilter === 'fail') return item.status === 'fail';
+          return item.mode === activeFilter;
+        });
+      }
+
+      function renderResults() {
+        const items = filteredResults();
+        if (!combinedReport) {
+          resultsEl.innerHTML = '<div class="empty">Avvia i test per visualizzare il report.</div>';
+          return;
+        }
+        if (!items.length) {
+          resultsEl.innerHTML = '<div class="empty">Nessun risultato corrisponde al filtro selezionato.</div>';
+          return;
+        }
+        const groups = new Map();
+        items.forEach(item => {
+          const key = `${item.mode}|${item.group}`;
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push(item);
+        });
+        resultsEl.innerHTML = [...groups.entries()].map(([key, rows]) => {
+          const [mode, group] = key.split('|');
+          const modeLabel = mode === 'real' ? 'REAL' : 'Community';
+          return `<section class="group"><div class="group-title">${escapeHtml(modeLabel)} · ${escapeHtml(group)}</div>${rows.map(row => {
+            const sub = row.status === 'fail' ? row.message : detailText(row.detail);
+            const detail = row.status === 'fail' && row.detail ? `<div class="failure-detail">${escapeHtml(row.detail)}</div>` : '';
+            return `<article class="test-row"><span class="status-icon ${row.status}">${row.status === 'pass' ? '✓' : '!'}</span><div><div class="test-name">${escapeHtml(row.name)}</div>${sub ? `<div class="test-sub">${escapeHtml(sub)}</div>` : ''}${detail}</div><span class="test-duration">${row.durationMs} ms</span></article>`;
+          }).join('')}</section>`;
+        }).join('');
+      }
+
+      function updateSummary() {
+        if (!combinedReport) return;
+        document.getElementById('metricTotal').textContent = combinedReport.summary.total;
+        document.getElementById('metricPassed').textContent = combinedReport.summary.passed;
+        document.getElementById('metricFailed').textContent = combinedReport.summary.failed;
+        document.getElementById('metricDuration').textContent = combinedReport.durationMs >= 1000 ? `${(combinedReport.durationMs / 1000).toFixed(1)} s` : `${combinedReport.durationMs} ms`;
+      }
+
+      function finishIfComplete() {
+        const community = modeState.community.report;
+        const real = modeState.real.report;
+        if (!community || !real) return;
+        const results = [
+          ...community.results.map(result => ({ ...result, mode: 'community' })),
+          ...real.results.map(result => ({ ...result, mode: 'real' }))
+        ];
+        combinedReport = {
+          generatedAt: new Date().toISOString(),
+          runId: activeRunId,
+          modes: { community, real },
+          durationMs: Math.max(community.durationMs, real.durationMs),
+          summary: {
+            total: results.length,
+            passed: results.filter(result => result.status === 'pass').length,
+            failed: results.filter(result => result.status === 'fail').length
+          },
+          results
+        };
+        updateSummary();
+        renderResults();
+        setRunning(false);
+        downloadBtn.disabled = false;
+        document.getElementById('runNote').textContent = combinedReport.summary.failed
+          ? `Suite conclusa con ${combinedReport.summary.failed} errori. Apri “Solo errori” per isolarli.`
+          : 'Suite conclusa: tutti i test sono stati superati.';
+      }
+
+      function startRun(options) {
+        if (running) return;
+        activeRunId = `run-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        combinedReport = null;
+        fatalEl.style.display = 'none';
+        document.getElementById('metricTotal').textContent = '0';
+        document.getElementById('metricPassed').textContent = '0';
+        document.getElementById('metricFailed').textContent = '0';
+        document.getElementById('metricDuration').textContent = '—';
+        resultsEl.innerHTML = '<div class="empty">I runner Community e REAL stanno eseguendo i controlli…</div>';
+        document.getElementById('runNote').textContent = options.includeSlow === false ? 'Esecuzione dei controlli rapidi.' : `Esecuzione completa${options.stressSeasons ? ` con ${options.stressSeasons} stagioni extra per modalità` : ''}.`;
+        setRunning(true);
+        ['community', 'real'].forEach(mode => {
+          resetModeUi(mode);
+          createRunner(mode, activeRunId, options);
+        });
+      }
+
+      window.addEventListener('message', event => {
+        const message = event.data || {};
+        const mode = message.mode;
+        if (!['community', 'real'].includes(mode)) return;
+        const state = modeState[mode];
+        if (!state.frame || event.source !== state.frame.contentWindow) return;
+        if (message.runId && message.runId !== activeRunId) return;
+        const ui = modeCard(mode);
+
+        if (message.type === 'fantaballa-test-runner-ready') {
+          if (state.ready) return;
+          state.ready = true;
+          ui.badge.className = 'badge running';
+          ui.badge.textContent = 'In esecuzione';
+          ui.current.textContent = 'Avvio della suite';
+          state.frame.contentWindow.postMessage({ type: 'fantaballa-run-tests', mode, runId: activeRunId, options: state.options }, '*');
+        }
+
+        if (message.type === 'fantaballa-test-progress') {
+          const percent = message.total ? Math.round((message.index / message.total) * 100) : 0;
+          ui.progress.style.width = `${percent}%`;
+          ui.current.textContent = message.test?.name || 'Test in corso';
+          ui.count.textContent = `${message.index + 1}/${message.total}`;
+        }
+
+        if (message.type === 'fantaballa-test-report') {
+          state.report = message.report;
+          const failed = message.report.summary.failed;
+          ui.progress.style.width = '100%';
+          ui.badge.className = `badge ${failed ? 'fail' : 'pass'}`;
+          ui.badge.textContent = failed ? `${failed} errori` : 'Superato';
+          ui.current.textContent = `${message.report.summary.passed}/${message.report.summary.total} test superati`;
+          ui.count.textContent = `${(message.report.durationMs / 1000).toFixed(1)} s`;
+          finishIfComplete();
+        }
+
+        if (message.type === 'fantaballa-test-runner-error') {
+          setModeError(mode, message.message || 'Errore runner');
+          fatalEl.style.display = 'block';
+          fatalEl.textContent = `${mode === 'real' ? 'REAL' : 'Community'}: ${message.message || 'Errore non specificato'}`;
+          setRunning(false);
+        }
+      });
+
+      document.getElementById('quickBtn').addEventListener('click', () => startRun({ includeSlow: false, stressSeasons: 0 }));
+      document.getElementById('fullBtn').addEventListener('click', () => startRun({ includeSlow: true, stressSeasons: 0 }));
+      document.getElementById('stressBtn').addEventListener('click', () => startRun({ includeSlow: true, stressSeasons: 3 }));
+      downloadBtn.addEventListener('click', () => {
+        if (!combinedReport) return;
+        const blob = new Blob([JSON.stringify(combinedReport, null, 2)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `fantaballa-test-report-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      });
+
+      document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', () => {
+          activeFilter = button.dataset.filter;
+          document.querySelectorAll('[data-filter]').forEach(item => item.classList.toggle('active', item === button));
+          renderResults();
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

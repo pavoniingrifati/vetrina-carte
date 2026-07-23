@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Fantaballa · Editor eventi</title>
+  <style>
+    :root{color-scheme:dark;--bg:#07101d;--panel:#101d31;--panel2:#162742;--line:#2b4261;--text:#eff6ff;--muted:#9eb1c9;--accent:#f3cc4d;--good:#43d28b;--bad:#ff6c79;--warn:#ffc95a;--blue:#63adff}
+    *{box-sizing:border-box}html{background:var(--bg)}body{margin:0;min-height:100vh;background:radial-gradient(circle at 10% 0,#192e4c 0,#07101d 46%);color:var(--text);font:15px/1.45 Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    button,input,select,textarea{font:inherit}button,a{touch-action:manipulation}.page{width:min(1500px,calc(100% - 24px));margin:0 auto;padding:24px 0 56px}.hero{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:18px}.eyebrow{color:var(--accent);font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.hero h1{font-size:clamp(28px,5vw,46px);line-height:1.05;margin:6px 0 9px}.hero p{margin:0;color:var(--muted);max-width:760px}.hero-actions,.toolbar,.inline-actions{display:flex;gap:8px;flex-wrap:wrap}.btn,.link-btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;border:1px solid var(--line);border-radius:10px;background:#172944;color:var(--text);padding:9px 13px;text-decoration:none;font-weight:780;cursor:pointer}.btn:hover,.link-btn:hover{border-color:var(--blue)}.btn.primary{background:var(--accent);border-color:var(--accent);color:#161b24}.btn.good{background:rgba(67,210,139,.15);color:var(--good)}.btn.danger{background:rgba(255,108,121,.12);color:#ffbdc4}.btn.ghost{background:transparent}.btn:disabled{opacity:.42;cursor:not-allowed}.toolbar{align-items:center;background:rgba(16,29,49,.96);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}.toolbar-spacer{flex:1}.status{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:6px 10px;font-size:13px;font-weight:800;background:#203452;color:var(--muted)}.status.ok{background:rgba(67,210,139,.14);color:var(--good)}.status.bad{background:rgba(255,108,121,.14);color:var(--bad)}.status.warn{background:rgba(255,201,90,.14);color:var(--warn)}.status.dirty{background:rgba(99,173,255,.14);color:var(--blue)}
+    .metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:12px}.metric{background:rgba(16,29,49,.95);border:1px solid var(--line);border-radius:12px;padding:12px}.metric small{display:block;color:var(--muted);font-size:12px}.metric strong{display:block;font-size:24px;margin-top:2px}.metric .bad{color:var(--bad)}.metric .warn{color:var(--warn)}
+    .workspace{display:grid;grid-template-columns:minmax(240px,300px) minmax(470px,1fr) minmax(320px,410px);gap:12px;align-items:start}.panel{background:rgba(16,29,49,.97);border:1px solid var(--line);border-radius:14px;overflow:hidden}.panel-head{padding:13px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}.panel-head h2,.panel-head h3{margin:0;font-size:17px}.panel-body{padding:14px}.catalog-tabs,.type-tabs{display:grid;gap:6px}.catalog-tabs{grid-template-columns:repeat(3,1fr);margin-bottom:9px}.type-tabs{grid-template-columns:1fr 1fr;margin-bottom:10px}.tab{border:1px solid var(--line);border-radius:9px;padding:8px 6px;background:#13233a;color:var(--muted);font-weight:750;cursor:pointer}.tab.active{background:var(--accent);border-color:var(--accent);color:#171c24}.search{width:100%;border:1px solid var(--line);border-radius:9px;background:#091525;color:var(--text);padding:10px 11px;margin-bottom:9px}.event-list{display:grid;gap:6px;max-height:calc(100vh - 345px);min-height:360px;overflow:auto;padding-right:2px}.event-item{width:100%;text-align:left;border:1px solid transparent;border-radius:10px;background:#122239;color:var(--text);padding:10px;cursor:pointer}.event-item:hover{border-color:#48688f}.event-item.active{border-color:var(--accent);background:#24364a}.event-item-top{display:flex;justify-content:space-between;gap:8px;align-items:center}.event-item b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.event-item small{display:block;color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pill{display:inline-flex;align-items:center;border-radius:999px;background:#203551;color:var(--muted);font-size:11px;font-weight:800;padding:3px 7px;white-space:nowrap}.pill.off{background:rgba(255,108,121,.14);color:var(--bad)}.empty{color:var(--muted);padding:28px 10px;text-align:center}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:grid;gap:5px}.field.full{grid-column:1/-1}.field label,.legend{color:#cbd8e8;font-size:13px;font-weight:760}.field input,.field select,.field textarea{width:100%;min-width:0;border:1px solid var(--line);border-radius:9px;background:#091525;color:var(--text);padding:10px 11px}.field textarea{min-height:90px;resize:vertical}.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid rgba(99,173,255,.55);outline-offset:1px}.help{color:var(--muted);font-size:12px}.switches{display:flex;gap:14px;flex-wrap:wrap;padding:10px 0}.check{display:flex;align-items:center;gap:7px;color:#dce7f5}.check input{width:18px;height:18px}.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:20px 0 9px;padding-top:14px;border-top:1px solid var(--line)}.section-title h3{margin:0;font-size:16px}.choice-list{display:grid;gap:10px}.choice{border:1px solid var(--line);border-radius:12px;background:#0c192b;padding:11px}.choice-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}.choice-head strong{font-size:14px}.icon-btn{border:1px solid var(--line);background:#172944;color:var(--text);border-radius:8px;min-width:36px;min-height:36px;cursor:pointer}.icon-btn.danger{color:var(--bad)}.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.choice-grid .full{grid-column:1/-1}.footer-actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+    .sticky{position:sticky;top:12px}.preview-shell{width:100%;max-width:390px;margin:0 auto;border:1px solid #425a78;border-radius:24px;background:#08111f;padding:14px;min-height:390px}.preview-phone{border:1px solid var(--line);border-radius:18px;background:linear-gradient(165deg,#152842,#0b1728);padding:16px}.preview-kicker{color:var(--accent);font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.08em}.preview-phone h3{font-size:24px;line-height:1.08;margin:7px 0 10px}.preview-phone p{color:#cfdbeb;margin:0 0 15px;white-space:pre-wrap}.preview-choice{display:block;width:100%;text-align:left;border:1px solid #39577d;border-radius:12px;background:#152a48;color:var(--text);padding:11px 12px;margin-top:8px}.preview-choice:nth-of-type(even){background:#391e2c;border-color:#684052}.preview-choice b{display:block}.preview-choice small{display:block;color:#b7c7da;margin-top:4px}.preview-off{display:inline-block;margin-top:12px;border-radius:999px;background:rgba(255,108,121,.15);color:var(--bad);padding:5px 9px;font-weight:800;font-size:12px}.issues{display:grid;gap:7px;max-height:260px;overflow:auto}.issue{border-left:3px solid var(--warn);background:#111f34;border-radius:8px;padding:8px 10px;color:#dce7f5;font-size:13px}.issue.error{border-color:var(--bad)}.issue.ok{border-color:var(--good)}.small-note{color:var(--muted);font-size:12px;margin:9px 0 0}.fatal{display:none;margin-bottom:12px;border:1px solid rgba(255,108,121,.45);background:rgba(255,108,121,.1);color:#ffd2d7;border-radius:12px;padding:12px 14px}
+    dialog{width:min(620px,calc(100% - 24px));border:1px solid var(--line);border-radius:14px;background:#101d31;color:var(--text);padding:0}dialog::backdrop{background:rgba(2,7,15,.78)}.dialog-head{display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid var(--line)}.dialog-head h2{margin:0;font-size:19px}.dialog-body{padding:14px}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;padding:14px;border-top:1px solid var(--line)}
+    @media(max-width:1180px){.workspace{grid-template-columns:260px minmax(0,1fr)}.right-column{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px}.right-column .sticky{position:static}.metrics{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:760px){.page{width:min(100% - 16px,1500px);padding-top:16px}.hero{display:block}.hero-actions{margin-top:13px}.toolbar{align-items:stretch}.toolbar-spacer{display:none}.toolbar .btn,.toolbar .link-btn{flex:1}.workspace{grid-template-columns:1fr}.event-list{max-height:330px;min-height:220px}.right-column{grid-column:auto;display:grid;grid-template-columns:1fr}.form-grid,.choice-grid{grid-template-columns:1fr}.field.full,.choice-grid .full{grid-column:auto}.metrics{grid-template-columns:repeat(2,1fr)}.footer-actions>.inline-actions{width:100%}.footer-actions .btn{flex:1}.sticky{position:static}.preview-shell{max-width:100%}}
+    @media(max-width:420px){.metrics{grid-template-columns:1fr 1fr}.catalog-tabs{grid-template-columns:1fr}.hero-actions .link-btn{width:100%}.choice-head{align-items:flex-start}.choice-head .inline-actions{justify-content:flex-end}.toolbar .btn{flex-basis:calc(50% - 8px)}}
+  </style>
+  <link rel="stylesheet" href="assets/mobile-responsive.css?v=20260722-1">
+  <script defer src="assets/mobile-responsive.js?v=20260722-1"></script>
+  <link rel="stylesheet" href="assets/accessibility.css?v=20260722-1">
+  <script defer src="assets/accessibility.js?v=20260722-1"></script>
+</head>
+<body class="page-event-editor">
+<main class="page">
+  <header class="hero">
+    <div><div class="eyebrow">Strumento interno · noindex</div><h1>Editor grafico degli eventi</h1><p>Modifica cataloghi, condizioni, opzioni e handler registrati. L’editor lavora in memoria e produce file JSON da sostituire nel progetto: non modifica automaticamente il server.</p></div>
+    <div class="hero-actions"><a class="link-btn" href="event-check.html">Controllo eventi</a><a class="link-btn" href="test-season.html">Test motore</a><a class="link-btn" href="index.html">← Torna al gioco</a></div>
+  </header>
+
+  <div id="fatal" class="fatal"></div>
+
+  <section class="toolbar" aria-label="Azioni editor">
+    <button id="newDecisionBtn" class="btn primary" type="button">+ Nuova decisione</button>
+    <button id="newAutoBtn" class="btn" type="button">+ Evento automatico</button>
+    <button id="importBtn" class="btn" type="button">Importa JSON</button>
+    <input id="importFile" type="file" accept="application/json,.json" hidden>
+    <button id="saveDraftBtn" class="btn" type="button">Salva bozza browser</button>
+    <button id="restoreDraftBtn" class="btn" type="button">Ripristina bozza</button>
+    <span class="toolbar-spacer"></span>
+    <span id="dirtyStatus" class="status">Caricamento…</span>
+    <button id="exportSelectedBtn" class="btn good" type="button">Esporta catalogo</button>
+    <button id="exportAllBtn" class="btn good" type="button">Esporta tutti</button>
+  </section>
+
+  <section class="metrics" aria-label="Riepilogo cataloghi">
+    <article class="metric"><small>Decisioni comuni</small><strong id="mCommon">0</strong></article>
+    <article class="metric"><small>Solo Community</small><strong id="mCommunity">0</strong></article>
+    <article class="metric"><small>Solo REAL</small><strong id="mReal">0</strong></article>
+    <article class="metric"><small>Eventi automatici</small><strong id="mAuto">0</strong></article>
+    <article class="metric"><small>Errori</small><strong id="mErrors">0</strong></article>
+    <article class="metric"><small>Avvisi</small><strong id="mWarnings">0</strong></article>
+  </section>
+
+  <section class="workspace">
+    <aside class="panel">
+      <div class="panel-head"><h2>Catalogo</h2><span id="listCount" class="pill">0</span></div>
+      <div class="panel-body">
+        <div class="catalog-tabs" role="tablist" aria-label="Catalogo"><button class="tab active" data-catalog="common" type="button">Comune</button><button class="tab" data-catalog="community" type="button">Community</button><button class="tab" data-catalog="real" type="button">REAL</button></div>
+        <div class="type-tabs" role="tablist" aria-label="Tipo evento"><button class="tab active" data-kind="decisions" type="button">Decisioni</button><button class="tab" data-kind="autoEvents" type="button">Automatici</button></div>
+        <input id="searchInput" class="search" type="search" placeholder="Cerca ID o titolo…" aria-label="Cerca evento">
+        <div id="eventList" class="event-list" aria-live="polite"></div>
+      </div>
+    </aside>
+
+    <section class="panel">
+      <div class="panel-head"><h2 id="editorTitle">Seleziona un evento</h2><span id="itemType" class="pill">—</span></div>
+      <div id="editorBody" class="panel-body"><div class="empty">Scegli un evento dall’elenco oppure creane uno nuovo.</div></div>
+    </section>
+
+    <div class="right-column">
+      <aside class="panel sticky">
+        <div class="panel-head"><h2>Anteprima smartphone</h2><span class="pill">390 px</span></div>
+        <div class="panel-body"><div id="preview" class="preview-shell"><div class="empty">Nessun evento selezionato.</div></div></div>
+      </aside>
+      <aside class="panel sticky" style="margin-top:12px">
+        <div class="panel-head"><h2>Validazione</h2><span id="validationBadge" class="status">—</span></div>
+        <div class="panel-body"><div id="issues" class="issues"><div class="issue ok">Caricamento cataloghi…</div></div><p class="small-note">L’esportazione è consentita solo senza errori bloccanti. Gli avvisi non impediscono il download.</p></div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<datalist id="autoHandlers"></datalist>
+<datalist id="availableHandlers"></datalist>
+<datalist id="titleHandlers"></datalist>
+<datalist id="describeHandlers"></datalist>
+<datalist id="contextHandlers"></datalist>
+<datalist id="choiceHandlers"></datalist>
+
+<dialog id="confirmDialog">
+  <div class="dialog-head"><h2 id="dialogTitle">Conferma</h2><button id="dialogClose" class="icon-btn" type="button" aria-label="Chiudi">×</button></div>
+  <div id="dialogBody" class="dialog-body"></div>
+  <div class="dialog-actions"><button id="dialogCancel" class="btn" type="button">Annulla</button><button id="dialogConfirm" class="btn danger" type="button">Conferma</button></div>
+</dialog>
+
+<script src="assets/season/event-handlers.js?v=20260722-1"></script>
+<script src="assets/event-validator.js?v=20260722-3"></script>
+<script src="assets/event-editor.js?v=20260722-1"></script>
+</body>
+</html>

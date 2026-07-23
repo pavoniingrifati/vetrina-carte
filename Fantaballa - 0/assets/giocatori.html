@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <link rel="icon" href="https://fantaballa.it/favicon.ico" sizes="any" />
+  <link rel="shortcut icon" href="https://fantaballa.it/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="48x48" href="https://fantaballa.it/favicon-48x48.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="https://fantaballa.it/site-icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="https://fantaballa.it/site-icon-512.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="https://fantaballa.it/apple-touch-icon.png" />
+  <link rel="manifest" href="https://fantaballa.it/site.webmanifest" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#071a2c">
+  <meta name="color-scheme" content="light only">
+  <title>Database giocatori di 0-0-0 | Fantaballa</title>
+  <meta name="description" content="Scopri il database dei giocatori di 0-0-0 con squadra, nazionale, ruolo e overall." />
+  <meta name="author" content="Fantaballa" />
+  <meta name="application-name" content="0-0-0" />
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+  <link rel="canonical" href="https://fantaballa.it/Fantaballa%20-%200/giocatori.html" />
+  <meta property="og:locale" content="it_IT" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Fantaballa" />
+  <meta property="og:title" content="Database giocatori di 0-0-0 | Fantaballa" />
+  <meta property="og:description" content="Scopri il database dei giocatori di 0-0-0 con squadra, nazionale, ruolo e overall." />
+  <meta property="og:url" content="https://fantaballa.it/Fantaballa%20-%200/giocatori.html" />
+  <meta property="og:image" content="https://fantaballa.it/site-icon-512.png" />
+  <meta property="og:image:alt" content="Logo di 0-0-0, roguelike sul calcio creato da Fantaballa" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Database giocatori di 0-0-0 | Fantaballa" />
+  <meta name="twitter:description" content="Scopri il database dei giocatori di 0-0-0 con squadra, nazionale, ruolo e overall." />
+  <meta name="twitter:image" content="https://fantaballa.it/site-icon-512.png" />
+  <style>
+    :root{
+      --navy:#071a2c;
+      --navy-2:#102d49;
+      --cream:#f5efdf;
+      --paper:#fffdf7;
+      --gold:#e3c64d;
+      --purple:#7650bd;
+      --ink:#10243a;
+      --muted:#6e6554;
+      --line:#d8c992;
+      --shadow:0 16px 40px rgba(0,0,0,.18);
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--ink);
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:
+        radial-gradient(circle at 15% 10%,rgba(44,113,167,.28),transparent 34%),
+        radial-gradient(circle at 90% 15%,rgba(118,80,189,.22),transparent 30%),
+        linear-gradient(145deg,#051421,#0b263d 52%,#061827);
+    }
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    .page{width:min(1500px,calc(100% - 28px));margin:0 auto;padding:24px 0 48px}
+    .hero{
+      position:relative;
+      overflow:hidden;
+      padding:26px;
+      border:2px solid var(--gold);
+      border-radius:28px;
+      background:linear-gradient(135deg,rgba(255,253,247,.98),rgba(239,229,255,.96));
+      box-shadow:var(--shadow);
+    }
+    .hero::after{
+      content:"";
+      position:absolute;
+      width:310px;height:310px;
+      right:-105px;top:-165px;
+      border:54px solid rgba(118,80,189,.12);
+      border-radius:50%;
+      pointer-events:none;
+    }
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:7px 11px;border-radius:999px;
+      background:var(--navy);color:#fff3a7;
+      font-size:11px;font-weight:1000;letter-spacing:.12em;text-transform:uppercase;
+    }
+    h1{margin:12px 0 7px;font-size:clamp(36px,6vw,70px);line-height:.9;letter-spacing:-.045em;text-transform:uppercase}
+    .hero p{max-width:800px;margin:0;color:#5b4c34;font-size:16px;font-weight:750;line-height:1.45}
+    .dataset-tabs{display:flex;gap:9px;flex-wrap:wrap;margin-top:21px}
+    .dataset-tab{
+      border:2px solid var(--navy);border-radius:14px;padding:10px 14px;
+      background:#fff;color:var(--navy);font-weight:950;
+      box-shadow:0 4px 0 rgba(7,26,44,.12);
+    }
+    .dataset-tab.active{background:var(--navy);color:#fff3a7}
+    .dataset-tab small{opacity:.8;margin-left:5px}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}
+    .stat-card{padding:14px 16px;border-radius:17px;background:rgba(255,255,255,.72);border:1px solid rgba(118,80,189,.24)}
+    .stat-card b{display:block;font-size:26px;color:var(--navy);line-height:1}
+    .stat-card span{display:block;margin-top:5px;color:var(--muted);font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.05em}
+    .panel{margin-top:18px;padding:18px;border-radius:25px;background:var(--cream);border:2px solid var(--gold);box-shadow:var(--shadow)}
+    .filters{display:grid;grid-template-columns:minmax(260px,1.7fr) repeat(5,minmax(135px,.7fr));gap:11px;align-items:end}
+    .field label{display:block;margin:0 0 6px;font-size:10px;font-weight:1000;letter-spacing:.08em;text-transform:uppercase;color:#675331}
+    .field input,.field select{
+      width:100%;height:48px;padding:0 13px;border:2px solid #cdbb78;border-radius:14px;
+      background:#fffdf7;color:var(--ink);font-weight:850;outline:none;
+    }
+    .field input:focus,.field select:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(118,80,189,.14)}
+    .search-wrap{position:relative}
+    .search-wrap input{padding-left:43px}
+    .search-wrap::before{content:"⌕";position:absolute;left:14px;bottom:10px;font-size:24px;color:var(--purple);font-weight:1000}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 10px}
+    .result-label{font-size:13px;font-weight:950;color:#594827}
+    .clear-btn{border:0;border-radius:12px;background:#e9dfc4;color:var(--navy);padding:9px 12px;font-size:12px;font-weight:950}
+    .table-shell{overflow:hidden;border:1px solid #d7c99b;border-radius:20px;background:var(--paper)}
+    table{width:100%;border-collapse:collapse;table-layout:fixed}
+    thead{background:var(--navy);color:#fff}
+    th{padding:13px 12px;text-align:left;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+    th:nth-child(1){width:58px;text-align:center}
+    th:nth-child(2){width:28%}
+    th:nth-child(3){width:25%}
+    th:nth-child(4){width:18%}
+    th:nth-child(5){width:12%}
+    th:nth-child(6){width:95px;text-align:center}
+    tbody tr{border-bottom:1px solid #e7dec3}
+    tbody tr:last-child{border-bottom:0}
+    tbody tr:nth-child(even){background:#f7f1e4}
+    td{padding:11px 12px;font-size:13px;font-weight:800;vertical-align:middle}
+    .rank{text-align:center;color:#7a6c50;font-weight:1000}
+    .player-cell{display:flex;align-items:center;gap:10px;min-width:0}
+    .avatar{width:40px;height:40px;flex:0 0 auto;display:grid;place-items:center;border-radius:12px;background:linear-gradient(145deg,var(--navy-2),var(--navy));color:#fff3a7;border:2px solid var(--gold);font-size:12px;font-weight:1000;box-shadow:0 3px 8px rgba(0,0,0,.16)}
+    .player-copy,.club-copy{min-width:0}
+    .player-name,.club-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--navy);font-weight:1000}
+    .player-name.subscriber-name{color:#7b4b00;font-size:14px;letter-spacing:.01em;text-shadow:0 1px 0 #fff,0 0 10px rgba(227,198,77,.42)}
+    .player-db{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px;color:#85755c;font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+    .subscriber-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border:1px solid #c79418;border-radius:999px;background:linear-gradient(135deg,#fff3a2,#e3c64d);color:#533600;font-size:9px;font-weight:1000;letter-spacing:.06em;box-shadow:0 2px 7px rgba(153,104,0,.22)}
+    .subscriber-tag::before{content:"★";font-size:10px}
+    .avatar.subscriber-avatar{background:linear-gradient(145deg,#7a4d00,#241600);color:#fff4a6;border-color:#ffe16a;box-shadow:0 0 0 3px rgba(227,198,77,.22),0 4px 12px rgba(76,45,0,.3)}
+    .avatar svg{width:100%;height:100%;display:block}
+    tbody tr.subscriber-row{background:linear-gradient(90deg,#fff8d9 0%,#fffdf7 55%,#f7f1e4 100%);box-shadow:inset 5px 0 0 #e3c64d}
+    tbody tr.subscriber-row:nth-child(even){background:linear-gradient(90deg,#fff4c2 0%,#fbf4df 55%,#f4ead2 100%)}
+    .club-cell{display:flex;align-items:center;gap:9px;min-width:0}
+    .club-swatch{width:24px;height:24px;flex:0 0 auto;border-radius:7px;border:2px solid var(--club-accent,#e3c64d);background:linear-gradient(135deg,var(--club-a,#1769aa) 0 50%,var(--club-b,#fff) 50% 100%);box-shadow:0 2px 6px rgba(0,0,0,.14)}
+    .nation{display:flex;align-items:center;gap:7px;min-width:0}
+    .nation::before{content:"●";color:var(--purple);font-size:8px}
+    .position{display:inline-flex;align-items:center;justify-content:center;padding:6px 9px;border-radius:999px;background:#e8def8;color:#4c2c83;font-size:11px;font-weight:1000;white-space:nowrap}
+    .ovr{text-align:center}
+    .ovr-badge{display:inline-grid;place-items:center;min-width:55px;height:45px;padding:0 8px;border-radius:12px;background:var(--navy);color:#fff;font-size:21px;font-weight:1000;border:2px solid transparent}
+    .rarity-bronze{border-color:#b7783e;color:#ffe1a8}.rarity-silver{border-color:#bfc9d6;color:#eef5ff}.rarity-gold{border-color:#edc838;color:#fff0a3}.rarity-elite{border-color:#9d6ce6;color:#e7d6ff;box-shadow:0 0 14px rgba(118,80,189,.28)}.rarity-icon{border-color:#f6d14b;color:#fff2a0;box-shadow:0 0 15px rgba(246,209,75,.45)}
+    .empty{padding:38px;text-align:center;color:#685b44;font-weight:900}
+    .pagination{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin-top:15px}
+    .page-btn{min-width:40px;height:40px;border:2px solid var(--navy);border-radius:12px;background:#fff;color:var(--navy);font-weight:1000}
+    .page-btn.active{background:var(--navy);color:#fff3a7}.page-btn:disabled{opacity:.4;cursor:not-allowed}
+    .loading{padding:50px;text-align:center;font-weight:1000;color:#fff}
+    .error{padding:18px;border-radius:16px;background:#ffe4df;color:#84281f;border:2px solid #e5988d;font-weight:900}
+    .footer-note{margin-top:15px;text-align:center;color:#d4ccbb;font-size:12px;font-weight:750}
+    @media(max-width:1050px){
+      .filters{grid-template-columns:repeat(2,minmax(0,1fr))}.field:first-child{grid-column:1/-1}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media(max-width:720px){
+      .page{width:min(100% - 16px,680px);padding-top:10px}.hero{padding:19px;border-radius:22px}h1{font-size:40px}.hero p{font-size:14px}.dataset-tabs{display:grid;grid-template-columns:1fr}.dataset-tab{width:100%}
+      .panel{padding:12px;border-radius:20px}.filters{grid-template-columns:1fr}.field:first-child{grid-column:auto}.stats-grid{gap:8px}.stat-card{padding:11px}.stat-card b{font-size:22px}
+      .toolbar{align-items:flex-start}.result-label{max-width:70%}
+      .table-shell{border:0;background:transparent;overflow:visible}table,tbody{display:block}thead{display:none}tbody{display:grid;gap:10px}tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 10px;padding:12px;border:1px solid #d7c99b;border-radius:17px;background:#fffdf7!important;box-shadow:0 4px 10px rgba(0,0,0,.06)}
+      td{padding:0;border:0}td::before{content:attr(data-label);display:block;margin-bottom:3px;color:#7b6c51;font-size:9px;font-weight:1000;letter-spacing:.07em;text-transform:uppercase}
+      .rank{display:none}.player-td{grid-column:1/2}.ovr{grid-column:2/3;grid-row:1/2;align-self:center}.club-td{grid-column:1/-1;border-top:1px solid #e8dec0;padding-top:9px}.nation-td{grid-column:1/2}.position-td{grid-column:2/3;text-align:right}.ovr::before{display:none}.club-cell{align-items:center}.player-name{font-size:15px}.player-name.subscriber-name{font-size:16px}.ovr-badge{min-width:59px;height:50px;font-size:23px}tbody tr.subscriber-row{background:linear-gradient(135deg,#fff8cf,#fffdf7)!important;border-color:#d5ae35;box-shadow:inset 5px 0 0 #e3c64d,0 5px 14px rgba(113,75,0,.12)}
+    }
+    @media(max-width:390px){.stats-grid{grid-template-columns:1fr 1fr}.nation-td{grid-column:1/-1}.position-td{grid-column:1/-1;text-align:left}}
+  
+    /* Creator */
+    .player-name.creator-name{color:#006997;font-size:14px;letter-spacing:.01em;text-shadow:0 1px 0 #fff,0 0 12px rgba(56,200,255,.45)}
+    .creator-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid #0b9bd9;border-radius:999px;background:linear-gradient(135deg,#b6f1ff,#38c8ff);color:#05304a;font-size:9px;font-weight:1000;letter-spacing:.06em;box-shadow:0 2px 7px rgba(0,121,179,.22)}
+    .creator-tag::before{content:'🎬';font-size:10px}
+    .avatar.creator-avatar{position:relative;background:linear-gradient(145deg,#064f75,#09243a);border-color:#77dcff;box-shadow:0 0 0 3px rgba(56,200,255,.25),0 4px 14px rgba(0,102,153,.32)}
+    .creator-avatar-badge{position:absolute;right:-5px;top:-6px;z-index:4;display:grid;place-items:center;min-width:23px;height:17px;padding:0 4px;border-radius:999px;background:linear-gradient(180deg,#b7f1ff,#38c8ff);border:2px solid #e9fbff;color:#05304a;font-size:8px;font-weight:1000;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+    tbody tr.creator-row{background:linear-gradient(90deg,#d9f8ff 0%,#f7fdff 55%,#e6f1ff 100%);box-shadow:inset 5px 0 0 #38c8ff}
+    tbody tr.creator-row:nth-child(even){background:linear-gradient(90deg,#c9f2ff 0%,#effbff 55%,#e1efff 100%)}
+    @media(max-width:760px){tbody tr.creator-row{background:linear-gradient(135deg,#d2f6ff,#f7fdff)!important;border-color:#38c8ff;box-shadow:inset 5px 0 0 #38c8ff,0 5px 14px rgba(0,102,153,.12)}.player-name.creator-name{font-size:16px}}
+
+  
+
+    /* Creator YouTube */
+    .player-name.creator-name{color:#ffffff!important;text-shadow:0 2px 5px rgba(70,0,0,.75)!important}
+    .creator-tag{
+      background:linear-gradient(180deg,#ff1a1a,#bd0000)!important;
+      border-color:#ffffff!important;
+      color:#ffffff!important;
+      box-shadow:0 2px 8px rgba(90,0,0,.38)!important;
+    }
+    .avatar.creator-avatar{
+      background:linear-gradient(145deg,#ff1717,#920000)!important;
+      border-color:#ffffff!important;
+      box-shadow:0 0 0 3px rgba(255,255,255,.38),0 0 0 6px rgba(255,0,0,.24),0 5px 16px rgba(90,0,0,.36)!important;
+    }
+    .creator-avatar-badge{
+      background:linear-gradient(180deg,#ff1a1a,#bd0000)!important;
+      border-color:#ffffff!important;
+      color:#ffffff!important;
+    }
+    tbody tr.creator-row,
+    tbody tr.creator-row:nth-child(even){
+      background:linear-gradient(100deg,#f00000 0%,#cf0000 56%,#910000 100%)!important;
+      box-shadow:inset 6px 0 0 #ffffff,0 5px 18px rgba(100,0,0,.24)!important;
+      color:#ffffff!important;
+    }
+    tbody tr.creator-row *{color:#ffffff!important}
+    tbody tr.creator-row .position{background:rgba(90,0,0,.46)!important;border:1px solid rgba(255,255,255,.78)!important;color:#ffffff!important}
+    tbody tr.creator-row .ovr-badge{background:#720000!important;border-color:#ffffff!important;color:#ffffff!important;box-shadow:0 0 12px rgba(255,255,255,.16)!important}
+    tbody tr.creator-row .nation::before{color:#ffffff!important}
+    tbody tr.creator-row .club-swatch{border-color:#ffffff!important}
+    @media(max-width:760px){
+      tbody tr.creator-row,
+      tbody tr.creator-row:nth-child(even){background:linear-gradient(135deg,#ed0000,#960000)!important;border-color:#ffffff!important;box-shadow:inset 6px 0 0 #ffffff,0 6px 18px rgba(100,0,0,.28)!important}
+      tbody tr.creator-row td::before{color:rgba(255,255,255,.78)!important}
+    }
+
+</style>
+  <link rel="stylesheet" href="assets/mobile-responsive.css?v=20260722-1">
+  <script defer src="assets/mobile-responsive.js?v=20260722-1"></script>
+  <link rel="stylesheet" href="assets/accessibility.css?v=20260722-1">
+  <script defer src="assets/accessibility.js?v=20260722-1"></script>
+</head>
+<body class="page-players">
+  <main class="page">
+    <section class="hero">
+      <span class="eyebrow">Database ufficiale Fantaballa</span>
+      <h1>Tutti i giocatori</h1>
+      <p>Cerca un giocatore per nome oppure filtra il database per squadra, nazionalità, ruolo e overall.</p>
+      <div class="dataset-tabs" id="datasetTabs" aria-label="Selezione database"></div>
+      <div class="stats-grid">
+        <div class="stat-card"><b id="totalPlayers">—</b><span>Giocatori mostrati</span></div>
+        <div class="stat-card"><b id="totalClubs">—</b><span>Squadre</span></div>
+        <div class="stat-card"><b id="totalNations">—</b><span>Nazionalità</span></div>
+        <div class="stat-card"><b id="averageOvr">—</b><span>OVR medio</span></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div id="appStatus" class="loading">Caricamento database…</div>
+      <div id="catalog" hidden>
+        <div class="filters">
+          <div class="field search-wrap">
+            <label for="searchInput">Cerca</label>
+            <input id="searchInput" type="search" autocomplete="off" placeholder="Nome giocatore, squadra o nazionalità">
+          </div>
+          <div class="field">
+            <label for="clubFilter">Squadra</label>
+            <select id="clubFilter"><option value="">Tutte le squadre</option></select>
+          </div>
+          <div class="field">
+            <label for="nationFilter">Nazionalità</label>
+            <select id="nationFilter"><option value="">Tutte le nazionalità</option></select>
+          </div>
+          <div class="field">
+            <label for="roleFilter">Ruolo</label>
+            <select id="roleFilter">
+              <option value="">Tutti i ruoli</option>
+              <option value="P">Portieri</option>
+              <option value="D">Difensori</option>
+              <option value="C">Centrocampisti</option>
+              <option value="A">Attaccanti</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="subscriberFilter">Abbonamento</label>
+            <select id="subscriberFilter">
+              <option value="">Tutti</option>
+              <option value="yes">Solo abbonati</option>
+              <option value="no">Solo non abbonati</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="sortFilter">Ordina</label>
+            <select id="sortFilter">
+              <option value="ovr-desc">OVR: dal più alto</option>
+              <option value="ovr-asc">OVR: dal più basso</option>
+              <option value="name-asc">Nome: A–Z</option>
+              <option value="club-asc">Squadra: A–Z</option>
+              <option value="nation-asc">Nazionalità: A–Z</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="result-label" id="resultLabel"></div>
+          <button class="clear-btn" id="clearFilters" type="button">Azzera filtri</button>
+        </div>
+
+        <div class="table-shell">
+          <table aria-label="Elenco giocatori Fantaballa">
+            <thead><tr><th>#</th><th>Nome</th><th>Squadra</th><th>Nazionalità</th><th>Ruolo</th><th>OVR</th></tr></thead>
+            <tbody id="playersBody"></tbody>
+          </table>
+          <div class="empty" id="emptyState" hidden>Nessun giocatore corrisponde ai filtri selezionati.</div>
+        </div>
+        <nav class="pagination" id="pagination" aria-label="Paginazione giocatori"></nav>
+      </div>
+    </section>
+    <div class="footer-note">La pagina legge direttamente i file JSON del gioco.</div>
+  </main>
+
+<script src="assets/creator-avatars.js?v=20260722-1"></script>
+
+<script>
+(() => {
+  'use strict';
+  const PAGE_SIZE = 50;
+  const DATASETS = {
+    all:{label:'Tutti',short:'Tutti'},
+    community:{label:'Fantaballa',short:'Community'},
+    real:{label:'Fantacampionato',short:'REAL'}
+  };
+  const state={players:[],clubs:new Map(),dataset:'all',page:1,filtered:[]};
+  const el=id=>document.getElementById(id);
+  const normalize=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  const escapeHtml=value=>String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+  const initials=name=>String(name||'?').split(/[\s._-]+/).filter(Boolean).slice(0,2).map(part=>part[0]).join('').toUpperCase()||'?';
+  const macroRole=player=>{
+    const role=String(player.role||'').toUpperCase();
+    if(['P','D','C','A'].includes(role))return role;
+    const position=String(player.Position||'').toUpperCase();
+    if(position==='P')return 'P';
+    if(/DC|TS|TD/.test(position))return 'D';
+    if(/CDC|CC|COC/.test(position))return 'C';
+    return 'A';
+  };
+  const rarityClass=ovr=>ovr>=85?'rarity-icon':ovr>=80?'rarity-elite':ovr>=75?'rarity-gold':ovr>=70?'rarity-silver':ovr>=65?'rarity-bronze':'';
+  const clubInfo=player=>state.clubs.get(`${player.database}:${player.club}`)||{name:player.club||'Senza squadra',colorClub:{}};
+  const clubName=player=>clubInfo(player).name||player.club||'Senza squadra';
+  const formatNumber=value=>new Intl.NumberFormat('it-IT').format(value);
+  const isSubscriber=player=>{
+    const values=[player?.abbonato,player?.subscriber].map(value=>normalize(value));
+    return values.some(value=>['si','sì','yes','true','1','tik tok','tiktok'].includes(value));
+  };
+
+  const isCreator=player=>String(player&&player.creator||'').trim().toLowerCase()==='si';
+
+    const hashString=str=>{let h=2166136261>>>0;for(const ch of String(str||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
+  const seededChoice=(list,seed,shift=0)=>list[(Math.floor(seed/Math.pow(7,shift))>>>0)%list.length];
+function avatarHexToRgb(color){
+ const value=String(color||'').trim();
+ const match=value.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+ if(!match)return null;
+ let hex=match[1];
+ if(hex.length===3)hex=hex.split('').map(ch=>ch+ch).join('');
+ return [parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16)];
+}
+function avatarRgbToHex(rgb){return `#${rgb.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('')}`}
+function avatarMix(a,b,t=.5){
+ const ra=avatarHexToRgb(a)||[24,44,74], rb=avatarHexToRgb(b)||[255,255,255];
+ return avatarRgbToHex(ra.map((v,i)=>v+(rb[i]-v)*t));
+}
+function avatarShade(color,amount=.15){return amount>=0?avatarMix(color,'#ffffff',amount):avatarMix(color,'#000000',Math.abs(amount))}
+function avatarLuma(color){const rgb=avatarHexToRgb(color)||[255,255,255];return (0.299*rgb[0]+0.587*rgb[1]+0.114*rgb[2])/255}
+function avatarTextColor(color){return avatarLuma(color)>.63?'#10243a':'#ffffff'}
+function avatarRoleCode(player){return String(player?.Position||player?.role||'').toUpperCase().split(',')[0].trim()||'--'}
+function avatarIsGoalkeeper(player){return /^(P|POR|GK)$/.test(avatarRoleCode(player))}
+function avatarSourceKey(player){
+ const source=player?.clubName||player?.teamName||player?.squadra||player?.team||player?.club||player?.nation||'Fantaballa';
+ return String(source);
+}
+function avatarClubInfo(player){
+ const clubId=player?.club||player?.clubId||'';
+ const club=clubId&&typeof clubById==='function'?clubById(clubId):null;
+ const colors=club?.colorClub||club?.colors||{};
+ const primary=colors.primary||'#1769AA';
+ const secondary=colors.secondary||avatarShade(primary,.45);
+ const accent=colors.accent||avatarMix(primary,secondary,.5);
+ const text=colors.text||avatarTextColor(primary);
+ return {name:club?.name||avatarSourceKey(player),shortName:club?.shortName||String(club?.name||avatarSourceKey(player)).slice(0,3).toUpperCase(),primary,secondary,accent,text};
+}
+function avatarTier(player){
+ const ovr=Number(player?.ovr)||0;
+ if(ovr>=90)return {key:'legend',glow:'#f6d365',rim:'#fff1a8',spark:'#fff8cf',stars:4,label:'LEG'};
+ if(ovr>=85)return {key:'elite',glow:'#b993ff',rim:'#eedcff',spark:'#f6efff',stars:3,label:'ELI'};
+ if(ovr>=80)return {key:'gold',glow:'#f7c948',rim:'#ffefad',spark:'#fff8da',stars:2,label:'GLD'};
+ if(ovr>=75)return {key:'silver',glow:'#b7c5d3',rim:'#eef4f8',spark:'#ffffff',stars:1,label:'SLV'};
+ return {key:'base',glow:'#8fb4d8',rim:'rgba(255,255,255,.4)',spark:'rgba(255,255,255,.8)',stars:0,label:'ROO'};
+}
+function avatarPalette(player){
+ const club=avatarClubInfo(player);
+ const tier=avatarTier(player);
+ const isGoalkeeper=avatarIsGoalkeeper(player);
+ const primary=isGoalkeeper?avatarMix(club.primary,'#16a34a',.28):club.primary;
+ const secondary=isGoalkeeper?avatarMix(club.secondary,'#facc15',.22):club.secondary;
+ const accent=isGoalkeeper?avatarMix(club.accent,'#ffffff',.18):club.accent;
+ const bg1=avatarShade(primary,-.16), bg2=avatarShade(secondary,.12), glow=avatarMix(primary,tier.glow,.38);
+ return {primary,secondary,accent,bg1,bg2,glow,rim:tier.rim,text:club.text,club};
+}
+function avatarSeed(player){
+ const role=avatarRoleCode(player);
+ const source=avatarSourceKey(player);
+ const seed=hashString(`${player?.name||''}|${player?.nation||''}|${role}|${source}`);
+ const preset={
+  seed,
+  skin:seededChoice(['#f6caa5','#edb98f','#d99870','#be805b','#915b40','#f0d5bb'],seed,1),
+  hair:seededChoice(['#1b1512','#432818','#6f4e37','#c18f59','#d8d8d8','#111827','#7f1d1d','#312e81'],seed,2),
+  eyebrows:seededChoice(['#2a1a12','#4a2d1d','#6b4423','#40240f'],seed,3),
+  faceShape:seededChoice(['round','oval','square'],seed,4),
+  hairStyle:seededChoice(['crop','part','curly','spike','fade','long'],seed,5),
+  eyeStyle:seededChoice(['dot','smile','focused','wide'],seed,6),
+  mouthStyle:seededChoice(['smile','serious','grin'],seed,7),
+  beardStyle:seededChoice(['none','none','stubble','goatee','moustache'],seed,8),
+  accessory:seededChoice(['none','none','glasses','headband'],seed,9),
+  kitStyle:seededChoice(['stripe','sash','hoops','split','solid'],seed,10)
+ };
+ const creatorStyle=String(player?.creatorStyle||'').trim().toLowerCase();
+ const creatorName=String(player?.name||'').trim().toLowerCase();
+ const isBaroneSportivo=creatorStyle==='barone-sportivo'||String(player?.id||'')==='850'||creatorName==='barone sportivo';
+ const isStefanoFinari=creatorStyle==='stefano-finari'||String(player?.id||'')==='851'||creatorName==='stefano finari';
+ const isFantaballa=creatorStyle==='fantaballa'||String(player?.id||'')==='384'||creatorName==='fantaballa';
+ const isMisterFm=creatorStyle==='misterfm'||String(player?.id||'')==='852'||creatorName==='misterfm';
+ if(isBaroneSportivo){
+  preset.skin='#f0d5bb';
+  preset.hair='#8a5a33';
+  preset.eyebrows='#5a371d';
+  preset.faceShape='oval';
+  preset.hairStyle='part';
+  preset.eyeStyle='focused';
+  preset.mouthStyle='serious';
+  preset.beardStyle='stubble';
+  preset.accessory='topHat';
+  preset.kitStyle='solid';
+ }
+ if(isStefanoFinari){
+  preset.skin='#f0c39f';
+  preset.hair='#3a241a';
+  preset.eyebrows='#251812';
+  preset.faceShape='oval';
+  preset.hairStyle='fade';
+  preset.eyeStyle='wide';
+  preset.mouthStyle='smile';
+  preset.beardStyle='moustache';
+  preset.accessory='none';
+  preset.kitStyle='solid';
+ }
+ if(isFantaballa){
+  preset.skin='#efbf9a';
+  preset.hair='#30231d';
+  preset.eyebrows='#3b2921';
+  preset.eyeColor='#79b8dc';
+  preset.faceShape='oval';
+  preset.hairStyle='sideSweep';
+  preset.eyeStyle='azureWide';
+  preset.mouthStyle='serious';
+  preset.beardStyle='shortBeard';
+  preset.accessory='none';
+  preset.kitStyle='solid';
+ }
+ if(isMisterFm){
+  preset.skin='#eeb991';
+  preset.hair='#4b301f';
+  preset.eyebrows='#382316';
+  preset.faceShape='oval';
+  preset.hairStyle='crop';
+  preset.eyeStyle='wide';
+  preset.mouthStyle='smile';
+  preset.beardStyle='stubble';
+  preset.accessory='capGlasses';
+  preset.kitStyle='solid';
+ }
+ return preset;
+}
+function renderPlayerAvatarSvg(player,sub=false){
+ const sharedSvg=window.FantaballaCreatorAvatars?.renderSvg?.(player,{subscriber:sub});
+ if(sharedSvg)return sharedSvg;
+ const a=avatarSeed(player), p=avatarPalette(player), tier=avatarTier(player), id=`av-${a.seed}`, overall=Number(player?.ovr)||0;
+ const face=a.faceShape==='square'
+   ? `<rect x="18" y="14" width="48" height="54" rx="16" fill="${a.skin}" stroke="rgba(90,52,31,.18)" stroke-width="1.2"/>`
+   : `<ellipse cx="42" cy="41" rx="${a.faceShape==='oval'?23:24}" ry="${a.faceShape==='oval'?28:26}" fill="${a.skin}" stroke="rgba(90,52,31,.18)" stroke-width="1.2"/>`;
+ const ears=`<ellipse cx="15.2" cy="41.5" rx="4.8" ry="7.6" fill="${a.skin}"/><ellipse cx="68.8" cy="41.5" rx="4.8" ry="7.6" fill="${a.skin}"/>`;
+ const cheeks=`<circle cx="26.5" cy="52.2" r="2.6" fill="rgba(255,147,147,.14)"/><circle cx="57.5" cy="52.2" r="2.6" fill="rgba(255,147,147,.14)"/>`;
+ const neck=`<rect x="37.2" y="62" width="9.6" height="9.8" rx="4.2" fill="${a.skin}" opacity=".98"/>`;
+ const collar=`<path d="M31 82c1.6-7.6 6.8-13 11-13 4.2 0 9.4 5.4 11 13" fill="rgba(255,255,255,.08)"/>`;
+ const hairMap={
+   crop:`<path d="M18.5 31c2.6-13.4 12.4-21.4 23.5-21.4 10.8 0 19.8 5.6 23.3 18.8-6.4-2.9-13.8-4.1-23.3-4.1-9.8 0-16.8 2.5-23.5 6.7z" fill="${a.hair}"/>`,
+   part:`<path d="M18.4 31c4.8-12.8 14.6-20.8 23.6-20.8 8.6 0 16.6 5.2 21.8 18-5.5-2.4-10.8-3.6-15.7-3.6l-5.8 8-5.8-8c-6.8 0-12.6 2.2-18.1 6.4z" fill="${a.hair}"/>`,
+   curly:`<path d="M18.9 32c3.8-12.6 12.2-20.5 22-20.5 10.5 0 18.6 5.4 22.1 16.5-1.4-.6-2.8-.8-4.5-.8 0 0-1.2-5-4.9-5-2.5 0-3.8 2.5-3.8 2.5s-2.3-5-6.5-5-5.4 3.5-5.4 3.5-2.2-3.2-5.9-2.2c-4 1.1-5.4 6-5.4 6s-2.8 1.2-3.7 5z" fill="${a.hair}"/>`,
+   spike:`<path d="M19.2 33c1.4-5.2 5.2-12.8 10.2-18.2l5 4.8 5.2-7.6 6.2 7.2 4.8-6c5.2 4 9.2 10.5 10.4 19-6.4-4.2-12.8-6.4-21.6-6.4-8.4 0-14.8 2.4-20.2 7.2z" fill="${a.hair}"/>`,
+   fade:`<path d="M22.3 31.5C26 20 33.7 14.2 42 14.2c9.3 0 16.7 5.5 20.3 15.7-4.9-2.1-10.6-3-18.9-3-8.5 0-14.4 1.8-21.1 4.6z" fill="${a.hair}"/><path d="M20.6 32.5c1.3-5 3.5-9.5 6-12-2.3 6.2-2.4 10.5-.9 15.4-1.8.8-3.4 1.4-5.1 2.2z" fill="${a.hair}" opacity=".32"/><path d="M58.8 20.5c2.4 2.8 4.8 7.4 5.7 11.8-1.8-.8-3.7-1.4-5.5-1.8 1-4.7.7-7.6-.2-10z" fill="${a.hair}" opacity=".32"/>`,
+   long:`<path d="M18.8 30.5c4.6-13 12.4-20.2 23.2-20.2 10.4 0 18.6 5.5 22 17-5.2-2.2-10.3-3.2-16.2-3.2-10.8 0-18 3.2-24.5 9z" fill="${a.hair}"/><path d="M20.2 33.3c1.2 10.8 1.2 19.2-1.1 28.2 4.8-2.5 8.8-6.8 10.2-14l1.1-14.2z" fill="${a.hair}" opacity=".92"/><path d="M63.8 33.3c-1.2 10.8-1.2 19.2 1.1 28.2-4.8-2.5-8.8-6.8-10.2-14l-1.1-14.2z" fill="${a.hair}" opacity=".92"/>`
+ };
+ const brows=`<path d="M26.6 34.5c3-1.8 6.2-2.6 9.7-2.4" fill="none" stroke="${a.eyebrows}" stroke-width="2" stroke-linecap="round"/><path d="M47 32.1c3.5-.2 6.7.6 9.7 2.4" fill="none" stroke="${a.eyebrows}" stroke-width="2" stroke-linecap="round"/>`;
+ const eyesMap={
+   dot:`<circle cx="33.2" cy="42.3" r="2.1" fill="#1b1a17"/><circle cx="50.8" cy="42.3" r="2.1" fill="#1b1a17"/>`,
+   smile:`<path d="M30 42.5c1.5 1.9 3 2.6 4.6 2.6 1.5 0 3-.7 4.5-2.6" fill="none" stroke="#1b1a17" stroke-width="1.55" stroke-linecap="round"/><path d="M45 42.5c1.5 1.9 3 2.6 4.6 2.6 1.5 0 3-.7 4.5-2.6" fill="none" stroke="#1b1a17" stroke-width="1.55" stroke-linecap="round"/>`,
+   focused:`<path d="M30 42.1h6.8" stroke="#1b1a17" stroke-width="1.65" stroke-linecap="round"/><path d="M47.2 42.1H54" stroke="#1b1a17" stroke-width="1.65" stroke-linecap="round"/><circle cx="33.2" cy="42.8" r="1.2" fill="#1b1a17"/><circle cx="50.8" cy="42.8" r="1.2" fill="#1b1a17"/>`,
+   wide:`<ellipse cx="33.2" cy="42.3" rx="3.1" ry="2.6" fill="#fff"/><ellipse cx="50.8" cy="42.3" rx="3.1" ry="2.6" fill="#fff"/><circle cx="33.2" cy="42.3" r="1.5" fill="#1b1a17"/><circle cx="50.8" cy="42.3" r="1.5" fill="#1b1a17"/>`
+ };
+ const nose=`<path d="M42 45c1.9 2.8 2 5.8-.1 7.4" fill="none" stroke="rgba(119,74,46,.32)" stroke-width="1.45" stroke-linecap="round"/>`;
+ const mouthMap={
+   smile:`<path d="M33 56c3.3 2.9 6 4 9 4 3 0 5.7-1.1 9-4" fill="none" stroke="rgba(110,47,34,.94)" stroke-width="2" stroke-linecap="round"/>`,
+   serious:`<path d="M34.2 56.4h15.6" fill="none" stroke="rgba(110,47,34,.94)" stroke-width="1.95" stroke-linecap="round"/>`,
+   grin:`<path d="M32.4 54.8c3 3.8 6.1 5.1 9.6 5.1 3.2 0 6.5-1.3 9.6-5.1" fill="#fff8ef" stroke="rgba(110,47,34,.94)" stroke-width="1.65" stroke-linejoin="round"/>`
+ };
+ const beardMap={
+   none:'',
+   stubble:`<path d="M28.2 52.8c3 8.4 8.4 13.2 13.8 13.2 5.5 0 10.8-4.8 13.8-13.2" fill="rgba(138,90,51,.34)"/><path d="M30 55.5c2.8 4.6 7.2 7.5 12 7.5s9.2-2.9 12-7.5" fill="none" stroke="rgba(138,90,51,.55)" stroke-width="1.4" stroke-linecap="round"/>`,
+   goatee:`<path d="M37.1 57c1.3 5.6 3 10 4.9 12.3 1.9-2.3 3.6-6.7 4.9-12.3" fill="rgba(58,37,23,.58)"/><path d="M34.4 54.6c2.4 2.3 5.1 3.3 7.6 3.3 2.5 0 5.2-.9 7.6-3.3" fill="rgba(58,37,23,.46)"/>`,
+   moustache:`<path d="M33.8 51c1.9 2 4.3 2.8 6.6 2.8 0 0 .5-1.5 1.6-1.5 1.2 0 1.6 1.5 1.6 1.5 2.3 0 4.7-.8 6.6-2.8-1.9 3.2-4.2 4.8-7.4 4.8h-1.6c-3.2 0-5.5-1.6-7.4-4.8z" fill="rgba(58,37,23,.72)"/>`
+ };
+ const accessoryMap={
+   none:'',
+   glasses:`<g stroke="#0f172a" stroke-width="1.9" fill="rgba(219,234,254,.25)"><rect x="25.4" y="38.2" width="13.4" height="9.6" rx="3.2"/><rect x="45.2" y="38.2" width="13.4" height="9.6" rx="3.2"/><path d="M38.8 43h6.4"/></g>`,
+   headband:`<path d="M23.2 31.4c6-2.8 12-4.1 18.8-4.1 6.8 0 12.8 1.3 18.8 4.1" fill="none" stroke="#ef4444" stroke-width="4.2" stroke-linecap="round" opacity=".92"/>`,
+   topHat:`<g><ellipse cx="42" cy="20.2" rx="22.5" ry="5.6" fill="#0f1115" opacity=".96"/><path d="M26 21V9.8c0-2.5 2-4.5 4.5-4.5h23c2.5 0 4.5 2 4.5 4.5V21z" fill="#191b20"/><rect x="24.5" y="19.2" width="35" height="3.6" rx="1.8" fill="#2a2d34"/><path d="M27 9.6h30" stroke="rgba(255,255,255,.16)" stroke-width="1.1" stroke-linecap="round"/></g>`,
+  capGlasses:`<g><path d="M20.5 26.8c5.6-8.4 13.4-12.9 21.5-12.9 8.3 0 16.6 4.6 21.5 12.9l-4 2.5c-5.1-5.9-11.1-8.9-17.5-8.9-6.3 0-12.5 3-17.5 8.9z" fill="#f0b83e"/><path d="M24.2 28.2h35.6v5.2H24.2z" fill="#fffdf8" stroke="rgba(75,48,31,.18)" stroke-width=".7"/><path d="M24.8 26.8c4.6-5.2 10.6-7.8 17.2-7.8 6.6 0 12.6 2.6 17.2 7.8" fill="none" stroke="rgba(255,255,255,.48)" stroke-width="1.1" stroke-linecap="round"/><g stroke="#524036" stroke-width="1.9" fill="rgba(219,234,254,.22)"><rect x="24.8" y="38.2" width="14.2" height="10" rx="3.4"/><rect x="45" y="38.2" width="14.2" height="10" rx="3.4"/><path d="M39 43h6"/></g></g>`
+ };
+ const sparkles=tier.stars?`<g fill="${tier.spark}" opacity=".86"><circle cx="21" cy="15" r="1.4"/><circle cx="61" cy="14" r="1.2"/><path d="M63 26l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z"/></g>`:'';
+ const crown=sub?`<g><circle cx="15" cy="15" r="8.8" fill="#f6c74e" stroke="#fff5bf" stroke-width="1.1"/><path d="M10.2 17.5l1.5-5 3 2.2 2.6-3.3 2.6 3.3 3-2.2 1.5 5z" fill="#8b5a00"/></g>`:'';
+ const topMark=overall>=88?`<g><circle cx="68.5" cy="15.5" r="8.2" fill="${tier.glow}"/><text x="68.5" y="18.6" text-anchor="middle" font-size="6.2" font-weight="900" fill="#10243a" font-family="system-ui, sans-serif">TOP</text></g>`:'';
+ const rimColor=sub ? '#ffe76a' : tier.rim;
+ return `<svg viewBox="0 0 84 84" aria-hidden="true" focusable="false"><defs><linearGradient id="${id}-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${avatarShade(p.bg1,.08)}"/><stop offset="100%" stop-color="${avatarShade(p.bg2,.02)}"/></linearGradient><radialGradient id="${id}-halo" cx="50%" cy="38%" r="60%"><stop offset="0%" stop-color="${avatarShade(p.glow,.42)}" stop-opacity=".82"/><stop offset="100%" stop-color="${avatarShade(p.glow,-.18)}" stop-opacity="0"/></radialGradient><radialGradient id="${id}-shine" cx="28%" cy="18%" r="70%"><stop offset="0%" stop-color="rgba(255,255,255,.38)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><rect x="4.5" y="4.5" width="75" height="75" rx="22" fill="url(#${id}-bg)"/><circle cx="42" cy="40" r="29" fill="url(#${id}-halo)"/>${collar}${neck}${ears}${face}${hairMap[a.hairStyle]||hairMap.crop}${cheeks}${accessoryMap[a.accessory]||''}${brows}${eyesMap[a.eyeStyle]||eyesMap.dot}${nose}${mouthMap[a.mouthStyle]||mouthMap.smile}${beardMap[a.beardStyle]||''}${sparkles}${crown}${topMark}<rect x="4.5" y="4.5" width="75" height="75" rx="22" fill="url(#${id}-shine)" opacity=".55"/><rect x="4.5" y="4.5" width="75" height="75" rx="22" fill="none" stroke="${rimColor}" stroke-width="${sub?'2.2':overall>=85?'1.7':'1.2'}"/></svg>`;
+}
+
+  function renderPlayerAvatar(player,subscribed=false,creator=false){
+    return `<span class="avatar ${subscribed?'subscriber-avatar':''} ${creator?'creator-avatar':''}" aria-hidden="true">${renderPlayerAvatarSvg(player,subscribed)}${creator?'<span class="creator-avatar-badge">CR</span>':''}</span>`;
+  }
+
+
+  async function loadJson(path){
+    const response=await fetch(path,{cache:'no-store'});
+    if(!response.ok)throw new Error(`Impossibile caricare ${path} (${response.status})`);
+    const data=await response.json();
+    if(!Array.isArray(data))throw new Error(`Formato non valido: ${path}`);
+    return data;
+  }
+
+  async function init(){
+    try{
+      const [communityPlayers,realPlayers,communityClubs,realClubs]=await Promise.all([
+        loadJson('data/giocatori.json'),loadJson('data/giocatori-real.json'),loadJson('data/club.json'),loadJson('data/club-real.json')
+      ]);
+      communityClubs.forEach(club=>state.clubs.set(`community:${club.id}`,club));
+      realClubs.forEach(club=>state.clubs.set(`real:${club.id}`,club));
+      state.players=[
+        ...communityPlayers.map(player=>({...player,database:'community'})),
+        ...realPlayers.map(player=>({...player,database:'real'}))
+      ];
+      renderDatasetTabs();
+      bindEvents();
+      refreshFilterOptions();
+      applyFilters();
+      el('appStatus').hidden=true;
+      el('catalog').hidden=false;
+    }catch(error){
+      el('appStatus').className='error';
+      el('appStatus').textContent=`Errore nel caricamento: ${error.message}`;
+    }
+  }
+
+  function datasetPlayers(){return state.dataset==='all'?state.players:state.players.filter(player=>player.database===state.dataset)}
+
+  function renderDatasetTabs(){
+    const counts={all:state.players.length,community:state.players.filter(p=>p.database==='community').length,real:state.players.filter(p=>p.database==='real').length};
+    el('datasetTabs').innerHTML=Object.entries(DATASETS).map(([key,item])=>`<button type="button" class="dataset-tab ${state.dataset===key?'active':''}" data-dataset="${key}">${item.label}<small>${formatNumber(counts[key])}</small></button>`).join('');
+    el('datasetTabs').querySelectorAll('[data-dataset]').forEach(button=>button.addEventListener('click',()=>{
+      state.dataset=button.dataset.dataset;state.page=1;
+      renderDatasetTabs();refreshFilterOptions();applyFilters();
+    }));
+  }
+
+  function optionMarkup(values,placeholder,current){
+    return `<option value="">${placeholder}</option>`+values.map(value=>`<option value="${escapeHtml(value)}" ${value===current?'selected':''}>${escapeHtml(value)}</option>`).join('');
+  }
+
+  function refreshFilterOptions(){
+    const players=datasetPlayers();
+    const clubCurrent=el('clubFilter').value;
+    const nationCurrent=el('nationFilter').value;
+    const clubs=[...new Set(players.map(clubName))].sort((a,b)=>a.localeCompare(b,'it'));
+    const nations=[...new Set(players.map(player=>player.nation||'Non indicata'))].sort((a,b)=>a.localeCompare(b,'it'));
+    el('clubFilter').innerHTML=optionMarkup(clubs,'Tutte le squadre',clubs.includes(clubCurrent)?clubCurrent:'');
+    el('nationFilter').innerHTML=optionMarkup(nations,'Tutte le nazionalità',nations.includes(nationCurrent)?nationCurrent:'');
+  }
+
+  function bindEvents(){
+    ['searchInput','clubFilter','nationFilter','roleFilter','subscriberFilter','sortFilter'].forEach(id=>{
+      el(id).addEventListener(id==='searchInput'?'input':'change',()=>{state.page=1;applyFilters()});
+    });
+    el('clearFilters').addEventListener('click',()=>{
+      el('searchInput').value='';el('clubFilter').value='';el('nationFilter').value='';el('roleFilter').value='';el('subscriberFilter').value='';el('sortFilter').value='ovr-desc';state.page=1;applyFilters();
+    });
+  }
+
+  function applyFilters(){
+    const query=normalize(el('searchInput').value);
+    const club=el('clubFilter').value;
+    const nation=el('nationFilter').value;
+    const role=el('roleFilter').value;
+    const subscriber=el('subscriberFilter').value;
+    const sort=el('sortFilter').value;
+    let players=datasetPlayers().filter(player=>{
+      const subscribed=isSubscriber(player),creator=isCreator(player);
+      const searchable=normalize(`${player.name} ${clubName(player)} ${player.nation||''} ${player.Position||''} ${subscribed?'abbonato tik tok':'non abbonato'} ${creator?'creator content creator':'non creator'}`);
+      return (!query||searchable.includes(query))&&(!club||clubName(player)===club)&&(!nation||(player.nation||'Non indicata')===nation)&&(!role||macroRole(player)===role)&&(!subscriber||(subscriber==='yes'?subscribed:!subscribed));
+    });
+    const compareText=(a,b)=>String(a).localeCompare(String(b),'it',{sensitivity:'base'});
+    players.sort((a,b)=>{
+      if(sort==='ovr-asc')return Number(a.ovr||0)-Number(b.ovr||0)||compareText(a.name,b.name);
+      if(sort==='name-asc')return compareText(a.name,b.name)||Number(b.ovr||0)-Number(a.ovr||0);
+      if(sort==='club-asc')return compareText(clubName(a),clubName(b))||compareText(a.name,b.name);
+      if(sort==='nation-asc')return compareText(a.nation,b.nation)||compareText(a.name,b.name);
+      return Number(b.ovr||0)-Number(a.ovr||0)||compareText(a.name,b.name);
+    });
+    state.filtered=players;
+    const pages=Math.max(1,Math.ceil(players.length/PAGE_SIZE));
+    if(state.page>pages)state.page=pages;
+    renderStats();renderTable();renderPagination();
+  }
+
+  function renderStats(){
+    const players=state.filtered;
+    el('totalPlayers').textContent=formatNumber(players.length);
+    el('totalClubs').textContent=formatNumber(new Set(players.map(clubName)).size);
+    el('totalNations').textContent=formatNumber(new Set(players.map(player=>player.nation||'Non indicata')).size);
+    el('averageOvr').textContent=players.length?(players.reduce((sum,p)=>sum+Number(p.ovr||0),0)/players.length).toFixed(1):'—';
+    const from=players.length?(state.page-1)*PAGE_SIZE+1:0;
+    const to=Math.min(state.page*PAGE_SIZE,players.length);
+    el('resultLabel').textContent=players.length?`${formatNumber(players.length)} giocatori · visualizzati ${from}–${to}`:'Nessun giocatore trovato';
+  }
+
+  function renderTable(){
+    const start=(state.page-1)*PAGE_SIZE;
+    const rows=state.filtered.slice(start,start+PAGE_SIZE);
+    el('emptyState').hidden=rows.length>0;
+    el('playersBody').innerHTML=rows.map((player,index)=>{
+      const club=clubInfo(player);const colors=club.colorClub||{};const ovr=Number(player.ovr||0);const subscribed=isSubscriber(player),creator=isCreator(player);
+      return `<tr class="${subscribed?'subscriber-row':''} ${creator?'creator-row':''}">
+        <td class="rank" data-label="Posizione">${start+index+1}</td>
+        <td class="player-td" data-label="Giocatore"><div class="player-cell">${renderPlayerAvatar(player,subscribed,creator)}<span class="player-copy"><span class="player-name ${subscribed?'subscriber-name':''} ${creator?'creator-name':''}" title="${escapeHtml(player.name)}${subscribed?' · Abbonato':''}${creator?' · Creator':''}">${escapeHtml(player.name)}</span><span class="player-db"><span>${player.database==='real'?'Fantacampionato':'Fantaballa'}</span>${subscribed?'<span class="subscriber-tag">Abbonato</span>':''}${creator?'<span class="creator-tag">Creator</span>':''}</span></span></div></td>
+        <td class="club-td" data-label="Squadra"><div class="club-cell"><span class="club-swatch" style="--club-a:${escapeHtml(colors.primary||'#1769aa')};--club-b:${escapeHtml(colors.secondary||'#fff')};--club-accent:${escapeHtml(colors.accent||'#e3c64d')}"></span><span class="club-copy"><span class="club-name" title="${escapeHtml(club.name||player.club)}">${escapeHtml(club.name||player.club||'Senza squadra')}</span></span></div></td>
+        <td class="nation-td" data-label="Nazionalità"><span class="nation">${escapeHtml(player.nation||'Non indicata')}</span></td>
+        <td class="position-td" data-label="Ruolo"><span class="position">${escapeHtml(player.Position||player.role||'—')}</span></td>
+        <td class="ovr" data-label="Overall"><span class="ovr-badge ${rarityClass(ovr)}">${ovr}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderPagination(){
+    const totalPages=Math.max(1,Math.ceil(state.filtered.length/PAGE_SIZE));
+    if(totalPages<=1){el('pagination').innerHTML='';return}
+    const pages=[];
+    for(let page=1;page<=totalPages;page++){
+      if(page===1||page===totalPages||Math.abs(page-state.page)<=2)pages.push(page);
+    }
+    const compact=[];
+    pages.forEach((page,index)=>{if(index&&page-pages[index-1]>1)compact.push('…');compact.push(page)});
+    el('pagination').innerHTML=`<button class="page-btn" data-page="${state.page-1}" ${state.page===1?'disabled':''} aria-label="Pagina precedente">‹</button>${compact.map(item=>item==='…'?'<span>…</span>':`<button class="page-btn ${item===state.page?'active':''}" data-page="${item}">${item}</button>`).join('')}<button class="page-btn" data-page="${state.page+1}" ${state.page===totalPages?'disabled':''} aria-label="Pagina successiva">›</button>`;
+    el('pagination').querySelectorAll('[data-page]').forEach(button=>button.addEventListener('click',()=>{
+      const next=Number(button.dataset.page);if(!Number.isFinite(next)||next<1||next>totalPages)return;state.page=next;renderStats();renderTable();renderPagination();document.querySelector('.panel').scrollIntoView({behavior:'smooth',block:'start'});
+    }));
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
