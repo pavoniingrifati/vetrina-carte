@@ -22,7 +22,7 @@ L’effetto dura per le successive 3 partite.
 - Il bonus si aggiunge ai punti normali del risultato.
 
 ### Correggi il documento
-La squadra dell’utente riceve immediatamente una penalizzazione di 2 punti.
+La squadra dell’utente riceve immediatamente una penalizzazione di 3 punti e ottiene un oggetto casuale nell’inventario. L’evento compare soltanto quando è disponibile almeno uno spazio libero.
 
 ## Compatibilità
 Gli eventi sono disponibili sia nel Campionato Community sia nel Campionato REAL. Gli effetti sono conservati nei salvataggi esistenti tramite `seasonRules`, senza modificare il formato generale del salvataggio.

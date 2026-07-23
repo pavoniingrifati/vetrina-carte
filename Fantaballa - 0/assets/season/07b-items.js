@@ -13,6 +13,15 @@ const SEASON_ITEM_DEFINITIONS=Object.freeze({
  'blue-pill':Object.freeze({id:'blue-pill',name:'Pillola blu',icon:'●',rarity:'Epico',type:'Consumabile rischioso',description:'Invecchia un calciatore: guadagna 10 OVR permanentemente, ma dopo ogni partita potrebbe annunciare improvvisamente il ritiro.'})
 });
 function seasonItemDefinition(id=''){return SEASON_ITEM_DEFINITIONS[String(id)]||null}
+const RANDOM_GIFT_ITEM_IDS=Object.freeze(['captain-armband','collina-whistle','buffon-gloves','var-token','blessed-ball','panini-pack','red-pill','blue-pill']);
+function grantRandomSeasonItem(source='Regalo casuale'){
+ const inventory=seasonInventory();
+ if(seasonInventoryUsedSlots()>=inventory.capacity)return null;
+ const itemId=pick(RANDOM_GIFT_ITEM_IDS);
+ const definition=seasonItemDefinition(itemId);
+ if(!definition||!addSeasonItem(itemId,1,{source}))return null;
+ return definition;
+}
 function seasonInventory(){
  state.inventory=state.inventory&&typeof state.inventory==='object'?state.inventory:{capacity:3,items:[],active:null,rokkyStarterGranted:false,pendingPack:null};
  state.inventory.capacity=clamp(Math.floor(Number(state.inventory.capacity)||3),1,10);

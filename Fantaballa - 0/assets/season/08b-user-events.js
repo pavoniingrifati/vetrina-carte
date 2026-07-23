@@ -177,9 +177,9 @@ function resolvePermanentAppealAfterMatch(result){
 
 /* Punti per ogni gol subito */
 function concededGoalPointsState(){return userEventState('concededGoalPoints',{active:false,matchesRemaining:0,startedMatchday:-1,totalBonus:0})}
-function concededGoalPointsAvailable(){return Boolean(!concededGoalPointsState().active&&Number(state.matchday)<seasonLength()-2)}
+function concededGoalPointsAvailable(){const inventory=seasonInventory();return Boolean(!concededGoalPointsState().active&&Number(state.matchday)<seasonLength()-2&&seasonInventoryUsedSlots()<inventory.capacity)}
 function acceptConcededGoalPoints(){Object.assign(concededGoalPointsState(),{active:true,matchesRemaining:3,startedMatchday:Number(state.matchday),totalBonus:0});return 'Per le prossime 3 partite ogni gol subito assegna +1 punto, fino a un massimo di 4 punti per gara.'}
-function rejectConcededGoalPoints(){const standing=userStanding();if(standing)standing.pts=(Number(standing.pts)||0)-2;return 'Il documento viene corretto, ma ricevi immediatamente una penalizzazione di 2 punti.'}
+function rejectConcededGoalPoints(){const item=grantRandomSeasonItem('Correzione del regolamento');if(!item)return 'Il documento non può essere corretto perché l’inventario è pieno.';const standing=userStanding();if(standing)standing.pts=(Number(standing.pts)||0)-3;return `Il documento viene corretto: ricevi immediatamente una penalizzazione di 3 punti, ma ottieni in regalo ${item.name}.`}
 function resolveConcededGoalPointsAfterMatch(result){
  const rule=concededGoalPointsState();if(!rule.active||!result)return;
  const goals=Math.max(0,Math.floor(Number.isFinite(Number(result.displayGa))?Number(result.displayGa):Number(result.ga)||0)),bonus=Math.min(4,goals),standing=userStanding();
