@@ -749,8 +749,8 @@ function animateMidseasonCandidateReveal(){
 function ovrTierKey(ovr){
  const value=Number(ovr)||0;
  if(value>=95)return 'diamond';
- if(value>=90)return 'gold';
- if(value>=85)return 'purple';
+ if(value>=90)return 'purple';
+ if(value>=85)return 'gold';
  if(value>=80)return 'blue';
  return 'base';
 }
