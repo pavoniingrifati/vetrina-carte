@@ -27,7 +27,7 @@ test('Nuova decisione comune consentita', () => {
   catalogs[0].decisions.push({id:'evento-editor-test',order:81,title:'Evento editor test',text:'Evento generato dal test.',choices:[{label:'A',effect:'A',applyHandler:'nuovo-sponsor:0'},{label:'B',effect:'B',applyHandler:'nuovo-sponsor:1'}]});
   const report=validate(catalogs);
   assert(report.ok, report.errors.join(' | '));
-  assert(report.stats.communityDecisions===83 && report.stats.realDecisions===77,'Conteggi nuova decisione errati.');
+  assert(report.stats.communityDecisions===87 && report.stats.realDecisions===81,'Conteggi nuova decisione errati.');
 });
 test('Handler inesistente bloccato', () => {
   const catalogs=clone(original);

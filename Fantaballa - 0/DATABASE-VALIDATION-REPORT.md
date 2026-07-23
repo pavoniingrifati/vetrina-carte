@@ -1,6 +1,6 @@
 # Rapporto validazione database Fantaballa
 
-Generato: `2026-07-23T05:37:28.292321Z`
+Generato: `2026-07-23T09:13:15.716284Z`
 
 ## Riepilogo
 

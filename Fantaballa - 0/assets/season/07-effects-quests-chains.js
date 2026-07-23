@@ -517,6 +517,7 @@ function acceptBaroneSportivoChallenge(){const response=startSeasonQuest({id:'ba
 function questTargetRosterEntry(q=questState(),fallback=questBestAttacker()){return rosterEntry(q.targetPlayerId)||fallback||null}
 function questOpponentIsTopThree(opponentId){return questIsActive('ammazza-grandi')&&sortedTable().slice(0,3).some(row=>String(row.id)===String(opponentId))}
 function questProgressText(q=questState()){
+ const itemProgress=typeof itemQuestProgressText==='function'?itemQuestProgressText(q):'';if(itemProgress)return itemProgress;
  if(q.id==='like-a-bomber')return `${q.progress}/${q.target} gol · ${q.matchesPlayed}/${q.deadlineMatches} partite`;
  if(q.id==='fair-play-finanziario')return `${q.progress}/${q.target} punti · ${q.matchesPlayed}/${q.deadlineMatches} giornate`;
  if(q.id==='la-curva')return `${q.facedTeamIds.length}/${q.targetTeamIds.length} grandi rivali affrontate`;
@@ -545,6 +546,7 @@ function tickSeasonQuestAfterMatch(result){
    result.questUpdates=Array.isArray(result.questUpdates)?result.questUpdates:[];result.questUpdates.push({success:false,title:'La curva',message:'La serie positiva è terminata: rimosso il bonus di +5 OVR.'});
  }
  const q=questState();if(!q.active)return;
+ if(typeof tickItemQuestAfterMatch==='function'&&tickItemQuestAfterMatch(result))return;
  if(q.id==='un-leader-per-la-squadra'){if(typeof tickLeaderQuestAfterMatch==='function')tickLeaderQuestAfterMatch(result);return}
  if(q.id==='barone-sportivo'){
    q.matchesPlayed++;
