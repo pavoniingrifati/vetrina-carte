@@ -50,6 +50,7 @@ function collinaWhistleCanSkipEvent(event=state.pendingEvent){
 function useCollinaWhistleToSkipEvent(){
  const event=state.pendingEvent;if(!collinaWhistleCanSkipEvent(event))return'Il Fischietto di Collina non può essere utilizzato su questo evento.';
  if(!removeSeasonItem('collina-whistle',1))return'Non possiedi il Fischietto di Collina.';
+ unlockAchievement('utilizza-fischietto-collina');
  const before=analyticsSnapshot(),title=String(event.title||'Evento');
  event.resolved=true;event.skippedWithItem='collina-whistle';event.result=`Il Fischietto di Collina interrompe ${title}: nessuna opzione viene applicata.`;
  recordSeasonEvent({kind:'decision',title,choice:'Fischietto di Collina',effect:'Evento saltato senza applicare alcuna scelta.',result:event.result,automatic:false},before);

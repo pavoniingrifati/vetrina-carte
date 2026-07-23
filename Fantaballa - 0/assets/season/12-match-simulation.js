@@ -461,6 +461,7 @@ function playRound(mode='instant'){
    commentary.push({minute:matchMinutes,type:'var',icon:'🕵️',title:'Gol annullato da Rokky',text:`Il gol di ${removedGoal?.player||'un avversario'} viene cancellato a partita conclusa.`,teamId:'',scoreAfter:`${homeGoals}–${awayGoals}`});
    commentary.sort((a,b)=>Number(a.minute)-Number(b.minute)||(a.type==='fulltime'?1:b.type==='fulltime'?-1:0));
    rokkyOutcome={attempted:true,success:true,caught:false,removedScorer:String(removedGoal?.player||''),originalGoalsAgainst:officialGoalsAgainst+1,finalGoalsAgainst:officialGoalsAgainst};
+   unlockAchievement('annulla-un-gol-avversario');
  };
  const finishRound=()=>{
    if(committed)return;

@@ -31,6 +31,8 @@
     { id:'galacticos', category:'Immediati', icon:'🌟', title:'Galácticos', description:'Vinci con tutti gli undici titolari ad almeno 90 OVR totale.' },
 
     { id:'capitano-mio-capitano', category:'Oggetti', icon:'©', title:'Capitano, mio capitano', description:'Fai indossare la Fascia del capitano a un giocatore per la prima volta.' },
+    { id:'utilizza-fischietto-collina', category:'Oggetti', icon:'◉', title:'Utilizza il Fischietto di Collina', description:'Usa il Fischietto di Collina per saltare un evento.' },
+    { id:'annulla-un-gol-avversario', category:'Allenatori', icon:'🕵️', title:'Annulla un gol avversario', description:'Annulla con successo un gol avversario usando Rokky.' },
 
     { id:'campeones', category:'Stagionali', icon:'🏆', title:'Campeones', description:'Vinci il campionato.' },
     { id:'double', category:'Stagionali', icon:'👑', title:'Double', description:'Vinci campionato e coppa nella stessa stagione.' },

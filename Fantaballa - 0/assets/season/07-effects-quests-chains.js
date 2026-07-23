@@ -76,14 +76,14 @@ function motivatorBonusScope(type){
 }
 function pushEffect(type,value,rounds,extra={}){
  const scope=motivatorBonusScope(type),ovrTypes=new Set(['teamOvr','playerOvr','subscriberOvr','goalkeeperOvr']),sponsorExtra=ovrTypes.has(String(type))?sponsorOvrExtraFor(value,extra):0,sponsoredValue=Number(value)+sponsorExtra,enhance=coachIs('motivator')&&!extra?.motivatorExtra&&scope&&sponsoredValue>0;
- const adjusted=enhance&&scope.kind!=='multiplier'?sponsoredValue+1:sponsoredValue,untilSeasonEnd=Boolean(extra?.untilSeasonEnd),duration=Math.max(1,Number(rounds)||(untilSeasonEnd?remainingSeasonMatches():1));
+ const adjusted=enhance&&scope.kind!=='multiplier'?sponsoredValue+2:sponsoredValue,untilSeasonEnd=Boolean(extra?.untilSeasonEnd),duration=Math.max(1,Number(rounds)||(untilSeasonEnd?remainingSeasonMatches():1));
  state.activeEffects.push({type,value:adjusted,rounds:duration,...extra,untilSeasonEnd,sponsorExtra});
  if(!enhance)return;
  const companionBase={rounds:duration,source:'Motivatore',motivatorExtra:true,untilSeasonEnd};
  if(extra?.playerId)companionBase.playerId=String(extra.playerId);
- if(scope.kind==='ovr')state.activeEffects.push({type:scope.chem,value:1,...companionBase});
- else if(scope.kind==='chem')state.activeEffects.push({type:scope.ovr,value:1,...companionBase});
- else{state.activeEffects.push({type:scope.ovr,value:1,...companionBase});state.activeEffects.push({type:scope.chem,value:1,...companionBase})}
+ if(scope.kind==='ovr')state.activeEffects.push({type:scope.chem,value:2,...companionBase});
+ else if(scope.kind==='chem')state.activeEffects.push({type:scope.ovr,value:2,...companionBase});
+ else{state.activeEffects.push({type:scope.ovr,value:2,...companionBase});state.activeEffects.push({type:scope.chem,value:2,...companionBase})}
 }
 function pushSeasonEffect(type,value,extra={}){return pushEffect(type,value,remainingSeasonMatches(),{...extra,untilSeasonEnd:true})}
 function applyCreatorMvpBoostAfterMatch(result){
