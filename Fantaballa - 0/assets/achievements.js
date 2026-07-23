@@ -32,6 +32,10 @@
 
     { id:'capitano-mio-capitano', category:'Oggetti', icon:'©', title:'Capitano, mio capitano', description:'Fai indossare la Fascia del capitano a un giocatore per la prima volta.' },
     { id:'utilizza-fischietto-collina', category:'Oggetti', icon:'◉', title:'Utilizza il Fischietto di Collina', description:'Usa il Fischietto di Collina per saltare un evento.' },
+    { id:'completa-saracinesca', category:'Oggetti', icon:'🧤', title:'Saracinesca', description:'Completa la quest Saracinesca e ottieni i Guanti di Buffon.' },
+    { id:'completa-non-era-mai-rigore', category:'Oggetti', icon:'📺', title:'Non era mai rigore', description:'Completa la quest Non era mai rigore e ottieni il Gettone VAR.' },
+    { id:'benedetto-sia-il-pallone', category:'Oggetti', icon:'⚽', title:'Benedetto sia il pallone', description:'Completa la quest Zona Cesarini e ottieni il Pallone benedetto.' },
+    { id:'completa-internazionale', category:'Oggetti', icon:'🌍', title:'Internazionale', description:'Completa la quest Internazionale e ottieni la Bustina Panini.' },
     { id:'annulla-un-gol-avversario', category:'Allenatori', icon:'🕵️', title:'Annulla un gol avversario', description:'Annulla con successo un gol avversario usando Rokky.' },
 
     { id:'campeones', category:'Stagionali', icon:'🏆', title:'Campeones', description:'Vinci il campionato.' },

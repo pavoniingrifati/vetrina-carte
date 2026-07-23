@@ -497,7 +497,11 @@ function finishSeasonQuest(success,message,result=null){
      'fair-play-finanziario':'conti-in-ordine',
      'la-curva':'tre-classiche',
      'milanlab':'milanlab-certificato',
-     'calcio-champagne':'calcio-champagne'
+     'calcio-champagne':'calcio-champagne',
+     'saracinesca':'completa-saracinesca',
+     'non-era-mai-rigore':'completa-non-era-mai-rigore',
+     'zona-cesarini':'benedetto-sia-il-pallone',
+     'internazionale':'completa-internazionale'
    };
    const achievementId=achievementByQuest[String(q.id||'')];if(achievementId)unlockAchievement(achievementId);
  }
