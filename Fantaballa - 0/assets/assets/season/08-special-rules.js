@@ -771,10 +771,10 @@ function setPermanentRosterOvr(entry,value){
  const before=Number(player.ovr)||60,requested=Math.max(1,Math.round(Number(value)||before)),isPositive=requested>before;
  if(isPositive&&coachIs('ductility'))return null;
  const sponsorExtra=isPositive?sponsorOvrExtraFor(requested-before):0,sponsoredRequested=isPositive?requested+sponsorExtra:requested;
- const after=isPositive&&coachIs('motivator')?sponsoredRequested+1:sponsoredRequested;
+ const after=isPositive&&coachIs('motivator')?sponsoredRequested+2:sponsoredRequested;
  state.draft.roster[index].player={...player,ovr:after};
  if(sponsorExtra){recordBallariniPlayerBonus(player.id,sponsorExtra);if(after>=100&&after-sponsorExtra<100)unlockAchievement('qualita-ballarini')}
- if(isPositive&&coachIs('motivator'))addMotivatorPermanentChemistry(player.id,1);
+ if(isPositive&&coachIs('motivator'))addMotivatorPermanentChemistry(player.id,2);
  return {player:state.draft.roster[index].player,before,after};
 }
 function empowerUnderdog(){
