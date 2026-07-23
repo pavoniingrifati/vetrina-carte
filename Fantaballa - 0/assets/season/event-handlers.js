@@ -57,7 +57,8 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "giocatore-porta-sfortuna":function(){return badLuckPlayerAvailable()},
 "ricorso-permanente":function(){return permanentAppealAvailable()},
 "punti-gol-subiti":function(){return concededGoalPointsAvailable()},
-"designazione-arbitrale":function(){return refereeDesignationAvailable()}
+"designazione-arbitrale":function(){return refereeDesignationAvailable()},
+"posto-fisso":function(){return fixedJobAvailable()}
  }),
  title:Object.freeze({
 "omonimo-allenatore":function(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`}
@@ -248,7 +249,9 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "punti-gol-subiti:0":function(){return acceptConcededGoalPoints()},
 "punti-gol-subiti:1":function(){return rejectConcededGoalPoints()},
 "designazione-arbitrale:0":function(){return acceptMariaSoleDesignation()},
-"designazione-arbitrale:1":function(){return acceptRosarioDesignation()}
+"designazione-arbitrale:1":function(){return acceptRosarioDesignation()},
+"posto-fisso:0":function(){return applyFixedJobRoleRule()},
+"posto-fisso:1":function(){return retireSingleRolePlayers()}
  })
 });
 const SEASON_EVENT_HANDLER_IDS=Object.freeze({

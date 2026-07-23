@@ -187,6 +187,29 @@ function resolveConcededGoalPointsAfterMatch(result){
  const message=bonus?`Hai subito ${goals} ${goals===1?'gol':'gol'} e ricevi +${bonus} ${bonus===1?'punto':'punti'} aggiuntivi.`:'Non hai subito gol: nessun punto aggiuntivo.';result.pointsNote=[result.pointsNote,message].filter(Boolean).join(' ');userEventUpdate(result,bonus>0,'Punti per ogni gol subito',`${message} ${rule.matchesRemaining>0?`Restano ${rule.matchesRemaining} partite.`:'La regola al contrario termina.'}`);
 }
 
+/* Posto fisso! */
+function fixedJobRoleCount(player){return new Set(positions(player).map(position=>String(position||'').trim().toUpperCase()).filter(Boolean)).size}
+function fixedJobAvailable(){return rosterPlayers().some(entry=>userEventPlayerByEntry(entry))}
+function applyFixedJobRoleRule(){
+ const entries=[...rosterPlayers()].filter(entry=>userEventPlayerByEntry(entry)),specialists=[],versatile=[],blocked=[];
+ entries.forEach(entry=>{
+  const player=userEventPlayerByEntry(entry),single=fixedJobRoleCount(player)===1,delta=single?5:-5,change=userEventPermanentDelta(entry.playerId,delta);
+  if(change)(single?specialists:versatile).push(change.player.name);else if(single)blocked.push(player.name);
+ });
+ const parts=[];
+ if(specialists.length)parts.push(`${specialists.length} giocatori con un solo ruolo ricevono +5 OVR fino a fine stagione`);
+ if(versatile.length)parts.push(`${versatile.length} giocatori con più ruoli perdono 5 OVR fino a fine stagione`);
+ if(blocked.length)parts.push(`il bonus positivo non viene applicato a ${blocked.length} giocatori per le regole dell’allenatore`);
+ return parts.length?`${parts.join('; ')}.`:'Nessun giocatore disponibile per applicare la direttiva.';
+}
+function retireSingleRolePlayers(){
+ const targets=[...rosterPlayers()].filter(entry=>{const player=userEventPlayerByEntry(entry);return player&&fixedJobRoleCount(player)===1});
+ if(!targets.length)return'Nessun giocatore con un singolo ruolo è presente nella rosa.';
+ const names=targets.map(entry=>userEventPlayerByEntry(entry)?.name).filter(Boolean);
+ targets.forEach(entry=>userEventRemovePlayer(entry.playerId,'la pensione anticipata del Posto fisso'));
+ return `${names.length} ${names.length===1?'giocatore con un solo ruolo lascia':'giocatori con un solo ruolo lasciano'} la squadra: ${names.join(', ')}. Gli slot rimasti vuoti saranno coperti dalla Primavera d’emergenza.`;
+}
+
 /* Designazione arbitrale */
 function refereeDesignationState(){return userEventState('refereeDesignation',{active:false,branch:'',matchesRemaining:0,matchesPlayed:0,startedMatchday:-1,failed:false,rewardGranted:false,lastOutcome:''})}
 function refereeDesignationAvailable(){const challenge=refereeDesignationState(),inventory=seasonInventory();return Boolean(!challenge.active&&Number(state.matchday)<seasonLength()-2&&seasonInventoryUsedSlots()<inventory.capacity)}

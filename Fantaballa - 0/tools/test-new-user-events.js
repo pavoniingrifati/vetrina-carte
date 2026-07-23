@@ -70,4 +70,9 @@ test('ricorso permanente rifiutato: +3 alla capolista',()=>{context.rejectPerman
 
 test('punti per gol subito: massimo 4 e penalizzazione alternativa',()=>{context.acceptConcededGoalPoints();const result={gf:1,ga:5,displayGa:5,opponentId:'opp1',pointsAwarded:0,pointsAdjustment:0,pointsNote:'',eventUpdates:[]};context.tickAdditionalUserEventsAfterMatch(result);assert(context.state.standings.user.pts===14,'Il bonus massimo di 4 punti non è stato applicato');assert(result.pointsAwarded===4,'Il recap non riporta i 4 punti aggiuntivi');reset();context.rejectConcededGoalPoints();assert(context.state.standings.user.pts===8,'La penalizzazione immediata di 2 punti non è stata applicata')});
 
+
+test('posto fisso: bonus agli specialisti e malus ai duttili',()=>{context.rosterEntry('p3').player.Position='ATT, AS';const singleBefore=context.rosterEntry('p2').player.ovr,multiBefore=context.rosterEntry('p3').player.ovr;const message=context.applyFixedJobRoleRule();assert(context.rosterEntry('p2').player.ovr===singleBefore+5,'Bonus +5 al giocatore con ruolo singolo non applicato');assert(context.rosterEntry('p3').player.ovr===multiBefore-5,'Malus -5 al giocatore multiruolo non applicato');assert(message.includes('un solo ruolo')&&message.includes('più ruoli'),'Riepilogo Posto fisso incompleto')});
+
+test('posto fisso: pensione rimuove tutti gli specialisti',()=>{context.rosterEntry('p3').player.Position='ATT, AS';const before=context.rosterPlayers().length;const message=context.retireSingleRolePlayers();assert(context.rosterEntry('p3'),'Il giocatore multiruolo non deve lasciare la squadra');assert(context.rosterPlayers().length===1,'Devono restare soltanto i giocatori multiruolo');assert(before>context.rosterPlayers().length&&message.includes('lasciano'),'La pensione non ha rimosso gli specialisti')});
+
 console.log(JSON.stringify({ok:true,tests:tests.length,names:tests},null,2));

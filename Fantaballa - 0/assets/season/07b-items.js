@@ -8,9 +8,19 @@ const SEASON_ITEM_DEFINITIONS=Object.freeze({
 });
 function seasonItemDefinition(id=''){return SEASON_ITEM_DEFINITIONS[String(id)]||null}
 function seasonInventory(){
- state.inventory=state.inventory&&typeof state.inventory==='object'?state.inventory:{capacity:3,items:[],active:null};
+ state.inventory=state.inventory&&typeof state.inventory==='object'?state.inventory:{capacity:3,items:[],active:null,rokkyStarterGranted:false};
  state.inventory.capacity=clamp(Math.floor(Number(state.inventory.capacity)||3),1,10);
  state.inventory.items=Array.isArray(state.inventory.items)?state.inventory.items:[];
+ state.inventory.rokkyStarterGranted=Boolean(state.inventory.rokkyStarterGranted);
+ if(coachIs('rokky')&&!state.inventory.rokkyStarterGranted){
+  const alreadyHasWhistle=state.inventory.items.some(item=>String(item?.id||'')==='collina-whistle');
+  if(!alreadyHasWhistle){
+   const existing=state.inventory.items.find(item=>String(item?.id||'')==='collina-whistle');
+   if(existing)existing.quantity=Math.max(0,Number(existing.quantity)||0)+1;
+   else state.inventory.items.push({id:'collina-whistle',quantity:1,acquiredMatchday:Number(state.matchday)||0,source:'Bonus allenatore Rokky'});
+  }
+  state.inventory.rokkyStarterGranted=true;
+ }
  return state.inventory;
 }
 function seasonInventoryUsedSlots(){const inventory=seasonInventory();return inventory.items.reduce((sum,item)=>sum+Math.max(0,Number(item?.quantity)||0),0)+(inventory.active?1:0)}
