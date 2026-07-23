@@ -747,6 +747,12 @@ function permanentRandomPlayerBoost(delta,source='Magia nera'){
  const player=entry.player||playerById(entry.playerId),before=Number(player?.ovr)||60,change=setPermanentRosterOvr(entry,before+delta);
  return change?`${change.player.name}: OVR ${change.before} → ${change.after} per il resto della stagione (${source}).`:'Il bonus OVR non è stato applicato.';
 }
+function applyBlackMagicBoost(){
+ const lukakuEntry=(state.draft?.roster||[]).find(entry=>{const player=entry?.player||playerById(entry?.playerId);return /(?:^|\s)lukaku(?:$|\s)/i.test(String(player?.name||'').trim())});
+ if(!lukakuEntry)return permanentRandomPlayerBoost(20,'Magia nera');
+ const player=lukakuEntry.player||playerById(lukakuEntry.playerId),before=Number(player?.ovr)||60,change=setPermanentRosterOvr(lukakuEntry,before+60);
+ return change?`${change.player.name} è stato riconosciuto dal Mago do Nascimento: OVR ${change.before} → ${change.after} (+60) fino a fine stagione.`:'Il bonus speciale di Lukaku non è stato applicato.';
+}
 function originalBaseOvr(player){
  const explicit=Number(player?.baseOvr);if(Number.isFinite(explicit)&&explicit>0)return Math.max(1,explicit);
  const original=playerById(player?.id);

@@ -174,7 +174,7 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "fgci-regolamento-rossi-punti:0":function(){state.seasonRules.redCardGoals=true;return 'Da ora ogni squadra che riceve un rosso ottiene anche un gol a favore.'},
 "fgci-regolamento-rossi-punti:1":function(){state.seasonRules.pointsEqualGoals=true;return 'Da ora ogni squadra ottiene in classifica tanti punti quanti sono i gol segnati nella partita.'},
 "mago-do-nascimento:0":function(){state.seasonRules.injuredOvrBonus=40;return 'Da ora ogni giocatore infortunato schierato riceve +40 OVR finché resta infortunato.'},
-"mago-do-nascimento:1":function(){return permanentRandomPlayerBoost(20,'Magia nera')},
+"mago-do-nascimento:1":function(){return applyBlackMagicBoost()},
 "fgci-regolamento-gol-tardivi:0":function(){state.seasonRules.lateGoalsDouble=true;return 'Da ora i gol segnati dall’80° minuto in poi valgono doppio per tutte le squadre.'},
 "fgci-regolamento-gol-tardivi:1":function(){state.seasonRules.zeroZeroNoPoints=true;return 'Da ora ogni 0-0 assegna 0 punti a entrambe le squadre.'},
 "underdog:0":function(){return empowerUnderdog()},
