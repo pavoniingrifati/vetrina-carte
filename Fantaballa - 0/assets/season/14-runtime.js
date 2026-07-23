@@ -24,7 +24,7 @@ async function boot(){
    showBootProgress('Controllo dei dati…','Verifica di Serie A, Legend, giocatori e regole della modalità.');
    SEASON_DATASETS={
     'serie-a':{players:serieAPlayers,clubs:serieAClubs,validation:SEASON_CONFIG.validation},
-    legend:{players:legendPlayers,clubs:legendClubs,validation:{...(SEASON_CONFIG.validation||{}),maximumOvr:120}}
+    legend:{players:legendPlayers,clubs:legendClubs,validation:{...(SEASON_CONFIG.validation||{}),maximumOvr:120,minimumClubCount:41,expectedClubCount:41,minimumClubMessage:'Sono presenti soltanto {count} record club: servono la squadra utente e 40 club Legend.',expectedClubMessage:'Sono presenti {count} record club invece dei 40 club Legend più la squadra utente.'}}
    };
    COMMENTARY=commentary;OTHER_CLUBS=Array.isArray(secondaryClubs)?secondaryClubs:[];CLASSIC_PLAYERS=Array.isArray(secondaryPlayers)?secondaryPlayers:[];
    applyCompetitionVariantData(state?.competitionVariant);

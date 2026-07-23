@@ -177,7 +177,7 @@ function validateGameData(players,clubs,validationConfig=SEASON_CONFIG.validatio
  });
  return{fatal,warnings};
 }
-function versionedResourceUrl(url){const value=String(url||'');if(!value||/^(?:https?:|data:|blob:)/i.test(value))return value;const sep=value.includes('?')?'&':'?';return `${value}${sep}v=20260723-objects1`}
+function versionedResourceUrl(url){const value=String(url||'');if(!value||/^(?:https?:|data:|blob:)/i.test(value))return value;const sep=value.includes('?')?'&':'?';return `${value}${sep}v=20260723-legend40`}
 async function fetchJsonResource(url,label,{optional=false}={}){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
  try{
@@ -195,8 +195,8 @@ function showBootError(error){
 function updateCompetitionChrome(){
  const profile=competitionVariantProfile(state?.competitionVariant),legend=profile.id==='legend';
  document.body?.classList.toggle('competition-legend',legend);
- const meta=document.getElementById('competitionHeaderMeta');if(meta)meta.textContent=legend?'Legend · 38 giornate · 20 squadre storiche · 400 campioni · OVR fino a 116':'Serie A · 38 giornate · 20 club · 455 calciatori reali';
- const hero=document.getElementById('competitionHeroText');if(hero)hero.textContent=legend?'Le squadre che hanno fatto la storia del calcio mondiale dentro il Fantacampionato: draft tra 20 club leggendari, 38 giornate, eventi, infortuni, squalifiche e mercato di metà stagione.':'I calciatori e i club della stagione 2025/26 dentro il Campionato di Fantaballa: draft, 38 giornate, eventi, infortuni, squalifiche e mercato di metà stagione.';
+ const meta=document.getElementById('competitionHeaderMeta');if(meta)meta.textContent=legend?'Legend · 38 giornate · 20 squadre per run · 40 club disponibili · 796 campioni · OVR fino a 116':'Serie A · 38 giornate · 20 club · 455 calciatori reali';
+ const hero=document.getElementById('competitionHeroText');if(hero)hero.textContent=legend?'Le squadre che hanno fatto la storia del calcio mondiale dentro il Fantacampionato: draft tra 40 club leggendari, 38 giornate, eventi, infortuni, squalifiche e mercato di metà stagione.':'I calciatori e i club della stagione 2025/26 dentro il Campionato di Fantaballa: draft, 38 giornate, eventi, infortuni, squalifiche e mercato di metà stagione.';
 }
 function applyCompetitionVariantData(value){
  const variant=normalizeCompetitionVariant(value),dataset=SEASON_DATASETS[variant]||SEASON_DATASETS['serie-a'];

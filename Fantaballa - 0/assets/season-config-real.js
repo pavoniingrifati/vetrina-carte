@@ -23,7 +23,7 @@ window.FANTABALLA_SEASON_CONFIG=Object.freeze({
   commentary:'data/cronaca-gol.json',
   variants:{
    'serie-a':{id:'serie-a',label:'Serie A',players:'data/giocatori-real.json',clubs:'data/club-real.json',playerCount:455,description:'I club e i calciatori della Serie A 2025/26.'},
-   legend:{id:'legend',label:'Legend',players:'data/storico/giocatori-storici.json',clubs:'data/storico/club-storiche.json',playerCount:400,description:'Venti squadre storiche italiane e internazionali con le rose delle loro stagioni leggendarie.'}
+   legend:{id:'legend',label:'Legend',players:'data/storico/giocatori-storici.json',clubs:'data/storico/club-storiche.json',playerCount:796,description:'Quaranta squadre storiche italiane e internazionali. Ogni run seleziona casualmente 19 avversarie, mentre il draft usa l’intero database.'}
   }
  },
  validation:{
