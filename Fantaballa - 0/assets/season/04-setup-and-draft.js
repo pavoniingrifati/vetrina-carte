@@ -419,11 +419,11 @@ function renderPlayerJersey(player,extra='',chemistryBonus=0){
 function persistSetupIdentity(teamInput,coachInput,saveState=true){
  const teamName=String(teamInput?.value??state.teamName??'').trim();
  const coachName=String(coachInput?.value??state.coachName??'').trim();
- state.teamName=teamName||DEFAULT_TEAM_NAME;
+ state.teamName=teamName;
  state.coachName=coachName;
  try{
-   localStorage.setItem(SETUP_TEAM_NAME_KEY,state.teamName);
-   localStorage.setItem(SETUP_COACH_NAME_KEY,state.coachName);
+   if(state.teamName)localStorage.setItem(SETUP_TEAM_NAME_KEY,state.teamName);else localStorage.removeItem(SETUP_TEAM_NAME_KEY);
+   if(state.coachName)localStorage.setItem(SETUP_COACH_NAME_KEY,state.coachName);else localStorage.removeItem(SETUP_COACH_NAME_KEY);
    localStorage.setItem(SETUP_COACH_TYPE_KEY,normalizeCoachType(state.coachType));
    localStorage.setItem(SETUP_PALETTE_KEY,state.teamPaletteId||'fantaballa');
  }catch(error){console.warn('Preferenze squadra non salvate',error)}
@@ -445,8 +445,8 @@ function coachProfileAt(offset=0,value=state?.coachType){const index=coachProfil
 function renderCoachCarousel(){const current=coachProfile(),prev=coachProfileAt(-1),next=coachProfileAt(1),index=coachProfileIndex()+1;return `<div class="season-coach-carousel"><button type="button" class="season-coach-nav prev" data-coach-nav="-1" aria-label="Allenatore precedente">‹</button><div class="season-coach-peek left" data-coach-type="${esc(prev.id)}" role="button" tabindex="0" aria-label="Seleziona ${esc(prev.name)}"><img src="${esc(prev.image)}" alt="" loading="lazy" decoding="async"><span>${esc(prev.name)}</span></div><article class="season-coach-hero active"><div class="season-coach-hero-art"><img src="${esc(current.image)}" alt="${esc(current.name)}" decoding="async" fetchpriority="high"></div><div class="season-coach-hero-copy"><div class="season-coach-card-head"><span class="season-coach-card-icon">${current.icon}</span><div><small>Tipo di allenatore</small><b>${esc(current.name)}</b><em>${esc(current.tagline||'')}</em></div></div><span class="season-coach-index">${index}/${COACH_PROFILES.length}</span><span class="season-coach-effect pro"><strong>Pro</strong>${esc(current.pro)}</span><span class="season-coach-effect con"><strong>Contro</strong>${esc(current.con)}</span></div></article><div class="season-coach-peek right" data-coach-type="${esc(next.id)}" role="button" tabindex="0" aria-label="Seleziona ${esc(next.name)}"><img src="${esc(next.image)}" alt="" loading="lazy" decoding="async"><span>${esc(next.name)}</span></div><button type="button" class="season-coach-nav next" data-coach-nav="1" aria-label="Allenatore successivo">›</button></div><div class="season-coach-dots">${COACH_PROFILES.map(profile=>`<button type="button" class="${profile.id===current.id?'active':''}" data-coach-type="${esc(profile.id)}" aria-label="Seleziona ${esc(profile.name)}"></button>`).join('')}</div>`}
 function showSetup(){
  const step=clamp(Number(state.setupStep)||1,1,4),userClub=activeUserClub(),userPal=clubPalette(userClub);
- const teamValue=String(state.teamName||localStorage.getItem(SETUP_TEAM_NAME_KEY)||'');
- const coachValue=String(state.coachName||localStorage.getItem(SETUP_COACH_NAME_KEY)||'');
+ const teamValue=String((state.phase==='setup'&&isLegacySetupTeamName(state.teamName))?'':(state.teamName||initialSetupTeamName()||''));
+ const coachValue=String((state.phase==='setup'&&isLegacySetupCoachName(state.coachName))?'':(state.coachName||initialSetupCoachName()||''));
  const allFormations=Object.keys(FORMATIONS).filter(form=>!['2-4-4','4-4-4','3-3-3'].includes(form));
  if(coachIs('three-five-two'))state.formation='3-5-2';
  const formations=coachIs('three-five-two')?['3-5-2']:allFormations;
