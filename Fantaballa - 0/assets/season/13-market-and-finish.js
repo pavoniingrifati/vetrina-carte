@@ -79,6 +79,7 @@ function continueAfterMidseasonSummary(){
  toast(state.midseason.step?`Mercato concluso con ${state.midseason.step} ${state.midseason.step===1?'cambio':'cambi'}`:'Nessun cambio effettuato');
 }
 function runBotMidseason(){
+ if(playerAcquisitionBlocked()){state.midseason.completed=true;state.midseason.autoCompleted=true;return}
  const ms=state.midseason;
  if(ms.autoCompleted)return;
  const target=clamp(Number(ms.target)||midseasonTarget(),1,3);
@@ -123,6 +124,7 @@ function midseasonDisplayedOvr(player,entry=null){
  const value=Math.round(base+effectiveChemistryFromBase(player,baseChem)+activeOvrBonus(player));return fantaballopoliAllowsNegativeOvr()?value:Math.max(1,value);
 }
 function showMidseason(){
+ if(playerAcquisitionBlocked()){state.midseason={...state.midseason,step:0,target:0,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',nation:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:true,auto:false,autoCompleted:true,changes:Array.isArray(state.midseason?.changes)?state.midseason.changes:[]};state.phase='season';state.seasonRules.botMidseason=false;initializeParallelCup();resolveFantaballopoliMidseason();if(!prepareMeritPostMidseasonEvent())prepareEvent();save();render();toast('Mercato bloccato: il draft di metà stagione viene saltato.');return}
  if(coachIs('three-five-two')){state.midseason.completed=true;state.midseason.autoCompleted=true;if(state.matchday>=seasonLength())advanceAfterRegularSeason();else state.phase='season';save();render();return}
  const ms=state.midseason;
  ms.target=clamp(Number(ms.target)||midseasonTarget(),1,3);

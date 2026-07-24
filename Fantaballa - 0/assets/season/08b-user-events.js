@@ -92,7 +92,7 @@ function weakBrotherClone(context,branch='user'){
  return {id:userEventGeneratedId(`weak-brother-${branch}`,source.id),name:`Fratello di ${source.name}`,role:roleOf(source),Position:String(source.Position||positions(source).join(', ')||'CC'),roleLabel:String(source.roleLabel||''),nation:String(source.nation||'Italia'),ovr:Math.max(1,(Number(source.ovr)||60)-30),baseOvr:Math.max(1,(Number(source.ovr)||60)-30),subscriber:'no',abbonato:'no',club:branch==='user'?USER_ID:'',eventPlayer:true,weakBrother:true,sourceBrotherOfId:String(source.id)};
 }
 function acceptWeakBrother(context){
- if(talentScoutBlocksExternalArrival())return talentScoutBlockMessage();const source=userEventPlayerByEntry(userEventEntryById(context?.playerId)),clone=weakBrotherClone(context,'user');if(!source||!clone)return'Il giocatore non è più disponibile.';
+ if(playerArrivalIsBlocked())return playerArrivalBlockMessage();const source=userEventPlayerByEntry(userEventEntryById(context?.playerId)),clone=weakBrotherClone(context,'user');if(!source||!clone)return'Il giocatore non è più disponibile.';
  const brother=userEventAddBenchPlayer(clone),remaining=Math.max(2,seasonLength()-Number(state.matchday)-1),delay=Math.min(2+Math.floor(Math.random()*5),remaining);
  Object.assign(weakBrotherState(),{active:true,branch:'user',originalPlayerId:String(source.id),originalPlayerName:source.name,brotherId:String(brother.id),brotherName:brother.name,targetTeamId:'',targetTeamName:'',dueMatchday:Number(state.matchday)+delay,secondActDone:false,lastOutcome:''});
  return `${brother.name} entra in rosa con ${brother.ovr} OVR, nello stesso ruolo di ${source.name}.`;

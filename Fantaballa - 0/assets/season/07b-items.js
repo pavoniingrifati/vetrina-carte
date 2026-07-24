@@ -176,6 +176,7 @@ function paniniCandidatePool(){
  const used=new Set(rosterPlayers().map(entry=>String(entry.playerId)));return PLAYERS.filter(player=>player&&player.club&&youngBeautifulAllowsPlayer(player)&&!used.has(String(player.id))&&paniniEligibleOutgoing(player).length);
 }
 function openPaniniPack(){
+ if(playerAcquisitionBlocked())return playerAcquisitionBlockMessage();
  const inventory=seasonInventory();if(inventory.pendingPack)return'La Bustina Panini è già aperta: completa prima la scelta.';
  if(seasonItemQuantity('panini-pack')<1)return'Non possiedi la Bustina Panini.';
  const candidates=shuffle(paniniCandidatePool()).slice(0,3);if(candidates.length<3)return'Non ci sono almeno 3 giocatori compatibili disponibili: la bustina non viene consumata.';
@@ -183,6 +184,7 @@ function openPaniniPack(){
  inventory.pendingPack={candidateIds:candidates.map(player=>String(player.id)),openedMatchday:Number(state.matchday)||0};return'Bustina aperta: scegli uno dei 3 giocatori e indica chi deve lasciare la rosa.';
 }
 function completePaniniPackSwap(candidateId,outgoingId){
+ if(playerAcquisitionBlocked())return playerAcquisitionBlockMessage();
  const pending=paniniPackPending();if(!pending||!pending.candidateIds.includes(String(candidateId)))return'Scelta della Bustina Panini non valida.';
  const replacement=playerById(candidateId);if(!replacement||!youngBeautifulAllowsPlayer(replacement))return replacement?youngBeautifulBlockMessage(replacement):'Giocatore non disponibile.';
  const outgoing=paniniEligibleOutgoing(replacement).find(entry=>String(entry.playerId)===String(outgoingId));if(!outgoing)return'Scegli un giocatore compatibile da sostituire.';

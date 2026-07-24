@@ -63,7 +63,9 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "punti-gol-subiti":function(){return concededGoalPointsAvailable()},
 "designazione-arbitrale":function(){return refereeDesignationAvailable()},
 "posto-fisso":function(){return fixedJobAvailable()},
-"pillola-rossa-pillola-blu":function(){return pillInventoryEventAvailable()}
+"pillola-rossa-pillola-blu":function(){return pillInventoryEventAvailable()},
+"misterioso-lakaka-lukaku":function(){return mysteriousLakakaEventAvailable()},
+"presidente-tirchio":function(){return thriftyPresidentEventAvailable()}
  }),
  title:Object.freeze({
 "omonimo-allenatore":function(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`}
@@ -266,7 +268,11 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "posto-fisso:0":function(){return applyFixedJobRoleRule()},
 "posto-fisso:1":function(){return retireSingleRolePlayers()},
 "pillola-rossa-pillola-blu:0":function(){return receivePillItem('red-pill')},
-"pillola-rossa-pillola-blu:1":function(){return receivePillItem('blue-pill')}
+"pillola-rossa-pillola-blu:1":function(){return receivePillItem('blue-pill')},
+"misterioso-lakaka-lukaku:0":function(){return receiveMysteriousLakakaPlayer('lakaka')},
+"misterioso-lakaka-lukaku:1":function(){return receiveMysteriousLakakaPlayer('lukaku')},
+"presidente-tirchio:0":function(){return activateThriftyPresidentCuts()},
+"presidente-tirchio:1":function(){return activateThriftyPresidentMarketBlock()}
  })
 });
 const SEASON_EVENT_HANDLER_IDS=Object.freeze({

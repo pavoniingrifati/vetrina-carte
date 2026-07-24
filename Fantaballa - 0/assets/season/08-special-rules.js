@@ -45,6 +45,7 @@ function stefanoFinariChallengeState(){
 function acceptStefanoFinariChallenge(){const challenge=stefanoFinariChallengeState();Object.assign(challenge,{active:true,startedMatchday:Number(state.matchday),resolved:false,result:''});return `${state.teamName} diventa ufficialmente la seconda squadra preferita di Stefano Finari. La prossima partita deciderà tutto.`}
 function guaranteeNextMatchExpulsion(){pushEffect('refChaos',1,1,{opponentRedChance:0,ownRedChance:1,source:'Rifiuto a Stefano Finari'});return 'Nella prossima partita un tuo giocatore verrà sicuramente espulso.'}
 function bringStefanoFinariIntoRoster(){
+ if(playerArrivalIsBlocked())return playerArrivalBlockMessage();
  const source=playerById('851');if(!source)return 'Stefano Finari non è disponibile nel database.';
  if(creatorInUserRoster('851'))return 'Stefano Finari è già presente nella tua rosa.';
  excludeOpponentPlayer('851');refreshOpponentClubRosters();
@@ -68,7 +69,7 @@ function replaceUserRosterPlayer(index,replacement){
  const entry=state.draft.roster[index];
  if(!entry||!replacement)return null;
  const outgoing=entry.player||playerById(entry.playerId);
- if(talentScoutBlocksExternalArrival())return{blocked:true,outgoing,incoming:null,slot:entry.slot,bench:Boolean(entry.bench),message:talentScoutBlockMessage()};
+ if(playerArrivalIsBlocked())return{blocked:true,outgoing,incoming:null,slot:entry.slot,bench:Boolean(entry.bench),message:playerArrivalBlockMessage()};
  if(!youngBeautifulAllowsPlayer(replacement))return{blocked:true,outgoing,incoming:null,slot:entry.slot,bench:Boolean(entry.bench),message:youngBeautifulBlockMessage(replacement)};
  const outgoingId=String(entry.playerId||outgoing?.id||'');
  const incoming={...replacement,id:String(replacement.id)};
@@ -84,7 +85,7 @@ function eventPlayerClone(player,universe='multiverso'){
  return registerGeneratedEventPlayer({...player,baseOvr:originalBaseOvr(player),id:`event-${universe}-${String(player.id||'x')}-${stamp}`,club:USER_ID,eventPlayer:true,eventUniverse:universe});
 }
 function replaceWeakestWithUniverse(pool,label,universe){
- if(talentScoutBlocksExternalArrival())return talentScoutBlockMessage();
+ if(playerArrivalIsBlocked())return playerArrivalBlockMessage();
  const weakest=weakestRosterItem(),candidates=(Array.isArray(pool)?pool:[]).filter(player=>player&&player.id&&player.name&&youngBeautifulAllowsPlayer(player));
  if(!weakest)return 'Nessun giocatore disponibile da sostituire.';if(!candidates.length)return `Il portale verso ${label} non ha trovato giocatori.`;
  const source=pick(candidates),incoming=eventPlayerClone(source,universe),change=replaceUserRosterPlayer(weakest.index,incoming);refreshOpponentClubRosters();
@@ -99,7 +100,7 @@ function italianReplacementForEntry(entry,usedSources=new Set()){
  for(const pool of pools){const found=chooseFrom(pool);if(found)return found}return null;
 }
 function replaceNonItalianWithItalians(){
- if(talentScoutBlocksExternalArrival())return talentScoutBlockMessage();
+ if(playerArrivalIsBlocked())return playerArrivalBlockMessage();
  const targets=state.draft.roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>item.player&&!isItalianPlayer(item.player));
  if(!targets.length)return 'La rosa è già composta soltanto da giocatori italiani.';
  const usedSources=new Set(),changes=[],records=[];
@@ -537,7 +538,7 @@ function coachNamesakeSource(){
  return null;
 }
 function bringCoachNamesake(){
- if(talentScoutBlocksExternalArrival())return talentScoutBlockMessage();
+ if(playerArrivalIsBlocked())return playerArrivalBlockMessage();
  const weakest=weakestRosterItem(),source=coachNamesakeSource();if(!weakest)return 'Nessun giocatore disponibile da sostituire.';if(!source)return `Non esiste né nel database del campionato attivo né in quello dell’altro campionato un giocatore chiamato ${state.coachName||'come il tuo allenatore'}.`;
  const incoming=eventPlayerClone(source,'te-stesso'),change=replaceUserRosterPlayer(weakest.index,incoming);refreshOpponentClubRosters();return `${change?.outgoing?.name||'Il giocatore più scarso'} lascia la rosa: arriva ${incoming.name}, il tuo omonimo trovato nei database dei due campionati.`;
 }
@@ -572,7 +573,7 @@ function applyHungerGamesResult(homeId,awayId,homeScore,awayScore){
  state.seasonRules.eliminatedTeamIds=[...new Set([...(state.seasonRules.eliminatedTeamIds||[]).map(String),loserId])];const loser=teamById(loserId);return `${loser?.name||'La squadra sconfitta'} è stata eliminata dagli Hunger Games.`;
 }
 function addMaradonaEventPlayer(){
- if(talentScoutBlocksExternalArrival())return talentScoutBlockMessage();
+ if(playerArrivalIsBlocked())return playerArrivalBlockMessage();
  if(coachIs('young-beautiful'))return youngBeautifulBlockMessage({name:'Diego Armando Maradona',ovr:120,baseOvr:120});
  const attackingIndexes=state.draft.roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>item.player&&roleOf(item.player)==='A');
  if(!attackingIndexes.length)return 'Nessun attaccante disponibile da sostituire.';
@@ -584,7 +585,7 @@ function addMaradonaEventPlayer(){
  return `${change?.outgoing?.name||'Un attaccante'} lascia il posto a Maradona da 120 OVR. I punti in classifica sono stati azzerati.`;
 }
 function rebuildWeakestStarters(){
- if(talentScoutBlocksExternalArrival())return talentScoutBlockMessage();
+ if(playerArrivalIsBlocked())return playerArrivalBlockMessage();
  const starters=state.draft.roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>item.player&&!item.entry.bench).sort((a,b)=>(Number(a.player.ovr)||0)-(Number(b.player.ovr)||0)).slice(0,3);
  if(!starters.length)return 'Nessun titolare disponibile per il rebuild.';
  const used=new Set(state.draft.roster.map(entry=>String(entry.playerId)));
@@ -641,6 +642,49 @@ function activateFantaguru(){
  state.seasonRules.fantaguruBetterMidseason=true;
  return 'Al draft di metà stagione ogni pack conterrà almeno un giocatore con OVR superiore a quello che stai cedendo.';
 }
+function mysteriousLakakaEventAvailable(){
+ if(playerArrivalIsBlocked())return false;
+ const entries=rosterPlayers().filter(entry=>entry?.player);
+ return entries.some(entry=>roleOf(entry.player)==='P')&&entries.some(entry=>roleOf(entry.player)==='A');
+}
+function mysteriousRoleReplacementTarget(role){
+ const rows=state.draft.roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>item.player&&roleOf(item.player)===role);
+ const starters=rows.filter(item=>!item.entry.bench),pool=starters.length?starters:rows;
+ return [...pool].sort((a,b)=>(Number(a.player.ovr)||0)-(Number(b.player.ovr)||0))[0]||null;
+}
+function receiveMysteriousLakakaPlayer(kind='lakaka'){
+ if(playerArrivalIsBlocked())return playerArrivalBlockMessage();
+ const lakaka=String(kind)==='lakaka';
+ const target=mysteriousRoleReplacementTarget(lakaka?'P':'A');
+ if(!target)return lakaka?'Non hai un portiere da sostituire.':'Non hai un attaccante da sostituire.';
+ const base=lakaka
+  ?{name:'Lakaka',nation:'Congo',Position:'P',role:'P',roleLabel:'Portiere',ovr:88,baseOvr:88}
+  :{name:'Lukaku',nation:'Belgio',Position:'ATT',role:'A',roleLabel:'Attaccante',ovr:78,baseOvr:78};
+ if(!youngBeautifulAllowsPlayer(base))return youngBeautifulBlockMessage(base);
+ const id=`event-${lakaka?'lakaka':'lukaku'}-${String(state.meta?.seasonId||state.meta?.createdAt||Date.now()).replace(/[^a-z0-9]/gi,'')}-${Number(state.matchday)||0}`;
+ const incoming=registerGeneratedEventPlayer({...base,id,club:USER_ID,subscriber:'no',abbonato:'no',eventPlayer:true,mysteriousPlayer:true});
+ const change=replaceUserRosterPlayer(target.index,incoming);if(!change||change.blocked)return change?.message||'Il nuovo giocatore non può entrare in rosa.';
+ refreshOpponentClubRosters();
+ return `${incoming.name} (${incoming.ovr} OVR, ${incoming.nation}) prende il posto di ${change.outgoing?.name||'un giocatore'} nello slot ${change.slot||incoming.Position}.`;
+}
+function thriftyPresidentEventAvailable(){return rosterPlayers().filter(entry=>entry?.player).length>=3}
+function activateThriftyPresidentCuts(){
+ const candidates=shuffle(rosterPlayers().filter(entry=>entry?.player)).slice(0,3),removed=[];
+ candidates.forEach(entry=>{const name=entry.player?.name||playerById(entry.playerId)?.name||'Giocatore';const message=removeOwnRosterPlayerPermanently(entry,'i tagli del presidente tirchio');if(!message.startsWith('Nessun'))removed.push(name)});
+ state.seasonRules.bottomHalfUnbeaten=true;
+ state.seasonRules.thriftyPresidentRemovedPlayers=[...new Set([...(state.seasonRules.thriftyPresidentRemovedPlayers||[]),...removed])];
+ return `${removed.length?removed.join(', '):'Tre giocatori'} lasciano la squadra. Da ora non puoi perdere contro club che occupano dall’11° posto in giù prima della partita: un’eventuale sconfitta viene trasformata in pareggio.`;
+}
+function activateThriftyPresidentMarketBlock(){
+ state.seasonRules.marketBlocked=true;
+ if(typeof seasonInventory==='function'){const inventory=seasonInventory();if(inventory?.pendingPack){inventory.pendingPack=null;if(typeof addSeasonItem==='function')addSeasonItem('panini-pack',1)}}
+ state.seasonRules.mandatoryMidseasonPlayerId='';state.seasonRules.mandatoryMidseasonPlayerIds=[];
+ state.seasonRules.guaranteedTopPlayerNextMidseason=false;state.seasonRules.coachTopSwapPlayerId='';state.seasonRules.topPlayerAfterMandatoryId='';
+ if(state.midseason&&typeof state.midseason==='object'){state.midseason.outgoingId='';state.midseason.mandatoryOutgoingId='';state.midseason.mandatoryOutgoingIds=[];state.midseason.clubId='';state.midseason.candidates=[];state.midseason.pendingCandidateId='';}
+ return 'Il mercato viene bloccato fino al termine della stagione: niente draft di metà campionato e nessun nuovo giocatore potrà entrare in rosa tramite eventi o oggetti.';
+}
+function bottomHalfUnbeatenOpponentRank(opponentId){const table=sortedTable(),index=table.findIndex(row=>String(row.id)===String(opponentId));return index>=0?index+1:0}
+function bottomHalfUnbeatenApplies(opponentId){return Boolean(state.seasonRules?.bottomHalfUnbeaten&&bottomHalfUnbeatenOpponentRank(opponentId)>=11)}
 function registerGeneratedEventPlayer(player){
  state.seasonRules.generatedEventPlayers=Array.isArray(state.seasonRules.generatedEventPlayers)?state.seasonRules.generatedEventPlayers:[];
  const id=String(player.id),index=state.seasonRules.generatedEventPlayers.findIndex(item=>String(item.id)===id);
@@ -839,6 +883,7 @@ function spaceJamReplacementTarget(incoming){
  return [...pool].sort((a,b)=>(Number(a.player.ovr)||0)-(Number(b.player.ovr)||0)||Number(a.entry.bench)-Number(b.entry.bench))[0]||null;
 }
 function spaceJamStealBestOpponentPlayer(opponent){
+ if(playerArrivalIsBlocked())return playerArrivalBlockMessage();
  const incoming=spaceJamOpponentBestPlayer(opponent),target=incoming?spaceJamReplacementTarget(incoming):null;if(!incoming||!target)return 'La distorsione non trova giocatori validi da trasferire.';
  const outgoing=target.player,outgoingId=String(target.entry.playerId||outgoing.id||''),incomingId=String(incoming.id||'');
  target.entry.playerId=incomingId;target.entry.player={...incoming,id:incomingId,club:USER_ID,spaceJamStolen:true,spaceJamFromTeamId:String(opponent?.id||''),spaceJamFromTeamName:String(opponent?.name||'')};

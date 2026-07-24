@@ -292,7 +292,7 @@ function mysteryGeneratedPlayer(source,tag='guest'){
  return registerGeneratedEventPlayer({...source,id:`event-${tag}-${String(source.id||'player')}-${stamp}`,baseOvr:Math.max(1,Number(source.baseOvr??source.ovr)||60),eventPlayer:true,eventUniverse:tag,club:String(source.club||tag)});
 }
 function replaceRandomRosterWithMysteryPlayer(source,tag){
- if(talentScoutBlocksExternalArrival())return{blocked:true,message:talentScoutBlockMessage()};
+ if(playerArrivalIsBlocked())return{blocked:true,message:playerArrivalBlockMessage()};
  if(!youngBeautifulAllowsPlayer(source))return{blocked:true,message:youngBeautifulBlockMessage(source)};
  const candidates=state.draft.roster.map((entry,index)=>({entry,index,player:entry.player||playerById(entry.playerId)})).filter(item=>item.player);
  if(!candidates.length)return{blocked:true,message:'Nessun giocatore disponibile da sostituire.'};
@@ -313,7 +313,7 @@ function recruitTearless(){
  return `${change.outgoing?.name||'Un giocatore casuale'} lascia il posto a Tearless (51 OVR). Il suo futuro nella squadra si deciderà in un momento casuale della stagione.`;
 }
 function recruitWorldChampion(){
- if(talentScoutBlocksExternalArrival())return talentScoutBlockMessage();
+ if(playerArrivalIsBlocked())return playerArrivalBlockMessage();
  const available=ITALIA_2006_EVENT_PLAYERS.filter(player=>youngBeautifulAllowsPlayer(player));
  if(!available.length)return 'Nessun campione del mondo è compatibile con le regole del tuo allenatore.';
  const source=pick(available),change=replaceRandomRosterWithMysteryPlayer(source,'italia-2006');
@@ -438,7 +438,7 @@ function removeGamblingPlayer(){
  return{type:'ludopatia',playerName:lost.name,message:`Ludopatia: ${lost.name} lascia definitivamente la rosa perché non hai vinto la partita.`};
 }
 function tipsterVictoryPlayer(){
- if(talentScoutBlocksExternalArrival())return{type:'tipster',blocked:true,message:talentScoutBlockMessage()};
+ if(playerArrivalIsBlocked())return{type:'tipster',blocked:true,message:playerArrivalBlockMessage()};
  const starters=state.draft.roster.filter(entry=>entry&&!entry.bench).map(entry=>({entry,player:entry.player||playerById(entry.playerId)})).filter(item=>item.player);
  if(!starters.length)return{type:'tipster',message:'Il Tipster non trova un titolare da sostituire.'};
  const freeTargets=starters.filter(item=>Number(item.entry.tipsterForcedMatches)<=0),target=pick(freeTargets.length?freeTargets:starters),rosterIds=new Set(state.draft.roster.map(entry=>String(entry.playerId))),rosterNames=new Set(rosterPlayers().map(item=>normalizeName(item.player.name)));

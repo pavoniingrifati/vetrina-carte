@@ -3,9 +3,9 @@
  * Modulo classico: l'ordine di caricamento è definito negli HTML del Campionato.
  */
 function seasonRuleSummary(){
- const target=midseasonTarget();
+ const target=playerAcquisitionBlocked()?0:midseasonTarget();
  const decisionMode=state.seasonRules.autoDecisions?'Mascotte / bot':'Allenatore';
- const marketMode=(state.seasonRules.autoMidseason||state.seasonRules.botMidseason)?'Automatico':'Manuale';
+ const marketMode=playerAcquisitionBlocked()?'Bloccato':(state.seasonRules.autoMidseason||state.seasonRules.botMidseason)?'Automatico':'Manuale';
  const extras=[`Allenatore: ${coachProfile().name}`,coachCurrentEffectLabel()];
  const refereeDeal=secretRefereeDealState();if(refereeDeal.active)extras.push(`Arbitro ecuadoriano: rigore ${refereeDeal.choice==='accept'?'a favore':'contro'} ogni partita`);
  const curvaContest=curvaContestState();if(curvaContest.active&&curvaContest.mode==='title')extras.push(`Contestazione curva: obiettivo top 2 entro la giornata ${curvaContest.deadlineMatchday}; nessun vantaggio durante la sfida`);if(curvaContest.active&&curvaContest.mode==='home')extras.push('Contestazione curva superata: ogni gara vale come in casa fino a fine stagione');if(curvaContest.active&&curvaContest.mode==='away')extras.push('Contestazione curva: ogni gara vale come in trasferta fino a fine stagione');
@@ -36,6 +36,8 @@ function seasonRuleSummary(){
  if(state.seasonRules.futureScorerPlayerId)extras.push(`${state.seasonRules.futureScorerPlayerName||'Giocatore dal futuro'}: almeno 1 gol a partita; un infortunio azzera i punti`);
  if(state.seasonRules.marathon)extras.push(`Maratona: ${seasonLength()} giornate`);
  if(state.seasonRules.hungerGames)extras.push(`Hunger Games: ${(state.seasonRules.eliminatedTeamIds||[]).length} squadre eliminate`);
+ if(state.seasonRules.bottomHalfUnbeaten)extras.push('Presidente tirchio: impossibile perdere contro squadre dall’11° posto in giù');
+ if(state.seasonRules.marketBlocked)extras.push('Mercato bloccato: nessun nuovo giocatore può entrare in rosa');
  if(state.seasonRules.lateGoalsDouble)extras.push('Gol dall’80°: valore doppio');
  if(state.seasonRules.zeroZeroNoPoints)extras.push('0-0: nessun punto');
  if(state.seasonRules.sixtyPointFear&&!state.seasonRules.sixtyPointFearTriggered)extras.push('60 la paura: a 60 punti il punteggio viene azzerato');
