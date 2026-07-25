@@ -1102,6 +1102,7 @@
       const rawModeOf = row => String(valueOf(row, ['modalita','gameMode','mode'], 'Classica')).trim();
       const modeKindOf = row => {
         const explicit = String(valueOf(row, ['modalita_tipo','modalitaTipo','modeType'], '')).trim().toLowerCase().replace(/[\s-]+/g, '_');
+        if (explicit === 'sfida_settimana' || explicit === 'weekly_pisa' || explicit === 'tricolore_pisa') return 'weekly';
         if (explicit === 'caos_real' || explicit === 'chaos_real' || explicit === 'fantacaos') return 'chaos';
         if (explicit === 'caos' || explicit === 'chaos') return 'chaos';
         if (explicit === 'campionato_real' || explicit === 'fantacampionato' || explicit === 'real') return 'campionatoReal';
@@ -1110,6 +1111,7 @@
         if (explicit === 'gary' || explicit === 'gary_medel') return 'gary';
         if (explicit === 'classica' || explicit === 'classic') return 'classic';
         const raw = rawModeOf(row);
+        if (/sfida della settimana|tricolore col pisa|weekly pisa/i.test(raw)) return 'weekly';
         if (/\b(caos|chaos)\b/i.test(raw)) return 'chaos';
         if (/fantacampionato|(campionato|stagione).*real|real.*(campionato|stagione)/i.test(raw)) return 'campionatoReal';
         if (/campionato|stagione/i.test(raw)) return 'campionato';
@@ -1126,6 +1128,7 @@
       };
       const modeLabelOf = row => {
         const kind = modeKindOf(row);
+        if (kind === 'weekly') return 'Sfida della settimana';
         if (kind === 'chaos') return `Caos · ${chaosCompetitionOf(row)}`;
         if (kind === 'campionatoReal') return 'Fantacampionato del Ca***';
         if (kind === 'campionato') return 'Campionato del Ca***';
@@ -1628,9 +1631,10 @@
         renderChampionshipTable(campionatoRealBody, campionatoRealRows, 'campionatoReal', 'In attesa del primo Fantacampionato vinto');
         renderWorstTable(worstBody, worstRows, 'In attesa dei primi vincitori di Campionato o Fantacampionato');
         renderChaosTable(chaosBody, chaosRows, 'In attesa della prima stagione Caos vinta');
-        renderScorers(rows);
+        const standardRows = rows.filter(row => modeKindOf(row) !== 'weekly');
+        renderScorers(standardRows);
         updateSortButtons();
-        renderOverviewStats(rows);
+        renderOverviewStats(standardRows);
         renderActiveHighlights();
         if (updated) updated.textContent = data && data.aggiornato_il ? `Aggiornata: ${data.aggiornato_il}` : 'Classifiche aggiornate';
       }

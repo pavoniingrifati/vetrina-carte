@@ -307,8 +307,15 @@ function doGet(e) {
       const wins = Number(item.vittorie || 0);
       const draws = Number(item.pareggi || 0);
       const storedPoints = item.punti;
-      const modeInfo = normalizeMode_(item.modalita || 'Classica', item.modalita_tipo || '');
+      const submissionCode = String(item.codice_vittoria || '').trim();
+      let modeInfo = normalizeMode_(item.modalita || 'Classica', item.modalita_tipo || '');
+      // Recupera anche le righe della Sfida della settimana salvate con una
+      // distribuzione precedente dello script, che poteva registrarle come "altro".
+      if (/^sfida_settimana_pisa[-_]/i.test(submissionCode)) {
+        modeInfo = { label:'Sfida della settimana', type:'sfida_settimana' };
+      }
       return {
+        codice_vittoria: submissionCode,
         squadra: item.squadra || '',
         allenatore: item.allenatore || '',
         tipo_allenatore: item.tipo_allenatore || '',
@@ -330,9 +337,16 @@ function doGet(e) {
       };
     });
 
+  const requestedMode = String(
+    requestParams.modalita_tipo || requestParams.modalitaTipo || requestParams.modeType || requestParams.mode || ''
+  ).trim().toLowerCase().replace(/[\s-]+/g, '_');
+  const filteredClassifica = requestedMode === 'sfida_settimana' || requestedMode === 'weekly_pisa' || requestedMode === 'tricolore_pisa'
+    ? classifica.filter(item => item.modalita_tipo === 'sfida_settimana' || /^sfida_settimana_pisa[-_]/i.test(String(item.codice_vittoria || '')))
+    : classifica;
+
   const data = {
     aggiornato_il: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm'),
-    classifica: classifica
+    classifica: filteredClassifica
   };
   const params = e && e.parameter ? e.parameter : {};
   const transport = String(params.transport || '').toLowerCase();
