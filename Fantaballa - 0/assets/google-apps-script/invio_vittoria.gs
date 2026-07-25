@@ -86,9 +86,6 @@ function normalizeMode_(modeValue, explicitType) {
   const rawMode = String(modeValue || 'Classica').trim();
   const rawType = String(explicitType || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
 
-  if (rawType === 'sfida_settimana' || rawType === 'weekly_pisa' || rawType === 'tricolore_pisa') {
-    return { label:'Sfida della settimana', type:'sfida_settimana' };
-  }
   if (rawType === 'caos_real' || rawType === 'chaos_real' || rawType === 'fantacaos') {
     return { label:'Modalità Caos REAL', type:'caos_real' };
   }
@@ -111,9 +108,6 @@ function normalizeMode_(modeValue, explicitType) {
     return { label:'Classica', type:'classica' };
   }
 
-  if (/sfida della settimana|tricolore col pisa/i.test(rawMode)) {
-    return { label:'Sfida della settimana', type:'sfida_settimana' };
-  }
   if (/\b(caos|chaos)\b.*\breal\b|\breal\b.*\b(caos|chaos)\b/i.test(rawMode)) {
     return { label:'Modalità Caos REAL', type:'caos_real' };
   }
@@ -140,10 +134,6 @@ function normalizeMode_(modeValue, explicitType) {
 
 function isChampionshipMode_(type) {
   return type === 'campionato' || type === 'campionato_real' || type === 'caos' || type === 'caos_real';
-}
-
-function requiresSubmissionCode_(type) {
-  return isChampionshipMode_(type) || type === 'sfida_settimana';
 }
 
 function normalizePayload_(payload) {
@@ -241,7 +231,7 @@ function doPost(e) {
     if (isChampionshipMode_(row.modalita_tipo) && Number(row.posizione_finale) !== 1) {
       return postOutput_(e, { ok:false, error:'Il risultato del Campionato può essere salvato solo con posizione finale 1.' });
     }
-    if (requiresSubmissionCode_(row.modalita_tipo) && !row.codice_vittoria) {
+    if (isChampionshipMode_(row.modalita_tipo) && !row.codice_vittoria) {
       return postOutput_(e, { ok:false, error:'Codice univoco della stagione mancante.' });
     }
     const sheet = getSheet_();
