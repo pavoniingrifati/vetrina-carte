@@ -12,29 +12,29 @@ function getAchievementCareerFlag(key){return window.FantaballaAchievements?.get
 function clearAchievementCareerFlag(key){return window.FantaballaAchievements?.clearCareerFlag?.(achievementCareerId(),key)}
 function achievementFantaballopoliOpeningAccepted(){
  const story=fantaballopoliState();
- return Boolean(getAchievementCareerFlag('fantaballopoliOpeningAccepted')||story.forcedLossPending||story.targetPlayerId||story.giudaId||story.corruptionFull||story.investigatorShown||['forced_loss_pending','part2_waiting','awaiting_midseason','curse','satisfaction_waiting','corruption','investigator_waiting','accusation','juventus_final','restart_message','confessed','ended_denial_no_title'].includes(String(story.stage||'')));
+ return Boolean(getAchievementCareerFlag('fantaballopoliOpeningAccepted')||story.path==='evil');
 }
 function achievementFantaballopoliBetrayal(){
  const story=fantaballopoliState();
- return Boolean(getAchievementCareerFlag('fantaballopoliGiudaBetrayal')||story.giudaId||story.curseMatches>0||story.curseActive||story.corruptionFull);
+ return Boolean(getAchievementCareerFlag('fantaballopoliGiudaBetrayal')||story.giudaId||story.targetTraded);
 }
 function achievementFantaballopoliAcceptedAll(){
- const story=fantaballopoliState(),opening=achievementFantaballopoliOpeningAccepted(),trade=Boolean(getAchievementCareerFlag('fantaballopoliTradeComplied')||story.giudaId),more=Boolean(getAchievementCareerFlag('fantaballopoliAcceptedMore')||story.corruptionFull||story.investigatorShown||['corruption','investigator_waiting','accusation','juventus_final','restart_message','confessed','ended_denial_no_title'].includes(String(story.stage||'')));
- return opening&&trade&&more;
+ const story=fantaballopoliState(),cartonati=story.cartonati||{};
+ return Boolean(story.path==='evil'&&story.giudaId&&cartonati.arbitro&&cartonati.giuda&&cartonati.silenzio);
 }
 function achievementFantaballopoliUsedAdvantages(matches=[]){
- const story=fantaballopoliState();
- const matchAdvantage=(Array.isArray(matches)?matches:[]).some(match=>Boolean(match?.fantaballopoliForcedWin||match?.fantaballopoliNegativeGoals||(Array.isArray(match?.fantaballopoliExpulsions)&&match.fantaballopoliExpulsions.length)||(Array.isArray(match?.fantaballopoliInjuries)&&match.fantaballopoliInjuries.length)));
- return Boolean(matchAdvantage||story.finale?.pointsApplied);
+ const story=fantaballopoliState(),cartonati=story.cartonati||{};
+ const matchAdvantage=(Array.isArray(matches)?matches:[]).some(match=>Boolean(match?.fantaballopoliForcedLoss||match?.fantaballopoliOpponentOvrBonus||match?.fantaballopoliInjuredDoubleCount));
+ return Boolean(matchAdvantage||cartonati.arbitro||cartonati.giuda||cartonati.silenzio||story.finale?.pointsApplied);
 }
 function syncFantaballopoliAchievements(){
- const story=fantaballopoliState(),stage=String(story.stage||'');
+ const story=fantaballopoliState(),stage=String(story.stage||''),evidence=story.intercettazioni||{};
  const started=!['','idle','inactive','waiting'].includes(stage);
  if(started)unlockAchievement('benvenuti-a-fantaballopoli');
- if(stage==='rejected'||getAchievementCareerFlag('fantaballopoliOpeningRejected'))unlockAchievement('mani-pulite');
+ if(story.path==='resistance'&&story.finale?.won)unlockAchievement('mani-pulite');
  if(achievementFantaballopoliBetrayal())unlockAchievement('giuda');
  if(achievementFantaballopoliAcceptedAll())unlockAchievement('dentro-fino-al-collo');
- if(story.investigatorShown||getAchievementCareerFlag('fantaballopoliInvestigatorReached')||['investigator_waiting','accusation','juventus_final','restart_message','confessed','ended_denial_no_title'].includes(stage))unlockAchievement('intercettazioni');
+ if(evidence.arbitro||evidence.testimone||evidence.triade)unlockAchievement('intercettazioni');
 }
 function achievementGoalValue(event){return Math.max(1,Number(event?.goalValue)||1)}
 function achievementWasRemuntada(userGoals=[],opponentGoals=[],gf=0,ga=0){
@@ -255,7 +255,7 @@ function checkSeasonAchievements(rank,eliminated=false){
  syncFantaballopoliAchievements();
  const fantaballopoliStory=fantaballopoliState();
  if(wonTitle&&achievementFantaballopoliBetrayal())unlockAchievement('il-bacio-di-giuda');
- if(wonTitle&&(String(fantaballopoliStory.stage||'')==='rejected'||getAchievementCareerFlag('fantaballopoliOpeningRejected')))unlockAchievement('sistema-abbattuto');
+ if(fantaballopoliStory.path==='resistance'&&fantaballopoliStory.finale?.won)unlockAchievement('sistema-abbattuto');
  if(wonTitle&&achievementFantaballopoliUsedAdvantages(matches))unlockAchievement('scudetto-di-cartone');
  if(allRosterItalian())unlockAchievement('il-generale');
  const contest=curvaContestState();

@@ -187,11 +187,12 @@
     }
     if (event.kind === 'storyFantaballopoli') {
       const map = {
-        opening: ['accept', 'reject'],
-        part2: ['ack'],
-        satisfaction: ['stop', 'more'],
-        investigator: ['confess', 'deny'],
-        accusation: ['blame', 'admit-both']
+        opening: ['accept', 'resist', 'optout'],
+        'evil-player': ['trade', 'lock'],
+        'good-witness': ['start'],
+        'evil-trials': ['start'],
+        'evil-no-giuda': ['continue'],
+        'challenge-result': ['next']
       };
       action = pick(map[event.storyType] || ['ack']);
       storyLog.push({ title: event.title || 'Fantaballopoli', choice: action, storyType: event.storyType || '' });

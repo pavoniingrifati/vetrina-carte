@@ -199,7 +199,7 @@ function simulateLeaguePlayoffTie(tie){
 function buildNextLeaguePlayoffTies(winners=[]){
  if(winners.length===4)return[leaguePlayoffTie(winners[0],winners[1],0),leaguePlayoffTie(winners[2],winners[3],1)];if(winners.length===2)return[leaguePlayoffTie(winners[0],winners[1],0)];return[];
 }
-function finishAfterLeaguePlayoffs(){if(!prepareMysteryCharacterFinale()&&!prepareMeritStoryFinale())state.phase='finished'}
+function finishAfterLeaguePlayoffs(){if(!prepareFantaballopoliFinale()&&!prepareMysteryCharacterFinale()&&!prepareMeritStoryFinale())state.phase='finished'}
 function advanceAfterRegularSeason(){
  if(Number(state.matchday)>=seasonLength()&&leaguePlayoffsRuleActive()){
    const p=leaguePlayoffState();if(p.status!=='completed'&&initializeLeaguePlayoffs())return;
@@ -279,9 +279,9 @@ function appendExtraTimeGoalEvents(total,lineup,team,opponent,events,startMinute
  if(Array.isArray(events)){events.push(...additions);events.sort((a,b)=>(Number(a?.minute)||0)-(Number(b?.minute)||0));}
  return additions;
 }
-function resolveNoDrawMatch({scoreA=0,scoreB=0,eventsA=[],eventsB=[],lineupA=[],lineupB=[],teamA=null,teamB=null,powerA=70,powerB=70,duration=90}={}){
+function resolveNoDrawMatch({scoreA=0,scoreB=0,eventsA=[],eventsB=[],lineupA=[],lineupB=[],teamA=null,teamB=null,powerA=70,powerB=70,duration=90,force=false}={}){
  let a=Number(scoreA)||0,b=Number(scoreB)||0;const regulationDuration=Math.max(30,Number(duration)||90),base={scoreA:a,scoreB:b,outcomeScoreA:a,outcomeScoreB:b,winnerId:a>b?String(teamA?.id||''):b>a?String(teamB?.id||''):'',extraTime:false,penalties:null,duration:regulationDuration,regulationDuration,note:''};
- if(!noDrawRuleActive()||a!==b)return base;
+ if((!force&&!noDrawRuleActive())||a!==b)return base;
  const extra=simulateScore(Math.max(35,Number(powerA)||70),Math.max(35,Number(powerB)||70),0,30,.62),addedA=appendExtraTimeGoalEvents(extra[0],lineupA,teamA,teamB,eventsA,regulationDuration),addedB=appendExtraTimeGoalEvents(extra[1],lineupB,teamB,teamA,eventsB,regulationDuration);
  a+=scoreGoalEvents(addedA);b+=scoreGoalEvents(addedB);base.extraTime=true;base.duration=regulationDuration+30;base.scoreA=a;base.scoreB=b;base.outcomeScoreA=a;base.outcomeScoreB=b;
  if(a!==b){base.winnerId=String((a>b?teamA:teamB)?.id||'');base.note=`Niente pareggio: ${a>b?teamA?.name:teamB?.name} vince dopo i tempi supplementari.`;return base;}

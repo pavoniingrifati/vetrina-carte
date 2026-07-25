@@ -32,7 +32,7 @@ context.userStanding=()=>context.state.standings.user;
 context.sortedTable=()=>Object.values(context.state.standings).sort((a,b)=>Number(b.pts)-Number(a.pts));
 context.registerGeneratedEventPlayer=player=>{const p={...player,id:String(player.id)};const i=context.state.seasonRules.generatedEventPlayers.findIndex(x=>String(x.id)===p.id);if(i>=0)context.state.seasonRules.generatedEventPlayers[i]=p;else context.state.seasonRules.generatedEventPlayers.push(p);return p};
 context.refreshOpponentClubRosters=()=>{};
-context.talentScoutBlocksExternalArrival=()=>false;context.talentScoutBlockMessage=()=>'';
+context.talentScoutBlocksExternalArrival=()=>false;context.talentScoutBlockMessage=()=>'';context.playerArrivalIsBlocked=()=>false;context.playerArrivalBlockMessage=()=>'';
 context.clearMandatoryMidseasonPlayer=()=>{};
 context.setPermanentRosterOvr=(entry,value)=>{const raw=context.rosterEntry(entry.playerId);if(!raw)return null;const before=Number(raw.player.ovr);raw.player={...raw.player,ovr:Math.max(1,Math.round(value))};return{player:raw.player,before,after:raw.player.ovr}};
 context.removeOwnRosterPlayerPermanently=(entry,reason='')=>{const i=context.state.draft.roster.findIndex(x=>String(x.playerId)===String(entry.playerId));if(i<0)return'Non presente';const name=context.state.draft.roster[i].player.name;context.state.draft.roster.splice(i,1);return`${name} lascia definitivamente la squadra${reason?` per ${reason}`:''}.`};
@@ -42,6 +42,7 @@ context.regulationGoalEvent=(team,opponent,duration,label)=>({minute:20,playerId
 context.goalValueForMinute=()=>1;
 context.boostAllRosterPlayers=delta=>{const names=[];for(const e of context.state.draft.roster){e.player={...e.player,ovr:Number(e.player.ovr)+delta};names.push(e.player.name)}return names};
 context.queueChainedAuto=(title,text,result)=>({title,text,result});
+context.grantRandomSeasonItem=()=>({id:'test-item',name:'Oggetto di prova'});
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(root,'assets/season/08b-user-events.js'),'utf8'),context,{filename:'08b-user-events.js'});
 function reset(){context.state=makeState();context.Math.random=Math.random}
@@ -68,7 +69,7 @@ test('ricorso permanente: sconfitta risarcita e vittoria senza punti',()=>{conte
 
 test('ricorso permanente rifiutato: +3 alla capolista',()=>{context.rejectPermanentAppeal();assert(context.state.standings.opp1.pts===15,'La capolista non ha ricevuto +3 punti')});
 
-test('punti per gol subito: massimo 4 e penalizzazione alternativa',()=>{context.acceptConcededGoalPoints();const result={gf:1,ga:5,displayGa:5,opponentId:'opp1',pointsAwarded:0,pointsAdjustment:0,pointsNote:'',eventUpdates:[]};context.tickAdditionalUserEventsAfterMatch(result);assert(context.state.standings.user.pts===14,'Il bonus massimo di 4 punti non è stato applicato');assert(result.pointsAwarded===4,'Il recap non riporta i 4 punti aggiuntivi');reset();context.rejectConcededGoalPoints();assert(context.state.standings.user.pts===8,'La penalizzazione immediata di 2 punti non è stata applicata')});
+test('punti per gol subito: massimo 4 e penalizzazione alternativa',()=>{context.acceptConcededGoalPoints();const result={gf:1,ga:5,displayGa:5,opponentId:'opp1',pointsAwarded:0,pointsAdjustment:0,pointsNote:'',eventUpdates:[]};context.tickAdditionalUserEventsAfterMatch(result);assert(context.state.standings.user.pts===14,'Il bonus massimo di 4 punti non è stato applicato');assert(result.pointsAwarded===4,'Il recap non riporta i 4 punti aggiuntivi');reset();context.rejectConcededGoalPoints();assert(context.state.standings.user.pts===7,'La penalizzazione immediata di 3 punti non è stata applicata')});
 
 
 test('posto fisso: bonus agli specialisti e malus ai duttili',()=>{context.rosterEntry('p3').player.Position='ATT, AS';const singleBefore=context.rosterEntry('p2').player.ovr,multiBefore=context.rosterEntry('p3').player.ovr;const message=context.applyFixedJobRoleRule();assert(context.rosterEntry('p2').player.ovr===singleBefore+5,'Bonus +5 al giocatore con ruolo singolo non applicato');assert(context.rosterEntry('p3').player.ovr===multiBefore-5,'Malus -5 al giocatore multiruolo non applicato');assert(message.includes('un solo ruolo')&&message.includes('più ruoli'),'Riepilogo Posto fisso incompleto')});

@@ -91,14 +91,19 @@ function runBotMidseason(){
    const mandatoryId=mandatoryMidseasonPlayerIds()[0]||'';
    const selected=mandatoryId?(possibleIndexes.find(item=>String(item.entry.playerId)===mandatoryId)||pick(possibleIndexes)):pick(possibleIndexes);
    const outgoing=selected.entry;
-   const usedIds=new Set(state.draft.roster.map(entry=>String(entry.playerId)));
-   let pool=PLAYERS.filter(player=>youngBeautifulAllowsPlayer(player)&&!usedIds.has(String(player.id))&&(outgoing.bench||userCompatible(player,outgoing.slot)));
-   if(requiresEqualOrBetterMidseason(outgoing.playerId)){
-     const compatiblePool=[...pool],threshold=Number(outgoing.player?.ovr||playerById(outgoing.playerId)?.ovr)||0;pool=pool.filter(player=>(Number(player.ovr)||0)>=threshold);
-     if(!pool.length&&compatiblePool.length){const source=[...compatiblePool].sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0))[0],boosted=registerGeneratedEventPlayer({...source,baseOvr:originalBaseOvr(source),id:`event-alien-auto-${source.id}-${Date.now()}`,ovr:threshold,eventPlayer:true,eventUniverse:'alien-market'});pool=[boosted];}
+   let replacement=null;
+   if(fantaballopoliRequiresGiuda(outgoing.playerId)){
+     replacement=createGiudaForEntry(outgoing);
+   }else{
+     const usedIds=new Set(state.draft.roster.map(entry=>String(entry.playerId)));
+     let pool=PLAYERS.filter(player=>youngBeautifulAllowsPlayer(player)&&!usedIds.has(String(player.id))&&(outgoing.bench||userCompatible(player,outgoing.slot)));
+     if(requiresEqualOrBetterMidseason(outgoing.playerId)){
+       const compatiblePool=[...pool],threshold=Number(outgoing.player?.ovr||playerById(outgoing.playerId)?.ovr)||0;pool=pool.filter(player=>(Number(player.ovr)||0)>=threshold);
+       if(!pool.length&&compatiblePool.length){const source=[...compatiblePool].sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0))[0],boosted=registerGeneratedEventPlayer({...source,baseOvr:originalBaseOvr(source),id:`event-alien-auto-${source.id}-${Date.now()}`,ovr:threshold,eventPlayer:true,eventUniverse:'alien-market'});pool=[boosted];}
+     }
+     if(pool.length)replacement=coachHighOvrPick(pool);
    }
-   if(!pool.length)continue;
-   const replacement=coachHighOvrPick(pool);
+   if(!replacement)continue;
    const projection=midseasonProjection(outgoing.playerId,replacement.id);
    const oldPlayer=outgoing.player||playerById(outgoing.playerId);
    state.draft.roster[selected.index].playerId=String(replacement.id);
@@ -125,7 +130,7 @@ function midseasonDisplayedOvr(player,entry=null){
 }
 function showMidseason(){
  if(playerAcquisitionBlocked()){state.midseason={...state.midseason,step:0,target:0,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',nation:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:true,auto:false,autoCompleted:true,changes:Array.isArray(state.midseason?.changes)?state.midseason.changes:[]};state.phase='season';state.seasonRules.botMidseason=false;initializeParallelCup();resolveFantaballopoliMidseason();if(!prepareMeritPostMidseasonEvent())prepareEvent();save();render();toast('Mercato bloccato: il draft di metà stagione viene saltato.');return}
- if(coachIs('three-five-two')){state.midseason.completed=true;state.midseason.autoCompleted=true;if(state.matchday>=seasonLength())advanceAfterRegularSeason();else state.phase='season';save();render();return}
+ if(coachIs('three-five-two')){state.midseason.completed=true;state.midseason.autoCompleted=true;resolveFantaballopoliMidseason();if(state.matchday>=seasonLength())advanceAfterRegularSeason();else state.phase='season';save();render();return}
  const ms=state.midseason;
  ms.target=clamp(Number(ms.target)||midseasonTarget(),1,3);
  ms.pendingCandidateId=String(ms.pendingCandidateId||'');
