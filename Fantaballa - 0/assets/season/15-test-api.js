@@ -6,8 +6,8 @@
   const TEST_API_VERSION = 3;
   const MODE = String(SEASON_CONFIG?.mode || 'unknown');
   const expected = MODE === 'real'
-    ? { players: 455, clubs: 21, autoEvents: 4, decisions: 83 }
-    : { players: 738, clubs: 37, autoEvents: 5, decisions: 89 };
+    ? { players: 455, clubs: 21, autoEvents: 4, decisions: 84 }
+    : { players: 738, clubs: 37, autoEvents: 5, decisions: 90 };
 
   const clone = value => {
     if (typeof structuredClone === 'function') return structuredClone(value);

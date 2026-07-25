@@ -137,6 +137,46 @@ function activateFederationGoalRule(rule='golden'){
 }
 function federationGoalRuleLabel(rule=state.seasonRules?.federationGoalRule){return rule==='golden'?'Golden goal':rule==='last'?'Chi segna per ultimo vince':''}
 const FORMULA_ONE_POINTS=[25,18,15,12,10,8,6,4,2,1];
+function activateFigcIncidentRule(rule='negative'){
+ const normalized=rule==='positive'?'positive':'negative';
+ state.seasonRules.figcIncidentRule=normalized;
+ return normalized==='negative'
+  ?'Regola negativa attiva: ogni rosso, nuovo infortunio o rigore sbagliato sottrae un gol alla squadra coinvolta, senza scendere sotto zero.'
+  :'Regola positiva attiva: ogni giocatore autore di almeno una doppietta assegna un punto aggiuntivo alla propria squadra.';
+}
+function figcIncidentRuleLabel(rule=state.seasonRules?.figcIncidentRule){return rule==='negative'?'Penalità episodi':rule==='positive'?'Premio doppietta':''}
+function figcNegativeIncidentRuleActive(){return String(state.seasonRules?.figcIncidentRule)==='negative'}
+function figcPositiveBraceRuleActive(){return String(state.seasonRules?.figcIncidentRule)==='positive'}
+function figcBraceScorers(events=[]){
+ const counts=new Map(),names=new Map();
+ (Array.isArray(events)?events:[]).forEach(event=>{
+  const key=String(event?.playerId||'');if(!key)return;
+  counts.set(key,(counts.get(key)||0)+1);names.set(key,String(event?.player||event?.playerName||'Marcatore'));
+ });
+ return [...counts.entries()].filter(([,count])=>count>=2).map(([playerId,count])=>({playerId,playerName:names.get(playerId)||'Marcatore',goals:count}));
+}
+function figcBraceBonus(events=[]){return figcPositiveBraceRuleActive()?figcBraceScorers(events).length:0}
+function figcIncidentCount(incidents={}){return Math.max(0,Number(incidents.redCards)||0)+Math.max(0,Number(incidents.injuries)||0)+Math.max(0,Number(incidents.missedPenalties)||0)}
+function applyFigcNegativeGoalPenalty(score,events,incidents={}){
+ const before=Number(score)||0,penalty=figcNegativeIncidentRuleActive()?figcIncidentCount(incidents):0;
+ if(!penalty||before<0)return{before,after:before,penalty:0,incidents:{...incidents}};
+ const after=Math.max(0,before-penalty),eventScore=scoreGoalEvents(events);
+ if(eventScore>after)capGoalEvents(events,after);
+ return{before,after,penalty:before-after,rawPenalty:penalty,incidents:{...incidents}};
+}
+function applyFigcBraceBonusesToRound(roundResults=[]){
+ const details=[];if(!figcPositiveBraceRuleActive())return details;
+ (Array.isArray(roundResults)?roundResults:[]).forEach(result=>{
+  [['homeId','homeName','homeGoals'],['awayId','awayName','awayGoals']].forEach(([idKey,nameKey,goalsKey])=>{
+   const teamId=String(result?.[idKey]||''),standing=state.standings?.[teamId],scorers=figcBraceScorers(result?.[goalsKey]||[]),bonus=scorers.length;
+   if(!teamId||!standing||!bonus||isTeamEliminated(teamId))return;
+   standing.pts=(Number(standing.pts)||0)+bonus;
+   details.push({teamId,teamName:String(result?.[nameKey]||standing.name||teamId),bonus,scorers});
+  });
+ });
+ return details;
+}
+
 function activateFigcCompetitionRule(rule='formula-one'){
  const normalized=rule==='no-draw'?'no-draw':'formula-one';
  state.seasonRules.figcCompetitionRule=normalized;

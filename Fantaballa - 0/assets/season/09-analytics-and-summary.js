@@ -20,6 +20,7 @@ function seasonRuleSummary(){
  if(state.seasonRules.pinkCardEndsMatch)extras.push('Cartellino rosa: partita conclusa a un minuto casuale');
  if(state.seasonRules.federationGoalRule)extras.push(`Regola FIGC: ${federationGoalRuleLabel()}`);
  if(state.seasonRules.figcCompetitionRule)extras.push(state.seasonRules.figcCompetitionRule==='formula-one'?`Regolamento FIGC: ${figcCompetitionRuleLabel()} · tavolino solo per infortuni, non per espulsioni o squalifiche`:`Regolamento FIGC: ${figcCompetitionRuleLabel()}`);
+ if(state.seasonRules.figcIncidentRule)extras.push(`Regola FIGC: ${figcIncidentRuleLabel()}`);
  if(state.seasonRules.fgicLeagueRule)extras.push(`Regola FGIC: ${fgicLeagueRuleLabel()}`);
  if(state.seasonRules.fgciPointsRule)extras.push(`Regola FGCI: ${fgciPointsRuleLabel()}`);
  if(state.seasonRules.fgciResultRule)extras.push(`Regola FGCI: ${fgciResultRuleLabel()}`);
