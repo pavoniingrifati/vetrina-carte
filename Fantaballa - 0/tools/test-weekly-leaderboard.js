@@ -23,5 +23,6 @@ const script=fs.readFileSync(path.join(root,'google-apps-script/invio_vittoria.g
 check('Apps Script espone codice vittoria',/codice_vittoria:\s*submissionCode/.test(script));
 check('Apps Script recupera righe legacy dal prefisso',/\^sfida_settimana_pisa\[-_\]/.test(script));
 check('Apps Script filtra la classifica settimanale su richiesta',/filteredClassifica/.test(script)&&/requestParams\.modalita_tipo/.test(script));
+check('Apps Script rifiuta la Sfida se non è vinta',/row\.modalita_tipo === 'sfida_settimana'/.test(script)&&/può essere salvato solo vincendo il campionato/.test(script));
 console.log(`\n${passed} pass, ${failed} fail`);
 process.exitCode=failed?1:0;

@@ -45,7 +45,7 @@ window.FANTABALLA_SEASON_CONFIG=Object.freeze({
   chaosLabel:'Sfida della settimana · Caos',
   standardType:'sfida_settimana',
   chaosType:'sfida_settimana',
-  allowAnyFinish:true,
+  allowAnyFinish:false,
   buttonText:'Invia risultato',
   successText:'Risultato inviato alla Sfida della settimana'
  },

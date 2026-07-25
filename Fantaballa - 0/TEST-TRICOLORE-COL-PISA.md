@@ -3,8 +3,8 @@
 ## Esito
 
 - 16 suite automatiche del progetto superate.
-- 18 controlli dedicati alla nuova modalità superati.
-- 59 file JavaScript validi sintatticamente.
+- 19 controlli dedicati alla nuova modalità superati.
+- 61 file JavaScript validi sintatticamente.
 - 75 file JSON validi.
 - 10 script Python compilabili.
 - 19 pagine HTML controllate.
@@ -23,7 +23,7 @@
 - Selezione di 11 titolari e 3 riserve.
 - Box home e immagine correttamente collegati.
 - Pagina gioco collegata al config e all'adattatore weekly.
-- Invio consentito per qualunque piazzamento finale.
+- Invio consentito soltanto con il 1° posto finale.
 - Classifica dedicata, miglior risultato per allenatore e badge +2 OVR per i primi 10.
 
 ## Limite del test browser
@@ -34,3 +34,8 @@ Il browser headless dell'ambiente ha bloccato qualsiasi navigazione locale con `
 
 - Verificato che **Giovani e belli** non compaia nel carosello della Sfida della settimana.
 - Verificato il fallback ad **Anonimo** per eventuali salvataggi precedenti.
+
+## Correzione invio classifica
+
+- Il pulsante di invio compare soltanto con il 1° posto finale.
+- Il Google Apps Script rifiuta una Sfida della settimana con posizione diversa da 1.

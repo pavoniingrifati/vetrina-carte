@@ -14,6 +14,7 @@
   - Campionato del Ca***: vengono accettate soltanto le stagioni vinte
   - Fantacampionato del Ca***: modalità REAL separata, accettata soltanto se vinta
   - Modalità Caos e Caos REAL: classifiche separate, accettate soltanto se vinte
+  - Sfida della settimana: classifica separata, accettata soltanto se il Pisa chiude al 1° posto
   - Invio verificato dal browser tramite risposta iframe (niente falsi messaggi di successo)
   - Invio delle stagioni REAL senza limiti massimi di giornate
   - Salvataggio del tipo di allenatore scelto dall'utente
@@ -240,6 +241,9 @@ function doPost(e) {
     }
     if (isChampionshipMode_(row.modalita_tipo) && Number(row.posizione_finale) !== 1) {
       return postOutput_(e, { ok:false, error:'Il risultato del Campionato può essere salvato solo con posizione finale 1.' });
+    }
+    if (row.modalita_tipo === 'sfida_settimana' && Number(row.posizione_finale) !== 1) {
+      return postOutput_(e, { ok:false, error:'Il risultato della Sfida della settimana può essere salvato solo vincendo il campionato.' });
     }
     if (requiresSubmissionCode_(row.modalita_tipo) && !row.codice_vittoria) {
       return postOutput_(e, { ok:false, error:'Codice univoco della stagione mancante.' });

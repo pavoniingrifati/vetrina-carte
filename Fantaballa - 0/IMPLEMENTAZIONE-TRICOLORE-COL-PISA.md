@@ -11,7 +11,7 @@
 
 ## Sfida della settimana
 - Nuova pagina dedicata `sfida-settimana.html`.
-- Tutte le stagioni concluse possono essere inviate, indipendentemente dal piazzamento.
+- Il risultato può essere inviato soltanto se il Pisa conclude il campionato al **1° posto**.
 - Ordinamento: punti, differenza reti, vittorie, gol fatti, piazzamento.
 - I primi 10 ricevono **+2 OVR al proprio giocatore**. Il premio è soltanto comunicato e verrà gestito manualmente.
 
@@ -23,3 +23,4 @@ Il sorgente incluso nel progetto riconosce `sfida_settimana`. Per registrare il 
 - Il profilo **Giovani e belli** è escluso esclusivamente dalla modalità Tricolore col Pisa.
 - I vecchi salvataggi della sfida che lo avevano selezionato vengono normalizzati automaticamente su **Anonimo**.
 - Le altre modalità continuano a mostrare e utilizzare normalmente Giovani e belli.
+
