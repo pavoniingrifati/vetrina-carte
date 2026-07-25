@@ -1537,12 +1537,15 @@
         return sortModeRows(views.filter(row => row.modeKind === boardKey), boardKey);
       }
 
-      function renderOverviewStats(rows) {
-        const namedRows = rows.filter(row => nameOf(row));
-        const unique = new Set(namedRows.map(row => normalizeName(nameOf(row))).filter(Boolean));
-        const scorerGoals = buildScorers(rows).reduce((sum, row) => sum + (Number(row.goals) || 0), 0);
-        const recordPoints = rows.reduce((best, row) => Math.max(best, pointsOf(row)), 0);
-        if (heroTotalRuns) heroTotalRuns.textContent = namedRows.length.toLocaleString('it-IT');
+      function renderOverviewStats(allRows, standardRows = allRows) {
+        // Le Sfide della settimana contano nei risultati registrati e nei gol dei bomber,
+        // ma restano escluse dai record e dalle classifiche del Fantacampionato.
+        const allNamedRows = allRows.filter(row => nameOf(row));
+        const standardNamedRows = standardRows.filter(row => nameOf(row));
+        const unique = new Set(standardNamedRows.map(row => normalizeName(nameOf(row))).filter(Boolean));
+        const scorerGoals = buildScorers(allRows).reduce((sum, row) => sum + (Number(row.goals) || 0), 0);
+        const recordPoints = standardRows.reduce((best, row) => Math.max(best, pointsOf(row)), 0);
+        if (heroTotalRuns) heroTotalRuns.textContent = allNamedRows.length.toLocaleString('it-IT');
         if (heroUniqueChampions) heroUniqueChampions.textContent = unique.size.toLocaleString('it-IT');
         if (heroScorerGoals) heroScorerGoals.textContent = scorerGoals.toLocaleString('it-IT');
         if (heroRecordPoints) heroRecordPoints.textContent = recordPoints ? recordPoints.toLocaleString('it-IT') : '—';
@@ -1632,9 +1635,9 @@
         renderWorstTable(worstBody, worstRows, 'In attesa dei primi vincitori di Campionato o Fantacampionato');
         renderChaosTable(chaosBody, chaosRows, 'In attesa della prima stagione Caos vinta');
         const standardRows = rows.filter(row => modeKindOf(row) !== 'weekly');
-        renderScorers(standardRows);
+        renderScorers(rows);
         updateSortButtons();
-        renderOverviewStats(standardRows);
+        renderOverviewStats(rows, standardRows);
         renderActiveHighlights();
         if (updated) updated.textContent = data && data.aggiornato_il ? `Aggiornata: ${data.aggiornato_il}` : 'Classifiche aggiornate';
       }
