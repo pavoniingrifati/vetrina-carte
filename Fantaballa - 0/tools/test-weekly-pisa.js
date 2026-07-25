@@ -37,7 +37,7 @@ check('Draft senza roll e reroll',/Nessun roll o reroll/.test(adapter)&&/refresh
 check('Scelta esatta 11 + 3',/11 titolari \+ 3 riserve/.test(adapter)&&/selectionCount:14/.test(config));
 check('Box home con immagine fornita',/macro-mode-card weekly-pisa/.test(home)&&/tricolore-pisa\.webp/.test(home));
 check('Pagina gioco collegata al config weekly',/season-config-weekly-pisa\.js/.test(game)&&/weekly-pisa-mode\.js/.test(game));
-check('Classifica dedicata e premio top 10',/Sfida della settimana/.test(leaderboard)&&/I primi 10 classificati ricevono un \+2 OVR/.test(leaderboard));
+check('Classifica dedicata e premio top 10',/Sfida della settimana/.test(leaderboard)&&/I primi 10 classificati ricevono un \+2 OVR al proprio giocatore/.test(leaderboard));
 const failed=checks.filter(c=>!c.ok);
 console.log(JSON.stringify({ok:!failed.length,summary:{total:checks.length,passed:checks.length-failed.length,failed:failed.length},checks},null,2));
 if(failed.length)process.exit(1);

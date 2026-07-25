@@ -13,7 +13,7 @@
 - Nuova pagina dedicata `sfida-settimana.html`.
 - Tutte le stagioni concluse possono essere inviate, indipendentemente dal piazzamento.
 - Ordinamento: punti, differenza reti, vittorie, gol fatti, piazzamento.
-- I primi 10 mostrano il badge **+2 OVR**. Il premio è soltanto comunicato e verrà gestito manualmente.
+- I primi 10 ricevono **+2 OVR al proprio giocatore**. Il premio è soltanto comunicato e verrà gestito manualmente.
 
 ## Google Apps Script
 Il sorgente incluso nel progetto riconosce `sfida_settimana`. Per registrare il tipo in modo canonico sul foglio online occorre pubblicare nuovamente il Google Apps Script. Anche prima della nuova pubblicazione, il vecchio endpoint può ricevere la modalità come voce personalizzata e la classifica dedicata la riconosce dal nome `Sfida della settimana`.

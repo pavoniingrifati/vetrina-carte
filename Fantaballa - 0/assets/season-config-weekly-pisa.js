@@ -56,7 +56,7 @@ window.FANTABALLA_SEASON_CONFIG=Object.freeze({
   selectionCount:14,
   leaderboardName:'Sfida della settimana',
   leaderboardUrl:'sfida-settimana.html',
-  rewardText:'I primi 10 classificati ricevono un +2 OVR a un giocatore.'
+  rewardText:'I primi 10 classificati ricevono un +2 OVR al proprio giocatore.'
  },
  events:{
   commonCatalog:'data/events/events-common.json',
