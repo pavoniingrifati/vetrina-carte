@@ -1,0 +1,19 @@
+# Implementazione — Tricolore col Pisa!
+
+## Nuova modalità
+- Nuovo box **Evento del weekend** nella home, con l’immagine fornita come sfondo.
+- Nuova pagina `tricolore-pisa.html`.
+- Squadra fissa: **Pisa**.
+- Draft speciale senza roll/reroll: la rosa completa del Pisa compare subito.
+- Selezione obbligatoria di 14 giocatori: 11 titolari e 3 riserve.
+- Dopo il draft parte il normale Fantacampionato condiviso: eventi, mercato, infortuni, squalifiche, oggetti e storie restano attivi.
+- Salvataggio completamente separato dalle altre modalità.
+
+## Sfida della settimana
+- Nuova pagina dedicata `sfida-settimana.html`.
+- Tutte le stagioni concluse possono essere inviate, indipendentemente dal piazzamento.
+- Ordinamento: punti, differenza reti, vittorie, gol fatti, piazzamento.
+- I primi 10 mostrano il badge **+2 OVR**. Il premio è soltanto comunicato e verrà gestito manualmente.
+
+## Google Apps Script
+Il sorgente incluso nel progetto riconosce `sfida_settimana`. Per registrare il tipo in modo canonico sul foglio online occorre pubblicare nuovamente il Google Apps Script. Anche prima della nuova pubblicazione, il vecchio endpoint può ricevere la modalità come voce personalizzata e la classifica dedicata la riconosce dal nome `Sfida della settimana`.
