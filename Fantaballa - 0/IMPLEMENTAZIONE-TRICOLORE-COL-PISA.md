@@ -17,3 +17,9 @@
 
 ## Google Apps Script
 Il sorgente incluso nel progetto riconosce `sfida_settimana`. Per registrare il tipo in modo canonico sul foglio online occorre pubblicare nuovamente il Google Apps Script. Anche prima della nuova pubblicazione, il vecchio endpoint può ricevere la modalità come voce personalizzata e la classifica dedicata la riconosce dal nome `Sfida della settimana`.
+
+## Aggiornamento allenatori
+
+- Il profilo **Giovani e belli** è escluso esclusivamente dalla modalità Tricolore col Pisa.
+- I vecchi salvataggi della sfida che lo avevano selezionato vengono normalizzati automaticamente su **Anonimo**.
+- Le altre modalità continuano a mostrare e utilizzare normalmente Giovani e belli.

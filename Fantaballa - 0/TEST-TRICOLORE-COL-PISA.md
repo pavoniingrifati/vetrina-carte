@@ -29,3 +29,8 @@
 ## Limite del test browser
 
 Il browser headless dell'ambiente ha bloccato qualsiasi navigazione locale con `ERR_BLOCKED_BY_ADMINISTRATOR`. Non è stato quindi possibile completare il test end-to-end tramite Chromium. Il motore condiviso è stato verificato attraverso le suite automatiche, mentre la nuova modalità è stata controllata tramite test dedicati su dati, configurazione, collegamenti, draft e invio risultati.
+
+## Vincolo allenatore
+
+- Verificato che **Giovani e belli** non compaia nel carosello della Sfida della settimana.
+- Verificato il fallback ad **Anonimo** per eventuali salvataggi precedenti.
