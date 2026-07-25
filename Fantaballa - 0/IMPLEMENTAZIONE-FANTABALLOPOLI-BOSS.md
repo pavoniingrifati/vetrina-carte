@@ -92,3 +92,9 @@ Rosa ispirata alla Juventus 2005/2006. Poteri possibili:
 - Nuovo schema di stato con migrazione dei vecchi stage di Fantaballopoli.
 - Autosalvataggio e backup esistenti mantenuti.
 - Community e REAL continuano a condividere lo stesso motore.
+
+## Aggiornamento achievement boss
+
+- Rimosso l'achievement legacy `juve-battuta`.
+- `Sistema abbattuto` è stato rinominato **Il Palazzo è caduto**.
+- `Inter degli Onesti battuta` è stato rinominato **Il sistema sei tu**.

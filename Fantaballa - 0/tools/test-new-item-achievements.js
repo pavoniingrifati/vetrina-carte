@@ -18,7 +18,7 @@ for(const [achievementId,title,questId] of expected){
  check(`Categoria Oggetti per ${title}`,new RegExp(`id:'${achievementId}'[^\n]+category:'Oggetti'`).test(achievements));
  check(`Sblocco da quest ${questId}`,quests.includes(`'${questId}':'${achievementId}'`));
 }
-check('Cache achievement aggiornata',pages.every(page=>page.includes('assets/achievements.js?v=20260725-fantaballopoli-boss1')));
+check('Cache achievement aggiornata',pages.every(page=>page.includes('assets/achievements.js?v=20260725-fantaballopoli-boss2')));
 const failed=checks.filter(item=>!item.ok);
 console.log(JSON.stringify({name:'Achievement nuove quest oggetti',passed:checks.length-failed.length,total:checks.length,checks},null,2));
 if(failed.length)process.exit(1);

@@ -25,3 +25,5 @@
 ## Nota
 
 Il controllo browser headless completo non è stato concluso nell’ambiente di lavoro; la verifica finale si basa su test di motore, sintassi, dati e riferimenti statici. Le pagine principali mantengono i controlli mobile e accessibilità già presenti nel progetto.
+
+- Verificata la rimozione dell'achievement legacy `juve-battuta` e il corretto collegamento dei due achievement boss.

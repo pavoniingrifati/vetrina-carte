@@ -91,10 +91,9 @@
     { id:'giuda', category:'Fantaballopoli', icon:'💋', title:'Giuda', description:'Cedi il giocatore scomodo e ottieni Giuda al draft.' },
     { id:'il-bacio-di-giuda', category:'Fantaballopoli', icon:'🏆', title:'Il bacio di Giuda', description:'Vinci comunque il campionato dopo il tradimento.' },
     { id:'scudetto-di-cartone', category:'Fantaballopoli', icon:'📦', title:'Scudetto di cartone', description:'Sconfiggi L’Inter degli Onesti e raddoppia i punti del campionato.' },
-    { id:'sistema-abbattuto', category:'Fantaballopoli', icon:'⚒️', title:'Sistema abbattuto', description:'Sconfiggi La Juve della Triade nella boss fight finale.' },
+    { id:'sistema-abbattuto', category:'Fantaballopoli', icon:'🏛️', title:'Il Palazzo è caduto', description:'Sconfiggi La Juve della Triade nella boss fight finale.' },
     { id:'intercettazioni', category:'Fantaballopoli', icon:'🎙️', title:'Intercettazioni', description:'Ottieni almeno una prova capace di disattivare un potere della Triade.' },
-    { id:'juve-battuta', category:'Fantaballopoli', icon:'⚫', title:'Juve della Triade battuta', description:'Sconfiggi La Juve della Triade, basata sulla rosa 2005/2006.' },
-    { id:'inter-onesti-battuta', category:'Fantaballopoli', icon:'🔵', title:'Inter degli Onesti battuta', description:'Difendi la Triade e sconfiggi L’Inter degli Onesti nella boss fight finale.' },
+    { id:'inter-onesti-battuta', category:'Fantaballopoli', icon:'👑', title:'Il sistema sei tu', description:'Sconfiggi L’Inter degli Onesti e salva la Triade.' },
     { id:'trentotto-denari', category:'Fantaballopoli', icon:'🪙', title:'Punti raddoppiati', description:'Vinci una boss fight di Fantaballopoli e raddoppia i punti ottenuti in campionato.' },
 
     { id:'la-grande-occasione', category:'Eventi', icon:'🎟️', title:'La grande occasione', description:'Promuovi il panchinaro al posto di un titolare.' },
