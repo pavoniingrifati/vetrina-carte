@@ -41,3 +41,26 @@ CORREZIONE CARTE GOTHAM — 26/07/2026
 - Riconosciuti anche i valori storici Gotham City FC e il refuso Gotahm City.
 - Riconosciuto il refuso Svicolato tra le carte condivise.
 - Migliorato il messaggio diagnostico delle sorgenti JSON.
+
+APERTURA PACCHETTI BASE + PREMIUM — 26/07/2026
+- Aggiunto overlay cinematografico a schermo intero condiviso da Fantaballa e Gotham.
+- Fantaballa usa atmosfera stadio, luci e particelle sportive.
+- Gotham usa atmosfera notturna, skyline, pioggia e neon.
+- Reveal progressivo: rarità, ruolo, serie, nome e immagine della carta.
+- Walkout automatico per Ultra Rara, Season, Leggendaria e per le serie configurate.
+- Pacchetti da 9 carte usano una sequenza più rapida; quelli piccoli mantengono più suspense.
+- Pulsanti Salta, Continua e Audio inclusi.
+- Riepilogo finale con tutte le carte e carta migliore evidenziata.
+- Suoni sintetici Web Audio: non richiedono file MP3 aggiuntivi.
+- Le carte vengono salvate prima del reveal cinematografico.
+
+FILE APERTURA
+- assets/css/futtu-pack-opening.css  -> grafica e animazioni
+- assets/js/futtu-pack-opening.js    -> sequenza Base + Premium
+- config/fantaballa.js               -> tema Fantaballa
+- config/gotham.js                   -> tema Gotham
+
+PERSONALIZZAZIONE
+Nei due file config puoi cambiare openingTheme: colori, atmosfera, testi,
+rarità e serie che attivano il walkout. Per forzare il walkout su una singola
+carta puoi aggiungere nel JSON: "walkout": true.

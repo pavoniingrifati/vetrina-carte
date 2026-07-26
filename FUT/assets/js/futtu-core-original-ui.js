@@ -482,20 +482,127 @@ function choosePack(game){
 
 var flashLine=document.getElementById('flashLine'),flashScreen=document.getElementById('flashScreen'),packArea=document.getElementById('packArea'),packBox=document.getElementById('pack');
 document.addEventListener('click',()=>{try{ensureAudio();}catch{}},{once:true});
-openBtn.addEventListener('click',async()=>{
-  if(GAME_STATE.opening)return;GAME_STATE.opening=true;updateOpenBtnEnabled();const game=GAME_STATE.selected,cost=PACK_COST_PER_GAME[game]||0;
-  const abort=(msg)=>{if(msg)document.getElementById('log').textContent=msg;resetPackPreviewState(true);flashLine.classList.remove('active');flashScreen.classList.remove('active');GAME_STATE.opening=false;updateOpenBtnEnabled();};
-  let newPts=await getCurrentPoints();
-  try{let u=firebase.auth().currentUser;if(!u||u.isAnonymous)u=await ensureGoogleUser();await ensureWallet10();newPts=await debitPackCostOrThrow(cost);document.getElementById('log').textContent=cost>0?`✅ ${cost} punti scalati. Punti rimasti: ${newPts}`:'🆓 Pacchetto gratuito aperto.';}
-  catch(e){if(e.message==='redirecting'){GAME_STATE.opening=false;return;}const code=e.code||e.message||'unknown';let msg='⚠️ Errore durante la scalatura punti.';if(code==='login-required')msg='🔐 Accedi con Google per aprire un pacchetto.';else if(code==='no-points')msg=`😕 Punti insufficienti (costo: ${cost}).`;else if(code==='permission-denied')msg='⛔ Permessi Firestore insufficienti per scrivere sul wallet.';else if(code==='unavailable')msg='📡 Sei offline o Firestore non è raggiungibile.';abort(msg+' ('+code+')');return;}
-  if(!GAME_STATE.loaded)await loadCards();
-  resetPackPreviewState(true);packBox.classList.add('shake');await delay(360);packBox.classList.remove('shake');flashLine.classList.add('active');flashScreen.classList.add('active');packBox.classList.add('opening');await delay(900);resetPackPreviewState(false);packArea.style.display='none';
+openBtn.addEventListener('click', async () => {
+  if (GAME_STATE.opening) return;
+
+  GAME_STATE.opening = true;
+  updateOpenBtnEnabled();
+
+  const game = GAME_STATE.selected;
+  const packConfig = PACK_CONFIG_BY_GAME[game] || {};
+  const cost = PACK_COST_PER_GAME[game] || 0;
+  const log = document.getElementById('log');
+
+  const abort = (message) => {
+    if (message && log) log.textContent = message;
+    resetPackPreviewState(true);
+    flashLine.classList.remove('active');
+    flashScreen.classList.remove('active');
+    GAME_STATE.opening = false;
+    updateOpenBtnEnabled();
+  };
+
+  let newPts = await getCurrentPoints();
+  try {
+    let user = firebase.auth().currentUser;
+    if (!user || user.isAnonymous) user = await ensureGoogleUser();
+    await ensureWallet10();
+    newPts = await debitPackCostOrThrow(cost);
+    if (log) log.textContent = cost > 0
+      ? `✅ ${cost} punti scalati. Punti rimasti: ${newPts}`
+      : '🆓 Pacchetto gratuito aperto.';
+  } catch (error) {
+    if (error.message === 'redirecting') {
+      GAME_STATE.opening = false;
+      return;
+    }
+    const code = error.code || error.message || 'unknown';
+    let message = '⚠️ Errore durante la scalatura punti.';
+    if (code === 'login-required') message = '🔐 Accedi con Google per aprire un pacchetto.';
+    else if (code === 'no-points') message = `😕 Punti insufficienti (costo: ${cost}).`;
+    else if (code === 'permission-denied') message = '⛔ Permessi Firestore insufficienti per scrivere sul wallet.';
+    else if (code === 'unavailable') message = '📡 Sei offline o Firestore non è raggiungibile.';
+    abort(`${message} (${code})`);
+    return;
+  }
+
+  if (!GAME_STATE.loaded) await loadCards();
+
   let chosen;
-  try{chosen=choosePack(game);}catch(e){abort(e.message==='pacchetti-finiti'?'❌ Pacchetti esauriti per questo game.':e.message==='pool-insufficiente'?'⚠️ Pool insufficiente per generare il pacchetto.':'⚠️ Nessuna carta disponibile per '+game+'.');return;}
-  const hasLegend=chosen.some(c=>norm(c.rarity)==='leggendaria');if(PACK_CONFIG_BY_GAME[game].kind!=='composite')chosen.sort((a,b)=>(rarityRank[a.rarity]||0)-(rarityRank[b.rarity]||0));if(hasLegend&&typeof triggerLegendFX==='function')try{triggerLegendFX();}catch{}
-  showStage(chosen);GAME_STATE.opening=false;renderGamePicker();updateOpenBtnEnabled();
-  try{await saveInventario(chosen);const msgTail=`<a href="${FUTTU_CONFIG.myCardsUrl}">Vai alle mie carte →</a>`;document.getElementById('log').innerHTML=(cost>0?`✅ Pacchetto salvato. Punti rimasti: <b>${newPts}</b>. `:'✅ Pacchetto salvato. ')+msgTail;}
-  catch(e){document.getElementById('log').textContent=e.message==='login-required'?'🔒 Accedi con Google per salvare le carte in "Le mie carte".':'⚠️ Errore nel salvataggio. Riprova.';}
+  try {
+    chosen = choosePack(game);
+  } catch (error) {
+    const message = error.message === 'pacchetti-finiti'
+      ? '❌ Pacchetti esauriti per questo game.'
+      : error.message === 'pool-insufficiente'
+        ? '⚠️ Pool insufficiente per generare il pacchetto.'
+        : `⚠️ Nessuna carta disponibile per ${game}.`;
+    abort(message);
+    return;
+  }
+
+  const hasLegend = chosen.some(card => norm(card.rarity) === 'leggendaria');
+  if (packConfig.kind !== 'composite') {
+    chosen.sort((a, b) => (rarityRank[a.rarity] || 0) - (rarityRank[b.rarity] || 0));
+  }
+
+  /* Salva prima della sequenza cinematografica: se l'utente chiude la pagina
+     durante il reveal, le carte sono già state registrate nell'inventario. */
+  let saveError = null;
+  try {
+    await saveInventario(chosen);
+  } catch (error) {
+    saveError = error;
+    console.error('[saveInventario]', error);
+  }
+
+  const premiumOpening = window.FUTTU_PACK_OPENING;
+  if (premiumOpening && typeof premiumOpening.play === 'function') {
+    resetPackPreviewState(true);
+    try {
+      await premiumOpening.play({
+        mode: FUTTU_CONFIG.id,
+        game,
+        packName: game,
+        cover: PACK_BACK_BY_GAME[game] || '',
+        pack: packConfig,
+        cards: chosen
+      });
+    } catch (error) {
+      console.error('[FUTTU_PACK_OPENING]', error);
+    }
+  } else {
+    /* Fallback: conserva l'apertura originale se il modulo premium non carica. */
+    resetPackPreviewState(true);
+    packBox.classList.add('shake');
+    await delay(360);
+    packBox.classList.remove('shake');
+    flashLine.classList.add('active');
+    flashScreen.classList.add('active');
+    packBox.classList.add('opening');
+    await delay(900);
+    resetPackPreviewState(false);
+    if (hasLegend && typeof triggerLegendFX === 'function') {
+      try { triggerLegendFX(); } catch (error) {}
+    }
+  }
+
+  packArea.style.display = 'none';
+  showStage(chosen);
+  GAME_STATE.opening = false;
+  renderGamePicker();
+  updateOpenBtnEnabled();
+
+  if (saveError) {
+    if (log) log.textContent = saveError.message === 'login-required'
+      ? '🔒 Accedi con Google per salvare le carte in "Le mie carte".'
+      : '⚠️ Le carte sono state mostrate, ma il salvataggio non è riuscito. Riprova.';
+  } else if (log) {
+    const messageTail = `<a href="${FUTTU_CONFIG.myCardsUrl}">Vai alle mie carte →</a>`;
+    log.innerHTML = (cost > 0
+      ? `✅ Pacchetto salvato. Punti rimasti: <b>${newPts}</b>. `
+      : '✅ Pacchetto salvato. ') + messageTail;
+  }
 });
 
 window.addEventListener('DOMContentLoaded',async()=>{
