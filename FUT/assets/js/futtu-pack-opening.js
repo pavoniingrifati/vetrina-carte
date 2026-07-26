@@ -49,6 +49,7 @@
   let muted = false;
   try { muted = localStorage.getItem('futtu_opening_muted') === '1'; } catch (error) {}
   let audioContext = null;
+  let cardImageGeneration = 0;
 
   function mergeTheme(){
     return Object.assign({}, DEFAULT_THEME, (window.FUTTU_CONFIG && window.FUTTU_CONFIG.openingTheme) || {});
@@ -244,12 +245,23 @@
   function setCardImage(card){
     const image = $('.fo-card-image', root);
     const fallback = $('.fo-card-placeholder', root);
-    image.hidden = false;
+    const requestId = ++cardImageGeneration;
+
+    image.onload = null;
+    image.onerror = null;
+    image.hidden = true;
+    image.style.display = 'none';
+    image.removeAttribute('src');
     fallback.hidden = true;
-    image.alt = `Carta ${card.name || ''}`;
-    image.onerror = () => {
+    fallback.style.display = 'none';
+    fallback.innerHTML = '';
+
+    const showFallback = () => {
+      if (requestId !== cardImageGeneration) return;
       image.hidden = true;
+      image.style.display = 'none';
       fallback.hidden = false;
+      fallback.style.display = 'grid';
       fallback.innerHTML = `
         <div class="fo-card-placeholder-inner">
           <div class="fo-card-placeholder-rarity">${rarityInfo(card).label}</div>
@@ -257,8 +269,27 @@
           <div class="fo-card-placeholder-meta">${[card.role, card.series || card.game].filter(Boolean).join(' · ')}</div>
         </div>`;
     };
-    image.src = card.img || '';
-    if (!card.img) image.onerror();
+
+    const src = String(card && card.img || '').trim();
+    if (!src) {
+      showFallback();
+      return;
+    }
+
+    image.alt = `Carta ${card.name || ''}`;
+    image.onload = () => {
+      if (requestId !== cardImageGeneration) return;
+      fallback.hidden = true;
+      fallback.style.display = 'none';
+      fallback.innerHTML = '';
+      image.hidden = false;
+      image.style.display = 'block';
+    };
+    image.onerror = () => {
+      if (requestId !== cardImageGeneration) return;
+      showFallback();
+    };
+    image.src = src;
   }
 
   function waitForAdvance(){
@@ -544,6 +575,6 @@
     skip: skipToSummary,
     isWalkoutCard: isWalkout,
     rarityInfo,
-    version: '1.1.0-manual-reveal'
+    version: '1.2.0-reopen-image-fix'
   };
 })();

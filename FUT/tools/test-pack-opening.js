@@ -60,6 +60,21 @@ test('Le carte vengono salvate prima della sequenza cinematografica', () => {
   assert(core.indexOf('await saveInventario(chosen)') < core.indexOf('await premiumOpening.play({'));
 });
 
+
+test('Dopo il reveal premium il motore sblocca una nuova apertura', () => {
+  assert(!core.includes('clearResults();'));
+  assert(core.includes("GAME_STATE.opening = false;"));
+  assert(core.includes("packArea.style.removeProperty('display')"));
+  assert(core.includes('applyPackVisual();'));
+});
+
+test('Il caricamento immagini carta protegge dai callback della carta precedente', () => {
+  assert(opening.includes('let cardImageGeneration = 0'));
+  assert(opening.includes('const requestId = ++cardImageGeneration'));
+  assert(opening.includes('if (requestId !== cardImageGeneration) return'));
+  assert(opening.includes("fallback.style.display = 'none'"));
+});
+
 test('Configurazione Fantaballa contiene tema stadio', () => {
   assert.equal(fantaballa.id, 'fantaballa');
   assert.equal(fantaballa.openingTheme.atmosphere, 'stadium');
@@ -86,7 +101,7 @@ test('Il modulo esporta API Base + Premium', () => {
   vm.runInNewContext(opening, context, { filename:'futtu-pack-opening.js' });
   const api = context.window.FUTTU_PACK_OPENING;
   assert(api && typeof api.play === 'function');
-  assert.equal(api.version, '1.1.0-manual-reveal');
+  assert.equal(api.version, '1.2.0-reopen-image-fix');
   assert(api.isWalkoutCard({ rarity:'Ultra Rara', series:'Gold' }));
   assert(api.isWalkoutCard({ rarity:'Rara', series:'Dream' }));
   assert(!api.isWalkoutCard({ rarity:'Rara', series:'Gold' }));
@@ -123,4 +138,4 @@ test('I pacchetti configurati restano separati per modalità', () => {
   assert(!fantaballa.packs.some(pack => pack.name === 'Gotham Tots'));
 });
 
-console.log(`\n${passed}/12 test superati.`);
+console.log(`\n${passed}/14 test superati.`);

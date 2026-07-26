@@ -588,14 +588,20 @@ openBtn.addEventListener('click', async () => {
     }
   }
 
-  packArea.style.display = 'none';
   if (usedPremiumOpening) {
-    clearResults();
+    const stageWrap = document.getElementById('stageWrap');
+    const stage = document.getElementById('stage');
+    if (stageWrap) stageWrap.classList.remove('show');
+    if (stage) stage.innerHTML = '';
+    resetPackPreviewState(true);
+    packArea.style.removeProperty('display');
   } else {
+    packArea.style.display = 'none';
     showStage(chosen);
   }
   GAME_STATE.opening = false;
   renderGamePicker();
+  applyPackVisual();
   updateOpenBtnEnabled();
 
   if (saveError) {
