@@ -43,6 +43,7 @@
   let runToken = 0;
   let activePayload = null;
   let activeResolve = null;
+  let advanceResolve = null;
   let sequenceStarted = false;
   let summaryShown = false;
   let muted = false;
@@ -88,7 +89,7 @@
             </div>
             <div class="fo-hint">Clicca per aprire subito</div>
           </div>
-          <div class="fo-reveal-phase">
+          <div class="fo-reveal-phase" tabindex="0" role="button" aria-label="Mostra la carta successiva">
             <div class="fo-walkout-label" aria-hidden="true"></div>
             <div class="fo-reveal-layout">
               <div class="fo-reveal-copy">
@@ -134,6 +135,13 @@
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         startNow();
+      }
+    });
+    $('.fo-reveal-phase', root).addEventListener('click', advanceSequence);
+    $('.fo-reveal-phase', root).addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        advanceSequence();
       }
     });
     $('.fo-skip', root).addEventListener('click', skipToSummary);
@@ -242,10 +250,31 @@
     image.onerror = () => {
       image.hidden = true;
       fallback.hidden = false;
-      fallback.textContent = card.name || 'Carta';
+      fallback.innerHTML = `
+        <div class="fo-card-placeholder-inner">
+          <div class="fo-card-placeholder-rarity">${rarityInfo(card).label}</div>
+          <div class="fo-card-placeholder-name">${card.name || 'Carta misteriosa'}</div>
+          <div class="fo-card-placeholder-meta">${[card.role, card.series || card.game].filter(Boolean).join(' · ')}</div>
+        </div>`;
     };
     image.src = card.img || '';
     if (!card.img) image.onerror();
+  }
+
+  function waitForAdvance(){
+    return new Promise(resolve => { advanceResolve = resolve; });
+  }
+
+  function clearAdvanceResolver(){
+    if (advanceResolve) {
+      const resolver = advanceResolve;
+      advanceResolve = null;
+      try { resolver(); } catch (error) {}
+    }
+  }
+
+  function advanceSequence(){
+    clearAdvanceResolver();
   }
 
   function showRoot(payload){
@@ -329,10 +358,15 @@
     if (token !== runToken || summaryShown) return;
 
     reveal.classList.add('is-revealed');
+    $('.fo-hint', root).textContent = index + 1 < total
+      ? 'Clicca per mostrare la carta successiva'
+      : 'Clicca per vedere il riepilogo finale';
+    try { reveal.focus({preventScroll:true}); } catch (error) {}
     sound('reveal', theme, info.rank);
     announce(`${card.name || 'Carta'} rivelata.`);
     setProgress(total, index + 1);
-    await wait(walkout ? 1550 : (quick ? 360 : 820));
+    await waitForAdvance();
+    if (token !== runToken || summaryShown) return;
   }
 
   function makeSummaryCard(card, index, isBest){
@@ -367,6 +401,7 @@
 
   function showSummary(cards, token){
     if (!activePayload || token !== runToken) return;
+    clearAdvanceResolver();
     summaryShown = true;
     sequenceStarted = true;
     scene.dataset.phase = 'summary';
@@ -375,6 +410,7 @@
     const best = bestCardIndex(cards);
     cards.forEach((card,index)=>grid.appendChild(makeSummaryCard(card,index,index===best)));
     $('.fo-summary-title', root).textContent = cards.length === 1 ? 'Carta ottenuta' : `${cards.length} carte ottenute`;
+    $('.fo-hint', root).textContent = 'Riepilogo finale del pacchetto';
     $('.fo-skip', root).hidden = true;
     $('.fo-continue', root).hidden = false;
     setProgress(cards.length, cards.length);
@@ -385,6 +421,7 @@
 
   function skipToSummary(){
     if (!activePayload) return;
+    clearAdvanceResolver();
     runToken += 1;
     const token = runToken;
     showSummary(orderCards(activePayload.cards || []), token);
@@ -395,6 +432,7 @@
     const resolver = activeResolve;
     runToken += 1;
     activeResolve = null;
+    clearAdvanceResolver();
     activePayload = null;
     summaryShown = false;
     sequenceStarted = false;
@@ -423,8 +461,6 @@
     runToken += 1;
     const token = runToken;
     showRoot(payload);
-    const autoDelay = reducedMotion() ? 60 : 720;
-    window.setTimeout(()=>{ if (token === runToken) startNow(); },autoDelay);
     return new Promise(resolve => { activeResolve = resolve; });
   }
 
@@ -508,6 +544,6 @@
     skip: skipToSummary,
     isWalkoutCard: isWalkout,
     rarityInfo,
-    version: '1.0.0-base-premium'
+    version: '1.1.0-manual-reveal'
   };
 })();

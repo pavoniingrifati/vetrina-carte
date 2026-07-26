@@ -557,7 +557,8 @@ openBtn.addEventListener('click', async () => {
   }
 
   const premiumOpening = window.FUTTU_PACK_OPENING;
-  if (premiumOpening && typeof premiumOpening.play === 'function') {
+  const usedPremiumOpening = !!(premiumOpening && typeof premiumOpening.play === 'function');
+  if (usedPremiumOpening) {
     resetPackPreviewState(true);
     try {
       await premiumOpening.play({
@@ -588,7 +589,11 @@ openBtn.addEventListener('click', async () => {
   }
 
   packArea.style.display = 'none';
-  showStage(chosen);
+  if (usedPremiumOpening) {
+    clearResults();
+  } else {
+    showStage(chosen);
+  }
   GAME_STATE.opening = false;
   renderGamePicker();
   updateOpenBtnEnabled();
