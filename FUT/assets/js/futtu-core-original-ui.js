@@ -338,6 +338,38 @@ var pricePill=document.getElementById('pricePill');
 var resetPacksBtn=document.getElementById('resetPacksBtn');
 var gamePicker=document.getElementById('gamePicker');
 var packEl=document.getElementById('pack');
+
+/*
+ * Ripristina sempre il pacchetto dopo l'animazione di apertura.
+ * L'animazione packOpen usa fill-mode: forwards e termina con opacity:0:
+ * senza rimuovere la classe `opening`, le aperture successive lasciano
+ * l'area cliccabile ma il pacchetto invisibile.
+ */
+function resetPackPreviewState(restoreArea=true){
+  const area=document.getElementById('packArea');
+  const pack=document.getElementById('pack');
+  if(pack){
+    pack.classList.remove('opening','shake');
+    if(typeof pack.getAnimations==='function'){
+      pack.getAnimations().forEach(anim=>{
+        const name=String(anim.animationName||'');
+        if(name==='packOpen'||name==='shake'){
+          try{anim.cancel();}catch(e){}
+        }
+      });
+    }
+    pack.style.removeProperty('animation');
+    pack.style.removeProperty('opacity');
+    pack.style.removeProperty('transform');
+    pack.style.removeProperty('filter');
+    pack.style.removeProperty('visibility');
+    void pack.offsetWidth;
+  }
+  if(area){
+    area.classList.remove('ut-pack-opening');
+    if(restoreArea) area.style.removeProperty('display');
+  }
+}
 function packsLeft(game){return Math.max(0,(GAME_STATE.packs[game]||[]).length-(GAME_STATE.cursor[game]||0));}
 function cardCount(game){
   const pack=PACK_CONFIG_BY_GAME[game];
@@ -364,7 +396,14 @@ function renderGamePicker(){
   });gamePicker.appendChild(frag);pricePill.textContent=`💰 Costo: ${PACK_COST_PER_GAME[GAME_STATE.selected]||0}`;
 }
 function applyPackVisual(){
-  const back=PACK_BACK_BY_GAME[GAME_STATE.selected]||PACK_BACK_BY_GAME[VALID_GAMES[0]];if(packEl)packEl.style.backgroundImage=`url('${back}')`;if(pricePill)pricePill.textContent=`💰 Costo: ${PACK_COST_PER_GAME[GAME_STATE.selected]||0}`;
+  resetPackPreviewState(true);
+  const back=PACK_BACK_BY_GAME[GAME_STATE.selected]||PACK_BACK_BY_GAME[VALID_GAMES[0]];
+  if(packEl){
+    packEl.style.backgroundImage=`url('${back}')`;
+    packEl.style.opacity='1';
+    packEl.style.visibility='visible';
+  }
+  if(pricePill)pricePill.textContent=`💰 Costo: ${PACK_COST_PER_GAME[GAME_STATE.selected]||0}`;
 }
 function updateOpenBtnEnabled(){
   const game=GAME_STATE.selected,pack=PACK_CONFIG_BY_GAME[game],left=packsLeft(game),cost=PACK_COST_PER_GAME[game]||0,badge=pointsBadge?.textContent||'Punti: 0',pts=Number((badge.split(':')[1]||'0').trim())||0;
@@ -433,12 +472,12 @@ var flashLine=document.getElementById('flashLine'),flashScreen=document.getEleme
 document.addEventListener('click',()=>{try{ensureAudio();}catch{}},{once:true});
 openBtn.addEventListener('click',async()=>{
   if(GAME_STATE.opening)return;GAME_STATE.opening=true;updateOpenBtnEnabled();const game=GAME_STATE.selected,cost=PACK_COST_PER_GAME[game]||0;
-  const abort=(msg)=>{if(msg)document.getElementById('log').textContent=msg;packArea.style.display='';packBox.classList.remove('opening');flashLine.classList.remove('active');flashScreen.classList.remove('active');GAME_STATE.opening=false;updateOpenBtnEnabled();};
+  const abort=(msg)=>{if(msg)document.getElementById('log').textContent=msg;resetPackPreviewState(true);flashLine.classList.remove('active');flashScreen.classList.remove('active');GAME_STATE.opening=false;updateOpenBtnEnabled();};
   let newPts=await getCurrentPoints();
   try{let u=firebase.auth().currentUser;if(!u||u.isAnonymous)u=await ensureGoogleUser();await ensureWallet10();newPts=await debitPackCostOrThrow(cost);document.getElementById('log').textContent=cost>0?`✅ ${cost} punti scalati. Punti rimasti: ${newPts}`:'🆓 Pacchetto gratuito aperto.';}
   catch(e){if(e.message==='redirecting'){GAME_STATE.opening=false;return;}const code=e.code||e.message||'unknown';let msg='⚠️ Errore durante la scalatura punti.';if(code==='login-required')msg='🔐 Accedi con Google per aprire un pacchetto.';else if(code==='no-points')msg=`😕 Punti insufficienti (costo: ${cost}).`;else if(code==='permission-denied')msg='⛔ Permessi Firestore insufficienti per scrivere sul wallet.';else if(code==='unavailable')msg='📡 Sei offline o Firestore non è raggiungibile.';abort(msg+' ('+code+')');return;}
   if(!GAME_STATE.loaded)await loadCards();
-  packBox.classList.add('shake');await delay(360);packBox.classList.remove('shake');flashLine.classList.add('active');flashScreen.classList.add('active');packBox.classList.add('opening');await delay(900);packArea.style.display='none';
+  resetPackPreviewState(true);packBox.classList.add('shake');await delay(360);packBox.classList.remove('shake');flashLine.classList.add('active');flashScreen.classList.add('active');packBox.classList.add('opening');await delay(900);resetPackPreviewState(false);packArea.style.display='none';
   let chosen;
   try{chosen=choosePack(game);}catch(e){abort(e.message==='pacchetti-finiti'?'❌ Pacchetti esauriti per questo game.':e.message==='pool-insufficiente'?'⚠️ Pool insufficiente per generare il pacchetto.':'⚠️ Nessuna carta disponibile per '+game+'.');return;}
   const hasLegend=chosen.some(c=>norm(c.rarity)==='leggendaria');if(PACK_CONFIG_BY_GAME[game].kind!=='composite')chosen.sort((a,b)=>(rarityRank[a.rarity]||0)-(rarityRank[b.rarity]||0));if(hasLegend&&typeof triggerLegendFX==='function')try{triggerLegendFX();}catch{}
@@ -453,4 +492,4 @@ window.addEventListener('DOMContentLoaded',async()=>{
   document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!openBtn.disabled)openBtn.click();});
 });
 
-Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COST_PER_GAME,PACK_SIZE_PER_GAME,GAME_STATE,packsLeft,cardCount,isInfinitePack,renderGamePicker,renderPacksStrip,applyPackVisual,updateOpenBtnEnabled,buildFinitePacks,makeCardEl,showStage});
+Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COST_PER_GAME,PACK_SIZE_PER_GAME,GAME_STATE,packsLeft,cardCount,isInfinitePack,renderGamePicker,renderPacksStrip,applyPackVisual,updateOpenBtnEnabled,resetPackPreviewState,buildFinitePacks,makeCardEl,showStage});

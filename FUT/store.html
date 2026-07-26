@@ -1405,6 +1405,13 @@ function triggerLegendFX(){
   box-shadow:0 0 0 2px rgba(78,229,216,.70), 0 0 34px rgba(78,229,216,.20)!important;
 }
 #packArea.ut-selected-pack-preview #pack:hover::before{transform:translateX(130%);}
+/* Se una vecchia animazione è rimasta agganciata, la preview successiva deve comunque tornare visibile. */
+#packArea.ut-selected-pack-preview:not(.ut-pack-opening) #pack:not(.opening){
+  opacity:1!important;
+  visibility:visible!important;
+  transform:translateY(0) scale(1)!important;
+  animation:none!important;
+}
 #packArea.ut-pack-opening #pack{pointer-events:none!important;}
 #packArea.ut-selected-pack-preview .pack.opening{
   animation:packOpen .9s cubic-bezier(.16,.84,.29,1) forwards!important;
@@ -1457,11 +1464,30 @@ function triggerLegendFX(){
     if (!area || !pack) return;
     const game = selectedGame();
     if (options && options.clearResults) clearResults();
+    /* La precedente apertura termina con opacity:0. Ripristina prima di mostrare il nuovo pack. */
+    if (typeof window.resetPackPreviewState === 'function') window.resetPackPreviewState(true);
+    else {
+      pack.classList.remove('opening','shake');
+      if (typeof pack.getAnimations === 'function') {
+        pack.getAnimations().forEach(function(anim){
+          const name = String(anim.animationName || '');
+          if (name === 'packOpen' || name === 'shake') { try { anim.cancel(); } catch(e) {} }
+        });
+      }
+      pack.style.removeProperty('animation');
+      pack.style.removeProperty('opacity');
+      pack.style.removeProperty('transform');
+      pack.style.removeProperty('filter');
+      pack.style.removeProperty('visibility');
+      area.style.removeProperty('display');
+    }
     area.classList.add('ut-selected-pack-preview');
     area.classList.remove('ut-pack-opening');
     area.dataset.packName = game;
     area.removeAttribute('aria-hidden');
     pack.style.backgroundImage = "url('" + packBack(game) + "')";
+    pack.style.opacity = '1';
+    pack.style.visibility = 'visible';
     pack.setAttribute('role','button');
     pack.setAttribute('tabindex','0');
     pack.setAttribute('aria-label','Apri pacchetto ' + game);

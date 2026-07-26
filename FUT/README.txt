@@ -27,3 +27,9 @@ Le immagini non sono incluse nello ZIP.
 IMPORTANTE
 Aprire il progetto tramite server web/hosting, non con doppio clic file://,
 perché il browser può bloccare fetch dei JSON e Firebase.
+
+
+CORREZIONE PREVIEW PACCHETTI — 26/07/2026
+- Ripristinata l'immagine grande del pacchetto dopo ogni apertura.
+- Rimossa correttamente la classe di animazione `opening` al termine, in caso di errore e al cambio pacchetto.
+- La correzione vale per Fantaballa FC e Gotham City FC perché usano lo stesso motore.
