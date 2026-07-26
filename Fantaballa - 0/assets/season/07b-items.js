@@ -322,7 +322,10 @@ function tickItemQuestAfterMatch(result){
 
 /* Quest Fascia del capitano */
 function leaderQuestEligibleEntries(){return captainEligibleEntries()}
+function leaderQuestCanStart(){return Boolean(questCanStart(2)&&seasonInventoryUsedSlots()<seasonInventory().capacity&&leaderQuestEligibleEntries().length)}
 function acceptLeaderQuest(){
+ const eligible=leaderQuestEligibleEntries();
+ if(!eligible.length)return'Quest non avviata: non ci sono titolari reali disponibili. I Primavera d’emergenza non possono essere scelti come leader.';
  const response=startSeasonQuest({id:'un-leader-per-la-squadra',title:'Un leader per la squadra',target:2,deadlineMatches:2,objective:'Scegli un titolare: dovrà giocare le prossime 2 partite, non ricevere rossi e aiutare la squadra a conquistare almeno 2 punti complessivi.',reward:'Ottieni l’oggetto comune Fascia del capitano.',penalty:'La quest termina senza penalizzazioni.'});
  const q=questState();if(q.active&&q.id==='un-leader-per-la-squadra'){q.awaitingPlayerSelection=true;q.notice='Prima di giocare scegli il leader della quest.'}return response;
 }
@@ -331,12 +334,20 @@ function chooseLeaderQuestPlayer(playerId){
  const entry=leaderQuestEligibleEntries().find(item=>String(item.playerId)===String(playerId));if(!entry)return'Scegli un titolare disponibile.';
  q.targetPlayerId=String(entry.playerId);q.targetPlayerName=String(entry.player.name);q.awaitingPlayerSelection=false;q.notice=`${entry.player.name} deve partire titolare nelle prossime 2 partite.`;q.objective=`${entry.player.name} deve partire titolare nelle prossime 2 partite, non ricevere cartellini rossi e aiutare la squadra a conquistare almeno 2 punti complessivi.`;entry.leaderQuestForcedMatches=2;return `${entry.player.name} è stato scelto come leader della squadra.`;
 }
+function cancelUnavailableLeaderQuest(){
+ const q=questState();if(!q.active||q.id!=='un-leader-per-la-squadra'||!q.awaitingPlayerSelection)return'La quest non è in attesa della scelta del leader.';
+ if(leaderQuestEligibleEntries().length)return'È disponibile almeno un titolare: scegli il leader per proseguire.';
+ clearLeaderQuestForcedPlayer(q);const message='Quest annullata: non ci sono titolari reali disponibili. Nessuna penalizzazione.';finishSeasonQuest(false,message);return message;
+}
 function leaderQuestSelectionPending(){const q=questState();return Boolean(q.active&&q.id==='un-leader-per-la-squadra'&&q.awaitingPlayerSelection)}
 function renderLeaderQuestSelection(q=questState()){
  if(!q.active||q.id!=='un-leader-per-la-squadra'||!q.awaitingPlayerSelection)return'';const eligible=leaderQuestEligibleEntries(),options=eligible.map(entry=>`<option value="${esc(entry.playerId)}">${esc(entry.player.name)} · ${esc(entry.slot||entry.player.Position||'')} · ${Number(entry.player.ovr)||0} OVR</option>`).join('');
- return `<div class="leader-quest-selection"><label for="leaderQuestPlayer">Scegli il leader titolare</label>${eligible.length?`<div><select id="leaderQuestPlayer">${options}</select><button class="btn" type="button" data-confirm-leader-quest>Conferma leader</button></div>`:'<p>Nessun titolare disponibile: la quest non può iniziare.</p>'}</div>`;
+ return `<div class="leader-quest-selection"><label for="leaderQuestPlayer">Scegli il leader titolare</label>${eligible.length?`<div><select id="leaderQuestPlayer">${options}</select><button class="btn" type="button" data-confirm-leader-quest>Conferma leader</button></div>`:'<div><p>Nessun titolare reale disponibile: i Primavera d’emergenza non possono essere scelti per una quest di due partite.</p><button class="btn" type="button" data-cancel-leader-quest>Annulla quest e continua</button></div>'}</div>`;
 }
-function bindLeaderQuestControls(){const button=document.querySelector('[data-confirm-leader-quest]');if(button)button.onclick=()=>{const select=document.getElementById('leaderQuestPlayer'),message=chooseLeaderQuestPlayer(select?.value||'');save();render();toast(message)}}
+function bindLeaderQuestControls(){
+ const button=document.querySelector('[data-confirm-leader-quest]');if(button)button.onclick=()=>{const select=document.getElementById('leaderQuestPlayer'),message=chooseLeaderQuestPlayer(select?.value||'');save();render();toast(message)};
+ const cancel=document.querySelector('[data-cancel-leader-quest]');if(cancel)cancel.onclick=()=>{const message=cancelUnavailableLeaderQuest();save();render();toast(message)};
+}
 function clearLeaderQuestForcedPlayer(q=questState()){const entry=rosterEntry(q.targetPlayerId);if(entry)entry.leaderQuestForcedMatches=0}
 function tickLeaderQuestAfterMatch(result){
  const q=questState();if(!result||!q.active||q.id!=='un-leader-per-la-squadra')return false;if(q.awaitingPlayerSelection)return true;

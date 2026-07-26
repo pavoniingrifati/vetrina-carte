@@ -4,19 +4,19 @@ const path=require('path');
 const vm=require('vm');
 const root=path.resolve(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'assets/season/07b-items.js'),'utf8')+`
-globalThis.__items={seasonInventory,seasonItemQuantity,addSeasonItem,useCaptainArmband,resolveCaptainArmbandAfterMatch,captainArmbandActive,acceptLeaderQuest,chooseLeaderQuestPlayer,tickLeaderQuestAfterMatch};`;
+globalThis.__items={seasonInventory,seasonItemQuantity,addSeasonItem,useCaptainArmband,resolveCaptainArmbandAfterMatch,captainArmbandActive,acceptLeaderQuest,chooseLeaderQuestPlayer,tickLeaderQuestAfterMatch,leaderQuestCanStart,cancelUnavailableLeaderQuest,renderLeaderQuestSelection};`;
 
 function createContext(){
   const player={id:'10',name:'Capitano Test',ovr:80,Position:'CC'};
   const entry={playerId:'10',player,bench:false,slot:'CC',slotId:'CC1',captainForcedMatches:0,leaderQuestForcedMatches:0,tipsterForcedMatches:0};
-  const state={matchday:4,inventory:{capacity:3,items:[{id:'captain-armband',quantity:1}],active:null},activeEffects:[],roster:[entry],quest:{active:false}};
+  const state={matchday:4,inventory:{capacity:3,items:[{id:'captain-armband',quantity:1}],active:null},activeEffects:[],roster:[entry],statuses:{'10':{seasonOut:false,injury:0,suspension:0}},quest:{active:false}};
   let lastFinish=null;
   const unlocked=[];
   const context={
     console,state,USER_ID:'user',
     clamp:(v,min,max)=>Math.max(min,Math.min(max,v)),
     getStarterEntries:()=>state.roster.filter(x=>!x.bench),
-    statusOf:()=>({seasonOut:false,injury:0,suspension:0}),
+    statusOf:id=>state.statuses[String(id)]||({seasonOut:false,injury:0,suspension:0}),
     temporaryEventBlocksPlayer:()=>false,
     rosterEntry:id=>state.roster.find(x=>String(x.playerId)===String(id))||null,
     rosterPlayers:()=>state.roster,
@@ -25,7 +25,7 @@ function createContext(){
     unlockAchievement:id=>unlocked.push(id),
     recordSeasonEvent:()=>{},analyticsSnapshot:()=>({}),
     esc:value=>String(value),document:{querySelectorAll:()=>[]},save:()=>{},render:()=>{},toast:()=>{},
-    questState:()=>state.quest,startSeasonQuest:data=>{state.quest={active:true,status:'active',matchesPlayed:0,progress:0,targetPlayerId:'',targetPlayerName:'',...data};return 'Quest avviata.'},finishSeasonQuest:(success,message)=>{lastFinish={success,message};state.quest.active=false},
+    questState:()=>state.quest,questCanStart:matches=>!state.quest.active&&state.matchday+Math.max(1,Number(matches)||1)<=38,startSeasonQuest:data=>{state.quest={active:true,status:'active',matchesPlayed:0,progress:0,targetPlayerId:'',targetPlayerName:'',...data};return 'Quest avviata.'},finishSeasonQuest:(success,message)=>{lastFinish={success,message};state.quest.active=false;state.quest.awaitingPlayerSelection=false},
     Math,Number,String,Array,Object,Boolean,JSON,Set,Map
   };
   context.globalThis=context;
@@ -102,6 +102,28 @@ test('Quest leader: cartellino rosso causa fallimento senza ricompensa',()=>{
   api.tickLeaderQuestAfterMatch({lineup:[{playerId:'10'}],pointsAwarded:3,ownSuspensionId:'10'});
   assert(getLastFinish()?.success===false,'Quest non fallita dopo il rosso');
   assert(api.seasonItemQuantity('captain-armband')===0,'Ricompensa assegnata nonostante il fallimento');
+});
+
+
+test('Quest leader non proposta e non avviata senza titolari reali disponibili',()=>{
+  const {api,state}=createContext();
+  state.inventory.items=[];state.statuses['10'].injury=2;
+  assert(api.leaderQuestCanStart()===false,'La quest risulta disponibile nonostante tutti i titolari siano indisponibili');
+  const message=api.acceptLeaderQuest();
+  assert(message.includes('Quest non avviata'),'Manca il messaggio di protezione');
+  assert(state.quest.active===false,'La quest è stata avviata senza un leader selezionabile');
+});
+
+test('Salvataggio già bloccato: appare il comando di annullamento e la partita può essere sbloccata',()=>{
+  const {api,state,getLastFinish}=createContext();
+  state.statuses['10'].injury=2;
+  state.quest={active:true,id:'un-leader-per-la-squadra',title:'Un leader per la squadra',awaitingPlayerSelection:true,targetPlayerId:'',targetPlayerName:''};
+  const html=api.renderLeaderQuestSelection(state.quest);
+  assert(html.includes('data-cancel-leader-quest'),'Il salvataggio bloccato non mostra il comando di recupero');
+  const message=api.cancelUnavailableLeaderQuest();
+  assert(message.includes('Quest annullata'),'Annullamento di emergenza non eseguito');
+  assert(state.quest.active===false&&state.quest.awaitingPlayerSelection===false,'La quest continua a bloccare la partita');
+  assert(getLastFinish()?.success===false,'La quest di recupero non è terminata correttamente');
 });
 
 const report={ok:tests.every(x=>x.ok),summary:{total:tests.length,passed:tests.filter(x=>x.ok).length,failed:tests.filter(x=>!x.ok).length},tests};

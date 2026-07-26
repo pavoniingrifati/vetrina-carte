@@ -17,7 +17,7 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "quest-ammazza-grandi":function(){return questCanStart(6)},
 "quest-milanlab":function(){return questCanStart(5)},
 "quest-calcio-champagne":function(){return questCanStart(3)},
-"quest-un-leader":function(){return questCanStart(2)&&seasonInventoryUsedSlots()<seasonInventory().capacity},
+"quest-un-leader":function(){return leaderQuestCanStart()},
 "quest-saracinesca":function(){return saracinescaQuestAvailable()},
 "quest-non-era-mai-rigore":function(){return noRigoreQuestAvailable()},
 "quest-zona-cesarini":function(){return zonaCesariniQuestAvailable()},
