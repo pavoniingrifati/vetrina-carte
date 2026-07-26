@@ -16,9 +16,9 @@ FILE DA MODIFICARE
 - Contenuti pacchetti Gotham: config/gotham.js
 
 CARTE
-Il sistema cerca:
-Fantaballa: cards.json oppure data/cards-fantaballa.json
-Gotham: cards (3).json oppure data/cards-gotham.json
+Il progetto include ora un archivio unico: data/cards.json
+Fantaballa e Gotham leggono lo stesso file e filtrano automaticamente le carte in base al campo game.
+Restano attivi anche i vecchi nomi file come fallback.
 
 IMMAGINI
 Mantieni i percorsi e le cartelle immagini già presenti nel sito.
@@ -33,3 +33,11 @@ CORREZIONE PREVIEW PACCHETTI — 26/07/2026
 - Ripristinata l'immagine grande del pacchetto dopo ogni apertura.
 - Rimossa correttamente la classe di animazione `opening` al termine, in caso di errore e al cambio pacchetto.
 - La correzione vale per Fantaballa FC e Gotham City FC perché usano lo stesso motore.
+
+
+CORREZIONE CARTE GOTHAM — 26/07/2026
+- Inserito data/cards.json con l'archivio fornito.
+- Gotham carica data/cards.json come prima sorgente, evitando l'errore HTTP 404.
+- Riconosciuti anche i valori storici Gotham City FC e il refuso Gotahm City.
+- Riconosciuto il refuso Svicolato tra le carte condivise.
+- Migliorato il messaggio diagnostico delle sorgenti JSON.

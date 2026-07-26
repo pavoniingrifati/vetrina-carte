@@ -269,12 +269,24 @@ function isInfinitePack(game){return ['infinite','composite','gotham-legend-infi
 
 async function fetchCards(){
   let lastError=null;
+  const attempted=[];
   for(const source of FUTTU_CONFIG.cardsSources||[]){
     const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),CONFIG.FETCH_TIMEOUT_MS);
-    try{const res=await fetch(source,{cache:'no-store',signal:ctrl.signal});if(!res.ok)throw new Error(`HTTP ${res.status}`);const json=await res.json();if(!Array.isArray(json))throw new Error('Formato JSON non valido');return json;}
-    catch(e){lastError=e;}finally{clearTimeout(timer);}
+    try{
+      attempted.push(source);
+      const res=await fetch(source,{cache:'no-store',signal:ctrl.signal});
+      if(!res.ok)throw new Error(`${source}: HTTP ${res.status}`);
+      const json=await res.json();
+      if(!Array.isArray(json))throw new Error(`${source}: formato JSON non valido`);
+      if(!json.length)throw new Error(`${source}: archivio carte vuoto`);
+      console.info(`[FUTTU] Carte caricate da ${source}: ${json.length}`);
+      return json;
+    }
+    catch(e){lastError=e;console.warn('[FUTTU] Sorgente carte non disponibile:',source,e);}
+    finally{clearTimeout(timer);}
   }
-  throw lastError||new Error('Impossibile caricare le carte');
+  const detail=lastError&&lastError.message?lastError.message:'nessun dettaglio';
+  throw new Error(`Impossibile caricare le carte. Sorgenti provate: ${attempted.join(', ')}. Ultimo errore: ${detail}`);
 }
 function buildFantaballaLegend(pool,size){
   const rarePlus=pool.filter(c=>['rara','epica','ultra rara','leggendaria'].includes(norm(c.rarity)));
@@ -329,7 +341,7 @@ async function loadCards(){
     document.getElementById('log').textContent=`Caricate: ${counts}.`;
   }catch(err){
     console.error('Errore caricamento carte:',err);
-    document.getElementById('log').textContent='⚠️ Errore nel caricamento delle carte.';
+    document.getElementById('log').textContent='⚠️ Errore nel caricamento delle carte. Verifica che data/cards.json sia pubblicato insieme al progetto.';
   }
 }
 
