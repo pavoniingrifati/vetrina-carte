@@ -205,6 +205,12 @@
     return allowedRarities.includes(rarity) || allowedSeries.some(item => item && series.includes(item));
   }
 
+  function isLegendCinematic(card){
+    const rarity = norm(card && card.rarity);
+    const series = norm(card && card.series);
+    return rarity === 'leggendaria' || series.includes('legend') || series.includes('leggend');
+  }
+
   function isClassicStarterPack(payload){
     const packName = norm(payload && payload.pack && payload.pack.name);
     return ['bronze','silver','gold'].includes(packName);
@@ -397,6 +403,37 @@
     });
   }
 
+  async function runLegendRevealSequence(card, quick, token){
+    const reveal = $('.fo-reveal-phase', root);
+    reveal.classList.add('is-legend-sequence');
+    reveal.classList.remove('show-role','show-rarity','show-series','show-name','show-image');
+    $('.fo-hint', root).textContent = 'Reveal Leggenda in corso…';
+
+    await wait(quick ? 180 : 320);
+    if (token !== runToken || summaryShown) return false;
+    reveal.classList.add('show-role');
+    sound('tease', activePayload.theme, 6);
+
+    await wait(quick ? 240 : 420);
+    if (token !== runToken || summaryShown) return false;
+    reveal.classList.add('show-rarity');
+
+    await wait(quick ? 240 : 420);
+    if (token !== runToken || summaryShown) return false;
+    reveal.classList.add('show-series');
+
+    await wait(quick ? 260 : 460);
+    if (token !== runToken || summaryShown) return false;
+    reveal.classList.add('show-name');
+
+    await wait(quick ? 340 : 620);
+    if (token !== runToken || summaryShown) return false;
+    setCardImage(card);
+    reveal.classList.add('show-image','is-revealed');
+    sound('reveal', activePayload.theme, 7);
+    return true;
+  }
+
   async function revealCard(card, index, total, quick, token, theme){
     const info = rarityInfo(card);
     const walkout = isWalkout(card, theme);
@@ -413,20 +450,29 @@
     $('.fo-card-counter', root).textContent = `Carta ${index + 1} di ${total}`;
     $('.fo-walkout-label', root).textContent = walkout ? (card.series || info.label) : '';
     clearCardImage();
+    reveal.classList.remove('is-legend-sequence','show-role','show-rarity','show-series','show-name','show-image');
     setProgress(total, index);
     announce(`${info.label}. ${card.role || ''}. ${card.series || ''}.`);
 
-    sound(walkout ? 'walkout' : 'tease', theme, info.rank);
-    await wait(walkout ? 760 : (quick ? 150 : 390));
-    if (token !== runToken || summaryShown) return;
+    const legendCinematic = isLegendCinematic(card);
+    if (legendCinematic) {
+      sound('walkout', theme, Math.max(info.rank, 6));
+      const completed = await runLegendRevealSequence(card, quick, token);
+      if (!completed || token !== runToken || summaryShown) return;
+    } else {
+      sound(walkout ? 'walkout' : 'tease', theme, info.rank);
+      await wait(walkout ? 760 : (quick ? 150 : 390));
+      if (token !== runToken || summaryShown) return;
 
-    setCardImage(card);
-    reveal.classList.add('is-revealed');
+      setCardImage(card);
+      reveal.classList.add('is-revealed');
+      sound('reveal', theme, info.rank);
+    }
+
     $('.fo-hint', root).textContent = index + 1 < total
       ? 'Clicca per mostrare la carta successiva'
       : 'Clicca per vedere il riepilogo finale';
     try { reveal.focus({preventScroll:true}); } catch (error) {}
-    sound('reveal', theme, info.rank);
     announce(`${card.name || 'Carta'} rivelata.`);
     setProgress(total, index + 1);
     await waitForAdvance();
@@ -613,6 +659,6 @@
     skip: skipToSummary,
     isWalkoutCard: isWalkout,
     rarityInfo,
-    version: '1.5.0-default-card-image'
+    version: '1.6.0-legend-cinematic'
   };
 })();

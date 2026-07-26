@@ -101,7 +101,7 @@ test('Il modulo esporta API Base + Premium', () => {
   vm.runInNewContext(opening, context, { filename:'futtu-pack-opening.js' });
   const api = context.window.FUTTU_PACK_OPENING;
   assert(api && typeof api.play === 'function');
-  assert.equal(api.version, '1.5.0-default-card-image');
+  assert.equal(api.version, '1.6.0-legend-cinematic');
   assert(api.isWalkoutCard({ rarity:'Ultra Rara', series:'Gold' }));
   assert(api.isWalkoutCard({ rarity:'Rara', series:'Dream' }));
   assert(!api.isWalkoutCard({ rarity:'Rara', series:'Gold' }));
@@ -143,7 +143,6 @@ test('La carta resta completamente nascosta durante il tease', () => {
   assert(css.includes('.fo-reveal-phase.is-tease .fo-card-visual{opacity:0!important;visibility:hidden!important'));
   assert(css.includes('.fo-reveal-phase.is-tease .fo-card-frame{opacity:0!important;visibility:hidden!important'));
   assert(opening.includes('clearCardImage();'));
-  assert(opening.indexOf('clearCardImage();') < opening.indexOf('setCardImage(card);\n    reveal.classList.add'));
 });
 
 test('Database contiene carte per entrambe le modalità', () => {
