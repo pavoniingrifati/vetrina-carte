@@ -272,53 +272,67 @@
   }
 
   function setCardImage(card){
-    const image = $('.fo-card-image', root);
-    const fallback = $('.fo-card-placeholder', root);
-    const requestId = ++cardImageGeneration;
+    return new Promise(resolve => {
+      const image = $('.fo-card-image', root);
+      const fallback = $('.fo-card-placeholder', root);
+      const requestId = ++cardImageGeneration;
+      let settled = false;
 
-    image.onload = null;
-    image.onerror = null;
-    image.hidden = true;
-    image.style.display = 'none';
-    image.removeAttribute('src');
-    fallback.hidden = true;
-    fallback.style.display = 'none';
-    fallback.innerHTML = '';
+      const finish = value => {
+        if (settled) return;
+        settled = true;
+        resolve(value);
+      };
 
-    const showFallback = () => {
-      if (requestId !== cardImageGeneration) return;
+      image.onload = null;
+      image.onerror = null;
       image.hidden = true;
       image.style.display = 'none';
-      fallback.hidden = false;
-      fallback.style.display = 'grid';
-      fallback.innerHTML = `
-        <div class="fo-card-placeholder-inner">
-          <div class="fo-card-placeholder-rarity">${rarityInfo(card).label}</div>
-          <div class="fo-card-placeholder-name">${card.name || 'Carta misteriosa'}</div>
-          <div class="fo-card-placeholder-meta">${[card.role, card.series || card.game].filter(Boolean).join(' · ')}</div>
-        </div>`;
-    };
-
-    const src = String(card && card.img || '').trim();
-    if (!src) {
-      showFallback();
-      return;
-    }
-
-    image.alt = `Carta ${card.name || ''}`;
-    image.onload = () => {
-      if (requestId !== cardImageGeneration) return;
+      image.removeAttribute('src');
       fallback.hidden = true;
       fallback.style.display = 'none';
       fallback.innerHTML = '';
-      image.hidden = false;
-      image.style.display = 'block';
-    };
-    image.onerror = () => {
-      if (requestId !== cardImageGeneration) return;
-      showFallback();
-    };
-    image.src = src;
+
+      const showFallback = () => {
+        if (requestId !== cardImageGeneration) {
+          finish(false);
+          return;
+        }
+        image.hidden = true;
+        image.style.display = 'none';
+        fallback.hidden = false;
+        fallback.style.display = 'grid';
+        fallback.innerHTML = `
+          <div class="fo-card-placeholder-inner">
+            <div class="fo-card-placeholder-rarity">${rarityInfo(card).label}</div>
+            <div class="fo-card-placeholder-name">${card.name || 'Carta misteriosa'}</div>
+            <div class="fo-card-placeholder-meta">${[card.role, card.series || card.game].filter(Boolean).join(' · ')}</div>
+          </div>`;
+        finish(true);
+      };
+
+      const src = String(card && card.img || '').trim();
+      if (!src) {
+        showFallback();
+        return;
+      }
+
+      image.alt = `Carta ${card.name || ''}`;
+      image.onload = () => {
+        if (requestId !== cardImageGeneration) {
+          finish(false);
+          return;
+        }
+        fallback.hidden = true;
+        fallback.style.display = 'none';
+        fallback.innerHTML = '';
+        image.hidden = false;
+        image.style.display = 'block';
+        finish(true);
+      };
+      image.onerror = showFallback;
+      image.src = src;
+    });
   }
 
   function waitForAdvance(){
@@ -417,7 +431,9 @@
     await wait(walkout ? 760 : (quick ? 150 : 390));
     if (token !== runToken || summaryShown) return;
 
-    setCardImage(card);
+    await setCardImage(card);
+    if (token !== runToken || summaryShown) return;
+    reveal.classList.remove('is-tease');
     reveal.classList.add('is-revealed');
     $('.fo-hint', root).textContent = index + 1 < total
       ? 'Clicca per mostrare la carta successiva'
@@ -607,6 +623,6 @@
     skip: skipToSummary,
     isWalkoutCard: isWalkout,
     rarityInfo,
-    version: '1.4.0-clean-summary-hidden-tease'
+    version: '1.4.1-card-reveal-visible-fix'
   };
 })();
