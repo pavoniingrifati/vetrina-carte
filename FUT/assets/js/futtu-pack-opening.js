@@ -22,6 +22,8 @@
     sound: true
   };
 
+  const DEFAULT_CARD_IMAGE = 'img/nEW%20pLAYER.png';
+
   const RARITY = {
     'comune':       { label:'COMUNE',       color:'#aab4c3', rank:0 },
     'non comune':   { label:'NON COMUNE',   color:'#48d69b', rank:1 },
@@ -272,67 +274,54 @@
   }
 
   function setCardImage(card){
-    return new Promise(resolve => {
-      const image = $('.fo-card-image', root);
-      const fallback = $('.fo-card-placeholder', root);
-      const requestId = ++cardImageGeneration;
-      let settled = false;
+    const image = $('.fo-card-image', root);
+    const fallback = $('.fo-card-placeholder', root);
+    const requestId = ++cardImageGeneration;
+    const primarySrc = String(card && card.img || '').trim();
+    let defaultAttempted = !primarySrc || primarySrc === DEFAULT_CARD_IMAGE;
 
-      const finish = value => {
-        if (settled) return;
-        settled = true;
-        resolve(value);
-      };
+    image.onload = null;
+    image.onerror = null;
+    image.hidden = true;
+    image.style.display = 'none';
+    image.removeAttribute('src');
+    fallback.hidden = true;
+    fallback.style.display = 'none';
+    fallback.innerHTML = '';
 
-      image.onload = null;
-      image.onerror = null;
+    const showTextFallback = () => {
+      if (requestId !== cardImageGeneration) return;
       image.hidden = true;
       image.style.display = 'none';
-      image.removeAttribute('src');
+      fallback.hidden = false;
+      fallback.style.display = 'grid';
+      fallback.innerHTML = `
+        <div class="fo-card-placeholder-inner">
+          <div class="fo-card-placeholder-rarity">${rarityInfo(card).label}</div>
+          <div class="fo-card-placeholder-name">${card.name || 'Carta misteriosa'}</div>
+          <div class="fo-card-placeholder-meta">${[card.role, card.series || card.game].filter(Boolean).join(' · ')}</div>
+        </div>`;
+    };
+
+    image.alt = `Carta ${card.name || ''}`;
+    image.onload = () => {
+      if (requestId !== cardImageGeneration) return;
       fallback.hidden = true;
       fallback.style.display = 'none';
       fallback.innerHTML = '';
-
-      const showFallback = () => {
-        if (requestId !== cardImageGeneration) {
-          finish(false);
-          return;
-        }
-        image.hidden = true;
-        image.style.display = 'none';
-        fallback.hidden = false;
-        fallback.style.display = 'grid';
-        fallback.innerHTML = `
-          <div class="fo-card-placeholder-inner">
-            <div class="fo-card-placeholder-rarity">${rarityInfo(card).label}</div>
-            <div class="fo-card-placeholder-name">${card.name || 'Carta misteriosa'}</div>
-            <div class="fo-card-placeholder-meta">${[card.role, card.series || card.game].filter(Boolean).join(' · ')}</div>
-          </div>`;
-        finish(true);
-      };
-
-      const src = String(card && card.img || '').trim();
-      if (!src) {
-        showFallback();
+      image.hidden = false;
+      image.style.display = 'block';
+    };
+    image.onerror = () => {
+      if (requestId !== cardImageGeneration) return;
+      if (!defaultAttempted) {
+        defaultAttempted = true;
+        image.src = DEFAULT_CARD_IMAGE;
         return;
       }
-
-      image.alt = `Carta ${card.name || ''}`;
-      image.onload = () => {
-        if (requestId !== cardImageGeneration) {
-          finish(false);
-          return;
-        }
-        fallback.hidden = true;
-        fallback.style.display = 'none';
-        fallback.innerHTML = '';
-        image.hidden = false;
-        image.style.display = 'block';
-        finish(true);
-      };
-      image.onerror = showFallback;
-      image.src = src;
-    });
+      showTextFallback();
+    };
+    image.src = primarySrc || DEFAULT_CARD_IMAGE;
   }
 
   function waitForAdvance(){
@@ -431,9 +420,7 @@
     await wait(walkout ? 760 : (quick ? 150 : 390));
     if (token !== runToken || summaryShown) return;
 
-    await setCardImage(card);
-    if (token !== runToken || summaryShown) return;
-    reveal.classList.remove('is-tease');
+    setCardImage(card);
     reveal.classList.add('is-revealed');
     $('.fo-hint', root).textContent = index + 1 < total
       ? 'Clicca per mostrare la carta successiva'
@@ -455,10 +442,17 @@
     const media = document.createElement('div');
     media.className = 'fo-summary-media';
     const image = document.createElement('img');
+    const primarySrc = String(card && card.img || '').trim();
+    let defaultAttempted = !primarySrc || primarySrc === DEFAULT_CARD_IMAGE;
     image.alt = card.name || 'Carta ottenuta';
     image.loading = 'eager';
     image.decoding = 'async';
     image.onerror = () => {
+      if (!defaultAttempted) {
+        defaultAttempted = true;
+        image.src = DEFAULT_CARD_IMAGE;
+        return;
+      }
       image.remove();
       const fallback = document.createElement('div');
       fallback.className = 'fo-summary-fallback';
@@ -468,12 +462,8 @@
       `;
       media.appendChild(fallback);
     };
-    if (card.img) {
-      image.src = card.img;
-      media.appendChild(image);
-    } else {
-      image.onerror();
-    }
+    image.src = primarySrc || DEFAULT_CARD_IMAGE;
+    media.appendChild(image);
     item.appendChild(media);
     return item;
   }
@@ -623,6 +613,6 @@
     skip: skipToSummary,
     isWalkoutCard: isWalkout,
     rarityInfo,
-    version: '1.4.1-card-reveal-visible-fix'
+    version: '1.5.0-default-card-image'
   };
 })();

@@ -71,7 +71,7 @@ test('Dopo il reveal premium il motore sblocca una nuova apertura', () => {
 test('Il caricamento immagini carta protegge dai callback della carta precedente', () => {
   assert(opening.includes('let cardImageGeneration = 0'));
   assert(opening.includes('const requestId = ++cardImageGeneration'));
-  assert(opening.includes('if (requestId !== cardImageGeneration)'));
+  assert(opening.includes('if (requestId !== cardImageGeneration) return'));
   assert(opening.includes("fallback.style.display = 'none'"));
 });
 
@@ -101,7 +101,7 @@ test('Il modulo esporta API Base + Premium', () => {
   vm.runInNewContext(opening, context, { filename:'futtu-pack-opening.js' });
   const api = context.window.FUTTU_PACK_OPENING;
   assert(api && typeof api.play === 'function');
-  assert.equal(api.version, '1.4.1-card-reveal-visible-fix');
+  assert.equal(api.version, '1.5.0-default-card-image');
   assert(api.isWalkoutCard({ rarity:'Ultra Rara', series:'Gold' }));
   assert(api.isWalkoutCard({ rarity:'Rara', series:'Dream' }));
   assert(!api.isWalkoutCard({ rarity:'Rara', series:'Gold' }));
@@ -119,6 +119,13 @@ test('Walkout Gotham riconosce le serie Dark', () => {
   assert(context.window.FUTTU_PACK_OPENING.isWalkoutCard({ rarity:'Rara', series:'Fusion2' }));
 });
 
+
+test('Le carte senza immagine usano la grafica default configurata', () => {
+  assert(opening.includes("const DEFAULT_CARD_IMAGE = 'img/nEW%20pLAYER.png'"));
+  assert(opening.includes('image.src = primarySrc || DEFAULT_CARD_IMAGE'));
+  assert(opening.includes('image.src = DEFAULT_CARD_IMAGE'));
+});
+
 test('CSS contiene fasi pack, reveal, walkout e riepilogo', () => {
   ['data-phase="pack"','data-phase="reveal"','data-phase="walkout"','data-phase="summary"'].forEach(token => assert(css.includes(token)));
   const noComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -132,14 +139,11 @@ test('Il recap mostra solo le carte in tre colonne', () => {
   assert(opening.includes('item.appendChild(media)'));
 });
 
-test('La carta resta nascosta nel tease e viene riattivata nel reveal', () => {
+test('La carta resta completamente nascosta durante il tease', () => {
   assert(css.includes('.fo-reveal-phase.is-tease .fo-card-visual{opacity:0!important;visibility:hidden!important'));
   assert(css.includes('.fo-reveal-phase.is-tease .fo-card-frame{opacity:0!important;visibility:hidden!important'));
   assert(opening.includes('clearCardImage();'));
-  assert(opening.includes('await setCardImage(card);'));
-  const removeTease = opening.indexOf("reveal.classList.remove('is-tease');");
-  const addRevealed = opening.indexOf("reveal.classList.add('is-revealed');");
-  assert(removeTease > -1 && addRevealed > removeTease);
+  assert(opening.indexOf('clearCardImage();') < opening.indexOf('setCardImage(card);\n    reveal.classList.add'));
 });
 
 test('Database contiene carte per entrambe le modalità', () => {
@@ -155,4 +159,4 @@ test('I pacchetti configurati restano separati per modalità', () => {
   assert(!fantaballa.packs.some(pack => pack.name === 'Gotham Tots'));
 });
 
-console.log(`\n${passed}/16 test superati.`);
+console.log(`\n${passed}/17 test superati.`);
