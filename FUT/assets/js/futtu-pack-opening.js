@@ -211,6 +211,12 @@
     return rarity === 'leggendaria' || series.includes('legend') || series.includes('leggend');
   }
 
+  function isLegendPack(payload=activePayload){
+    const packName = norm(payload && payload.pack && payload.pack.name);
+    const displayName = norm(payload && (payload.packName || payload.game));
+    return packName === 'legend' || packName.includes('leggend') || displayName === 'legend' || displayName.includes('leggend');
+  }
+
   function isClassicStarterPack(payload){
     const packName = norm(payload && payload.pack && payload.pack.name);
     return ['bronze','silver','gold'].includes(packName);
@@ -366,7 +372,7 @@
     applyTheme(theme);
     buildParticles(theme);
     scene.dataset.phase = 'pack';
-    $('.fo-reveal-phase', root).classList.remove('is-tease','is-revealed');
+    $('.fo-reveal-phase', root).classList.remove('is-tease','is-revealed','is-legend-sequence','show-role','show-rarity','show-series','show-name','show-image');
     $('.fo-title', root).textContent = payload.packName || payload.game || 'Pacchetto';
     $('.fo-hint', root).textContent = theme.readyText || 'Clicca per aprire subito';
     $('.fo-skip', root).hidden = false;
@@ -453,6 +459,7 @@
     $('.fo-hint', root).textContent = 'Carta in caricamento…';
     await setCardImage(card);
     if (token !== runToken || summaryShown) return false;
+    reveal.classList.remove('is-tease');
     reveal.classList.add('show-image','is-revealed');
     sound('reveal', activePayload.theme, 7);
     return true;
@@ -478,7 +485,7 @@
     setProgress(total, index);
     announce(`${info.label}. ${card.role || ''}. ${card.series || ''}.`);
 
-    const legendCinematic = isLegendCinematic(card);
+    const legendCinematic = isLegendPack(activePayload) || isLegendCinematic(card);
     if (legendCinematic) {
       sound('walkout', theme, Math.max(info.rank, 6));
       const completed = await runLegendRevealSequence(card, quick, token);
@@ -490,6 +497,7 @@
 
       await setCardImage(card);
       if (token !== runToken || summaryShown) return;
+      reveal.classList.remove('is-tease');
       reveal.classList.add('is-revealed');
       sound('reveal', theme, info.rank);
     }
@@ -684,6 +692,7 @@
     skip: skipToSummary,
     isWalkoutCard: isWalkout,
     rarityInfo,
-    version: '1.7.0-legend-click-steps'
+    isLegendPack,
+    version: '1.8.0-legend-pack-image-fix'
   };
 })();

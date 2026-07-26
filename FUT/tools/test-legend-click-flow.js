@@ -120,7 +120,7 @@ async function waitFor(fn, timeout=1200){
   const api = windowObj.FUTTU_PACK_OPENING;
   const playPromise = api.play({
     game:'Legend', packName:'Legend', cover:'cover.webp', pack:{name:'Legend'},
-    cards:[{name:'Test Legend',rarity:'Leggendaria',series:'Legend',role:'ATT',img:'legend.webp'}]
+    cards:[{name:'Frank Tots16',rarity:'Rara',series:'Tots',role:'POR',img:'legend.webp'}]
   });
   const pack = document.selectorMap.get('.fo-pack-phase');
   const reveal = document.selectorMap.get('.fo-reveal-phase');
@@ -144,5 +144,5 @@ async function waitFor(fn, timeout=1200){
   await waitFor(()=>scene.dataset.phase === 'summary');
   document.selectorMap.get('.fo-continue').click();
   await playPromise;
-  console.log('✓ Legend: 5 clic separati, immagine visibile al quinto, recap al sesto');
+  console.log('✓ Pack Legend: anche una carta Rara/Tots usa 5 clic separati, immagine al quinto, recap al sesto');
 })().catch(error=>{ console.error(error); process.exit(1); });

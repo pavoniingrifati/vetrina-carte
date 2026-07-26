@@ -101,7 +101,7 @@ test('Il modulo esporta API Base + Premium', () => {
   vm.runInNewContext(opening, context, { filename:'futtu-pack-opening.js' });
   const api = context.window.FUTTU_PACK_OPENING;
   assert(api && typeof api.play === 'function');
-  assert.equal(api.version, '1.7.0-legend-click-steps');
+  assert.equal(api.version, '1.8.0-legend-pack-image-fix');
   assert(api.isWalkoutCard({ rarity:'Ultra Rara', series:'Gold' }));
   assert(api.isWalkoutCard({ rarity:'Rara', series:'Dream' }));
   assert(!api.isWalkoutCard({ rarity:'Rara', series:'Gold' }));
@@ -173,6 +173,17 @@ test('L’immagine Legend diventa visibile nell’ultimo step', () => {
   assert(block.indexOf('await setCardImage(card);') < block.indexOf("reveal.classList.add('show-image','is-revealed')"));
 });
 
+test('Il pacchetto Legend usa la sequenza anche con carte Tots o Rare', () => {
+  assert(opening.includes('isLegendPack(activePayload) || isLegendCinematic(card)'));
+  assert(opening.includes("packName === 'legend'"));
+});
+
+test('Le aperture normali rimuovono lo stato tease prima di mostrare l’immagine', () => {
+  const normalBranch = opening.indexOf("reveal.classList.remove('is-tease');", opening.indexOf('} else {', opening.indexOf('const legendCinematic')));
+  assert(normalBranch > -1);
+  assert(opening.indexOf("reveal.classList.add('is-revealed');", normalBranch) > normalBranch);
+});
+
 test('Database contiene carte per entrambe le modalità', () => {
   const game = value => String(value || '').trim().toLowerCase();
   assert(cards.some(card => game(card.game) === 'fantaballa fc'));
@@ -186,4 +197,4 @@ test('I pacchetti configurati restano separati per modalità', () => {
   assert(!fantaballa.packs.some(pack => pack.name === 'Gotham Tots'));
 });
 
-console.log(`\n${passed}/19 test superati.`);
+console.log(`\n${passed}/21 test superati.`);
