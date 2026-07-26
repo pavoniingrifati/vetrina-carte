@@ -101,7 +101,7 @@ test('Il modulo esporta API Base + Premium', () => {
   vm.runInNewContext(opening, context, { filename:'futtu-pack-opening.js' });
   const api = context.window.FUTTU_PACK_OPENING;
   assert(api && typeof api.play === 'function');
-  assert.equal(api.version, '1.2.0-reopen-image-fix');
+  assert.equal(api.version, '1.3.0-summary-order-fix');
   assert(api.isWalkoutCard({ rarity:'Ultra Rara', series:'Gold' }));
   assert(api.isWalkoutCard({ rarity:'Rara', series:'Dream' }));
   assert(!api.isWalkoutCard({ rarity:'Rara', series:'Gold' }));

@@ -203,8 +203,23 @@
     return allowedRarities.includes(rarity) || allowedSeries.some(item => item && series.includes(item));
   }
 
-  function orderCards(cards){
-    return cards.map((card,index)=>({card,index})).sort((a,b)=>{
+  function isClassicStarterPack(payload){
+    const packName = norm(payload && payload.pack && payload.pack.name);
+    return ['bronze','silver','gold'].includes(packName);
+  }
+
+  function isObjectCard(card){
+    return norm(card && card.series) === 'oggetto' || norm(card && card.rarity) === 'oggetto';
+  }
+
+  function orderCards(cards, payload=activePayload){
+    const list = Array.isArray(cards) ? cards.slice() : [];
+    if (isClassicStarterPack(payload)) {
+      const objects = list.filter(isObjectCard);
+      const others = list.filter(card => !isObjectCard(card));
+      return objects.concat(others);
+    }
+    return list.map((card,index)=>({card,index})).sort((a,b)=>{
       const diff = rank(a.card) - rank(b.card);
       return diff || a.index - b.index;
     }).map(item=>item.card);
@@ -334,7 +349,7 @@
   async function startSequence(token){
     if (sequenceStarted || !activePayload || token !== runToken) return;
     sequenceStarted = true;
-    const cards = orderCards(activePayload.cards || []);
+    const cards = orderCards(activePayload.cards || [], activePayload);
     const theme = activePayload.theme;
     const quick = cards.length > 4;
 
@@ -361,7 +376,7 @@
     if (!activePayload || sequenceStarted || summaryShown) return;
     startSequence(runToken).catch(error => {
       console.error('[FUTTU Pack Opening]', error);
-      showSummary(orderCards(activePayload.cards || []), runToken);
+      showSummary(orderCards(activePayload.cards || [], activePayload), runToken);
     });
   }
 
@@ -455,7 +470,7 @@
     clearAdvanceResolver();
     runToken += 1;
     const token = runToken;
-    showSummary(orderCards(activePayload.cards || []), token);
+    showSummary(orderCards(activePayload.cards || [], activePayload), token);
   }
 
   function close(){
@@ -575,6 +590,6 @@
     skip: skipToSummary,
     isWalkoutCard: isWalkout,
     rarityInfo,
-    version: '1.2.0-reopen-image-fix'
+    version: '1.3.0-summary-order-fix'
   };
 })();
