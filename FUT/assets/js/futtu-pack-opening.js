@@ -257,6 +257,20 @@
     if (!src) image.onerror();
   }
 
+  function clearCardImage(){
+    const image = $('.fo-card-image', root);
+    const fallback = $('.fo-card-placeholder', root);
+    cardImageGeneration += 1;
+    image.onload = null;
+    image.onerror = null;
+    image.hidden = true;
+    image.style.display = 'none';
+    image.removeAttribute('src');
+    fallback.hidden = true;
+    fallback.style.display = 'none';
+    fallback.innerHTML = '';
+  }
+
   function setCardImage(card){
     const image = $('.fo-card-image', root);
     const fallback = $('.fo-card-placeholder', root);
@@ -395,7 +409,7 @@
     $('.fo-side-role', root).textContent = card.role || '—';
     $('.fo-card-counter', root).textContent = `Carta ${index + 1} di ${total}`;
     $('.fo-walkout-label', root).textContent = walkout ? (card.series || info.label) : '';
-    setCardImage(card);
+    clearCardImage();
     setProgress(total, index);
     announce(`${info.label}. ${card.role || ''}. ${card.series || ''}.`);
 
@@ -403,6 +417,7 @@
     await wait(walkout ? 760 : (quick ? 150 : 390));
     if (token !== runToken || summaryShown) return;
 
+    setCardImage(card);
     reveal.classList.add('is-revealed');
     $('.fo-hint', root).textContent = index + 1 < total
       ? 'Clicca per mostrare la carta successiva'
@@ -419,29 +434,31 @@
     const item = document.createElement('article');
     item.className = `fo-summary-card${isBest ? ' is-best' : ''}`;
     item.style.setProperty('--sd', `${Math.min(index * 60, 420)}ms`);
+    item.setAttribute('aria-label', card.name || 'Carta ottenuta');
+
     const media = document.createElement('div');
     media.className = 'fo-summary-media';
     const image = document.createElement('img');
-    image.alt = `Carta ${card.name || ''}`;
+    image.alt = card.name || 'Carta ottenuta';
     image.loading = 'eager';
     image.decoding = 'async';
     image.onerror = () => {
       image.remove();
       const fallback = document.createElement('div');
       fallback.className = 'fo-summary-fallback';
-      fallback.textContent = card.name || 'Carta';
+      fallback.innerHTML = `
+        <span>${rarityInfo(card).label}</span>
+        <strong>${card.name || 'Carta'}</strong>
+      `;
       media.appendChild(fallback);
     };
-    if (card.img) image.src = card.img;
-    else image.onerror();
-    if (card.img) media.appendChild(image);
-    const name = document.createElement('div');
-    name.className = 'fo-summary-name';
-    name.textContent = card.name || 'Carta';
-    const meta = document.createElement('div');
-    meta.className = 'fo-summary-meta';
-    meta.textContent = [card.rarity, card.role].filter(Boolean).join(' · ');
-    item.append(media,name,meta);
+    if (card.img) {
+      image.src = card.img;
+      media.appendChild(image);
+    } else {
+      image.onerror();
+    }
+    item.appendChild(media);
     return item;
   }
 
@@ -590,6 +607,6 @@
     skip: skipToSummary,
     isWalkoutCard: isWalkout,
     rarityInfo,
-    version: '1.3.0-summary-order-fix'
+    version: '1.4.0-clean-summary-hidden-tease'
   };
 })();
