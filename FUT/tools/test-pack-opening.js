@@ -71,7 +71,7 @@ test('Dopo il reveal premium il motore sblocca una nuova apertura', () => {
 test('Il caricamento immagini carta protegge dai callback della carta precedente', () => {
   assert(opening.includes('let cardImageGeneration = 0'));
   assert(opening.includes('const requestId = ++cardImageGeneration'));
-  assert(opening.includes('if (requestId !== cardImageGeneration) return'));
+  assert(opening.includes('if (requestId !== cardImageGeneration) { settle(false); return; }'));
   assert(opening.includes("fallback.style.display = 'none'"));
 });
 
@@ -101,7 +101,7 @@ test('Il modulo esporta API Base + Premium', () => {
   vm.runInNewContext(opening, context, { filename:'futtu-pack-opening.js' });
   const api = context.window.FUTTU_PACK_OPENING;
   assert(api && typeof api.play === 'function');
-  assert.equal(api.version, '1.6.0-legend-cinematic');
+  assert.equal(api.version, '1.7.0-legend-click-steps');
   assert(api.isWalkoutCard({ rarity:'Ultra Rara', series:'Gold' }));
   assert(api.isWalkoutCard({ rarity:'Rara', series:'Dream' }));
   assert(!api.isWalkoutCard({ rarity:'Rara', series:'Gold' }));
@@ -145,6 +145,34 @@ test('La carta resta completamente nascosta durante il tease', () => {
   assert(opening.includes('clearCardImage();'));
 });
 
+
+
+test('Il reveal Legend avanza un passaggio per ogni clic', () => {
+  const start = opening.indexOf('async function runLegendRevealSequence');
+  const end = opening.indexOf('async function revealCard', start);
+  const block = opening.slice(start, end);
+  assert(start > -1 && end > start);
+  assert.equal((block.match(/await waitForAdvance\(\)/g) || []).length, 5);
+  const role = block.indexOf("'show-role'");
+  const rarity = block.indexOf("'show-rarity'");
+  const series = block.indexOf("'show-series'");
+  const name = block.indexOf("'show-name'");
+  const image = block.indexOf("'show-image','is-revealed'");
+  assert(role > -1 && role < rarity && rarity < series && series < name && name < image);
+  assert(!block.includes('await wait(quick'));
+});
+
+test('L’immagine Legend diventa visibile nell’ultimo step', () => {
+  assert(css.includes('.fo-reveal-phase.is-legend-sequence:not(.show-image) .fo-card-frame'));
+  assert(css.includes('.fo-reveal-phase.is-legend-sequence.show-image .fo-card-frame{opacity:1!important;visibility:visible!important'));
+  assert(css.includes('.fo-reveal-phase.is-legend-sequence.show-image .fo-card-visual{opacity:1!important;visibility:visible!important'));
+  const start = opening.indexOf('async function runLegendRevealSequence');
+  const end = opening.indexOf('async function revealCard', start);
+  const block = opening.slice(start, end);
+  assert(block.includes('await setCardImage(card);'));
+  assert(block.indexOf('await setCardImage(card);') < block.indexOf("reveal.classList.add('show-image','is-revealed')"));
+});
+
 test('Database contiene carte per entrambe le modalità', () => {
   const game = value => String(value || '').trim().toLowerCase();
   assert(cards.some(card => game(card.game) === 'fantaballa fc'));
@@ -158,4 +186,4 @@ test('I pacchetti configurati restano separati per modalità', () => {
   assert(!fantaballa.packs.some(pack => pack.name === 'Gotham Tots'));
 });
 
-console.log(`\n${passed}/17 test superati.`);
+console.log(`\n${passed}/19 test superati.`);
