@@ -131,3 +131,66 @@
 /* Flusso rapido: destinazioni dello scorrimento automatico */
 .season-draft-main-top,.season-pitch-wrap,.season-candidates-head{scroll-margin-top:110px}
 @media(max-width:860px){.season-draft-main-top,.season-pitch-wrap,.season-candidates-head{scroll-margin-top:78px}}
+
+/* Pack rapido: nessun overlay e nessuna attesa aggiuntiva */
+.season-roll-btn{
+  transition:transform .1s ease,filter .12s ease,box-shadow .12s ease!important;
+  transform-origin:center
+}
+.season-roll-btn:active:not(:disabled){
+  transform:translateY(2px) scale(.985)!important;
+  filter:brightness(.97)
+}
+.season-draw-card{position:relative;overflow:hidden}
+.season-draw-card.quick-pack-club-reveal{
+  animation:quickPackClubPulse .24s cubic-bezier(.2,.82,.3,1) both
+}
+.season-draw-card.quick-pack-club-reveal::after{
+  content:"";position:absolute;inset:-30%;z-index:6;pointer-events:none;
+  background:linear-gradient(110deg,transparent 32%,color-mix(in srgb,var(--draw-c,#fff) 82%,transparent) 49%,transparent 66%);
+  transform:translateX(-72%) rotate(5deg);
+  animation:quickPackClubFlash .32s ease-out both
+}
+.season-draw-card.quick-pack-club-reveal .season-draw-nation{
+  animation:quickPackClubName .22s cubic-bezier(.18,.9,.28,1.15) both
+}
+.season-candidate.quick-pack-card-reveal{
+  animation:quickPackCardSettle .2s cubic-bezier(.2,.78,.28,1) both;
+  pointer-events:auto!important
+}
+/* Lo shine delle rarità avviene una volta al reveal, non in loop. */
+.season-candidate.rarity-elite::after,
+.season-candidate.rarity-icon::after{animation:none!important;opacity:0}
+.season-candidate.quick-pack-shine::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:5;opacity:1;
+  background:linear-gradient(112deg,transparent 17%,rgba(255,255,255,.62) 43%,transparent 66%);
+  transform:translateX(-135%);
+  animation:quickPackRarityShine .46s ease-out .03s both!important
+}
+@keyframes quickPackClubPulse{
+  0%{transform:scale(.985);filter:brightness(.92) saturate(.88)}
+  45%{transform:scale(1.008);filter:brightness(1.14) saturate(1.18)}
+  100%{transform:scale(1);filter:none}
+}
+@keyframes quickPackClubFlash{
+  0%{opacity:0;transform:translateX(-72%) rotate(5deg)}
+  18%{opacity:.92}
+  100%{opacity:0;transform:translateX(72%) rotate(5deg)}
+}
+@keyframes quickPackClubName{
+  0%{opacity:.62;transform:translateY(5px) scale(.97)}
+  100%{opacity:1;transform:none}
+}
+@keyframes quickPackCardSettle{
+  0%{opacity:.68;transform:translateY(9px) scale(.985)}
+  100%{opacity:1;transform:none}
+}
+@keyframes quickPackRarityShine{
+  0%{opacity:0;transform:translateX(-135%)}
+  18%{opacity:.9}
+  100%{opacity:0;transform:translateX(135%)}
+}
+@media(prefers-reduced-motion:reduce){
+  .season-roll-btn,.season-draw-card.quick-pack-club-reveal,.season-draw-card.quick-pack-club-reveal .season-draw-nation,.season-candidate.quick-pack-card-reveal{animation:none!important;transition:none!important;transform:none!important;filter:none!important}
+  .season-draw-card.quick-pack-club-reveal::after,.season-candidate.quick-pack-shine::after{display:none!important}
+}

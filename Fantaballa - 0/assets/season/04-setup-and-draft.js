@@ -607,7 +607,6 @@ async function playSeasonPackReveal(possibleClubIds,finalClubId,isReroll){
 }
 async function drawDraft(useReroll=false){
  if(draftRolling||draftComplete())return;
- primeDraftAudio();
  const savedScrollY=window.scrollY;
  if(useReroll){
    if(state.draft.rerolls<=0)return toast('Re-roll terminati');
@@ -622,20 +621,14 @@ async function drawDraft(useReroll=false){
  const finalClub=clubById(finalClubId);
  draftRolling=true;
  state.draft.pendingPlayerId='';
- state.draft.candidates=[];
- save();
- playDraftPackSound();
- document.querySelectorAll('#draftRollBtn').forEach(button=>{
-   button.disabled=true;
-   button.setAttribute('aria-busy','true');
- });
  try{
-   await playSeasonPackReveal(possible,finalClubId,useReroll);
    if(coachIs('three-five-two')&&!state.draft.roster.length&&!useReroll){
      if(!buildThreeFiveTwoOpeningRoster(finalClubId))throw new Error(`Impossibile generare la rosa 3-5-2 da ${finalClub?.name||finalClubId}`);
      draftRolling=false;
      save();
      render();
+     animateDraftClubReveal();
+     requestAnimationFrame(()=>window.scrollTo({top:savedScrollY,left:0,behavior:'auto'}));
      toast(`3-5-2: ${finalClub?.name||'il primo club'} ha generato automaticamente la rosa di 14 giocatori.`);
      return;
    }
@@ -652,7 +645,6 @@ async function drawDraft(useReroll=false){
    requestAnimationFrame(()=>window.scrollTo({top:savedScrollY,left:0,behavior:'auto'}));
  }catch(error){
    console.error('Errore apertura pack club campionato',error);
-   modalRoot.innerHTML='';
    state.draft.clubId='';
    state.draft.candidates=[];
    if(useReroll)state.draft.rerolls=Math.min(initialDraftRerollLimit(),state.draft.rerolls+1);
@@ -810,24 +802,29 @@ function playDraftRaritySound(ovr){
  if(tier===3){draftTone(392,now,.18,.035,'triangle');draftTone(523.25,now+.11,.22,.038,'triangle');draftTone(783.99,now+.24,.34,.042,'sine');return}
  draftTone(392,now,.20,.04,'triangle');draftTone(523.25,now+.09,.24,.042,'triangle');draftTone(659.25,now+.19,.28,.045,'triangle');draftTone(1046.5,now+.34,.48,.052,'sine');
 }
+function animateDraftClubReveal(){
+ const card=document.querySelector('.season-draft-main-top .season-draw-card');
+ if(!card)return;
+ if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+ card.classList.remove('quick-pack-club-reveal');
+ void card.offsetWidth;
+ card.classList.add('quick-pack-club-reveal');
+ setTimeout(()=>card.classList.remove('quick-pack-club-reveal'),520);
+}
 function animateDraftCandidateReveal(players){
+ animateDraftClubReveal();
  const cards=[...document.querySelectorAll('.season-candidate[data-candidate]')];
  if(!cards.length)return;
- const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
  if(reduced)return;
- cards.forEach(card=>card.classList.add('pack-hidden'));
- void cards[0].offsetWidth;
- cards.forEach((card,index)=>{
-   setTimeout(()=>{
-     card.classList.remove('pack-hidden');
-     card.classList.add('pack-revealed');
-     const ovr=Number(card.dataset.ovr)||0;
-     if(ovr>=75)playDraftRaritySound(ovr);
-     setTimeout(()=>card.classList.remove('pack-revealed'),900);
-   },120+index*105);
+ cards.forEach(card=>{
+   card.classList.remove('quick-pack-card-reveal','quick-pack-shine');
+   void card.offsetWidth;
+   card.classList.add('quick-pack-card-reveal');
+   if(card.classList.contains('rarity-gold')||card.classList.contains('rarity-elite')||card.classList.contains('rarity-icon'))card.classList.add('quick-pack-shine');
  });
+ setTimeout(()=>cards.forEach(card=>card.classList.remove('quick-pack-card-reveal','quick-pack-shine')),620);
 }
-
 
 function animateMidseasonCandidateReveal(){
  const cards=[...document.querySelectorAll('.midseason-market-player[data-market]')];
