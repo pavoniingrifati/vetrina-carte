@@ -1077,10 +1077,10 @@ function activateCurvaAwayPenalty(){
 }
 function curvaContestVenueMode(){const contest=curvaContestState();return contest.active&&['home','away'].includes(contest.mode)?contest.mode:''}
 function curvaContestHomeAdvantage(userHome){
- const mode=curvaContestVenueMode();
- if(mode==='home')return userHome?.18:-.18;
+ const mode=curvaContestVenueMode(),stadiumBonus=userHome?clamp(Number(state.seasonRules?.stadiumHomeAdvantageBonus)||0,0,.15):0;
+ if(mode==='home')return (userHome?.18:-.18)+stadiumBonus;
  if(mode==='away')return userHome?-.18:.18;
- return .18;
+ return .18+stadiumBonus;
 }
 function curvaContestFutureTeamCandidates(){
  const futureIds=new Set();

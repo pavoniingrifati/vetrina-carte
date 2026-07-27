@@ -69,7 +69,8 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "presidente-tirchio":function(){return thriftyPresidentEventAvailable()}
  }),
  title:Object.freeze({
-"omonimo-allenatore":function(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`}
+"omonimo-allenatore":function(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`},
+"cambio-stadio":function(){return `Il presidente del ${String(state.teamName||'tuo club')} ti chiede se è una buona idea cambiare stadio`}
  }),
  describe:Object.freeze({
 "rapito-alieni":function(context){return context?.playerName?`${this.text} Il giocatore coinvolto è ${context.playerName}.`:this.text},
@@ -275,7 +276,9 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "misterioso-lakaka-lukaku:0":function(){return receiveMysteriousLakakaPlayer('lakaka')},
 "misterioso-lakaka-lukaku:1":function(){return receiveMysteriousLakakaPlayer('lukaku')},
 "presidente-tirchio:0":function(){return activateThriftyPresidentCuts()},
-"presidente-tirchio:1":function(){return activateThriftyPresidentMarketBlock()}
+"presidente-tirchio:1":function(){return activateThriftyPresidentMarketBlock()},
+"cambio-stadio:0":function(){state.seasonRules.stadiumHomeAdvantageBonus=Math.max(Number(state.seasonRules.stadiumHomeAdvantageBonus)||0,.06);return "Trasloco completato: il nuovo stadio aumenta leggermente il vantaggio nelle partite casalinghe fino al termine della stagione."},
+"cambio-stadio:1":function(){const names=boostAllRosterPlayers(1);return `${names.length} giocatori della rosa ricevono +1 OVR permanente.`}
  })
 });
 const SEASON_EVENT_HANDLER_IDS=Object.freeze({

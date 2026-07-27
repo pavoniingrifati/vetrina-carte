@@ -14,6 +14,7 @@ function seasonRuleSummary(){
  if(Number(state.seasonRules.winPoints)!==3||Number(state.seasonRules.drawPoints)!==1)extras.push(`Punteggio: vittoria +${Number(state.seasonRules.winPoints)} · pareggio +${Number(state.seasonRules.drawPoints)}`);
  if(currentMatchDuration()!==90)extras.push(`Durata tue partite: ${currentMatchDuration()} minuti`);
  if(state.seasonRules.deathMatchClubId)extras.push(`${state.seasonRules.deathMatchClubName||'Club speciale'}: +${Number(state.seasonRules.deathMatchClubBonus)||10} OVR contro di te`);
+ if(Number(state.seasonRules.stadiumHomeAdvantageBonus)>0)extras.push('Nuovo stadio: vantaggio casalingo leggermente aumentato fino a fine stagione');
  if(state.seasonRules.redCardGoals)extras.push('Ogni rosso vale un gol per la squadra che lo riceve');
  if(state.seasonRules.pointsEqualGoals)extras.push('Punti in classifica uguali ai gol segnati');
  if(state.seasonRules.yellowEqualsRed)extras.push('Giallo = espulsione diretta');

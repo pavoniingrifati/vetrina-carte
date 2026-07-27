@@ -24,10 +24,10 @@ test('Cataloghi originali validi', () => assert(validate(original).ok, 'I catalo
 test('Modalità baseline esatta valida', () => assert(validate(original,{strictCounts:true}).ok, 'La baseline esatta non è valida.'));
 test('Nuova decisione comune consentita', () => {
   const catalogs=clone(original);
-  catalogs[0].decisions.push({id:'evento-editor-test',order:81,title:'Evento editor test',text:'Evento generato dal test.',choices:[{label:'A',effect:'A',applyHandler:'nuovo-sponsor:0'},{label:'B',effect:'B',applyHandler:'nuovo-sponsor:1'}]});
+  catalogs[0].decisions.push({id:'evento-editor-test',order:210,title:'Evento editor test',text:'Evento generato dal test.',choices:[{label:'A',effect:'A',applyHandler:'nuovo-sponsor:0'},{label:'B',effect:'B',applyHandler:'nuovo-sponsor:1'}]});
   const report=validate(catalogs);
   assert(report.ok, report.errors.join(' | '));
-  assert(report.stats.communityDecisions===91 && report.stats.realDecisions===85,'Conteggi nuova decisione errati.');
+  assert(report.stats.communityDecisions===92 && report.stats.realDecisions===86,'Conteggi nuova decisione errati.');
 });
 test('Handler inesistente bloccato', () => {
   const catalogs=clone(original);
