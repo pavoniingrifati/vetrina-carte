@@ -24,10 +24,16 @@ function previewTeamAverageOvr(team){
  if(String(team.id||'')===String(USER_ID))return Math.round(resolvedLineupAverage(resolveLineup())||0);
  return Math.round(opponentMatchPower(team)||0);
 }
-function renderNextTeamCard(team,label,ovr){
+function seasonTeamInitials(name){
+ const words=String(name||'Squadra').trim().split(/\s+/).filter(Boolean);
+ return (words.length>1?`${words[0][0]||''}${words[1][0]||''}`:(words[0]||'SQ').slice(0,2)).toUpperCase();
+}
+function renderNextTeamCard(team,label,ovr,options={}){
  const safeTeam=team||{name:state.teamName};
  const average=Math.max(1,Math.round(Number(ovr)||0));
- return `<div class="next-team-card" style="${teamCssVars(safeTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(safeTeam?.name||state.teamName)}px" title="${esc(safeTeam?.name||state.teamName)}">${esc(safeTeam?.name||state.teamName)}</div><div class="next-team-meta"><div class="subline">${esc(label)}</div><div class="next-team-ovr">OVR <b>${average}</b></div></div></div>`;
+ const side=String(options.side||'').trim();
+ const detail=String(options.detail||label||'Squadra');
+ return `<div class="next-team-card ${side?`is-${esc(side)}`:''}" style="${teamCssVars(safeTeam)}"><span class="next-team-colors"></span><div class="next-team-identity"><div class="next-team-badge" aria-hidden="true">${esc(seasonTeamInitials(safeTeam?.name||state.teamName))}</div><div class="next-team-copy"><div class="team-name" style="font-size:${teamNameFontSize(safeTeam?.name||state.teamName)}px" title="${esc(safeTeam?.name||state.teamName)}">${esc(safeTeam?.name||state.teamName)}</div><div class="next-team-meta"><div class="subline">${esc(detail)}</div><div class="next-team-ovr">OVR <b>${average}</b></div></div></div></div></div>`;
 }
 function showParallelCupMatch(pending){
  const cup=parallelCupState(),stage=cup.stages?.[Number(pending.stageIndex)],tie=stage?.ties?.find(item=>String(item.id)===String(pending.tieId));
@@ -65,24 +71,102 @@ function showParallelCupResultModal(report,homeTeam,awayTeam){
  document.getElementById('closeCupResult').onclick=()=>{modalRoot.innerHTML='';render()};
 }
 
+
+function seasonHomeForm(limit=5){
+ const history=Array.isArray(state.history)?state.history:[];
+ const recent=history.slice(-Math.max(1,Number(limit)||5)).map(match=>{
+  const outcome=journeyOutcome(match);
+  return {type:outcome,label:outcome==='win'?'V':outcome==='draw'?'N':'P',title:outcome==='win'?'Vittoria':outcome==='draw'?'Pareggio':'Sconfitta'};
+ });
+ while(recent.length<limit)recent.unshift({type:'empty',label:'–',title:'Nessuna partita'});
+ return recent;
+}
+function renderSeasonHomeTopline({rank,standing,lineupOvr,chemistry}){
+ const rounds=Math.max(1,Array.isArray(state.schedule)?state.schedule.length:38);
+ const form=seasonHomeForm(5);
+ return `<section class="season-home-topline" aria-label="Riepilogo stagione"><div><span>Giornata</span><b>${Math.min(rounds,state.matchday+1)}<small>/${rounds}</small></b></div><div><span>Posizione</span><b>${rank}°</b></div><div><span>Punti</span><b>${Number(standing?.pts)||0}</b></div><div class="season-home-form"><span>Ultime cinque</span><div aria-label="Forma recente">${form.map(result=>`<b class="season-home-form-result ${result.type}" title="${esc(result.title)}">${result.label}</b>`).join('')}</div></div><div><span>OVR medio</span><b>${Number(lineupOvr).toFixed(1)}</b></div><div><span>Intesa</span><b>${Number(chemistry?.score)||0}<small>/100</small></b></div></section>`;
+}
+function seasonMatchDifficulty(userOvr,opponentOvr){
+ const delta=(Number(opponentOvr)||0)-(Number(userOvr)||0);
+ if(delta>=8)return{label:'Molto difficile',className:'is-extreme',delta};
+ if(delta>=4)return{label:'Difficile',className:'is-hard',delta};
+ if(delta>=-3)return{label:'Equilibrata',className:'is-balanced',delta};
+ return{label:'Favorevole',className:'is-favourable',delta};
+}
+function renderSeasonHomeAttention(){
+ const fragments=[
+  renderParallelCupPanel(),
+  typeof renderSeasonInventory==='function'?renderSeasonInventory():'',
+  renderActiveQuest(),
+  renderError404StoryPanel(),
+  renderFantaballopoliPanel(),
+  renderMeritStoryPanel(),
+  renderEvent()
+ ].filter(Boolean);
+ const pending=Boolean(state.pendingEvent&&!state.pendingEvent.resolved)||(typeof leaderQuestSelectionPending==='function'&&leaderQuestSelectionPending());
+ const content=fragments.length?fragments.join(''):`<div class="season-home-quiet"><span aria-hidden="true">✓</span><div><b>Nessuna decisione urgente</b><p>La squadra è pronta. Puoi giocare la prossima partita oppure consultare rosa e statistiche.</p></div></div>`;
+ return `<section class="panel season-home-card season-home-attention fanta-card fanta-card--story" id="seasonHomeAttention"><div class="season-home-section-head"><div><span>Richiede la tua attenzione</span><b>${pending?'Completa la scelta prima di giocare':'Decisioni, missioni e storia'}</b></div><i aria-hidden="true">${pending?'!':'✓'}</i></div><div class="season-home-attention-content">${content}</div></section>`;
+}
+function renderSeasonHomeStatus(opponent){
+ const lineup=resolveLineup(),chemistry=draftChemistry(lineup),unavailable=unavailableList();
+ const injuries=unavailable.filter(entry=>statusOf(entry.playerId).injury>0).length;
+ const suspensions=unavailable.filter(entry=>statusOf(entry.playerId).suspension>0).length;
+ const average=resolvedLineupAverage(lineup);
+ const ready=unavailable.length===0;
+ return `<section class="panel season-home-card season-home-status fanta-card fanta-card--info"><div class="season-home-section-head"><div><span>Stato squadra</span><b>Modulo ${esc(state.formation)} · formazione effettiva</b></div><span class="season-home-ready ${ready?'':'has-alert'}">${ready?'Pronta':`${unavailable.length} indisponibili`}</span></div><div class="season-home-status-metrics"><div><span>OVR partita</span><b>${average.toFixed(1)}</b></div><div><span>Intesa</span><b>${chemistry.score}/100</b></div><div><span>Titolari</span><b>${lineup.length}/${seasonStarterTarget()}</b></div><div><span>Modulo</span><b>${esc(state.formation)}</b></div></div><div class="season-home-availability-summary"><span>Infortunati: ${injuries}</span><span>Squalificati: ${suspensions}</span></div>${ready?'<div class="season-home-ok">Nessun giocatore indisponibile</div>':''}<button id="openSeasonRoster" class="season-home-manage-button" type="button">Apri rosa e formazione</button><details class="season-home-details"><summary>Formazione effettiva della prossima partita</summary>${renderResolvedLineup()}</details><details class="season-home-details"><summary>Gestisci indisponibili</summary>${renderAvailability()}</details><div class="season-home-opponent">${seasonRuleSummary()}${renderOpponentRoster(opponent)}</div></section>`;
+}
+function renderSeasonNearbyStandings(){
+ const table=sortedTable(),userIndex=Math.max(0,table.findIndex(row=>String(row.id)===String(USER_ID))),visibleCount=Math.min(5,table.length);
+ const start=Math.max(0,Math.min(userIndex-2,table.length-visibleCount));
+ const rows=table.slice(start,start+visibleCount);
+ return `<section class="panel season-home-card season-home-standings fanta-card fanta-card--table"><div class="season-home-section-head"><div><span>Situazione campionato</span><b>Le squadre intorno a te</b></div><button class="season-home-text-button" data-open-season-tab="table" type="button">Classifica completa</button></div><div class="season-home-standing-list">${rows.map((row,index)=>{const team=teamById(row.id)||{id:row.id,name:row.name||'Squadra'};const absolutePosition=start+index+1;return `<div class="season-home-standing-row ${String(row.id)===String(USER_ID)?'is-user':''}" style="${teamCssVars(team)}"><span class="season-home-position">${absolutePosition}</span><span class="season-home-standing-team">${teamColorDot(team)}<b>${esc(team.name||row.name||'Squadra')}</b></span><span class="season-home-standing-form">${Number(row.w)||0}V · ${Number(row.d)||0}N · ${Number(row.l)||0}P</span><strong>${Number(row.pts)||0}</strong></div>`}).join('')}</div></section>`;
+}
+function renderSeasonUpcomingFixtures(){
+ const schedule=Array.isArray(state.schedule)?state.schedule:[];
+ const fixtures=[];
+ for(let index=state.matchday;index<schedule.length&&fixtures.length<4;index++){
+  const fixture=(schedule[index]||[]).find(match=>match.home===USER_ID||match.away===USER_ID);if(!fixture)continue;
+  const userHome=fixture.home===USER_ID,opponent=teamById(userHome?fixture.away:fixture.home);
+  fixtures.push({index,userHome,opponent});
+ }
+ return `<section class="panel season-home-card season-home-fixtures fanta-card fanta-card--table"><div class="season-home-section-head"><div><span>Prossimi impegni</span><b>Il percorso che ti aspetta</b></div><button class="season-home-text-button" data-open-season-tab="calendar" type="button">Calendario</button></div><div class="season-home-fixture-list">${fixtures.length?fixtures.map((item,index)=>`<div class="season-home-fixture-row ${index===0?'is-next':''}" style="${teamCssVars(item.opponent)}"><span><small>${index===0?'Prossima':`Giornata ${item.index+1}`} · ${item.userHome?'Casa':'Trasferta'}</small><b>${teamColorDot(item.opponent)}${esc(item.opponent?.name||'Avversario')}</b></span><strong>${item.userHome?'CASA':'TRASFERTA'}</strong></div>`).join(''):'<p class="season-home-empty">Nessun altro incontro in calendario.</p>'}</div></section>`;
+}
+function renderSeasonHomeChaos(){
+ const feed=renderChaosLeagueFeed();if(!feed)return'';
+ return `<section class="panel season-home-card season-home-chaos"><details><summary>🌀 Attività delle altre squadre</summary>${feed}</details></section>`;
+}
+function renderSeasonHomeTabs(){
+ return `<section class="panel season-tabs-panel season-home-tabs"><div class="tabs" role="tablist" aria-label="Sezioni della stagione"><button class="tab active" data-tab="table" type="button" role="tab" aria-selected="true">Classifica</button><button class="tab" data-tab="calendar" type="button" role="tab" aria-selected="false">Calendario</button><button class="tab" data-tab="roster" type="button" role="tab" aria-selected="false">Rosa</button><button class="tab" data-tab="stats" type="button" role="tab" aria-selected="false">Statistiche</button><button class="tab" data-tab="journey" type="button" role="tab" aria-selected="false">Percorso</button></div><div id="tab-table" class="tab-view active" role="tabpanel">${renderTable()}</div><div id="tab-calendar" class="tab-view" role="tabpanel">${renderCalendar()}</div><div id="tab-roster" class="tab-view" role="tabpanel">${renderSeasonRosterField()}</div><div id="tab-stats" class="tab-view" role="tabpanel">${renderStats()}</div><div id="tab-journey" class="tab-view" role="tabpanel">${renderSeasonJourney()}</div></section>`;
+}
+function activateSeasonTab(name,{scroll=true}={}){
+ const target=document.getElementById(`tab-${name}`);if(!target)return;
+ document.querySelectorAll('.season-tabs-panel .tab').forEach(button=>{const active=button.dataset.tab===name;button.classList.toggle('active',active);button.setAttribute('aria-selected',active?'true':'false')});
+ document.querySelectorAll('.season-tabs-panel .tab-view').forEach(view=>view.classList.toggle('active',view===target));
+ if(scroll)document.querySelector('.season-tabs-panel')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
 function showSeason(){
  if(state.matchday>=19&&parallelCupState().status==='pending')initializeParallelCup();
  const pendingCupMatch=parallelCupPendingMatch();
  if(pendingCupMatch){showParallelCupMatch(pendingCupMatch);return}
  prepareEvent();
- const fx=userFixture(),opp=teamById(fx.home===USER_ID?fx.away:fx.home),userTeam=teamById(USER_ID)||{id:USER_ID,name:state.teamName,clubId:state.userClubId,colors:activeUserClub().colorClub},homeTeam=teamById(fx.home),awayTeam=teamById(fx.away),standing=userStanding(),rank=sortedTable().findIndex(x=>x.id===USER_ID)+1,eventPending=Boolean(state.pendingEvent&&!state.pendingEvent.resolved),questSelectionPending=typeof leaderQuestSelectionPending==='function'&&leaderQuestSelectionPending(),matchBlocked=eventPending||questSelectionPending,matchDisabled=matchBlocked?'disabled aria-disabled="true" aria-describedby="matchActionStatus" data-disabled-reason="Completa prima la scelta in attesa."':'',matchStatus=eventPending?'Prima di giocare devi scegliere una delle opzioni dell’evento in attesa.':questSelectionPending?'Prima di giocare devi scegliere il leader della quest.':'Scegli la cronaca completa oppure la simulazione rapida.';
- screen.innerHTML=`<section class="panel season-overview-panel" style="${teamCssVars(userTeam)}"><div class="season-strip"><div class="stat"><b>${state.matchday+1}</b><span>Giornata</span></div><div class="stat"><b>${rank}°</b><span>Posizione</span></div><div class="stat"><b>${standing.pts}</b><span>Punti</span></div><div class="stat"><b>${standing.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${standing.ga}</b><span>Gol subiti</span></div></div></section><div class="dashboard-grid season-dashboard-grid"><div class="season-main-column"><section class="panel season-match-panel"><div class="label">Prossima partita</div><div class="next-match">${renderNextTeamCard(homeTeam,fx.home===USER_ID?'Casa':'Avversario',previewTeamAverageOvr(homeTeam))}<div class="versus">VS</div>${renderNextTeamCard(awayTeam,fx.away===USER_ID?'Trasferta':'Avversario',previewTeamAverageOvr(awayTeam))}</div><div style="margin-top:14px">${renderParallelCupPanel()}${typeof renderSeasonInventory==='function'?renderSeasonInventory():''}${renderActiveQuest()}${renderError404StoryPanel()}${renderFantaballopoliPanel()}${renderMeritStoryPanel()}${renderEvent()}${renderChaosLeagueFeed()}</div><div class="match-play-actions"><button id="playRoundLive" class="btn match-live-button" type="button" data-single-action data-busy-announcement="Partita avviata con cronaca." ${matchDisabled}>🎙️ Gioca con cronaca</button><button id="playRoundInstant" class="btn match-instant-button" type="button" data-single-action data-busy-announcement="Simulazione della giornata avviata." ${matchDisabled}>⚡ Simula subito</button></div><div id="matchActionStatus" class="match-play-note a11y-command-message ${matchBlocked?'is-blocked':''}" role="status" aria-live="polite">${matchStatus}</div></section><section class="panel season-tabs-panel"><div class="tabs"><button class="tab active" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="roster">Rosa</button><button class="tab" data-tab="stats">Statistiche</button><button class="tab" data-tab="journey">Percorso</button></div><div id="tab-table" class="tab-view active">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-roster" class="tab-view">${renderSeasonRosterField()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div><div id="tab-journey" class="tab-view">${renderSeasonJourney()}</div></section></div><aside class="season-sidebar"><section class="panel season-availability-panel"><div class="label">Indisponibili</div><h3>Gestione formazione</h3>${renderAvailability()}<p style="font-size:12px"><b>Squalificato:</b> sostituzione automatica. <b>Infortunato:</b> può giocare con -20 Intesa oppure essere sostituito. Panchinaro fuori ruolo: -10 Intesa.</p></section><section class="panel season-lineup-panel"><div class="label">Formazione effettiva</div>${renderResolvedLineup()}</section><section class="panel opponent-club-panel season-opponent-panel" style="${teamCssVars(opp)}"><div class="label">Avversario reale</div><h3>${teamColorDot(opp)}${esc(opp.name)}</h3>${seasonRuleSummary()}${renderOpponentRoster(opp)}</section></aside></div>`;
- document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>resolveDecision(Number(b.dataset.choice)));
+ const fx=userFixture(),opp=teamById(fx.home===USER_ID?fx.away:fx.home),userTeam=teamById(USER_ID)||{id:USER_ID,name:state.teamName,clubId:state.userClubId,colors:activeUserClub().colorClub},homeTeam=teamById(fx.home),awayTeam=teamById(fx.away),standing=userStanding(),rank=sortedTable().findIndex(x=>x.id===USER_ID)+1,userHome=fx.home===USER_ID,lineup=resolveLineup(),lineupOvr=resolvedLineupAverage(lineup),chemistry=draftChemistry(lineup),opponentOvr=previewTeamAverageOvr(opp),difficulty=seasonMatchDifficulty(lineupOvr,opponentOvr),eventPending=Boolean(state.pendingEvent&&!state.pendingEvent.resolved),questSelectionPending=typeof leaderQuestSelectionPending==='function'&&leaderQuestSelectionPending(),matchBlocked=eventPending||questSelectionPending,matchDisabled=matchBlocked?'disabled aria-disabled="true" aria-describedby="matchActionStatus" data-disabled-reason="Completa prima la scelta in attesa."':'',matchStatus=eventPending?'Prima di giocare devi scegliere una delle opzioni dell’evento in attesa.':questSelectionPending?'Prima di giocare devi scegliere il leader della quest.':'Scegli la cronaca completa oppure la simulazione rapida.';
+ const venueLabel=userHome?'Partita in casa':'Partita in trasferta';
+ screen.innerHTML=`<div class="season-home" style="${teamCssVars(userTeam)}">${renderSeasonHomeTopline({rank,standing,lineupOvr,chemistry})}<div class="season-home-dashboard-grid"><div class="season-home-dashboard-main"><section class="panel season-home-match fanta-card fanta-card--match"><div class="season-home-match-head"><div><span>Giornata ${state.matchday+1} · ${venueLabel}</span><b>${userHome?'Difendi il tuo campo':'Cerca punti lontano da casa'}</b></div><strong class="season-home-difficulty ${difficulty.className}" title="Differenza OVR: ${difficulty.delta>=0?'+':''}${difficulty.delta.toFixed(1)}">${difficulty.label}</strong></div><div class="next-match season-home-next-match">${renderNextTeamCard(homeTeam,userHome?'La tua squadra':'Avversario',previewTeamAverageOvr(homeTeam),{side:'home',detail:userHome?'La tua squadra · Casa':'Avversario · Casa'})}<div class="versus" aria-label="contro">VS</div>${renderNextTeamCard(awayTeam,userHome?'Avversario':'La tua squadra',previewTeamAverageOvr(awayTeam),{side:'away',detail:userHome?'Avversario · Trasferta':'La tua squadra · Trasferta'})}</div>${matchBlocked?`<button class="season-home-blocked" type="button" data-focus-attention><b>Partita bloccata</b><span>Completa la scelta →</span></button>`:''}<div class="season-home-match-actions"><button id="playRoundLive" class="btn match-live-button" type="button" data-single-action data-busy-announcement="Partita avviata con cronaca." ${matchDisabled}>🎙️ Gioca con cronaca</button><button id="playRoundInstant" class="btn match-instant-button" type="button" data-single-action data-busy-announcement="Simulazione della giornata avviata." ${matchDisabled}>⚡ Simula</button></div><div id="matchActionStatus" class="match-play-note a11y-command-message ${matchBlocked?'is-blocked':''}" role="status" aria-live="polite">${matchStatus}</div></section><div class="season-home-dashboard-lower season-home-primary-grid">${renderSeasonHomeAttention()}${renderSeasonHomeStatus(opp)}</div>${renderSeasonHomeTabs()}</div><aside class="season-home-dashboard-side">${renderSeasonNearbyStandings()}${renderSeasonUpcomingFixtures()}${renderSeasonHomeChaos()}</aside></div></div>`;
+ document.querySelectorAll('[data-choice]').forEach(button=>button.onclick=()=>resolveDecision(Number(button.dataset.choice)));
  bindSeasonEventControls();
  bindMeritStoryControls();
  bindError404StoryControls();
  bindFantaballopoliControls();
  if(typeof bindSeasonInventoryControls==='function')bindSeasonInventoryControls();
  if(typeof bindLeaderQuestControls==='function')bindLeaderQuestControls();
- document.querySelectorAll('[data-injured]').forEach(b=>b.onclick=()=>{const id=b.dataset.injured;state.playInjured[id]=!state.playInjured[id];save();render()});
- document.getElementById('playRoundLive').onclick=()=>playRound('live');
- document.getElementById('playRoundInstant').onclick=()=>playRound('instant');
- document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-view').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active')})
+ document.querySelectorAll('[data-injured]').forEach(button=>button.onclick=()=>{const id=button.dataset.injured;state.playInjured[id]=!state.playInjured[id];save();render()});
+ const liveButton=document.getElementById('playRoundLive'),instantButton=document.getElementById('playRoundInstant');
+ if(liveButton)liveButton.onclick=()=>playRound('live');
+ if(instantButton)instantButton.onclick=()=>playRound('instant');
+ document.querySelectorAll('[data-tab]').forEach(button=>button.onclick=()=>activateSeasonTab(button.dataset.tab,{scroll:false}));
+ document.querySelectorAll('[data-open-season-tab]').forEach(button=>button.onclick=()=>activateSeasonTab(button.dataset.openSeasonTab));
+ const rosterButton=document.getElementById('openSeasonRoster');if(rosterButton)rosterButton.onclick=()=>activateSeasonTab('roster');
+ const attentionButton=document.querySelector('[data-focus-attention]');if(attentionButton)attentionButton.onclick=()=>document.getElementById('seasonHomeAttention')?.scrollIntoView({behavior:'smooth',block:'center'});
 }
 function lineupEffects(entry,lineup){
  const player=entry.player||{};

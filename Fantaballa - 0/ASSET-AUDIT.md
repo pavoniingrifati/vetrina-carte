@@ -2,18 +2,11 @@
 
 - Asset trovati: **30**
 - Peso totale asset: **12.73 MB**
-- Riferimenti locali controllati: **70**
-- File mancanti: **4**
+- Riferimenti locali controllati: **66**
+- File mancanti: **0**
 - Immagini oltre 500 KB: **3**
 - Gruppi duplicati esatti: **7**
 - Asset potenzialmente inutilizzati: **11**
-
-## File mancanti
-
-- `assets/coach-profiles/anonymous.png` — riferito da assets/season-engine.js
-- `assets/coach-profiles/motivator.png` — riferito da assets/season-engine.js
-- `assets/coach-profiles/salvation.png` — riferito da assets/season-engine.js
-- `assets/coach-profiles/talent-scout.png` — riferito da assets/season-engine.js
 
 ## Asset pesanti
 
@@ -23,12 +16,12 @@
 
 ## Duplicati esatti
 
-- `apple-touch-icon.png`, `assets/apple-touch-icon.png`
-- `assets/site-icon-512.png`, `site-icon-512.png`
 - `TEST-FANTABALLA-CREATOR.png`, `assets/TEST-FANTABALLA-CREATOR.png`
 - `assets/favicon-48x48.png`, `favicon-48x48.png`
-- `assets/favicon.ico`, `favicon.ico`
 - `assets/site-icon-192.png`, `site-icon-192.png`
+- `assets/site-icon-512.png`, `site-icon-512.png`
+- `assets/favicon.ico`, `favicon.ico`
+- `apple-touch-icon.png`, `assets/apple-touch-icon.png`
 - `assets/macro-modes/season-bg.png`, `assets/macro-modes/season-draft-hero.png`
 
 ## Potenzialmente inutilizzati
