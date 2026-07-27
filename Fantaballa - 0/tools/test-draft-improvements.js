@@ -9,14 +9,14 @@ const css=read('assets/season/draft-improvements.css');
 const checks=[];
 const check=(name,condition)=>checks.push({name,ok:Boolean(condition)});
 
-check('Stato draft salva ultima scelta annullabile',stateCode.includes('lastPlacement:null')&&stateCode.includes('next.draft.lastPlacement'));
+check('Lo stato nuovo non espone una scelta annullabile',!stateCode.includes('lastPlacement:null')&&stateCode.includes("delete next.draft.lastPlacement"));
 check('Esiste il calcolo impatto candidato',draftCode.includes('function draftCandidateImpact(player)'));
 check('Esiste l’analisi delle lacune della rosa',draftCode.includes('function renderDraftAnalysis'));
-check('Esiste annulla ultima scelta',draftCode.includes('function undoLastDraftPlacement'));
+check('Annulla ultima scelta è stato rimosso',!draftCode.includes('undoLastDraftPlacement')&&!draftCode.includes('undoDraftBtn')&&!draftCode.includes('Annulla ultima scelta'));
 check('Il nuovo markup non crea il secondo pulsante centrale',!draftCode.slice(draftCode.indexOf('function showDraft(){')).includes('id="draftRollBtnCenter"'));
-check('Le tre modalità caricano il nuovo CSS', ['campionato.html','campionato-real.html','tricolore-pisa.html'].every(file=>read(file).includes('assets/season/draft-improvements.css?v=20260727-draft1')));
-check('Le tre modalità invalidano la cache del nuovo JS', ['campionato.html','campionato-real.html','tricolore-pisa.html'].every(file=>read(file).includes('assets/season/04-setup-and-draft.js?v=20260727-draft2')));
-check('CSS contiene status bar, analisi e slot consigliato',css.includes('.season-draft-statusbar')&&css.includes('.season-draft-analysis')&&css.includes('.season-field-slot.recommended'));
+check('Le tre modalità caricano il nuovo CSS', ['campionato.html','campionato-real.html','tricolore-pisa.html'].every(file=>read(file).includes('assets/season/draft-improvements.css?v=20260727-lock1')));
+check('Le tre modalità invalidano la cache del nuovo JS', ['campionato.html','campionato-real.html','tricolore-pisa.html'].every(file=>read(file).includes('assets/season/04-setup-and-draft.js?v=20260727-lock1')));
+check('CSS contiene status bar, analisi e slot consigliato, senza comando annulla',css.includes('.season-draft-statusbar')&&css.includes('.season-draft-analysis')&&css.includes('.season-field-slot.recommended')&&!css.includes('.season-undo-draft'));
 
 // Smoke test del rendering con un ambiente minimo.
 const players=[
@@ -30,7 +30,7 @@ const slots=[
 ];
 const context={
  console,
- state:{phase:'draft',formation:'4-3-3',teamName:'Fantaballa Test',coachName:'Mister Test',coachType:'anonymous',competitionVariant:'serie-a',seasonRules:{},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:'',openingClubShown:false,lastPlacement:null}},
+ state:{phase:'draft',formation:'4-3-3',teamName:'Fantaballa Test',coachName:'Mister Test',coachType:'anonymous',competitionVariant:'serie-a',seasonRules:{},draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:'',openingClubShown:false}},
  FORMATION_LAYOUTS:{'4-3-3':slots},FORMATIONS:{'4-3-3':slots.map(x=>x[0])},POSITION_ROLE:{P:'P',DC:'D',TS:'D',TD:'D',CDC:'C',CC:'C',COC:'C',AS:'A',AD:'A',ATT:'A'},
  PLAYERS:players,CLUBS:[{id:'c1',name:'Club Test'}],USER_ID:'user',
  window:{matchMedia:()=>({matches:false}),scrollTo:()=>{},setTimeout,clearTimeout},
@@ -53,7 +53,7 @@ const context={
  esc:value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])),
  renderMiniAvatar:()=>'<span class="season-mini-avatar"></span>',renderPlayerJersey:()=>'<span class="season-jersey-wrap"></span>',
  sortPlayersByRole:list=>list,save:()=>{},render:()=>{},toast:message=>{context.lastToast=message},openConfirm:async()=>true,
- freshState:()=>({draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:'',openingClubShown:false,lastPlacement:null}}),
+ freshState:()=>({draft:{roster:[],clubId:'',candidates:[],rerolls:3,pendingPlayerId:'',openingClubShown:false}}),
  finalizeDraft:()=>{},drawDraft:()=>{},mobileDraftTab:'players',draftRolling:false,lastPlacedDraftTimer:null,lastPlacedDraftSlotId:'',
  SEASON_CONFIG:{labels:{packKicker:'Pack'}},pick:list=>list[0],shuffle:list=>[...list]
 };
@@ -73,9 +73,8 @@ try{
  context.state.draft.pendingPlayerId='p1';context.showDraft();
  check('Il Talent scout mostra lo slot consigliato',context.screen.innerHTML.includes('Slot consigliato')&&context.screen.innerHTML.includes('aria-label="Slot consigliato dal Talent scout"'));
  context.placeDraftStarter('starter-0');
- check('Il posizionamento registra lastPlacement',context.state.draft.roster.length===1&&context.state.draft.lastPlacement?.playerId==='p1');
- context.undoLastDraftPlacement();
- check('Annulla ripristina pack e rimuove giocatore',context.state.draft.roster.length===0&&context.state.draft.clubId==='c1'&&context.state.draft.candidates.includes('p1'));
+ check('Il posizionamento rende definitiva la scelta',context.state.draft.roster.length===1&&context.state.draft.roster[0].playerId==='p1'&&!('lastPlacement' in context.state.draft));
+ check('Dopo il posizionamento non esiste alcun comando per cambiare la scelta',typeof context.undoLastDraftPlacement==='undefined'&&!draftCode.includes('undoDraftBtn')&&!draftCode.includes('Annulla ultima scelta'));
 }catch(error){
  checks.push({name:'Smoke test runtime',ok:false,error:String(error.stack||error)});
 }
