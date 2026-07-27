@@ -1,0 +1,14 @@
+const fs=require('fs'),vm=require('vm'),path=require('path');
+const root=path.resolve(__dirname,'..');
+const read=f=>fs.readFileSync(path.join(root,f),'utf8');
+const events=JSON.parse(read('data/events/events-common.json'));
+const event=events.decisions.find(item=>item.id==='pillola-rossa-pillola-blu');
+if(!event||event.choices.length!==2)throw new Error('Evento pillole mancante o incompleto');
+const math=Object.create(Math);math.random=()=>0;
+const context={console,Math:math,state:{matchday:5,seasonRules:{},inventory:{capacity:3,items:[],active:null},draft:{roster:[{playerId:'p1',player:{id:'p1',name:'Test Player',ovr:90},slot:'ATT',slotId:'att-1',bench:false}]},statuses:{},playInjured:{},activeEffects:[],analytics:{eventLog:[]}},clamp:(n,a,b)=>Math.max(a,Math.min(b,n)),playerById:id=>{const entry=context.state.draft.roster.find(e=>e.playerId===id);return entry?entry.player:null},rosterEntry:id=>context.state.draft.roster.find(e=>e.playerId===id),rosterPlayers:()=>context.state.draft.roster,recordSeasonEvent:()=>{},analyticsSnapshot:()=>({}),esc:String,renderMiniAvatar:()=>'',modalRoot:{innerHTML:''},save:()=>{},render:()=>{},toast:()=>{},getStarterEntries:()=>context.state.draft.roster,statusOf:id=>context.state.statuses[id]||(context.state.statuses[id]={injury:0,suspension:0,seasonOut:false,seasonOutReason:''}),setPermanentRosterOvr:(entry,value)=>{const before=entry.player.ovr;entry.player={...entry.player,ovr:value};return{before,after:value}},removeOwnRosterPlayerPermanently:(entry)=>{context.state.draft.roster=context.state.draft.roster.filter(e=>e!==entry);return`${entry.player.name} lascia definitivamente la squadra.`},document:{querySelectorAll:()=>[]}};
+vm.createContext(context);vm.runInContext(read('assets/season/07b-items.js'),context);
+if(!context.receivePillItem('red-pill').includes('inventario'))throw new Error('Pillola rossa non aggiunta');
+const red=context.useRedPill('p1');if(context.state.draft.roster[0].player.ovr!==85||!context.redPillProtectsPlayer('p1'))throw new Error(`Pillola rossa fallita: ${red}`);
+context.state={matchday:5,seasonRules:{},inventory:{capacity:3,items:[{id:'blue-pill',quantity:1}],active:null},draft:{roster:[{playerId:'p1',player:{id:'p1',name:'Test Player',ovr:90},slot:'ATT',slotId:'att-1',bench:false}]},statuses:{},playInjured:{},activeEffects:[],analytics:{eventLog:[]}};
+const blue=context.useBluePill('p1');if(context.state.draft.roster[0].player.ovr!==100)throw new Error(`Pillola blu fallita: ${blue}`);const result={matchday:6};context.tickPillEffectsAfterMatch(result);if(context.state.draft.roster.length!==0||!result.itemUpdates?.length)throw new Error('Ritiro pillola blu non applicato');
+console.log('Pillole: OK');
