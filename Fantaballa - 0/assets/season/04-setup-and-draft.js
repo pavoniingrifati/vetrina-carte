@@ -492,10 +492,16 @@ function jerseyNumberColor(color){
  if(goldContrast>darkContrast+0.35 && goldContrast>=4.2)return '#ffe96c';
  return '#10243a';
 }
+function jerseyNumberOutlineColor(numberColor){
+ const rgb=jerseyColorRgb(numberColor);
+ if(!rgb)return 'rgba(247,241,222,.96)';
+ return relativeLuminance(rgb) > 0.55 ? 'rgba(16,36,58,.96)' : 'rgba(247,241,222,.96)';
+}
 function renderPlayerJersey(player,extra='',chemistryBonus=0){
  const pal=clubPalette(activeUserClub()); const sub=isSubscriber(player); const currentChem=effectiveChemistryFromBase(player,chemistryBonus); const shownOvr=Math.round(ductilityEffectiveBaseOvr(player)+currentChem+activeOvrBonus(player));
  const numberColor=jerseyNumberColor(pal.b||pal.secondary||pal.a||'#ffffff');
- return `<span class="season-jersey-wrap ${sub?'subscriber':''} ${extra}" style="--nation-a:${pal.a};--nation-b:${pal.b};--nation-c:${pal.c};--nation-ink:${pal.ink};--jersey-number-color:${numberColor}" title="OVR base ${Math.round(ductilityEffectiveBaseOvr(player))} · Intesa attuale ${formatSignedIntesa(currentChem)}"><span class="season-jersey"><span class="season-jersey-number">${shownOvr}</span></span>${sub?'<span class="season-jersey-sub-star">★</span>':''}</span>`
+ const outlineColor=jerseyNumberOutlineColor(numberColor);
+ return `<span class="season-jersey-wrap ${sub?'subscriber':''} ${extra}" style="--nation-a:${pal.a};--nation-b:${pal.b};--nation-c:${pal.c};--nation-ink:${pal.ink};--jersey-number-color:${numberColor};--jersey-number-outline:${outlineColor}" title="OVR base ${Math.round(ductilityEffectiveBaseOvr(player))} · Intesa attuale ${formatSignedIntesa(currentChem)}"><span class="season-jersey"><span class="season-jersey-number">${shownOvr}</span></span>${sub?'<span class="season-jersey-sub-star">★</span>':''}</span>`
 }
 
 function persistSetupIdentity(teamInput,coachInput,saveState=true){
