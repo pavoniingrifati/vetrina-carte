@@ -96,8 +96,10 @@
  finishDraftPlacement=function(showPitchAnimation=false){
   state.draft.pendingPlayerId='';
   refreshWeeklyDraft();
-  mobileDraftTab=showPitchAnimation?'field':(draftComplete()?'roster':'players');
+  const complete=draftComplete();
+  mobileDraftTab=complete?'roster':'players';
   save();render();
+  if(!complete)scrollDraftIntoView('.season-candidates-head','start');
   if(showPitchAnimation&&lastPlacedDraftSlotId){const placedId=lastPlacedDraftSlotId;lastPlacedDraftTimer=setTimeout(()=>{document.querySelectorAll('.season-field-slot.just-placed').forEach(element=>element.classList.remove('just-placed'));if(lastPlacedDraftSlotId===placedId)lastPlacedDraftSlotId='';lastPlacedDraftTimer=null},900)}
   if(draftComplete())toast('Rosa del Pisa completa: 11 titolari + 3 riserve.');
  };

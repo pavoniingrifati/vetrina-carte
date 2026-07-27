@@ -14,9 +14,11 @@ check('Esiste il calcolo impatto candidato',draftCode.includes('function draftCa
 check('Esiste l’analisi delle lacune della rosa',draftCode.includes('function renderDraftAnalysis'));
 check('Annulla ultima scelta è stato rimosso',!draftCode.includes('undoLastDraftPlacement')&&!draftCode.includes('undoDraftBtn')&&!draftCode.includes('Annulla ultima scelta'));
 check('Il nuovo markup non crea il secondo pulsante centrale',!draftCode.slice(draftCode.indexOf('function showDraft(){')).includes('id="draftRollBtnCenter"'));
-check('Le tre modalità caricano il nuovo CSS', ['campionato.html','campionato-real.html','tricolore-pisa.html'].every(file=>read(file).includes('assets/season/draft-improvements.css?v=20260727-lock1')));
-check('Le tre modalità invalidano la cache del nuovo JS', ['campionato.html','campionato-real.html','tricolore-pisa.html'].every(file=>read(file).includes('assets/season/04-setup-and-draft.js?v=20260727-lock1')));
-check('CSS contiene status bar, analisi e slot consigliato, senza comando annulla',css.includes('.season-draft-statusbar')&&css.includes('.season-draft-analysis')&&css.includes('.season-field-slot.recommended')&&!css.includes('.season-undo-draft'));
+check('Le tre modalità caricano il nuovo CSS', ['campionato.html','campionato-real.html','tricolore-pisa.html'].every(file=>read(file).includes('assets/season/draft-improvements.css?v=20260727-flow1')));
+check('Le tre modalità invalidano la cache del nuovo JS', ['campionato.html','campionato-real.html','tricolore-pisa.html'].every(file=>read(file).includes('assets/season/04-setup-and-draft.js?v=20260727-flow1')));
+check('CSS contiene analisi, slot consigliato e destinazioni scroll, senza comando annulla',css.includes('.season-draft-analysis')&&css.includes('.season-field-slot.recommended')&&css.includes('scroll-margin-top')&&!css.includes('.season-undo-draft'));
+check('Il click sul giocatore centra il campo',draftCode.includes("scrollDraftIntoView('.season-pitch-wrap','center')"));
+check('Dopo il posizionamento si torna al blocco Roll',draftCode.includes("scrollDraftIntoView('.season-draft-main-top','center')"));
 
 // Smoke test del rendering con un ambiente minimo.
 const players=[
@@ -61,11 +63,11 @@ vm.createContext(context);
 try{
  vm.runInContext(draftCode,context);
  context.showDraft();
- check('Smoke render genera status bar',context.screen.innerHTML.includes('season-draft-statusbar'));
+ check('Smoke render non genera la barra superiore duplicata',!context.screen.innerHTML.includes('season-draft-statusbar'));
  check('Smoke render genera un solo pulsante pack',(context.screen.innerHTML.match(/id="draftRollBtn"/g)||[]).length===1&&!context.screen.innerHTML.includes('draftRollBtnCenter'));
  check('Smoke render genera il pannello analisi',context.screen.innerHTML.includes('season-draft-analysis'));
  context.state.draft.clubId='c1';context.state.draft.candidates=['p1','p2','p3'];context.showDraft();
- check('Con allenatore normale le card mostrano impatto ma non consigli',context.screen.innerHTML.includes('season-candidate-impact')&&!context.screen.innerHTML.includes('Migliore scelta')&&!context.screen.innerHTML.includes('season-analysis-recommendation')&&!context.screen.innerHTML.includes('Consigli del Talent scout'));
+ check('Con allenatore normale le card sono compatte e senza statistiche aggiuntive',!context.screen.innerHTML.includes('season-candidate-impact')&&!context.screen.innerHTML.includes('OVR squadra')&&!context.screen.innerHTML.includes('Migliore scelta')&&!context.screen.innerHTML.includes('season-analysis-recommendation')&&!context.screen.innerHTML.includes('Consigli del Talent scout'));
  context.state.draft.pendingPlayerId='p1';context.showDraft();
  check('Con allenatore normale la selezione non mostra slot consigliati',context.screen.innerHTML.includes('season-draft-selection-preview')&&!context.screen.innerHTML.includes('Slot consigliato')&&!context.screen.innerHTML.includes('season-field-slot available recommended'));
  context.state.draft.pendingPlayerId='';context.state.coachType='talent-scout';context.showDraft();
