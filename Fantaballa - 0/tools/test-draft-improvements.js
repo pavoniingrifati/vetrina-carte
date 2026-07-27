@@ -15,11 +15,11 @@ check('Esiste l’analisi delle lacune della rosa',draftCode.includes('function 
 check('Annulla ultima scelta è stato rimosso',!draftCode.includes('undoLastDraftPlacement')&&!draftCode.includes('undoDraftBtn')&&!draftCode.includes('Annulla ultima scelta'));
 check('Il nuovo markup non crea il secondo pulsante centrale',!draftCode.slice(draftCode.indexOf('function showDraft(){')).includes('id="draftRollBtnCenter"'));
 check('Le tre modalità caricano il nuovo CSS', ['campionato.html','campionato-real.html','tricolore-pisa.html'].every(file=>read(file).includes('assets/season/draft-improvements.css?v=20260727-quickpack1')));
-check('Le tre modalità invalidano la cache del nuovo JS', ['campionato.html','campionato-real.html','tricolore-pisa.html'].every(file=>read(file).includes('assets/season/04-setup-and-draft.js?v=20260727-quickpack1')));
+check('Le tre modalità invalidano la cache del nuovo JS', ['campionato.html','campionato-real.html','tricolore-pisa.html'].every(file=>read(file).includes('assets/season/04-setup-and-draft.js?v=20260727-packreveal1')));
 check('CSS contiene analisi, slot consigliato e destinazioni scroll, senza comando annulla',css.includes('.season-draft-analysis')&&css.includes('.season-field-slot.recommended')&&css.includes('scroll-margin-top')&&!css.includes('.season-undo-draft'));
 check('Il click sul giocatore centra il campo',draftCode.includes("scrollDraftIntoView('.season-pitch-wrap','center')"));
 check('Dopo il posizionamento si torna al blocco Roll',draftCode.includes("scrollDraftIntoView('.season-draft-main-top','center')"));
-check('Il pack non usa più il reveal bloccante',!draftCode.slice(draftCode.indexOf('async function drawDraft')).split('function scrollDraftIntoView')[0].includes('playSeasonPackReveal'));
+check('Il pulsante Apri pack club avvia il reveal completo',draftCode.slice(draftCode.indexOf('async function drawDraft')).split('function scrollDraftIntoView')[0].includes('await playSeasonPackReveal(possible,finalClubId,useReroll)'));
 check('Il reveal rapido anima club e carte senza nasconderle',draftCode.includes('function animateDraftClubReveal')&&draftCode.includes('quick-pack-card-reveal')&&css.includes('@keyframes quickPackCardSettle')&&!css.includes('.quick-pack-card-reveal{pointer-events:none'));
 
 // Smoke test del rendering con un ambiente minimo.

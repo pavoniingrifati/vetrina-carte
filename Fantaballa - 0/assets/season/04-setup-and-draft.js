@@ -621,7 +621,11 @@ async function drawDraft(useReroll=false){
  const finalClub=clubById(finalClubId);
  draftRolling=true;
  state.draft.pendingPlayerId='';
+ const rollButton=document.getElementById('draftRollBtn');
+ if(rollButton){rollButton.disabled=true;rollButton.textContent='Apertura pack…'}
  try{
+   playDraftPackSound();
+   await playSeasonPackReveal(possible,finalClubId,useReroll);
    if(coachIs('three-five-two')&&!state.draft.roster.length&&!useReroll){
      if(!buildThreeFiveTwoOpeningRoster(finalClubId))throw new Error(`Impossibile generare la rosa 3-5-2 da ${finalClub?.name||finalClubId}`);
      draftRolling=false;
@@ -644,6 +648,7 @@ async function drawDraft(useReroll=false){
    animateDraftCandidateReveal(drawn);
    requestAnimationFrame(()=>window.scrollTo({top:savedScrollY,left:0,behavior:'auto'}));
  }catch(error){
+   modalRoot.innerHTML='';
    console.error('Errore apertura pack club campionato',error);
    state.draft.clubId='';
    state.draft.candidates=[];
