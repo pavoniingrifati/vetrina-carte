@@ -473,35 +473,16 @@ function jerseyColorRgb(color){
  }
  return null;
 }
-function relativeLuminance(rgb){
- const srgb=rgb.map(v=>{const x=Math.max(0,Math.min(255,Number(v)||0))/255;return x<=0.03928?x/12.92:Math.pow((x+0.055)/1.055,2.4)});
- return 0.2126*srgb[0]+0.7152*srgb[1]+0.0722*srgb[2];
-}
-function contrastRatio(rgbA,rgbB){
- const l1=relativeLuminance(rgbA),l2=relativeLuminance(rgbB),hi=Math.max(l1,l2),lo=Math.min(l1,l2);
- return (hi+0.05)/(lo+0.05);
-}
 function jerseyNumberColor(color){
  const rgb=jerseyColorRgb(color);
- if(!rgb)return '#10243a';
- const white=[255,255,255],dark=[16,36,58],gold=[255,233,108];
- const whiteContrast=contrastRatio(rgb,white);
- const darkContrast=contrastRatio(rgb,dark);
- const goldContrast=contrastRatio(rgb,gold);
- if(whiteContrast>=darkContrast && whiteContrast>=goldContrast)return '#FFFFFF';
- if(goldContrast>darkContrast+0.35 && goldContrast>=4.2)return '#ffe96c';
- return '#10243a';
-}
-function jerseyNumberOutlineColor(numberColor){
- const rgb=jerseyColorRgb(numberColor);
- if(!rgb)return 'rgba(247,241,222,.96)';
- return relativeLuminance(rgb) > 0.55 ? 'rgba(16,36,58,.96)' : 'rgba(247,241,222,.96)';
+ if(!rgb)return '#111111';
+ const brightness=(rgb[0]*299+rgb[1]*587+rgb[2]*114)/1000;
+ return brightness<150?'#FFFFFF':'#111111';
 }
 function renderPlayerJersey(player,extra='',chemistryBonus=0){
  const pal=clubPalette(activeUserClub()); const sub=isSubscriber(player); const currentChem=effectiveChemistryFromBase(player,chemistryBonus); const shownOvr=Math.round(ductilityEffectiveBaseOvr(player)+currentChem+activeOvrBonus(player));
- const numberColor=jerseyNumberColor(pal.b||pal.secondary||pal.a||'#ffffff');
- const outlineColor=jerseyNumberOutlineColor(numberColor);
- return `<span class="season-jersey-wrap ${sub?'subscriber':''} ${extra}" style="--nation-a:${pal.a};--nation-b:${pal.b};--nation-c:${pal.c};--nation-ink:${pal.ink};--jersey-number-color:${numberColor};--jersey-number-outline:${outlineColor}" title="OVR base ${Math.round(ductilityEffectiveBaseOvr(player))} · Intesa attuale ${formatSignedIntesa(currentChem)}"><span class="season-jersey"><span class="season-jersey-number">${shownOvr}</span></span>${sub?'<span class="season-jersey-sub-star">★</span>':''}</span>`
+ const numberColor=jerseyNumberColor(pal.b||pal.secondary||pal.a);
+ return `<span class="season-jersey-wrap ${sub?'subscriber':''} ${extra}" style="--nation-a:${pal.a};--nation-b:${pal.b};--nation-c:${pal.c};--nation-ink:${pal.ink};--jersey-number-color:${numberColor}" title="OVR base ${Math.round(ductilityEffectiveBaseOvr(player))} · Intesa attuale ${formatSignedIntesa(currentChem)}"><span class="season-jersey"><span class="season-jersey-number">${shownOvr}</span></span>${sub?'<span class="season-jersey-sub-star">★</span>':''}</span>`
 }
 
 function persistSetupIdentity(teamInput,coachInput,saveState=true){
