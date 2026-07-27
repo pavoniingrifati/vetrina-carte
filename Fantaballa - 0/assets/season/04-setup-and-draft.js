@@ -168,6 +168,86 @@ function draftCandidateChemPreview(player){
  const preview=draftChemistry(previewEntries);
  return preview.playerBonus[String(player.id)]||0;
 }
+function draftCandidateBestSlot(player){
+ const slots=availableStarterSlotsForPlayer(player);
+ if(!slots.length)return null;
+ const natural=slots.filter(slot=>naturalCompatible(player,slot.code));
+ const roleMatches=slots.filter(slot=>POSITION_ROLE[slot.code]===roleOf(player));
+ const pool=natural.length?natural:(roleMatches.length?roleMatches:slots);
+ const openCounts={};openStarterSlots().forEach(slot=>openCounts[slot.code]=(openCounts[slot.code]||0)+1);
+ return [...pool].sort((a,b)=>(openCounts[a.code]||0)-(openCounts[b.code]||0)||String(a.code).localeCompare(String(b.code),'it'))[0]||slots[0];
+}
+function draftCandidateImpact(player){
+ const currentChem=draftChemistry();
+ const overallBefore=draftEffectiveAverageOvr(currentChem);
+ const slots=availableStarterSlotsForPlayer(player);
+ const canStart=slots.length>0;
+ const canBench=benchEntries().length<3;
+ if(canStart&&!benchDraftPhase()){
+   const previewEntries=[...starterEntries(),{playerId:String(player.id),player,bench:false}];
+   const previewChem=draftChemistry(previewEntries);
+   const overallAfter=draftEffectiveAverageOvr(previewChem);
+   const bestSlot=draftCandidateBestSlot(player);
+   return {mode:'starter',canStart,canBench,bestSlot,overallBefore,overallAfter,overallDelta:overallAfter-overallBefore,chemBefore:currentChem.score,chemAfter:previewChem.score,chemDelta:previewChem.score-currentChem.score,playerChem:previewChem.playerBonus[String(player.id)]||0,score:overallAfter+(previewChem.score*.075)+(naturalCompatible(player,bestSlot?.code)?1.25:0)};
+ }
+ return {mode:'bench',canStart,canBench,bestSlot:null,overallBefore,overallAfter:overallBefore,overallDelta:0,chemBefore:currentChem.score,chemAfter:currentChem.score,chemDelta:0,playerChem:0,score:(Number(player?.ovr)||0)+(canBench?0:-1000)};
+}
+function draftBestCandidateId(){
+ const candidates=state.draft.candidates.map(playerById).filter(Boolean).filter(draftPlayerIsValid);
+ if(!candidates.length)return'';
+ return String([...candidates].sort((a,b)=>draftCandidateImpact(b).score-draftCandidateImpact(a).score||(Number(b.ovr)||0)-(Number(a.ovr)||0))[0]?.id||'');
+}
+function draftNeeds(){
+ const counts={};openStarterSlots().forEach(slot=>counts[slot.code]=(counts[slot.code]||0)+1);
+ return Object.entries(counts).map(([code,count])=>({code,count,label:count>1?`${code} ×${count}`:code}));
+}
+function draftAnalysisWarnings(chem=draftChemistry()){
+ const warnings=[];
+ const needs=draftNeeds();
+ if(needs.some(item=>item.code==='P'))warnings.push('Manca ancora il portiere titolare.');
+ if(starterEntries().length>=4&&chem.score<30)warnings.push('Intesa bassa: prova ad abbinare nazione, club o giocatori abbonati.');
+ const benchRoles=new Set(benchEntries().map(entry=>roleOf(entry.player)));
+ if(benchEntries().length&&benchEntries().length<3&&!benchRoles.has('D'))warnings.push('Valuta una riserva difensiva per coprire gli imprevisti.');
+ if(starterEntries().length>=9&&benchEntries().length===0)warnings.push('La panchina è ancora vuota: servono 3 riserve per completare il draft.');
+ if(!warnings.length)warnings.push(draftComplete()?'Rosa completa: controlla i valori e avvia il campionato.':'La costruzione della rosa è equilibrata. Continua con il prossimo pack.');
+ return warnings.slice(0,3);
+}
+function renderDraftStatusBar({starters=starterEntries().length,bench=benchEntries().length,chem=draftChemistry(),effective=draftEffectiveAverageOvr(chem)}={}){
+ const total=starters+bench;
+ return `<section class="season-draft-statusbar" aria-label="Avanzamento draft"><div><span>Scelta</span><b>${Math.min(14,total+1)}/14</b></div><div><span>Titolari</span><b>${starters}/11</b></div><div><span>Riserve</span><b>${bench}/3</b></div><div><span>OVR squadra</span><b>${starters?effective.toFixed(1):'—'}</b></div><div><span>Intesa</span><b>${chem.score}/100</b></div><div><span>Re-roll</span><b>${state.draft.rerolls}</b></div></section>`;
+}
+function renderDraftSelectionPreview(){
+ const player=playerById(state.draft.pendingPlayerId);if(!player)return'';
+ const impact=draftCandidateImpact(player),bestSlot=impact.bestSlot;
+ const overallBefore=starterEntries().length?impact.overallBefore.toFixed(1):'—';
+ const overallAfter=impact.mode==='starter'?impact.overallAfter.toFixed(1):overallBefore;
+ const freeBench=[1,2,3].map(i=>`bench-${i}`).find(id=>!benchEntries().some(entry=>entry.slotId===id));
+ return `<section class="season-draft-selection-preview" aria-live="polite"><div class="season-draft-selection-player">${renderMiniAvatar(player,'small')}<div><span>Giocatore selezionato</span><b>${esc(player.name)} · OVR ${esc(player.ovr)}</b><small>${esc(player.Position)}${bestSlot?` · Slot consigliato ${esc(bestSlot.code)}`:' · Destinazione panchina'}</small></div></div><div class="season-draft-impact"><span><small>OVR squadra</small><b>${overallBefore} → ${overallAfter}</b></span><span><small>Intesa</small><b>${impact.chemBefore} → ${impact.chemAfter}</b></span><span><small>Bonus giocatore</small><b>${impact.mode==='starter'?`${formatSignedIntesa(impact.playerChem)} INT`:'PAN'}</b></span></div>${freeBench?`<button id="draftBenchQuickBtn" class="season-draft-quick-bench" type="button">Metti in panchina</button>`:''}</section>`;
+}
+function canUndoDraftPlacement(){return !coachIs('three-five-two')&&Array.isArray(state?.draft?.roster)&&state.draft.roster.length>0}
+function undoLastDraftPlacement(){
+ if(!canUndoDraftPlacement())return toast('Nessuna scelta da annullare.');
+ const saved=state.draft.lastPlacement&&typeof state.draft.lastPlacement==='object'?state.draft.lastPlacement:null;
+ let index=-1;
+ if(saved?.playerId)index=state.draft.roster.findIndex(entry=>String(entry.playerId)===String(saved.playerId)&&(!saved.slotId||String(entry.slotId)===String(saved.slotId)));
+ if(index<0)index=state.draft.roster.length-1;
+ const [removed]=state.draft.roster.splice(index,1);if(!removed)return;
+ const clubId=String(saved?.clubId||removed.player?.club||playerById(removed.playerId)?.club||'');
+ state.draft.clubId=clubId;
+ const restored=(saved?.candidates?.length?saved.candidates:draftCandidatesForClub(clubId).map(player=>String(player.id))).map(String);
+ state.draft.candidates=[...new Set(restored)].filter(id=>draftPlayerIsValid(playerById(id)));
+ if(!state.draft.candidates.length&&clubId)state.draft.candidates=draftCandidatesForClub(clubId).map(player=>String(player.id));
+ state.draft.pendingPlayerId='';
+ state.draft.lastPlacement=null;
+ state.draft.openingClubShown=true;
+ mobileDraftTab='players';
+ save();render();toast(`${removed.player?.name||'Ultima scelta'} rimossa. Il pack precedente è stato ripristinato.`);
+}
+function renderDraftAnalysis(chem=draftChemistry()){
+ const starters=starterEntries().length,bench=benchEntries().length,effective=draftEffectiveAverageOvr(chem),needs=draftNeeds(),warnings=draftAnalysisWarnings(chem),bestId=draftBestCandidateId(),best=playerById(bestId),bestImpact=best?draftCandidateImpact(best):null;
+ const needMarkup=needs.length?needs.map(item=>`<span class="season-analysis-need">${esc(item.label)}</span>`).join(''):'<span class="season-analysis-complete">Tutti gli slot titolari sono coperti</span>';
+ return `<div class="season-draft-analysis"><div class="season-analysis-title"><div><span>Analisi rosa</span><b>${draftComplete()?'Pronta per il campionato':'Cosa manca alla squadra'}</b></div><span class="season-analysis-score">${starters?effective.toFixed(1):'—'}</span></div><div class="season-analysis-metrics"><div><span>Intesa</span><b>${chem.score}/100</b></div><div><span>Titolari</span><b>${starters}/11</b></div><div><span>Panchina</span><b>${bench}/3</b></div><div><span>Bonus INT</span><b>${formatSignedIntesa(chem.totalBonus)}</b></div></div><section class="season-analysis-block"><h3>Posizioni mancanti</h3><div class="season-analysis-needs">${needMarkup}</div></section>${best&&bestImpact?`<section class="season-analysis-block season-analysis-recommendation"><span>Scelta consigliata dal pack</span><b>${esc(best.name)} · ${esc(best.Position)}</b><small>${bestImpact.mode==='starter'?`OVR squadra ${starters?bestImpact.overallBefore.toFixed(1):'—'} → ${bestImpact.overallAfter.toFixed(1)} · Intesa ${bestImpact.chemBefore} → ${bestImpact.chemAfter}`:`Migliore opzione disponibile per la panchina · OVR ${esc(best.ovr)}`}</small></section>`:''}<section class="season-analysis-block"><h3>Indicazioni</h3><ul>${warnings.map(text=>`<li>${esc(text)}</li>`).join('')}</ul></section><div class="season-analysis-actions"><button id="undoDraftBtn" class="season-undo-draft" type="button" ${canUndoDraftPlacement()?'':'disabled'}>↶ Annulla ultima scelta</button></div></div>`;
+}
 function renderDraftChemistryCard(chem=draftChemistry()){
  const effective=draftEffectiveAverageOvr(chem);
  return `<div class="season-chemistry-card"><div class="season-chemistry-head"><span>Intesa titolari</span><b>${chem.score}/100</b></div><div class="season-chemistry-bar"><i style="width:${chem.score}%"></i></div><div class="season-chemistry-total"><span>Bonus totale</span><b>${formatSignedIntesa(chem.totalBonus)}</b></div><div class="season-chemistry-breakdown"><span>NAZ ${formatSignedIntesa(chem.baseTotalBonus)}</span><span>CLUB ${formatSignedIntesa(chem.clubTotalBonus)}</span><span>ABB ${formatSignedIntesa(chem.subscriberTotalBonus)}</span><span>ALL ${formatSignedIntesa(chem.coachTotalBonus)}</span></div><div class="season-chemistry-effective"><span>OVR titolari con intesa</span><b>${chem.players.length?effective.toFixed(1):'—'}</b></div><small>Le 3 riserve non aumentano l’intesa finché restano in panchina.</small></div>`;
@@ -556,7 +636,7 @@ async function drawDraft(useReroll=false){
  state.draft.candidates=[];
  save();
  playDraftPackSound();
- document.querySelectorAll('#draftRollBtn,#draftRollBtnCenter').forEach(button=>{
+ document.querySelectorAll('#draftRollBtn').forEach(button=>{
    button.disabled=true;
    button.setAttribute('aria-busy','true');
  });
@@ -599,23 +679,26 @@ function placeDraftStarter(slotId){
  const player=playerById(state.draft.pendingPlayerId),slot=formationSlots().find(s=>s.instanceId===slotId);
  if(!player||!slot||!availableStarterSlotsForPlayer(player).some(s=>s.instanceId===slotId))return;
  if(lastPlacedDraftTimer){clearTimeout(lastPlacedDraftTimer);lastPlacedDraftTimer=null}
+ const impact=draftCandidateImpact(player),entry={playerId:String(player.id),slotId:slot.instanceId,slot:slot.code,bench:false,player:{...player}};
+ state.draft.lastPlacement={playerId:String(player.id),slotId:slot.instanceId,clubId:String(state.draft.clubId||player.club||''),candidates:[...state.draft.candidates]};
  lastPlacedDraftSlotId=slot.instanceId;
- state.draft.roster.push({playerId:String(player.id),slotId:slot.instanceId,slot:slot.code,bench:false,player:{...player}});
- finishDraftPlacement(true)
+ state.draft.roster.push(entry);
+ finishDraftPlacement(true,{player,slotLabel:slot.code,chemAfter:impact.chemAfter})
 }
 function placeDraftBench(slotId){
  const player=playerById(state.draft.pendingPlayerId);
  if(!player||usedDraftPlayerIds().has(String(player.id)))return;
  const index=Number(String(slotId).replace(/\D/g,''));
  if(!index||state.draft.roster.some(r=>r.bench&&r.slotId===slotId)||benchEntries().length>=3)return;
+ state.draft.lastPlacement={playerId:String(player.id),slotId,clubId:String(state.draft.clubId||player.club||''),candidates:[...state.draft.candidates]};
  state.draft.roster.push({playerId:String(player.id),slotId,slot:`PAN${index}`,bench:true,player:{...player}});
- finishDraftPlacement(false)
+ finishDraftPlacement(false,{player,slotLabel:`Panchina ${index}`,chemAfter:draftChemistry().score})
 }
-function finishDraftPlacement(showPitchAnimation=false){
+function finishDraftPlacement(showPitchAnimation=false,placed=null){
  state.draft.pendingPlayerId='';
  state.draft.clubId='';
  state.draft.candidates=[];
- mobileDraftTab=showPitchAnimation?'pitch':(draftComplete()?'roster':'players');
+ mobileDraftTab=showPitchAnimation?'field':(draftComplete()?'roster':'players');
  save();
  render();
  if(showPitchAnimation&&lastPlacedDraftSlotId){
@@ -626,7 +709,8 @@ function finishDraftPlacement(showPitchAnimation=false){
      lastPlacedDraftTimer=null;
    },900)
  }
- if(draftComplete())toast('Rosa completa: 11 titolari + 3 riserve.')
+ if(draftComplete())toast('Rosa completa: 11 titolari + 3 riserve.');
+ else if(placed?.player)toast(`${placed.player.name} inserito: ${placed.slotLabel}${placed.chemAfter!==undefined?` · Intesa ${placed.chemAfter}/100`:''}.`);
 }
 async function resetSeasonDraft(){
  const confirmed=await openConfirm({title:'Azzera il draft',message:'La rosa scelta verrà cancellata, ma squadra, allenatore e modulo resteranno invariati.',confirmText:'Azzera draft',danger:true});if(!confirmed)return;
@@ -653,8 +737,9 @@ function renderSeasonPitch(){
  const assigned=new Map(starterEntries().map(r=>[String(r.slotId),r]));
  const pending=playerById(state.draft.pendingPlayerId);
  const available=new Set(pending?availableStarterSlotsForPlayer(pending).map(s=>s.instanceId):[]);
+ const recommendedId=pending?draftCandidateBestSlot(pending)?.instanceId:'';
  const chemistry=draftChemistry();
- return `<div class="season-pitch-panel"><div class="season-pitch-title"><b>Formazione ${esc(state.formation)}</b><span>Regole Gary MEDel · Position precise</span></div><div class="season-pitch-shell">${renderPitchBoardStrip()}<div class="season-pitch-middle">${renderPitchBoardSide('left')}<div class="season-pitch-wrap"><svg class="season-pitch-svg" viewBox="0 0 100 120" preserveAspectRatio="none" aria-hidden="true"><rect x="0.8" y="0.8" width="98.4" height="118.4" fill="none" stroke="rgba(255,255,255,.8)" stroke-width=".8"/><rect x="21" y="1" width="58" height="18" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".6"/><rect x="34" y="1" width="32" height="8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><rect x="43" y="1" width="14" height="3" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".5"/><rect x="21" y="101" width="58" height="18" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".6"/><rect x="34" y="111" width="32" height="8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><rect x="43" y="116" width="14" height="3" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".5"/><line x1="0.8" y1="60" x2="99.2" y2="60" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><circle cx="50" cy="60" r="12.2" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><circle cx="50" cy="60" r=".7" fill="rgba(255,255,255,.75)"/><circle cx="50" cy="18" r=".7" fill="rgba(255,255,255,.75)"/><circle cx="50" cy="102" r=".7" fill="rgba(255,255,255,.75)"/><path d="M40,19 A10,10 0 0 0 60,19" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><path d="M40,101 A10,10 0 0 1 60,101" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><path d="M0.8,5 A4,4 0 0 0 4.8,0.8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><path d="M99.2,5 A4,4 0 0 1 95.2,0.8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><path d="M0.8,115 A4,4 0 0 1 4.8,119.2" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><path d="M99.2,115 A4,4 0 0 0 95.2,119.2" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/></svg>${formationSlots().map(slot=>{const entry=assigned.get(slot.instanceId),isAvailable=available.has(slot.instanceId);const sub=entry&&isSubscriber(entry.player),creator=entry&&isCreator(entry.player);const chemBonus=entry?(chemistry.playerBonus[String(entry.player.id)]||0):0;return `<button type="button" class="season-field-slot ${entry?'filled':''} ${isAvailable?'available':''} ${sub?'subscriber-player':''} ${creator?'creator-player':''} ${slot.instanceId===lastPlacedDraftSlotId?'just-placed':''}" data-starter-slot="${slot.instanceId}" data-position="${slot.code}" style="left:${slot.x}%;top:${slot.y}%">${entry?`${renderPlayerJersey(entry.player,'',chemBonus)}<span class="season-slot-name">${sub?'<span class="season-field-sub-star">★</span>':''}${creator?'<span class="season-inline-creator">CR</span>':''}${esc(entry.player.name)}</span><span class="season-slot-role">${esc(slot.code)}</span><span class="season-slot-chem ${chemBonus>0?'positive':''}">${formatSignedIntesa(chemBonus)} INT</span>`:`<span class="season-slot-badge">${esc(slot.code)}</span><span class="season-slot-name">${esc(slot.code)}</span>`}</button>`}).join('')}</div>${renderPitchBoardSide('right')}</div>${renderPitchBoardStrip()}</div><div class="season-pitch-help">${pending?`Hai scelto <b>${esc(pending.name)}</b>: clicca uno degli slot illuminati compatibili oppure una casella panchina.`:'Rolla un club, scegli un giocatore e poi clicca uno slot del campo o della panchina.'}</div>${renderSeasonBench()}</div>`
+ return `<div class="season-pitch-panel">${renderDraftSelectionPreview()}<div class="season-pitch-title"><b>Formazione ${esc(state.formation)}</b><span>${pending?'Scegli uno slot illuminato':'Posizioni precise · Regole Gary MEDel'}</span></div><div class="season-pitch-shell">${renderPitchBoardStrip()}<div class="season-pitch-middle">${renderPitchBoardSide('left')}<div class="season-pitch-wrap"><svg class="season-pitch-svg" viewBox="0 0 100 120" preserveAspectRatio="none" aria-hidden="true"><rect x="0.8" y="0.8" width="98.4" height="118.4" fill="none" stroke="rgba(255,255,255,.8)" stroke-width=".8"/><rect x="21" y="1" width="58" height="18" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".6"/><rect x="34" y="1" width="32" height="8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><rect x="43" y="1" width="14" height="3" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".5"/><rect x="21" y="101" width="58" height="18" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".6"/><rect x="34" y="111" width="32" height="8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><rect x="43" y="116" width="14" height="3" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".5"/><line x1="0.8" y1="60" x2="99.2" y2="60" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><circle cx="50" cy="60" r="12.2" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><circle cx="50" cy="60" r=".7" fill="rgba(255,255,255,.75)"/><circle cx="50" cy="18" r=".7" fill="rgba(255,255,255,.75)"/><circle cx="50" cy="102" r=".7" fill="rgba(255,255,255,.75)"/><path d="M40,19 A10,10 0 0 0 60,19" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><path d="M40,101 A10,10 0 0 1 60,101" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><path d="M0.8,5 A4,4 0 0 0 4.8,0.8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><path d="M99.2,5 A4,4 0 0 1 95.2,0.8" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><path d="M0.8,115 A4,4 0 0 1 4.8,119.2" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/><path d="M99.2,115 A4,4 0 0 0 95.2,119.2" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".55"/></svg>${formationSlots().map(slot=>{const entry=assigned.get(slot.instanceId),isAvailable=available.has(slot.instanceId),isRecommended=isAvailable&&slot.instanceId===recommendedId,isUnavailable=Boolean(pending&&!entry&&!isAvailable);const sub=entry&&isSubscriber(entry.player),creator=entry&&isCreator(entry.player);const chemBonus=entry?(chemistry.playerBonus[String(entry.player.id)]||0):0;return `<button type="button" class="season-field-slot ${entry?'filled':''} ${isAvailable?'available':''} ${isRecommended?'recommended':''} ${isUnavailable?'unavailable':''} ${sub?'subscriber-player':''} ${creator?'creator-player':''} ${slot.instanceId===lastPlacedDraftSlotId?'just-placed':''}" data-starter-slot="${slot.instanceId}" data-position="${slot.code}" style="left:${slot.x}%;top:${slot.y}%" ${isRecommended?'aria-label="Slot consigliato"':''}>${entry?`${renderPlayerJersey(entry.player,'',chemBonus)}<span class="season-slot-name">${sub?'<span class="season-field-sub-star">★</span>':''}${creator?'<span class="season-inline-creator">CR</span>':''}${esc(entry.player.name)}</span><span class="season-slot-role">${esc(slot.code)}</span><span class="season-slot-chem ${chemBonus>0?'positive':''}">${formatSignedIntesa(chemBonus)} INT</span>`:`<span class="season-slot-badge">${esc(slot.code)}</span><span class="season-slot-name">${isRecommended?'Consigliato':esc(slot.code)}</span>`}</button>`}).join('')}</div>${renderPitchBoardSide('right')}</div>${renderPitchBoardStrip()}</div><div class="season-pitch-help">${pending?`Hai scelto <b>${esc(pending.name)}</b>: gli slot compatibili sono illuminati. Quello verde è il posizionamento consigliato.`:'Apri un pack, scegli un giocatore e posizionalo in campo oppure in panchina.'}</div>${renderSeasonBench()}</div>`
 }
 function renderSeasonBench(){
  const bench=benchEntries(),pending=playerById(state.draft.pendingPlayerId);
@@ -788,10 +873,11 @@ function draftCandidateOvrStyle(ovr){
 
 function renderDraftCandidates(){
  if(draftRolling)return '<div class="season-empty">Apertura del pacchetto club…</div>';
- if(!state.draft.clubId)return '<div class="season-empty">Premi <b>Apri pack club</b>. Verranno mostrati tutti i giocatori compatibili appartenenti al club estratto. Più l’OVR è alto, più il box diventa scuro.</div>';
+ if(!state.draft.clubId)return '<div class="season-empty">Premi <b>Apri pack club</b>. Vedrai tutti i giocatori compatibili del club estratto e il loro impatto previsto sulla squadra.</div>';
  const candidates=sortPlayersByRole(state.draft.candidates.map(playerById).filter(Boolean));
  if(!candidates.length)return '<div class="season-empty">Nessun giocatore valido in questo club. Usa il re-roll.</div>';
- return candidates.map((p,index)=>{const rawOvr=Math.max(0,Number(p.ovr)||0),ovrScaleMax=state?.competitionVariant==='legend'?116:100,ovr=Math.max(0,Math.min(100,(rawOvr/ovrScaleMax)*100));const sub=isSubscriber(p),creator=isCreator(p);const chemPreview=draftCandidateChemPreview(p);const rarity=draftRarityMeta(p.ovr);const ovrTier=ovrTierClass(p.ovr);return `<button type="button" class="season-candidate rarity-${rarity.key} ${ovrTier} ${sub?'subscriber':''} ${creator?'creator':''} ${state.draft.pendingPlayerId===String(p.id)?'active':''}" data-candidate="${esc(p.id)}" data-ovr="${rawOvr}" style="${draftCandidateOvrStyle(p.ovr)}" aria-label="${esc(p.name)}, overall ${esc(p.ovr)}, rarità ${esc(rarity.label)}, intesa ${chemPreview}"><span class="season-candidate-rank">#${index+1}</span>${renderMiniAvatar(p)}<span class="season-candidate-body"><span class="season-candidate-name">${esc(p.name)}</span><span class="season-candidate-meter" aria-hidden="true"><i style="width:${ovr}%"></i></span><span class="season-candidate-meta"><span class="season-chip position">${esc(p.Position)}</span><span class="season-rarity-badge">${esc(rarity.label)}</span>${sub?'<span class="season-chip sub">ABBONATO</span>':''}${creator?'<span class="season-chip creator">CREATOR</span>':''}<span class="season-chip chemistry ${benchDraftPhase()?'bench':''}">${benchDraftPhase()?'PAN':`${formatSignedIntesa(chemPreview)} INT`}</span></span></span><span class="season-chip ovr ${ovrTier}">${esc(p.ovr)}</span></button>`}).join('')
+ const bestId=draftBestCandidateId();
+ return candidates.map(p=>{const rawOvr=Math.max(0,Number(p.ovr)||0),sub=isSubscriber(p),creator=isCreator(p),impact=draftCandidateImpact(p),rarity=draftRarityMeta(p.ovr),ovrTier=ovrTierClass(p.ovr),recommended=String(p.id)===bestId;const impactText=impact.mode==='starter'?`OVR squadra ${starterEntries().length?impact.overallBefore.toFixed(1):'—'} → ${impact.overallAfter.toFixed(1)} · Intesa ${impact.chemBefore} → ${impact.chemAfter}`:`Panchina · OVR ${rawOvr}`;return `<button type="button" class="season-candidate rarity-${rarity.key} ${ovrTier} ${sub?'subscriber':''} ${creator?'creator':''} ${recommended?'recommended':''} ${state.draft.pendingPlayerId===String(p.id)?'active':''}" data-candidate="${esc(p.id)}" data-ovr="${rawOvr}" style="${draftCandidateOvrStyle(p.ovr)}" aria-label="${esc(p.name)}, overall ${esc(p.ovr)}, ${recommended?'scelta consigliata, ':''}${esc(impactText)}">${renderMiniAvatar(p)}<span class="season-candidate-body">${recommended?'<span class="season-candidate-best">Migliore scelta</span>':''}<span class="season-candidate-name">${esc(p.name)}</span><span class="season-candidate-meta"><span class="season-chip position">${esc(p.Position)}</span><span class="season-rarity-badge">${esc(rarity.label)}</span>${sub?'<span class="season-chip sub">ABBONATO</span>':''}${creator?'<span class="season-chip creator">CREATOR</span>':''}<span class="season-chip chemistry ${impact.mode==='bench'?'bench':''}">${impact.mode==='starter'?`${formatSignedIntesa(impact.playerChem)} INT`:'PAN'}</span></span><span class="season-candidate-impact">${esc(impactText)}</span></span><span class="season-chip ovr ${ovrTier}"><small>OVR</small>${esc(p.ovr)}</span></button>`}).join('')
 }
 function renderRosterMini(){
  const rows=rosterPlayers();
@@ -868,53 +954,51 @@ function showDraft(){
  const chemistry=draftChemistry();
  const effectiveAverage=draftEffectiveAverageOvr(chemistry);
  const rollDisabled=draftRolling||draftComplete()||(hasPack&&!canReroll);
- const rerollWord=state.draft.rerolls===1?'RE-ROLL DISPONIBILE':'RE-ROLL DISPONIBILI';
- const rollText=draftRolling?'Apertura pack…':!hasPack?'Rolla il club 🎲':state.draft.rerolls>0?`Re-rolla · ${state.draft.rerolls} rimasti 🎲`:'Re-roll terminati';
- const centerRollTitle=draftRolling?'APERTURA PACK…':!hasPack?'ROLLA IL CLUB':state.draft.rerolls>0?'RE-ROLLA IL CLUB':'RE-ROLL TERMINATI';
- const centerRollSub=draftRolling?'Sto aprendo il pacchetto club':!hasPack?`Estrai uno dei ${CLUBS.length} club`:state.draft.rerolls>0?`${state.draft.rerolls} ${rerollWord}`:'Scegli uno dei giocatori già estratti';
+ const rollText=draftRolling?'Apertura pack…':!hasPack?'Apri pack club 🎲':state.draft.rerolls>0?`Cambia club · ${state.draft.rerolls} re-roll`:'Re-roll terminati';
  const currentDrawClub=drawnClub();
  const drawPal=clubPalette(currentDrawClub||activeUserClub());
  const drawStyle=`--draw-a:${drawPal.a};--draw-b:${drawPal.b};--draw-c:${drawPal.c};--draw-ink:${drawPal.ink}`;
  screen.innerHTML=`<div class="season-draft-page">
+   ${renderDraftStatusBar({starters,bench,chem:chemistry,effective:effectiveAverage})}
    <nav class="season-mobile-tabs" id="seasonMobileTabs" role="tablist" aria-label="Sezioni draft">
      <button type="button" class="season-mobile-tab ${mobileDraftTab==='players'?'active':''}" id="seasonMobilePlayers" data-mobile-tab="players" role="tab" aria-controls="seasonPlayersPane" aria-selected="${mobileDraftTab==='players'?'true':'false'}"><span class="season-mobile-tab-icon" aria-hidden="true">👥</span><span>Giocatori</span><b>${state.draft.candidates.length||0}</b></button>
      <button type="button" class="season-mobile-tab ${mobileDraftTab==='field'?'active':''}" id="seasonMobileField" data-mobile-tab="field" role="tab" aria-controls="seasonFieldPane" aria-selected="${mobileDraftTab==='field'?'true':'false'}"><span class="season-mobile-tab-icon" aria-hidden="true">⚽</span><span>Campo</span><b>${starters}/11</b>${state.draft.pendingPlayerId?'<i class="season-mobile-tab-alert" aria-label="Giocatore da posizionare"></i>':''}</button>
-     <button type="button" class="season-mobile-tab ${mobileDraftTab==='roster'?'active':''}" id="seasonMobileRoster" data-mobile-tab="roster" role="tab" aria-controls="seasonRosterPane" aria-selected="${mobileDraftTab==='roster'?'true':'false'}"><span class="season-mobile-tab-icon" aria-hidden="true">📋</span><span>Rosa</span><b>${total}/14</b></button>
+     <button type="button" class="season-mobile-tab ${mobileDraftTab==='roster'?'active':''}" id="seasonMobileRoster" data-mobile-tab="roster" role="tab" aria-controls="seasonRosterPane" aria-selected="${mobileDraftTab==='roster'?'true':'false'}"><span class="season-mobile-tab-icon" aria-hidden="true">📊</span><span>Analisi</span><b>${total}/14</b></button>
    </nav>
    <div class="season-draft-shell">
      <aside id="seasonPlayersPane" class="season-draft-panel season-draft-panel-left season-mobile-pane ${mobileDraftTab==='players'?'mobile-active':''}" data-mobile-pane="players" role="tabpanel" aria-labelledby="seasonMobilePlayers">
        <div class="season-draft-identity"><div><span>Squadra</span><b>${esc(state.teamName)}</b></div><div><span>Allenatore</span><b>${esc(state.coachName)} · ${esc(coachProfile().name)}</b></div></div>
-       <div class="season-draw-card" style="${drawStyle}"><div class="season-draw-head"><span class="season-draw-mini">Drawn</span><span class="season-draw-pick">Pick ${String(Math.min(14,total+1)).padStart(2,'0')}</span></div><div class="season-draw-row"><div class="season-draw-copy"><div class="season-draw-nation" title="${currentDrawClub?esc(currentDrawClub.name):'Apri il pack'}">${currentDrawClub?esc(currentDrawClub.name):'Apri il pack'}</div></div></div></div>
-       <div class="season-roll-actions"><button id="draftRollBtn" class="season-roll-btn" ${rollDisabled?'disabled':''}>${rollText}</button><button id="resetDraftBtnDesktop" class="season-roll-reset" type="button">↺ Reset draft</button></div>
-       <div class="season-reroll-note ${hasPack?'active-reroll':'first-roll'}">${hasPack?(state.draft.rerolls>0?`Ti restano ${state.draft.rerolls} re-roll su ${draftRerollLimit}. · `:'Hai terminato i re-roll. · '):''}Le riserve possono essere scelte in qualsiasi momento.</div>
+       <div class="season-draw-card" style="${drawStyle}"><div class="season-draw-head"><span class="season-draw-mini">Club estratto</span><span class="season-draw-pick">Pick ${String(Math.min(14,total+1)).padStart(2,'0')}</span></div><div class="season-draw-row"><div class="season-draw-copy"><div class="season-draw-nation" title="${currentDrawClub?esc(currentDrawClub.name):'Apri il pack'}">${currentDrawClub?esc(currentDrawClub.name):'Nessun club'}</div></div></div></div>
+       <div class="season-roll-actions"><button id="draftRollBtn" class="season-roll-btn" ${rollDisabled?'disabled':''}>${rollText}</button></div>
+       <div class="season-reroll-note ${hasPack?'active-reroll':'first-roll'}">${hasPack?(state.draft.rerolls>0?`Puoi cambiare il club ancora ${state.draft.rerolls} volte su ${draftRerollLimit}. `:'Hai terminato i re-roll. '):'Apri il primo pack per iniziare. '}Le riserve possono essere scelte in qualsiasi momento.</div>
        <div class="season-candidates-head"><span>Scegli un giocatore</span><span>${state.draft.candidates.length||0} validi</span></div>
        <div class="season-candidate-list">${renderDraftCandidates()}</div>
+       <details class="season-draft-more"><summary>Altre opzioni</summary><div><button id="backSetupBtn" type="button">← Torna al modulo</button><button id="resetDraftBtnDesktop" type="button">↺ Azzera draft</button></div></details>
      </aside>
      <main id="seasonFieldPane" aria-labelledby="seasonMobileField" class="season-draft-main season-mobile-pane ${mobileDraftTab==='field'?'mobile-active':''}" data-mobile-pane="field" role="tabpanel">
-       <button id="draftRollBtnCenter" class="season-roll-btn season-roll-btn-center ${hasPack?'is-reroll':'is-first-roll'}" ${rollDisabled?'disabled':''} aria-label="${esc(centerRollTitle)}. ${esc(centerRollSub)}"><span class="season-roll-main">${centerRollTitle} <span aria-hidden="true">🎲</span></span><span class="season-roll-sub">${centerRollSub}</span></button>
        ${renderSeasonPitch()}
      </main>
      <aside id="seasonRosterPane" aria-labelledby="seasonMobileRoster" class="season-draft-panel season-draft-panel-right season-mobile-pane ${mobileDraftTab==='roster'?'mobile-active':''}" data-mobile-pane="roster" role="tabpanel">
-       <div class="season-box-score-head"><div><strong>Box score · ${starters}/11</strong><small class="season-box-score-label">Overall medio titolari</small></div><span class="season-box-score-number">${starters?Math.round(effectiveAverage):0}</span></div>
-       ${renderRosterMini()}
-       ${draftComplete()?`<div class="season-draft-complete"><h3>Rosa pronta</h3><div>11 titolari e 3 riserve selezionati con regole Gary MEDel.</div><button id="startSeasonBtn" class="btn primary">Inizia il campionato</button></div>`:''}
+       ${renderDraftAnalysis(chemistry)}
+       ${draftComplete()?`<div class="season-draft-complete"><h3>Rosa pronta</h3><div>11 titolari e 3 riserve selezionati.</div><button id="startSeasonBtn" class="btn primary">Inizia il campionato</button></div>`:''}
      </aside>
    </div>
+   ${state.draft.pendingPlayerId?`<div class="season-mobile-selection-bar"><span>${esc(playerById(state.draft.pendingPlayerId)?.name||'Giocatore')} selezionato</span><button type="button" id="mobileGoFieldBtn">Vai al campo →</button></div>`:''}
  </div>`;
  bindMobileDraftTabs();
  document.querySelectorAll('[data-candidate]').forEach(button=>button.onclick=()=>selectDraftCandidate(button.dataset.candidate));
  document.querySelectorAll('.season-field-slot.available').forEach(button=>button.onclick=()=>placeDraftStarter(button.dataset.starterSlot));
  document.querySelectorAll('.season-bench-slot.available').forEach(button=>button.onclick=()=>placeDraftBench(button.dataset.benchSlot));
+ const quickBench=document.getElementById('draftBenchQuickBtn');if(quickBench)quickBench.onclick=()=>{const free=[1,2,3].map(i=>`bench-${i}`).find(id=>!benchEntries().some(entry=>entry.slotId===id));if(free)placeDraftBench(free)};
  const roll=document.getElementById('draftRollBtn');if(roll)roll.onclick=()=>drawDraft(hasPack);
- const rollCenter=document.getElementById('draftRollBtnCenter');if(rollCenter)rollCenter.onclick=()=>drawDraft(hasPack);
  const reset=document.getElementById('resetDraftBtn');if(reset)reset.onclick=resetSeasonDraft;
  const resetDesktop=document.getElementById('resetDraftBtnDesktop');if(resetDesktop)resetDesktop.onclick=resetSeasonDraft;
- const back=document.getElementById('backSetupBtn');if(back)back.onclick=()=>{state.phase='setup';save();render()};
+ const undo=document.getElementById('undoDraftBtn');if(undo)undo.onclick=undoLastDraftPlacement;
+ const back=document.getElementById('backSetupBtn');if(back)back.onclick=backToSeasonSetup;
+ const goField=document.getElementById('mobileGoFieldBtn');if(goField)goField.onclick=()=>setMobileDraftTab('field',true);
  const start=document.getElementById('startSeasonBtn');if(start)start.onclick=finalizeDraft;
  if(draftComplete())setMobileDraftTab('roster',false);
  else if(state.draft.pendingPlayerId&&window.matchMedia('(max-width:860px)').matches)setMobileDraftTab('field',false);
- else if(!window.matchMedia('(max-width:860px)').matches){
-   mobileDraftTab='players';
- }
+ else if(!window.matchMedia('(max-width:860px)').matches)mobileDraftTab='players';
 }
 
