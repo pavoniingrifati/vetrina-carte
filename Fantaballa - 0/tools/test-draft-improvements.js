@@ -15,7 +15,7 @@ check('Esiste l’analisi delle lacune della rosa',draftCode.includes('function 
 check('Esiste annulla ultima scelta',draftCode.includes('function undoLastDraftPlacement'));
 check('Il nuovo markup non crea il secondo pulsante centrale',!draftCode.slice(draftCode.indexOf('function showDraft(){')).includes('id="draftRollBtnCenter"'));
 check('Le tre modalità caricano il nuovo CSS', ['campionato.html','campionato-real.html','tricolore-pisa.html'].every(file=>read(file).includes('assets/season/draft-improvements.css?v=20260727-draft1')));
-check('Le tre modalità invalidano la cache del nuovo JS', ['campionato.html','campionato-real.html','tricolore-pisa.html'].every(file=>read(file).includes('assets/season/04-setup-and-draft.js?v=20260727-draft1')));
+check('Le tre modalità invalidano la cache del nuovo JS', ['campionato.html','campionato-real.html','tricolore-pisa.html'].every(file=>read(file).includes('assets/season/04-setup-and-draft.js?v=20260727-draft2')));
 check('CSS contiene status bar, analisi e slot consigliato',css.includes('.season-draft-statusbar')&&css.includes('.season-draft-analysis')&&css.includes('.season-field-slot.recommended'));
 
 // Smoke test del rendering con un ambiente minimo.
@@ -47,7 +47,7 @@ const context={
  rosterPlayers:()=>context.state.draft.roster.map(entry=>({...entry,player:entry.player||players.find(p=>p.id===entry.playerId)})),
  playerById:id=>players.find(p=>String(p.id)===String(id)),clubById:id=>id==='c1'?{id:'c1',name:'Club Test'}:null,
  activeUserClub:()=>({id:'user',name:'Fantaballa Test'}),clubPalette:()=>({a:'#173f66',b:'#10243a',c:'#fff',ink:'#10243a'}),
- coachIs:()=>false,coachProfile:()=>({name:'Anonimo'}),initialDraftRerollLimit:()=>3,
+ coachIs:id=>context.state.coachType===id,coachProfile:()=>({name:context.state.coachType==='talent-scout'?'Talent scout':'Anonimo'}),initialDraftRerollLimit:()=>3,
  parallelCupChemistryZero:()=>false,parallelCupChemistryMultiplier:()=>1,ductilityEffectiveBaseOvr:p=>Number(p.ovr)||0,
  avg:list=>list.length?list.reduce((a,b)=>a+b,0)/list.length:0,clamp:(n,a,b)=>Math.max(a,Math.min(b,n)),
  esc:value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])),
@@ -65,9 +65,13 @@ try{
  check('Smoke render genera un solo pulsante pack',(context.screen.innerHTML.match(/id="draftRollBtn"/g)||[]).length===1&&!context.screen.innerHTML.includes('draftRollBtnCenter'));
  check('Smoke render genera il pannello analisi',context.screen.innerHTML.includes('season-draft-analysis'));
  context.state.draft.clubId='c1';context.state.draft.candidates=['p1','p2','p3'];context.showDraft();
- check('Le card mostrano impatto e migliore scelta',context.screen.innerHTML.includes('season-candidate-impact')&&context.screen.innerHTML.includes('Migliore scelta'));
+ check('Con allenatore normale le card mostrano impatto ma non consigli',context.screen.innerHTML.includes('season-candidate-impact')&&!context.screen.innerHTML.includes('Migliore scelta')&&!context.screen.innerHTML.includes('season-analysis-recommendation')&&!context.screen.innerHTML.includes('Consigli del Talent scout'));
  context.state.draft.pendingPlayerId='p1';context.showDraft();
- check('La selezione mostra anteprima e slot consigliato',context.screen.innerHTML.includes('season-draft-selection-preview')&&context.screen.innerHTML.includes('recommended'));
+ check('Con allenatore normale la selezione non mostra slot consigliati',context.screen.innerHTML.includes('season-draft-selection-preview')&&!context.screen.innerHTML.includes('Slot consigliato')&&!context.screen.innerHTML.includes('season-field-slot available recommended'));
+ context.state.draft.pendingPlayerId='';context.state.coachType='talent-scout';context.showDraft();
+ check('Il Talent scout mostra migliore scelta e consigli',context.screen.innerHTML.includes('Migliore scelta')&&context.screen.innerHTML.includes('season-analysis-recommendation')&&context.screen.innerHTML.includes('Consigli del Talent scout'));
+ context.state.draft.pendingPlayerId='p1';context.showDraft();
+ check('Il Talent scout mostra lo slot consigliato',context.screen.innerHTML.includes('Slot consigliato')&&context.screen.innerHTML.includes('aria-label="Slot consigliato dal Talent scout"'));
  context.placeDraftStarter('starter-0');
  check('Il posizionamento registra lastPlacement',context.state.draft.roster.length===1&&context.state.draft.lastPlacement?.playerId==='p1');
  context.undoLastDraftPlacement();

@@ -8,10 +8,10 @@ Aggiornamento: 27 luglio 2026
 - Barra superiore compatta con avanzamento, titolari, riserve, OVR, Intesa e re-roll.
 - Schede giocatore semplificate: eliminati numero progressivo e barra OVR ridondante.
 - Ogni candidato mostra l'impatto previsto su OVR squadra e Intesa.
-- Il candidato più utile del pack viene evidenziato come `Migliore scelta`.
-- Dopo la selezione compare un'anteprima con slot consigliato e valori prima/dopo.
-- Sul campo lo slot consigliato è verde; gli slot incompatibili vengono attenuati.
-- Il pannello destro ora analizza la rosa: posizioni mancanti, valori, consigli e miglior candidato.
+- Con il profilo allenatore `Talent scout`, il candidato più utile del pack viene evidenziato come `Migliore scelta`.
+- Solo il `Talent scout` mostra lo slot consigliato, l'evidenziazione verde e i consigli sulla costruzione della rosa.
+- Con tutti gli altri allenatori restano visibili esclusivamente dati oggettivi: impatto su OVR e Intesa, slot compatibili e posizioni mancanti.
+- Il pannello destro analizza sempre valori e lacune della rosa, ma non propone scelte o consigli senza il `Talent scout`.
 - Aggiunto `Annulla ultima scelta`, che rimuove il giocatore e ripristina il pack precedente.
 - Reset e ritorno al modulo sono stati spostati sotto `Altre opzioni`.
 - Migliorato il passaggio Giocatori → Campo su smartphone con barra fissa di conferma.
