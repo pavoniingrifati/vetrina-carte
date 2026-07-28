@@ -69,11 +69,14 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "presidente-tirchio":function(){return thriftyPresidentEventAvailable()},
 "procuratore-invadente":function(){return intrusiveAgentAvailable()},
 "fascia-di-calabria":function(){return calabriaArmbandAvailable()},
-"talpa-spogliatoio":function(){return lockerRoomMoleAvailable()}
+"talpa-spogliatoio":function(){return lockerRoomMoleAvailable()},
+"partita-senza-mister":function(){return noMisterMatchAvailable()},
+"cambio-presidente":function(){return presidentChangeAvailable()}
  }),
  title:Object.freeze({
 "omonimo-allenatore":function(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`},
-"cambio-stadio":function(){return `Il presidente del ${String(state.teamName||'tuo club')} ti chiede se è una buona idea cambiare stadio`}
+"cambio-stadio":function(){return `Il presidente del ${String(state.teamName||'tuo club')} ti chiede se è una buona idea cambiare stadio`},
+"partita-senza-mister":function(context){return noMisterMatchTitle(context)}
  }),
  describe:Object.freeze({
 "rapito-alieni":function(context){return context?.playerName?`${this.text} Il giocatore coinvolto è ${context.playerName}.`:this.text},
@@ -88,7 +91,8 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "giocatore-porta-sfortuna":function(context){return badLuckPlayerDescription(context)},
 "procuratore-invadente":function(context){return intrusiveAgentDescription(context)},
 "fascia-di-calabria":function(context){return calabriaArmbandDescription(context)},
-"talpa-spogliatoio":function(context){return lockerRoomMoleDescription(context)}
+"talpa-spogliatoio":function(context){return lockerRoomMoleDescription(context)},
+"partita-senza-mister":function(context){return noMisterMatchDescription(context)}
  }),
  createContext:Object.freeze({
 "rapito-alieni":function(){const entry=randomOwnEntry();return entry?{playerId:String(entry.playerId),playerName:entry.player.name}:{}},
@@ -101,7 +105,8 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "giocatore-porta-sfortuna":function(){return badLuckPlayerContext()},
 "procuratore-invadente":function(){return intrusiveAgentContext()},
 "fascia-di-calabria":function(){return calabriaArmbandContext()},
-"talpa-spogliatoio":function(){return lockerRoomMoleContext()}
+"talpa-spogliatoio":function(){return lockerRoomMoleContext()},
+"partita-senza-mister":function(){return noMisterMatchContext()}
  }),
  choiceApply:Object.freeze({
 "nuovo-sponsor:0":function(){return activateBallariniSponsor()},
@@ -294,6 +299,11 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "talpa-spogliatoio:1":function(context){return accuseLockerRoomMole(context,1)},
 "talpa-spogliatoio:2":function(context){return accuseLockerRoomMole(context,2)},
 "talpa-spogliatoio:3":function(){return ignoreLockerRoomMole()},
+"partita-senza-mister:0":function(context){return chooseCaptainNoMister(context)},
+"partita-senza-mister:1":function(context){return trustViceNoMister(context)},
+"cambio-presidente:0":function(){return startErichToirChallenge()},
+"cambio-presidente:1":function(){return startSylvioBerlusoniChallenge()},
+"cambio-presidente:2":function(){return startGianpietroPozzuoloChallenge()},
 "cambio-stadio:0":function(){state.seasonRules.stadiumHomeAdvantageBonus=Math.max(Number(state.seasonRules.stadiumHomeAdvantageBonus)||0,.06);return "Trasloco completato: il nuovo stadio aumenta leggermente il vantaggio nelle partite casalinghe fino al termine della stagione."},
 "cambio-stadio:1":function(){const names=boostAllRosterPlayers(1);return `${names.length} giocatori della rosa ricevono +1 OVR permanente.`}
  })

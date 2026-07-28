@@ -264,6 +264,125 @@ function accuseLockerRoomMole(context,index){
 }
 function ignoreLockerRoomMole(){pushEffect('opponentOvr',8,3,{source:'Talpa nello spogliatoio'});return 'Non accusi nessuno. Nessun giocatore viene perso, ma i prossimi 3 avversari ricevono +8 OVR.'}
 
+/* La partita senza mister */
+function noMisterMatchState(){return userEventState('noMisterMatch',{active:false,branch:'',coachName:'',captainId:'',captainName:'',oldFormation:'',newFormation:'',tacticianUsed:false,startedMatchday:-1,lastOutcome:''})}
+function noMisterCoachBonusesDisabled(){const event=noMisterMatchState();return Boolean(event.active&&event.branch==='vice')}
+function noMisterCaptainCandidate(){return [...getStarterEntries()].filter(entry=>userEventPlayerByEntry(entry)).sort((a,b)=>(Number(userEventPlayerByEntry(b)?.ovr)||0)-(Number(userEventPlayerByEntry(a)?.ovr)||0))[0]||null}
+function noMisterMatchAvailable(){return Boolean(!noMisterMatchState().active&&noMisterCaptainCandidate()&&Number(state.matchday)<seasonLength())}
+function noMisterMatchContext(){const entry=noMisterCaptainCandidate(),player=userEventPlayerByEntry(entry);return{coachName:String(state.coachName||'Mister').trim()||'Mister',captainId:String(entry?.playerId||''),captainName:String(player?.name||'il capitano')}}
+function noMisterMatchTitle(context){return `La partita senza mister ${String(context?.coachName||state.coachName||'Mister').trim()||'Mister'}`}
+function noMisterMatchDescription(context){const mister=String(context?.coachName||state.coachName||'Mister').trim()||'Mister';return `${mister}, rimani bloccato al tuo bordello preferito poco prima della partita. La squadra deve decidere chi prenderà il comando.`}
+function chooseCaptainNoMister(context){
+ const current=String(state.formation||'4-3-3'),available=Object.keys(typeof FORMATIONS==='object'&&FORMATIONS?FORMATIONS:{}).filter(key=>key!==current&&key!=='4-4-4'&&key!=='3-3-3'),fallback=['4-3-3','4-4-2','4-2-3-1','4-5-1','3-5-2','5-3-2','3-4-3','4-3-1-2'].filter(key=>key!==current),chosen=pick(available.length?available:fallback)||current;
+ const entry=userEventEntryById(context?.captainId)||noMisterCaptainCandidate(),player=userEventPlayerByEntry(entry),captainName=String(context?.captainName||player?.name||'Il capitano');
+ Object.assign(noMisterMatchState(),{active:true,branch:'captain',coachName:String(context?.coachName||state.coachName||'Mister'),captainId:String(entry?.playerId||context?.captainId||''),captainName,oldFormation:current,newFormation:chosen,tacticianUsed:false,startedMatchday:Number(state.matchday),lastOutcome:''});
+ state.formation=chosen;
+ return `${captainName} sceglie casualmente il ${chosen} per la prossima partita. Se vinci, riceverà +10 OVR permanente. Dopo la gara tornerà il ${current}.`;
+}
+function trustViceNoMister(context){
+ const current=String(state.formation||'4-3-3'),hasTactician=Boolean(state.seasonRules?.autoOptimizeLineup),optimization=hasTactician&&typeof optimizeLineupWithBench==='function'?optimizeLineupWithBench():'';
+ Object.assign(noMisterMatchState(),{active:true,branch:'vice',coachName:String(context?.coachName||state.coachName||'Mister'),captainId:String(context?.captainId||''),captainName:String(context?.captainName||'il capitano'),oldFormation:current,newFormation:current,tacticianUsed:hasTactician,startedMatchday:Number(state.matchday),lastOutcome:''});
+ return `Il vice mantiene il ${current}, ma tutti i bonus dell’allenatore vengono disattivati per la prossima partita.${hasTactician?` Il Tattico interviene: ${optimization}`:''}`;
+}
+function resolveNoMisterMatchAfterMatch(result){
+ const event=noMisterMatchState();if(!result||!event.active)return;
+ const won=Number(result.gf)>Number(result.ga),branch=String(event.branch||'');let message='';
+ if(branch==='captain'){
+  state.formation=event.oldFormation||state.formation;
+  if(won){const change=userEventPermanentDelta(event.captainId,10);message=change?`${event.captainName} ha guidato la squadra alla vittoria e riceve +10 OVR permanente: nuovo OVR ${change.after}. Il ${event.oldFormation} viene ripristinato.`:`Vittoria ottenuta, ma ${event.captainName} non è più presente in rosa. Il ${event.oldFormation} viene ripristinato.`}
+  else message=`La scelta del ${event.newFormation} non porta alla vittoria. ${event.captainName} non riceve bonus e viene ripristinato il ${event.oldFormation}.`;
+ }else{
+  message=`Il vice ha mantenuto il ${event.oldFormation}. I bonus di ${event.coachName||'mister'} sono rimasti disattivati per questa partita${event.tacticianUsed?', mentre il Tattico ha ottimizzato la formazione':''}.`;
+ }
+ event.active=false;event.lastOutcome=message;userEventUpdate(result,branch==='captain'?won:true,'La partita senza mister',message);
+}
+
+
+/* Cambio di presidente */
+function presidentChallengeState(){
+ const challenge=userEventState('presidentChallenge',{selected:false,active:false,completed:false,status:'idle',presidentId:'',presidentName:'',matchesRequired:0,matchesRemaining:0,matchesPlayed:0,wins:0,goals:0,bigWins:0,points:0,oldFormation:'',currentFormation:'',preparedMatchday:-1,imposedPlayerId:'',imposedPlayerName:'',excludedIds:[],promotedIds:[],swapPairs:[],benchScorerId:'',benchScorerName:'',lockRemaining:0,lockFormation:'',lockPreparedMatchday:-1,rewardPlayerId:'',rewardPlayerName:'',lastOutcome:''});
+ challenge.selected=Boolean(challenge.selected);challenge.active=Boolean(challenge.active);challenge.completed=Boolean(challenge.completed);challenge.matchesRequired=Math.max(0,Number(challenge.matchesRequired)||0);challenge.matchesRemaining=Math.max(0,Number(challenge.matchesRemaining)||0);challenge.matchesPlayed=Math.max(0,Number(challenge.matchesPlayed)||0);challenge.wins=Math.max(0,Number(challenge.wins)||0);challenge.goals=Math.max(0,Number(challenge.goals)||0);challenge.bigWins=Math.max(0,Number(challenge.bigWins)||0);challenge.points=Math.max(0,Number(challenge.points)||0);challenge.preparedMatchday=Number.isFinite(Number(challenge.preparedMatchday))?Number(challenge.preparedMatchday):-1;challenge.lockRemaining=Math.max(0,Number(challenge.lockRemaining)||0);challenge.lockPreparedMatchday=Number.isFinite(Number(challenge.lockPreparedMatchday))?Number(challenge.lockPreparedMatchday):-1;challenge.excludedIds=Array.isArray(challenge.excludedIds)?challenge.excludedIds.map(String):[];challenge.promotedIds=Array.isArray(challenge.promotedIds)?challenge.promotedIds.map(String):[];challenge.swapPairs=Array.isArray(challenge.swapPairs)?challenge.swapPairs:[];return challenge;
+}
+function presidentChangeAvailable(){
+ const challenge=presidentChallengeState(),remaining=Math.max(0,seasonLength()-Number(state.matchday||0)),starters=rosterPlayers().filter(entry=>!entry.bench&&userEventPlayerByEntry(entry)),bench=rosterPlayers().filter(entry=>entry.bench&&userEventPlayerByEntry(entry));
+ return Boolean(!challenge.selected&&!challenge.active&&remaining>=3&&starters.length>=3&&bench.length>=3&&!playerArrivalIsBlocked()&&!coachIs('young-beautiful')&&!coachIs('three-five-two')&&!state.seasonRules?.userFormationOverride);
+}
+function beginPresidentChallenge(id,name,matches){
+ const challenge=presidentChallengeState();Object.assign(challenge,{selected:true,active:true,completed:false,status:'active',presidentId:String(id),presidentName:String(name),matchesRequired:Number(matches),matchesRemaining:Number(matches),matchesPlayed:0,wins:0,goals:0,bigWins:0,points:0,oldFormation:String(state.formation||'4-3-3'),currentFormation:String(state.formation||'4-3-3'),preparedMatchday:-1,imposedPlayerId:'',imposedPlayerName:'',excludedIds:[],promotedIds:[],swapPairs:[],benchScorerId:'',benchScorerName:'',lockRemaining:0,lockFormation:'',lockPreparedMatchday:-1,rewardPlayerId:'',rewardPlayerName:'',lastOutcome:''});state.seasonRules.clubPresidentName=String(name);return challenge;
+}
+function presidentHighestRosterEntry(){return [...rosterPlayers()].filter(entry=>userEventPlayerByEntry(entry)).sort((a,b)=>(Number(userEventPlayerByEntry(b)?.ovr)||0)-(Number(userEventPlayerByEntry(a)?.ovr)||0))[0]||null}
+function presidentStandardFormations(){return ['4-3-3','4-4-2','4-2-3-1','4-5-1','3-5-2','5-3-2','3-4-3','4-3-1-2'].filter(key=>FORMATIONS[key])}
+function presidentForceStarter(playerId){const entry=userEventEntryById(playerId);if(!entry)return false;if(entry.bench)return userEventMoveToStarter(playerId);const valid=formationSlots(state.formation).some(slot=>String(slot.instanceId)===String(entry.slotId)||String(slot.code)===String(entry.slot));if(valid)return true;entry.bench=true;return userEventMoveToStarter(playerId)}
+function presidentOtherPlayerPools(){
+ const pools=[];Object.entries(SEASON_DATASETS||{}).forEach(([key,dataset])=>{if(Array.isArray(dataset?.players)&&dataset.players!==PLAYERS)pools.push({label:key==='legend'?'Legend':key,players:dataset.players})});
+ if(Array.isArray(CLASSIC_PLAYERS)&&CLASSIC_PLAYERS!==PLAYERS)pools.push({label:'altro campionato',players:CLASSIC_PLAYERS});if(Array.isArray(REAL_PLAYERS)&&REAL_PLAYERS!==PLAYERS)pools.push({label:'altro campionato',players:REAL_PLAYERS});return pools;
+}
+function presidentSpecialPlayerCandidate(){
+ const used=new Set(rosterPlayers().map(entry=>String(entry.playerId))),eligible=player=>player&&player.id&&player.name&&!used.has(String(player.id))&&(Number(player.ovr)||0)>=95&&(Number(player.ovr)||0)<=105;
+ const current=shuffle((Array.isArray(PLAYERS)?PLAYERS:[]).filter(eligible));if(current.length)return{player:current[0],source:'questo campionato'};
+ for(const pool of presidentOtherPlayerPools()){const candidates=shuffle(pool.players.filter(eligible));if(candidates.length)return{player:candidates[0],source:pool.label}}
+ const fallback=[...(Array.isArray(PLAYERS)?PLAYERS:[]),...presidentOtherPlayerPools().flatMap(pool=>pool.players)].filter(player=>player&&player.id&&player.name&&!used.has(String(player.id))).sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0))[0]||{id:'speciale',name:'Fuoriclasse del presidente',Position:'ATT',role:'A',roleLabel:'Attaccante',nation:'Sconosciuta',ovr:100},fallbackOvr=95+Math.floor(Math.random()*11);
+ return{player:{...fallback,ovr:fallbackOvr,baseOvr:fallbackOvr},source:'scouting internazionale'};
+}
+function grantToirSpecialPlayer(){
+ const candidate=presidentSpecialPlayerCandidate(),source=candidate.player,targetOvr=Math.max(95,Math.min(105,Math.round(Number(source.ovr)||100))),clone={...source,id:userEventGeneratedId('toir-special',source.id),club:USER_ID,ovr:targetOvr,baseOvr:targetOvr,eventPlayer:true,presidentReward:true,presidentSourceId:String(source.id||'')},added=userEventAddBenchPlayer(clone),challenge=presidentChallengeState();challenge.rewardPlayerId=String(added.id);challenge.rewardPlayerName=String(added.name);return{player:added,source:candidate.source};
+}
+function startErichToirChallenge(){beginPresidentChallenge('toir','Erich Toir',3);return 'Erich Toir diventa presidente. Nelle prossime 3 partite devi vincerne almeno 2, segnare almeno 7 gol e ottenere almeno una vittoria con 3 gol di scarto.'}
+function startSylvioBerlusoniChallenge(){
+ const challenge=beginPresidentChallenge('berlusoni','Sylvio Berlusoni',3),entry=pick(rosterPlayers().filter(item=>userEventPlayerByEntry(item))),player=userEventPlayerByEntry(entry);challenge.imposedPlayerId=String(entry?.playerId||'');challenge.imposedPlayerName=String(player?.name||'un giocatore scelto dal presidente');preparePresidentChallengeBeforeLineup();return `Sylvio Berlusoni diventa presidente. ${challenge.imposedPlayerName} sarà il capitano imposto e partirà titolare per 3 partite. Il modulo cambierà casualmente a ogni gara: servono almeno 6 punti.`;
+}
+function presidentPozzuoloPairs(){
+ const challenge=presidentChallengeState();if(challenge.swapPairs.length)return challenge.swapPairs;
+ if(typeof applyUserFormationLayout==='function')applyUserFormationLayout(state.formation);
+ const starters=rosterPlayers().filter(entry=>!entry.bench&&userEventPlayerByEntry(entry)).sort((a,b)=>(Number(userEventPlayerByEntry(b)?.ovr)||0)-(Number(userEventPlayerByEntry(a)?.ovr)||0)).slice(0,3),benchPool=rosterPlayers().filter(entry=>entry.bench&&userEventPlayerByEntry(entry)).sort((a,b)=>(Number(userEventPlayerByEntry(b)?.ovr)||0)-(Number(userEventPlayerByEntry(a)?.ovr)||0)),pairs=[];
+ starters.forEach(top=>{const topPlayer=userEventPlayerByEntry(top);let index=benchPool.findIndex(candidate=>userCompatible(userEventPlayerByEntry(candidate),top.slot));if(index<0)index=benchPool.findIndex(candidate=>roleOf(userEventPlayerByEntry(candidate))===roleOf(topPlayer));if(index<0)index=0;const promoted=benchPool.splice(index,1)[0];if(!promoted)return;pairs.push({topId:String(top.playerId),topName:String(topPlayer?.name||'Titolare'),topSlot:String(top.slot||''),topSlotId:String(top.slotId||''),promotedId:String(promoted.playerId),promotedName:String(userEventPlayerByEntry(promoted)?.name||'Panchinaro'),benchSlot:String(promoted.slot||'R'),benchSlotId:String(promoted.slotId||`bench-${promoted.playerId}`)});userEventSwapStarterBench(top,promoted)});
+ challenge.swapPairs=pairs;challenge.excludedIds=pairs.map(pair=>pair.topId);challenge.promotedIds=pairs.map(pair=>pair.promotedId);return pairs;
+}
+function enforcePozzuoloLineup(){const pairs=presidentPozzuoloPairs();pairs.forEach(pair=>{const top=userEventEntryById(pair.topId),promoted=userEventEntryById(pair.promotedId);if(top)Object.assign(top,{bench:true,slot:pair.benchSlot,slotId:pair.benchSlotId});if(promoted)Object.assign(promoted,{bench:false,slot:pair.topSlot,slotId:pair.topSlotId})});return pairs.length}
+function restorePozzuoloLineup(){const challenge=presidentChallengeState();challenge.swapPairs.forEach(pair=>{const top=userEventEntryById(pair.topId),promoted=userEventEntryById(pair.promotedId);if(top)Object.assign(top,{bench:false,slot:pair.topSlot,slotId:pair.topSlotId});if(promoted)Object.assign(promoted,{bench:true,slot:pair.benchSlot,slotId:pair.benchSlotId})});challenge.swapPairs=[];challenge.excludedIds=[];challenge.promotedIds=[]}
+function startGianpietroPozzuoloChallenge(){const challenge=beginPresidentChallenge('pozzuolo','Gianpietro Pozzuolo',2),pairs=presidentPozzuoloPairs();challenge.preparedMatchday=Number(state.matchday);return `Gianpietro Pozzuolo diventa presidente. Per 2 partite restano fuori ${pairs.map(pair=>pair.topName).join(', ')} e giocano ${pairs.map(pair=>pair.promotedName).join(', ')}. Devi vincere almeno una gara e segnare con uno dei tre panchinari promossi.`}
+function preparePresidentChallengeBeforeLineup(){
+ const challenge=presidentChallengeState();
+ if(challenge.active&&challenge.presidentId==='berlusoni'){
+  if(challenge.preparedMatchday!==Number(state.matchday)){const pool=presidentStandardFormations().filter(key=>key!==challenge.currentFormation),chosen=pick(pool.length?pool:presidentStandardFormations())||state.formation;challenge.currentFormation=chosen;challenge.preparedMatchday=Number(state.matchday);if(typeof applyUserFormationLayout==='function')applyUserFormationLayout(chosen);else state.formation=chosen}
+  presidentForceStarter(challenge.imposedPlayerId);return;
+ }
+ if(challenge.active&&challenge.presidentId==='pozzuolo'){if(challenge.preparedMatchday!==Number(state.matchday))challenge.preparedMatchday=Number(state.matchday);enforcePozzuoloLineup();return}
+ if(!challenge.active&&challenge.lockRemaining>0){if(challenge.lockPreparedMatchday!==Number(state.matchday)){challenge.lockPreparedMatchday=Number(state.matchday);challenge.currentFormation=challenge.lockFormation||challenge.currentFormation||state.formation;if(typeof applyUserFormationLayout==='function')applyUserFormationLayout(challenge.currentFormation);else state.formation=challenge.currentFormation}}
+}
+function enforcePresidentChallengeLineup(){const challenge=presidentChallengeState();if(challenge.active&&challenge.presidentId==='berlusoni')presidentForceStarter(challenge.imposedPlayerId);if(challenge.active&&challenge.presidentId==='pozzuolo')enforcePozzuoloLineup()}
+function presidentChallengeProgressLabel(){
+ const challenge=presidentChallengeState();if(challenge.active&&challenge.presidentId==='toir')return `Erich Toir: ${challenge.matchesPlayed}/3 partite · ${challenge.wins}/2 vittorie · ${challenge.goals}/7 gol · ${challenge.bigWins}/1 vittoria con 3 gol di scarto`;
+ if(challenge.active&&challenge.presidentId==='berlusoni')return `Sylvio Berlusoni: ${challenge.matchesPlayed}/3 partite · ${challenge.points}/6 punti · capitano imposto ${challenge.imposedPlayerName}`;
+ if(challenge.active&&challenge.presidentId==='pozzuolo')return `Gianpietro Pozzuolo: ${challenge.matchesPlayed}/2 partite · ${challenge.wins}/1 vittoria · gol di un panchinaro ${challenge.benchScorerId?'sì':'no'}`;
+ if(challenge.lockRemaining>0)return `Sylvio Berlusoni: modulo ${challenge.lockFormation||challenge.currentFormation} bloccato ancora per ${challenge.lockRemaining} ${challenge.lockRemaining===1?'partita':'partite'}`;
+ return challenge.selected?`Presidente: ${challenge.presidentName}`:'';
+}
+function resolvePresidentChallengeAfterMatch(result){
+ const challenge=presidentChallengeState();if(!result)return;
+ if(!challenge.active&&challenge.lockRemaining>0){challenge.lockRemaining=Math.max(0,challenge.lockRemaining-1);if(challenge.lockRemaining>0){challenge.lastOutcome=`Il ${challenge.lockFormation} resta bloccato per altre ${challenge.lockRemaining} ${challenge.lockRemaining===1?'partita':'partite'}.`;userEventUpdate(result,false,'Sylvio Berlusoni',challenge.lastOutcome)}else{const restore=challenge.oldFormation||challenge.currentFormation;if(restore&&typeof applyUserFormationLayout==='function')applyUserFormationLayout(restore);else if(restore)state.formation=restore;challenge.status='failed';challenge.lastOutcome=`Sono terminate le 2 partite aggiuntive: il ${restore} viene ripristinato.`;userEventUpdate(result,true,'Sylvio Berlusoni',challenge.lastOutcome)}return}
+ if(!challenge.active)return;
+ const gf=Math.max(0,Number(result.gf)||0),ga=Math.max(0,Number(result.ga)||0),won=gf>ga,draw=gf===ga;challenge.matchesPlayed++;challenge.matchesRemaining=Math.max(0,challenge.matchesRemaining-1);if(won)challenge.wins++;challenge.goals+=gf;if(won&&gf-ga>=3)challenge.bigWins++;challenge.points+=won?3:draw?1:0;
+ if(challenge.presidentId==='pozzuolo'&&!challenge.benchScorerId){const promoted=new Set(challenge.promotedIds),goal=(Array.isArray(result.goals)?result.goals:[]).find(item=>promoted.has(String(item?.playerId||'')));if(goal){challenge.benchScorerId=String(goal.playerId);challenge.benchScorerName=String(goal.player||userEventPlayerByEntry(userEventEntryById(goal.playerId))?.name||'Panchinaro')}}
+ challenge.preparedMatchday=-1;
+ if(challenge.matchesRemaining>0){challenge.lastOutcome=presidentChallengeProgressLabel();userEventUpdate(result,won,challenge.presidentName,challenge.lastOutcome);return}
+ challenge.active=false;challenge.completed=true;let success=false,message='';
+ if(challenge.presidentId==='toir'){
+  success=challenge.wins>=2&&challenge.goals>=7&&challenge.bigWins>=1;
+  if(success){const boosted=boostAllRosterPlayers(5),reward=grantToirSpecialPlayer();message=`Sfida completata: ${boosted.length} giocatori ricevono +5 OVR permanente e ${reward.player.name} (${reward.player.ovr} OVR) arriva da ${reward.source}.`}
+  else{const highest=presidentHighestRosterEntry(),name=userEventPlayerByEntry(highest)?.name||'Il giocatore con OVR più alto',exit=highest?userEventRemovePlayer(highest.playerId,'il piano di rientro dell’investimento di Erich Toir'):'Nessun giocatore disponibile.';message=`Sfida fallita (${challenge.wins}/2 vittorie, ${challenge.goals}/7 gol, ${challenge.bigWins}/1 vittoria larga). Erich Toir resta presidente, ma ${name} viene venduto. ${exit}`}
+ }else if(challenge.presidentId==='berlusoni'){
+  success=challenge.points>=6;
+  if(success){const change=userEventPermanentDelta(challenge.imposedPlayerId,12),tactician=activatePersistentTactician(),restore=challenge.oldFormation||state.formation;if(restore&&typeof applyUserFormationLayout==='function')applyUserFormationLayout(restore);else state.formation=restore;message=`Sfida completata con ${challenge.points} punti. ${challenge.imposedPlayerName} riceve +12 OVR permanente${change?`: nuovo OVR ${change.after}`:''}. ${tactician}`}
+  else{const exit=userEventEntryById(challenge.imposedPlayerId)?userEventRemovePlayer(challenge.imposedPlayerId,'il fallimento della sfida di Sylvio Berlusoni'):`${challenge.imposedPlayerName} non è più presente in rosa.`;challenge.lockRemaining=2;challenge.lockFormation=challenge.currentFormation||state.formation;challenge.lockPreparedMatchday=-1;challenge.status='locked';message=`Sfida fallita con ${challenge.points}/6 punti. ${exit} Il ${challenge.lockFormation} resta bloccato per altre 2 partite.`}
+ }else if(challenge.presidentId==='pozzuolo'){
+  success=challenge.wins>=1&&Boolean(challenge.benchScorerId);restorePozzuoloLineup();
+  if(success){const change=userEventPermanentDelta(challenge.benchScorerId,15);message=`Sfida completata: almeno una vittoria e gol di ${challenge.benchScorerName}. ${challenge.benchScorerName} riceve +15 OVR permanente${change?`: nuovo OVR ${change.after}`:''}; il giocatore più forte resta in rosa.`}
+  else{const highest=presidentHighestRosterEntry(),name=userEventPlayerByEntry(highest)?.name||'Il giocatore con OVR più alto',exit=highest?userEventRemovePlayer(highest.playerId,'la politica delle plusvalenze di Gianpietro Pozzuolo'):'Nessun giocatore disponibile.';message=`Sfida fallita: vittorie ${challenge.wins}/1, gol di un panchinaro ${challenge.benchScorerId?'sì':'no'}. ${name} viene venduto definitivamente. ${exit}`}
+ }
+ const finalChallenge=presidentChallengeState();if(finalChallenge.presidentId!=='berlusoni'||success)finalChallenge.status=success?'success':'failed';finalChallenge.lastOutcome=message;userEventUpdate(result,success,finalChallenge.presidentName,message);
+}
+
 /* Designazione arbitrale */
 function refereeDesignationState(){return userEventState('refereeDesignation',{active:false,branch:'',matchesRemaining:0,matchesPlayed:0,startedMatchday:-1,failed:false,rewardGranted:false,lastOutcome:''})}
 function refereeDesignationAvailable(){const challenge=refereeDesignationState(),inventory=seasonInventory();return Boolean(!challenge.active&&Number(state.matchday)<seasonLength()-2&&seasonInventoryUsedSlots()<inventory.capacity)}
@@ -296,6 +415,8 @@ function resolveRefereeDesignationAfterMatch(result){
 
 function tickAdditionalUserEventsAfterMatch(result){
  if(!result)return;
+ resolveNoMisterMatchAfterMatch(result);
+ resolvePresidentChallengeAfterMatch(result);
  if(typeof tickPillEffectsAfterMatch==='function')tickPillEffectsAfterMatch(result);
  resolveRefereeDesignationAfterMatch(result);
  resolvePermanentAppealAfterMatch(result);

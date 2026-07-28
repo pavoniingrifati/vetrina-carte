@@ -127,3 +127,11 @@ Vengono mostrati tre sospettati.
 ### Non accusare nessuno
 - nessun giocatore viene perso;
 - i prossimi 3 avversari ricevono +8 OVR.
+
+## Cambio di presidente
+
+Tre candidati possono prendere il controllo del club:
+
+- **Erich Toir**: 3 partite, almeno 2 vittorie, 7 gol e una vittoria con 3 gol di scarto. Il successo assegna un giocatore speciale da 95–105 OVR e +5 OVR permanente alla rosa; il fallimento vende il giocatore con OVR più alto.
+- **Sylvio Berlusoni**: 3 partite con modulo casuale e capitano imposto, obiettivo 6 punti. Il successo assegna +12 OVR al capitano e il Tattico; il fallimento fa partire il giocatore e blocca l’ultimo modulo per altre 2 partite.
+- **Gianpietro Pozzuolo**: per 2 partite i 3 titolari con OVR più alto vengono sostituiti da 3 panchinari. Servono almeno una vittoria e un gol di uno dei promossi. Il successo assegna +15 OVR al marcatore; il fallimento vende il giocatore con OVR più alto.

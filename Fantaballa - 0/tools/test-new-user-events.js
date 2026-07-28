@@ -10,12 +10,14 @@ function makeState(){
   makePlayer('b1','Riserva 1',66,'CC','C'),makePlayer('b2','Riserva 2',67,'ATT','A'),makePlayer('b3','Riserva 3',68,'P','P')
  ];
  const roster=players.map((player,index)=>({playerId:player.id,player:{...player},bench:index>=11,slot:index>=11?`R${index-10}`:(index===0?'P':index===2?'ATT':index===3?'AS':'CC'),slotId:index>=11?`bench-${index-10}`:`starter-${index}`,malus:0}));
- return{matchday:2,formation:'4-3-3',teamName:'Test Team',draft:{roster},statuses:{},playInjured:{},seasonRules:{generatedEventPlayers:[]},teams:[{id:'user',name:'Test Team',roster:[]},{id:'opp1',name:'Avversari',clubId:'opp1',roster:[]}],standings:{user:{id:'user',name:'Test Team',pts:10,p:0,w:0,d:0,l:0,gf:0,ga:0},opp1:{id:'opp1',name:'Avversari',pts:12,p:0,w:0,d:0,l:0,gf:0,ga:0}},activeEffects:[]};
+ return{matchday:2,formation:'4-3-3',teamName:'Test Team',coachName:'Mister Test',draft:{roster},statuses:{},playInjured:{},seasonRules:{generatedEventPlayers:[]},teams:[{id:'user',name:'Test Team',roster:[]},{id:'opp1',name:'Avversari',clubId:'opp1',roster:[]}],standings:{user:{id:'user',name:'Test Team',pts:10,p:0,w:0,d:0,l:0,gf:0,ga:0},opp1:{id:'opp1',name:'Avversari',pts:12,p:0,w:0,d:0,l:0,gf:0,ga:0}},activeEffects:[]};
 }
-const context={console,Set,Map,Number,String,Array,Object,Boolean,Date,Error,JSON,Math:Object.create(Math),USER_ID:'user',POSITION_ROLE:{P:'P',CC:'C',ATT:'A',AS:'A',AD:'A',DC:'D',TS:'D',TD:'D',CDC:'C',COC:'C'}};
+const context={console,Set,Map,Number,String,Array,Object,Boolean,Date,Error,JSON,Math:Object.create(Math),FORMATIONS:{'4-3-3':{},'4-4-2':{},'3-5-2':{}},USER_ID:'user',POSITION_ROLE:{P:'P',CC:'C',ATT:'A',AS:'A',AD:'A',DC:'D',TS:'D',TD:'D',CDC:'C',COC:'C'}};
 context.globalThis=context;context.window=context;context.state=makeState();
 context.clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
 context.pick=list=>Array.isArray(list)&&list.length?list[0]:null;
+context.shuffle=list=>Array.isArray(list)?[...list]:[];
+context.coachIs=()=>false;
 context.positions=p=>String(p?.Position||'').split(',').map(x=>x.trim()).filter(Boolean);
 context.roleOf=p=>p?.role||context.POSITION_ROLE[context.positions(p)[0]]||'C';
 context.userCompatible=(p,slot)=>context.positions(p).includes(slot)||context.roleOf(p)===context.POSITION_ROLE[slot];
@@ -28,6 +30,9 @@ context.rosterPlayers=()=>context.state.draft.roster.map(e=>({...e,player:e.play
 context.getStarterEntries=()=>context.rosterPlayers().filter(e=>!e.bench);
 context.startingGoalkeeperEntry=()=>context.getStarterEntries().find(e=>context.roleOf(e.player)==='P')||null;
 context.seasonLength=()=>38;
+context.formationSlots=key=>Array.from({length:11},(_,i)=>({code:i===0?'P':i>=8?'ATT':'CC',instanceId:`starter-${i}`}));
+context.applyUserFormationLayout=key=>{context.state.formation=key;const starters=context.state.draft.roster.filter(e=>!e.bench);starters.forEach((e,i)=>{e.slot=i===0?'P':i>=8?'ATT':'CC';e.slotId=`starter-${i}`});return{players:11,bench:context.state.draft.roster.filter(e=>e.bench).length}};
+context.activatePersistentTactician=()=>{context.state.seasonRules.autoOptimizeLineup=true;return'Il Tattico è attivo fino a fine stagione.'};
 context.userStanding=()=>context.state.standings.user;
 context.sortedTable=()=>Object.values(context.state.standings).sort((a,b)=>Number(b.pts)-Number(a.pts));
 context.registerGeneratedEventPlayer=player=>{const p={...player,id:String(player.id)};const i=context.state.seasonRules.generatedEventPlayers.findIndex(x=>String(x.id)===p.id);if(i>=0)context.state.seasonRules.generatedEventPlayers[i]=p;else context.state.seasonRules.generatedEventPlayers.push(p);return p};
@@ -42,7 +47,10 @@ context.regulationGoalEvent=(team,opponent,duration,label)=>({minute:20,playerId
 context.goalValueForMinute=()=>1;
 context.boostAllRosterPlayers=delta=>{const names=[];for(const e of context.state.draft.roster){e.player={...e.player,ovr:Number(e.player.ovr)+delta};names.push(e.player.name)}return names};
 context.queueChainedAuto=(title,text,result)=>({title,text,result});
+context.PLAYERS=[makePlayer('star100','Fuoriclasse Speciale',100,'ATT','A')];
+context.CLASSIC_PLAYERS=[];context.REAL_PLAYERS=context.PLAYERS;context.SEASON_DATASETS={'serie-a':{players:context.PLAYERS},legend:{players:[makePlayer('legend99','Leggenda Speciale',99,'ATT','A')]}};
 context.grantRandomSeasonItem=()=>({id:'test-item',name:'Oggetto di prova'});
+context.optimizeCalls=0;context.optimizeLineupWithBench=()=>{context.optimizeCalls++;return'Formazione già ottimale.'};
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(root,'assets/season/08b-user-events.js'),'utf8'),context,{filename:'08b-user-events.js'});
 function reset(){context.state=makeState();context.Math.random=Math.random}
@@ -88,5 +96,27 @@ test('fascia di Calabria distrutta: -5 Intesa per una partita',()=>{context.dest
 test('talpa: accusa corretta rimuove il colpevole e assegna +15 Intesa',()=>{const c={suspects:[{playerId:'p2',playerName:'Scarso'},{playerId:'p3',playerName:'Attaccante'},{playerId:'p4',playerName:'Ala'}],moleIndex:1};context.accuseLockerRoomMole(c,1);assert(!context.rosterEntry('p3'),'La talpa deve essere rimossa');assert(context.state.activeEffects.some(e=>e.type==='teamChem'&&e.value===15),'Bonus +15 Intesa non applicato')});
 
 test('talpa: non accusare dà +8 OVR ai prossimi 3 avversari',()=>{context.ignoreLockerRoomMole();const effect=context.state.activeEffects.find(e=>e.type==='opponentOvr');assert(effect&&effect.value===8&&effect.rounds===3,'Malus avversari della talpa errato')});
+
+
+
+test('partita senza mister: il capitano cambia modulo, vince e riceve +10',()=>{const old=context.state.formation,c=context.noMisterMatchContext();assert(c.captainId==='p3','Il capitano deve essere il titolare con OVR più alto');context.chooseCaptainNoMister(c);assert(context.state.formation!==old,'Il capitano non ha scelto un modulo diverso');const before=context.rosterEntry(c.captainId).player.ovr;context.tickAdditionalUserEventsAfterMatch({gf:2,ga:1,eventUpdates:[]});assert(context.state.formation===old,'Il modulo precedente non è stato ripristinato');assert(context.rosterEntry(c.captainId).player.ovr===before+10,'Il capitano non ha ricevuto +10 OVR permanente');assert(!context.noMisterMatchState().active,'L’evento non è stato chiuso')});
+
+test('partita senza mister: sconfitta del capitano senza bonus',()=>{const old=context.state.formation,c=context.noMisterMatchContext(),before=context.rosterEntry(c.captainId).player.ovr;context.chooseCaptainNoMister(c);context.tickAdditionalUserEventsAfterMatch({gf:0,ga:1,eventUpdates:[]});assert(context.state.formation===old,'Il modulo precedente non è stato ripristinato dopo la sconfitta');assert(context.rosterEntry(c.captainId).player.ovr===before,'Il capitano non deve ricevere bonus dopo la sconfitta')});
+
+test('partita senza mister: il vice mantiene il modulo e usa il Tattico',()=>{const old=context.state.formation;context.state.seasonRules.autoOptimizeLineup=true;context.optimizeCalls=0;const c=context.noMisterMatchContext();context.trustViceNoMister(c);assert(context.state.formation===old,'Il vice deve mantenere il modulo');assert(context.noMisterCoachBonusesDisabled(),'I bonus dell’allenatore devono essere disattivati');assert(context.optimizeCalls===1,'Il Tattico deve ottimizzare la formazione');context.tickAdditionalUserEventsAfterMatch({gf:1,ga:1,eventUpdates:[]});assert(!context.noMisterCoachBonusesDisabled(),'I bonus devono riattivarsi dopo la partita')});
+
+
+
+test('presidente Erich Toir: successo con premio e +5 alla rosa',()=>{const before=context.rosterEntry('p2').player.ovr;context.startErichToirChallenge();context.tickAdditionalUserEventsAfterMatch({gf:3,ga:0,goals:[],eventUpdates:[]});context.tickAdditionalUserEventsAfterMatch({gf:2,ga:0,goals:[],eventUpdates:[]});context.tickAdditionalUserEventsAfterMatch({gf:2,ga:1,goals:[],eventUpdates:[]});const challenge=context.presidentChallengeState();assert(challenge.status==='success','La sfida di Erich deve essere superata');assert(context.rosterEntry('p2').player.ovr===before+5,'Il +5 OVR alla rosa non è stato applicato');assert(context.rosterEntry(challenge.rewardPlayerId)?.player?.ovr>=95&&context.rosterEntry(challenge.rewardPlayerId)?.player?.ovr<=105,'Il giocatore speciale deve avere OVR 95-105')});
+
+test('presidente Erich Toir: fallimento e vendita del migliore',()=>{context.startErichToirChallenge();const highest=context.presidentHighestRosterEntry(),id=String(highest.playerId);for(let i=0;i<3;i++)context.tickAdditionalUserEventsAfterMatch({gf:1,ga:1,goals:[],eventUpdates:[]});assert(!context.rosterEntry(id),'Il giocatore con OVR più alto deve essere venduto dopo il fallimento')});
+
+test('presidente Sylvio Berlusoni: 6 punti, +12 e Tattico',()=>{context.startSylvioBerlusoniChallenge();const challenge=context.presidentChallengeState(),id=challenge.imposedPlayerId,before=context.rosterEntry(id).player.ovr;context.tickAdditionalUserEventsAfterMatch({gf:2,ga:0,goals:[],eventUpdates:[]});context.tickAdditionalUserEventsAfterMatch({gf:1,ga:0,goals:[],eventUpdates:[]});context.tickAdditionalUserEventsAfterMatch({gf:0,ga:1,goals:[],eventUpdates:[]});assert(context.rosterEntry(id).player.ovr===before+12,'Il capitano imposto non ha ricevuto +12 OVR');assert(context.state.seasonRules.autoOptimizeLineup,'Il Tattico non è stato assegnato')});
+
+test('presidente Sylvio Berlusoni: fallimento, uscita e modulo bloccato',()=>{const old=context.state.formation;context.startSylvioBerlusoniChallenge();const challenge=context.presidentChallengeState(),id=challenge.imposedPlayerId;for(let i=0;i<3;i++)context.tickAdditionalUserEventsAfterMatch({gf:0,ga:1,goals:[],eventUpdates:[]});assert(!context.rosterEntry(id),'Il giocatore imposto deve lasciare la rosa');assert(context.presidentChallengeState().lockRemaining===2,'Il modulo deve restare bloccato per 2 partite');context.tickAdditionalUserEventsAfterMatch({gf:1,ga:1,goals:[],eventUpdates:[]});context.tickAdditionalUserEventsAfterMatch({gf:1,ga:1,goals:[],eventUpdates:[]});assert(context.presidentChallengeState().lockRemaining===0,'Il blocco modulo deve terminare dopo 2 gare');assert(context.state.formation===old,'Il modulo precedente deve essere ripristinato')});
+
+test('presidente Gianpietro Pozzuolo: vittoria e gol del panchinaro',()=>{context.startGianpietroPozzuoloChallenge();const challenge=context.presidentChallengeState(),scorer=challenge.promotedIds[0],before=context.rosterEntry(scorer).player.ovr,name=context.rosterEntry(scorer).player.name;context.tickAdditionalUserEventsAfterMatch({gf:1,ga:0,goals:[{playerId:scorer,player:name}],eventUpdates:[]});context.tickAdditionalUserEventsAfterMatch({gf:0,ga:1,goals:[],eventUpdates:[]});assert(context.rosterEntry(scorer).player.ovr===before+15,'Il panchinaro marcatore non ha ricevuto +15 OVR');assert(context.presidentChallengeState().status==='success','La sfida di Pozzuolo deve essere superata')});
+
+test('presidente Gianpietro Pozzuolo: fallimento e vendita del migliore',()=>{context.startGianpietroPozzuoloChallenge();context.tickAdditionalUserEventsAfterMatch({gf:0,ga:1,goals:[],eventUpdates:[]});context.tickAdditionalUserEventsAfterMatch({gf:0,ga:0,goals:[],eventUpdates:[]});assert(context.rosterPlayers().length===13,'Dopo il fallimento deve essere venduto un giocatore');assert(context.presidentChallengeState().status==='failed','La sfida di Pozzuolo deve risultare fallita')});
 
 console.log(JSON.stringify({ok:true,tests:tests.length,names:tests},null,2));

@@ -7,7 +7,7 @@ Testi, ordine, modalità, opzioni e collegamenti alla logica sono ora dati JSON;
 
 ## File
 
-- `data/events/events-common.json`: 88 decisioni e 4 eventi automatici condivisi.
+- `data/events/events-common.json`: 90 decisioni e 4 eventi automatici condivisi.
 - `data/events/events-community.json`: 6 decisioni e 1 evento automatico esclusivi Community.
 - `data/events/events-real.json`: estensioni REAL, attualmente vuote.
 - `assets/season/event-handlers.js`: condizioni, titoli dinamici e collegamento delle scelte.

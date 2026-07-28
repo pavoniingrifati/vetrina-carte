@@ -68,7 +68,7 @@ function syncCoachRestrictions(){
 }
 function coachEventChanceFactor(){return coachIs('three-five-two')?.5:1}
 function youngBeautifulBaseOvr(player){return originalBaseOvr(player)}
-function youngBeautifulChemistryBonus(player){if(!coachIs('young-beautiful')||!player)return 0;const base=youngBeautifulBaseOvr(player);return base>=60&&base<=69?20:base>=70&&base<=75?10:0}
+function youngBeautifulChemistryBonus(player){if(!coachIs('young-beautiful')||!player||(typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled()))return 0;const base=youngBeautifulBaseOvr(player);return base>=60&&base<=69?20:base>=70&&base<=75?10:0}
 function youngBeautifulAllowsPlayer(player){return !coachIs('young-beautiful')||youngBeautifulBaseOvr(player)<85}
 function youngBeautifulBlockMessage(player){const name=String(player?.name||'Questo giocatore'),base=youngBeautifulBaseOvr(player);return `Giovani e belli: ${name} ha ${base} OVR base e non può entrare in rosa. Il limite massimo consentito è 84.`}
 function initialDraftRerollLimit(value=state?.coachType){const coach=normalizeCoachType(value);return coach==='young-beautiful'?0:coach==='talent-scout'?4:3}
@@ -208,7 +208,7 @@ function validateGameData(players,clubs,validationConfig=SEASON_CONFIG.validatio
  });
  return{fatal,warnings};
 }
-function versionedResourceUrl(url){const value=String(url||'');if(!value||/^(?:https?:|data:|blob:)/i.test(value))return value;const sep=value.includes('?')?'&':'?';return `${value}${sep}v=20260728-events-calabria1`}
+function versionedResourceUrl(url){const value=String(url||'');if(!value||/^(?:https?:|data:|blob:)/i.test(value))return value;const sep=value.includes('?')?'&':'?';return `${value}${sep}v=20260728-presidents1`}
 async function fetchJsonResource(url,label,{optional=false}={}){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
  try{
@@ -256,7 +256,7 @@ function resetSetupForCompetitionVariant(value){
 function positions(p){return String(p.Position||p.position||p.role||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean)}
 function naturalCompatible(p,code){return positions(p).includes(code)}
 function compatible(p,code){return naturalCompatible(p,code)}
-function userCompatible(p,code){return coachIs('ductility')||naturalCompatible(p,code)}
+function userCompatible(p,code){return (coachIs('ductility')&&!(typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled()))||naturalCompatible(p,code)}
 function roleOf(p){return p.role||POSITION_ROLE[positions(p)[0]]||'C'}
 const DRAFT_ROLE_ORDER={P:0,D:1,C:2,A:3};
 const DRAFT_POSITION_ORDER=['P','DC','TS','TD','DC/TS','DC/TD','TS/TD','CDC','CC','COC','CC/CDC','CC/COC','ATT','AS','AD','AS/ATT','AD/ATT','ATT/COC','AS/COC','AD/COC'];
