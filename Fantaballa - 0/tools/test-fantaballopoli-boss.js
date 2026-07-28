@@ -7,10 +7,10 @@ const marketSource=fs.readFileSync(require('path').join(__dirname,'../assets/sea
 const fantaDefaults=()=>({
  initialized:false,scheduled:false,triggerMatchday:-1,stage:'idle',path:'',forcedLossPending:false,
  targetPlayerId:'',targetPlayerName:'',targetRole:'',targetTradeOrdered:false,targetTraded:false,targetLocked:false,
- midseasonResolved:false,giudaId:'',power:0,suspicion:0,completed:false,
+ midseasonResolved:false,giudaId:'',giudaLost:false,giudaLostReason:'',giudaCurseWins:0,giudaCurseTotal:0,power:0,suspicion:0,completed:false,
  cartonati:{arbitro:false,giuda:false,silenzio:false},
  intercettazioni:{arbitro:false,testimone:false,triade:false},
- challenge:{id:'',active:false,status:'idle',matchesPlayed:0,matchesRequired:0,progress:0,scored:false,lastMatchday:-1,resultText:'',nextId:''},
+ challenge:{id:'',active:false,status:'idle',matchesPlayed:0,matchesRequired:0,progress:0,wins:0,cleanSheets:0,goals:0,scored:false,lastMatchday:-1,resultText:'',nextId:''},
  lastChallengeResult:null,
  finale:{eligible:false,bossId:'',bossName:'',played:false,userGoals:0,opponentGoals:0,won:false,extraTime:false,penalties:null,notes:[],userScorers:[],opponentScorers:[],activePowers:[],pointsApplied:false,rankBeforeBonus:0,rankAfterBonus:0,pointsBeforeBonus:0,pointsAfterBonus:0}
 });
@@ -79,9 +79,9 @@ test('percorso Triade: Giuda e tre Cartonati',()=>{
  const story=context.fantaballopoliState();story.path='evil';story.scheduled=true;story.stage='awaiting_midseason';story.targetPlayerId='p1';story.targetPlayerName='Testimone';story.targetRole='ATT';
  const giuda=context.createGiudaForEntry(state.draft.roster[0]);state.draft.roster[0]={playerId:giuda.id,player:{...giuda},slot:'ATT',bench:false};state.midseason.changes=[{outId:'p1',incomingId:giuda.id,slot:'ATT'}];
  context.resolveFantaballopoliMidseason();assert.equal(story.stage,'evil_trials_waiting');assert.equal(story.targetTraded,true);
- context.startFantaballopoliChallenge('evil-result');context.tickFantaballopoliChallenge({winnerId:'user',gf:2,ga:1,displayGf:2,displayGa:1,goals:[],lineup:[]});assert.equal(story.cartonati.arbitro,true);
- context.startFantaballopoliChallenge('evil-giuda');context.tickFantaballopoliChallenge({winnerId:'user',gf:1,ga:0,displayGf:1,displayGa:0,goals:[{playerId:story.giudaId}],lineup:[]});assert.equal(story.cartonati.giuda,true);
- context.startFantaballopoliChallenge('evil-dossier');for(let i=0;i<5;i++)context.tickFantaballopoliChallenge({winnerId:i%2?'opp':'user',gf:1,ga:i%2?2:0,displayGf:1,displayGa:i%2?2:0,goals:[],lineup:[]});assert.equal(story.cartonati.silenzio,true);
+ context.startFantaballopoliChallenge('evil-result');context.tickFantaballopoliChallenge({winnerId:'user',gf:2,ga:1,displayGf:2,displayGa:1,extraTime:false,penalties:null,goals:[],lineup:[]});assert.equal(story.cartonati.arbitro,true);
+ context.startFantaballopoliChallenge('evil-giuda');context.tickFantaballopoliChallenge({winnerId:'user',gf:4,ga:1,displayGf:4,displayGa:1,goals:[],lineup:[{playerId:story.giudaId}]});assert.equal(story.cartonati.giuda,true);
+ context.startFantaballopoliChallenge('evil-dossier');const dossierScores=[[2,0],[2,0],[2,1],[2,1],[2,3]];dossierScores.forEach(([gf,ga],index)=>context.tickFantaballopoliChallenge({winnerId:index<4?'user':'opp',gf,ga,displayGf:gf,displayGa:ga,goals:[],lineup:[]}));assert.equal(story.cartonati.silenzio,true);
  assert(context.fantaballopoliBossPowers(story).every(power=>!power.active));
 });
 
@@ -100,7 +100,34 @@ test('regole partita: dodicesimo, rigore e gol infortunato doppio',()=>{
  const rule=context.fantaballopoliMatchRule(),base=[{playerId:'x',player:{id:'x',name:'Uno',ovr:80}}],twelve=context.fantaballopoliOpponentLineup(base,{id:'opp'},rule);
  assert.equal(twelve.length,2);assert.equal(twelve[1].storyTwelfth,true);
  const opponentGoals=[];assert.equal(context.applyFantaballopoliPenaltyGoal(opponentGoals,{id:'opp'},{id:'user'},90,rule),true);assert.equal(opponentGoals.length,1);
- context.startFantaballopoliChallenge('evil-result');state.statuses.p1={injury:2};state.playInjured.p1=true;const events=[{playerId:'p1',goalValue:1}],count=context.applyFantaballopoliInjuredGoalValues(events,[{playerId:'p1',player:players[0]}],context.fantaballopoliMatchRule());assert.equal(count,1);assert.equal(events[0].goalValue,2);
+ context.startFantaballopoliChallenge('evil-result');const hardRule=context.fantaballopoliMatchRule();assert.equal(hardRule.opponentOvrBonus,15);assert.equal(hardRule.openingGoalAgainst,true);assert.equal(hardRule.forceNoDraw,false);state.statuses.p1={injury:2};state.playInjured.p1=true;const events=[{playerId:'p1',goalValue:1}],count=context.applyFantaballopoliInjuredGoalValues(events,[{playerId:'p1',player:players[0]}],hardRule);assert.equal(count,0);assert.equal(events[0].goalValue,1);
+ const openingGoals=[];context.applyFantaballopoliPenaltyGoal(openingGoals,{id:'opp'},{id:'user'},90,hardRule);assert.equal(openingGoals[0].minute,1);assert.equal(openingGoals[0].isFantaballopoliOpeningGoal,true);
+});
+
+test('maledizione di Giuda: -5 a tutta la rosa senza limite minimo',()=>{
+ const story=context.fantaballopoliState();story.path='evil';story.scheduled=true;story.giudaId='p1';
+ state.draft.roster[0].player={...state.draft.roster[0].player,name:'Giuda',ovr:4};state.draft.roster[1].player.ovr=3;state.draft.roster[2].player.ovr=2;
+ context.tickFantaballopoliAfterMatch({winnerId:'user',gf:1,ga:0,lineup:[{playerId:'p1'}],goals:[]});
+ assert.deepEqual(state.draft.roster.map(entry=>entry.player.ovr),[-1,-2,-3]);assert.equal(story.giudaCurseWins,1);assert.equal(story.giudaCurseTotal,5);assert.equal(context.fantaballopoliAllowsNegativeOvr(),true);
+});
+
+test('fallire una prova fa perdere Giuda ma le prove continuano',()=>{
+ const story=context.fantaballopoliState();story.path='evil';story.scheduled=true;story.giudaId='p1';state.draft.roster[0].player.name='Giuda';story.giudaCurseWins=2;story.giudaCurseTotal=10;
+ context.startFantaballopoliChallenge('evil-result');context.tickFantaballopoliChallenge({winnerId:'opp',gf:0,ga:1,displayGf:0,displayGa:1,extraTime:false,penalties:null,lineup:[{playerId:'p1'}],goals:[]});
+ assert.equal(story.giudaLost,true);assert.equal(context.rosterEntry('p1'),null);assert.equal(story.lastChallengeResult.nextId,'evil-giuda');assert.equal(story.lastChallengeResult.giudaLost,true);assert.equal(story.giudaCurseTotal,10);
+ state.pendingEvent={kind:'storyFantaballopoli',storyType:'challenge-result',resolved:false};resolvedEvent('next');assert.equal(story.challenge.id,'evil-giuda');assert.equal(story.challenge.active,true);
+});
+
+test('seconda prova: Giuda non deve segnare, bastano titolarità e tre gol di scarto',()=>{
+ const story=context.fantaballopoliState();story.path='evil';story.scheduled=true;story.giudaId='p1';state.draft.roster[0].player.name='Giuda';
+ context.startFantaballopoliChallenge('evil-giuda');context.tickFantaballopoliChallenge({winnerId:'user',gf:4,ga:1,displayGf:4,displayGa:1,lineup:[{playerId:'p1'}],goals:[{playerId:'p2'},{playerId:'p3'},{playerId:'p2'},{playerId:'p3'}]});
+ assert.equal(story.cartonati.giuda,true);assert.equal(story.lastChallengeResult.success,true);
+});
+
+test('seconda prova senza Giuda: tre gol di scarto e doppietta',()=>{
+ const story=context.fantaballopoliState();story.path='evil';story.scheduled=true;story.giudaId='p1';story.giudaLost=true;state.draft.roster=state.draft.roster.filter(entry=>entry.playerId!=='p1');
+ context.startFantaballopoliChallenge('evil-giuda');context.tickFantaballopoliChallenge({winnerId:'user',gf:4,ga:1,displayGf:4,displayGa:1,lineup:[{playerId:'p2'},{playerId:'p3'}],goals:[{playerId:'p2'},{playerId:'p2'},{playerId:'p3'},{playerId:'p3'}]});
+ assert.equal(story.cartonati.giuda,true);assert.equal(story.lastChallengeResult.success,true);
 });
 
 test('boss finale: punti raddoppiati e testimone nell’Inter',()=>{

@@ -359,7 +359,7 @@ function initializeStoryArc(){
  const storyChance=.2*coachEventChanceFactor();if(Math.random()>=storyChance)return;
  const selected=Math.floor(Math.random()*3);if(selected===0)initializeMeritStory(true);else if(selected===1)initializeFantaballopoliStory(true);else initializeError404Story(true);
 }
-function fantaballopoliAllowsNegativeOvr(){return false}
+function fantaballopoliAllowsNegativeOvr(){const story=fantaballopoliState();return Boolean(story.path==='evil'&&Number(story.giudaCurseWins)>0)}
 function fantaballopoliHighestRosterEntry(){
  return [...rosterPlayers()].sort((a,b)=>{const av=(Number(a.player?.ovr)||0)+activeOvrBonus(a.player),bv=(Number(b.player?.ovr)||0)+activeOvrBonus(b.player);return bv-av||String(a.player?.name||'').localeCompare(String(b.player?.name||''),'it')})[0]||null;
 }
@@ -373,9 +373,9 @@ function fantaballopoliRemoveRosterPlayer(playerId){
 }
 function fantaballopoliChallengeDefinition(id){
  const definitions={
-  'evil-result':{title:'Prima prova — Il risultato prestabilito',objective:'Vinci la prossima partita. L’avversaria ha +10 OVR, i gol dei tuoi infortunati valgono doppio e il pareggio non è ammesso.',reward:'Cartonato dell’Arbitro',matches:1,next:'evil-giuda'},
-  'evil-giuda':{title:'Seconda prova — La dimostrazione di forza',objective:'Vinci la prossima partita facendo segnare Giuda oppure con almeno due gol di scarto.',reward:'Cartonato di Giuda',matches:1,next:'evil-dossier'},
-  'evil-dossier':{title:'Terza prova — Distruggere il dossier',objective:'Segna almeno un gol in ciascuna delle prossime cinque partite.',reward:'Cartonato del Silenzio',matches:5,next:''},
+  'evil-result':{title:'Prima prova — Il risultato prestabilito',objective:'Parti dallo 0-1, affronti un’avversaria con +15 OVR e devi vincere entro i 90 minuti. Pareggio, supplementari o rigori significano fallimento.',reward:'Cartonato dell’Arbitro',matches:1,next:'evil-giuda'},
+  'evil-giuda':{title:'Seconda prova — La dimostrazione di forza',objective:'Se Giuda è ancora nella rosa deve partire titolare e la squadra deve vincere con almeno tre gol di scarto: Giuda non è obbligato a segnare. Se Giuda è già andato via, devi vincere con almeno tre gol di scarto e un tuo giocatore deve realizzare una doppietta.',reward:'Cartonato di Giuda',matches:1,next:'evil-dossier'},
+  'evil-dossier':{title:'Terza prova — Distruggere il dossier',objective:'Nelle prossime cinque partite devi segnare sempre, ottenere almeno 4 vittorie, 2 clean sheet e 10 gol complessivi.',reward:'Cartonato del Silenzio',matches:5,next:''},
   'good-twelve':{title:'Prima prova — Vincere contro dodici',objective:'Vinci la prossima partita contro dodici avversari e dopo un rigore automatico contro. Il pareggio non è ammesso.',reward:'Intercettazione dell’Arbitro',matches:1,next:'good-witness'},
   'good-witness':{title:'Seconda prova — Proteggere il Testimone',objective:'Per tre partite il Testimone deve essere titolare, segnare almeno una volta e non essere espulso.',reward:'Testimonianza del Giocatore',matches:3,next:'good-dominion'},
   'good-dominion':{title:'Terza prova — Spezzare il dominio',objective:'Segna almeno tre gol in una singola partita entro le prossime tre giornate.',reward:'Intercettazione della Triade',matches:3,next:''}
@@ -384,7 +384,7 @@ function fantaballopoliChallengeDefinition(id){
 }
 function startFantaballopoliChallenge(id){
  const story=fantaballopoliState(),definition=fantaballopoliChallengeDefinition(id);if(!definition)return false;
- story.lastChallengeResult=null;story.challenge={id:String(id),active:true,status:'active',matchesPlayed:0,matchesRequired:definition.matches,progress:0,scored:false,lastMatchday:Number(state.matchday)||0,resultText:'',nextId:definition.next||''};story.stage='challenge_active';return true;
+ story.lastChallengeResult=null;story.challenge={id:String(id),active:true,status:'active',matchesPlayed:0,matchesRequired:definition.matches,progress:0,wins:0,cleanSheets:0,goals:0,scored:false,lastMatchday:Number(state.matchday)||0,resultText:'',nextId:definition.next||''};story.stage='challenge_active';return true;
 }
 function rewardFantaballopoliChallenge(id){
  const story=fantaballopoliState();
@@ -395,9 +395,31 @@ function rewardFantaballopoliChallenge(id){
  else if(id==='good-witness')story.intercettazioni.testimone=true;
  else if(id==='good-dominion')story.intercettazioni.triade=true;
 }
+function fantaballopoliGiudaInLineup(result){
+ const story=fantaballopoliState(),giudaId=String(story.giudaId||'');if(!giudaId)return false;
+ return (Array.isArray(result?.lineup)?result.lineup:[]).some(entry=>String(entry?.playerId||entry?.player?.id||'')===giudaId);
+}
+function applyGiudaVictoryCurse(result){
+ const story=fantaballopoliState();if(story.path!=='evil'||story.giudaLost||!fantaballopoliResultWon(result)||!fantaballopoliGiudaInLineup(result))return null;
+ const changes=[];(Array.isArray(state.draft?.roster)?state.draft.roster:[]).forEach(entry=>{
+  const player=entry?.player||playerById(entry?.playerId);if(!player)return;
+  const numeric=Number(player.ovr),before=Number.isFinite(numeric)?numeric:60,after=Math.round(before-5);
+  entry.player={...player,ovr:after};changes.push({playerId:String(entry.playerId||player.id||''),name:String(player.name||'Giocatore'),before,after});
+ });
+ if(!changes.length)return null;
+ story.giudaCurseWins=Math.max(0,Number(story.giudaCurseWins)||0)+1;story.giudaCurseTotal=Math.max(0,Number(story.giudaCurseTotal)||0)+5;
+ const message=`Maledizione di Giuda: vittoria numero ${story.giudaCurseWins}. Tutti i ${changes.length} giocatori della rosa perdono 5 OVR permanente, senza limite minimo.`;
+ result.giudaCurse={applied:true,wins:story.giudaCurseWins,totalPenalty:story.giudaCurseTotal,changes};result.eventUpdates=Array.isArray(result.eventUpdates)?result.eventUpdates:[];result.eventUpdates.push({success:false,title:'Maledizione di Giuda',message});
+ refreshOpponentClubRosters();return result.giudaCurse;
+}
+function loseGiudaAfterFailedChallenge(challengeTitle='Prova della Triade'){
+ const story=fantaballopoliState();if(story.path!=='evil'||story.giudaLost)return false;
+ const removed=removeGiudaFromRoster();story.giudaLost=true;story.giudaLostReason=`Sfida fallita: ${challengeTitle}`;return removed;
+}
 function finishFantaballopoliChallenge(success,text=''){
  const story=fantaballopoliState(),challenge=story.challenge,definition=fantaballopoliChallengeDefinition(challenge.id);challenge.active=false;challenge.status=success?'success':'failed';challenge.resultText=String(text||'');if(success)rewardFantaballopoliChallenge(challenge.id);
- story.lastChallengeResult={id:challenge.id,success:Boolean(success),title:definition?.title||'Prova della Triade',reward:definition?.reward||'',text:challenge.resultText,nextId:challenge.nextId||''};story.stage='challenge_result_waiting';
+ const evilFailure=story.path==='evil'&&!success,giudaWasAlreadyLost=Boolean(story.giudaLost);if(evilFailure&&!giudaWasAlreadyLost){loseGiudaAfterFailedChallenge(definition?.title||'Prova della Triade');challenge.resultText=`${challenge.resultText} Giuda abbandona definitivamente la rosa e la sua maledizione si interrompe. I malus OVR già applicati restano permanenti.`.trim()}
+ story.lastChallengeResult={id:challenge.id,success:Boolean(success),title:definition?.title||'Prova della Triade',reward:definition?.reward||'',text:challenge.resultText,nextId:challenge.nextId||'',giudaLost:evilFailure&&!giudaWasAlreadyLost};story.stage='challenge_result_waiting';
 }
 function prepareFantaballopoliStoryEvent(){
  const story=fantaballopoliState();if(state.phase!=='season'||state.pendingEvent||!story.initialized||!story.scheduled||story.completed)return false;
@@ -413,20 +435,20 @@ function prepareFantaballopoliStoryEvent(){
   state.pendingEvent={kind:'storyFantaballopoli',storyType:'good-witness',resolved:false,title:'Il Testimone',text:`${story.targetPlayerName} ha registrato l’ordine della Triade. Proteggilo: la sua testimonianza può indebolire La Juve della Triade.`};return true;
  }
  if(story.stage==='evil_trials_waiting'){
-  state.pendingEvent={kind:'storyFantaballopoli',storyType:'evil-trials',resolved:false,title:'Le tre prove della Triade',text:'Dopo il draft riappaiono le tre figure misteriose. Ogni prova superata ti consegnerà un Cartonato capace di indebolire L’Inter degli Onesti.'};return true;
+  state.pendingEvent={kind:'storyFantaballopoli',storyType:'evil-trials',resolved:false,title:'Le tre prove della Triade',text:'Ogni prova superata consegna un Cartonato. Se ne fallisci anche una sola, Giuda abbandona definitivamente la rosa. Inoltre ogni vittoria con Giuda titolare toglie 5 OVR permanente a tutti i giocatori, senza limite minimo.'};return true;
  }
  if(story.stage==='evil_no_giuda_waiting'){
   state.pendingEvent={kind:'storyFantaballopoli',storyType:'evil-no-giuda',resolved:false,title:'Nessun testimone',text:'Hai eliminato il giocatore scomodo senza cederlo. Non hai ottenuto Giuda e non potrai conquistare i Cartonati: affronterai L’Inter degli Onesti con tutti i suoi poteri.'};return true;
  }
  if(story.stage==='challenge_result_waiting'){
-  const result=story.lastChallengeResult||{};state.pendingEvent={kind:'storyFantaballopoli',storyType:'challenge-result',resolved:false,title:result.success?'Prova superata':'Prova fallita',text:result.success?`${result.title}: hai ottenuto ${result.reward}. ${result.text||''}`:`${result.title}: non hai ottenuto ${result.reward}. ${result.text||''}`};return true;
+  const result=story.lastChallengeResult||{};state.pendingEvent={kind:'storyFantaballopoli',storyType:'challenge-result',resolved:false,title:result.success?'Prova superata':'Prova fallita',text:result.success?`${result.title}: hai ottenuto ${result.reward}. ${result.text||''}`:`${result.title}: non hai ottenuto ${result.reward}. ${result.text||''}${result.giudaLost?' Le altre prove continuano comunque, ma senza Giuda e senza la sua maledizione.':''}`};return true;
  }
  return false;
 }
 function fantaballopoliForcesLoss(){const story=fantaballopoliState();return Boolean(story.forcedLossPending&&story.stage==='evil_forced_loss')}
 function fantaballopoliMatchRule(){
  const story=fantaballopoliState(),challenge=story.challenge||{},id=challenge.active?String(challenge.id||''):'';
- return {forcedLoss:fantaballopoliForcesLoss(),challengeId:id,opponentOvrBonus:id==='evil-result'?10:0,injuredGoalsDouble:id==='evil-result',forceNoDraw:id==='evil-result'||id==='good-twelve',extraOpponentPlayer:id==='good-twelve',automaticPenaltyAgainst:id==='good-twelve'};
+ return {forcedLoss:fantaballopoliForcesLoss(),challengeId:id,opponentOvrBonus:id==='evil-result'?15:0,injuredGoalsDouble:false,forceNoDraw:id==='good-twelve',extraOpponentPlayer:id==='good-twelve',automaticPenaltyAgainst:id==='good-twelve'||id==='evil-result',openingGoalAgainst:id==='evil-result'};
 }
 function applyFantaballopoliOpponentRisks(){return{expelled:[],injured:[],powerPenalty:0}}
 function fantaballopoliOpponentLineup(lineup,opponent,rule){
@@ -435,6 +457,7 @@ function fantaballopoliOpponentLineup(lineup,opponent,rule){
 }
 function applyFantaballopoliPenaltyGoal(events,opponent,userTeam,matchMinutes,rule){
  if(!rule?.automaticPenaltyAgainst||!Array.isArray(events))return false;
+ if(rule.openingGoalAgainst){const goal=regulationGoalEvent(opponent,userTeam,matchMinutes,'Risultato prestabilito');goal.minute=1;goal.isFantaballopoliOpeningGoal=true;goal.description='La prova comincia dallo 0-1: il risultato prestabilito assegna subito un gol agli avversari.';events.push(goal);return true}
  const goal=regulationGoalEvent(opponent,userTeam,matchMinutes,'Rigore della Triade');goal.isFantaballopoliPenalty=true;goal.description='La Triade assegna un rigore automatico agli avversari.';events.push(goal);return true;
 }
 function applyFantaballopoliInjuredGoalValues(events,lineup,rule){
@@ -466,11 +489,18 @@ function tickFantaballopoliChallenge(result){
  const story=fantaballopoliState(),challenge=story.challenge;if(!challenge?.active||!result)return;
  const id=String(challenge.id||''),won=fantaballopoliResultWon(result),gf=Number.isFinite(Number(result.displayGf))?Number(result.displayGf):Number(result.gf)||0,ga=Number.isFinite(Number(result.displayGa))?Number(result.displayGa):Number(result.ga)||0;
  challenge.matchesPlayed++;
- if(id==='evil-result'){finishFantaballopoliChallenge(won,won?'Il risultato prestabilito è stato rispettato.':'La Triade non perdona il risultato sbagliato.');}
- else if(id==='evil-giuda'){
-  const giudaScored=(result.goals||[]).some(goal=>String(goal?.playerId||'')===String(story.giudaId||'')),margin=gf-ga,success=won&&(giudaScored||margin>=2);finishFantaballopoliChallenge(success,success?(giudaScored?'Giuda è diventato il simbolo della vittoria.':'La vittoria larga ha dimostrato la forza della Triade.'):'Hai vinto senza rispettare le condizioni oppure non hai vinto.');
+ if(id==='evil-result'){
+  const regulationWin=won&&!result.extraTime&&!result.penalties;finishFantaballopoliChallenge(regulationWin,regulationWin?'Hai ribaltato lo 0-1 contro un’avversaria potenziata entro i 90 minuti.':'Non hai vinto entro i 90 minuti: il risultato prestabilito non è stato rispettato.');
+ }else if(id==='evil-giuda'){
+  const giudaAvailable=!story.giudaLost&&Boolean(rosterEntry(story.giudaId)),giudaStarter=fantaballopoliGiudaInLineup(result),margin=gf-ga,validGoals=(result.goals||[]).filter(goal=>!goal?.isImprovisedPenalty&&!goal?.isRuleGoal),scorerCounts={};
+  validGoals.forEach(goal=>{const scorerId=String(goal?.playerId||goal?.player?.id||goal?.player||'');if(scorerId)scorerCounts[scorerId]=(scorerCounts[scorerId]||0)+Math.max(1,Number(goal?.goalValue)||1)});
+  const hasBrace=Object.values(scorerCounts).some(count=>Number(count)>=2),success=giudaAvailable?(giudaStarter&&won&&margin>=3):(won&&margin>=3&&hasBrace);
+  finishFantaballopoliChallenge(success,success?(giudaAvailable?'Giuda è partito titolare e la squadra ha vinto con almeno tre gol di scarto. Non era necessario un suo gol.':'Anche senza Giuda hai vinto con almeno tre gol di scarto e un tuo giocatore ha realizzato una doppietta.'):(giudaAvailable&&!giudaStarter?'Giuda non è stato schierato titolare.':!won?'La squadra non ha vinto.':margin<3?'La vittoria non è arrivata con almeno tre gol di scarto.':'Senza Giuda, nessun tuo giocatore ha realizzato una doppietta.'));
  }else if(id==='evil-dossier'){
-  if(gf<1)finishFantaballopoliChallenge(false,'La serie si interrompe: in questa partita non hai segnato.');else{challenge.progress++;if(challenge.matchesPlayed>=5)finishFantaballopoliChallenge(challenge.progress>=5,'Hai segnato in tutte e cinque le partite e indebolito il dossier.');}
+  if(gf<1){finishFantaballopoliChallenge(false,'La serie si interrompe: in questa partita non hai segnato.');}
+  else{challenge.progress++;challenge.goals=Math.max(0,Number(challenge.goals)||0)+gf;if(won)challenge.wins=Math.max(0,Number(challenge.wins)||0)+1;if(ga===0)challenge.cleanSheets=Math.max(0,Number(challenge.cleanSheets)||0)+1;
+   if(challenge.matchesPlayed>=5){const success=challenge.progress>=5&&challenge.wins>=4&&challenge.cleanSheets>=2&&challenge.goals>=10;finishFantaballopoliChallenge(success,success?`Dossier distrutto: ${challenge.wins} vittorie, ${challenge.cleanSheets} clean sheet e ${challenge.goals} gol.`:`Obiettivi incompleti: ${challenge.wins}/4 vittorie, ${challenge.cleanSheets}/2 clean sheet e ${challenge.goals}/10 gol.`);}
+  }
  }else if(id==='good-twelve'){finishFantaballopoliChallenge(won,won?'Hai battuto dodici avversari nonostante il rigore contro.':'La Triade ha imposto il proprio risultato.');}
  else if(id==='good-witness'){
   const starter=(result.lineup||[]).some(entry=>String(entry?.playerId||entry?.player?.id||'')===String(story.targetPlayerId||'')),sentOff=String(result.ownSuspensionId||'')===String(story.targetPlayerId||''),scored=(result.goals||[]).some(goal=>String(goal?.playerId||'')===String(story.targetPlayerId||''));if(scored)challenge.scored=true;
@@ -483,7 +513,7 @@ function tickFantaballopoliChallenge(result){
 function tickFantaballopoliAfterMatch(result){
  const story=fantaballopoliState();if(!result||story.completed)return;
  if(story.forcedLossPending&&story.stage==='evil_forced_loss'){story.forcedLossPending=false;if(fantaballopoliSelectTarget())story.stage='evil_player_waiting';else{story.stage='evil_boss_waiting'}}
- tickFantaballopoliChallenge(result);
+ applyGiudaVictoryCurse(result);tickFantaballopoliChallenge(result);
 }
 function resolveFantaballopoliAction(action){
  const event=state.pendingEvent,story=fantaballopoliState();if(!event||event.kind!=='storyFantaballopoli'||event.resolved)return;
@@ -512,9 +542,9 @@ function renderFantaballopoliEvent(event){
  if(event.storyType==='opening')choices=`<button class="choice season-event-choice tone-blue" data-fanta-action="accept"><b>Accetta di perdere</b><small>Entra nella Triade. Il boss finale sarà L’Inter degli Onesti.</small></button><button class="choice season-event-choice tone-red" data-fanta-action="resist"><b>Rifiuta di perdere</b><small>Combatti il sistema. Il boss finale sarà La Juve della Triade.</small></button><button class="choice season-event-choice" data-fanta-action="optout"><b>Non voglio partecipare</b><small>Annulla Fantaballopoli per questa stagione e continua normalmente.</small></button>`;
  else if(event.storyType==='evil-player')choices=`<button class="choice season-event-choice tone-blue" data-fanta-action="trade"><b>Cederlo al prossimo draft</b><small>Al prossimo draft riceverai Giuda, un talento misterioso scelto dalla Triade.</small></button><button class="choice season-event-choice tone-red" data-fanta-action="lock"><b>Non cederlo</b><small>Chiudilo per sempre nello spogliatoio: viene rimosso e non darà più problemi.</small></button>`;
  else if(event.storyType==='good-witness')choices=`<button class="choice season-event-choice tone-blue" data-fanta-action="start"><b>Proteggi il Testimone</b><small>Avvia le tre prove per raccogliere le Intercettazioni.</small></button>`;
- else if(event.storyType==='evil-trials')choices=`<button class="choice season-event-choice tone-blue" data-fanta-action="start"><b>Affronta le prove</b><small>Ogni Cartonato ottenuto disattiverà un potere dell’Inter degli Onesti.</small></button>`;
+ else if(event.storyType==='evil-trials')choices=`<button class="choice season-event-choice tone-blue" data-fanta-action="start"><b>Affronta le prove</b><small>Fallirne una significa perdere Giuda. Ogni vittoria con lui titolare applica −5 OVR permanente a tutta la rosa, senza limite.</small></button>`;
  else if(event.storyType==='evil-no-giuda')choices=`<button class="choice season-event-choice tone-red" data-fanta-action="continue"><b>Continua</b><small>Arriva a fine campionato e affronta L’Inter degli Onesti senza Cartonati.</small></button>`;
- else choices=`<button class="choice season-event-choice tone-blue" data-fanta-action="next"><b>${fantaballopoliState().lastChallengeResult?.nextId?'Prossima prova':'Verso il boss finale'}</b><small>La storia continua anche se la prova è fallita.</small></button>`;
+ else choices=`<button class="choice season-event-choice tone-blue" data-fanta-action="next"><b>${fantaballopoliState().lastChallengeResult?.nextId?'Prossima prova':'Verso il boss finale'}</b><small>${fantaballopoliState().lastChallengeResult?.giudaLost?'Giuda è andato via e la maledizione è terminata, ma le prove continuano.':'Continua il percorso di Fantaballopoli.'}</small></button>`;
  return `<div class="season-event-overlay" role="presentation" ${seasonEventMinimized?'hidden':''}><section class="season-event-dialog story-event-dialog" role="dialog" aria-modal="true" aria-labelledby="seasonEventTitle" aria-describedby="seasonEventCopy"><button class="season-event-minimize" data-event-minimize type="button" aria-label="Riduci l’evento e consulta la pagina">━ Riduci</button><div class="season-event-head"><div class="season-event-kicker">Evento storia</div><h2 class="season-event-title" id="seasonEventTitle">${esc(event.title)}</h2><p class="season-event-copy" id="seasonEventCopy">${esc(event.text)}</p></div><div class="choice-grid season-event-choice-grid">${choices}</div><p class="season-event-hint">Fantaballopoli è facoltativa: la scelta iniziale determina definitivamente il percorso.</p></section></div><aside class="season-event-dock story-event-dock" ${seasonEventMinimized?'':'hidden'} aria-label="Evento storia in attesa"><button class="season-event-dock-button" data-event-expand type="button"><span class="season-event-dock-pulse" aria-hidden="true"></span><span class="season-event-dock-copy"><span>Storia in attesa</span><b>${esc(event.title)}</b></span><span class="season-event-dock-open">Riapri ↑</span></button></aside>`;
 }
 function bindFantaballopoliControls(){document.querySelectorAll('[data-fanta-action]').forEach(button=>button.onclick=()=>resolveFantaballopoliAction(button.dataset.fantaAction))}
@@ -523,8 +553,8 @@ function fantaballopoliCollectedLabels(story=fantaballopoliState()){
 }
 function renderFantaballopoliPanel(){
  const story=fantaballopoliState();syncFantaballopoliAchievements();if(!story.scheduled||story.completed||['idle','inactive','waiting','opening','opted_out'].includes(story.stage))return'';
- const challenge=story.challenge?.active?fantaballopoliChallengeDefinition(story.challenge.id):null,progress=challenge?`<p><b>${esc(challenge.title)}</b><br>${esc(challenge.objective)}<br>Partite: ${Number(story.challenge.matchesPlayed)||0}/${Number(story.challenge.matchesRequired)||challenge.matches}</p>`:'';
- const pathTitle=story.path==='evil'?'Dalla parte della Triade':'Contro la Triade',boss=story.path==='evil'?'L’Inter degli Onesti':'La Juve della Triade';return `<section class="event-card"><div class="label">Storia · Fantaballopoli</div><h3>${esc(pathTitle)}</h3><p>Boss finale: <b>${esc(boss)}</b></p>${progress}<p class="subline">${esc(fantaballopoliCollectedLabels(story))}</p></section>`;
+ const challenge=story.challenge?.active?fantaballopoliChallengeDefinition(story.challenge.id):null,challengeStats=story.challenge?.id==='evil-dossier'?`<br>Vittorie: ${Number(story.challenge.wins)||0}/4 · Clean sheet: ${Number(story.challenge.cleanSheets)||0}/2 · Gol: ${Number(story.challenge.goals)||0}/10`:'' ,progress=challenge?`<p><b>${esc(challenge.title)}</b><br>${esc(challenge.objective)}<br>Partite: ${Number(story.challenge.matchesPlayed)||0}/${Number(story.challenge.matchesRequired)||challenge.matches}${challengeStats}</p>`:'';
+ const pathTitle=story.path==='evil'?'Dalla parte della Triade':'Contro la Triade',boss=story.path==='evil'?'L’Inter degli Onesti':'La Juve della Triade',curse=story.path==='evil'&&story.giudaId?`<p><b>Maledizione di Giuda:</b> ${Number(story.giudaCurseWins)||0} vittorie · −${Number(story.giudaCurseTotal)||0} OVR permanente a tutta la rosa${story.giudaLost?' · terminata dopo l’addio di Giuda; i malus già subiti restano attivi':''}.</p>`:'';return `<section class="event-card"><div class="label">Storia · Fantaballopoli</div><h3>${esc(pathTitle)}</h3><p>Boss finale: <b>${esc(boss)}</b></p>${curse}${progress}<p class="subline">${esc(fantaballopoliCollectedLabels(story))}</p></section>`;
 }
 function fantaballopoliBossDefinition(story=fantaballopoliState()){
  const base=story.path==='evil'?FANTABALLOPOLI_BOSSES.inter:FANTABALLOPOLI_BOSSES.juve;
