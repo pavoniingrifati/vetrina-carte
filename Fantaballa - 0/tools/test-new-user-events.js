@@ -76,4 +76,17 @@ test('posto fisso: bonus agli specialisti e malus ai duttili',()=>{context.roste
 
 test('posto fisso: pensione rimuove tutti gli specialisti',()=>{context.rosterEntry('p3').player.Position='ATT, AS';const before=context.rosterPlayers().length;const message=context.retireSingleRolePlayers();assert(context.rosterEntry('p3'),'Il giocatore multiruolo non deve lasciare la squadra');assert(context.rosterPlayers().length===1,'Devono restare soltanto i giocatori multiruolo');assert(before>context.rosterPlayers().length&&message.includes('lasciano'),'La pensione non ha rimosso gli specialisti')});
 
+
+test('procuratore: tre vittorie rendono permanente il +8',()=>{const c={playerId:'b1',playerName:'Riserva 1'};context.acceptIntrusiveAgent(c);assert(!context.rosterEntry('b1').bench,'Il giocatore deve essere spostato titolare');for(let i=0;i<3;i++)context.tickAdditionalUserEventsAfterMatch({gf:2,ga:0,lineup:[{playerId:'b1'}],eventUpdates:[]});assert(context.rosterEntry('b1').player.ovr===74,'Il +8 permanente non è stato applicato');assert(!context.intrusiveAgentState().active,'La clausola deve terminare dopo 3 partite')});
+
+test('procuratore: se resta fuori lascia la squadra',()=>{context.acceptIntrusiveAgent({playerId:'b1',playerName:'Riserva 1'});context.tickAdditionalUserEventsAfterMatch({gf:1,ga:0,lineup:[{playerId:'p1'}],eventUpdates:[]});assert(!context.rosterEntry('b1'),'Il giocatore deve lasciare la squadra se non parte titolare')});
+
+test('fascia di Calabria: +12 e -5 dopo una sconfitta da titolare',()=>{context.assignCalabriaArmband({playerId:'p3',playerName:'Attaccante'});assert(context.rosterEntry('p3').player.ovr===92,'Bonus +12 non applicato');context.tickAdditionalUserEventsAfterMatch({gf:0,ga:1,lineup:[{playerId:'p3'}],eventUpdates:[]});assert(context.rosterEntry('p3').player.ovr===87,'Malus -5 dopo la sconfitta non applicato')});
+
+test('fascia di Calabria distrutta: -5 Intesa per una partita',()=>{context.destroyCalabriaArmband();const effect=context.state.activeEffects.find(e=>e.type==='teamChem');assert(effect&&effect.value===-5&&effect.rounds===1,'Malus Intesa della fascia distrutta errato')});
+
+test('talpa: accusa corretta rimuove il colpevole e assegna +15 Intesa',()=>{const c={suspects:[{playerId:'p2',playerName:'Scarso'},{playerId:'p3',playerName:'Attaccante'},{playerId:'p4',playerName:'Ala'}],moleIndex:1};context.accuseLockerRoomMole(c,1);assert(!context.rosterEntry('p3'),'La talpa deve essere rimossa');assert(context.state.activeEffects.some(e=>e.type==='teamChem'&&e.value===15),'Bonus +15 Intesa non applicato')});
+
+test('talpa: non accusare dà +8 OVR ai prossimi 3 avversari',()=>{context.ignoreLockerRoomMole();const effect=context.state.activeEffects.find(e=>e.type==='opponentOvr');assert(effect&&effect.value===8&&effect.rounds===3,'Malus avversari della talpa errato')});
+
 console.log(JSON.stringify({ok:true,tests:tests.length,names:tests},null,2));

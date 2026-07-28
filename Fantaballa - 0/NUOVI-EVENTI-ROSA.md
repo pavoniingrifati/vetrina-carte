@@ -1,6 +1,6 @@
 # Nuovi eventi della rosa
 
-Sono stati aggiunti sei eventi data-driven, disponibili sia nel Campionato Community sia nella modalità REAL.
+Sono stati aggiunti nove eventi data-driven, disponibili sia nel Campionato Community sia nella modalità REAL.
 Sono marcati `userOnly`, quindi non vengono applicati automaticamente alle squadre controllate dal Caos.
 
 ## 1. Il rigorista improvvisato
@@ -91,3 +91,39 @@ Viene scelto casualmente un titolare.
 
 Tutti gli stati intermedi vengono salvati dentro `seasonRules` nel salvataggio versionato già esistente.
 Non è stato creato un nuovo sistema di salvataggio e non sono state cambiate le chiavi del `localStorage`.
+
+## 7. Il procuratore invadente
+
+Viene scelto un giocatore presente in panchina.
+
+### Accetta la clausola
+- riceve +8 OVR per le prossime 3 partite;
+- deve partire titolare in tutte e tre;
+- se resta fuori anche una volta, lascia definitivamente la squadra;
+- se la squadra vince tutte e tre le partite, il +8 OVR diventa permanente fino a fine stagione.
+
+### Rifiuta
+- il giocatore resta, ma perde 1 OVR fino a fine stagione.
+
+## 8. La fascia di Calabria
+
+Viene indicato come capitano il titolare con l’OVR attuale più alto.
+
+### Assegnala
+- il capitano riceve +12 OVR permanente;
+- ogni sconfitta con lui titolare gli toglie 5 OVR permanente.
+
+### Distruggila
+- tutta la rosa perde 5 Intesa nella prossima partita.
+
+## 9. La talpa nello spogliatoio
+
+Vengono mostrati tre sospettati.
+
+### Accusa un giocatore
+- se è la talpa, viene cacciato e la squadra ottiene +15 Intesa nella prossima partita;
+- se è innocente, lascia comunque la squadra per l’umiliazione.
+
+### Non accusare nessuno
+- nessun giocatore viene perso;
+- i prossimi 3 avversari ricevono +8 OVR.

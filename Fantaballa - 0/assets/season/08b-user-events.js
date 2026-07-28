@@ -210,6 +210,60 @@ function retireSingleRolePlayers(){
  return `${names.length} ${names.length===1?'giocatore con un solo ruolo lascia':'giocatori con un solo ruolo lasciano'} la squadra: ${names.join(', ')}. Gli slot rimasti vuoti saranno coperti dalla Primavera d’emergenza.`;
 }
 
+
+/* Il procuratore invadente */
+function intrusiveAgentState(){return userEventState('intrusiveAgent',{active:false,playerId:'',playerName:'',matchesRemaining:0,matchesPlayed:0,wins:0,startedMatchday:-1,lastOutcome:''})}
+function intrusiveAgentBenchCandidates(){return rosterPlayers().filter(entry=>entry?.bench&&userEventPlayerByEntry(entry))}
+function intrusiveAgentAvailable(){return Boolean(intrusiveAgentBenchCandidates().length&&!intrusiveAgentState().active&&Number(state.matchday)<seasonLength()-2)}
+function intrusiveAgentContext(){const entry=pick(intrusiveAgentBenchCandidates()),player=userEventPlayerByEntry(entry);return player?{playerId:String(entry.playerId),playerName:player.name}:{} }
+function intrusiveAgentDescription(context){return `Il procuratore di ${context?.playerName||'un giocatore in panchina'} pretende che il suo assistito parta titolare nelle prossime 3 partite.`}
+function clearIntrusiveAgentEffect(playerId){state.activeEffects=(state.activeEffects||[]).filter(effect=>!(String(effect?.type||'')==='playerOvr'&&String(effect?.playerId||'')===String(playerId||'')&&String(effect?.source||'')==='Procuratore invadente'))}
+function acceptIntrusiveAgent(context){
+ const entry=userEventEntryById(context?.playerId),player=userEventPlayerByEntry(entry);if(!entry||!player||!entry.bench)return'Il giocatore non è più disponibile in panchina.';
+ if(!userEventMoveToStarter(entry.playerId))return'Non è possibile inserirlo nella formazione titolare.';
+ Object.assign(intrusiveAgentState(),{active:true,playerId:String(entry.playerId),playerName:player.name,matchesRemaining:3,matchesPlayed:0,wins:0,startedMatchday:Number(state.matchday),lastOutcome:''});
+ pushEffect('playerOvr',8,3,{playerId:String(entry.playerId),playerName:player.name,source:'Procuratore invadente'});
+ return `${player.name} riceve +8 OVR nelle prossime 3 partite e parte subito titolare. Se resta fuori anche una volta, lascerà definitivamente la squadra.`;
+}
+function rejectIntrusiveAgent(context){const entry=userEventEntryById(context?.playerId),player=userEventPlayerByEntry(entry);if(!entry||!player)return'Il giocatore non è più disponibile.';const change=userEventPermanentDelta(entry.playerId,-1);return `${player.name} resta in rosa, ma perde 1 OVR fino a fine stagione${change?`: nuovo OVR ${change.after}`:''}.`}
+function resolveIntrusiveAgentAfterMatch(result){
+ const clause=intrusiveAgentState();if(!result||!clause.active)return;
+ const entry=userEventEntryById(clause.playerId),lineup=Array.isArray(result.lineup)?result.lineup:[],started=lineup.some(item=>String(item?.playerId||'')===String(clause.playerId));
+ if(!entry||!started){clause.active=false;clearIntrusiveAgentEffect(clause.playerId);const exit=entry?userEventRemovePlayer(clause.playerId,'la clausola del procuratore invadente'):`${clause.playerName} non è più presente in rosa.`;clause.lastOutcome=`${clause.playerName} non è partito titolare: ${exit}`;userEventUpdate(result,false,'Il procuratore invadente',clause.lastOutcome);return}
+ clause.matchesPlayed=Math.max(0,Number(clause.matchesPlayed)||0)+1;clause.matchesRemaining=Math.max(0,Number(clause.matchesRemaining)||0)-1;if(Number(result.gf)>Number(result.ga))clause.wins=Math.max(0,Number(clause.wins)||0)+1;
+ if(clause.matchesRemaining>0){clause.lastOutcome=`${clause.playerName} ha rispettato la clausola: ${clause.matchesPlayed}/3 presenze da titolare e ${clause.wins}/3 vittorie.`;userEventUpdate(result,true,'Il procuratore invadente',clause.lastOutcome);return}
+ clause.active=false;clearIntrusiveAgentEffect(clause.playerId);
+ if(clause.wins===3){const change=userEventPermanentDelta(clause.playerId,8);clause.lastOutcome=`Tre vittorie su tre: il +8 OVR di ${clause.playerName} diventa permanente fino a fine stagione${change?`: nuovo OVR ${change.after}`:''}.`;userEventUpdate(result,true,'Il procuratore invadente',clause.lastOutcome)}
+ else{clause.lastOutcome=`La clausola termina con ${clause.wins} vittorie su 3: il bonus temporaneo di ${clause.playerName} viene rimosso.`;userEventUpdate(result,false,'Il procuratore invadente',clause.lastOutcome)}
+}
+
+/* La fascia di Calabria */
+function calabriaArmbandState(){return userEventState('calabriaArmband',{active:false,playerId:'',playerName:'',losses:0,startedMatchday:-1,lastOutcome:''})}
+function calabriaCaptainCandidate(){return [...getStarterEntries()].filter(entry=>userEventPlayerByEntry(entry)).sort((a,b)=>(Number(userEventPlayerByEntry(b)?.ovr)||0)-(Number(userEventPlayerByEntry(a)?.ovr)||0))[0]||null}
+function calabriaArmbandAvailable(){return Boolean(calabriaCaptainCandidate()&&!calabriaArmbandState().active)}
+function calabriaArmbandContext(){const entry=calabriaCaptainCandidate(),player=userEventPlayerByEntry(entry);return player?{playerId:String(entry.playerId),playerName:player.name}:{} }
+function calabriaArmbandDescription(context){return `Trovi la vecchia fascia di Calabria. Il gruppo indica ${context?.playerName||'il titolare con l’OVR più alto'} come possibile capitano.`}
+function assignCalabriaArmband(context){const entry=userEventEntryById(context?.playerId),player=userEventPlayerByEntry(entry);if(!entry||!player)return'Il capitano non è più disponibile.';const change=userEventPermanentDelta(entry.playerId,12);Object.assign(calabriaArmbandState(),{active:true,playerId:String(entry.playerId),playerName:player.name,losses:0,startedMatchday:Number(state.matchday),lastOutcome:''});return `${player.name} riceve +12 OVR permanente${change?`: nuovo OVR ${change.after}`:''}. Ogni sconfitta con lui titolare gli costerà 5 OVR permanente.`}
+function destroyCalabriaArmband(){pushEffect('teamChem',-5,1,{source:'Fascia di Calabria distrutta'});return 'La fascia viene distrutta. La rosa perde 5 Intesa nella prossima partita.'}
+function resolveCalabriaArmbandAfterMatch(result){
+ const armband=calabriaArmbandState();if(!result||!armband.active)return;const entry=userEventEntryById(armband.playerId);if(!entry){armband.active=false;return}
+ const started=(Array.isArray(result.lineup)?result.lineup:[]).some(item=>String(item?.playerId||'')===String(armband.playerId)),lost=Number(result.gf)<Number(result.ga);if(!started||!lost)return;
+ armband.losses=Math.max(0,Number(armband.losses)||0)+1;const change=userEventPermanentDelta(armband.playerId,-5);armband.lastOutcome=`Sconfitta con ${armband.playerName} titolare: -5 OVR permanente${change?`, nuovo OVR ${change.after}`:''}.`;userEventUpdate(result,false,'La fascia di Calabria',armband.lastOutcome)
+}
+
+/* La talpa nello spogliatoio */
+function lockerRoomMoleAvailable(){return rosterPlayers().filter(entry=>userEventPlayerByEntry(entry)).length>=3}
+function lockerRoomMoleContext(){
+ const pool=[...rosterPlayers()].filter(entry=>userEventPlayerByEntry(entry));for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
+ const suspects=pool.slice(0,3).map(entry=>({playerId:String(entry.playerId),playerName:String(userEventPlayerByEntry(entry)?.name||'Sospettato')}));return {suspects,moleIndex:Math.floor(Math.random()*Math.max(1,suspects.length))}
+}
+function lockerRoomMoleDescription(context){const suspects=Array.isArray(context?.suspects)?context.suspects:[];return suspects.length>=3?`Qualcuno comunica la formazione agli avversari. Sospettato A: ${suspects[0].playerName}. Sospettato B: ${suspects[1].playerName}. Sospettato C: ${suspects[2].playerName}.`:'Tre giocatori sono sospettati di comunicare la formazione agli avversari.'}
+function accuseLockerRoomMole(context,index){
+ const suspects=Array.isArray(context?.suspects)?context.suspects:[],suspect=suspects[Number(index)];if(!suspect)return'Il sospettato non è disponibile.';const entry=userEventEntryById(suspect.playerId);if(!entry)return`${suspect.playerName} non è più presente in rosa.`;
+ const isMole=Number(context?.moleIndex)===Number(index),exit=userEventRemovePlayer(suspect.playerId,isMole?'lo scandalo della talpa':'l’umiliazione di un’accusa ingiusta');if(isMole){pushEffect('teamChem',15,1,{source:'Talpa scoperta'});return `${suspect.playerName} era davvero la talpa. ${exit} La squadra riceve +15 Intesa nella prossima partita.`}return `${suspect.playerName} era innocente, ma ${exit}`
+}
+function ignoreLockerRoomMole(){pushEffect('opponentOvr',8,3,{source:'Talpa nello spogliatoio'});return 'Non accusi nessuno. Nessun giocatore viene perso, ma i prossimi 3 avversari ricevono +8 OVR.'}
+
 /* Designazione arbitrale */
 function refereeDesignationState(){return userEventState('refereeDesignation',{active:false,branch:'',matchesRemaining:0,matchesPlayed:0,startedMatchday:-1,failed:false,rewardGranted:false,lastOutcome:''})}
 function refereeDesignationAvailable(){const challenge=refereeDesignationState(),inventory=seasonInventory();return Boolean(!challenge.active&&Number(state.matchday)<seasonLength()-2&&seasonInventoryUsedSlots()<inventory.capacity)}
@@ -246,6 +300,8 @@ function tickAdditionalUserEventsAfterMatch(result){
  resolveRefereeDesignationAfterMatch(result);
  resolvePermanentAppealAfterMatch(result);
  resolveConcededGoalPointsAfterMatch(result);
+ resolveIntrusiveAgentAfterMatch(result);
+ resolveCalabriaArmbandAfterMatch(result);
  const penalty=result.improvisedPenalty;
  if(penalty){if(penalty.missing)userEventUpdate(result,false,'Il rigorista improvvisato',`${penalty.playerName} non era disponibile e la prova viene annullata.`);else if(!penalty.awarded)userEventUpdate(result,true,'Il rigorista improvvisato',`Nessun rigore assegnato: ${penalty.playerName} non ha potuto dimostrare nulla.`);else if(penalty.scored)userEventUpdate(result,true,'Il rigorista improvvisato',`${penalty.playerName} segna il rigore e ottiene +5 OVR permanente: nuovo OVR ${penalty.newOvr}.`);else userEventUpdate(result,false,'Il rigorista improvvisato',`${penalty.playerName} sbaglia il rigore e perde 5 OVR permanente: nuovo OVR ${penalty.newOvr}.`)}
  if(result.weakBrotherGoal)userEventUpdate(result,false,'Il fratello scarso',`${result.weakBrotherGoal.playerName} mantiene la promessa e segna per ${result.weakBrotherGoal.teamName}.`);

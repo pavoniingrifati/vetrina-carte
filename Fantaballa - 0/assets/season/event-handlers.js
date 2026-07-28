@@ -66,7 +66,10 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "posto-fisso":function(){return fixedJobAvailable()},
 "pillola-rossa-pillola-blu":function(){return pillInventoryEventAvailable()},
 "misterioso-lakaka-lukaku":function(){return mysteriousLakakaEventAvailable()},
-"presidente-tirchio":function(){return thriftyPresidentEventAvailable()}
+"presidente-tirchio":function(){return thriftyPresidentEventAvailable()},
+"procuratore-invadente":function(){return intrusiveAgentAvailable()},
+"fascia-di-calabria":function(){return calabriaArmbandAvailable()},
+"talpa-spogliatoio":function(){return lockerRoomMoleAvailable()}
  }),
  title:Object.freeze({
 "omonimo-allenatore":function(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`},
@@ -82,7 +85,10 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "fratello-scarso":function(context){return weakBrotherDescription(context)},
 "portiere-vuole-segnare":function(context){return goalkeeperScorerDescription(context)},
 "contratto-scritto-male":function(context){return badContractDescription(context)},
-"giocatore-porta-sfortuna":function(context){return badLuckPlayerDescription(context)}
+"giocatore-porta-sfortuna":function(context){return badLuckPlayerDescription(context)},
+"procuratore-invadente":function(context){return intrusiveAgentDescription(context)},
+"fascia-di-calabria":function(context){return calabriaArmbandDescription(context)},
+"talpa-spogliatoio":function(context){return lockerRoomMoleDescription(context)}
  }),
  createContext:Object.freeze({
 "rapito-alieni":function(){const entry=randomOwnEntry();return entry?{playerId:String(entry.playerId),playerName:entry.player.name}:{}},
@@ -92,7 +98,10 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "fratello-scarso":function(){return weakBrotherContext()},
 "portiere-vuole-segnare":function(){return goalkeeperScorerContext()},
 "contratto-scritto-male":function(){return badContractContext()},
-"giocatore-porta-sfortuna":function(){return badLuckPlayerContext()}
+"giocatore-porta-sfortuna":function(){return badLuckPlayerContext()},
+"procuratore-invadente":function(){return intrusiveAgentContext()},
+"fascia-di-calabria":function(){return calabriaArmbandContext()},
+"talpa-spogliatoio":function(){return lockerRoomMoleContext()}
  }),
  choiceApply:Object.freeze({
 "nuovo-sponsor:0":function(){return activateBallariniSponsor()},
@@ -277,6 +286,14 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "misterioso-lakaka-lukaku:1":function(){return receiveMysteriousLakakaPlayer('lukaku')},
 "presidente-tirchio:0":function(){return activateThriftyPresidentCuts()},
 "presidente-tirchio:1":function(){return activateThriftyPresidentMarketBlock()},
+"procuratore-invadente:0":function(context){return acceptIntrusiveAgent(context)},
+"procuratore-invadente:1":function(context){return rejectIntrusiveAgent(context)},
+"fascia-di-calabria:0":function(context){return assignCalabriaArmband(context)},
+"fascia-di-calabria:1":function(){return destroyCalabriaArmband()},
+"talpa-spogliatoio:0":function(context){return accuseLockerRoomMole(context,0)},
+"talpa-spogliatoio:1":function(context){return accuseLockerRoomMole(context,1)},
+"talpa-spogliatoio:2":function(context){return accuseLockerRoomMole(context,2)},
+"talpa-spogliatoio:3":function(){return ignoreLockerRoomMole()},
 "cambio-stadio:0":function(){state.seasonRules.stadiumHomeAdvantageBonus=Math.max(Number(state.seasonRules.stadiumHomeAdvantageBonus)||0,.06);return "Trasloco completato: il nuovo stadio aumenta leggermente il vantaggio nelle partite casalinghe fino al termine della stagione."},
 "cambio-stadio:1":function(){const names=boostAllRosterPlayers(1);return `${names.length} giocatori della rosa ricevono +1 OVR permanente.`}
  })

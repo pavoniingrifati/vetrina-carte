@@ -794,3 +794,102 @@ function showMeritStoryFinale(){
  screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Finale segreto concluso</div><h2>${finale.won?'Impresa completata!':'Sfida persa'}</h2><div class="final-position">${finale.userGoals}–${finale.opponentGoals}</div><p>${esc(state.teamName)} contro ${esc(finale.opponent)}.</p></div><div class="panel"><h3>${finale.pointsDelta>0?'+20':'−20'} punti in campionato</h3><p>Il risultato è stato applicato alla classifica prima del recap finale.</p><button id="finishMeritFinale" class="btn primary">Vai al recap finale</button></div></section>`;document.getElementById('finishMeritFinale').onclick=finishMeritStoryFinale;
 }
 
+/* Fantaballopoli boss live commentary patch — 2026-07-28 */
+function fantaballopoliBossMatchLineup(boss){
+ return (boss?.starters||[]).map((source,index)=>{
+  const position=String(source.position||source.Position||'ATT'),id=`${boss.id}-starter-${index}`;
+  const player={id,name:String(source.name||`Giocatore ${index+1}`),Position:position,position,role:(typeof POSITION_ROLE==='object'&&POSITION_ROLE[position])||source.role||'A',ovr:Number(source.ovr)||70,nation:'Fantaballopoli'};
+  return{playerId:id,player,slot:position,slotId:`${boss.id}-slot-${index}`,bench:false,malus:0};
+ });
+}
+function fantaballopoliFinalUserLineup(){
+ if(typeof resolveLineup==='function')return resolveLineup();
+ return (typeof rosterPlayers==='function'?rosterPlayers():[]).filter(entry=>!entry.bench);
+}
+function fantaballopoliSpecialGoal(lineup,team,opponent,{minute=45,scorerName='',description='La palla finisce in rete.',tag='' }={}){
+ const safe=(Array.isArray(lineup)?lineup:[]).filter(entry=>entry&&entry.player),named=scorerName?safe.find(entry=>String(entry.player?.name||'')===String(scorerName)):null,scorer=named||(typeof weightedScorer==='function'?weightedScorer(safe):safe[0]);
+ const others=safe.filter(entry=>String(entry.playerId)!==String(scorer?.playerId)),assist=others.length&&Math.random()<.55?(typeof pick==='function'?pick(others):others[0]):null;
+ return{minute:Number(minute)||45,playerId:String(scorer?.playerId||''),assistId:String(assist?.playerId||''),player:String(scorer?.player?.name||scorerName||team?.name||'Marcatore'),assist:String(assist?.player?.name||''),teamId:String(team?.id||''),teamName:String(team?.name||''),goalValue:1,description:String(description||''),fantaballopoliTag:String(tag||'')};
+}
+function fantaballopoliSimpleGoals(total,lineup,team,opponent,minMinute=1,maxMinute=88){
+ if(typeof buildTeamGoals==='function')return buildTeamGoals(total,lineup,team,opponent,[],maxMinute,minMinute);
+ const events=[];for(let index=0;index<Math.max(0,Number(total)||0);index++){const span=Math.max(1,maxMinute-minMinute+1),minute=minMinute+Math.floor(Math.random()*span);events.push(fantaballopoliSpecialGoal(lineup,team,opponent,{minute,description:'Azione conclusa con un gol.'}))}return events.sort((a,b)=>a.minute-b.minute);
+}
+function fantaballopoliFinalSimulation(){
+ const story=fantaballopoliState(),finale=story.finale,boss=fantaballopoliBossDefinition(story);if(!finale?.eligible||finale.played)return null;
+ const powers=fantaballopoliBossPowers(story),active=id=>powers.some(power=>power.id===id&&power.active),notes=[],special=[];
+ const userTeam=typeof teamById==='function'?(teamById(USER_ID)||{id:USER_ID,name:state.teamName,colors:typeof activeUserClub==='function'?activeUserClub().colors:null}):{id:USER_ID,name:state.teamName};
+ const bossTeam={id:boss.id,name:boss.name,colors:boss.colors,clubId:boss.id};
+ const userLineup=fantaballopoliFinalUserLineup(),bossLineup=fantaballopoliBossMatchLineup(boss);
+ let userPower=Math.max(35,Number(matchPower())||35),bossPower=Math.max(35,Number(fantaballopoliBossBasePower(boss))||35);
+ if(story.path==='resistance'&&active('palace')){bossPower+=10;notes.push('Protezione del Palazzo: +10 OVR alla Juve della Triade.');special.push({minute:1,type:'var',icon:'🏛️',title:'Protezione del Palazzo',text:'La Juve della Triade entra in campo con +10 OVR.',teamId:String(boss.id)})}
+ if(story.path==='evil'&&active('dossier')){bossPower+=10;userPower=Math.max(25,userPower-5);notes.push('Dossier completo: +10 OVR all’Inter e -5 potenza alla tua squadra.');special.push({minute:1,type:'var',icon:'📁',title:'Dossier completo',text:'L’Inter viene potenziata e il tuo spogliatoio perde fiducia.',teamId:String(boss.id)})}
+ if(story.path==='evil'&&active('giuda')&&story.giudaId&&rosterEntry(story.giudaId)){userPower=Math.max(25,userPower-10);notes.push('Gabbia per Giuda: la tua potenza scende di 10.');special.push({minute:2,type:'var',icon:'⛓️',title:'Gabbia per Giuda',text:'Il potere del boss neutralizza Giuda e riduce la tua potenza.',teamId:String(boss.id)})}
+ let refereeEffect='',ownRedEntry=null;if(active('referee'))refereeEffect=typeof pick==='function'?pick(['penalty','red','annul']):'penalty';
+ if(refereeEffect==='red'){
+  ownRedEntry=(typeof pick==='function'?pick(userLineup.filter(entry=>entry&&entry.player)):userLineup[0])||null;userPower=Math.max(25,userPower-10);
+  notes.push(`${story.path==='evil'?'Vigilanza arbitrale':'Arbitro della Triade'}: espulsione, -10 potenza.`);
+ }
+ const baseScore=simulateScore(userPower,bossPower,0,90),baseGf=Math.max(0,Number(baseScore?.[0])||0),baseGa=Math.max(0,Number(baseScore?.[1])||0);
+ let userEvents=fantaballopoliSimpleGoals(baseGf,userLineup,userTeam,bossTeam,2,87),bossEvents=fantaballopoliSimpleGoals(baseGa,bossLineup,bossTeam,userTeam,2,87);
+ if(refereeEffect==='penalty'){
+  const minute=18+Math.floor(Math.random()*58);bossEvents.push(fantaballopoliSpecialGoal(bossLineup,bossTeam,userTeam,{minute,description:'Rigore molto contestato concesso dal potere arbitrale di Fantaballopoli.',tag:'referee-penalty'}));notes.push(`${story.path==='evil'?'Vigilanza arbitrale':'Arbitro della Triade'}: rigore trasformato dal boss.`);
+ }else if(refereeEffect==='annul'){
+  if(userEvents.length){
+   const removed=userEvents.splice(Math.floor(Math.random()*userEvents.length),1)[0],minute=Math.min(88,(Number(removed?.minute)||45)+1);special.push({minute,type:'var',icon:'📺',title:'Gol annullato dalla Triade',text:`La rete di ${removed?.player||'un tuo giocatore'} viene cancellata dopo un controllo interminabile.`,teamId:''});notes.push(`${story.path==='evil'?'Vigilanza arbitrale':'Arbitro della Triade'}: un tuo gol viene annullato.`);
+  }else{
+   const minute=22+Math.floor(Math.random()*55);bossEvents.push(fantaballopoliSpecialGoal(bossLineup,bossTeam,userTeam,{minute,description:'Non trovando un gol da annullare, l’arbitro assegna un rigore al boss.',tag:'referee-penalty'}));notes.push(`${story.path==='evil'?'Vigilanza arbitrale':'Arbitro della Triade'}: senza gol da annullare, viene assegnato un rigore al boss.`);
+  }
+ }
+ let guaranteedWitnessGoal=false;
+ if(story.path==='evil'&&story.targetTraded&&story.targetPlayerName){
+  const witness=bossLineup.find(entry=>String(entry.player?.name||'')===String(story.targetPlayerName));
+  const minute=25+Math.floor(Math.random()*58);bossEvents.push(fantaballopoliSpecialGoal(bossLineup,bossTeam,userTeam,{minute,scorerName:story.targetPlayerName,description:`${story.targetPlayerName}, ceduto al draft, colpisce la sua ex squadra.`,tag:'witness'}));guaranteedWitnessGoal=true;notes.push(`${story.targetPlayerName}, ceduto al draft, segna sicuramente per L’Inter degli Onesti.`);
+  if(!witness&&bossEvents.length)bossEvents[bossEvents.length-1].player=story.targetPlayerName;
+ }
+ let gf=userEvents.length,ga=bossEvents.length;
+ if(story.path==='resistance'&&active('recovery')&&gf>ga){
+  if(Math.random()<.85){bossEvents.push(fantaballopoliSpecialGoal(bossLineup,bossTeam,userTeam,{minute:89,description:'Il recupero sembra non finire mai: la Juve trova il gol nel finale.',tag:'infinite-recovery'}));ga++;notes.push('Recupero infinito: la Juve trova un gol oltre il 90°.');special.push({minute:88,type:'var',icon:'⏱️',title:'Recupero infinito',text:'Il quarto uomo alza un tabellone senza fine.',teamId:String(boss.id)})}
+  if(gf>ga&&Math.random()<.35){bossEvents.push(fantaballopoliSpecialGoal(bossLineup,bossTeam,userTeam,{minute:90,description:'Un’ultima azione concessa fuori tempo massimo diventa gol.',tag:'infinite-recovery'}));ga++;notes.push('Recupero infinito: arriva un’altra occasione fuori tempo massimo.')}
+ }
+ let extraTime=false,penalties=null,duration=90;
+ if(gf===ga){
+  const extra=simulateScore(userPower,bossPower,0,30,.62),extraGf=Math.max(0,Number(extra?.[0])||0),extraGa=Math.max(0,Number(extra?.[1])||0);userEvents.push(...fantaballopoliSimpleGoals(extraGf,userLineup,userTeam,bossTeam,91,118));bossEvents.push(...fantaballopoliSimpleGoals(extraGa,bossLineup,bossTeam,userTeam,91,118));gf+=extraGf;ga+=extraGa;extraTime=true;duration=120;notes.push('La boss fight prosegue ai tempi supplementari.');
+ }
+ let won=gf>ga;
+ if(gf===ga){
+  const shootout=simulatePenaltyShootout(userPower,bossPower),userWins=Number(shootout.scoreA)>Number(shootout.scoreB);penalties={for:Number(shootout.scoreA)||0,against:Number(shootout.scoreB)||0};won=userWins;notes.push(`Calci di rigore: ${penalties.for}-${penalties.against}.`);
+ }
+ userEvents.sort((a,b)=>Number(a.minute)-Number(b.minute));bossEvents.sort((a,b)=>Number(a.minute)-Number(b.minute));
+ const noDrawOutcome={regulationDuration:90,extraTime,penalties:penalties?{home:penalties.for,away:penalties.against,winnerId:won?String(userTeam.id):String(bossTeam.id)}:null};
+ let commentary=[];
+ if(typeof buildMatchCommentary==='function'){
+  commentary=buildMatchCommentary({homeTeam:userTeam,awayTeam:bossTeam,homeLineup:userLineup,awayLineup:bossLineup,homeEvents:userEvents,awayEvents:bossEvents,homePower:userPower,awayPower:bossPower,redCandidate:null,ownRedEntry,userHome:true,duration,startMinute:0,pinkCard:false,opponentYellowRed:false,ownYellowRed:false,noDrawOutcome});
+  commentary.push(...special);commentary.sort((a,b)=>Number(a.minute)-Number(b.minute)||(a.type==='fulltime'?1:b.type==='fulltime'?-1:0));
+ }
+ const userScorers=userEvents.map(event=>event.player).filter(Boolean),bossScorers=bossEvents.map(event=>event.player).filter(Boolean);if(guaranteedWitnessGoal&&!bossScorers.includes(story.targetPlayerName))bossScorers.unshift(story.targetPlayerName);
+ return{boss,userTeam,bossTeam,userLineup,bossLineup,userPower,bossPower,gf,ga,won,extraTime,penalties,notes,userScorers,bossScorers,commentary,duration,powers};
+}
+function commitFantaballopoliFinal(result){
+ if(!result)return;const story=fantaballopoliState(),finale=story.finale;if(!finale?.eligible||finale.played)return;
+ finale.played=true;finale.userGoals=Number(result.gf)||0;finale.opponentGoals=Number(result.ga)||0;finale.won=Boolean(result.won);finale.extraTime=Boolean(result.extraTime);finale.penalties=result.penalties?{...result.penalties}:null;finale.notes=[...(result.notes||[])];finale.userScorers=[...(result.userScorers||[])];finale.opponentScorers=[...(result.bossScorers||[])];finale.commentary=[...(result.commentary||[])];finale.matchDuration=Number(result.duration)||90;finale.activePowers=(result.powers||[]).filter(power=>power.active).map(power=>power.id);finale.rankBeforeBonus=sortedTable().findIndex(row=>String(row.id)===String(USER_ID))+1;finale.pointsBeforeBonus=Number(userStanding()?.pts)||0;
+ if(finale.won&&userStanding()&&!finale.pointsApplied){userStanding().pts=finale.pointsBeforeBonus*2;finale.pointsApplied=true;finale.pointsAfterBonus=Number(userStanding().pts)||0;if(story.path==='resistance')unlockAchievement('sistema-abbattuto');else unlockAchievement('inter-onesti-battuta');unlockAchievement('trentotto-denari');unlockAchievement('scudetto-di-cartone')}
+ else finale.pointsAfterBonus=Number(userStanding()?.pts)||0;
+ finale.rankAfterBonus=sortedTable().findIndex(row=>String(row.id)===String(USER_ID))+1;story.completed=true;story.stage='boss_completed';save();render();
+}
+function playFantaballopoliFinal(mode='instant'){
+ const result=fantaballopoliFinalSimulation();if(!result)return;
+ if(mode==='live'&&typeof playLiveMatch==='function'&&result.commentary.length){
+  playLiveMatch({commentary:result.commentary,homeTeam:result.userTeam,awayTeam:result.bossTeam,homeGoals:result.gf,awayGoals:result.ga,matchday:state.matchday+1,duration:result.duration,startMinute:0,label:'Boss finale · Fantaballopoli'},()=>commitFantaballopoliFinal(result));return;
+ }
+ commitFantaballopoliFinal(result);
+}
+function playFantaballopoliJuventusFinal(mode='instant'){return playFantaballopoliFinal(mode)}
+function showFantaballopoliFinal(){
+ const story=fantaballopoliState(),finale=story.finale,boss=fantaballopoliBossDefinition(story),powers=fantaballopoliBossPowers(story);if(!finale.played){
+  const powerRows=powers.map(power=>`<div class="goal-line"><b>${power.active?'⚠️':'✅'} ${esc(power.name)}</b><br>${power.active?esc(power.description):'Potere disattivato grazie alle prove superate.'}</div>`).join('');screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Boss finale · Fantaballopoli</div><h2>${esc(boss.name)}</h2><div class="final-position">VS</div><p>${story.path==='evil'?'Difendi la Triade contro la rosa dell’Inter 2005/2006.':'Abbatti il sistema affrontando la rosa della Juventus 2005/2006.'}</p></div><section class="panel"><h3>Poteri del boss</h3>${powerRows}<p class="subline">${esc(fantaballopoliCollectedLabels(story))}</p></section><section class="panel"><h3>Rosa del boss</h3>${renderFantaballopoliBossRoster(boss)}</section><section class="panel"><p>Se vinci, i tuoi <b>${Number(userStanding()?.pts)||0} punti</b> in campionato vengono raddoppiati. In caso di sconfitta restano invariati.</p><div class="season-top-actions"><button id="playFantaballopoliFinalLive" type="button" data-single-action data-busy-announcement="Boss fight avviata con cronaca." class="btn match-live-button">🎙️ Gioca con cronaca</button><button id="playFantaballopoliFinalInstant" type="button" data-single-action data-busy-announcement="Boss fight simulata." class="btn match-instant-button">📯 Simula</button></div></section></section>`;document.getElementById('playFantaballopoliFinalLive').onclick=()=>playFantaballopoliFinal('live');document.getElementById('playFantaballopoliFinalInstant').onclick=()=>playFantaballopoliFinal('instant');return;
+ }
+ const penaltyLine=finale.penalties?` · rigori ${Number(finale.penalties.for)}-${Number(finale.penalties.against)}`:finale.extraTime?' · d.t.s.':'',notes=(finale.notes||[]).map(note=>`<div class="goal-line">${esc(note)}</div>`).join(''),userTeam=typeof teamById==='function'?(teamById(USER_ID)||{id:USER_ID,name:state.teamName}):{id:USER_ID,name:state.teamName},bossTeam={id:boss.id,name:boss.name,colors:boss.colors},commentaryHtml=Array.isArray(finale.commentary)&&finale.commentary.length&&typeof commentaryRowHtml==='function'?finale.commentary.map(event=>commentaryRowHtml(event,userTeam,bossTeam)).join(''):'';
+ screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Fantaballopoli conclusa</div><h2>${finale.won?`Hai sconfitto ${esc(boss.name)}`:`${esc(boss.name)} ha vinto`}</h2><div class="final-position">${Number(finale.userGoals)}–${Number(finale.opponentGoals)}</div><p>${penaltyLine?esc(penaltyLine.replace(/^ · /,'')):''}</p></div><section class="panel"><div class="goal-line"><b>${esc(state.teamName)}</b><br>${(finale.userScorers||[]).map(esc).join(' · ')||'Nessun marcatore'}</div><div class="goal-line"><b>${esc(boss.name)}</b><br>${(finale.opponentScorers||[]).map(esc).join(' · ')||'Nessun marcatore'}</div>${notes}<div class="goal-line"><b>Punti campionato</b><br>${Number(finale.pointsBeforeBonus)||0} → <b>${Number(finale.pointsAfterBonus)||0}</b>${finale.won?' · raddoppiati':' · invariati'}</div>${commentaryHtml?`<div class="match-highlights-title">Cronaca della partita</div><div class="goals match-highlights">${commentaryHtml}</div>`:''}</section><button id="finishFantaballopoliFinal" class="btn primary">Vai al recap finale</button></section>`;document.getElementById('finishFantaballopoliFinal').onclick=finishFantaballopoliFinal;
+}
+
