@@ -387,5 +387,6 @@ function finalizeDraft(){
  state.draft.candidates=[];
  save();
  prepareEvent();
- render()
+ render();
+ requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:'auto'})));
 }
