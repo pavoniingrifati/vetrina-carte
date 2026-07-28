@@ -175,15 +175,23 @@ function bindSeasonEventControls(){
  /* Allinea sempre DOM e variabile, anche sui browser che ignorano [hidden]. */
  setSeasonEventMinimized(seasonEventMinimized,{focus:false});
 }
+function renderResolvedSeasonEventCard(e,{label='Settimana',notice=''}={}){
+ const title=String(e?.title||'Evento risolto').trim();
+ const description=String(e?.text||'').trim();
+ const result=String(e?.result||description||'Evento concluso.').trim();
+ const descriptionHtml=description&&description!==result?`<p>${esc(description)}</p>`:'';
+ const noticeHtml=notice?`<div class="quest-notice">${esc(notice)}</div>`:'';
+ return `<details class="season-event-result-card"><summary><span class="season-event-result-main"><span class="season-event-result-kicker">Risultato della scelta</span><strong>${esc(result)}</strong></span><span class="season-event-result-toggle" aria-hidden="true"><span class="season-event-result-toggle-closed">Dettagli +</span><span class="season-event-result-toggle-open">Riduci −</span></span></summary><div class="season-event-result-details"><div class="label">${esc(label)}</div><h3>${esc(title)}</h3>${descriptionHtml}${noticeHtml}</div></details>`;
+}
 function renderEvent(){
  const e=state.pendingEvent;
  if(!e)return'';
  if(e.kind==='storyError404'&&!e.resolved)return renderError404StoryEvent(e);
- if(e.kind==='storyError404')return `<div class="event-card"><div class="label">Storia</div><h3>${esc(e.title)}</h3><p>${esc(e.text)}</p></div>`;
+ if(e.kind==='storyError404')return renderResolvedSeasonEventCard(e,{label:'Storia'});
  if(e.kind==='storyFantaballopoli'&&!e.resolved)return renderFantaballopoliEvent(e);
- if(e.kind==='storyFantaballopoli')return `<div class="event-card"><div class="label">Storia</div><h3>${esc(e.title)}</h3><p>${esc(e.text)}</p>${e.result?`<b>${esc(e.result)}</b>`:''}</div>`;
+ if(e.kind==='storyFantaballopoli')return renderResolvedSeasonEventCard(e,{label:'Storia'});
  if(e.kind==='storyMerit'&&!e.resolved)return renderMeritStoryEvent(e);
- if(e.kind==='storyMerit')return `<div class="event-card"><div class="label">Storia</div><h3>${esc(e.title)}</h3><p>${esc(e.text)}</p>${e.result?`<b>${esc(e.result)}</b>`:''}</div>`;
+ if(e.kind==='storyMerit')return renderResolvedSeasonEventCard(e,{label:'Storia'});
  if(e.kind==='decision'&&!e.resolved){
    const d=decisionFromPending(e);
    if(!d)return'';
@@ -196,5 +204,5 @@ function renderEvent(){
    return `<div class="season-event-overlay" role="presentation" ${seasonEventMinimized?'hidden':''}><section class="season-event-dialog" role="dialog" aria-modal="true" aria-labelledby="seasonEventTitle" aria-describedby="seasonEventCopy"><button class="season-event-minimize" data-event-minimize type="button" aria-label="Riduci l’evento e consulta la pagina">━ Riduci</button><div class="season-event-head"><div class="season-event-kicker">${esc(eventLabel)}</div><h2 class="season-event-title" id="seasonEventTitle">${esc(e.title)}</h2><p class="season-event-copy" id="seasonEventCopy">${esc(e.text)}</p></div><div class="choice-grid season-event-choice-grid">${choices}</div>${whistleAction}<p class="season-event-hint">Riduci il box per consultare Rosa, Classifica, Calendario e Statistiche; potrai riaprirlo in qualsiasi momento.</p></section></div><aside class="season-event-dock" ${seasonEventMinimized?'':'hidden'} aria-label="Evento in attesa di una decisione"><button class="season-event-dock-button" data-event-expand type="button"><span class="season-event-dock-pulse" aria-hidden="true"></span><span class="season-event-dock-copy"><span>Evento in attesa</span><b>${esc(e.title)}</b></span><span class="season-event-dock-open">Riapri ↑</span></button></aside>`;
  }
  const notice=questState().notice;
- return `<div class="event-card"><div class="label">${e.chained?'Evento concatenato':(e.kind==='auto'?'Evento casuale':'Settimana')}</div><h3>${esc(e.title)}</h3><p>${esc(e.text)}</p>${e.result?`<b>${esc(e.result)}</b>`:''}${notice?`<div class="quest-notice">${esc(notice)}</div>`:''}</div>`
+ return renderResolvedSeasonEventCard(e,{label:e.chained?'Evento concatenato':(e.kind==='auto'?'Evento casuale':'Settimana'),notice});
 }

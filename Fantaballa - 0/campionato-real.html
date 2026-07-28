@@ -3270,6 +3270,11 @@
       box-shadow:0 0 0 3px rgba(255,255,255,.24),0 8px 20px rgba(110,0,0,.28)!important;
     }
     .resolved-player-card.creator-card *{color:#ffffff!important}
+.resolved-player-card.creator-card .resolved-effects .resolved-effect.plus{background:#dcf7e4!important;color:#0f5b35!important;border:1px solid #8fd3a3!important;box-shadow:0 1px 3px rgba(0,0,0,.12)!important}
+.resolved-player-card.creator-card .resolved-effects .resolved-effect.minus{background:#ffe2de!important;color:#8b231d!important;border:1px solid #e7a39c!important;box-shadow:0 1px 3px rgba(0,0,0,.12)!important}
+.resolved-player-card.creator-card .resolved-effects .resolved-effect.neutral{background:#e8eef5!important;color:#16324b!important;border:1px solid #c8d3de!important;box-shadow:0 1px 3px rgba(0,0,0,.12)!important}
+.resolved-player-card.creator-card .resolved-ovr-col .chip.ovr{background:#102c49!important;color:#ffffff!important;border:1px solid rgba(255,255,255,.28)!important;box-shadow:0 3px 8px rgba(0,0,0,.18)!important}
+.resolved-player-card.creator-card .resolved-total{color:#fff4f4!important;opacity:.95}
     .season-inline-creator{
       background:linear-gradient(180deg,#ff1a1a,#b70000)!important;
       border:1px solid #ffffff!important;
@@ -3404,7 +3409,7 @@
   <link rel="stylesheet" href="assets/accessibility.css?v=20260722-1">
   <link rel="stylesheet" href="assets/season/items.css?v=20260723-pills1">
   <link rel="stylesheet" href="assets/season/draft-improvements.css?v=20260727-quickpack1">
-  <link rel="stylesheet" href="assets/season/season-top.css?v=20260727-toponly1">
+  <link rel="stylesheet" href="assets/season/season-top.css?v=20260728-eventexpand1">
   <script defer src="assets/accessibility.js?v=20260722-1"></script>
 </head>
 <body class="page-season-real">
@@ -3433,8 +3438,8 @@
 <script src="assets/season/08b-user-events.js?v=20260724-events2"></script>
 <script src="assets/season/09-analytics-and-summary.js?v=20260727-stadium1"></script>
 <script src="assets/season/event-handlers.js?v=20260727-stadium1"></script>
-<script src="assets/season/10-events.js?v=20260724-events2"></script>
-<script src="assets/season/11-season-ui-and-lineup.js?v=20260728-calendar-result1"></script>
+<script src="assets/season/10-events.js?v=20260728-eventexpand1"></script>
+<script src="assets/season/11-season-ui-and-lineup.js?v=20260728-topactionsfix1"></script>
 <script src="assets/season/12-match-simulation.js?v=20260725-figc-incident1"></script>
 <script src="assets/season/13-market-and-finish.js?v=20260725-weekly-pisa1"></script>
 <script src="assets/season/14-runtime.js?v=20260723-legend40"></script>
@@ -3511,4 +3516,212 @@
   },{once:true});
 })();
 </script>
+
+<style id="event-entity-highlight-style">
+  .season-entity-name{
+    display:inline;
+    padding:0 .28em;
+    margin:0 .04em;
+    border-radius:.5em;
+    color:#8d5200!important;
+    background:linear-gradient(180deg,rgba(247,216,93,.42),rgba(247,216,93,.16));
+    box-shadow:inset 0 -1px 0 rgba(141,82,0,.22);
+    font-weight:1000!important;
+    letter-spacing:.01em;
+  }
+  .season-event-dialog .season-entity-name,
+  .story-event-dialog .season-entity-name,
+  .season-event-dock .season-entity-name{
+    color:#ffe58f!important;
+    background:linear-gradient(180deg,rgba(16,36,58,.34),rgba(16,36,58,.16));
+    box-shadow:inset 0 0 0 1px rgba(242,211,86,.38),0 2px 8px rgba(0,0,0,.18);
+    text-shadow:none;
+  }
+  .season-event-choice .season-entity-name,
+  .choice .season-entity-name{
+    color:#10243a!important;
+    background:rgba(255,255,255,.86);
+    box-shadow:inset 0 0 0 1px rgba(16,36,58,.14);
+  }
+  .season-event-history-row .season-entity-name{
+    color:#fff2b4!important;
+    background:rgba(255,255,255,.08);
+    box-shadow:inset 0 0 0 1px rgba(242,211,86,.24);
+  }
+</style>
+<script id="event-entity-highlight-patch">
+(function(){
+  const CONTAINER_SELECTOR = [
+    '.event-card',
+    '.season-event-dialog',
+    '.season-event-dock',
+    '.story-event-dialog',
+    '.season-event-history-row'
+  ].join(',');
+  const IGNORE_SELECTOR = 'script,style,textarea,input,button,select,option';
+  const GENERIC_BLOCK_SELECTOR = '.season-event-title,.season-event-kicker,.label';
+  const STOP_PHRASES = new Set([
+    'SETTIMANA NORMALE','OGGETTI DELLA RUN','PROSSIME PARTITE','INFORTUNI E SQUALIFICHE',
+    'HOME OVERVIEW','FOCUS MATCH','CLASSIFICA','RISULTATO DELLA SCELTA','NESSUN EVENTO PARTICOLARE'
+  ]);
+  const COMMON_WORDS = new Set([
+    'un','una','il','lo','la','i','gli','le','del','della','dello','dei','degli','delle',
+    'settimana','normale','scelta','risultato','oggetti','run','partita','partite','evento',
+    'eventi','casa','trasferta','giornata','home','overview','focus','match','infotroni','squalifiche'
+  ]);
+  const ROLE_REGEX = /\b(?:giocatore|allenatore|mister|coach|capitano|portiere|difensore|centrocampista|attaccante|personaggio|talento|bomber|regista|presidente|arriva|incontra|chiama|ingaggia|trova|vede|convoca|affida)\s+([A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’.-]{1,}(?:\s+[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’.-]{0,}){0,2})/gi;
+  const GENERIC_NAME_REGEX = /\b([A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’.-]{2,}(?:\s+[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’.-]{1,}){1,2})\b/g;
+  function isLetter(ch){ return !!ch && /[A-Za-zÀ-ÖØ-öø-ÿ]/.test(ch); }
+  function escapeHtml(str){
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
+  }
+  function normalize(text){
+    return String(text||'').replace(/\s+/g,' ').trim();
+  }
+  function phraseIsCommon(phrase){
+    const words = normalize(phrase).toLowerCase().split(' ').filter(Boolean);
+    return words.length && words.every(w => COMMON_WORDS.has(w));
+  }
+  function addRange(ranges,start,end){
+    if(start >= end) return;
+    for(const range of ranges){
+      if(!(end <= range.start || start >= range.end)) return;
+    }
+    ranges.push({start,end});
+  }
+  function findKnownNames(){
+    const selectors = [
+      '.season-slot-name',
+      '.season-roster-bench-card b',
+      '.season-bench-copy b',
+      '.season-candidate-name',
+      '.season-roster-player b',
+      '.resolved-name-line b',
+      '.midseason-player-copy b'
+    ];
+    const names = new Set();
+    document.querySelectorAll(selectors.join(',')).forEach(el => {
+      const text = normalize(el.textContent);
+      if(!text || text.length < 3) return;
+      if(/[0-9]/.test(text)) return;
+      if(text.toUpperCase() === text && text.length > 5) return;
+      if(text.split(' ').length === 1 && text.length < 5) return;
+      names.add(text);
+    });
+    return [...names].sort((a,b)=> b.length - a.length);
+  }
+  function findExactRanges(text, names, ranges){
+    const lower = text.toLowerCase();
+    names.forEach(name => {
+      const needle = name.toLowerCase();
+      let from = 0;
+      while(from < lower.length){
+        const idx = lower.indexOf(needle, from);
+        if(idx === -1) break;
+        const before = idx === 0 ? '' : text[idx-1];
+        const after = idx + needle.length >= text.length ? '' : text[idx + needle.length];
+        if(!isLetter(before) && !isLetter(after)) addRange(ranges, idx, idx + needle.length);
+        from = idx + needle.length;
+      }
+    });
+  }
+  function collectRanges(text, allowGeneric, knownNames){
+    const ranges = [];
+    findExactRanges(text, knownNames, ranges);
+    let match;
+    ROLE_REGEX.lastIndex = 0;
+    while((match = ROLE_REGEX.exec(text))){
+      const whole = match[0] || '';
+      const name = match[1] || '';
+      const start = match.index + whole.lastIndexOf(name);
+      const end = start + name.length;
+      if(!phraseIsCommon(name) && !STOP_PHRASES.has(normalize(name).toUpperCase())) addRange(ranges, start, end);
+    }
+    if(allowGeneric){
+      GENERIC_NAME_REGEX.lastIndex = 0;
+      while((match = GENERIC_NAME_REGEX.exec(text))){
+        const name = normalize(match[1] || '');
+        if(!name) continue;
+        if(STOP_PHRASES.has(name.toUpperCase())) continue;
+        if(phraseIsCommon(name)) continue;
+        if(name.split(' ').length < 2) continue;
+        addRange(ranges, match.index, match.index + match[1].length);
+      }
+    }
+    ranges.sort((a,b)=>a.start-b.start);
+    return ranges;
+  }
+  function highlightTextNode(node, knownNames){
+    const parent = node.parentElement;
+    if(!parent) return;
+    if(parent.closest('.season-entity-name') || parent.closest(IGNORE_SELECTOR)) return;
+    const text = node.nodeValue;
+    if(!text || !text.trim()) return;
+    const allowGeneric = !parent.closest(GENERIC_BLOCK_SELECTOR);
+    const ranges = collectRanges(text, allowGeneric, knownNames);
+    if(!ranges.length) return;
+    const fragment = document.createDocumentFragment();
+    let cursor = 0;
+    ranges.forEach(range => {
+      if(range.start > cursor) fragment.appendChild(document.createTextNode(text.slice(cursor, range.start)));
+      const span = document.createElement('span');
+      span.className = 'season-entity-name';
+      span.textContent = text.slice(range.start, range.end);
+      fragment.appendChild(span);
+      cursor = range.end;
+    });
+    if(cursor < text.length) fragment.appendChild(document.createTextNode(text.slice(cursor)));
+    node.parentNode.replaceChild(fragment, node);
+  }
+  function scan(root){
+    const knownNames = findKnownNames();
+    const containers = [];
+    if(root && root.matches && root.matches(CONTAINER_SELECTOR)) containers.push(root);
+    if(root && root.querySelectorAll){ root.querySelectorAll(CONTAINER_SELECTOR).forEach(el => containers.push(el)); }
+    if(!root){ document.querySelectorAll(CONTAINER_SELECTOR).forEach(el => containers.push(el)); }
+    const seen = new Set();
+    containers.forEach(container => {
+      if(!container || seen.has(container)) return;
+      seen.add(container);
+      const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+        acceptNode(node){
+          if(!node || !node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if(!parent) return NodeFilter.FILTER_REJECT;
+          if(parent.closest('.season-entity-name') || parent.closest(IGNORE_SELECTOR)) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      const textNodes = [];
+      let current;
+      while((current = walker.nextNode())) textNodes.push(current);
+      textNodes.forEach(node => highlightTextNode(node, knownNames));
+    });
+  }
+  let raf = 0;
+  function schedule(root){
+    if(raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => scan(root || document));
+  }
+  window.addEventListener('load', () => {
+    schedule(document);
+    const observer = new MutationObserver(mutations => {
+      for(const mutation of mutations){
+        if(mutation.type === 'childList'){
+          mutation.addedNodes.forEach(node => {
+            if(node && node.nodeType === 1) schedule(node);
+          });
+        }else if(mutation.type === 'characterData' && mutation.target && mutation.target.parentElement){
+          schedule(mutation.target.parentElement);
+        }
+      }
+    });
+    observer.observe(document.body,{subtree:true,childList:true,characterData:true});
+  }, {once:true});
+})();
+</script>
+
 </body></html>
