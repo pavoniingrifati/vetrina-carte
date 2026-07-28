@@ -504,6 +504,18 @@ function scheduleSetupIdentitySave(teamInput,coachInput){
  setupIdentitySaveTimer=setTimeout(()=>save(),220);
 }
 function setupScrollTo(id){requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}))}
+function scrollManualDraftToPageTop(){
+ const apply=()=>{
+  const root=document.documentElement,body=document.body,previous=root.style.scrollBehavior;
+  root.style.scrollBehavior='auto';
+  window.scrollTo(0,0);
+  root.scrollTop=0;
+  if(body)body.scrollTop=0;
+  root.style.scrollBehavior=previous;
+ };
+ requestAnimationFrame(()=>requestAnimationFrame(apply));
+ setTimeout(apply,90);
+}
 function restoreSetupScroll(scrollTop){const target=Math.max(0,Number(scrollTop)||0),apply=()=>{const root=document.documentElement,previous=root.style.scrollBehavior;root.style.scrollBehavior='auto';window.scrollTo(0,target);root.style.scrollBehavior=previous};requestAnimationFrame(()=>requestAnimationFrame(apply));setTimeout(apply,120)}
 function captureCoachSelectorViewport(){const selector=document.querySelector('.season-coach-selector');return selector?selector.getBoundingClientRect().top:null}
 function restoreCoachSelectorViewport(previousTop){if(previousTop==null)return;const apply=()=>{const selector=document.querySelector('.season-coach-selector');if(!selector)return;const currentTop=selector.getBoundingClientRect().top;const delta=currentTop-previousTop;if(Math.abs(delta)>1){const root=document.documentElement,prev=root.style.scrollBehavior;root.style.scrollBehavior='auto';window.scrollBy(0,delta);root.style.scrollBehavior=prev}};requestAnimationFrame(()=>requestAnimationFrame(apply));setTimeout(apply,100);setTimeout(apply,260);document.querySelectorAll('.season-coach-selector img').forEach(img=>{if(img.complete)return;img.addEventListener('load',apply,{once:true})})}
@@ -539,7 +551,7 @@ function showSetup(){
  document.querySelectorAll('[data-coach-nav]').forEach(button=>{button.onpointerdown=event=>event.preventDefault();button.onclick=event=>{event.preventDefault();const coachScrollTop=window.scrollY;const coachSelectorTop=captureCoachSelectorViewport();persistSetupIdentity(teamInput,coachInput,false);const direction=Number(button.dataset.coachNav||0)||0;const currentIndex=coachProfileIndex();const nextProfile=COACH_PROFILES[(currentIndex+direction+COACH_PROFILES.length)%COACH_PROFILES.length]||COACH_PROFILES[0];state.coachType=normalizeCoachType(nextProfile.id);syncCoachRestrictions();try{localStorage.setItem(SETUP_COACH_TYPE_KEY,state.coachType)}catch{}save();showSetup();restoreSetupScroll(coachScrollTop);restoreCoachSelectorViewport(coachSelectorTop)}});
  const continueIdentity=document.getElementById('continueIdentity');if(continueIdentity)continueIdentity.onclick=()=>{const teamName=String(teamInput?.value||'').trim(),coachName=String(coachInput?.value||'').trim();if(!teamName||!coachName)return toast('Inserisci sia il nome della squadra sia il nome dell’allenatore.');clearTimeout(setupIdentitySaveTimer);persistSetupIdentity(teamInput,coachInput,false);state.setupStep=3;save();showSetup();setupScrollTo('setupFormationStep')};
  document.querySelectorAll('[data-form]').forEach(button=>button.onclick=()=>{clearTimeout(setupIdentitySaveTimer);persistSetupIdentity(teamInput,coachInput,false);state.formation=coachIs('three-five-two')?'3-5-2':button.dataset.form;state.setupStep=4;save();showSetup();setupScrollTo('setupDraftStep')});
- const beginDraft=automatic=>{clearTimeout(setupIdentitySaveTimer);persistSetupIdentity(teamInput,coachInput,false);if(!String(state.teamName||'').trim()||!String(state.coachName||'').trim())return toast('Completa nome squadra e allenatore prima di iniziare.');state.coachName=String(state.coachName).trim();state.coachType=normalizeCoachType(state.coachType);syncCoachRestrictions();try{localStorage.setItem(SETUP_COACH_NAME_KEY,state.coachName);localStorage.setItem(SETUP_COACH_TYPE_KEY,state.coachType);localStorage.setItem(SETUP_PALETTE_KEY,state.teamPaletteId||'fantaballa')}catch{}if(automatic)return startFullyRandomDraft();state.phase='draft';state.draft=freshState().draft;state.draft.rerolls=initialDraftRerollLimit();save();render()};
+ const beginDraft=automatic=>{clearTimeout(setupIdentitySaveTimer);persistSetupIdentity(teamInput,coachInput,false);if(!String(state.teamName||'').trim()||!String(state.coachName||'').trim())return toast('Completa nome squadra e allenatore prima di iniziare.');state.coachName=String(state.coachName).trim();state.coachType=normalizeCoachType(state.coachType);syncCoachRestrictions();try{localStorage.setItem(SETUP_COACH_NAME_KEY,state.coachName);localStorage.setItem(SETUP_COACH_TYPE_KEY,state.coachType);localStorage.setItem(SETUP_PALETTE_KEY,state.teamPaletteId||'fantaballa')}catch{}if(automatic)return startFullyRandomDraft();state.phase='draft';state.draft=freshState().draft;state.draft.rerolls=initialDraftRerollLimit();save();render();scrollManualDraftToPageTop()};
  const manual=document.getElementById('startDraft'),automatic=document.getElementById('startRandomDraft');if(manual)manual.onclick=()=>beginDraft(false);if(automatic)automatic.onclick=()=>beginDraft(true);
 }
 
