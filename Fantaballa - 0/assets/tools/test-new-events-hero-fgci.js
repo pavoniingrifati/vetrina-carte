@@ -14,7 +14,7 @@ assert(hero.order===218&&fgci.order===219,'Ordine dei nuovi eventi errato');
 const context={
  console,Set,Map,Number,String,Array,Object,Boolean,Date,Error,JSON,
  Math:Object.create(Math),encodeURIComponent,
- state:{teamName:'Test United',competitionVariant:'serie-a',formation:'4-3-3',gameMode:'normal',teamPaletteId:'x',teamColors:{primary:'#000'},seasonRules:{},activeEffects:[],standings:{user:{id:'user',name:'Test United',pts:27},a:{id:'a',name:'A',pts:31},b:{id:'b',name:'B',pts:14}},seenDecisionEvents:[]},
+ state:{teamName:'Test United',competitionVariant:'serie-a',formation:'4-3-3',matchday:12,phase:'season',draft:{roster:[]},teams:[],schedule:[],history:[],gameMode:'normal',teamPaletteId:'x',teamColors:{primary:'#000'},seasonRules:{},activeEffects:[],standings:{user:{id:'user',name:'Test United',pts:27},a:{id:'a',name:'A',pts:31},b:{id:'b',name:'B',pts:14}},seenDecisionEvents:[]},
  SAVE_MODE:'community',USER_ID:'user',AUTO_SAVE_KEY:'test_save',FORMATIONS:{'4-3-3':{}},startupNotice:'',
  localStorage:{data:new Map(),getItem(k){return this.data.has(k)?this.data.get(k):null},setItem(k,v){this.data.set(k,String(v))},removeItem(k){this.data.delete(k)}},
  location:{href:''},setTimeout(fn){context._scheduled=fn},
@@ -40,7 +40,12 @@ assert(context.state.seasonRules.heroAcademiaRule==='four-one','Regola 4-1 non a
 context.state.seasonRules.heroAcademiaRule='';
 const portalMessage=context.openHeroAcademiaPortal();
 assert(/portale punta/i.test(portalMessage),'Messaggio del portale non restituito');
-assert(context.localStorage.getItem('fantaballa_season_portal_transfer_v1'),'Trasferimento portale non salvato');
+const portalPayload=JSON.parse(context.localStorage.getItem('fantaballa_season_portal_transfer_v1')||'null');
+assert(portalPayload,'Trasferimento portale non salvato');
+assert(portalPayload.currentMatchday===12,'Il Portale non conserva la giornata corrente');
+assert(portalPayload.currentLeaderPoints===31,'Il Portale non registra il massimo punti della capolista');
+assert(Number(portalPayload.userStanding?.pts)===27,'Il Portale non conserva i punti della squadra utente');
+assert(portalPayload.stateSnapshot&&portalPayload.stateSnapshot.teamName==='Test United','Il Portale non conserva il progresso della run');
 assert(typeof context._scheduled==='function','Reindirizzamento del portale non programmato');
 context.state.seasonRules.fgciDirectMatchRule='';context.activateFgciDirectMatchRule('effective-time');
 assert(context.state.seasonRules.fgciDirectMatchRule==='effective-time','Tempo effettivo non attivato');
@@ -90,4 +95,4 @@ assert(matchContext.state.standings.user.pts===7&&matchContext.state.standings.a
 
 const handlerSource=fs.readFileSync(path.join(assetRoot,'season/event-handlers.js'),'utf8');
 for(const event of [hero,fgci])for(const choice of event.choices)assert(handlerSource.includes(`\"${choice.applyHandler}\"`),`Handler mancante: ${choice.applyHandler}`);
-console.log(JSON.stringify({ok:true,checks:['catalogo eventi','titolo dinamico','regola 4-1','portale registrato','lotteria rigori 0-0','tempo effettivo','handler collegati']},null,2));
+console.log(JSON.stringify({ok:true,checks:['catalogo eventi','titolo dinamico','regola 4-1','portale con punti e giornata conservati','lotteria rigori 0-0','tempo effettivo','handler collegati']},null,2));

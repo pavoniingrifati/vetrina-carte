@@ -83,6 +83,9 @@ function giveLastTeamLeaderPoints(){
 
 
 const SEASON_PORTAL_TRANSFER_KEY='fantaballa_season_portal_transfer_v1';
+function portalDeepClone(value,fallback=null){
+ try{return JSON.parse(JSON.stringify(value))}catch{return fallback}
+}
 function myHeroAcademiaEventTitle(){
  return `My Hero Academia è venuta a fare visita al centro d’allenamento del ${String(state.teamName||'tuo club')}`;
 }
@@ -107,31 +110,63 @@ function randomPortalDestination(){
  const available=all.filter(item=>item.id!==current);
  return pick(available)||all[0];
 }
+function portalRandomStanding(team,played,maxPoints){
+ const rounds=Math.max(0,Math.floor(Number(played)||0));
+ const ceiling=Math.max(0,Math.floor(Number(maxPoints)||0));
+ const points=ceiling>0?Math.floor(Math.random()*(ceiling+1)):0;
+ const competitivePoints=Math.min(points,rounds*3);
+ let wins=Math.min(rounds,Math.floor(competitivePoints/3)),draws=0;
+ while(wins>=0){
+  draws=competitivePoints-(wins*3);
+  if(draws>=0&&wins+draws<=rounds)break;
+  wins--;
+ }
+ if(wins<0){wins=0;draws=Math.min(rounds,competitivePoints)}
+ const losses=Math.max(0,rounds-wins-draws);
+ const goalLimit=Math.max(1,rounds*2+1);
+ return{
+  id:String(team.id),name:String(team.name||''),p:rounds,w:wins,d:draws,l:losses,
+  gf:Math.floor(Math.random()*goalLimit),ga:Math.floor(Math.random()*goalLimit),pts:points
+ };
+}
 function openHeroAcademiaPortal(){
  const target=randomPortalDestination();
+ const leader=typeof sortedTable==='function'?sortedTable()[0]:null;
+ const currentUser=state?.standings?.[USER_ID]||(typeof userStanding==='function'?userStanding():null)||{};
+ const snapshot=portalDeepClone(state,{})||{};
+ snapshot.seasonRules=snapshot.seasonRules&&typeof snapshot.seasonRules==='object'?snapshot.seasonRules:{};
+ snapshot.seasonRules.heroAcademiaPortalUsed=true;
+ snapshot.seasonRules.heroAcademiaPortalDestination=target.id;
  const payload={
-  version:1,targetMode:target.mode,targetVariant:target.variant,targetId:target.id,targetLabel:target.label,
+  version:2,targetMode:target.mode,targetVariant:target.variant,targetId:target.id,targetLabel:target.label,
   sourceMode:SAVE_MODE,sourceVariant:String(state.competitionVariant||'serie-a'),createdAt:Date.now(),
   teamName:String(state.teamName||''),coachName:String(state.coachName||''),coachType:String(state.coachType||''),
   formation:String(state.formation||'4-3-3'),gameMode:String(state.gameMode||'normal'),
-  teamPaletteId:String(state.teamPaletteId||''),teamColors:state.teamColors&&typeof state.teamColors==='object'?{...state.teamColors}:null
+  teamPaletteId:String(state.teamPaletteId||''),teamColors:state.teamColors&&typeof state.teamColors==='object'?{...state.teamColors}:null,
+  currentMatchday:Math.max(0,Number(state.matchday)||0),
+  currentLeaderPoints:Math.max(0,Number(leader?.pts)||0),
+  userStanding:portalDeepClone(currentUser,{}),
+  stateSnapshot:snapshot
  };
  try{localStorage.setItem(SEASON_PORTAL_TRANSFER_KEY,JSON.stringify(payload))}catch(error){console.error('Portale non salvato',error);return 'Il portale non riesce ad aprirsi perché il browser ha bloccato il salvataggio locale.'}
  state.seasonRules.heroAcademiaPortalUsed=true;
  state.seasonRules.heroAcademiaPortalDestination=target.id;
+ if(typeof save==='function')save();
  setTimeout(()=>{try{location.href=`${target.url}?portal=${encodeURIComponent(target.variant)}&from=${encodeURIComponent(SAVE_MODE)}`}catch(error){console.error('Portale non aperto',error)}},1100);
- return `Il portale punta verso ${target.label}. La run attuale resta salvata; nella destinazione inizierai una nuova stagione con lo stesso nome squadra e allenatore.`;
+ const points=Math.max(0,Number(currentUser?.pts)||0),played=Math.max(0,Number(state.matchday)||0);
+ return `Il portale punta verso ${target.label}. Mantieni ${points} punti e ${played} giornate disputate; le nuove avversarie riceveranno punti casuali da 0 a ${Math.max(0,Number(leader?.pts)||0)}.`;
 }
 function consumeSeasonPortalTransfer(){
  let payload=null;
  try{payload=JSON.parse(localStorage.getItem(SEASON_PORTAL_TRANSFER_KEY)||'null')}catch{payload=null}
- if(!payload||Number(payload.version)!==1||String(payload.targetMode||'')!==SAVE_MODE)return null;
+ if(!payload||![1,2].includes(Number(payload.version))||String(payload.targetMode||'')!==SAVE_MODE)return null;
  const targetVariant=SAVE_MODE==='real'?(String(payload.targetVariant)==='legend'?'legend':'serie-a'):'serie-a';
  try{
   const existing=localStorage.getItem(AUTO_SAVE_KEY);
   if(existing)localStorage.setItem(`${AUTO_SAVE_KEY}_portal_backup_${Date.now()}`,existing);
  }catch(error){console.warn('Backup pre-portale non riuscito',error)}
- const next=freshState();
+ const sourceSnapshot=payload.stateSnapshot&&typeof payload.stateSnapshot==='object'?portalDeepClone(payload.stateSnapshot,null):null;
+ const next=sourceSnapshot||freshState();
  next.competitionVariant=targetVariant;
  next.teamName=String(payload.teamName||next.teamName);
  next.coachName=String(payload.coachName||next.coachName);
@@ -140,13 +175,55 @@ function consumeSeasonPortalTransfer(){
  next.gameMode=String(payload.gameMode)==='chaos'?'chaos':'normal';
  next.teamPaletteId=String(payload.teamPaletteId||next.teamPaletteId);
  if(payload.teamColors&&typeof payload.teamColors==='object')next.teamColors=normalizeClubColors(payload.teamColors);
+ state=next;
+ if(typeof applyCompetitionVariantData==='function')applyCompetitionVariantData(targetVariant);
+ const oldUserTeam=(Array.isArray(next.teams)?next.teams:[]).find(team=>String(team?.id)===String(USER_ID))||{};
+ const userClub=(Array.isArray(CLUBS)?CLUBS:[]).find(club=>String(club?.id)===String(typeof DEFAULT_FRESH_USER_CLUB_ID!=='undefined'?DEFAULT_FRESH_USER_CLUB_ID:''))||(Array.isArray(CLUBS)?CLUBS[0]:null);
+ const currentMatchday=Math.max(0,Math.floor(Number(payload.currentMatchday??next.matchday)||0));
+ const leaderPoints=Math.max(0,Math.floor(Number(payload.currentLeaderPoints)||0));
+ const sourceUser=payload.userStanding&&typeof payload.userStanding==='object'?payload.userStanding:(next.standings?.[USER_ID]||{});
+ const draftedIds=Array.isArray(next.draft?.roster)?next.draft.roster.map(entry=>String(entry?.playerId||'')).filter(Boolean):[];
+ const opponentClubs=shuffle((Array.isArray(CLUBS)?CLUBS:[]).filter(club=>!userClub||String(club.id)!==String(userClub.id))).slice(0,19);
+ next.userClubId=String(userClub?.id||next.userClubId||'');
+ next.leagueClubIds=opponentClubs.map(club=>String(club.id));
+ next.teams=[{
+  id:USER_ID,clubId:next.userClubId,name:next.teamName,
+  shortName:String(oldUserTeam.shortName||userClub?.shortName||next.teamName.slice(0,3)).toUpperCase(),
+  colors:next.teamColors||userClub?.colorClub||oldUserTeam.colors,
+  strength:Number(oldUserTeam.strength)||75
+ }].concat(opponentClubs.map(club=>({
+  id:String(club.id),clubId:String(club.id),name:String(club.name||club.id),shortName:String(club.shortName||club.name||'').slice(0,5),colors:club.colorClub,
+  strength:typeof clubStrength==='function'?clubStrength(club.id,draftedIds):75,
+  roster:typeof buildClubRoster==='function'?buildClubRoster(club.id,draftedIds):[],statuses:{},mascot:null,playerOverrides:{},
+  chaos:{activeEffects:[],seenDecisionEvents:[],decisions:0,midseasonPickDelta:0,matchDuration:90,futureScorerId:'',futureInjuryZeroPoints:false,sixtyPointFear:false,eventChanceMultiplier:1,nonItalianChemZero:false,formation:'',latestDecision:null}
+ })));
+ next.schedule=typeof generateSchedule==='function'?generateSchedule(next.teams.map(team=>team.id)):[];
+ next.matchday=Math.min(currentMatchday,next.schedule.length||currentMatchday);
+ next.standings={};
+ next.standings[USER_ID]={
+  id:USER_ID,name:next.teamName,p:Math.max(0,Number(sourceUser.p)||next.matchday),
+  w:Math.max(0,Number(sourceUser.w)||0),d:Math.max(0,Number(sourceUser.d)||0),l:Math.max(0,Number(sourceUser.l)||0),
+  gf:Math.max(0,Number(sourceUser.gf)||0),ga:Math.max(0,Number(sourceUser.ga)||0),pts:Math.max(0,Number(sourceUser.pts)||0)
+ };
+ next.teams.filter(team=>team.id!==USER_ID).forEach(team=>{next.standings[team.id]=portalRandomStanding(team,next.matchday,leaderPoints)});
+ next.phase='season';
+ next.pendingEvent=null;
+ next.lastRoundResults=[];
+ next.seenDecisionEvents=[...new Set([...(Array.isArray(next.seenDecisionEvents)?next.seenDecisionEvents:[]),'my-hero-academia-visita'])];
+ next.seasonRules=next.seasonRules&&typeof next.seasonRules==='object'?next.seasonRules:{};
  next.seasonRules.heroAcademiaPortalUsed=true;
  next.seasonRules.heroAcademiaPortalDestination=String(payload.targetId||targetVariant);
- next.seenDecisionEvents=['my-hero-academia-visita'];
+ next.seasonRules.seasonLength=Math.max(38,next.schedule.length||38);
+ next.seasonRules.dynamicLeague='';next.seasonRules.dynamicLeagueLabel='';next.seasonRules.dynamicLeagueTeamIds=[];
+ next.seasonRules.deathMatchClubId='';next.seasonRules.deathMatchClubName='';next.seasonRules.bottomHelpRoundTeamIds=[];
+ next.seasonRules.eliminatedTeamIds=[];next.seasonRules.hungerGames=false;
+ next.chaos=next.chaos&&typeof next.chaos==='object'?next.chaos:{};
+ next.chaos.currentRound=null;next.chaos.latest=[];next.chaos.lastPreparedMatchday=next.matchday-1;
  try{localStorage.removeItem(SEASON_PORTAL_TRANSFER_KEY)}catch{}
- startupNotice=`Portale completato: sei arrivato in ${String(payload.targetLabel||'un nuovo campionato')}. La stagione precedente è rimasta salvata nella sua modalità.`;
+ startupNotice=`Portale completato: sei arrivato in ${String(payload.targetLabel||'un nuovo campionato')} con ${next.standings[USER_ID].pts} punti dopo ${next.matchday} giornate. Le nuove avversarie hanno punti casuali compresi tra 0 e ${leaderPoints}.`;
  return next;
 }
+
 function activateFgciDirectMatchRule(mode){
  const normalized=mode==='effective-time'?'effective-time':'penalty-lottery';
  state.seasonRules.fgciDirectMatchRule=normalized;
