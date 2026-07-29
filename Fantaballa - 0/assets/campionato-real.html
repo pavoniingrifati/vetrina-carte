@@ -3885,6 +3885,101 @@
   }
 }
 </style>
+
+<style id="season-event-focus-preview-v8">
+/* Focus di lettura: la card attiva si apre nettamente sopra l'altra. */
+.season-event-dialog:not(.story-event-dialog),
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-grid{
+  overflow:visible!important;
+}
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-grid{
+  position:relative!important;
+  isolation:isolate!important;
+  padding:18px 8px 22px!important;
+}
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-float{
+  position:relative!important;
+  z-index:1!important;
+  transition:opacity .38s cubic-bezier(.22,1,.36,1),filter .38s cubic-bezier(.22,1,.36,1),transform .38s cubic-bezier(.22,1,.36,1)!important;
+}
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-float:first-child .season-event-choice{
+  transform-origin:left center!important;
+}
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-float:last-child .season-event-choice{
+  transform-origin:right center!important;
+}
+.season-event-dialog:not(.story-event-dialog) .season-event-choice{
+  transition:filter .38s cubic-bezier(.22,1,.36,1),box-shadow .38s cubic-bezier(.22,1,.36,1),transform .38s cubic-bezier(.22,1,.36,1),opacity .38s cubic-bezier(.22,1,.36,1)!important;
+}
+.season-event-dialog:not(.story-event-dialog) .season-event-choice b,
+.season-event-dialog:not(.story-event-dialog) .season-event-choice small,
+.season-event-dialog:not(.story-event-dialog) .season-event-option-label{
+  transition:font-size .38s cubic-bezier(.22,1,.36,1),line-height .38s cubic-bezier(.22,1,.36,1),transform .38s cubic-bezier(.22,1,.36,1),opacity .38s ease!important;
+}
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-grid:hover .season-event-choice-float:not(:hover){
+  z-index:0!important;
+  opacity:.48!important;
+  filter:grayscale(.12) brightness(.72) saturate(.72)!important;
+  transform:scale(.91)!important;
+  animation-play-state:paused!important;
+}
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-float:hover,
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-float:focus-within{
+  z-index:20!important;
+  animation-play-state:paused!important;
+}
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-float:hover .season-event-choice,
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-float:focus-within .season-event-choice{
+  z-index:20!important;
+  filter:brightness(1.12) saturate(1.12)!important;
+  transform:translateY(-12px) scale(1.25)!important;
+  box-shadow:0 45px 88px rgba(6,18,34,.48),0 0 0 5px rgba(255,255,255,.42),0 0 32px rgba(255,255,255,.18)!important;
+}
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-float:hover .season-event-choice b,
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-float:focus-within .season-event-choice b{
+  font-size:clamp(28px,3.65vw,40px)!important;
+  line-height:1.02!important;
+}
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-float:hover .season-event-choice small,
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-float:focus-within .season-event-choice small{
+  font-size:clamp(15px,1.85vw,18px)!important;
+  line-height:1.55!important;
+}
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-float:hover .season-event-option-label,
+.season-event-dialog:not(.story-event-dialog) .season-event-choice-float:focus-within .season-event-option-label{
+  font-size:12px!important;
+  transform:translateY(-2px)!important;
+}
+@media(max-width:680px), (hover:none){
+  .season-event-dialog:not(.story-event-dialog){overflow:auto!important;}
+  .season-event-dialog:not(.story-event-dialog) .season-event-choice-grid{padding:8px 0 12px!important;}
+  .season-event-dialog:not(.story-event-dialog) .season-event-choice-grid:hover .season-event-choice-float:not(:hover){
+    opacity:1!important;
+    filter:none!important;
+    transform:none!important;
+  }
+  .season-event-dialog:not(.story-event-dialog) .season-event-choice-float:hover .season-event-choice,
+  .season-event-dialog:not(.story-event-dialog) .season-event-choice-float:focus-within .season-event-choice{
+    transform:translateY(-5px) scale(1.035)!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .season-event-dialog:not(.story-event-dialog) .season-event-choice-float,
+  .season-event-dialog:not(.story-event-dialog) .season-event-choice,
+  .season-event-dialog:not(.story-event-dialog) .season-event-choice b,
+  .season-event-dialog:not(.story-event-dialog) .season-event-choice small{
+    transition:none!important;
+  }
+}
+</style>
+
+<style id="topbar-brand-title-dark-v1">
+/* Titolo principale della top bar più leggibile su sfondo chiaro */
+.topbar .brand b{
+  color:#10243a!important;
+  text-shadow:none!important;
+}
+</style>
 </head>
 <body class="page-season-real">
 <div class="app">
@@ -4260,4 +4355,53 @@
 })();
 </script>
 
+
+<script id="mobile-team-name-autofit-v1">
+(function(){
+  const SELECTOR='.season-top-team-copy strong,.season-match-panel .team-name,.season-home-next-match .team-name';
+  let raf=0;
+  function fitOne(el){
+    if(!el)return;
+    if(!window.matchMedia('(max-width:760px)').matches){
+      el.style.removeProperty('--mobile-team-font');
+      return;
+    }
+    const parent=el.parentElement;
+    if(!parent||parent.clientWidth<20)return;
+    let size=20;
+    el.style.setProperty('--mobile-team-font',size+'px');
+    while(size>10 && el.scrollWidth>el.clientWidth+1){
+      size-=0.5;
+      el.style.setProperty('--mobile-team-font',size+'px');
+    }
+  }
+  function fitAll(root=document){
+    const nodes=[];
+    if(root.matches&&root.matches(SELECTOR))nodes.push(root);
+    if(root.querySelectorAll)root.querySelectorAll(SELECTOR).forEach(el=>nodes.push(el));
+    nodes.forEach(fitOne);
+  }
+  function schedule(root=document){
+    cancelAnimationFrame(raf);
+    raf=requestAnimationFrame(()=>fitAll(root));
+  }
+  function start(){
+    schedule(document);
+    window.addEventListener('resize',()=>schedule(document),{passive:true});
+    const target=document.getElementById('screen')||document.body;
+    new MutationObserver(mutations=>{
+      mutations.forEach(m=>m.addedNodes.forEach(node=>{
+        if(node.nodeType===1)schedule(node);
+      }));
+    }).observe(target,{childList:true,subtree:true});
+    if('ResizeObserver' in window){
+      const ro=new ResizeObserver(entries=>entries.forEach(entry=>fitOne(entry.target)));
+      const watch=()=>document.querySelectorAll(SELECTOR).forEach(el=>ro.observe(el));
+      watch();
+      new MutationObserver(watch).observe(target,{childList:true,subtree:true});
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
+</script>
 </body></html>

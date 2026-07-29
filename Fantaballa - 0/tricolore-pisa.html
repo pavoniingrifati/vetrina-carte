@@ -4638,4 +4638,53 @@
 })();
 </script>
 
+
+<script id="mobile-team-name-autofit-v1">
+(function(){
+  const SELECTOR='.season-top-team-copy strong,.season-match-panel .team-name,.season-home-next-match .team-name';
+  let raf=0;
+  function fitOne(el){
+    if(!el)return;
+    if(!window.matchMedia('(max-width:760px)').matches){
+      el.style.removeProperty('--mobile-team-font');
+      return;
+    }
+    const parent=el.parentElement;
+    if(!parent||parent.clientWidth<20)return;
+    let size=20;
+    el.style.setProperty('--mobile-team-font',size+'px');
+    while(size>10 && el.scrollWidth>el.clientWidth+1){
+      size-=0.5;
+      el.style.setProperty('--mobile-team-font',size+'px');
+    }
+  }
+  function fitAll(root=document){
+    const nodes=[];
+    if(root.matches&&root.matches(SELECTOR))nodes.push(root);
+    if(root.querySelectorAll)root.querySelectorAll(SELECTOR).forEach(el=>nodes.push(el));
+    nodes.forEach(fitOne);
+  }
+  function schedule(root=document){
+    cancelAnimationFrame(raf);
+    raf=requestAnimationFrame(()=>fitAll(root));
+  }
+  function start(){
+    schedule(document);
+    window.addEventListener('resize',()=>schedule(document),{passive:true});
+    const target=document.getElementById('screen')||document.body;
+    new MutationObserver(mutations=>{
+      mutations.forEach(m=>m.addedNodes.forEach(node=>{
+        if(node.nodeType===1)schedule(node);
+      }));
+    }).observe(target,{childList:true,subtree:true});
+    if('ResizeObserver' in window){
+      const ro=new ResizeObserver(entries=>entries.forEach(entry=>fitOne(entry.target)));
+      const watch=()=>document.querySelectorAll(SELECTOR).forEach(el=>ro.observe(el));
+      watch();
+      new MutationObserver(watch).observe(target,{childList:true,subtree:true});
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
+</script>
 </body></html>
