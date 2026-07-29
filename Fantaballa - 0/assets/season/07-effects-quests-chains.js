@@ -3,9 +3,9 @@
  * Modulo classico: l'ordine di caricamento è definito negli HTML del Campionato.
  */
 function getStarterEntries(){return rosterPlayers().filter(r=>!r.bench)}function getBenchEntries(){return rosterPlayers().filter(r=>r.bench)}
-function motivatorPermanentChemistryBonus(player){return coachIs('motivator')?Math.max(0,Number(state.seasonRules?.motivatorPermanentChemistry?.[String(player?.id||'')])||0):0}
+function motivatorPermanentChemistryBonus(player){return coachIs('motivator')&&!(typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled())?Math.max(0,Number(state.seasonRules?.motivatorPermanentChemistry?.[String(player?.id||'')])||0):0}
 function addMotivatorPermanentChemistry(playerId,value=1){if(!coachIs('motivator')||!playerId||Number(value)<=0)return 0;state.seasonRules.motivatorPermanentChemistry=state.seasonRules.motivatorPermanentChemistry&&typeof state.seasonRules.motivatorPermanentChemistry==='object'?state.seasonRules.motivatorPermanentChemistry:{};const id=String(playerId),next=Math.max(0,(Number(state.seasonRules.motivatorPermanentChemistry[id])||0)+Number(value));state.seasonRules.motivatorPermanentChemistry[id]=next;return next}
-function chemistryBaseRaw(player,list){if(coachIs('ductility'))return 0;const players=Array.isArray(list)?list:[];let v=nationChemistryBonus(player,players)+clubChemistryBonus(player,players)+youngBeautifulChemistryBonus(player);if(isSubscriber(player))v+=5;const subs=players.filter(o=>o.nation===player.nation&&isSubscriber(o)).length;if(isSubscriber(player)&&subs>=2)v+=10;if(normalizeName(player.name)===normalizeName(state.coachName))v+=10;v+=motivatorPermanentChemistryBonus(player);return v}
+function chemistryBaseRaw(player,list){if(coachIs('ductility'))return 0;const players=Array.isArray(list)?list:[];let v=nationChemistryBonus(player,players)+clubChemistryBonus(player,players)+youngBeautifulChemistryBonus(player);if(isSubscriber(player))v+=5;const subs=players.filter(o=>o.nation===player.nation&&isSubscriber(o)).length;if(isSubscriber(player)&&subs>=2)v+=10;if(!(typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled())&&normalizeName(player.name)===normalizeName(state.coachName))v+=10;v+=motivatorPermanentChemistryBonus(player);return v}
 function chemistryBase(player,list){return coachIs('ductility')||closedPortsAffects(player)?0:chemistryBaseRaw(player,list)}
 function activeChemistryEventBonus(player){
  if(coachIs('ductility'))return 0;
@@ -75,7 +75,7 @@ function motivatorBonusScope(type){
  return scopes[String(type||'')]||null;
 }
 function pushEffect(type,value,rounds,extra={}){
- const scope=motivatorBonusScope(type),ovrTypes=new Set(['teamOvr','playerOvr','subscriberOvr','goalkeeperOvr']),sponsorExtra=ovrTypes.has(String(type))?sponsorOvrExtraFor(value,extra):0,sponsoredValue=Number(value)+sponsorExtra,enhance=coachIs('motivator')&&!extra?.motivatorExtra&&scope&&sponsoredValue>0;
+ const scope=motivatorBonusScope(type),ovrTypes=new Set(['teamOvr','playerOvr','subscriberOvr','goalkeeperOvr']),sponsorExtra=ovrTypes.has(String(type))?sponsorOvrExtraFor(value,extra):0,sponsoredValue=Number(value)+sponsorExtra,enhance=coachIs('motivator')&&!(typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled())&&!extra?.motivatorExtra&&scope&&sponsoredValue>0;
  const adjusted=enhance&&scope.kind!=='multiplier'?sponsoredValue+2:sponsoredValue,untilSeasonEnd=Boolean(extra?.untilSeasonEnd),duration=Math.max(1,Number(rounds)||(untilSeasonEnd?remainingSeasonMatches():1));
  state.activeEffects.push({type,value:adjusted,rounds:duration,...extra,untilSeasonEnd,sponsorExtra});
  if(!enhance)return;

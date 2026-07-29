@@ -26,7 +26,7 @@ function previewTeamAverageOvr(team){
 }
 function renderNextTeamCard(team,label,ovr){
  const safeTeam=team||{name:state.teamName};
- const average=Math.max(1,Math.round(Number(ovr)||0));
+ const numeric=Number(ovr),average=fantaballopoliAllowsNegativeOvr()&&Number.isFinite(numeric)?Math.round(numeric):Math.max(1,Math.round(numeric||0));
  return `<div class="next-team-card" style="${teamCssVars(safeTeam)}"><span class="next-team-colors"></span><div class="team-name" style="font-size:${teamNameFontSize(safeTeam?.name||state.teamName)}px" title="${esc(safeTeam?.name||state.teamName)}">${esc(safeTeam?.name||state.teamName)}</div><div class="next-team-meta"><div class="subline">${esc(label)}</div><div class="next-team-ovr">OVR <b>${average}</b></div></div></div>`;
 }
 
@@ -59,7 +59,7 @@ function seasonTopDifficulty(userOvr,opponentOvr){
 function renderSeasonTopTeam(team,{role,venue,ovr,side}){
  const safeTeam=team||{name:'Squadra'},name=safeTeam.name||'Squadra';
  const badge=typeof teamColorDot==='function'?teamColorDot(safeTeam):esc(seasonTopTeamInitials(name));
- return `<div class="season-top-team ${esc(side||'')}" style="${teamCssVars(safeTeam)}"><span class="season-top-team-colors" aria-hidden="true"></span><div class="season-top-team-badge season-top-team-badge--flag" aria-hidden="true">${badge}</div><div class="season-top-team-copy"><strong title="${esc(name)}">${esc(name)}</strong></div><div class="season-top-team-ovr" aria-label="Overall ${Math.max(1,Math.round(Number(ovr)||0))}"><span>OVR</span><b>${Math.max(1,Math.round(Number(ovr)||0))}</b></div></div>`;
+ const numeric=Number(ovr),shownOvr=fantaballopoliAllowsNegativeOvr()&&Number.isFinite(numeric)?Math.round(numeric):Math.max(1,Math.round(numeric||0));return `<div class="season-top-team ${esc(side||'')}" style="${teamCssVars(safeTeam)}"><span class="season-top-team-colors" aria-hidden="true"></span><div class="season-top-team-badge season-top-team-badge--flag" aria-hidden="true">${badge}</div><div class="season-top-team-copy"><strong title="${esc(name)}">${esc(name)}</strong></div><div class="season-top-team-ovr" aria-label="Overall ${shownOvr}"><span>OVR</span><b>${shownOvr}</b></div></div>`;
 }
 
 function ensureSeasonHomeStyles(){

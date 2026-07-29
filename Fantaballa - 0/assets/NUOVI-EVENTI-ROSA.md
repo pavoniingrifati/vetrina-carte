@@ -127,3 +127,11 @@ Vengono mostrati tre sospettati.
 ### Non accusare nessuno
 - nessun giocatore viene perso;
 - i prossimi 3 avversari ricevono +8 OVR.
+
+
+## 10. La partita senza mister [nome allenatore]
+
+L’allenatore rimane bloccato al suo bordello preferito poco prima della partita.
+
+- **Lascia decidere al capitano:** il capitano sceglie casualmente il modulo. Se la squadra vince, riceve +10 OVR permanente. Dopo la gara torna il modulo precedente.
+- **Affida la squadra al vice:** il modulo resta invariato e i bonus dell’allenatore vengono disattivati per una partita. Con il Tattico attivo, la formazione viene ottimizzata automaticamente.

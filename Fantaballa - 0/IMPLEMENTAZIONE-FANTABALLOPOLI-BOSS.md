@@ -2,7 +2,7 @@
 
 Versione motore: **1.3.0**  
 Versione stato salvataggi: **46**  
-Data intervento: **25 luglio 2026**
+Data aggiornamento bilanciamento: **28 luglio 2026**
 
 ## Scelta iniziale
 
@@ -21,20 +21,31 @@ L’evento iniziale propone tre opzioni definitive:
 - Il giocatore ceduto entra segretamente nella formazione de **L’Inter degli Onesti** e segna almeno un gol nella boss fight.
 - Se il normale mercato viene saltato o gestito automaticamente, lo scambio narrativo con Giuda viene comunque completato.
 
+### Maledizione di Giuda
+
+- Ogni vittoria con **Giuda titolare** riduce permanentemente di **5 OVR tutti i giocatori della rosa**, compresi panchinari e Giuda.
+- La penalità è cumulativa e **non ha alcun limite minimo**: gli OVR possono arrivare a zero o diventare negativi.
+- Se una delle tre prove viene fallita, **Giuda abbandona definitivamente la rosa** e il percorso delle prove termina immediatamente.
+
 ### Prove e Cartonati
 
 1. **Il risultato prestabilito**
-   - Avversari: +10 OVR.
-   - I gol dei giocatori infortunati schierati valgono doppio.
-   - Pareggio vietato: supplementari e rigori.
+   - La partita comincia dallo **0-1**.
+   - Avversari: **+15 OVR**.
+   - Bisogna vincere entro i 90 minuti; pareggio, supplementari o rigori equivalgono a fallimento.
    - Vittoria: Cartonato dell’Arbitro.
 
 2. **La dimostrazione di forza**
-   - Bisogna vincere facendo segnare Giuda oppure con almeno due gol di scarto.
+   - Giuda deve partire titolare.
+   - Giuda deve segnare almeno un gol valido.
+   - La squadra deve vincere con almeno due gol di scarto.
    - Ricompensa: Cartonato di Giuda.
 
 3. **Distruggere il dossier**
-   - Bisogna segnare in ciascuna delle successive cinque partite.
+   - Cinque partite consecutive con almeno un gol segnato in ciascuna.
+   - Almeno 4 vittorie su 5.
+   - Almeno 2 clean sheet.
+   - Almeno 10 gol complessivi.
    - Ricompensa: Cartonato del Silenzio.
 
 Ogni Cartonato disattiva un potere de **L’Inter degli Onesti**.

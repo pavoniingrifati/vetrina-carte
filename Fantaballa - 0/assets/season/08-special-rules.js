@@ -755,7 +755,8 @@ function coachGuaranteedGoalEvent(lineup,team,opponent,duration,reason){
 }
 function applyCoachGoalGuarantees(userEvents,opponentEvents,lineup,opponentLineup,userTeam,opponent,duration){
  const result={for:false,against:false,average:coachRosterAverageOvr()};if(!coachIs('salvation'))return result;
- if(result.average<70){userEvents.push(coachGuaranteedGoalEvent(lineup,userTeam,opponent,duration,'Mister salvezza: con una rosa sotto 70 OVR, viene aggiunto un gol alla squadra.'));result.for=true}
+ const bonusesDisabled=typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled();
+ if(result.average<70&&!bonusesDisabled){userEvents.push(coachGuaranteedGoalEvent(lineup,userTeam,opponent,duration,'Mister salvezza: con una rosa sotto 70 OVR, viene aggiunto un gol alla squadra.'));result.for=true}
  if(result.average>80&&scoreGoalEvents(opponentEvents)<1){opponentEvents.push(coachGuaranteedGoalEvent(opponentLineup,opponent,userTeam,duration,'Mister salvezza: con una rosa sopra 80 OVR, almeno un gol subito è garantito.'));result.against=true}
  return result;
 }
@@ -843,10 +844,10 @@ function originalBaseOvr(player){
  const stored=Number(original?.baseOvr);if(Number.isFinite(stored)&&stored>0)return Math.max(1,stored);
  return Math.max(1,Number(original?.ovr??player?.ovr)||60);
 }
-function ductilityScorerOvrBonus(player){if(!coachIs('ductility')||!player)return 0;return Math.max(0,Math.floor(Number(state.seasonRules?.ductilityScorerOvr?.[String(player.id||'')])||0))}
-function ductilityEffectiveBaseOvr(player){const current=Math.max(1,Number(player?.ovr)||originalBaseOvr(player)),base=originalBaseOvr(player);if(!coachIs('ductility'))return current;return Math.max(1,Math.min(current,base)+ductilityScorerOvrBonus(player))}
-function ductilityEntryIsOutOfRole(entry){return Boolean(coachIs('ductility')&&entry?.player&&!isEmergencyYouthEntry(entry)&&entry.slot&&!naturalCompatible(entry.player,entry.slot))}
-function addDuctilityScorerOvr(playerId,value=1){if(!coachIs('ductility')||!playerId||Number(value)<=0)return 0;state.seasonRules.ductilityScorerOvr=state.seasonRules.ductilityScorerOvr&&typeof state.seasonRules.ductilityScorerOvr==='object'?state.seasonRules.ductilityScorerOvr:{};const id=String(playerId),next=Math.max(0,(Number(state.seasonRules.ductilityScorerOvr[id])||0)+Math.floor(Number(value)||0));state.seasonRules.ductilityScorerOvr[id]=next;return next}
+function ductilityScorerOvrBonus(player){if(!coachIs('ductility')||!player||(typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled()))return 0;return Math.max(0,Math.floor(Number(state.seasonRules?.ductilityScorerOvr?.[String(player.id||'')])||0))}
+function ductilityEffectiveBaseOvr(player){const numeric=Number(player?.ovr),allowNegative=typeof fantaballopoliAllowsNegativeOvr==='function'&&fantaballopoliAllowsNegativeOvr(),current=allowNegative&&Number.isFinite(numeric)?numeric:Math.max(1,numeric||originalBaseOvr(player)),base=originalBaseOvr(player);if(!coachIs('ductility'))return current;const adjusted=Math.min(current,base)+ductilityScorerOvrBonus(player);return allowNegative?adjusted:Math.max(1,adjusted)}
+function ductilityEntryIsOutOfRole(entry){return Boolean(coachIs('ductility')&&!(typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled())&&entry?.player&&!isEmergencyYouthEntry(entry)&&entry.slot&&!naturalCompatible(entry.player,entry.slot))}
+function addDuctilityScorerOvr(playerId,value=1){if(!coachIs('ductility')||(typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled())||!playerId||Number(value)<=0)return 0;state.seasonRules.ductilityScorerOvr=state.seasonRules.ductilityScorerOvr&&typeof state.seasonRules.ductilityScorerOvr==='object'?state.seasonRules.ductilityScorerOvr:{};const id=String(playerId),next=Math.max(0,(Number(state.seasonRules.ductilityScorerOvr[id])||0)+Math.floor(Number(value)||0));state.seasonRules.ductilityScorerOvr[id]=next;return next}
 function rosterEntryIndex(entry){return state.draft.roster.findIndex(item=>String(item.playerId)===String(entry?.playerId||''))}
 function setPermanentRosterOvr(entry,value){
  if(!entry)return null;
@@ -855,10 +856,10 @@ function setPermanentRosterOvr(entry,value){
  const before=Number(player.ovr)||60,requested=Math.max(1,Math.round(Number(value)||before)),isPositive=requested>before;
  if(isPositive&&coachIs('ductility'))return null;
  const sponsorExtra=isPositive?sponsorOvrExtraFor(requested-before):0,sponsoredRequested=isPositive?requested+sponsorExtra:requested;
- const after=isPositive&&coachIs('motivator')?sponsoredRequested+2:sponsoredRequested;
+ const motivatorBonusActive=isPositive&&coachIs('motivator')&&!(typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled()),after=motivatorBonusActive?sponsoredRequested+2:sponsoredRequested;
  state.draft.roster[index].player={...player,ovr:after};
  if(sponsorExtra){recordBallariniPlayerBonus(player.id,sponsorExtra);if(after>=100&&after-sponsorExtra<100)unlockAchievement('qualita-ballarini')}
- if(isPositive&&coachIs('motivator'))addMotivatorPermanentChemistry(player.id,2);
+ if(motivatorBonusActive)addMotivatorPermanentChemistry(player.id,2);
  return {player:state.draft.roster[index].player,before,after};
 }
 function empowerUnderdog(){
