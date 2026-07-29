@@ -81,6 +81,85 @@ function giveLastTeamLeaderPoints(){
  return `${last.name||'L’ultima in classifica'} passa da ${before} a ${target} punti, raggiungendo ${leader.name||'la capolista'}.`;
 }
 
+
+const SEASON_PORTAL_TRANSFER_KEY='fantaballa_season_portal_transfer_v1';
+function myHeroAcademiaEventTitle(){
+ return `My Hero Academia è venuta a fare visita al centro d’allenamento del ${String(state.teamName||'tuo club')}`;
+}
+function myHeroAcademiaEventAvailable(){
+ return !state.seasonRules.heroAcademiaRule&&!state.seasonRules.heroAcademiaPortalUsed;
+}
+function activateHeroAcademiaFourOneRule(){
+ state.seasonRules.heroAcademiaRule='four-one';
+ return 'All 4 1 & 1 4 all è attivo fino a fine stagione: una tua vittoria 4-1 azzera i tuoi punti; una tua sconfitta 1-4 azzera i punti di tutte le altre squadre.';
+}
+function currentPortalCompetitionId(){
+ if(SAVE_MODE==='real')return String(state.competitionVariant||'serie-a')==='legend'?'legend':'serie-a';
+ return 'community';
+}
+function randomPortalDestination(){
+ const current=currentPortalCompetitionId();
+ const all=[
+  {id:'community',mode:'community',variant:'serie-a',label:'Campionato del Ca***',url:'campionato.html'},
+  {id:'serie-a',mode:'real',variant:'serie-a',label:'Fantacampionato del Ca*** · Serie A',url:'campionato-real.html'},
+  {id:'legend',mode:'real',variant:'legend',label:'Fantacampionato Legend',url:'campionato-real.html'}
+ ];
+ const available=all.filter(item=>item.id!==current);
+ return pick(available)||all[0];
+}
+function openHeroAcademiaPortal(){
+ const target=randomPortalDestination();
+ const payload={
+  version:1,targetMode:target.mode,targetVariant:target.variant,targetId:target.id,targetLabel:target.label,
+  sourceMode:SAVE_MODE,sourceVariant:String(state.competitionVariant||'serie-a'),createdAt:Date.now(),
+  teamName:String(state.teamName||''),coachName:String(state.coachName||''),coachType:String(state.coachType||''),
+  formation:String(state.formation||'4-3-3'),gameMode:String(state.gameMode||'normal'),
+  teamPaletteId:String(state.teamPaletteId||''),teamColors:state.teamColors&&typeof state.teamColors==='object'?{...state.teamColors}:null
+ };
+ try{localStorage.setItem(SEASON_PORTAL_TRANSFER_KEY,JSON.stringify(payload))}catch(error){console.error('Portale non salvato',error);return 'Il portale non riesce ad aprirsi perché il browser ha bloccato il salvataggio locale.'}
+ state.seasonRules.heroAcademiaPortalUsed=true;
+ state.seasonRules.heroAcademiaPortalDestination=target.id;
+ setTimeout(()=>{try{location.href=`${target.url}?portal=${encodeURIComponent(target.variant)}&from=${encodeURIComponent(SAVE_MODE)}`}catch(error){console.error('Portale non aperto',error)}},1100);
+ return `Il portale punta verso ${target.label}. La run attuale resta salvata; nella destinazione inizierai una nuova stagione con lo stesso nome squadra e allenatore.`;
+}
+function consumeSeasonPortalTransfer(){
+ let payload=null;
+ try{payload=JSON.parse(localStorage.getItem(SEASON_PORTAL_TRANSFER_KEY)||'null')}catch{payload=null}
+ if(!payload||Number(payload.version)!==1||String(payload.targetMode||'')!==SAVE_MODE)return null;
+ const targetVariant=SAVE_MODE==='real'?(String(payload.targetVariant)==='legend'?'legend':'serie-a'):'serie-a';
+ try{
+  const existing=localStorage.getItem(AUTO_SAVE_KEY);
+  if(existing)localStorage.setItem(`${AUTO_SAVE_KEY}_portal_backup_${Date.now()}`,existing);
+ }catch(error){console.warn('Backup pre-portale non riuscito',error)}
+ const next=freshState();
+ next.competitionVariant=targetVariant;
+ next.teamName=String(payload.teamName||next.teamName);
+ next.coachName=String(payload.coachName||next.coachName);
+ next.coachType=normalizeCoachType(payload.coachType||next.coachType);
+ next.formation=FORMATIONS[String(payload.formation||'')]?String(payload.formation):next.formation;
+ next.gameMode=String(payload.gameMode)==='chaos'?'chaos':'normal';
+ next.teamPaletteId=String(payload.teamPaletteId||next.teamPaletteId);
+ if(payload.teamColors&&typeof payload.teamColors==='object')next.teamColors=normalizeClubColors(payload.teamColors);
+ next.seasonRules.heroAcademiaPortalUsed=true;
+ next.seasonRules.heroAcademiaPortalDestination=String(payload.targetId||targetVariant);
+ next.seenDecisionEvents=['my-hero-academia-visita'];
+ try{localStorage.removeItem(SEASON_PORTAL_TRANSFER_KEY)}catch{}
+ startupNotice=`Portale completato: sei arrivato in ${String(payload.targetLabel||'un nuovo campionato')}. La stagione precedente è rimasta salvata nella sua modalità.`;
+ return next;
+}
+function activateFgciDirectMatchRule(mode){
+ const normalized=mode==='effective-time'?'effective-time':'penalty-lottery';
+ state.seasonRules.fgciDirectMatchRule=normalized;
+ if(normalized==='penalty-lottery'){
+  state.seasonRules.figcCompetitionRule='';
+  return 'Lotteria dei rigori attiva fino a fine stagione: tutte le partite iniziano direttamente dal dischetto, il risultato resta 0-0 e durante la gara non possono verificarsi infortuni o cartellini rossi.';
+ }
+ if(!state.activeEffects.some(effect=>effect.type==='injuryRisk'&&String(effect.source||'')==='Tempo effettivo FGCI')){
+  pushSeasonEffect('injuryRisk',1,{chance:.72,count:2,duration:2,source:'Tempo effettivo FGCI'});
+ }
+ return 'Tempo effettivo attivo fino a fine stagione: ogni partita dura 90 minuti effettivi, senza recupero, con un aumento drastico di infortuni ed espulsioni.';
+}
+
 const SEASON_EVENT_HANDLERS=Object.freeze({
  autoApply:Object.freeze({
 "auto-1":function(){const r=pick(getStarterEntries());if(r){setOwnPlayerInjury(r,2);return `${r.player.name} è infortunato per 2 giornate.${state.seasonRules.futureInjuryZeroPoints?' Punti azzerati dalla regola del futuro.':''}`}return 'Nessun titolare disponibile.'},
@@ -153,12 +232,15 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "cambio-presidente":function(){return presidentChangeAvailable()},
 "var-estremamente-severo":function(){return !state.seasonRules.extremeVarRule},
 "essere-misterioso-con-corna":function(){return hornedEntityEventAvailable()},
-"nuovo-regolamento-fgci-riposo":function(){return !state.seasonRules.fgciLeaderRestRule&&!state.seasonRules.fgciLastPointsApplied}
+"nuovo-regolamento-fgci-riposo":function(){return !state.seasonRules.fgciLeaderRestRule&&!state.seasonRules.fgciLastPointsApplied},
+"my-hero-academia-visita":function(){return myHeroAcademiaEventAvailable()},
+"nuovo-regolamento-fgci-rigori-tempo":function(){return !state.seasonRules.fgciDirectMatchRule}
  }),
  title:Object.freeze({
 "omonimo-allenatore":function(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`},
 "cambio-stadio":function(){return `Il presidente del ${String(state.teamName||'tuo club')} ti chiede se è una buona idea cambiare stadio`},
-"partita-senza-mister":function(context){return noMisterMatchTitle(context)}
+"partita-senza-mister":function(context){return noMisterMatchTitle(context)},
+"my-hero-academia-visita":function(){return myHeroAcademiaEventTitle()}
  }),
  describe:Object.freeze({
 "rapito-alieni":function(context){return context?.playerName?`${this.text} Il giocatore coinvolto è ${context.playerName}.`:this.text},
@@ -393,7 +475,11 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "essere-misterioso-con-corna:0":function(){return sellSoulAndSkipMatches()},
 "essere-misterioso-con-corna:1":function(){return keepSoulDoubleMatch()},
 "nuovo-regolamento-fgci-riposo:0":function(){return activateFgciLeaderRestRule()},
-"nuovo-regolamento-fgci-riposo:1":function(){return giveLastTeamLeaderPoints()}
+"nuovo-regolamento-fgci-riposo:1":function(){return giveLastTeamLeaderPoints()},
+"my-hero-academia-visita:0":function(){return activateHeroAcademiaFourOneRule()},
+"my-hero-academia-visita:1":function(){return openHeroAcademiaPortal()},
+"nuovo-regolamento-fgci-rigori-tempo:0":function(){return activateFgciDirectMatchRule('penalty-lottery')},
+"nuovo-regolamento-fgci-rigori-tempo:1":function(){return activateFgciDirectMatchRule('effective-time')}
  })
 });
 const SEASON_EVENT_HANDLER_IDS=Object.freeze({

@@ -27,6 +27,7 @@ async function boot(){
     legend:{players:legendPlayers,clubs:legendClubs,validation:{...(SEASON_CONFIG.validation||{}),maximumOvr:120,minimumClubCount:41,expectedClubCount:41,minimumClubMessage:'Sono presenti soltanto {count} record club: servono la squadra utente e 40 club Legend.',expectedClubMessage:'Sono presenti {count} record club invece dei 40 club Legend più la squadra utente.'}}
    };
    COMMENTARY=commentary;OTHER_CLUBS=Array.isArray(secondaryClubs)?secondaryClubs:[];CLASSIC_PLAYERS=Array.isArray(secondaryPlayers)?secondaryPlayers:[];
+   const portalState=typeof consumeSeasonPortalTransfer==='function'?consumeSeasonPortalTransfer():null;if(portalState)state=portalState;
    applyCompetitionVariantData(state?.competitionVariant);
    if(dataDiagnostics.fatal.length)throw Error(dataDiagnostics.fatal.slice(0,12).join(' | ')+(dataDiagnostics.fatal.length>12?` | Altri ${dataDiagnostics.fatal.length-12} errori.`:''));
  }catch(error){
