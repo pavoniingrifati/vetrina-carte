@@ -42,6 +42,8 @@ context.clearMandatoryMidseasonPlayer=()=>{};
 context.setPermanentRosterOvr=(entry,value)=>{const raw=context.rosterEntry(entry.playerId);if(!raw)return null;const before=Number(raw.player.ovr);raw.player={...raw.player,ovr:Math.max(1,Math.round(value))};return{player:raw.player,before,after:raw.player.ovr}};
 context.removeOwnRosterPlayerPermanently=(entry,reason='')=>{const i=context.state.draft.roster.findIndex(x=>String(x.playerId)===String(entry.playerId));if(i<0)return'Non presente';const name=context.state.draft.roster[i].player.name;context.state.draft.roster.splice(i,1);return`${name} lascia definitivamente la squadra${reason?` per ${reason}`:''}.`};
 context.pushEffect=(type,value,rounds,extra={})=>{context.state.activeEffects.push({type,value,rounds,...extra});return context.state.activeEffects.at(-1)};
+context.remainingSeasonMatches=()=>Math.max(1,context.seasonLength()-Number(context.state.matchday||0));
+context.pushSeasonEffect=(type,value,extra={})=>context.pushEffect(type,value,context.remainingSeasonMatches(),{...extra,untilSeasonEnd:true});
 context.buildTeamGoals=(total,lineup,team,opponent)=>Array.from({length:total},(_,i)=>({minute:20+i,playerId:String(lineup[0]?.playerId||''),player:lineup[0]?.player?.name||'Marcatore',teamId:String(team?.id||''),teamName:team?.name||'',goalValue:1,description:'Gol'}));
 context.regulationGoalEvent=(team,opponent,duration,label)=>({minute:20,playerId:'',player:label||'Gol',teamId:String(team?.id||''),teamName:team?.name||'',goalValue:1,description:'Gol'});
 context.goalValueForMinute=()=>1;
@@ -93,7 +95,7 @@ test('fascia di Calabria: +12 e -5 dopo una sconfitta da titolare',()=>{context.
 
 test('fascia di Calabria distrutta: -5 Intesa per una partita',()=>{context.destroyCalabriaArmband();const effect=context.state.activeEffects.find(e=>e.type==='teamChem');assert(effect&&effect.value===-5&&effect.rounds===1,'Malus Intesa della fascia distrutta errato')});
 
-test('talpa: accusa corretta rimuove il colpevole e assegna +15 Intesa',()=>{const c={suspects:[{playerId:'p2',playerName:'Scarso'},{playerId:'p3',playerName:'Attaccante'},{playerId:'p4',playerName:'Ala'}],moleIndex:1};context.accuseLockerRoomMole(c,1);assert(!context.rosterEntry('p3'),'La talpa deve essere rimossa');assert(context.state.activeEffects.some(e=>e.type==='teamChem'&&e.value===15),'Bonus +15 Intesa non applicato')});
+test('talpa: accusa corretta rimuove il colpevole e assegna +5 Intesa fino a fine stagione',()=>{const c={suspects:[{playerId:'p2',playerName:'Scarso'},{playerId:'p3',playerName:'Attaccante'},{playerId:'p4',playerName:'Ala'}],moleIndex:1};context.accuseLockerRoomMole(c,1);assert(!context.rosterEntry('p3'),'La talpa deve essere rimossa');const effect=context.state.activeEffects.find(e=>e.type==='teamChem'&&e.source==='Talpa scoperta');assert(effect&&effect.value===5&&effect.untilSeasonEnd===true&&effect.rounds===36,'Bonus +5 Intesa fino a fine stagione non applicato')});
 
 test('talpa: non accusare dà +8 OVR ai prossimi 3 avversari',()=>{context.ignoreLockerRoomMole();const effect=context.state.activeEffects.find(e=>e.type==='opponentOvr');assert(effect&&effect.value===8&&effect.rounds===3,'Malus avversari della talpa errato')});
 

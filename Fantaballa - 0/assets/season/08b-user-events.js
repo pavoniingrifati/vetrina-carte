@@ -260,7 +260,7 @@ function lockerRoomMoleContext(){
 function lockerRoomMoleDescription(context){const suspects=Array.isArray(context?.suspects)?context.suspects:[];return suspects.length>=3?`Qualcuno comunica la formazione agli avversari. Sospettato A: ${suspects[0].playerName}. Sospettato B: ${suspects[1].playerName}. Sospettato C: ${suspects[2].playerName}.`:'Tre giocatori sono sospettati di comunicare la formazione agli avversari.'}
 function accuseLockerRoomMole(context,index){
  const suspects=Array.isArray(context?.suspects)?context.suspects:[],suspect=suspects[Number(index)];if(!suspect)return'Il sospettato non è disponibile.';const entry=userEventEntryById(suspect.playerId);if(!entry)return`${suspect.playerName} non è più presente in rosa.`;
- const isMole=Number(context?.moleIndex)===Number(index),exit=userEventRemovePlayer(suspect.playerId,isMole?'lo scandalo della talpa':'l’umiliazione di un’accusa ingiusta');if(isMole){pushEffect('teamChem',15,1,{source:'Talpa scoperta'});return `${suspect.playerName} era davvero la talpa. ${exit} La squadra riceve +15 Intesa nella prossima partita.`}return `${suspect.playerName} era innocente, ma ${exit}`
+ const isMole=Number(context?.moleIndex)===Number(index),exit=userEventRemovePlayer(suspect.playerId,isMole?'lo scandalo della talpa':'l’umiliazione di un’accusa ingiusta');if(isMole){pushSeasonEffect('teamChem',5,{source:'Talpa scoperta'});return `${suspect.playerName} era davvero la talpa. ${exit} Tutti i giocatori ricevono +5 Intesa fino a fine stagione.`}return `${suspect.playerName} era innocente, ma ${exit}`
 }
 function ignoreLockerRoomMole(){pushEffect('opponentOvr',8,3,{source:'Talpa nello spogliatoio'});return 'Non accusi nessuno. Nessun giocatore viene perso, ma i prossimi 3 avversari ricevono +8 OVR.'}
 

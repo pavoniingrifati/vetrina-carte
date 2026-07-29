@@ -121,7 +121,7 @@ Viene indicato come capitano il titolare con l’OVR attuale più alto.
 Vengono mostrati tre sospettati.
 
 ### Accusa un giocatore
-- se è la talpa, viene cacciato e la squadra ottiene +15 Intesa nella prossima partita;
+- se è la talpa, viene cacciato e tutti i giocatori ottengono +5 Intesa fino a fine stagione;
 - se è innocente, lascia comunque la squadra per l’umiliazione.
 
 ### Non accusare nessuno
