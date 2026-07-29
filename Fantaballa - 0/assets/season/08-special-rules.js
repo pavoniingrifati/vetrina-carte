@@ -335,6 +335,7 @@ function matchOutcomeScores(gf,ga,winnerId='',teamId=''){
 function formulaOnePerformanceEntries(roundResults=[]){
  const entries=[];
  (roundResults||[]).forEach(result=>{
+   if(result?.rested)return;
    const winner=String(result?.winnerId||''),homeId=String(result?.homeId||''),awayId=String(result?.awayId||''),homeScore=Number(result?.homeScore)||0,awayScore=Number(result?.awayScore)||0,walkover=result?.formulaOneInjuryWalkover||null;
    [[homeId,String(result?.homeName||''),awayId,homeScore,awayScore,'home'],[awayId,String(result?.awayName||''),homeId,awayScore,homeScore,'away']].forEach(([teamId,name,opponentId,gf,ga,side])=>{
      if(!teamId||isTeamEliminated(teamId))return;

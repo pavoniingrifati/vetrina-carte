@@ -2,6 +2,85 @@
  * Logica eseguibile degli eventi. Testi, ordine, modalità e opzioni vivono nei cataloghi JSON.
  * I riferimenti sono espliciti e validati: nessun nome proveniente dai JSON viene valutato come codice.
  */
+
+function activateExtremeVarRule(mode){
+ state.seasonRules.extremeVarRule=mode==='last'?'last':'first';
+ return state.seasonRules.extremeVarRule==='last'
+  ? 'Da ora l’ultimo gol di ogni tua partita viene annullato dal VAR, indipendentemente dalla squadra che lo segna.'
+  : 'Da ora il primo gol di ogni tua partita viene annullato dal VAR, indipendentemente dalla squadra che lo segna.';
+}
+function hornedEntityEventAvailable(){
+ const remaining=Math.max(0,seasonLength()-Number(state.matchday||0));
+ return !state.seasonRules.soulEventChoice&&remaining>0&&remaining<=14&&rosterPlayers().length>0;
+}
+function removeFourteenSoulPlayers(){
+ const ids=shuffle(rosterPlayers()).slice(0,14).map(entry=>String(entry.playerId));
+ const removed=[];
+ ids.forEach(id=>{
+  const entry=rosterEntry(id);
+  const name=entry?.player?.name||playerById(id)?.name||'Giocatore';
+  if(entry){removeOwnRosterPlayerPermanently(entry,'il patto con l’essere misterioso');removed.push(name)}
+ });
+ return removed;
+}
+function simulateSoulSkippedAiRound(round,restLeaderId=''){
+ const results=[];
+ (Array.isArray(round)?round:[]).forEach(match=>{
+  const homeId=String(match?.home||''),awayId=String(match?.away||'');
+  if(!homeId||!awayId||homeId===USER_ID||awayId===USER_ID)return;
+  if(restLeaderId&&(homeId===restLeaderId||awayId===restLeaderId)){results.push({homeId,awayId,rested:true});return;}
+  const home=teamById(homeId),away=teamById(awayId);
+  if(!home||!away)return;
+  let [homeScore,awayScore]=simulateScore(Math.max(35,opponentMatchPower(home)),Math.max(35,opponentMatchPower(away)),.18,90);
+  if(chaosEnabled())[homeScore,awayScore]=applyChaosScoreRules(home,away,homeScore,awayScore);
+  updateStanding(homeId,homeScore,awayScore);
+  updateStanding(awayId,awayScore,homeScore);
+  results.push({homeId,awayId,homeScore,awayScore});
+ });
+ return results;
+}
+function sellSoulAndSkipMatches(){
+ state.seasonRules.soulEventChoice='sold';
+ const removed=removeFourteenSoulPlayers();
+ const total=Math.min(14,Math.max(0,seasonLength()-Number(state.matchday||0)));
+ let skipped=0,totalPoints=0;
+ for(let i=0;i<total;i++){
+  const round=state.schedule?.[Number(state.matchday)||0]||[];
+  const userMatch=round.find(match=>String(match.home)===USER_ID||String(match.away)===USER_ID);
+  const leaderRestId=state.seasonRules.fgciLeaderRestRule?String(sortedTable()[0]?.id||''):'';
+  const aiResults=simulateSoulSkippedAiRound(round,leaderRestId);
+  const standing=userStanding();if(standing)standing.pts=(Number(standing.pts)||0)+2;
+  totalPoints+=2;skipped++;
+  const opponentId=userMatch?String(userMatch.home===USER_ID?userMatch.away:userMatch.home):'';
+  const opponent=teamById(opponentId);
+  state.history.push({matchday:Number(state.matchday)+1,opponent:opponent?.name||'Partita saltata',opponentId,home:Boolean(userMatch&&String(userMatch.home)===USER_ID),gf:0,ga:0,displayGf:0,displayGa:0,winnerId:'',goals:[],opponentGoals:[],highlights:[],commentary:[],soulSkipped:true,matchNotPlayed:true,pointsAwarded:2,pointsAdjustment:2,pointsNote:'Patto dell’anima: partita non disputata e +2 punti amministrativi.'});
+  state.lastRoundResults=aiResults;
+  state.matchday=(Number(state.matchday)||0)+1;
+ }
+ state.lastResult=state.history[state.history.length-1]||null;
+ state.seasonRules.soulSkippedMatches=skipped;
+ state.seasonRules.soulSoldPlayers=removed;
+ if(Number(state.matchday)>=seasonLength()){
+  if(typeof advanceAfterRegularSeason==='function')advanceAfterRegularSeason();else state.phase='finished';
+ }
+ return `Patto concluso: ${skipped} ${skipped===1?'partita saltata':'partite saltate'}, +${totalPoints} punti e ${removed.length} giocatori hanno lasciato definitivamente la squadra.`;
+}
+function keepSoulDoubleMatch(){
+ state.seasonRules.soulEventChoice='kept';
+ state.seasonRules.soulDoubleMatchPending=true;
+ return 'La prossima giornata verrà giocata due volte contro lo stesso avversario. Ottieni 6 punti solo vincendo entrambe le simulazioni; in ogni altro caso ottieni 0 punti.';
+}
+function activateFgciLeaderRestRule(){
+ state.seasonRules.fgciLeaderRestRule=true;
+ return 'Da questa giornata la squadra prima in classifica resta a riposo. Quando viene superata, il riposo passa automaticamente alla nuova capolista.';
+}
+function giveLastTeamLeaderPoints(){
+ const table=sortedTable();if(table.length<2)return 'Non ci sono abbastanza squadre in classifica.';
+ const leader=table[0],last=table[table.length-1],before=Number(last.pts)||0,target=Number(leader.pts)||0;
+ last.pts=target;state.seasonRules.fgciLastPointsApplied=true;
+ return `${last.name||'L’ultima in classifica'} passa da ${before} a ${target} punti, raggiungendo ${leader.name||'la capolista'}.`;
+}
+
 const SEASON_EVENT_HANDLERS=Object.freeze({
  autoApply:Object.freeze({
 "auto-1":function(){const r=pick(getStarterEntries());if(r){setOwnPlayerInjury(r,2);return `${r.player.name} è infortunato per 2 giornate.${state.seasonRules.futureInjuryZeroPoints?' Punti azzerati dalla regola del futuro.':''}`}return 'Nessun titolare disponibile.'},
@@ -71,7 +150,10 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "fascia-di-calabria":function(){return calabriaArmbandAvailable()},
 "talpa-spogliatoio":function(){return lockerRoomMoleAvailable()},
 "partita-senza-mister":function(){return noMisterMatchAvailable()},
-"cambio-presidente":function(){return presidentChangeAvailable()}
+"cambio-presidente":function(){return presidentChangeAvailable()},
+"var-estremamente-severo":function(){return !state.seasonRules.extremeVarRule},
+"essere-misterioso-con-corna":function(){return hornedEntityEventAvailable()},
+"nuovo-regolamento-fgci-riposo":function(){return !state.seasonRules.fgciLeaderRestRule&&!state.seasonRules.fgciLastPointsApplied}
  }),
  title:Object.freeze({
 "omonimo-allenatore":function(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`},
@@ -305,7 +387,13 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "cambio-presidente:1":function(){return startSylvioBerlusoniChallenge()},
 "cambio-presidente:2":function(){return startGianpietroPozzuoloChallenge()},
 "cambio-stadio:0":function(){state.seasonRules.stadiumHomeAdvantageBonus=Math.max(Number(state.seasonRules.stadiumHomeAdvantageBonus)||0,.06);return "Trasloco completato: il nuovo stadio aumenta leggermente il vantaggio nelle partite casalinghe fino al termine della stagione."},
-"cambio-stadio:1":function(){const names=boostAllRosterPlayers(1);return `${names.length} giocatori della rosa ricevono +1 OVR permanente.`}
+"cambio-stadio:1":function(){const names=boostAllRosterPlayers(1);return `${names.length} giocatori della rosa ricevono +1 OVR permanente.`},
+"var-estremamente-severo:0":function(){return activateExtremeVarRule('first')},
+"var-estremamente-severo:1":function(){return activateExtremeVarRule('last')},
+"essere-misterioso-con-corna:0":function(){return sellSoulAndSkipMatches()},
+"essere-misterioso-con-corna:1":function(){return keepSoulDoubleMatch()},
+"nuovo-regolamento-fgci-riposo:0":function(){return activateFgciLeaderRestRule()},
+"nuovo-regolamento-fgci-riposo:1":function(){return giveLastTeamLeaderPoints()}
  })
 });
 const SEASON_EVENT_HANDLER_IDS=Object.freeze({
