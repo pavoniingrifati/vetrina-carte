@@ -1,5 +1,18 @@
 LA TUA FANTAROSA IN SERIE A — ISTRUZIONI
 
+ANTEPRIMA LOCALE SU WINDOWS
+1. Estrai la cartella fantarosafm.
+2. Fai doppio clic su start-server.bat.
+3. Il browser si aprira automaticamente su:
+   http://localhost:8000/
+4. Lascia aperta la finestra nera mentre lavori.
+5. Dopo una modifica, salva il file e aggiorna la pagina con CTRL+F5.
+6. Per fermare il server, premi CTRL+C nella finestra nera.
+
+Il server viene avviato direttamente dentro la cartella del progetto. Per questo
+l'anteprima locale usa http://localhost:8000/, mentre su GitHub Pages il sito
+continua a funzionare nella cartella /fantarosafm.
+
 CONTENUTI DEL SITO
 Tutti i contenuti modificabili si trovano in:
 
@@ -17,19 +30,13 @@ COME AGGIUNGERE UNA SQUADRA
 1. Apri data/esempio-squadra.json.
 2. Copia tutto l'oggetto della squadra.
 3. Incollalo dentro l'array "teams" di data/contenuti.json.
-4. Se aggiungi più squadre, separale con una virgola.
+4. Se aggiungi piu squadre, separale con una virgola.
 5. Salva il file rispettando la sintassi JSON.
 
-IMPORTANTE: APERTURA IN LOCALE
-Il browser non consente sempre di leggere un file JSON aprendo index.html con doppio clic.
-Per questo è incluso start-server.bat.
-
-Su Windows:
-1. Fai doppio clic su start-server.bat.
-2. Si aprirà il sito all'indirizzo http://localhost:8000
-3. Lascia aperta la finestra nera mentre lavori.
-
-Il sito pubblicato su un normale hosting, Netlify o Vercel leggerà il JSON senza problemi.
+PUBBLICAZIONE SU GITHUB
+Carica l'intera cartella fantarosafm nella directory principale del repository.
+Il sito pubblico sara disponibile su:
+https://fantaballa.it/fantarosafm
 
 STRUTTURA
 - index.html: struttura della pagina
@@ -38,3 +45,4 @@ STRUTTURA
 - data/contenuti.json: unico database dei contenuti
 - data/esempio-squadra.json: modello da copiare
 - assets/: loghi e immagini
+- start-server.bat: avvio dell'anteprima locale

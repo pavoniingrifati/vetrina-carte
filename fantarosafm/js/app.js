@@ -240,6 +240,37 @@
     document.body.classList.remove("modal-open");
   };
 
+  const cleanUrl = () => {
+    const currentPath = window.location.pathname;
+    let cleanPath = currentPath
+      .replace(/index\.html$/i, "")
+      .replace(/\/+$/, "");
+
+    if (!cleanPath) cleanPath = "/";
+
+    if (currentPath !== cleanPath || window.location.hash) {
+      window.history.replaceState(null, "", cleanPath + window.location.search);
+    }
+  };
+
+  const bindCleanSectionNavigation = () => {
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
+      link.addEventListener("click", event => {
+        const targetId = link.getAttribute("href");
+        const target = targetId ? document.querySelector(targetId) : null;
+        if (!target) return;
+
+        event.preventDefault();
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        cleanUrl();
+      });
+    });
+
+    if (window.location.hash) {
+      window.requestAnimationFrame(cleanUrl);
+    }
+  };
+
   const bindInteractions = () => {
     document.addEventListener("click", event => {
       const item = event.target.closest("[data-team-id]");
@@ -329,6 +360,7 @@
   };
 
   const start = async () => {
+    bindCleanSectionNavigation();
     bindInteractions();
     try {
       const response = await fetch(DATA_URL, { cache: "no-store" });
