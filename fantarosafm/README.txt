@@ -5,9 +5,10 @@ ANTEPRIMA LOCALE SU WINDOWS
 2. Fai doppio clic su start-server.bat.
 3. Il browser si aprira automaticamente su:
    http://localhost:8000/
-4. Lascia aperta la finestra nera mentre lavori.
-5. Dopo una modifica, salva il file e aggiorna la pagina con CTRL+F5.
-6. Per fermare il server, premi CTRL+C nella finestra nera.
+4. Non serve installare Python: il server usa PowerShell, gia presente in Windows.
+5. Lascia aperta la finestra nera mentre lavori.
+6. Dopo una modifica, salva il file e aggiorna la pagina con CTRL+F5.
+7. Per fermare il server, premi CTRL+C nella finestra nera.
 
 Il server viene avviato direttamente dentro la cartella del progetto. Per questo
 l'anteprima locale usa http://localhost:8000/, mentre su GitHub Pages il sito
@@ -46,3 +47,8 @@ STRUTTURA
 - data/esempio-squadra.json: modello da copiare
 - assets/: loghi e immagini
 - start-server.bat: avvio dell'anteprima locale
+- server.ps1: server locale PowerShell senza installazioni
+
+AGGIORNAMENTO MOBILE
+Il layout è ottimizzato per smartphone da 320 px in su, tablet e dispositivi touch.
+La classifica mobile non richiede scorrimento orizzontale; menu, pulsanti e schede squadra sono adattati al touch.

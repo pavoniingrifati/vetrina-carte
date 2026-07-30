@@ -16,6 +16,7 @@
   const modalContent = document.getElementById("modalContent");
   const menuToggle = document.getElementById("menuToggle");
   const mainNav = document.getElementById("mainNav");
+  let lastFocusedElement = null;
 
   const state = {
     query: "",
@@ -228,6 +229,7 @@
       </div>
     `;
 
+    lastFocusedElement = document.activeElement;
     teamModal.classList.add("is-open");
     teamModal.setAttribute("aria-hidden", "false");
     document.body.classList.add("modal-open");
@@ -238,6 +240,13 @@
     teamModal.classList.remove("is-open");
     teamModal.setAttribute("aria-hidden", "true");
     document.body.classList.remove("modal-open");
+    if (lastFocusedElement instanceof HTMLElement) lastFocusedElement.focus();
+  };
+
+  const closeMenu = () => {
+    mainNav.classList.remove("is-open");
+    menuToggle.setAttribute("aria-expanded", "false");
+    menuToggle.setAttribute("aria-label", "Apri menu");
   };
 
   const cleanUrl = () => {
@@ -284,7 +293,29 @@
         event.preventDefault();
         openModal(item.dataset.teamId);
       }
-      if (event.key === "Escape" && teamModal.classList.contains("is-open")) closeModal();
+
+      if (event.key === "Escape") {
+        if (teamModal.classList.contains("is-open")) closeModal();
+        if (mainNav.classList.contains("is-open")) {
+          closeMenu();
+          menuToggle.focus();
+        }
+      }
+
+      if (event.key === "Tab" && teamModal.classList.contains("is-open")) {
+        const focusable = [...teamModal.querySelectorAll('button, a[href], input, select, [tabindex]:not([tabindex="-1"])')]
+          .filter(element => !element.hasAttribute("disabled"));
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
     });
 
     searchInput.addEventListener("input", event => {
@@ -303,10 +334,18 @@
     menuToggle.addEventListener("click", () => {
       const isOpen = mainNav.classList.toggle("is-open");
       menuToggle.setAttribute("aria-expanded", String(isOpen));
+      menuToggle.setAttribute("aria-label", isOpen ? "Chiudi menu" : "Apri menu");
     });
-    mainNav.addEventListener("click", () => {
-      mainNav.classList.remove("is-open");
-      menuToggle.setAttribute("aria-expanded", "false");
+    mainNav.addEventListener("click", closeMenu);
+
+    document.addEventListener("click", event => {
+      if (!mainNav.classList.contains("is-open")) return;
+      if (mainNav.contains(event.target) || menuToggle.contains(event.target)) return;
+      closeMenu();
+    });
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 900) closeMenu();
     });
   };
 
