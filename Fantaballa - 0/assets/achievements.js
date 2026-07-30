@@ -61,6 +61,13 @@
     { id:'io-sono-fortissimo', category:'Stagionali', icon:'💪', title:'Io sono Fortissimo!', description:'Raggiungi un OVR medio della squadra di almeno 120.' },
     { id:'aura-strabiliaaante', category:'Stagionali', icon:'✨', title:'Ha un’aura strabiliaaante!', description:'Raggiungi un OVR medio della squadra di almeno 140.' },
     { id:'limite-super-sayan', category:'Stagionali', icon:'🔥', title:'Il limite del super sayan', description:'Aumenta l’OVR medio della squadra di almeno 10 punti tra l’inizio e la fine della stagione.' },
+    { id:'pareggite-acuta', category:'Stagionali', icon:'🤝', title:'Pareggite acuta', description:'Termina una stagione con almeno 15 pareggi.' },
+    { id:'vietato-segnare', category:'Stagionali', icon:'🚫', title:'Vietato segnare', description:'Ottieni almeno 10 risultati per 0-0 nella stessa stagione.' },
+    { id:'difesa-illegale', category:'Stagionali', icon:'🚧', title:'Difesa illegale', description:'Concludi la stagione con meno di 10 gol subiti.' },
+    { id:'campione-al-risparmio', category:'Stagionali', icon:'🐖', title:'Campione al risparmio', description:'Vinci il campionato con meno di 60 punti.' },
+    { id:'rimonta-del-secolo', category:'Stagionali', icon:'📈', title:'La rimonta del secolo', description:'Vinci il campionato dopo essere stato ultimo almeno una volta dalla 10ª giornata in poi.' },
+    { id:'per-un-soffio', category:'Stagionali', icon:'🌬️', title:'Per un soffio', description:'Vinci il campionato per differenza reti oppure con un solo punto di vantaggio.' },
+    { id:'dominio-assoluto', category:'Stagionali', icon:'👑', title:'Dominio assoluto', description:'Vinci il campionato con almeno 20 punti di vantaggio.' },
 
     { id:'giovani-promesse', category:'Allenatori', icon:'✨', title:'Giovani promesse', description:'Vinci il campionato con “Giovani e belli”.' },
     { id:'fuori-dagli-schemi', category:'Allenatori', icon:'🔀', title:'Fuori dagli schemi', description:'Segna 10 gol con giocatori schierati fuori ruolo usando “Duttilità”.', target:10 },

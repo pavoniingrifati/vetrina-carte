@@ -855,10 +855,12 @@ function setPermanentRosterOvr(entry,value){
  const index=rosterEntryIndex(entry),player=entry.player||playerById(entry.playerId);
  if(index<0||!player)return null;
  const before=Number(player.ovr)||60,requested=Math.max(1,Math.round(Number(value)||before)),isPositive=requested>before;
+ if(requested<before&&typeof cellCyborgActive==='function'&&cellCyborgActive()){if(typeof recordCyborgBlockedMalus==='function')recordCyborgBlockedMalus();return{player:state.draft.roster[index].player||player,before,after:before,blocked:true}}
  if(isPositive&&coachIs('ductility'))return null;
  const sponsorExtra=isPositive?sponsorOvrExtraFor(requested-before):0,sponsoredRequested=isPositive?requested+sponsorExtra:requested;
  const motivatorBonusActive=isPositive&&coachIs('motivator')&&!(typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled()),after=motivatorBonusActive?sponsoredRequested+2:sponsoredRequested;
  state.draft.roster[index].player={...player,ovr:after};
+ if(typeof cellCyborgActive==='function'&&cellCyborgActive()&&typeof cyborgRestoreProtectedRoster==='function')cyborgRestoreProtectedRoster();
  if(sponsorExtra){recordBallariniPlayerBonus(player.id,sponsorExtra);if(after>=100&&after-sponsorExtra<100)unlockAchievement('qualita-ballarini')}
  if(motivatorBonusActive)addMotivatorPermanentChemistry(player.id,2);
  return {player:state.draft.roster[index].player,before,after};

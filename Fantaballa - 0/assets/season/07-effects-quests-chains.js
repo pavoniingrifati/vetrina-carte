@@ -6,21 +6,23 @@ function getStarterEntries(){return rosterPlayers().filter(r=>!r.bench)}function
 function motivatorPermanentChemistryBonus(player){return coachIs('motivator')&&!(typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled())?Math.max(0,Number(state.seasonRules?.motivatorPermanentChemistry?.[String(player?.id||'')])||0):0}
 function addMotivatorPermanentChemistry(playerId,value=1){if(!coachIs('motivator')||!playerId||Number(value)<=0)return 0;state.seasonRules.motivatorPermanentChemistry=state.seasonRules.motivatorPermanentChemistry&&typeof state.seasonRules.motivatorPermanentChemistry==='object'?state.seasonRules.motivatorPermanentChemistry:{};const id=String(playerId),next=Math.max(0,(Number(state.seasonRules.motivatorPermanentChemistry[id])||0)+Number(value));state.seasonRules.motivatorPermanentChemistry[id]=next;return next}
 function chemistryBaseRaw(player,list){if(coachIs('ductility'))return 0;const players=Array.isArray(list)?list:[];let v=nationChemistryBonus(player,players)+clubChemistryBonus(player,players)+youngBeautifulChemistryBonus(player);if(isSubscriber(player))v+=5;const subs=players.filter(o=>o.nation===player.nation&&isSubscriber(o)).length;if(isSubscriber(player)&&subs>=2)v+=10;if(!(typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled())&&normalizeName(player.name)===normalizeName(state.coachName))v+=10;v+=motivatorPermanentChemistryBonus(player);return v}
-function chemistryBase(player,list){return coachIs('ductility')||closedPortsAffects(player)?0:chemistryBaseRaw(player,list)}
+function chemistryBase(player,list){const shield=typeof cellCyborgActive==='function'&&cellCyborgActive();return coachIs('ductility')||(!shield&&closedPortsAffects(player))?0:chemistryBaseRaw(player,list)}
 function activeChemistryEventBonus(player){
  if(coachIs('ductility'))return 0;
- let value=0;
+ const shield=typeof cellCyborgActive==='function'&&cellCyborgActive();let value=0;
+ const include=amount=>{const number=Number(amount)||0;if(!shield||number>=0)value+=number};
  state.activeEffects.forEach(effect=>{
-   if(effect.type==='teamChem')value+=Number(effect.value)||0;
-   if(effect.type==='subscriberChem'&&isSubscriber(player))value+=Number(effect.value)||0;
-   if(effect.type==='playerChem'&&String(effect.playerId)===String(player.id))value+=Number(effect.value)||0;
+   if(effect.type==='teamChem')include(effect.value);
+   if(effect.type==='subscriberChem'&&isSubscriber(player))include(effect.value);
+   if(effect.type==='playerChem'&&String(effect.playerId)===String(player.id))include(effect.value);
  });
  return value;
 }
 function activeOvrBonus(player){
- if(state.activeEffects.some(effect=>effect.type==='baseOvrOnly'))return 0;
+ const shield=typeof cellCyborgActive==='function'&&cellCyborgActive();
+ if(!shield&&state.activeEffects.some(effect=>effect.type==='baseOvrOnly'))return 0;
  const ductility=coachIs('ductility');let value=0;
- const include=amount=>{const number=Number(amount)||0;if(!ductility||number<0)value+=number};
+ const include=amount=>{const number=Number(amount)||0;if(shield&&number<0)return;if(!ductility||number<0)value+=number};
  state.activeEffects.forEach(effect=>{
    if(effect.type==='teamOvr')include(effect.value);
    if(effect.type==='subscriberOvr'&&isSubscriber(player))include(effect.value);
@@ -34,18 +36,20 @@ function activeOvrBonus(player){
 }
 function activeChemistryMultiplier(player){
  if(coachIs('ductility'))return 1;
- let multiplier=parallelCupChemistryMultiplier();
+ const shield=typeof cellCyborgActive==='function'&&cellCyborgActive();let multiplier=parallelCupChemistryMultiplier();if(shield&&multiplier<1)multiplier=1;
+ const factor=value=>{const number=Math.max(.1,Number(value)||1);return shield&&number<1?1:number};
  state.activeEffects.forEach(effect=>{
-   if(effect.type==='teamChemMultiplier')multiplier*=Math.max(.1,Number(effect.value)||1);
-   if(effect.type==='subscriberChemMultiplier'&&isSubscriber(player))multiplier*=Math.max(.1,Number(effect.value)||1);
-   if(effect.type==='playerChemMultiplier'&&String(effect.playerId)===String(player?.id||''))multiplier*=Math.max(.1,Number(effect.value)||1);
+   if(effect.type==='teamChemMultiplier')multiplier*=factor(effect.value);
+   if(effect.type==='subscriberChemMultiplier'&&isSubscriber(player))multiplier*=factor(effect.value);
+   if(effect.type==='playerChemMultiplier'&&String(effect.playerId)===String(player?.id||''))multiplier*=factor(effect.value);
  });
  return clamp(multiplier,.1,6);
 }
-function chemistryIsZeroed(){return coachIs('ductility')||parallelCupChemistryZero()||state.activeEffects.some(effect=>effect.type==='teamChemZero')}
+function chemistryIsZeroed(){const shield=typeof cellCyborgActive==='function'&&cellCyborgActive();return coachIs('ductility')||(!shield&&(parallelCupChemistryZero()||state.activeEffects.some(effect=>effect.type==='teamChemZero')))}
 function effectiveChemistryFromBase(player,baseChem=0){
- if(coachIs('ductility')||state.activeEffects.some(effect=>effect.type==='baseOvrOnly'))return 0;
- if(chemistryIsZeroed()||closedPortsAffects(player))return 0;
+ const shield=typeof cellCyborgActive==='function'&&cellCyborgActive();
+ if(coachIs('ductility')||(!shield&&state.activeEffects.some(effect=>effect.type==='baseOvrOnly')))return 0;
+ if(chemistryIsZeroed()||(!shield&&closedPortsAffects(player)))return 0;
  const raw=(Number(baseChem)||0)+activeChemistryEventBonus(player);
  const multiplier=activeChemistryMultiplier(player);
  return raw>0?raw*multiplier:raw;
@@ -75,6 +79,7 @@ function motivatorBonusScope(type){
  return scopes[String(type||'')]||null;
 }
 function pushEffect(type,value,rounds,extra={}){
+ if(typeof cyborgBlocksTeamEffect==='function'&&cyborgBlocksTeamEffect(type,value))return false;
  const scope=motivatorBonusScope(type),ovrTypes=new Set(['teamOvr','playerOvr','subscriberOvr','goalkeeperOvr']),sponsorExtra=ovrTypes.has(String(type))?sponsorOvrExtraFor(value,extra):0,sponsoredValue=Number(value)+sponsorExtra,enhance=coachIs('motivator')&&!(typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled())&&!extra?.motivatorExtra&&scope&&sponsoredValue>0;
  const adjusted=enhance&&scope.kind!=='multiplier'?sponsoredValue+2:sponsoredValue,untilSeasonEnd=Boolean(extra?.untilSeasonEnd),duration=Math.max(1,Number(rounds)||(untilSeasonEnd?remainingSeasonMatches():1));
  state.activeEffects.push({type,value:adjusted,rounds:duration,...extra,untilSeasonEnd,sponsorExtra});

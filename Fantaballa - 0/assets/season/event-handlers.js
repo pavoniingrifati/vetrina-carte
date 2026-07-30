@@ -259,6 +259,80 @@ function activateFgciDirectMatchRule(mode){
  return 'Tempo effettivo attivo fino a fine stagione: ogni partita dura 90 minuti effettivi, senza recupero, con un aumento drastico di infortuni ed espulsioni.';
 }
 
+
+function nameccEventAvailable(){
+ return !String(state.seasonRules?.nameccOpponentRule||'');
+}
+function nameccRandomOvr(){return 50+Math.floor(Math.random()*151)}
+function nameccOpponentRuleOvr(team){
+ const rule=String(state.seasonRules?.nameccOpponentRule||'');
+ if(!rule||!team||String(team.id||'')===String(USER_ID))return null;
+ if(rule==='cahill')return 90;
+ if(rule!=='gimenez')return null;
+ state.seasonRules.nameccOpponentOvrs=state.seasonRules.nameccOpponentOvrs&&typeof state.seasonRules.nameccOpponentOvrs==='object'?state.seasonRules.nameccOpponentOvrs:{};
+ const id=String(team.id||'');let value=Number(state.seasonRules.nameccOpponentOvrs[id]);
+ if(!Number.isFinite(value)||value<50||value>200){value=nameccRandomOvr();state.seasonRules.nameccOpponentOvrs[id]=value}
+ team.strength=value;return value;
+}
+function activateNameccOpponentRule(mode){
+ const normalized=mode==='cahill'?'cahill':'gimenez';
+ state.seasonRules.nameccOpponentRule=normalized;state.seasonRules.nameccOpponentOvrs={};
+ const assigned=[];(state.teams||[]).forEach(team=>{if(!team||String(team.id||'')===String(USER_ID))return;const value=normalized==='cahill'?90:nameccRandomOvr();if(normalized==='gimenez')state.seasonRules.nameccOpponentOvrs[String(team.id)]=value;team.strength=value;assigned.push(value)});
+ return normalized==='cahill'
+  ? `Cahill è attivo: tutte le ${assigned.length} squadre avversarie vengono fissate a 90 OVR fino a fine stagione.`
+  : `Squadra Gimenez è attiva: le ${assigned.length} squadre avversarie ricevono un OVR casuale fisso tra 50 e 200 fino a fine stagione.`;
+}
+function cellEventAvailable(){return !String(state.seasonRules?.cellRule||'')}
+function cellPerfectActive(){return String(state.seasonRules?.cellRule||'')==='perfect'}
+function cellCyborgActive(){return String(state.seasonRules?.cellRule||'')==='cyborg'&&Boolean(state.seasonRules?.cyborgMalusShield)}
+function cyborgBlockedEffectType(type,value){
+ const key=String(type||''),number=Number(value);
+ if(['teamChemZero','baseOvrOnly'].includes(key))return true;
+ if(['teamChemMultiplier','subscriberChemMultiplier','playerChemMultiplier'].includes(key))return Number.isFinite(number)&&number<1;
+ if(['teamOvr','playerOvr','subscriberOvr','goalkeeperOvr','teamChem','subscriberChem','playerChem'].includes(key))return Number.isFinite(number)&&number<0;
+ return false;
+}
+function recordCyborgBlockedMalus(){
+ if(!cellCyborgActive())return 0;
+ const next=Math.max(0,(Number(state.seasonRules.cyborgBlockedMalusCount)||0)+1);state.seasonRules.cyborgBlockedMalusCount=next;return next;
+}
+function cyborgBlocksTeamEffect(type,value){
+ const blocked=cellCyborgActive()&&cyborgBlockedEffectType(type,value);if(blocked)recordCyborgBlockedMalus();return blocked;
+}
+function cyborgOvrFloorMap(){
+ state.seasonRules.cyborgOvrFloorByPlayer=state.seasonRules.cyborgOvrFloorByPlayer&&typeof state.seasonRules.cyborgOvrFloorByPlayer==='object'?state.seasonRules.cyborgOvrFloorByPlayer:{};
+ return state.seasonRules.cyborgOvrFloorByPlayer;
+}
+function cyborgRestoreProtectedRoster(){
+ if(!cellCyborgActive())return[];
+ const floors=cyborgOvrFloorMap(),restored=[];
+ (state.draft?.roster||[]).forEach(entry=>{const player=entry?.player||playerById(entry?.playerId);if(!player)return;const id=String(entry.playerId||player.id||''),current=Number(player.ovr)||60,known=Number(floors[id]);if(!Number.isFinite(known)){floors[id]=current;return}if(current<known){entry.player={...player,ovr:known};restored.push({playerId:id,name:String(player.name||'Giocatore'),from:current,to:known});recordCyborgBlockedMalus()}else if(current>known)floors[id]=current;});
+ return restored;
+}
+function activateCellPerfect(){
+ state.seasonRules.cellRule='perfect';state.seasonRules.cyborgMalusShield=false;state.seasonRules.cyborgOvrFloorByPlayer={};
+ return 'Essere perfetto è attivo fino a fine stagione: ogni vittoria assegna esattamente +1 OVR permanente a tutta la rosa; ogni sconfitta porta tutti esattamente a 60 OVR. I pareggi non modificano la squadra.';
+}
+function activateCellCyborg(){
+ state.seasonRules.cellRule='cyborg';state.seasonRules.cyborgMalusShield=true;state.seasonRules.cyborgBlockedMalusCount=0;state.seasonRules.cyborgOvrFloorByPlayer={};
+ cyborgRestoreProtectedRoster();const before=Array.isArray(state.activeEffects)?state.activeEffects.length:0;
+ state.activeEffects=(state.activeEffects||[]).filter(effect=>!cyborgBlockedEffectType(effect?.type,effect?.value));const removed=Math.max(0,before-state.activeEffects.length);
+ return `Cyborg è attivo fino a fine stagione: tutti i malus di OVR e Intesa sulla tua squadra vengono bloccati. ${removed?`${removed} malus già attivi sono stati neutralizzati.`:'I bonus positivi restano attivi normalmente.'}`;
+}
+function cellSetRosterOvr(mode){
+ const changes=[];(state.draft?.roster||[]).forEach(entry=>{const player=entry?.player||playerById(entry?.playerId);if(!player)return;const before=Number(player.ovr)||60,after=mode==='reset'?60:before+1;entry.player={...player,ovr:after};const generated=(state.seasonRules.generatedEventPlayers||[]).find(item=>String(item.id)===String(entry.playerId||player.id||''));if(generated)generated.ovr=after;changes.push({playerId:String(entry.playerId||player.id||''),name:String(player.name||'Giocatore'),before,after})});
+ if(typeof refreshOpponentClubRosters==='function')refreshOpponentClubRosters();return changes;
+}
+function applyCellPerfectAfterMatch(result){
+ if(!cellPerfectActive()||!result||result.matchNotPlayed)return null;
+ const winnerId=String(result.winnerId||''),won=winnerId===String(USER_ID),lost=Boolean(winnerId)&&winnerId!==String(USER_ID);
+ if(!won&&!lost)return null;
+ const changes=cellSetRosterOvr(won?'boost':'reset'),message=won
+  ? `Essere perfetto: vittoria ottenuta, tutti i ${changes.length} giocatori guadagnano +1 OVR permanente.`
+  : `Essere perfetto: sconfitta subita, tutti i ${changes.length} giocatori vengono portati a 60 OVR.`;
+ result.cellPerfectOutcome={type:won?'victory-boost':'defeat-reset',changes,message};result.eventUpdates=Array.isArray(result.eventUpdates)?result.eventUpdates:[];result.eventUpdates.push({success:won,title:'Arriva Cell sulla Terra!',message});return result.cellPerfectOutcome;
+}
+
 const SEASON_EVENT_HANDLERS=Object.freeze({
  autoApply:Object.freeze({
 "auto-1":function(){const r=pick(getStarterEntries());if(r){setOwnPlayerInjury(r,2);return `${r.player.name} è infortunato per 2 giornate.${state.seasonRules.futureInjuryZeroPoints?' Punti azzerati dalla regola del futuro.':''}`}return 'Nessun titolare disponibile.'},
@@ -334,7 +408,9 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "nuovo-regolamento-fgci-riposo":function(){return !state.seasonRules.fgciLeaderRestRule&&!state.seasonRules.fgciLastPointsApplied},
 "my-hero-academia-visita":function(){return myHeroAcademiaEventAvailable()},
 "nuovo-regolamento-fgci-rigori-tempo":function(){return !state.seasonRules.fgciDirectMatchRule},
-"arriva-la-wwe":function(){return wweEventAvailable()}
+"arriva-la-wwe":function(){return wweEventAvailable()},
+"campionato-a-namecc":function(){return nameccEventAvailable()},
+"arriva-cell-sulla-terra":function(){return cellEventAvailable()}
  }),
  title:Object.freeze({
 "omonimo-allenatore":function(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`},
@@ -581,7 +657,11 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "nuovo-regolamento-fgci-rigori-tempo:0":function(){return activateFgciDirectMatchRule('penalty-lottery')},
 "nuovo-regolamento-fgci-rigori-tempo:1":function(){return activateFgciDirectMatchRule('effective-time')},
 "arriva-la-wwe:0":function(){return activateWweWatchOut()},
-"arriva-la-wwe:1":function(){return activateWweRoyalRumble()}
+"arriva-la-wwe:1":function(){return activateWweRoyalRumble()},
+"campionato-a-namecc:0":function(){return activateNameccOpponentRule('gimenez')},
+"campionato-a-namecc:1":function(){return activateNameccOpponentRule('cahill')},
+"arriva-cell-sulla-terra:0":function(){return activateCellPerfect()},
+"arriva-cell-sulla-terra:1":function(){return activateCellCyborg()}
  })
 });
 const SEASON_EVENT_HANDLER_IDS=Object.freeze({

@@ -60,7 +60,7 @@ function buildDecisionFromData(item){
 async function loadSeasonEventCatalog(){
  const mode=SEASON_CONFIG.mode==='real'?'real':'community';
  const commonBase=SEASON_CONFIG.events?.commonCatalog||'data/events/events-common.json';
- const commonPath=`${commonBase}${String(commonBase).includes('?')?'&':'?'}v=20260730-figc-negative1`;
+ const commonPath=`${commonBase}${String(commonBase).includes('?')?'&':'?'}v=20260730-namecc-cell1`;
  const modePath=SEASON_CONFIG.events?.modeCatalog||`data/events/events-${mode}.json`;
  const catalogs=await Promise.all([fetchJsonResource(commonPath,commonPath),fetchJsonResource(modePath,modePath)]);
  const report=validateSeasonEventCatalog(catalogs);SEASON_EVENT_CATALOG_REPORT=report;
@@ -82,11 +82,13 @@ function applyDecisionChoice(decisionIndex,choiceIndex,context={},decisionId='')
  const choice=decision?.choices?.[choiceIndex];
  if(!choice)return 'Scelta non disponibile.';
  const detail=choice.apply(context||{});
+ const cyborgRestored=typeof cyborgRestoreProtectedRoster==='function'?cyborgRestoreProtectedRoster():[];
  if(String(decision?.id||'')==='generale-misterioso'){
   setAchievementCareerFlag('generalEventMatchday',Number(state.matchday)||0);
   setAchievementCareerFlag('generalWinStreak',0);
  }
- return `Scelta: ${choice.label}. ${detail||choice.effect}`;
+ const cyborgNote=cyborgRestored.length?` Cyborg neutralizza il malus e ripristina l’OVR di ${cyborgRestored.length} ${cyborgRestored.length===1?'giocatore':'giocatori'}.`:'';
+ return `Scelta: ${choice.label}. ${detail||choice.effect}${cyborgNote}`;
 }
 function prepareEvent(){
  if(state.phase!=='season'||state.pendingEvent)return;

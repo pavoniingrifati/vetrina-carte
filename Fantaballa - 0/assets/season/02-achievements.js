@@ -172,6 +172,8 @@ function checkPostMatchAchievements({gf=0,ga=0,userGoals=[],opponentGoals=[],var
  const finalOvrRows=Array.isArray(lineupFinalOvrs)?lineupFinalOvrs:[];
  const matchAverageOvr=finalOvrRows.length?finalOvrRows.reduce((sum,row)=>sum+(Number(row?.finalOvr)||0),0)/finalOvrRows.length:0;
  checkTeamOverallAchievements(matchAverageOvr);
+ const currentZeroZeroCount=(Array.isArray(state.history)?state.history:[]).filter(match=>Number(match?.gf)===0&&Number(match?.ga)===0).length;
+ if(currentZeroZeroCount>=10)unlockAchievement('vietato-segnare',{zeroZeroCount:currentZeroZeroCount});
  if(finalOvrRows.some(row=>Number(row?.finalOvr)>=100)||achievementLineupReachedHundred(lineup))unlockAchievement('centenario');
  if(sponsorBallariniActive()&&(finalOvrRows.some(row=>Number(row?.ballariniContribution)>0&&Number(row?.finalOvr)>=100&&Number(row?.finalOvr)-Number(row?.ballariniContribution)<100)||achievementBallariniMadeHundred(lineup)))unlockAchievement('qualita-ballarini');
  if(sponsorFootballManagerActive()&&won){state.seasonRules.fmTacticianWins=Math.max(0,(Number(state.seasonRules.fmTacticianWins)||0)+1);if(state.seasonRules.fmTacticianWins>=10)unlockAchievement('database-umano')}
@@ -217,6 +219,16 @@ function checkPostMatchAchievements({gf=0,ga=0,userGoals=[],opponentGoals=[],var
   if(rank>0&&rank<=2){unlockAchievement('da-zero-alla-gloria');clearAchievementCareerFlag('parityReset')}
  }
 }
+function trackLastPlaceFromMatchday10(){
+ const completedMatchday=Math.max(0,Number(state?.matchday)||0);
+ if(completedMatchday<10)return false;
+ const table=sortedTable(),userRank=table.findIndex(row=>String(row?.id)===String(USER_ID))+1;
+ if(userRank>0&&userRank===table.length){
+  if(!getAchievementCareerFlag('wasLastFromMatchday10'))setAchievementCareerFlag('wasLastFromMatchday10',{matchday:completedMatchday});
+  return true;
+ }
+ return false;
+}
 function achievementLongestWinStreak(matches=[]){
  let current=0,best=0;
  (Array.isArray(matches)?matches:[]).forEach(match=>{if(Number(match?.gf)>Number(match?.ga)){current++;best=Math.max(best,current)}else current=0});
@@ -240,9 +252,20 @@ function checkSeasonAchievements(rank,eliminated=false){
  if(wonTitle&&Number(standing?.w)===0)unlockAchievement('zero-vittorie-un-titolo');
  if(cupWon&&!wonTitle)unlockAchievement('coppa-di-consolazione');
  if(matches.length&&matches.every(match=>Number(match.gf)>=Number(match.ga)))unlockAchievement('invincibili');
+ const zeroZeroCount=matches.filter(match=>Number(match?.gf)===0&&Number(match?.ga)===0).length;
+ if(Number(standing?.d)>=15)unlockAchievement('pareggite-acuta');
+ if(zeroZeroCount>=10)unlockAchievement('vietato-segnare',{zeroZeroCount});
+ if(matches.length&&Number(standing?.ga)<10)unlockAchievement('difesa-illegale');
  if(Number(standing?.gf)>=100)unlockAchievement('attacco-atomico');
- if(wonTitle&&runnerUp&&Number(standing?.pts)-Number(runnerUp?.pts)<=1)unlockAchievement('fotofinish');
- if(wonTitle&&runnerUp&&Number(standing?.pts)-Number(runnerUp?.pts)>=10)unlockAchievement('dominio-totale');
+ const pointsGap=runnerUp?Number(standing?.pts)-Number(runnerUp?.pts):0;
+ const userGoalDifference=Number(standing?.gf)-Number(standing?.ga),runnerGoalDifference=runnerUp?Number(runnerUp?.gf)-Number(runnerUp?.ga):0;
+ const wonOnGoalDifference=Boolean(wonTitle&&runnerUp&&pointsGap===0&&userGoalDifference>runnerGoalDifference);
+ if(wonTitle&&runnerUp&&pointsGap<=1)unlockAchievement('fotofinish');
+ if(wonTitle&&runnerUp&&(pointsGap===1||wonOnGoalDifference))unlockAchievement('per-un-soffio',{pointsGap,userGoalDifference,runnerGoalDifference});
+ if(wonTitle&&runnerUp&&pointsGap>=10)unlockAchievement('dominio-totale');
+ if(wonTitle&&runnerUp&&pointsGap>=20)unlockAchievement('dominio-assoluto',{pointsGap});
+ if(wonTitle&&Number(standing?.pts)<60)unlockAchievement('campione-al-risparmio');
+ if(wonTitle&&getAchievementCareerFlag('wasLastFromMatchday10'))unlockAchievement('rimonta-del-secolo',getAchievementCareerFlag('wasLastFromMatchday10')||{});
  if(wonTitle&&Number(standing?.l)===0)unlockAchievement('campione-imbattuto');
  if(otherStandings.length&&otherStandings.every(row=>Number(standing?.gf)>Number(row?.gf)))unlockAchievement('miglior-attacco');
  if(otherStandings.length&&otherStandings.every(row=>Number(standing?.ga)<Number(row?.ga)))unlockAchievement('miglior-difesa');

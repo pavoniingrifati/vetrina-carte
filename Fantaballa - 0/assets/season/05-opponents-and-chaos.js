@@ -291,6 +291,8 @@ function runChaosOpponentMidseason(){
 
 function opponentMatchPower(team){
  if(!team||team.id===USER_ID)return matchPower();
+ const nameccOverride=typeof nameccOpponentRuleOvr==='function'?nameccOpponentRuleOvr(team):null;
+ if(nameccOverride!==null&&nameccOverride!==undefined&&Number.isFinite(Number(nameccOverride)))return Number(nameccOverride);
  const lineup=teamMatchLineup(team),target=Math.max(1,activeAiMatchSlots(team).length);
  const values=lineup.map(entry=>isEmergencyYouthEntry(entry)?50:(Number(entry?.player?.ovr)||50));
  while(values.length<target)values.push(50);
