@@ -59,7 +59,8 @@ function buildDecisionFromData(item){
 }
 async function loadSeasonEventCatalog(){
  const mode=SEASON_CONFIG.mode==='real'?'real':'community';
- const commonPath=SEASON_CONFIG.events?.commonCatalog||'data/events/events-common.json';
+ const commonBase=SEASON_CONFIG.events?.commonCatalog||'data/events/events-common.json';
+ const commonPath=`${commonBase}${String(commonBase).includes('?')?'&':'?'}v=20260730-wwe1`;
  const modePath=SEASON_CONFIG.events?.modeCatalog||`data/events/events-${mode}.json`;
  const catalogs=await Promise.all([fetchJsonResource(commonPath,commonPath),fetchJsonResource(modePath,modePath)]);
  const report=validateSeasonEventCatalog(catalogs);SEASON_EVENT_CATALOG_REPORT=report;

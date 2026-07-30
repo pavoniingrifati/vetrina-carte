@@ -224,6 +224,28 @@ function consumeSeasonPortalTransfer(){
  return next;
 }
 
+function wweEventAvailable(){
+ return !state.seasonRules.wweRule&&Number(state.matchday||0)<seasonLength();
+}
+function activateWweWatchOut(){
+ state.seasonRules.wweRule='watch-out';
+ state.seasonRules.royalRumble=null;
+ return 'Watch out! è attivo fino a fine stagione: i gol normali non contano. Ogni infortunio o espulsione ricevuti da una squadra durante la partita valgono un gol per quella stessa squadra.';
+}
+function royalRumbleState(source=state){
+ const rules=source?.seasonRules||(source.seasonRules={});
+ if(!rules.royalRumble||typeof rules.royalRumble!=='object')rules.royalRumble={};
+ return rules.royalRumble;
+}
+function activateWweRoyalRumble(){
+ const opponents=shuffle((state.teams||[]).filter(team=>String(team?.id||'')!==String(USER_ID)&&!isTeamEliminated(team?.id)).map(team=>String(team.id)));
+ const currentPoints=Math.max(0,Number(userStanding()?.pts)||0),startDay=Math.max(0,Number(state.matchday)||0);
+ state.seasonRules.wweRule='royal-rumble';
+ state.seasonRules.royalRumble={active:true,completed:false,champion:false,eliminated:false,queue:opponents,index:0,results:[],startingPoints:currentPoints,startingMatchday:startDay,singleMatchday:Math.min(seasonLength(),startDay+1),activatedAt:Date.now()};
+ state.phase='royal-rumble';
+ return `Royal Rumble attiva: ${opponents.length} avversarie da affrontare nella stessa giornata. I tuoi ${currentPoints} punti resteranno invariati; alla prima sconfitta sei eliminato.`;
+}
+
 function activateFgciDirectMatchRule(mode){
  const normalized=mode==='effective-time'?'effective-time':'penalty-lottery';
  state.seasonRules.fgciDirectMatchRule=normalized;
@@ -311,7 +333,8 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "essere-misterioso-con-corna":function(){return hornedEntityEventAvailable()},
 "nuovo-regolamento-fgci-riposo":function(){return !state.seasonRules.fgciLeaderRestRule&&!state.seasonRules.fgciLastPointsApplied},
 "my-hero-academia-visita":function(){return myHeroAcademiaEventAvailable()},
-"nuovo-regolamento-fgci-rigori-tempo":function(){return !state.seasonRules.fgciDirectMatchRule}
+"nuovo-regolamento-fgci-rigori-tempo":function(){return !state.seasonRules.fgciDirectMatchRule},
+"arriva-la-wwe":function(){return wweEventAvailable()}
  }),
  title:Object.freeze({
 "omonimo-allenatore":function(){return `Ti si avvicina un tipo di nome ${String(state.coachName||'misterioso')}`},
@@ -556,7 +579,9 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "my-hero-academia-visita:0":function(){return activateHeroAcademiaFourOneRule()},
 "my-hero-academia-visita:1":function(){return openHeroAcademiaPortal()},
 "nuovo-regolamento-fgci-rigori-tempo:0":function(){return activateFgciDirectMatchRule('penalty-lottery')},
-"nuovo-regolamento-fgci-rigori-tempo:1":function(){return activateFgciDirectMatchRule('effective-time')}
+"nuovo-regolamento-fgci-rigori-tempo:1":function(){return activateFgciDirectMatchRule('effective-time')},
+"arriva-la-wwe:0":function(){return activateWweWatchOut()},
+"arriva-la-wwe:1":function(){return activateWweRoyalRumble()}
  })
 });
 const SEASON_EVENT_HANDLER_IDS=Object.freeze({

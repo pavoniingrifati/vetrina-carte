@@ -186,7 +186,7 @@ function activateFigcCompetitionRule(rule='formula-one'){
 }
 function figcCompetitionRuleLabel(rule=state.seasonRules?.figcCompetitionRule){return rule==='formula-one'?'Formato Formula 1':rule==='no-draw'?'Niente pareggio':''}
 function formulaOneRuleActive(){return String(state.seasonRules?.figcCompetitionRule)==='formula-one'}
-function noDrawRuleActive(){return String(state.seasonRules?.figcCompetitionRule)==='no-draw'}
+function noDrawRuleActive(){return !(typeof wweWatchOutActive==='function'&&wweWatchOutActive())&&String(state.seasonRules?.figcCompetitionRule)==='no-draw'}
 
 function fgicLeagueRuleActive(rule=''){const current=String(state.seasonRules?.fgicLeagueRule||'');return rule?current===String(rule):Boolean(current)}
 function bottomHelpRuleActive(){return fgicLeagueRuleActive('bottom-help')}
