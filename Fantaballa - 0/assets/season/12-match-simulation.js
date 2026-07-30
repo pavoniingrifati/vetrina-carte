@@ -519,7 +519,23 @@ function simulateSoulSecondLeg({userHome,userPower,opponentPower,lineup,opponent
  return{gf,ga,won:gf>ga,varOutcome};
 }
 function advanceSeasonAfterCompletedMatchday(){
- advanceSeasonAfterCompletedMatchday();
+ state.matchday++;
+ if(typeof trackLastPlaceFromMatchday10==='function')trackLastPlaceFromMatchday10();
+ state.pendingEvent=null;
+ if(state.matchday===19){
+  runChaosOpponentMidseason();
+  if(coachIs('three-five-two')||playerAcquisitionBlocked()){
+   state.midseason={...state.midseason,step:0,target:0,outgoingId:'',mandatoryOutgoingId:'',mandatoryOutgoingIds:[],clubId:'',nation:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:true,auto:false,autoCompleted:true,changes:[]};
+   resolveFantaballopoliMidseason();
+   if(isTeamEliminated(USER_ID)||state.matchday>=seasonLength())advanceAfterRegularSeason();
+   else if(!curvaContestState().pendingTeamId)prepareEvent();
+  }else{
+   const target=midseasonTarget(),auto=Boolean(state.seasonRules.autoMidseason||state.seasonRules.botMidseason),mandatoryIds=mandatoryMidseasonPlayerIds().filter(id=>rosterEntry(id)).slice(0,3),mandatory=mandatoryIds[0]||'';
+   state.midseason={step:0,target:clamp(Math.max(target,mandatoryIds.length),1,3),outgoingId:mandatory,mandatoryOutgoingId:mandatory,mandatoryOutgoingIds:mandatoryIds,clubId:'',nation:'',candidates:[],pendingCandidateId:'',drawsUsed:0,completed:false,auto,autoCompleted:false,changes:[]};
+   state.phase='midseason';
+  }
+ }else if(isTeamEliminated(USER_ID)||state.matchday>=seasonLength())advanceAfterRegularSeason();
+ else if(!curvaContestState().pendingTeamId)prepareEvent();
 }
 function playFgciLeaderRestRound(mode,fixture,leaderId){
  const roundResults=[];
