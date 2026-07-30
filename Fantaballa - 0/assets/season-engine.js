@@ -172,6 +172,16 @@ function achievementBallariniContribution(entry){
 function achievementBallariniMadeHundred(lineup=[]){
  const rows=(Array.isArray(lineup)?lineup:[]).filter(entry=>entry&&entry.player);return rows.some(entry=>{const contribution=achievementBallariniContribution(entry),final=Number(resolvedPlayerFinalOvr(entry,rows))||0;return contribution>0&&final>=100&&final-contribution<100});
 }
+function achievementTeamAverageOvr(override=0){
+ const live=typeof teamPowerBase==='function'?Number(teamPowerBase())||0:0,forced=Number(override)||0;
+ return Math.max(0,live,forced);
+}
+function checkTeamOverallAchievements(override=0){
+ const average=achievementTeamAverageOvr(override);
+ if(average>=120)unlockAchievement('io-sono-fortissimo',{teamAverageOvr:Math.round(average*10)/10});
+ if(average>=140)unlockAchievement('aura-strabiliaaante',{teamAverageOvr:Math.round(average*10)/10});
+ return average;
+}
 function checkPostMatchAchievements({gf=0,ga=0,userGoals=[],opponentGoals=[],varRandomResult=false,ductilityBoosts=[],lineup=[],lineupFinalOvrs=[],matchDuration=90}={}){
  ensureAchievementInitialRoster();
  const scored=Number(gf)||0,conceded=Number(ga)||0,won=scored>conceded,draw=scored===conceded,result=state.lastResult||{};
@@ -188,6 +198,8 @@ function checkPostMatchAchievements({gf=0,ga=0,userGoals=[],opponentGoals=[],var
  if(won&&achievementLineupHasOutOfRole(lineup))unlockAchievement('ma-e-del-mestiere');
  if(won&&achievementLineupHasEmergencyGoalkeeper(lineup))unlockAchievement('senza-portiere');
  const finalOvrRows=Array.isArray(lineupFinalOvrs)?lineupFinalOvrs:[];
+ const matchAverageOvr=finalOvrRows.length?finalOvrRows.reduce((sum,row)=>sum+(Number(row?.finalOvr)||0),0)/finalOvrRows.length:0;
+ checkTeamOverallAchievements(matchAverageOvr);
  if(finalOvrRows.some(row=>Number(row?.finalOvr)>=100)||achievementLineupReachedHundred(lineup))unlockAchievement('centenario');
  if(sponsorBallariniActive()&&(finalOvrRows.some(row=>Number(row?.ballariniContribution)>0&&Number(row?.finalOvr)>=100&&Number(row?.finalOvr)-Number(row?.ballariniContribution)<100)||achievementBallariniMadeHundred(lineup)))unlockAchievement('qualita-ballarini');
  if(sponsorFootballManagerActive()&&won){state.seasonRules.fmTacticianWins=Math.max(0,(Number(state.seasonRules.fmTacticianWins)||0)+1);if(state.seasonRules.fmTacticianWins>=10)unlockAchievement('database-umano')}
@@ -244,6 +256,8 @@ function rememberFinalDayLeaderForAchievements(){
  setAchievementCareerFlag('finalDaySnapshot',{matchday:Number(state.matchday)+1,userRank,leaderId:String(leader?.id||''),leaderName:String(leader?.name||''),leaderPoints:Number(leader?.pts)||0,userPoints:Number(standing?.pts)||0});
 }
 function checkSeasonAchievements(rank,eliminated=false){
+ const finalTeamOvr=checkTeamOverallAchievements(),initialTeamOvr=Math.max(0,Number(state?.analytics?.initialOvr)||0);
+ if(initialTeamOvr>0&&finalTeamOvr-initialTeamOvr>=10)unlockAchievement('limite-super-sayan',{initialTeamOvr:Math.round(initialTeamOvr*10)/10,finalTeamOvr:Math.round(finalTeamOvr*10)/10});
  if(eliminated||Number(rank)<=0)return;
  const table=sortedTable(),allStandings=Object.values(state.standings||{}),standing=userStanding(),matches=Array.isArray(state.history)?state.history:[],cupWon=parallelCupState().winnerId===parallelCupUserId();
  const wonTitle=Number(rank)===1,runnerUp=table.find(row=>String(row.id)!==String(USER_ID)),otherStandings=allStandings.filter(row=>String(row?.id)!==String(USER_ID));

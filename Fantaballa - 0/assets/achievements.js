@@ -58,6 +58,9 @@
     { id:'difesa-acciaio', category:'Stagionali', icon:'🔩', title:'Difesa d’acciaio', description:'Subisci meno di 20 gol in una stagione.' },
     { id:'campione-al-minimo', category:'Stagionali', icon:'🪙', title:'Campione al minimo', description:'Vinci il campionato con al massimo 50 punti.' },
     { id:'attacco-col-contagocce', category:'Stagionali', icon:'💧', title:'Attacco col contagocce', description:'Vinci il campionato segnando al massimo 38 gol.' },
+    { id:'io-sono-fortissimo', category:'Stagionali', icon:'💪', title:'Io sono Fortissimo!', description:'Raggiungi un OVR medio della squadra di almeno 120.' },
+    { id:'aura-strabiliaaante', category:'Stagionali', icon:'✨', title:'Ha un’aura strabiliaaante!', description:'Raggiungi un OVR medio della squadra di almeno 140.' },
+    { id:'limite-super-sayan', category:'Stagionali', icon:'🔥', title:'Il limite del super sayan', description:'Aumenta l’OVR medio della squadra di almeno 10 punti tra l’inizio e la fine della stagione.' },
 
     { id:'giovani-promesse', category:'Allenatori', icon:'✨', title:'Giovani promesse', description:'Vinci il campionato con “Giovani e belli”.' },
     { id:'fuori-dagli-schemi', category:'Allenatori', icon:'🔀', title:'Fuori dagli schemi', description:'Segna 10 gol con giocatori schierati fuori ruolo usando “Duttilità”.', target:10 },
