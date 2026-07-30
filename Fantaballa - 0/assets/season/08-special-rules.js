@@ -246,19 +246,48 @@ function advanceAfterRegularSeason(){
  }
  finishAfterLeaguePlayoffs();
 }
+function playoffStageResultRow(result,index=0){
+ return `<div class="playoff-stage-row is-revealed" style="--playoff-row-delay:${Math.max(0,index)*90}ms"><div class="playoff-stage-score"><span>${result.homeSeed}ª ${esc(result.homeName)}</span><strong>${Number(result.homeGoals)}–${Number(result.awayGoals)}</strong><span>${esc(result.awayName)} ${result.awaySeed}ª</span></div><small>${result.penalties?`Rigori: ${Number(result.penalties.home)}–${Number(result.penalties.away)}.`:result.extraTime?'Decisa dopo i tempi supplementari.':'Partita decisa nei tempi regolamentari.'}</small></div>`;
+}
+function playoffStageLiveRow(tie,index=0){
+ const home=teamById(tie.homeId),away=teamById(tie.awayId);
+ return `<div class="playoff-stage-row is-live" id="playoffLiveRow"><div class="playoff-stage-score"><span>${tie.homeSeed}ª ${esc(home?.name||'Squadra')}</span><strong><span class="playoff-sim-ball">⚽</span></strong><span>${esc(away?.name||'Squadra')} ${tie.awaySeed}ª</span></div><small>Simulazione della partita ${index+1} in corso…</small><div class="playoff-sim-progress"><i></i></div></div>`;
+}
 function playLeaguePlayoffStage(){
  const p=leaguePlayoffState();if(p.status!=='active'||!p.ties.length)return;
- const stageName=leaguePlayoffStageName(p.stageIndex),results=p.ties.map(simulateLeaguePlayoffTie),winners=results.map(result=>String(result.winnerId));
- p.lastStageResults=results;p.history.push({stageIndex:p.stageIndex,stageName,results});
- const userTie=results.find(result=>[String(result.homeId),String(result.awayId)].includes(String(USER_ID)));if(userTie&&String(userTie.winnerId)!==String(USER_ID))p.userEliminated=true;
- if(p.stageIndex>=2){p.status='completed';p.championId=String(winners[0]||'');p.ties=[];p.stageName='Play off conclusi';}
- else{p.stageIndex++;p.stageName=leaguePlayoffStageName(p.stageIndex);p.ties=buildNextLeaguePlayoffTies(winners)}
- save();
- const rows=`<div class="playoff-stage-rows">${results.map(result=>`<div class="playoff-stage-row"><b>${result.homeSeed}ª ${esc(result.homeName)} ${Number(result.homeGoals)}–${Number(result.awayGoals)} ${esc(result.awayName)} ${result.awaySeed}ª</b><small>${result.penalties?`Rigori: ${Number(result.penalties.home)}–${Number(result.penalties.away)}.`:result.extraTime?'Decisa dopo i tempi supplementari.':'Partita decisa nei tempi regolamentari.'}</small></div>`).join('')}</div>`;
- const completed=p.status==='completed',champion=teamById(p.championId);
- modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded playoff-stage-modal"><div class="label">🏆 ${esc(stageName)}</div><h2>${completed?`${esc(champion?.name||'La squadra vincitrice')} è campione`:'Turno completato'}</h2>${rows}<button id="continueLeaguePlayoffs" class="btn primary">${completed?'Vai al finale di stagione':'Continua i play off'}</button></div></div>`;
- document.getElementById('continueLeaguePlayoffs').onclick=()=>{modalRoot.innerHTML='';if(completed)finishAfterLeaguePlayoffs();save();render()};
+ const stageName=leaguePlayoffStageName(p.stageIndex),ties=p.ties.slice(),results=[];
+ modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal result-modal-expanded playoff-stage-modal playoff-stage-live"><div class="label">🏆 ${esc(stageName)}</div><h2>Simulazione del turno</h2><p class="playoff-stage-intro">Le partite vengono disputate una alla volta. I risultati appariranno al termine di ogni simulazione.</p><div id="playoffStageLiveArea" class="playoff-stage-rows"></div><button class="btn primary" disabled>Simulazione in corso…</button></div></div>`;
+ const area=document.getElementById('playoffStageLiveArea'),button=modalRoot.querySelector('.playoff-stage-modal .btn.primary');
+ let index=0;
+ const simulateNext=()=>{
+   if(index>=ties.length){
+     const winners=results.map(result=>String(result.winnerId));
+     p.lastStageResults=results;p.history.push({stageIndex:p.stageIndex,stageName,results});
+     const userTie=results.find(result=>[String(result.homeId),String(result.awayId)].includes(String(USER_ID)));if(userTie&&String(userTie.winnerId)!==String(USER_ID))p.userEliminated=true;
+     if(p.stageIndex>=2){p.status='completed';p.championId=String(winners[0]||'');p.ties=[];p.stageName='Play off conclusi';}
+     else{p.stageIndex++;p.stageName=leaguePlayoffStageName(p.stageIndex);p.ties=buildNextLeaguePlayoffTies(winners)}
+     save();
+     const completed=p.status==='completed',champion=teamById(p.championId),modal=modalRoot.querySelector('.playoff-stage-modal');
+     modal.classList.remove('playoff-stage-live');
+     modal.querySelector('h2').textContent=completed?`${champion?.name||'La squadra vincitrice'} è campione`:'Turno completato';
+     modal.querySelector('.playoff-stage-intro').textContent=completed?'Il tabellone dei play off scudetto è terminato.':'Tutte le partite del turno sono state simulate.';
+     button.disabled=false;button.textContent=completed?'Vai al finale di stagione':'Continua i play off';
+     button.id='continueLeaguePlayoffs';
+     button.onclick=()=>{modalRoot.innerHTML='';if(completed)finishAfterLeaguePlayoffs();save();render()};
+     return;
+   }
+   const tie=ties[index];
+   area.insertAdjacentHTML('beforeend',playoffStageLiveRow(tie,index));
+   setTimeout(()=>{
+     const result=simulateLeaguePlayoffTie(tie);results.push(result);
+     const live=document.getElementById('playoffLiveRow');if(live)live.outerHTML=playoffStageResultRow(result,index);
+     index++;
+     setTimeout(simulateNext,500);
+   },950);
+ };
+ setTimeout(simulateNext,250);
 }
+
 function renderLeaguePlayoffHistory(){
  const p=leaguePlayoffState();if(!p.history.length)return'';
  return p.history.map(stage=>`<section class="panel"><div class="label">${esc(stage.stageName)}</div>${(stage.results||[]).map(result=>`<div class="goal-line"><b>${result.homeSeed}ª ${esc(result.homeName)}</b> ${Number(result.homeGoals)}–${Number(result.awayGoals)} <b>${esc(result.awayName)} ${result.awaySeed}ª</b>${result.penalties?` · rigori ${Number(result.penalties.home)}–${Number(result.penalties.away)}`:result.extraTime?' · d.t.s.':''}</div>`).join('')}</section>`).join('');
