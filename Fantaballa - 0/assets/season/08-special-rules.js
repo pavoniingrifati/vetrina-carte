@@ -141,7 +141,7 @@ function activateFigcIncidentRule(rule='negative'){
  const normalized=rule==='positive'?'positive':'negative';
  state.seasonRules.figcIncidentRule=normalized;
  return normalized==='negative'
-  ?'Regola negativa attiva: ogni rosso, nuovo infortunio o rigore sbagliato sottrae un gol alla squadra coinvolta, senza scendere sotto zero.'
+  ?'Regola negativa attiva: ogni rosso, nuovo infortunio o rigore sbagliato sottrae un gol alla squadra coinvolta. Il risultato può diventare negativo.'
   :'Regola positiva attiva: ogni giocatore autore di almeno una doppietta assegna un punto aggiuntivo alla propria squadra.';
 }
 function figcIncidentRuleLabel(rule=state.seasonRules?.figcIncidentRule){return rule==='negative'?'Penalità episodi':rule==='positive'?'Premio doppietta':''}
@@ -159,10 +159,10 @@ function figcBraceBonus(events=[]){return figcPositiveBraceRuleActive()?figcBrac
 function figcIncidentCount(incidents={}){return Math.max(0,Number(incidents.redCards)||0)+Math.max(0,Number(incidents.injuries)||0)+Math.max(0,Number(incidents.missedPenalties)||0)}
 function applyFigcNegativeGoalPenalty(score,events,incidents={}){
  const before=Number(score)||0,penalty=figcNegativeIncidentRuleActive()?figcIncidentCount(incidents):0;
- if(!penalty||before<0)return{before,after:before,penalty:0,incidents:{...incidents}};
- const after=Math.max(0,before-penalty),eventScore=scoreGoalEvents(events);
- if(eventScore>after)capGoalEvents(events,after);
- return{before,after,penalty:before-after,rawPenalty:penalty,incidents:{...incidents}};
+ if(!penalty)return{before,after:before,penalty:0,incidents:{...incidents}};
+ const after=before-penalty,eventScore=scoreGoalEvents(events);
+ if(eventScore>Math.max(0,after))capGoalEvents(events,Math.max(0,after));
+ return{before,after,penalty,rawPenalty:penalty,incidents:{...incidents}};
 }
 function applyFigcBraceBonusesToRound(roundResults=[]){
  const details=[];if(!figcPositiveBraceRuleActive())return details;

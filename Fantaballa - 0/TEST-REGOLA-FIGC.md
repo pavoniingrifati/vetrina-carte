@@ -6,7 +6,7 @@ Il file `tools/test-figc-incident-rule.js` verifica:
 
 1. attivazione della scelta Negativo;
 2. sottrazione cumulativa per rosso, infortunio e rigore sbagliato;
-3. limite minimo del risultato a zero;
+3. possibilità che il risultato diventi negativo;
 4. conteggio della doppietta basato sulle marcature effettive;
 5. tripletta considerata come un solo bonus;
 6. bonus applicato alla classifica di entrambe le squadre.

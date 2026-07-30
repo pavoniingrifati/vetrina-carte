@@ -14,9 +14,9 @@ Per ogni episodio realmente registrato dal motore nella partita, la squadra coin
 - nuovo infortunio avvenuto durante la partita;
 - rigore sbagliato.
 
-Le penalità si sommano. Il punteggio non può scendere sotto zero.
+Le penalità si sommano e il punteggio può scendere sotto zero.
 
-Esempio: una squadra vince 3-1, ma riceve un rosso e subisce un nuovo infortunio. Il suo risultato diventa 1-1.
+Esempio: una squadra è sullo 0-1, riceve un rosso e subisce due nuovi infortuni. Il suo risultato diventa -3-1.
 
 La correzione viene applicata prima dell'eventuale regola che impedisce il pareggio, così un risultato diventato pari può andare ai supplementari e ai rigori quando previsto.
 

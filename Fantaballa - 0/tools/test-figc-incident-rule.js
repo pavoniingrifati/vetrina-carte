@@ -21,10 +21,10 @@ function test(name,fn){try{fn();tests.push({name,ok:true})}catch(error){tests.pu
 test('scelta negativa attiva la regola',()=>{
  const text=context.activateFigcIncidentRule('negative');
  assert.equal(context.state.seasonRules.figcIncidentRule,'negative');
- assert(text.includes('sottrae un gol'));
+ assert(text.includes('sottrae un gol'));assert(text.includes('negativo'));
 });
 
-test('rossi, infortuni e rigori sbagliati sottraggono gol senza andare sotto zero',()=>{
+test('rossi, infortuni e rigori sbagliati possono portare il risultato sotto zero',()=>{
  context.state.seasonRules.figcIncidentRule='negative';
  const events=[
   {minute:10,playerId:'p1',player:'Uno',goalValue:1},
@@ -34,7 +34,10 @@ test('rossi, infortuni e rigori sbagliati sottraggono gol senza andare sotto zer
  const out=context.applyFigcNegativeGoalPenalty(3,events,{redCards:1,injuries:1,missedPenalties:1});
  assert.equal(out.after,0);assert.equal(out.penalty,3);assert.equal(context.scoreGoalEvents(events),0);
  const zero=context.applyFigcNegativeGoalPenalty(0,[],{redCards:2,injuries:2,missedPenalties:2});
- assert.equal(zero.after,0);
+ assert.equal(zero.after,-6);assert.equal(zero.penalty,6);
+ const belowEvents=[{minute:12,playerId:'p4',player:'Quattro',goalValue:1}];
+ const below=context.applyFigcNegativeGoalPenalty(1,belowEvents,{redCards:2,injuries:1,missedPenalties:0});
+ assert.equal(below.after,-2);assert.equal(below.penalty,3);assert.equal(context.scoreGoalEvents(belowEvents),0);
 });
 
 test('una doppietta o più vale un punto per giocatore, non per ogni gol oltre il secondo',()=>{
