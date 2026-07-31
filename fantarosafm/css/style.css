@@ -1022,7 +1022,7 @@ footer {
   display: grid;
   place-items: center;
   background: var(--team-color);
-  color: #081008;
+  color: var(--team-secondary-color, #000000);
   clip-path: polygon(27% 0, 40% 9%, 60% 9%, 73% 0, 100% 18%, 88% 37%, 76% 30%, 76% 100%, 24% 100%, 24% 30%, 12% 37%, 0 18%);
   font-family: "Barlow Condensed";
   font-weight: 900;
@@ -3217,5 +3217,366 @@ body {
 
   .team-card-score {
     font-size: 28px;
+  }
+}
+
+/* Fix: nomi squadre leggermente tagliati nella classifica */
+.team-cell-text {
+  padding-right: 14px;
+}
+
+.team-cell strong {
+  display: inline-block;
+  max-width: 100%;
+  line-height: 1.06;
+  padding-right: 0.18em;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* Fix campo formazione: linee corrette e giocatori più grandi */
+.pitch {
+  min-height: 590px;
+  aspect-ratio: 3 / 4;
+  border: 5px solid #2b7a4d;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(255,255,255,.035) 0 12.5%,
+      rgba(255,255,255,0) 12.5% 25%
+    ),
+    linear-gradient(180deg, #2a7a49 0%, #1f6a3e 100%);
+}
+
+.pitch::before {
+  inset: 22px;
+  border: 1.5px solid rgba(255,255,255,.48);
+  background:
+    /* linea di metà campo orizzontale */
+    linear-gradient(rgba(255,255,255,.46), rgba(255,255,255,.46)) center / 100% 1.5px no-repeat,
+    /* cerchio centrale */
+    radial-gradient(circle at center, transparent 0 50px, rgba(255,255,255,.46) 51px 52.5px, transparent 53.5px),
+
+    /* area di rigore superiore */
+    linear-gradient(rgba(255,255,255,.46), rgba(255,255,255,.46)) top center / 50% 1.5px no-repeat,
+    linear-gradient(rgba(255,255,255,.46), rgba(255,255,255,.46)) top left 25% / 1.5px 18% no-repeat,
+    linear-gradient(rgba(255,255,255,.46), rgba(255,255,255,.46)) top right 25% / 1.5px 18% no-repeat,
+
+    /* area piccola superiore */
+    linear-gradient(rgba(255,255,255,.46), rgba(255,255,255,.46)) top center / 22% 1.5px no-repeat,
+    linear-gradient(rgba(255,255,255,.46), rgba(255,255,255,.46)) top left 39% / 1.5px 8% no-repeat,
+    linear-gradient(rgba(255,255,255,.46), rgba(255,255,255,.46)) top right 39% / 1.5px 8% no-repeat,
+
+    /* area di rigore inferiore */
+    linear-gradient(rgba(255,255,255,.46), rgba(255,255,255,.46)) bottom center / 50% 1.5px no-repeat,
+    linear-gradient(rgba(255,255,255,.46), rgba(255,255,255,.46)) bottom left 25% / 1.5px 18% no-repeat,
+    linear-gradient(rgba(255,255,255,.46), rgba(255,255,255,.46)) bottom right 25% / 1.5px 18% no-repeat,
+
+    /* area piccola inferiore */
+    linear-gradient(rgba(255,255,255,.46), rgba(255,255,255,.46)) bottom center / 22% 1.5px no-repeat,
+    linear-gradient(rgba(255,255,255,.46), rgba(255,255,255,.46)) bottom left 39% / 1.5px 8% no-repeat,
+    linear-gradient(rgba(255,255,255,.46), rgba(255,255,255,.46)) bottom right 39% / 1.5px 8% no-repeat;
+}
+
+.pitch::after {
+  content: "";
+  position: absolute;
+  inset: 22px;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.6) 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 12%, rgba(255,255,255,.55) 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 88%, rgba(255,255,255,.55) 0 2px, transparent 3px);
+}
+
+.player-dot {
+  width: 96px;
+}
+
+.player-shirt {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 6px;
+  font-size: 14px;
+}
+
+.player-name {
+  max-width: 96px;
+  padding: 4px 7px;
+  font-size: 10px;
+  line-height: 1.15;
+}
+
+@media (max-width: 900px) {
+  .pitch {
+    min-height: 560px;
+  }
+
+  .player-dot {
+    width: 88px;
+  }
+
+  .player-shirt {
+    width: 40px;
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .player-name {
+    max-width: 88px;
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 600px) {
+  .pitch {
+    min-height: 520px;
+  }
+
+  .pitch::before,
+  .pitch::after {
+    inset: 16px;
+  }
+
+  .player-dot {
+    width: 74px;
+  }
+
+  .player-shirt {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 5px;
+    font-size: 12px;
+  }
+
+  .player-name {
+    max-width: 74px;
+    font-size: 8px;
+    padding: 3px 5px;
+  }
+}
+
+/* Upgrade campo più realistico + nomi giocatori completi */
+.pitch {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.035), transparent 34%),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255,255,255,.05) 0 11%,
+      rgba(255,255,255,0) 11% 22%
+    ),
+    linear-gradient(180deg, #2f8752 0%, #28794a 45%, #216d41 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.05),
+    inset 0 18px 40px rgba(255,255,255,.03),
+    inset 0 -22px 35px rgba(0,0,0,.1);
+}
+
+.pitch::before {
+  border: 2px solid rgba(255,255,255,.52);
+  background:
+    /* linea metà campo */
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)) center / 100% 2px no-repeat,
+    /* cerchio centrale */
+    radial-gradient(circle at center, transparent 0 50px, rgba(255,255,255,.5) 51px 53px, transparent 54px),
+    /* area rigore sopra */
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)) top center / 50% 2px no-repeat,
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)) top 0 left 25% / 2px 18% no-repeat,
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)) top 0 right 25% / 2px 18% no-repeat,
+    /* area piccola sopra */
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)) top center / 22% 2px no-repeat,
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)) top 0 left 39% / 2px 8% no-repeat,
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)) top 0 right 39% / 2px 8% no-repeat,
+    /* area rigore sotto */
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)) bottom center / 50% 2px no-repeat,
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)) bottom 0 left 25% / 2px 18% no-repeat,
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)) bottom 0 right 25% / 2px 18% no-repeat,
+    /* area piccola sotto */
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)) bottom center / 22% 2px no-repeat,
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)) bottom 0 left 39% / 2px 8% no-repeat,
+    linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)) bottom 0 right 39% / 2px 8% no-repeat,
+    /* dischetto metà campo */
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.75) 0 2px, transparent 3px);
+}
+
+.pitch::after {
+  content: "";
+  position: absolute;
+  inset: 22px;
+  pointer-events: none;
+  background:
+    /* dischetti rigore */
+    radial-gradient(circle at 50% 12%, rgba(255,255,255,.75) 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 88%, rgba(255,255,255,.75) 0 2px, transparent 3px),
+    /* archi area di rigore */
+    radial-gradient(circle at 50% 12%, transparent 0 61px, rgba(255,255,255,.42) 62px 64px, transparent 65px),
+    radial-gradient(circle at 50% 88%, transparent 0 61px, rgba(255,255,255,.42) 62px 64px, transparent 65px),
+    /* archi d'angolo */
+    radial-gradient(circle at top left, transparent 0 11px, rgba(255,255,255,.42) 12px 13px, transparent 14px),
+    radial-gradient(circle at top right, transparent 0 11px, rgba(255,255,255,.42) 12px 13px, transparent 14px),
+    radial-gradient(circle at bottom left, transparent 0 11px, rgba(255,255,255,.42) 12px 13px, transparent 14px),
+    radial-gradient(circle at bottom right, transparent 0 11px, rgba(255,255,255,.42) 12px 13px, transparent 14px);
+}
+
+.player-dot {
+  width: 118px;
+}
+
+.player-name {
+  display: block;
+  max-width: 118px;
+  min-width: 76px;
+  margin: 0 auto;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.15;
+  text-wrap: balance;
+  font-size: 10px;
+  padding: 4px 7px;
+  border-radius: 7px;
+  box-shadow: 0 3px 8px rgba(0,0,0,.25);
+}
+
+@media (max-width: 900px) {
+  .player-dot {
+    width: 104px;
+  }
+
+  .player-name {
+    max-width: 104px;
+    min-width: 70px;
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 600px) {
+  .pitch::before,
+  .pitch::after {
+    inset: 16px;
+  }
+
+  .player-dot {
+    width: 84px;
+  }
+
+  .player-name {
+    max-width: 84px;
+    min-width: 64px;
+    font-size: 8px;
+    padding: 3px 5px;
+  }
+}
+
+/* Porte viste dall'alto e ombra morbida sotto le maglie */
+.pitch-goal {
+  width: 23%;
+  height: 20px;
+  position: absolute;
+  left: 50%;
+  z-index: 2;
+  transform: translateX(-50%);
+  border-right: 2px solid rgba(255,255,255,.78);
+  border-left: 2px solid rgba(255,255,255,.78);
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.22) 0 1px, transparent 1px 8px),
+    repeating-linear-gradient(180deg, rgba(255,255,255,.2) 0 1px, transparent 1px 7px),
+    rgba(255,255,255,.025);
+  filter: drop-shadow(0 3px 3px rgba(0,0,0,.28));
+}
+
+.pitch-goal-top {
+  top: 22px;
+  border-top: 2px solid rgba(255,255,255,.78);
+}
+
+.pitch-goal-bottom {
+  bottom: 22px;
+  border-bottom: 2px solid rgba(255,255,255,.78);
+}
+
+.player-dot {
+  z-index: 4;
+}
+
+.player-dot::before {
+  content: "";
+  width: 44px;
+  height: 12px;
+  position: absolute;
+  left: 50%;
+  top: 31px;
+  z-index: -1;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(0,0,0,.25);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.player-shirt {
+  position: relative;
+  z-index: 1;
+  filter:
+    drop-shadow(0 4px 4px rgba(0,0,0,.26))
+    drop-shadow(0 1px 0 rgba(255,255,255,.08));
+}
+
+@media (max-width: 600px) {
+  .pitch-goal {
+    width: 25%;
+    height: 16px;
+  }
+
+  .pitch-goal-top {
+    top: 16px;
+  }
+
+  .pitch-goal-bottom {
+    bottom: 16px;
+  }
+
+  .player-dot::before {
+    width: 38px;
+    height: 10px;
+    top: 27px;
+  }
+}
+
+/* Rimuove i due cerchi completi vicino alle porte */
+.pitch::after {
+  background:
+    radial-gradient(circle at 50% 12%, rgba(255,255,255,.75) 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 88%, rgba(255,255,255,.75) 0 2px, transparent 3px),
+    radial-gradient(circle at top left, transparent 0 11px, rgba(255,255,255,.42) 12px 13px, transparent 14px),
+    radial-gradient(circle at top right, transparent 0 11px, rgba(255,255,255,.42) 12px 13px, transparent 14px),
+    radial-gradient(circle at bottom left, transparent 0 11px, rgba(255,255,255,.42) 12px 13px, transparent 14px),
+    radial-gradient(circle at bottom right, transparent 0 11px, rgba(255,255,255,.42) 12px 13px, transparent 14px);
+}
+
+
+/* Statistiche aggiuntive: Capocannoniere e Coppa Italia */
+.modal-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.modal-stat .stat-yes {
+  color: #5ee28a;
+}
+
+.modal-stat .stat-no {
+  color: #f26b74;
+}
+
+@media (max-width: 900px) {
+  .modal-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 360px) {
+  .modal-stats {
+    grid-template-columns: 1fr;
   }
 }

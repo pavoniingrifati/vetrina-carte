@@ -44,6 +44,14 @@
 
   const numeric = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
+  const isYes = (value) => {
+    if (typeof value === "boolean") return value;
+    const normalized = String(value ?? "").trim().toLowerCase();
+    return ["sì", "si", "true", "1", "yes"].includes(normalized);
+  };
+
+  const yesNo = (value) => isYes(value) ? "Sì" : "No";
+
   const ratingLabel = (rating) => {
     const value = numeric(rating);
     const band = [...RATING_BANDS]
@@ -80,7 +88,7 @@
   };
 
   const crest = (team) => `
-    <span class="team-crest" style="background:${escapeHtml(team.color || "#e30613")}" aria-hidden="true">
+    <span class="team-crest" style="background:${escapeHtml(team.color || "#e30613")};color:${escapeHtml(team.secondaryColor || "#000000")}" aria-hidden="true">
       ${escapeHtml(team.initials || String(team.name || "?").slice(0, 3).toUpperCase())}
     </span>
   `;
@@ -173,7 +181,9 @@
   const renderPitch = (team) => {
     const positions = formationPositions[team.formation] || formationPositions["4-3-3"];
     return `
-      <div class="pitch" style="--team-color:${escapeHtml(team.color || "#e30613")}">
+      <div class="pitch" style="--team-color:${escapeHtml(team.color || "#e30613")};--team-secondary-color:${escapeHtml(team.secondaryColor || "#000000")}">
+        <span class="pitch-goal pitch-goal-top" aria-hidden="true"></span>
+        <span class="pitch-goal pitch-goal-bottom" aria-hidden="true"></span>
         ${(team.starters || []).slice(0, 11).map((player, index) => {
           const [x, y] = positions[index] || [50, 50];
           return `
@@ -216,6 +226,8 @@
               <div class="modal-stat"><span>Punti</span><strong>${numeric(team.points)}</strong></div>
               <div class="modal-stat"><span>Gol fatti</span><strong>${numeric(team.goalsFor)}</strong></div>
               <div class="modal-stat"><span>Gol subiti</span><strong>${numeric(team.goalsAgainst)}</strong></div>
+              <div class="modal-stat"><span>Capocannoniere</span><strong class="${isYes(team.capocannoniere) ? "stat-yes" : "stat-no"}">${yesNo(team.capocannoniere)}</strong></div>
+              <div class="modal-stat"><span>Coppa Italia</span><strong class="${isYes(team.coppaItalia) ? "stat-yes" : "stat-no"}">${yesNo(team.coppaItalia)}</strong></div>
             </div>
           </section>
           <section class="panel">

@@ -26,6 +26,7 @@ Dentro questo file puoi cambiare:
 - nome della competizione
 - fasce delle valutazioni
 - elenco completo delle squadre
+- colore principale e colore secondario di ogni squadra
 
 COME AGGIUNGERE UNA SQUADRA
 1. Apri data/esempio-squadra.json.
@@ -33,6 +34,17 @@ COME AGGIUNGERE UNA SQUADRA
 3. Incollalo dentro l'array "teams" di data/contenuti.json.
 4. Se aggiungi piu squadre, separale con una virgola.
 5. Salva il file rispettando la sintassi JSON.
+
+COLORI DELLA SQUADRA
+Per ogni squadra puoi impostare:
+- "color": colore principale della maglia e degli elementi grafici
+- "secondaryColor": colore dei numeri sulla maglia e delle iniziali nello stemma
+
+Esempio:
+"color": "#e30613",
+"secondaryColor": "#ffffff"
+
+Se "secondaryColor" manca, il sito usa automaticamente il nero (#000000).
 
 PUBBLICAZIONE SU GITHUB
 Carica l'intera cartella fantarosafm nella directory principale del repository.
@@ -52,3 +64,12 @@ STRUTTURA
 AGGIORNAMENTO MOBILE
 Il layout è ottimizzato per smartphone da 320 px in su, tablet e dispositivi touch.
 La classifica mobile non richiede scorrimento orizzontale; menu, pulsanti e schede squadra sono adattati al touch.
+
+NUOVE STATISTICHE MODIFICABILI
+------------------------------
+Per ogni squadra puoi aggiungere o modificare queste due voci in data/contenuti.json:
+
+"capocannoniere": "Sì",
+"coppaItalia": "No"
+
+Sono accettati sia "Sì"/"No" sia true/false. Nel sito vengono mostrate nella scheda della squadra, dentro "Risultato simulazione".
