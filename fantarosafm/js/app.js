@@ -126,7 +126,7 @@
           </div>
         </div>
         <span class="formation-chip">${escapeHtml(team.formation)}</span>
-        <span class="result-chip">${escapeHtml(team.fmResult)}</span>
+        <span class="result-chip">${numeric(team.fmPosition) ? `${numeric(team.fmPosition)}°` : "—"}</span>
         <div class="points-cell"><strong>${numeric(team.points)}</strong><small>punti</small></div>
         <div class="rating-cell">
           <span class="rating-ring" style="--value:${numeric(team.rating)}"><strong>${numeric(team.rating)}</strong></span>
@@ -149,7 +149,7 @@
           <p class="owner">${escapeHtml(team.owner)}</p>
           <div class="team-card-meta">
             <div><span>Modulo</span><strong>${escapeHtml(team.formation)}</strong></div>
-            <div><span>Serie A FM</span><strong>${numeric(team.fmPosition)}°</strong></div>
+            <div><span>Piazzamento</span><strong>${numeric(team.fmPosition) ? `${numeric(team.fmPosition)}°` : "—"}</strong></div>
           </div>
         </div>
         <div class="team-card-footer">
