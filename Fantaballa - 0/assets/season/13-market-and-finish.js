@@ -276,13 +276,129 @@ function completeMarket(id){
 function rankedGoalStats(){return Object.entries(state.stats?.goals||{}).filter(([,goals])=>Number(goals)>0).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0)||String(statPlayerInfo(a[0]).name).localeCompare(String(statPlayerInfo(b[0]).name),'it'))}
 function userTeamGoalStats(){const totals={};(state.history||[]).forEach(match=>(match.goals||[]).forEach(goal=>{const id=String(goal.playerId||'');if(id)totals[id]=(totals[id]||0)+1}));const exact=Object.entries(totals).filter(([,goals])=>Number(goals)>0).sort((a,b)=>Number(b[1])-Number(a[1])||String(statPlayerInfo(a[0]).name).localeCompare(String(statPlayerInfo(b[0]).name),'it'));return exact.length?exact:rankedGoalStats().filter(([id])=>String(statPlayerTeam(id)?.id||'')===USER_ID)}
 function teamTopScorer(){return userTeamGoalStats()[0]||null}
+function seasonFinalTrophies(context={}){
+ const sourceCandidates=[state?.trophies,state?.meta?.trophies,state?.seasonSummary?.trophies].filter(entry=>entry&&typeof entry==='object');
+ const readCount=key=>{
+  for(const source of sourceCandidates){
+   const raw=source?.[key];
+   const value=Number(raw);
+   if(Number.isFinite(value)&&value>0)return Math.max(0,Math.floor(value));
+  }
+  return 0;
+ };
+ const leagueWon=Boolean(context.leagueWon),cupWon=Boolean(context.cupWon),royalChampion=Boolean(context.royalChampion);
+ const trophies=[];
+ if(royalChampion)trophies.push({key:'royal-rumble',count:1,label:'Royal Rumble'});
+ else{
+  const scudettoCount=Math.max(readCount('scudetto'),leagueWon?1:0);
+  const coppaItaliaCount=Math.max(readCount('coppaItalia'),cupWon?1:0);
+  if(scudettoCount>0)trophies.push({key:'scudetto',count:scudettoCount,label:'Campionato'});
+  if(coppaItaliaCount>0)trophies.push({key:'coppaItalia',count:coppaItaliaCount,label:'Coppa'});
+ }
+ return trophies.slice(0,2);
+}
+function rosterStatLeaders(bucket,tieBucket=''){
+ const rosterIds=new Set((state.draft?.roster||[]).map(entry=>String(entry?.playerId||'')).filter(Boolean));
+ const bucketValues=state.stats?.[bucket]||{};
+ let entries=Object.entries(bucketValues).filter(([id,value])=>rosterIds.has(String(id))&&Number(value)>0);
+ if(!entries.length&&bucket==='mvpVotes')entries=Object.entries(state.stats?.mvpPoints||{}).filter(([id,value])=>rosterIds.has(String(id))&&Number(value)>0);
+ return entries.sort((a,b)=>Number(b[1]||0)-Number(a[1]||0)||Number((state.stats?.[tieBucket]||{})[b[0]]||0)-Number((state.stats?.[tieBucket]||{})[a[0]]||0)||String(statPlayerInfo(a[0])?.name||'').localeCompare(String(statPlayerInfo(b[0])?.name||''),'it'));
+}
+function bucketHasRealMvpVotes(){return Object.values(state.stats?.mvpVotes||{}).some(value=>Number(value)>0)}
+function seasonHeroAwards(){
+ const scorer=teamTopScorer(),assist=rosterStatLeaders('assists')[0]||null,clean=rosterStatLeaders('cleanSheets')[0]||null,mvp=rosterStatLeaders('mvpVotes','mvpPoints')[0]||null;
+ const buildDetail=(entry,suffix)=>{if(!entry)return '—';const player=statPlayerInfo(entry[0]);const value=Math.round(Number(entry[1])||0);return `${player?.name||'—'} · ${value} ${suffix}`};
+ return [
+  {key:'capocannoniere',label:'Capocannoniere',detail:scorer?`${statPlayerInfo(scorer[0])?.name||'—'} · ${Math.round(Number(scorer[1])||0)} gol`:'—'},
+  {key:'assistman',label:'Assist Man',detail:buildDetail(assist,'assist')},
+  {key:'cleansheet',label:'Clean Sheet',detail:buildDetail(clean,'clean sheet')},
+  {key:'mvp',label:'MVP',detail:buildDetail(mvp,bucketHasRealMvpVotes()?'MVP':'pt')}
+ ];
+}
+function seasonShowcaseIcon(key=''){
+ const iconClass=String(key||'').replace(/[^a-z0-9_-]/gi,'');
+ const trophy=`<svg viewBox="0 0 80 120" aria-hidden="true" focusable="false"><defs><linearGradient id="metalBody-${iconClass}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f7f9"/><stop offset="0.18" stop-color="#c4c8ce"/><stop offset="0.45" stop-color="#8b9097"/><stop offset="0.7" stop-color="#dde0e5"/><stop offset="1" stop-color="#6e737a"/></linearGradient><linearGradient id="metalDark-${iconClass}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#616872"/><stop offset="1" stop-color="#30353c"/></linearGradient><linearGradient id="shine-${iconClass}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="rgba(255,255,255,0)"/><stop offset="0.5" stop-color="#ffffff" stop-opacity=".9"/><stop offset="1" stop-color="rgba(255,255,255,0)"/></linearGradient></defs><path d="M28 8h24l-6 68H34z" fill="url(#metalBody-${iconClass})" stroke="#626871" stroke-width="1.6"/><path d="M18 18h44L54 66H26z" fill="url(#metalBody-${iconClass})" opacity=".98" stroke="#6a7078" stroke-width="1.2"/><path d="M39 23h2l-2 39h-2z" fill="#ffffff" opacity=".85"/><ellipse cx="40" cy="28" rx="5" ry="4.5" fill="#9ea3aa" stroke="#666b73" stroke-width="1"/><path d="M31 77h18l4 22H27z" fill="url(#metalBody-${iconClass})" stroke="#626871" stroke-width="1.2"/><path d="M33 70h14v9H33z" fill="url(#metalDark-${iconClass})"/><path d="M28 96h24v7H28z" fill="url(#metalDark-${iconClass})"/><path d="M26 103h28v9H26z" fill="url(#metalBody-${iconClass})" stroke="#626871" stroke-width="1.1"/><path d="M20 20h8l-4 22h-8z" fill="url(#metalDark-${iconClass})" opacity=".45"/><path d="M60 20h-8l4 22h8z" fill="url(#metalDark-${iconClass})" opacity=".45"/></svg>`;
+ const boot=`<svg viewBox="0 0 96 96" aria-hidden="true" focusable="false"><defs><linearGradient id="gold-${iconClass}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff7c9"/><stop offset="0.2" stop-color="#f9db75"/><stop offset="0.55" stop-color="#c99119"/><stop offset="1" stop-color="#ffefac"/></linearGradient><linearGradient id="sole-${iconClass}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#855a12"/><stop offset="1" stop-color="#4f3310"/></linearGradient></defs><path d="M18 54c9 0 18-6 24-18l8 4c2 10 6 18 12 25 5 5 11 8 18 9v8H15c-1-3-1-6 0-9 1-4 2-7 3-19z" fill="url(#gold-${iconClass})" stroke="#7a5715" stroke-width="2"/><path d="M17 74h63v8H17z" fill="url(#sole-${iconClass})"/><circle cx="28" cy="84" r="2.4" fill="#d6bf72"/><circle cx="40" cy="84" r="2.4" fill="#d6bf72"/><circle cx="52" cy="84" r="2.4" fill="#d6bf72"/><circle cx="64" cy="84" r="2.4" fill="#d6bf72"/></svg>`;
+ const assist=`<svg viewBox="0 0 96 96" aria-hidden="true" focusable="false"><defs><linearGradient id="silver-${iconClass}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.24" stop-color="#d6dbe1"/><stop offset="0.62" stop-color="#98a0ab"/><stop offset="1" stop-color="#f4f6f9"/></linearGradient><linearGradient id="goldAssist-${iconClass}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff7c9"/><stop offset="0.3" stop-color="#f1c44f"/><stop offset="1" stop-color="#b98014"/></linearGradient></defs><circle cx="48" cy="48" r="26" fill="none" stroke="url(#silver-${iconClass})" stroke-width="8"/><circle cx="48" cy="48" r="12" fill="url(#goldAssist-${iconClass})" stroke="#8a6518" stroke-width="2"/><path d="M48 10l5 12-5 10-5-10zM48 64l5 10-5 12-5-12zM10 48l12-5 10 5-10 5zM64 48l10-5 12 5-12 5z" fill="url(#silver-${iconClass})"/></svg>`;
+ const glove=`<svg viewBox="0 0 96 96" aria-hidden="true" focusable="false"><defs><linearGradient id="gloveMain-${iconClass}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f9fbfd"/><stop offset="1" stop-color="#ccd4dd"/></linearGradient><linearGradient id="gloveTrim-${iconClass}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#48c0ff"/><stop offset="1" stop-color="#1758b7"/></linearGradient></defs><path d="M31 15c4 0 6 3 6 8v18h4V19c0-4 2-7 6-7s6 3 6 7v22h4V24c0-4 2-7 6-7 5 0 7 4 7 9v23c0 14-7 24-22 28l-4 10H33l-4-11c-8-4-13-12-13-22V34c0-4 2-7 6-7s6 3 6 7v11h3V23c0-5 2-8 6-8z" fill="url(#gloveMain-${iconClass})" stroke="#69727e" stroke-width="2"/><path d="M26 74h31v10H26z" fill="url(#gloveTrim-${iconClass})"/><path d="M24 84h35v7H24z" fill="#113f89"/></svg>`;
+ const star=`<svg viewBox="0 0 96 96" aria-hidden="true" focusable="false"><defs><linearGradient id="medal-${iconClass}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff7ca"/><stop offset="0.25" stop-color="#f6cd58"/><stop offset="0.65" stop-color="#c28912"/><stop offset="1" stop-color="#fff1ad"/></linearGradient><linearGradient id="ribbon-${iconClass}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f45a78"/><stop offset="1" stop-color="#9f2348"/></linearGradient></defs><path d="M35 8h12l5 24H40z" fill="url(#ribbon-${iconClass})"/><path d="M49 8h12l-1 24H44z" fill="#d03b61"/><circle cx="48" cy="57" r="24" fill="url(#medal-${iconClass})" stroke="#906816" stroke-width="2.2"/><path d="M48 40l5 10 11 1-8 8 2 11-10-5-10 5 2-11-8-8 11-1z" fill="#fff7d0" stroke="#9a7116" stroke-width="1.4"/></svg>`;
+ switch(String(key)){
+  case 'scudetto':
+  case 'coppaItalia':
+  case 'royal-rumble': return trophy;
+  case 'capocannoniere': return boot;
+  case 'assistman': return assist;
+  case 'cleansheet': return glove;
+  case 'mvp': return star;
+  default: return trophy;
+ }
+}
+function renderSeasonHeroItems(items=[],sideClass=''){
+ if(!Array.isArray(items)||!items.length)return '';
+ const rows=items.map(item=>`<div class="season-showcase-item season-showcase-${esc(item.key||'item')}"${item.detail?` title="${esc(String(item.detail))}"`:''}><div class="season-showcase-icon" aria-hidden="true">${seasonShowcaseIcon(item.key)}</div><div class="season-showcase-label">${esc(item.label||'Premio')}</div></div>`).join('');
+ return `<div class="final-hero-side ${esc(sideClass)}">${rows}</div>`;
+}
+function seasonCrestLetters(name=''){
+ const tokens=String(name||'').trim().split(/\s+/).filter(Boolean);
+ if(!tokens.length)return'FC';
+ if(tokens.length===1)return tokens[0].slice(0,2).toUpperCase();
+ return `${tokens[0][0]||''}${tokens[1][0]||''}`.toUpperCase();
+}
+function seasonFinishBadgeText(context={}){
+ if(context.royalChampion)return'Royal Rumble completata';
+ if(context.leagueWon&&context.cupWon)return'Double centrato';
+ if(context.playoffActive&&context.playoffTitle)return'Titolo conquistato ai play off';
+ if(context.leagueWon)return'Campioni d\'Italia';
+ if(context.cupWon)return'Coppa conquistata';
+ if(context.eliminated)return'Percorso concluso';
+ if(Number(context.regularRank)===2)return'Vicecampioni';
+ if(Number(context.regularRank)>0&&Number(context.regularRank)<=4)return`Top ${Number(context.regularRank)}`;
+ return'Stagione archiviata';
+}
+function seasonFinishNarrative(context={}){
+ const team=String(context.teamName||'La tua squadra'),s=context.s||{},points=Number(s.pts)||0,gf=Number(s.gf)||0,ga=Number(s.ga)||0,diff=gf-ga,matchday=Number(context.matchday)||0;
+ if(context.royalChampion)return `${team} ha superato tutte le sfide della Royal Rumble e chiude da campione, con ${points} punti congelati e ${gf} gol segnati.`;
+ if(context.leagueWon&&context.cupWon)return `${team} firma una stagione storica: campionato e coppa nello stesso anno, ${points} punti in ${matchday} giornate e differenza reti ${diff>=0?'+':''}${diff}.`;
+ if(context.playoffActive&&context.playoffTitle)return `${team} completa il capolavoro nei play off e si prende il titolo dopo ${matchday} giornate di regular season.`;
+ if(context.leagueWon)return `${team} conquista il campionato dopo ${matchday} giornate, chiudendo a ${points} punti con ${gf} gol fatti.`;
+ if(context.eliminated)return `${team} conclude qui il proprio percorso: stagione difficile, ma con basi utili per ripartire più forte nella prossima annata.`;
+ if(Number(context.regularRank)===2)return `${team} sfiora il titolo e chiude al 2° posto con ${points} punti: una corsa rimasta aperta fino in fondo.`;
+ if(Number(context.regularRank)>0&&Number(context.regularRank)<=4)return `${team} chiude tra le prime ${Number(context.regularRank)} del campionato con ${points} punti e una stagione da protagonista.`;
+ return `${team} chiude la stagione dopo ${matchday} giornate con ${points} punti, ${gf} gol fatti e ${ga} subiti.`;
+}
+function renderSeasonFinishPills(items=[]){
+ const list=Array.isArray(items)?items.filter(item=>item&&item.value):[];
+ if(!list.length)return'';
+ return `<div class="season-finish-pill-row">${list.map(item=>`<div class="season-finish-pill"><span>${esc(item.label||'Dato')}</span><b>${esc(String(item.value))}</b></div>`).join('')}</div>`;
+}
+function renderSeasonAwardHighlights(items=[]){
+ const list=Array.isArray(items)?items.filter(Boolean):[];
+ if(!list.length)return'';
+ return `<div class="season-finish-awards-grid">${list.map(item=>`<article class="season-finish-award-card"><span>${esc(item.label||'Premio')}</span><b>${esc(item.value||'—')}</b>${item.note?`<small>${esc(item.note)}</small>`:''}</article>`).join('')}</div>`;
+}
 function showFinished(){
  const royal=typeof royalRumbleState==='function'?royalRumbleState():null,royalCompleted=Boolean(royal?.completed),royalChampion=Boolean(royalCompleted&&royal.champion),royalEliminated=Boolean(royalCompleted&&royal.eliminated);
- const table=sortedTable(),eliminated=royalCompleted?royalEliminated:isTeamEliminated(USER_ID),regularRank=royalCompleted?(royalChampion?1:0):eliminated?0:table.findIndex(x=>x.id===USER_ID)+1,p=leaguePlayoffState(),playoffTitle=leaguePlayoffTitleWon(),playoffActive=!royalCompleted&&leaguePlayoffsRuleActive()&&p.status==='completed',achievementRank=royalCompleted?(royalChampion?1:0):playoffActive?(playoffTitle?1:Math.max(2,regularRank||2)):regularRank,rankLabel=royalCompleted?(royalChampion?'🏆':'—'):eliminated?'—':playoffTitle?'🏆':playoffActive?`${regularRank}° REG.`:`${regularRank}°`,s=userStanding(),rankedGoals=rankedGoalStats(),top=rankedGoals[0],topPlayer=top?statPlayerInfo(top[0]):null,userTop=teamTopScorer(),userTopPlayer=userTop?statPlayerInfo(userTop[0]):null,allowAnyFinish=Boolean(SEASON_CONFIG.submission?.allowAnyFinish),weeklyChallenge=Boolean(SEASON_CONFIG.weeklyChallenge?.enabled),canSubmit=(allowAnyFinish||(royalCompleted?royalChampion:(playoffActive?playoffTitle:regularRank===1)))&&!eliminated,summary=buildSeasonSummary(royalCompleted?(royalChampion?1:0):playoffActive?(playoffTitle?1:regularRank):regularRank,eliminated),finalHeadline=royalCompleted?(royalChampion?'Campione della Royal Rumble!':'Eliminato dalla Royal Rumble'):playoffActive?(playoffTitle?'Campione dei play off!':!p.userQualified?'Non qualificato ai play off':p.userEliminated?'Eliminato dai play off':'Play off conclusi'):seasonFinalHeadline(regularRank,eliminated),playoffNote=leaguePlayoffFinalNote(),royalNote=royalCompleted?`Royal Rumble conclusa dopo ${Number(royal.results?.length)||0} sfide nella stessa giornata. I punti sono rimasti ${Number(royal.startingPoints)||0}.`:'';
+ const table=sortedTable(),eliminated=royalCompleted?royalEliminated:isTeamEliminated(USER_ID),regularRank=royalCompleted?(royalChampion?1:0):eliminated?0:table.findIndex(x=>x.id===USER_ID)+1,p=leaguePlayoffState(),playoffTitle=leaguePlayoffTitleWon(),playoffActive=!royalCompleted&&leaguePlayoffsRuleActive()&&p.status==='completed',leagueWon=!eliminated&&(royalCompleted?royalChampion:(playoffActive?playoffTitle:regularRank===1)),cupWon=parallelCupState().winnerId===parallelCupUserId(),heroTrophies=seasonFinalTrophies({leagueWon,cupWon,royalChampion}),heroAwards=seasonHeroAwards(),leftHero=renderSeasonHeroItems(heroTrophies,'left'),rightHero=renderSeasonHeroItems(heroAwards,'right'),achievementRank=royalCompleted?(royalChampion?1:0):playoffActive?(playoffTitle?1:Math.max(2,regularRank||2)):regularRank,rankLabel=royalCompleted?(royalChampion?'🏆':'—'):eliminated?'—':playoffTitle?'🏆':playoffActive?`${regularRank}° REG.`:`${regularRank}°`,s=userStanding(),rankedGoals=rankedGoalStats(),top=rankedGoals[0],topPlayer=top?statPlayerInfo(top[0]):null,userTop=teamTopScorer(),userTopPlayer=userTop?statPlayerInfo(userTop[0]):null,allowAnyFinish=Boolean(SEASON_CONFIG.submission?.allowAnyFinish),weeklyChallenge=Boolean(SEASON_CONFIG.weeklyChallenge?.enabled),canSubmit=(allowAnyFinish||(royalCompleted?royalChampion:(playoffActive?playoffTitle:regularRank===1)))&&!eliminated,summary=buildSeasonSummary(royalCompleted?(royalChampion?1:0):playoffActive?(playoffTitle?1:regularRank):regularRank,eliminated),finalHeadline=royalCompleted?(royalChampion?'Campione della Royal Rumble!':'Eliminato dalla Royal Rumble'):playoffActive?(playoffTitle?'Campione dei play off!':!p.userQualified?'Non qualificato ai play off':p.userEliminated?'Eliminato dai play off':'Play off conclusi'):seasonFinalHeadline(regularRank,eliminated),playoffNote=leaguePlayoffFinalNote(),royalNote=royalCompleted?`Royal Rumble conclusa dopo ${Number(royal.results?.length)||0} sfide nella stessa giornata. I punti sono rimasti ${Number(royal.startingPoints)||0}.`:'';
+ const finishContext={teamName:state.teamName,matchday:state.matchday,s,leagueWon,cupWon,royalChampion,playoffActive,playoffTitle,eliminated,regularRank};
+ const finishBadge=seasonFinishBadgeText(finishContext),finishNarrative=seasonFinishNarrative(finishContext),contextNote=[playoffNote,royalNote].filter(Boolean).join(' '),userClub=typeof activeUserClub==='function'?activeUserClub():null,heroStyle=userClub?teamCssVars(userClub):'';
+ const diff=(Number(s.gf)||0)-(Number(s.ga)||0),finishPills=renderSeasonFinishPills([{label:'Punti',value:Number(s.pts)||0},{label:'Record',value:`${s.w}-${s.d}-${s.l}`},{label:'Diff. reti',value:`${diff>=0?'+':''}${diff}`},{label:'Trofei',value:heroTrophies.length?heroTrophies.map(item=>item.label).join(' · '):'Nessuno'}]);
+ const assistLeader=rosterStatLeaders('assists')[0]||null,assistInfo=assistLeader?statPlayerInfo(assistLeader[0]):null,cleanLeader=rosterStatLeaders('cleanSheets')[0]||null,cleanInfo=cleanLeader?statPlayerInfo(cleanLeader[0]):null,mvpLeader=rosterStatLeaders('mvpVotes','mvpPoints')[0]||null,mvpInfo=mvpLeader?statPlayerInfo(mvpLeader[0]):null;
+ const awardHighlights=renderSeasonAwardHighlights([
+   {label:'Capocannoniere campionato',value:topPlayer?`${topPlayer.name} — ${Number(top?.[1])||0} gol`:'Nessun marcatore'},
+   {label:`Top scorer ${state.teamName}`,value:userTopPlayer?`${userTopPlayer.name} — ${Number(userTop?.[1])||0} gol`:'Nessun marcatore'},
+   {label:'Miglior assistman',value:assistInfo?`${assistInfo.name} — ${Math.round(Number(assistLeader?.[1])||0)} assist`:'Dato non disponibile'},
+   {label:'Miglior clean sheet',value:cleanInfo?`${cleanInfo.name} — ${Math.round(Number(cleanLeader?.[1])||0)} clean sheet`:'Dato non disponibile',note:mvpInfo?`MVP: ${mvpInfo.name} · ${Math.round(Number(mvpLeader?.[1])||0)}`:'MVP non disponibile'}
+ ]);
  checkSeasonAchievements(achievementRank,eliminated);
- screen.innerHTML=`<section class="panel season-finished-view"><div class="final-hero"><div class="label">Stagione conclusa</div><h2>${finalHeadline}</h2><div class="final-position">${rankLabel}</div><p>${esc(state.teamName)} chiude la stagione dopo ${state.matchday} giornate.${playoffNote?` ${esc(playoffNote)}`:''}${royalNote?` ${esc(royalNote)}`:''}</p></div><div class="final-grid"><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div></div>${renderSeasonSummaryCard(summary)}<section class="panel"><h3>Capocannonieri</h3><p><b>Campionato:</b> ${topPlayer?`${esc(topPlayer.name)} — ${Number(top[1])||0} gol`:'Nessun marcatore'}</p><p><b>${esc(state.teamName)}:</b> ${userTopPlayer?`${esc(userTopPlayer.name)} — ${Number(userTop[1])||0} gol`:'Nessun marcatore'}</p>${canSubmit?`<p class="subline">${weeklyChallenge?`Invia la vittoria alla <b>${esc(SEASON_CONFIG.weeklyChallenge?.leaderboardName||'Sfida della settimana')}</b>. ${esc(SEASON_CONFIG.weeklyChallenge?.rewardText||'')}`:'La vittoria del Campionato può essere inviata alla classifica generale. Il miglior marcatore della tua squadra verrà sommato alla tabella Capocannonieri.'}</p>`:`<p class="subline"><b>Invio non disponibile:</b> ${weeklyChallenge?'nella Sfida della settimana può inviare il risultato soltanto chi vince il Campionato.':'può inviare il risultato soltanto chi vince il Campionato o i play off scudetto.'}</p>`}<div class="top-actions">${canSubmit?`<button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultato inviato':esc(SEASON_CONFIG.submission?.buttonText||'Invia vittoria')}</button>`:''}<button id="exportSeason" class="btn gold">Esporta risultati JSON</button></div></section>${renderFinalPlayerStats()}<div class="season-finished-table">${renderTable()}</div></section>`;
- const sendButton=document.getElementById('sendSeason');if(sendButton)sendButton.onclick=sendSeason;document.getElementById('exportSeason').onclick=exportSeason;document.getElementById('shareSeasonCard').onclick=()=>shareSeasonSummary(summary);document.getElementById('downloadSeasonCard').onclick=()=>downloadSeasonSummary(summary);
+ screen.innerHTML=`<section class="panel season-finished-view" style="${heroStyle}"><div class="final-hero final-hero-upgraded"><div class="final-hero-topline"><div class="label">Stagione conclusa</div><div class="season-finish-status">${esc(finishBadge)}</div></div><div class="final-hero-layout">${leftHero}<div class="final-hero-main"><div class="season-finish-crest" aria-hidden="true"><span>${esc(seasonCrestLetters(state.teamName))}</span></div><div class="season-finish-outcome">${esc(finalHeadline)}</div><h2>${esc(state.teamName)}</h2><div class="season-finish-rank-wrap"><div class="final-position season-finish-rank">${rankLabel}</div><div class="season-finish-rank-label">Posizione finale</div></div><p class="season-finish-copy">${esc(finishNarrative)}</p>${finishPills}<div class="season-finish-actions"><button id="jumpSeasonSummary" class="btn gold" type="button">Rivedi la stagione</button><button id="jumpSeasonTable" class="btn" type="button">Vai alla classifica</button></div></div>${rightHero}</div><div class="final-grid season-finish-stats"><div class="stat"><b>${rankLabel}</b><span>Posizione</span></div><div class="stat"><b>${s.pts}</b><span>Punti</span></div><div class="stat"><b>${s.w}-${s.d}-${s.l}</b><span>V-N-P</span></div><div class="stat"><b>${s.gf}</b><span>Gol fatti</span></div><div class="stat"><b>${s.ga}</b><span>Gol subiti</span></div><div class="stat"><b>${diff>=0?'+':''}${diff}</b><span>Diff. reti</span></div></div>${contextNote?`<div class="season-finish-context">${esc(contextNote)}</div>`:''}</div>${renderSeasonSummaryCard(summary)}<section class="panel season-finish-protagonists"><h3>Protagonisti della stagione</h3><p class="subline">I numeri più importanti del tuo campionato, raccolti in una sola schermata finale.</p>${awardHighlights}${canSubmit?`<p class="subline">${weeklyChallenge?`Invia la vittoria alla ${esc(SEASON_CONFIG.weeklyChallenge?.leaderboardName||'Sfida della settimana')}. ${esc(SEASON_CONFIG.weeklyChallenge?.rewardText||'')}`:'La vittoria del Campionato può essere inviata alla classifica generale. Il miglior marcatore della tua squadra verrà sommato alla tabella Capocannonieri.'}</p>`:`<p class="subline"><b>Invio non disponibile:</b> ${weeklyChallenge?'nella Sfida della settimana può inviare il risultato soltanto chi vince il Campionato.':'può inviare il risultato soltanto chi vince il Campionato o i play off scudetto.'}</p>`}<div class="top-actions">${canSubmit?`<button id="sendSeason" class="btn primary" ${state.submitted?'disabled':''}>${state.submitted?'Risultato inviato':esc(SEASON_CONFIG.submission?.buttonText||'Invia vittoria')}</button>`:''}<button id="exportSeason" class="btn gold" type="button">Esporta risultati JSON</button></div></section>${renderFinalPlayerStats()}<div class="season-finished-table" id="seasonFinalTable">${renderTable()}</div></section>`;
+ const sendButton=document.getElementById('sendSeason');if(sendButton)sendButton.onclick=sendSeason;
+ const exportButton=document.getElementById('exportSeason');if(exportButton)exportButton.onclick=exportSeason;
+ const shareButton=document.getElementById('shareSeasonCard');if(shareButton)shareButton.onclick=()=>shareSeasonSummary(summary);
+ const downloadButton=document.getElementById('downloadSeasonCard');if(downloadButton)downloadButton.onclick=()=>downloadSeasonSummary(summary);
+ const jumpSummary=document.getElementById('jumpSeasonSummary');if(jumpSummary)jumpSummary.onclick=()=>document.getElementById('seasonSummaryCard')?.scrollIntoView({behavior:'smooth',block:'start'});
+ const jumpTable=document.getElementById('jumpSeasonTable');if(jumpTable)jumpTable.onclick=()=>document.getElementById('seasonFinalTable')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
+
 
 let seasonSendInFlight=false;
 function createSeasonSubmissionCode(){
