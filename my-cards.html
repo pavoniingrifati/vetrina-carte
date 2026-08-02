@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Le mie carte – Fantaballa</title>
 
-<!-- Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -14,7 +13,7 @@
   :root{ --bg:#0b0f19; --panel:#0f1526; --text:#ecf0ff; --muted:#a7b0d3; --accent:#6ee7ff; --radius:18px }
   *{box-sizing:border-box}
   body{margin:0; background:var(--bg); color:var(--text); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto}
-  header{position:sticky; top:0; z-index:10; background:linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6)); border-bottom:1px solid rgba(255,255,255,.06); backdrop-filter: blur(10px)}
+  header{position:sticky; top:0; z-index:10; background:linear-gradient(180deg, rgba(13,19,37,.9), rgba(13,19,37,.6)); border-bottom:1px solid rgba(255,255,255,.06); backdrop-filter:blur(10px)}
   .wrap{max-width:1200px; margin:0 auto; padding:16px}
   h1{margin:0 0 8px}
   a{color:var(--accent); text-decoration:none}
@@ -37,6 +36,7 @@
   .r-Epica{background:rgba(167,139,250,.28)}
   .r-Ultra\ Rara{background:rgba(251,191,36,.30); color:#000}
   .r-Season{background:rgba(239,68,68,.30)}
+  .r-Leggendaria{background:rgba(255,227,112,.30); color:#111}
   footer{border-top:1px solid rgba(255,255,255,.06); background:linear-gradient(0deg, rgba(13,19,37,.85), rgba(13,19,37,.6)); margin-top:20px}
   .empty{opacity:.8; color:var(--muted); margin:12px 0}
   .authbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
@@ -56,7 +56,7 @@
         <button id="btnLoginEmail" class="btn" type="button">Accedi con Email</button>
         <button id="btnLogout" class="btn" type="button" style="display:none">Esci</button>
         <a href="index.html" class="btn">🏠 Home</a>
-        <a href="open-pack.html" class="btn">🎁 Apri pacchetto</a>
+        <a href="FUT/fantaballa.html" class="btn">🎁 Apri pacchetto</a>
       </div>
     </div>
 
@@ -65,8 +65,8 @@
       <select id="fSeries"><option value="">Serie: tutte</option></select>
       <select id="fRarity">
         <option value="">Rarità: tutte</option>
-        <option>Season</option><option>Ultra Rara</option><option>Epica</option>
-        <option>Rara</option><option>Non Comune</option><option>Comune</option>
+        <option>Leggendaria</option><option>Season</option><option>Ultra Rara</option>
+        <option>Epica</option><option>Rara</option><option>Non Comune</option><option>Comune</option>
       </select>
       <select id="sort">
         <option value="rarity-desc">Ordina: Rarità ↓</option>
@@ -92,13 +92,11 @@
   </div>
 </footer>
 
-<!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
 <script>
-// === Config Firebase (uguale al tuo index) ===
 const firebaseConfig = {
   apiKey: "AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",
   authDomain: "fantaball-9e19c.firebaseapp.com",
@@ -111,14 +109,70 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// === UI helpers ===
 const $ = (s,el=document)=>el.querySelector(s);
-const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5};
+const rarityRank={'Comune':0,'Non Comune':1,'Rara':2,'Epica':3,'Ultra Rara':4,'Season':5,'Leggendaria':6};
 const who=$('#whoami'), bG=$('#btnLoginGoogle'), bE=$('#btnLoginEmail'), bOut=$('#btnLogout');
 const q=$('#q'), fSeries=$('#fSeries'), fRarity=$('#fRarity'), sortSel=$('#sort'), grid=$('#grid'), statusEl=$('#status'), stats=$('#stats');
 
-let ITEMS = []; // inventario corrente
+let ITEMS = [];
 let SNAP_UNSUB = null;
+
+/*
+ * Corregge in lettura tutti i vecchi percorsi salvati in Firestore.
+ * La pagina my-cards.html è nella root, mentre le immagini sono in FUT/img/.
+ */
+function resolveCardImagePath(rawPath){
+  let src = String(rawPath || '').trim();
+  if (!src) return 'FUT/img/nEW%20pLAYER.webp';
+
+  // Rimuove il vecchio parametro GitHub senza eliminare eventuali altri parametri.
+  src = src
+    .replace(/([?&])raw=true(?=&|$)/ig, '$1')
+    .replace(/[?&]$/g, '')
+    .replace(/\?&/g, '?')
+    .replace(/&&+/g, '&');
+
+  // Vecchi URL GitHub/raw: conserva solo il percorso successivo alla cartella img.
+  if (/^https?:\/\//i.test(src)) {
+    try {
+      const url = new URL(src);
+      const lowerPath = url.pathname.toLowerCase();
+      const imgIndex = lowerPath.lastIndexOf('/img/');
+      if (imgIndex >= 0) {
+        src = 'FUT/img/' + url.pathname.slice(imgIndex + 5);
+      } else {
+        return src;
+      }
+    } catch (error) {
+      return src;
+    }
+  }
+
+  src = src.replace(/\\/g, '/');
+  src = src.replace(/^\.\//, '').replace(/^(\.\.\/)+/, '');
+  src = src.replace(/^\/+/, '');
+
+  if (/^fut\/img\//i.test(src)) {
+    src = src.replace(/^fut\/img\//i, 'FUT/img/');
+  } else if (/^img\//i.test(src)) {
+    src = 'FUT/' + src;
+  } else if (!src.includes('/')) {
+    src = 'FUT/img/' + src;
+  }
+
+  // Le grafiche reali del nuovo archivio sono in formato WebP.
+  src = src.replace(/\.(png|jpe?g)(?=$|[?#])/i, '.webp');
+  return src;
+}
+
+function escapeHtml(value){
+  return String(value ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
 
 function render(){
   const term = q.value.trim().toLowerCase();
@@ -145,50 +199,59 @@ function render(){
   grid.innerHTML = '';
   if(!items.length){
     statusEl.textContent = 'Nessuna carta trovata.';
+    stats.textContent = 'Carte uniche: 0 • Totale copie: 0';
     return;
   }
+
   statusEl.textContent = '';
   const frag = document.createDocumentFragment();
   items.forEach(c=>{
     const d=document.createElement('div');
     d.className='card';
     const rClass = 'r-' + String(c.rarity||'').replace(' ','\\ ');
+    const imagePath = resolveCardImagePath(c.img);
     d.innerHTML = `
-      <img class="thumb" src="${c.img||''}" alt="${c.name||''}">
+      <img class="thumb" src="${escapeHtml(imagePath)}" alt="${escapeHtml(c.name||'')}" loading="lazy" decoding="async">
       <div class="meta">
         <div>
-          <div class="name">${c.name||''}</div>
-          <div class="sub">${c.series||''}</div>
+          <div class="name">${escapeHtml(c.name||'')}</div>
+          <div class="sub">${escapeHtml(c.series||'')}</div>
         </div>
         <div class="right">
-          <span class="pillR ${rClass}">${c.rarity||''}</span>
-          <div class="sub">x${c.count||1}</div>
+          <span class="pillR ${escapeHtml(rClass)}">${escapeHtml(c.rarity||'')}</span>
+          <div class="sub">x${Number(c.count||1)}</div>
         </div>
       </div>`;
+
+    const image = d.querySelector('.thumb');
+    image.addEventListener('error', ()=>{
+      if (image.dataset.fallbackApplied === '1') return;
+      image.dataset.fallbackApplied = '1';
+      image.src = 'FUT/img/nEW%20pLAYER.webp';
+    });
+
     frag.appendChild(d);
   });
   grid.appendChild(frag);
 
-  // Stats
   const totalUnique = items.length;
-  const totalQty = items.reduce((s,x)=>s+(x.count||0),0);
+  const totalQty = items.reduce((s,x)=>s+Number(x.count||0),0);
   stats.textContent = `Carte uniche: ${totalUnique} • Totale copie: ${totalQty}`;
 }
 
 function fillSeriesFilter(items){
   const set = new Set(items.map(x=>x.series).filter(Boolean));
   const cur = fSeries.value;
-  fSeries.innerHTML = '<option value="">Serie: tutte</option>' + Array.from(set).sort().map(s=>`<option>${s}</option>`).join('');
+  fSeries.innerHTML = '<option value="">Serie: tutte</option>' + Array.from(set).sort().map(s=>`<option>${escapeHtml(s)}</option>`).join('');
   if (set.has(cur)) fSeries.value = cur;
 }
 
-// === AUTH ===
 function updateAuthUI(u){
   const label = !u ? 'Non autenticato'
                    : (u.isAnonymous ? `Ospite (${u.uid.slice(0,6)}…)`
                                     : (u.displayName || u.email || u.uid));
   who.textContent = `👤 ${label}`;
-  bOut.style.display = u ? '' : 'none'; // 👈 cambiata qui
+  bOut.style.display = u ? '' : 'none';
   bG.style.display = !u || u.isAnonymous ? '' : 'none';
   bE.style.display = !u || u.isAnonymous ? '' : 'none';
 }
@@ -196,11 +259,9 @@ function updateAuthUI(u){
 firebase.auth().onAuthStateChanged(async u=>{
   updateAuthUI(u);
 
-  // stop precedente listener
   if (SNAP_UNSUB){ SNAP_UNSUB(); SNAP_UNSUB=null; }
 
   if(!u){
-    // se manca user, proviamo anonimo così la pagina resta viva
     try{ await firebase.auth().signInAnonymously(); }catch(e){}
     statusEl.textContent = 'Accedi per vedere la tua collezione.';
     grid.innerHTML='';
@@ -215,7 +276,6 @@ firebase.auth().onAuthStateChanged(async u=>{
   }
 
   statusEl.textContent = 'Carico il tuo inventario…';
-  // realtime listener sull’inventario
   SNAP_UNSUB = db.collection('users').doc(u.uid).collection('inventory')
     .onSnapshot(snap=>{
       ITEMS = snap.docs.map(d=>({id:d.id, ...d.data()}));
@@ -228,7 +288,6 @@ firebase.auth().onAuthStateChanged(async u=>{
     });
 });
 
-// Google login / logout
 async function loginWithGoogle(){
   const provider = new firebase.auth.GoogleAuthProvider();
   const u = firebase.auth().currentUser;
@@ -244,9 +303,14 @@ async function loginWithGoogle(){
     alert('Errore login Google: '+e.message);
   }
 }
-async function logout(){ try{ await firebase.auth().signOut(); await firebase.auth().signInAnonymously(); }catch(e){} }
 
-// (Facoltativo) Email/password minimale via prompt
+async function logout(){
+  try{
+    await firebase.auth().signOut();
+    await firebase.auth().signInAnonymously();
+  }catch(e){}
+}
+
 async function loginEmailPrompt(){
   const email = prompt('Email:');
   if(!email) return;
@@ -273,12 +337,9 @@ async function loginEmailPrompt(){
   }
 }
 
-// Bind UI
 bG.addEventListener('click', loginWithGoogle);
 bE.addEventListener('click', loginEmailPrompt);
 bOut.addEventListener('click', logout);
-
-// Filtri / sort
 [q, fSeries, fRarity, sortSel].forEach(el=>el.addEventListener('input', render));
 </script>
 </body>
