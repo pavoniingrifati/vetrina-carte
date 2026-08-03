@@ -1,6 +1,6 @@
 'use strict';
 
-const DIRECTOR_VERSION=3;
+const DIRECTOR_VERSION=6;
 const SAVE_KEY='fantaballa_director_sportivo_v1';
 const INFLUENCE_START=8;
 const TOTAL_ROUNDS=38;
@@ -18,6 +18,21 @@ let TEAM_MAP=new Map();
 let PLAYERS_BY_CLUB=new Map();
 let state=null;
 let commentaryTimer=0;
+
+const REFEREES=[
+ {id:'annulla-big',title:'Arbitro annulla-big',effect:'Il primo gol segnato da ciascuna squadra nelle prime 3 posizioni viene annullato, compresa la tua squadra se è nella top 3.',scope:'round',scopeLabel:'Tutta la giornata',rule:'cancelTopThreeFirstGoal'},
+ {id:'severo',title:'Arbitro severo',effect:'La capolista riceve un’espulsione garantita e disputa la propria partita in inferiorità numerica.',scope:'round',scopeLabel:'Partita della capolista',rule:'leaderRedCard'},
+ {id:'cornuti',title:'Arbitro cornuti',effect:'Ogni gol dell’avversario della squadra favorita ha il 50% di probabilità di essere annullato.',scope:'match',scopeLabel:'Partita scelta',rule:'opponentGoalsHalfCancelled',chooseFavored:true},
+ {id:'amico',title:'Arbitro amico',effect:'La squadra favorita non può perdere la partita: se necessario raggiunge almeno il pareggio.',scope:'match',scopeLabel:'Partita scelta',rule:'favoredCannotLose',chooseFavored:true},
+ {id:'bollente',title:'Arbitro bollente',effect:'La squadra favorita vince sicuramente, ma c’è il 20% di probabilità che lo scandalo venga scoperto e i punti della tua squadra siano azzerati.',scope:'match',scopeLabel:'Partita scelta · rischio estremo',rule:'favoredGuaranteedWin',chooseFavored:true,danger:true},
+ {id:'underdog',title:'Arbitro underdog',effect:'Se la squadra favorita ha un OVR inferiore all’avversaria, riceve un gol garantito.',scope:'match',scopeLabel:'Partita scelta',rule:'underdogGuaranteedGoal',chooseFavored:true},
+ {id:'var',title:'Arbitro al VAR',effect:'Negli episodi dubbi favorisce sempre la squadra più in basso in classifica.',scope:'match',scopeLabel:'Partita scelta',rule:'varFavorsLower'},
+ {id:'handicap',title:'Arbitro handicap',effect:'Tutte le squadre di casa iniziano la partita con un gol di vantaggio.',scope:'round',scopeLabel:'Tutta la giornata',rule:'homeStartsOne'},
+ {id:'fantacalcio',title:'Arbitro fantacalcio',effect:'Il giocatore con l’OVR più alto della squadra favorita segna un gol garantito.',scope:'match',scopeLabel:'Partita scelta',rule:'bestPlayerGuaranteedGoal',chooseFavored:true},
+ {id:'trasferta',title:'Arbitro in trasferta',effect:'Tutte le squadre di casa possono segnare al massimo un gol.',scope:'round',scopeLabel:'Tutta la giornata',rule:'homeMaxOneGoal'},
+ {id:'annoiato',title:'Arbitro annoiato',effect:'Tutte le partite della giornata terminano dopo appena 5 minuti.',scope:'round',scopeLabel:'Tutta la giornata',rule:'fiveMinuteMatches'},
+ {id:'ultimo',title:'Arbitro finché non metti l’ultimo',effect:'La partita non termina finché la squadra favorita non segna almeno un gol.',scope:'match',scopeLabel:'Partita scelta',rule:'playUntilFavoredScores',chooseFavored:true}
+];
 
 function esc(value){return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]))}
 function clamp(value,min,max){return Math.max(min,Math.min(max,value))}
@@ -48,7 +63,7 @@ function formatDirectorMultiplier(value){return `×${Number(value||1).toFixed(2)
 function toast(message){if(!toastRoot)return;toastRoot.textContent=String(message||'');toastRoot.classList.add('show');window.clearTimeout(toastRoot._timer);toastRoot._timer=window.setTimeout(()=>toastRoot.classList.remove('show'),2400)}
 function closeModal(){window.clearInterval(commentaryTimer);commentaryTimer=0;modalRoot.innerHTML=''}
 function save(){if(!state)return;state.updatedAt=new Date().toISOString();localStorage.setItem(SAVE_KEY,JSON.stringify(state));if(saveStatus){saveStatus.textContent='Salvato';window.clearTimeout(saveStatus._timer);saveStatus._timer=window.setTimeout(()=>saveStatus.textContent='Salvataggio automatico attivo',1100)}}
-function loadSaved(){try{const parsed=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(!parsed||![1,2,DIRECTOR_VERSION].includes(Number(parsed.version)))return null;return parsed}catch(error){console.warn('Salvataggio Direttore Sportivo non leggibile',error);return null}}
+function loadSaved(){try{const parsed=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(!parsed||![1,2,3,4,5,DIRECTOR_VERSION].includes(Number(parsed.version)))return null;return parsed}catch(error){console.warn('Salvataggio Direttore Sportivo non leggibile',error);return null}}
 
 async function boot(){
  try{
@@ -62,9 +77,10 @@ async function boot(){
   REGULATIONS=Array.isArray(regulations?.regulations)?regulations.regulations:[];
   buildDataModel();
   state=loadSaved();
-  if(state)repairState();
+  if(state){repairState();save()}
   render();
-  if(state?.pendingChoices?.length)window.setTimeout(renderInfluenceChoices,80);
+  if(state?.pendingRefereeId)window.setTimeout(renderRefereeAssignment,80);
+  else if(state?.pendingChoices?.length)window.setTimeout(renderInfluenceChoices,80);
  }catch(error){
   console.error(error);
   screen.innerHTML=`<section class="panel"><div class="label">Errore di caricamento</div><h2>La modalità non può essere aperta</h2><p>${esc(error.message||error)}</p><button class="btn primary" type="button" onclick="location.reload()">Riprova</button></section>`;
@@ -91,13 +107,18 @@ function buildDataModel(){
 }
 
 function repairState(){
+ const previousVersion=Number(state.version)||1;
  state.version=DIRECTOR_VERSION;
  state.rng=(Number(state.rng)||seedNow())>>>0;
  state.influence=clamp(Number(state.influence)||0,0,INFLUENCE_START);
  state.round=clamp(Number(state.round)||0,0,TOTAL_ROUNDS);
  state.pendingChoices=Array.isArray(state.pendingChoices)?state.pendingChoices:[];
+ state.pendingChoiceType=state.pendingChoiceType==='referee'?'referee':'regulation';
+ state.pendingRefereeId=String(state.pendingRefereeId||'');
+ state.roundReferee=state.roundReferee&&typeof state.roundReferee==='object'?state.roundReferee:null;
+ state.refereeHistory=Array.isArray(state.refereeHistory)?state.refereeHistory:[];
  state.seenRegulationIds=Array.isArray(state.seenRegulationIds)?state.seenRegulationIds:[];
- state.regulations=Array.isArray(state.regulations)?state.regulations:[];
+ state.regulations=(Array.isArray(state.regulations)?state.regulations:[]).map(item=>{const catalog=REGULATIONS.find(regulation=>regulation.id===item.id);const rounds=Number(item.remainingRounds);return{...item,remainingRounds:Number.isFinite(rounds)?Math.max(0,rounds):(Number(catalog?.rounds)||0)}}).filter(item=>!Number(REGULATIONS.find(regulation=>regulation.id===item.id)?.rounds)||Number(item.remainingRounds)>0);
  state.regulationHistory=Array.isArray(state.regulationHistory)?state.regulationHistory:[];
  state.history=Array.isArray(state.history)?state.history:[];
  state.stats=state.stats&&typeof state.stats==='object'?state.stats:{scorers:{},team:{}};
@@ -109,33 +130,100 @@ function repairState(){
  if(!state.table||typeof state.table!=='object')state.table=createTable();
  if(!Number(state.startExpectedRank)&&teamOf(state.targetTeamId))state.startExpectedRank=[...TEAMS].sort((a,b)=>b.rating-a.rating).findIndex(team=>team.id===state.targetTeamId)+1;
  state.startExpectedRank=clamp(Math.round(Number(state.startExpectedRank)||1),1,20);
- if(!Array.isArray(state.schedule)||state.schedule.length!==TOTAL_ROUNDS)state.schedule=generateSchedule(TEAMS.map(team=>team.id));
+ const invalidSchedule=!Array.isArray(state.schedule)||state.schedule.length!==TOTAL_ROUNDS;
+ if(invalidSchedule)state.schedule=generateSchedule(TEAMS.map(team=>team.id));
+ else if(previousVersion<6)repairLegacyScheduleVenues();
+ if(state.roundReferee&&Number(state.roundReferee.round)!==state.round+1)state.roundReferee=null;
  if(!teamOf(state.targetTeamId)){localStorage.removeItem(SAVE_KEY);state=null}
 }
 
 function createTable(){return Object.fromEntries(TEAMS.map(team=>[team.id,{id:team.id,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0}]))}
 function generateSchedule(teamIds){
- let rotating=shuffle(teamIds);
- if(rotating.length%2)rotating.push('__bye__');
- const first=[];
- for(let round=0;round<rotating.length-1;round++){
+ const ordered=shuffle(teamIds);
+ if(ordered.length%2)ordered.push('__bye__');
+ const teamCount=ordered.length,rotatingCount=teamCount-1,first=[];
+ for(let round=0;round<rotatingCount;round++){
   const matches=[];
-  for(let index=0;index<rotating.length/2;index++){
-   const a=rotating[index],b=rotating[rotating.length-1-index];
-   if(a==='__bye__'||b==='__bye__')continue;
-   const flip=(round+index)%2===1;
-   matches.push({homeId:flip?b:a,awayId:flip?a:b});
+  for(let matchIndex=0;matchIndex<teamCount/2;matchIndex++){
+   let homeIndex=(round+matchIndex)%rotatingCount;
+   let awayIndex=(rotatingCount-matchIndex+round)%rotatingCount;
+   if(matchIndex===0)awayIndex=teamCount-1;
+   let homeId=ordered[homeIndex],awayId=ordered[awayIndex];
+   if(round%2===1)[homeId,awayId]=[awayId,homeId];
+   if(homeId==='__bye__'||awayId==='__bye__')continue;
+   matches.push({homeId,awayId});
   }
   first.push(matches);
-  rotating=[rotating[0],rotating[rotating.length-1],...rotating.slice(1,-1)];
  }
+ rebalanceFirstLegVenues(first,ordered.filter(id=>id!=='__bye__'));
  const second=first.map(round=>round.map(match=>({homeId:match.awayId,awayId:match.homeId})));
- return [...first,...second];
+ const reorderedSecond=second.length>1?[...second.slice(1),second[0]]:second;
+ return [...first,...reorderedSecond];
+}
+function venueSequence(schedule,teamId){
+ return schedule.map(round=>{const fixture=round.find(match=>match.homeId===teamId||match.awayId===teamId);return fixture?(fixture.homeId===teamId?'H':'A'):''}).filter(Boolean);
+}
+function maximumVenueRun(schedule,teamId){
+ const sequence=venueSequence(schedule,teamId);let best=0,current=0,last='';
+ for(const venue of sequence){if(venue===last)current+=1;else{last=venue;current=1}best=Math.max(best,current)}
+ return best;
+}
+function rebalanceFirstLegVenues(first,teamIds){
+ const maximumHomes=Math.ceil((teamIds.length-1)/2),minimumHomes=Math.floor((teamIds.length-1)/2);
+ const counts=Object.fromEntries(teamIds.map(teamId=>[teamId,venueSequence(first,teamId).filter(venue=>venue==='H').length]));
+ const overloaded=teamIds.filter(teamId=>counts[teamId]>maximumHomes);
+ const search=(remaining,runLimit)=>{
+  if(!remaining.length)return teamIds.every(teamId=>counts[teamId]>=minimumHomes&&counts[teamId]<=maximumHomes);
+  let selected='',candidates=[];
+  for(const teamId of remaining){
+   const options=[];
+   first.forEach((round,roundIndex)=>round.forEach((fixture,fixtureIndex)=>{
+    if(fixture.homeId===teamId&&counts[fixture.awayId]<maximumHomes)options.push({roundIndex,fixtureIndex,receiver:fixture.awayId});
+   }));
+   if(!selected||options.length<candidates.length){selected=teamId;candidates=options}
+  }
+  const next=remaining.filter(teamId=>teamId!==selected);
+  for(const candidate of candidates){
+   const fixture=first[candidate.roundIndex][candidate.fixtureIndex];
+   [fixture.homeId,fixture.awayId]=[fixture.awayId,fixture.homeId];counts[selected]-=1;counts[candidate.receiver]+=1;
+   const valid=maximumVenueRun(first,selected)<=runLimit&&maximumVenueRun(first,candidate.receiver)<=runLimit&&search(next,runLimit);
+   if(valid)return true;
+   counts[selected]+=1;counts[candidate.receiver]-=1;[fixture.homeId,fixture.awayId]=[fixture.awayId,fixture.homeId];
+  }
+  return false;
+ };
+ if(!search(overloaded,2))search(overloaded,3);
+}
+function targetVenueInRound(round){
+ const fixture=round?.find(match=>match.homeId===state.targetTeamId||match.awayId===state.targetTeamId);
+ return fixture?.homeId===state.targetTeamId?'H':'A';
+}
+function repairLegacyScheduleVenues(){
+ if(!Array.isArray(state.schedule)||state.schedule.length!==TOTAL_ROUNDS||!state.targetTeamId)return;
+ if(state.round===0){state.schedule=generateSchedule(TEAMS.map(team=>team.id));return}
+ const lockedCount=Math.min(TOTAL_ROUNDS,state.round+1),locked=state.schedule.slice(0,lockedCount),remaining=state.schedule.slice(lockedCount);
+ const homeRounds=remaining.filter(round=>targetVenueInRound(round)==='H'),awayRounds=remaining.filter(round=>targetVenueInRound(round)==='A'),ordered=[];
+ const lockedVenues=locked.map(targetVenueInRound).filter(Boolean);let last=lockedVenues.at(-1)||'',run=1;
+ for(let index=lockedVenues.length-2;index>=0&&lockedVenues[index]===last;index--)run+=1;
+ while(homeRounds.length||awayRounds.length){
+  let venue;
+  if(last==='H'&&run>=2&&awayRounds.length)venue='A';
+  else if(last==='A'&&run>=2&&homeRounds.length)venue='H';
+  else if(homeRounds.length===awayRounds.length)venue=last==='H'?'A':'H';
+  else venue=homeRounds.length>awayRounds.length?'H':'A';
+  if(venue==='H'&&!homeRounds.length)venue='A';
+  if(venue==='A'&&!awayRounds.length)venue='H';
+  const next=venue==='H'?homeRounds.shift():awayRounds.shift();ordered.push(next);
+  if(venue===last)run+=1;else{last=venue;run=1}
+ }
+ state.schedule=[...locked,...ordered];
+ state.meta=state.meta&&typeof state.meta==='object'?state.meta:{};
+ state.meta.scheduleVenueRepair=6;
 }
 
 function startMission(){
  const seed=seedNow();
- state={version:DIRECTOR_VERSION,rng:seed,phase:'briefing',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),targetTeamId:'',influence:INFLUENCE_START,influenceUsedToday:false,round:0,schedule:[],table:{},regulations:[],regulationHistory:[],seenRegulationIds:[],pendingChoices:[],history:[],stats:{scorers:{},team:{}},playoff:null,championId:'',regularSeasonRank:0,startExpectedRank:0,directorName:'',submitted:false,meta:{}};
+ state={version:DIRECTOR_VERSION,rng:seed,phase:'briefing',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),targetTeamId:'',influence:INFLUENCE_START,influenceUsedToday:false,round:0,schedule:[],table:{},regulations:[],regulationHistory:[],seenRegulationIds:[],pendingChoices:[],pendingChoiceType:'regulation',pendingRefereeId:'',roundReferee:null,refereeHistory:[],history:[],stats:{scorers:{},team:{}},playoff:null,championId:'',regularSeasonRank:0,startExpectedRank:0,directorName:'',submitted:false,meta:{}};
  const target=pick(TEAMS);
  state.targetTeamId=target.id;
  state.schedule=generateSchedule(TEAMS.map(team=>team.id));
@@ -153,9 +241,26 @@ function gapFromTop(){const table=sortedTable(),target=targetRow();return table.
 function targetTeam(){return teamOf(state.targetTeamId)}
 function currentRoundMatches(){return state.schedule[state.round]||[]}
 function currentTargetFixture(){return currentRoundMatches().find(match=>match.homeId===state.targetTeamId||match.awayId===state.targetTeamId)||null}
-function activeRegulations(){return (state.regulations||[]).map(item=>REGULATIONS.find(regulation=>regulation.id===item.id)||item).filter(Boolean)}
+function activeRegulations(){return (state.regulations||[]).map(item=>{const catalog=REGULATIONS.find(regulation=>regulation.id===item.id)||{};return{...catalog,...item}}).filter(item=>item&&(!Number(item.rounds)||Number(item.remainingRounds)>0))}
+function directorRegulationDurationLabel(regulation){const rounds=Number(regulation?.rounds)||0;if(!rounds)return String(regulation?.duration||'Fino a fine stagione');const remaining=Math.max(0,Number(regulation?.remainingRounds)||0);return `${remaining} ${remaining===1?'giornata rimasta':'giornate rimaste'}`}
+function tickDirectorRegulations(){state.regulations=(state.regulations||[]).map(item=>{const catalog=REGULATIONS.find(regulation=>regulation.id===item.id);if(!Number(catalog?.rounds))return item;return{...item,remainingRounds:Math.max(0,(Number(item.remainingRounds)||0)-1)}}).filter(item=>{const catalog=REGULATIONS.find(regulation=>regulation.id===item.id);return !Number(catalog?.rounds)||Number(item.remainingRounds)>0})}
 function hasRule(rule){return activeRegulations().some(regulation=>regulation.rule===rule)}
 function regulationById(id){return REGULATIONS.find(regulation=>regulation.id===id)||null}
+function refereeById(id){return REFEREES.find(referee=>referee.id===String(id))||null}
+function fixtureKey(fixture){return fixture?`${fixture.homeId}__${fixture.awayId}`:''}
+function refereeAssignmentDescription(assignment=state?.roundReferee){
+ if(!assignment)return'';
+ const referee=refereeById(assignment.id),home=teamOf(assignment.homeId),away=teamOf(assignment.awayId),favored=teamOf(assignment.favoredTeamId);
+ if(referee?.scope==='round')return `${referee.title} · ${referee.scopeLabel}`;
+ const match=home&&away?`${home.name}–${away.name}`:'partita scelta';
+ return `${referee?.title||'Arbitro'} · ${match}${favored?` · favorisce ${favored.name}`:''}`;
+}
+function refereeForFixture(fixture){
+ const assignment=state?.roundReferee;
+ if(!assignment)return null;
+ if(refereeById(assignment.id)?.scope==='round')return assignment;
+ return assignment.fixtureKey===fixtureKey(fixture)?assignment:null;
+}
 
 function render(){
  closeModal();
@@ -170,13 +275,13 @@ function render(){
 }
 
 function renderSetup(){
- screen.innerHTML=`<section class="setup-hero"><div class="setup-copy"><span class="setup-kicker">Nuova modalità · 38 giornate</span><h1>Direttore<br>Sportivo</h1><p>Non controlli una squadra: ne ricevi una casuale e devi portarla al titolo manipolando soltanto il regolamento. Nessun mercato, nessun bonus OVR, nessuna Intesa.</p><div class="setup-pills"><span class="setup-pill">⚖️ 8 punti Influenza</span><span class="setup-pill">🎲 4 regolamenti casuali</span><span class="setup-pill">🎙️ Cronaca o Simula</span><span class="setup-pill">🏆 Obiettivo Scudetto</span></div><div class="setup-actions"><button id="newMissionBtn" class="btn gold" type="button">Assegnami una squadra casuale</button><a class="btn" href="index.html">Torna al menu</a></div></div></section>`;
+ screen.innerHTML=`<section class="setup-hero"><div class="setup-copy"><span class="setup-kicker">Nuova modalità · 38 giornate</span><h1>Direttore<br>Sportivo</h1><p>Non controlli una squadra: ne ricevi una casuale e devi portarla al titolo intervenendo su regolamenti e designazioni arbitrali. Nessun mercato, nessun bonus OVR, nessuna Intesa.</p><div class="setup-pills"><span class="setup-pill">⚖️ 8 punti Influenza</span><span class="setup-pill">🎲 4 regolamenti o arbitri casuali</span><span class="setup-pill">🎙️ Cronaca o Simula</span><span class="setup-pill">🏆 Obiettivo Scudetto</span></div><div class="setup-actions"><button id="newMissionBtn" class="btn gold" type="button">Assegnami una squadra casuale</button><a class="btn" href="index.html">Torna al menu</a></div></div></section>`;
  document.getElementById('newMissionBtn').onclick=startMission;
 }
 
 function renderBriefing(){
  const team=targetTeam(),rank=state.startExpectedRank,attack=Math.round(team.attack),defense=Math.round(team.defense),difficulty=directorDifficultyProfile(rank),profile=rank<=3?'Favorita al titolo':rank<=7?'Squadra da zona europea':rank<=12?'Squadra di metà classifica':rank<=16?'Missione difficile':'Missione estrema';
- screen.innerHTML=`<section class="panel briefing-card" style="${teamStyle(team)}"><div class="club-crest"><span>${esc(team.shortName||shortBadge(team.name))}</span></div><div><div class="label">Missione assegnata casualmente</div><h2>Porta ${esc(team.name)} al titolo</h2><p class="subline">${esc(profile)}. Non potrai modificare la rosa né i valori dei giocatori: il tuo unico strumento sarà l’Influenza Federale.</p><div class="dossier-grid"><div class="dossier-stat"><b>${team.rating.toFixed(1)}</b><span>OVR stimato</span></div><div class="dossier-stat"><b>${attack}</b><span>Attacco</span></div><div class="dossier-stat"><b>${defense}</b><span>Difesa</span></div><div class="dossier-stat"><b>${rank}°</b><span>Forza prevista</span></div><div class="dossier-stat difficulty-${difficulty.key}"><b>${esc(difficulty.label)}</b><span>Difficoltà</span></div><div class="dossier-stat"><b>${formatDirectorMultiplier(difficulty.multiplier)}</b><span>Coeff. impresa</span></div><div class="dossier-stat"><b>${INFLUENCE_START}</b><span>Influenza iniziale</span></div><div class="dossier-stat"><b>Pt×10</b><span>Base classifica</span></div></div><div class="director-score-explainer"><b>Come funziona la classifica</b><span>(Punti finali × 10 + Influenza rimasta × 80) × coefficiente difficoltà</span></div><div class="setup-actions"><button id="beginSeasonBtn" class="btn primary" type="button">Inizia la stagione</button><button id="rerollMissionBtn" class="btn gold" type="button">Estrai un’altra missione</button></div></div></section>`;
+ screen.innerHTML=`<section class="panel briefing-card" style="${teamStyle(team)}"><div class="club-crest"><span>${esc(team.shortName||shortBadge(team.name))}</span></div><div><div class="label">Missione assegnata casualmente</div><h2>Porta ${esc(team.name)} al titolo</h2><p class="subline">${esc(profile)}. Non potrai modificare la rosa né i valori dei giocatori: il tuo strumento sarà l’Influenza Federale, spendibile per regolamenti o arbitri.</p><div class="dossier-grid"><div class="dossier-stat"><b>${team.rating.toFixed(1)}</b><span>OVR stimato</span></div><div class="dossier-stat"><b>${attack}</b><span>Attacco</span></div><div class="dossier-stat"><b>${defense}</b><span>Difesa</span></div><div class="dossier-stat"><b>${rank}°</b><span>Forza prevista</span></div><div class="dossier-stat difficulty-${difficulty.key}"><b>${esc(difficulty.label)}</b><span>Difficoltà</span></div><div class="dossier-stat"><b>${formatDirectorMultiplier(difficulty.multiplier)}</b><span>Coeff. impresa</span></div><div class="dossier-stat"><b>${INFLUENCE_START}</b><span>Influenza iniziale</span></div><div class="dossier-stat"><b>Pt×10</b><span>Base classifica</span></div></div><div class="director-score-explainer"><b>Come funziona la classifica</b><span>(Punti finali × 10 + Influenza rimasta × 80) × coefficiente difficoltà</span></div><div class="setup-actions"><button id="beginSeasonBtn" class="btn primary" type="button">Inizia la stagione</button><button id="rerollMissionBtn" class="btn gold" type="button">Estrai un’altra missione</button></div></div></section>`;
  document.getElementById('beginSeasonBtn').onclick=beginSeason;
  document.getElementById('rerollMissionBtn').onclick=()=>{localStorage.removeItem(SAVE_KEY);state=null;startMission()};
 }
@@ -184,14 +289,15 @@ function renderBriefing(){
 function renderMissionHero(){
  const team=targetTeam(),standing=targetRow(),rank=rankOf(team.id),gap=gapFromTop(),active=activeRegulations();
  const dots=Array.from({length:INFLUENCE_START},(_,index)=>`<span class="influence-dot ${index<state.influence?'active':''}"></span>`).join('');
- return `<section class="mission-hero" style="${teamStyle(team)}"><div class="mission-grid"><div><div class="mission-head"><div class="mission-mini-crest">${esc(team.shortName)}</div><div class="mission-title"><div class="label" style="color:#ffe96c">Missione stagionale</div><h1>Porta ${esc(team.name)} al titolo</h1><p>Non gestisci la rosa: governi il regolamento del campionato.</p></div></div><div class="influence-meter"><div class="influence-head"><span>Influenza Federale disponibile</span><b>${state.influence}/${INFLUENCE_START}</b></div><div class="influence-dots">${dots}</div></div></div><div class="mission-stats"><div class="mission-stat"><b>${rank||'—'}°</b><span>Posizione</span></div><div class="mission-stat"><b>${standing.pts}</b><span>Punti</span></div><div class="mission-stat"><b>${gap===0?'0':gap}</b><span>Dalla vetta</span></div><div class="mission-stat"><b>${active.length}</b><span>Regole attive</span></div><div class="mission-stat"><b>${esc(directorDifficultyProfile().label)}</b><span>Difficoltà</span></div></div></div></section>`;
+ return `<section class="mission-hero" style="${teamStyle(team)}"><div class="mission-grid"><div><div class="mission-head"><div class="mission-mini-crest">${esc(team.shortName)}</div><div class="mission-title"><div class="label" style="color:#ffe96c">Missione stagionale</div><h1>Porta ${esc(team.name)} al titolo</h1><p>Non gestisci la rosa: governi regolamenti e designazioni arbitrali.</p></div></div><div class="influence-meter"><div class="influence-head"><span>Influenza Federale disponibile</span><b>${state.influence}/${INFLUENCE_START}</b></div><div class="influence-dots">${dots}</div></div></div><div class="mission-stats"><div class="mission-stat"><b>${rank||'—'}°</b><span>Posizione</span></div><div class="mission-stat"><b>${standing.pts}</b><span>Punti</span></div><div class="mission-stat"><b>${gap===0?'0':gap}</b><span>Dalla vetta</span></div><div class="mission-stat"><b>${active.length}</b><span>Regole attive</span></div><div class="mission-stat"><b>${esc(directorDifficultyProfile().label)}</b><span>Difficoltà</span></div></div></div></section>`;
 }
 function renderMatchPanel(options={}){
  const playoff=Boolean(options.playoff),fixture=playoff?options.fixture:currentTargetFixture();
  if(!fixture)return`<section class="panel"><div class="empty">Nessuna partita disponibile.</div></section>`;
- const home=teamOf(fixture.homeId),away=teamOf(fixture.awayId),roundLabel=playoff?playoffStageLabel(state.playoff?.stage):`Giornata ${state.round+1}`,used=state.influenceUsedToday||state.influence<=0||playoff;
- const reason=playoff?'L’Influenza non può essere utilizzata durante i play off.':state.influence<=0?'Hai terminato i punti Influenza.':state.influenceUsedToday?'Hai già convocato il Consiglio Federale in questa giornata.':'Spendendo 1 punto riceverai quattro regolamenti casuali e dovrai approvarne uno.';
- return `<section class="panel match-panel"><div class="match-panel-head"><div><div class="label">Prossima partita</div><h2>${esc(roundLabel)}</h2></div><span class="round-badge">${fixture.homeId===state.targetTeamId?'La tua missione gioca in casa':'La tua missione gioca in trasferta'}</span></div><div class="matchup"><div class="match-team"><b>${esc(home.name)}</b><span>Casa · OVR ${home.rating.toFixed(1)}</span><span class="team-rank">${rankOf(home.id)||'—'}° in classifica</span></div><div class="versus">VS</div><div class="match-team"><b>${esc(away.name)}</b><span>Trasferta · OVR ${away.rating.toFixed(1)}</span><span class="team-rank">${rankOf(away.id)||'—'}° in classifica</span></div></div><div class="match-actions">${playoff?'':`<button id="useInfluenceBtn" class="btn gold influence-button" type="button" ${used?'disabled':''}>⚖️ Usa 1 Influenza · ${state.influence} rimasti</button>`}<button id="playLiveBtn" class="btn primary" type="button">🎙️ Gioca con cronaca</button><button id="playInstantBtn" class="btn soft" type="button">📯 Simula</button></div><div class="regulation-reminder">${esc(reason)}</div></section>`;
+ const home=teamOf(fixture.homeId),away=teamOf(fixture.awayId),roundLabel=playoff?playoffStageLabel(state.playoff?.stage):`Giornata ${state.round+1}`,used=state.influenceUsedToday||state.influence<=0||playoff,assignment=state.roundReferee;
+ const reason=playoff?'L’Influenza non può essere utilizzata durante i play off.':state.influence<=0?'Hai terminato i punti Influenza.':state.influenceUsedToday?'Hai già utilizzato l’Influenza in questa giornata.':'Spendendo 1 punto puoi scegliere fra quattro regolamenti casuali oppure quattro arbitri casuali.';
+ const refereeBanner=!playoff&&assignment?`<div class="referee-active-banner"><span>🟨 Designazione della giornata</span><b>${esc(refereeAssignmentDescription(assignment))}</b><small>${esc(refereeById(assignment.id)?.effect||'')}</small></div>`:'';
+ return `<section class="panel match-panel"><div class="match-panel-head"><div><div class="label">Prossima partita</div><h2>${esc(roundLabel)}</h2></div><span class="round-badge">${fixture.homeId===state.targetTeamId?'La tua missione gioca in casa':'La tua missione gioca in trasferta'}</span></div><div class="matchup"><div class="match-team"><b>${esc(home.name)}</b><span>Casa · OVR ${home.rating.toFixed(1)}</span><span class="team-rank">${rankOf(home.id)||'—'}° in classifica</span></div><div class="versus">VS</div><div class="match-team"><b>${esc(away.name)}</b><span>Trasferta · OVR ${away.rating.toFixed(1)}</span><span class="team-rank">${rankOf(away.id)||'—'}° in classifica</span></div></div>${refereeBanner}<div class="match-actions">${playoff?'':`<button id="useInfluenceBtn" class="btn gold influence-button" type="button" ${used?'disabled':''}>⚖️ Usa 1 Influenza · ${state.influence} rimasti</button>`}<button id="playLiveBtn" class="btn primary" type="button">🎙️ Gioca con cronaca</button><button id="playInstantBtn" class="btn soft" type="button">📯 Simula</button></div><div class="regulation-reminder">${esc(reason)}</div></section>`;
 }
 function renderSeason(){
  screen.innerHTML=`${renderMissionHero()}${renderMatchPanel()}<div class="dashboard-grid"><section class="panel"><div class="tabs"><button class="tab active" data-tab="home">Home</button><button class="tab" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="stats">Statistiche</button><button class="tab" data-tab="journey">Percorso</button></div><div id="tab-home" class="tab-view active">${renderHomeTab()}</div><div id="tab-table" class="tab-view">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div><div id="tab-journey" class="tab-view">${renderJourney()}</div></section><aside>${renderSidebar()}</aside></div>`;
@@ -201,8 +307,9 @@ function renderSeason(){
  document.getElementById('playInstantBtn')?.addEventListener('click',()=>playCurrentRound('instant'));
 }
 function renderHomeTab(){
- const active=activeRegulations(),last=state.history[state.history.length-1];
- return `<h3>Regolamenti attivi</h3>${active.length?`<div class="active-rules">${active.map(regulation=>`<article class="rule-card"><b>${esc(regulation.title)}</b><small>${esc(regulation.effect)} · ${esc(regulation.duration||'Fino a fine stagione')}</small></article>`).join('')}</div>`:`<div class="empty">Il campionato segue ancora il regolamento normale. Puoi utilizzare l’Influenza prima di qualsiasi giornata.</div>`}<h3 style="margin-top:18px">${last?'Ultimi risultati':'La stagione deve ancora iniziare'}</h3>${last?renderRoundResults(last.matches):`<div class="empty">Gioca la prima giornata per vedere tutti i risultati del campionato.</div>`}`;
+ const active=activeRegulations(),last=state.history[state.history.length-1],assignment=state.roundReferee;
+ const refereeCard=assignment?`<article class="rule-card referee-rule-card"><b>${esc(refereeById(assignment.id)?.title||'Designazione arbitrale')}</b><small>${esc(refereeAssignmentDescription(assignment))}<br>${esc(refereeById(assignment.id)?.effect||'')}</small></article>`:'';
+ return `<h3>Interventi attivi</h3>${active.length||assignment?`<div class="active-rules">${refereeCard}${active.map(regulation=>`<article class="rule-card"><b>${esc(regulation.title)}</b><small>${esc(regulation.effect)} · ${esc(directorRegulationDurationLabel(regulation))}</small></article>`).join('')}</div>`:`<div class="empty">Il campionato segue ancora il regolamento normale. Puoi usare l’Influenza per convocare il Consiglio Federale oppure designare un arbitro.</div>`}<h3 style="margin-top:18px">${last?'Ultimi risultati':'La stagione deve ancora iniziare'}</h3>${last?renderRoundResults(last.matches):`<div class="empty">Gioca la prima giornata per vedere tutti i risultati del campionato.</div>`}`;
 }
 function renderRoundResults(matches=[]){return `<div class="round-results">${matches.map(match=>renderResultRow(match)).join('')}</div>`}
 function renderResultRow(match){
@@ -232,14 +339,15 @@ function renderStats(){
 function renderSidebar(){
  const team=targetTeam(),form=targetHistory().slice(-5).map(item=>targetOutcome(item.match)),upcoming=[];
  for(let index=state.round+1;index<Math.min(TOTAL_ROUNDS,state.round+5);index++){const fixture=state.schedule[index].find(match=>match.homeId===team.id||match.awayId===team.id),opponent=teamOf(fixture.homeId===team.id?fixture.awayId:fixture.homeId);upcoming.push({round:index+1,opponent,venue:fixture.homeId===team.id?'Casa':'Trasferta'})}
- return `<section class="panel sidebar-card"><div class="label">Stato missione</div><h3>${esc(team.name)}</h3><p class="subline">Forza prevista iniziale: ${state.startExpectedRank}° · ${esc(directorDifficultyProfile().label)} ${formatDirectorMultiplier(directorDifficultyProfile().multiplier)} · OVR ${team.rating.toFixed(1)}</p><div class="target-form">${form.length?form.map(value=>`<span class="form-dot ${value}">${value}</span>`).join(''):'<span class="subline">Nessuna partita</span>'}</div></section><section class="panel sidebar-card"><div class="label">Prossime partite</div><div class="next-fixtures">${upcoming.length?upcoming.map(item=>`<div class="fixture-mini"><strong>G${item.round}</strong><b>${esc(item.opponent.name)}</b><span>${item.venue}</span></div>`).join(''):'<div class="empty">Fine calendario</div>'}</div></section><section class="panel sidebar-card"><div class="label">Influenza utilizzata</div><h3>${INFLUENCE_START-state.influence}/${INFLUENCE_START}</h3><p class="subline">Ogni utilizzo mostra quattro regolamenti casuali. Il punto viene consumato appena le proposte vengono rivelate.</p></section>`;
+ return `<section class="panel sidebar-card"><div class="label">Stato missione</div><h3>${esc(team.name)}</h3><p class="subline">Forza prevista iniziale: ${state.startExpectedRank}° · ${esc(directorDifficultyProfile().label)} ${formatDirectorMultiplier(directorDifficultyProfile().multiplier)} · OVR ${team.rating.toFixed(1)}</p><div class="target-form">${form.length?form.map(value=>`<span class="form-dot ${value}">${value}</span>`).join(''):'<span class="subline">Nessuna partita</span>'}</div></section><section class="panel sidebar-card"><div class="label">Prossime partite</div><div class="next-fixtures">${upcoming.length?upcoming.map(item=>`<div class="fixture-mini"><strong>G${item.round}</strong><b>${esc(item.opponent.name)}</b><span>${item.venue}</span></div>`).join(''):'<div class="empty">Fine calendario</div>'}</div></section><section class="panel sidebar-card"><div class="label">Influenza utilizzata</div><h3>${INFLUENCE_START-state.influence}/${INFLUENCE_START}</h3><p class="subline">Ogni utilizzo mostra quattro regolamenti oppure quattro arbitri casuali. Il punto viene consumato appena le proposte vengono rivelate.</p></section>`;
 }
 function bindDashboardTabs(){document.querySelectorAll('.tab').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(item=>item.classList.toggle('active',item===button));document.querySelectorAll('.tab-view').forEach(view=>view.classList.toggle('active',view.id===`tab-${button.dataset.tab}`))}))}
 
 function openInfluenceConfirm(){
  if(state.influence<=0||state.influenceUsedToday||state.phase!=='season')return;
- modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal"><div class="label">Convocazione straordinaria</div><h2>Usare 1 punto Influenza?</h2><p class="subline">Riceverai quattro regolamenti casuali. Dopo averli visti dovrai approvarne uno: non sarà possibile annullare la convocazione o recuperare il punto.</p><div class="modal-actions"><button id="confirmInfluenceBtn" class="btn gold" type="button">Convoca il Consiglio Federale</button><button id="cancelInfluenceBtn" class="btn" type="button">Annulla</button></div></section></div>`;
- document.getElementById('confirmInfluenceBtn').onclick=revealInfluenceChoices;
+ modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal influence-hub"><div class="label">Intervento federale</div><h2>Come vuoi usare 1 punto Influenza?</h2><p class="subline">Il punto viene consumato quando riveli le quattro proposte. Dopo averle viste dovrai effettuare una scelta.</p><div class="influence-mode-grid"><button id="chooseRegulationsBtn" class="influence-mode-card" type="button"><span>⚖️</span><b>Consiglio Federale</b><p>Estrai quattro regolamenti casuali e approvane uno per il campionato.</p></button><button id="chooseRefereesBtn" class="influence-mode-card referee" type="button"><span>🟨</span><b>Designazione arbitrale</b><p>Estrai quattro arbitri casuali e assegnane uno alla giornata o a una partita.</p></button></div><div class="modal-actions"><button id="cancelInfluenceBtn" class="btn" type="button">Annulla</button></div></section></div>`;
+ document.getElementById('chooseRegulationsBtn').onclick=()=>revealInfluenceChoices('regulation');
+ document.getElementById('chooseRefereesBtn').onclick=()=>revealInfluenceChoices('referee');
  document.getElementById('cancelInfluenceBtn').onclick=closeModal;
 }
 function availableRegulationPool(){
@@ -248,30 +356,37 @@ function availableRegulationPool(){
  if(pool.length<4){state.seenRegulationIds=[];pool=REGULATIONS.filter(regulation=>!activeIds.has(regulation.id))}
  return pool;
 }
-function revealInfluenceChoices(){
+function revealInfluenceChoices(type='regulation'){
  if(state.influence<=0||state.influenceUsedToday)return;
- const pool=shuffle(availableRegulationPool()).slice(0,4);
- if(pool.length<4){toast('Catalogo regolamenti non sufficiente.');return}
+ const refereeMode=type==='referee';
+ const pool=shuffle(refereeMode?REFEREES:availableRegulationPool()).slice(0,4);
+ if(pool.length<4){toast(refereeMode?'Catalogo arbitri non sufficiente.':'Catalogo regolamenti non sufficiente.');return}
  state.influence-=1;
  state.influenceUsedToday=true;
- state.pendingChoices=pool.map(regulation=>regulation.id);
- state.seenRegulationIds=[...new Set([...state.seenRegulationIds,...state.pendingChoices])];
+ state.pendingChoiceType=refereeMode?'referee':'regulation';
+ state.pendingChoices=pool.map(item=>item.id);
+ if(!refereeMode)state.seenRegulationIds=[...new Set([...state.seenRegulationIds,...state.pendingChoices])];
  save();
  renderInfluenceChoices();
 }
 function renderInfluenceChoices(){
+ if(state.pendingChoiceType==='referee'){renderRefereeChoices();return}
+ renderRegulationChoices();
+}
+function renderRegulationChoices(){
  const choices=(state.pendingChoices||[]).map(regulationById).filter(Boolean);
  if(!choices.length){closeModal();return}
- modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal choice-event"><div class="label">Evento decisionale · Consiglio Federale</div><h2>Il regolamento deve cambiare</h2><p>Hai speso un punto Influenza. Le quattro proposte sono state estratte casualmente: scegline una da applicare all’intero campionato.</p><div class="regulation-choice-grid">${choices.map((regulation,index)=>`<button class="regulation-choice" type="button" data-regulation-id="${esc(regulation.id)}"><span class="choice-number">${index+1}</span><b>${esc(regulation.title)}</b><p>${esc(regulation.effect)}</p><small>${esc(regulation.duration)} · Origine: ${esc(regulation.sourceEvent)}</small></button>`).join('')}</div><p class="subline" style="color:#e7edf4;margin-top:14px">La finestra non può essere chiusa finché non approvi una proposta.</p></section></div>`;
+ modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal choice-event"><div class="label">Evento decisionale · Consiglio Federale</div><h2>Il regolamento deve cambiare</h2><p>Hai speso un punto Influenza. Le quattro proposte sono state estratte casualmente: scegline una da applicare all’intero campionato.</p><div class="regulation-choice-grid">${choices.map((regulation,index)=>`<button class="regulation-choice" type="button" data-regulation-id="${esc(regulation.id)}"><span class="choice-number">${index+1}</span><b>${esc(regulation.title)}</b><p>${esc(regulation.effect)}</p><small>${esc(regulation.duration)} · Origine: ${esc(regulation.sourceEvent)}</small></button>`).join('')}</div><p class="subline forced-choice-note">La finestra non può essere chiusa finché non approvi una proposta.</p></section></div>`;
  document.querySelectorAll('[data-regulation-id]').forEach(button=>button.addEventListener('click',()=>approveRegulation(button.dataset.regulationId)));
 }
 function approveRegulation(id){
  const regulation=regulationById(id);if(!regulation)return;
  let replaced=null;
  if(regulation.group&&!regulation.instant){const index=state.regulations.findIndex(item=>item.group===regulation.group);if(index>=0){replaced=regulationById(state.regulations[index].id)||state.regulations[index];state.regulations.splice(index,1)}}
- if(regulation.instant){applyInstantRegulation(regulation)}else state.regulations.push({id:regulation.id,group:regulation.group,activatedRound:state.round+1});
+ if(regulation.instant){applyInstantRegulation(regulation)}else state.regulations.push({id:regulation.id,group:regulation.group,activatedRound:state.round+1,remainingRounds:Number(regulation.rounds)||0});
  state.regulationHistory.push({id:regulation.id,title:regulation.title,round:state.round+1,replaced:replaced?.title||''});
  state.pendingChoices=[];
+ state.pendingChoiceType='regulation';
  save();
  render();
  modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal"><div class="label">Regolamento approvato</div><h2>${esc(regulation.title)}</h2><p class="subline">${esc(regulation.effect)}</p>${replaced?`<div class="regulation-reminder">Sostituisce: ${esc(replaced.title)}</div>`:''}<div class="modal-actions"><button id="closeApprovedBtn" class="btn primary" type="button">Torna alla partita</button></div></section></div>`;
@@ -282,6 +397,40 @@ function applyInstantRegulation(regulation){
   const table=sortedTable();if(table.length){const leader=table[0],bottom=table[table.length-1];bottom.pts=leader.pts;toast(`${teamOf(bottom.id).name} raggiunge la capolista a ${formatPoints(leader.pts)} punti.`)}
  }
 }
+function renderRefereeChoices(){
+ const choices=(state.pendingChoices||[]).map(refereeById).filter(Boolean);
+ if(!choices.length){closeModal();return}
+ modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal choice-event referee-choice-event"><div class="label">Designazione arbitrale</div><h2>Scegli un arbitro</h2><p>Hai speso un punto Influenza. Gli arbitri possono ricomparire in qualsiasi giornata: scegli obbligatoriamente uno dei quattro profili estratti.</p><div class="regulation-choice-grid referee-choice-grid">${choices.map((referee,index)=>`<button class="regulation-choice referee-choice ${referee.danger?'danger':''}" type="button" data-referee-id="${esc(referee.id)}"><span class="choice-number">${index+1}</span><b>${esc(referee.title)}</b><p>${esc(referee.effect)}</p><small>${esc(referee.scopeLabel)}</small></button>`).join('')}</div><p class="subline forced-choice-note">La finestra non può essere chiusa finché non completi la designazione.</p></section></div>`;
+ document.querySelectorAll('[data-referee-id]').forEach(button=>button.addEventListener('click',()=>beginRefereeAssignment(button.dataset.refereeId)));
+}
+function beginRefereeAssignment(id){
+ const referee=refereeById(id);if(!referee)return;
+ state.pendingRefereeId=referee.id;
+ state.pendingChoices=[];
+ save();
+ if(referee.scope==='round'){assignRoundReferee(referee.id);return}
+ renderRefereeAssignment();
+}
+function renderRefereeAssignment(){
+ const referee=refereeById(state.pendingRefereeId);if(!referee){state.pendingRefereeId='';save();closeModal();return}
+ const rankMap=Object.fromEntries(sortedTable().map((row,index)=>[row.id,index+1]));
+ const fixtures=currentRoundMatches();
+ modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal referee-assignment-modal"><div class="label">${esc(referee.title)}</div><h2>Scegli la partita${referee.chooseFavored?' e la squadra da favorire':''}</h2><p class="subline">${esc(referee.effect)}</p>${referee.danger?`<div class="referee-danger-warning"><b>Rischio scandalo:</b> il 20% di probabilità riguarda sempre la tua squadra, anche se usi l’arbitro in un’altra partita.</div>`:''}<div class="referee-fixtures">${fixtures.map(fixture=>{const home=teamOf(fixture.homeId),away=teamOf(fixture.awayId);return`<article class="referee-fixture"><div class="referee-fixture-head"><span>${rankMap[home.id]}°</span><b>${esc(home.name)} – ${esc(away.name)}</b><span>${rankMap[away.id]}°</span></div>${referee.chooseFavored?`<div class="referee-favor-actions"><button class="btn compact" type="button" data-assign-referee="1" data-home-id="${esc(home.id)}" data-away-id="${esc(away.id)}" data-favored-id="${esc(home.id)}">Favorisci ${esc(home.name)}</button><button class="btn compact" type="button" data-assign-referee="1" data-home-id="${esc(home.id)}" data-away-id="${esc(away.id)}" data-favored-id="${esc(away.id)}">Favorisci ${esc(away.name)}</button></div>`:`<button class="btn compact referee-match-select" type="button" data-assign-referee="1" data-home-id="${esc(home.id)}" data-away-id="${esc(away.id)}">Assegna a questa partita</button>`}</article>`}).join('')}</div><p class="subline forced-choice-note">Il punto Influenza è già stato consumato: devi completare la designazione.</p></section></div>`;
+ document.querySelectorAll('[data-assign-referee]').forEach(button=>button.addEventListener('click',()=>assignRoundReferee(referee.id,{homeId:button.dataset.homeId,awayId:button.dataset.awayId},button.dataset.favoredId||'')));
+}
+function assignRoundReferee(id,fixture=null,favoredTeamId=''){
+ const referee=refereeById(id);if(!referee)return;
+ const assignment={id:referee.id,round:state.round+1,scope:referee.scope,fixtureKey:fixture?fixtureKey(fixture):'',homeId:fixture?.homeId||'',awayId:fixture?.awayId||'',favoredTeamId:String(favoredTeamId||''),createdAt:new Date().toISOString(),caught:false};
+ state.roundReferee=assignment;
+ state.refereeHistory.push({...assignment,title:referee.title});
+ state.pendingRefereeId='';
+ state.pendingChoices=[];
+ state.pendingChoiceType='regulation';
+ save();
+ render();
+ modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal"><div class="label">Designazione confermata</div><h2>${esc(referee.title)}</h2><p class="subline">${esc(refereeAssignmentDescription(assignment))}</p><div class="referee-confirm-effect">${esc(referee.effect)}</div><div class="modal-actions"><button id="closeRefereeApprovedBtn" class="btn primary" type="button">Torna alla partita</button></div></section></div>`;
+ document.getElementById('closeRefereeApprovedBtn').onclick=closeModal;
+}
 
 function poisson(lambda){let limit=Math.exp(-Math.max(0,lambda)),product=1,count=0;do{count++;product*=Math.max(.000001,rand())}while(product>limit&&count<12);return count-1}
 function pickScorer(teamId){
@@ -291,67 +440,103 @@ function pickScorer(teamId){
  for(const player of players){const role=String(player.role||'C').toUpperCase(),copies=role==='A'?5:role==='C'?3:role==='D'?1:0;for(let i=0;i<copies;i++)weighted.push(player)}
  return pick(weighted.length?weighted:players)||players[0];
 }
+function strongestPlayer(teamId){const players=PLAYERS_BY_CLUB.get(String(teamId))||[];return [...players].sort((a,b)=>Number(b.ovr||0)-Number(a.ovr||0))[0]||pickScorer(teamId)}
+function makeRefereeGoal(teamId,minute,scorer=null,label=''){const player=scorer||pickScorer(teamId);return{teamId,minute:Number(minute)||1,playerId:String(player.id||`${teamId}-referee`),playerName:String(player.name||label||'Giocatore'),annulled:false,value:1,refereeGoal:true}}
+function addRefereeGoals(goals,teamId,count,startMinute=90,scorer=null){for(let index=0;index<count;index++)goals.push(makeRefereeGoal(teamId,startMinute+index,scorer))}
 function generateGoals(teamId,count,duration){const goals=[];for(let index=0;index<count;index++){const scorer=pickScorer(teamId);goals.push({teamId,minute:randomInt(1,duration),playerId:String(scorer.id),playerName:String(scorer.name),annulled:false,value:1})}return goals}
 function matchStrength(home,away){const homeAttack=(home.attack-away.defense)/22,awayAttack=(away.attack-home.defense)/22,quality=((home.rating+away.rating)/2-73)/35;return{homeLambda:clamp(1.32+homeAttack+quality+.16,.22,3.5),awayLambda:clamp(1.08+awayAttack+quality,.18,3.2)}}
-function matchDuration(){if(hasRule('duration30'))return 30;if(hasRule('duration120'))return 120;return 90}
+function matchDuration(referee=null){if(refereeById(referee?.id)?.rule==='fiveMinuteMatches')return 5;if(hasRule('duration30'))return 30;if(hasRule('duration120'))return 120;return 90}
 function incidentFactor(){let factor=1;if(hasRule('effectiveTime'))factor*=2.15;if(hasRule('duration120'))factor*=1.35;if(hasRule('duration30'))factor*=.55;return factor}
 function preRoundBottomIds(){return new Set(sortedTable().slice(9).map(row=>row.id))}
+function directorGoalValue(goal){return Math.max(1,Number(goal?.value)||1)}
+function directorComebackWinner(goals,winnerId,homeId,awayId){if(!winnerId)return false;let home=0,away=0,trailed=false;for(const goal of [...(goals||[])].sort((a,b)=>Number(a.minute)-Number(b.minute))){if(goal.teamId===homeId)home+=directorGoalValue(goal);else if(goal.teamId===awayId)away+=directorGoalValue(goal);if(winnerId===homeId&&home<away)trailed=true;if(winnerId===awayId&&away<home)trailed=true}return trailed}
+function directorLateWinningGoal(goals,winnerId,homeId,awayId,homeScore,awayScore){if(!winnerId||Number(homeScore)===Number(awayScore))return null;const loserFinal=winnerId===homeId?Number(awayScore)||0:Number(homeScore)||0;let running=0;for(const goal of [...(goals||[])].sort((a,b)=>Number(a.minute)-Number(b.minute))){if(goal.teamId!==winnerId)continue;running+=directorGoalValue(goal);if(running>loserFinal)return Number(goal.minute)>=85?goal:null}return null}
+
 function simulateMatch(fixture,context={}){
- const home=teamOf(fixture.homeId),away=teamOf(fixture.awayId),knockout=Boolean(context.knockout),bottomIds=context.bottomIds||new Set();
- if(context.skipped)return{homeId:home.id,awayId:away.id,homeGoals:0,awayGoals:0,skipped:true,winnerId:'',homePoints:0,awayPoints:0,commentary:[{minute:'—',text:'La capolista e la sua avversaria osservano un turno di riposo imposto dal regolamento.',type:'rule'}],goals:[],homeIncidents:{yellow:0,red:0,injuries:0,missedPenalties:0},awayIncidents:{yellow:0,red:0,injuries:0,missedPenalties:0}};
- if(hasRule('penaltiesOnly')){
+ const home=teamOf(fixture.homeId),away=teamOf(fixture.awayId),knockout=Boolean(context.knockout),bottomIds=context.bottomIds||new Set(),leaderId=String(context.leaderId||''),rankMap=context.rankMap||{},pointsMap=context.pointsMap||{},referee=context.refereeAssignment||null,refereeProfile=refereeById(referee?.id),refereeNotes=[];
+ const refereeNote=text=>{refereeNotes.push(text)};
+ if(context.skipped)return{homeId:home.id,awayId:away.id,homeGoals:0,awayGoals:0,skipped:true,winnerId:'',homePoints:0,awayPoints:0,commentary:[{minute:'—',text:'La capolista e la sua avversaria osservano un turno di riposo imposto dal regolamento.',type:'rule'}],goals:[],homeIncidents:{yellow:0,red:0,injuries:0,missedPenalties:0},awayIncidents:{yellow:0,red:0,injuries:0,missedPenalties:0},refereeId:referee?.id||'',refereeNotes};
+ if(hasRule('penaltiesOnly')&&!referee){
   const homeChance=.5+clamp((home.rating-away.rating)/100,-.15,.15),homeWins=rand()<homeChance,winnerId=homeWins?home.id:away.id;
-  return finalizeMatch({home,away,goals:[],homeGoals:0,awayGoals:0,winnerId,decidedByPenalties:true,commentary:[{minute:'0’',text:'Il regolamento manda le squadre direttamente ai calci di rigore.',type:'rule'},{minute:'RIG',text:`${teamOf(winnerId).name} vince la lotteria dei rigori.`,type:'goal'}],homeIncidents:{yellow:0,red:0,injuries:0,missedPenalties:0},awayIncidents:{yellow:0,red:0,injuries:0,missedPenalties:0},bottomIds,knockout});
+  return finalizeMatch({home,away,goals:[],homeGoals:0,awayGoals:0,winnerId,decidedByPenalties:true,commentary:[{minute:'0’',text:'Il regolamento manda le squadre direttamente ai calci di rigore.',type:'rule'},{minute:'RIG',text:`${teamOf(winnerId).name} vince la lotteria dei rigori.`,type:'goal'}],homeIncidents:{yellow:0,red:0,injuries:0,missedPenalties:0},awayIncidents:{yellow:0,red:0,injuries:0,missedPenalties:0},bottomIds,knockout,leaderId,rankMap,pointsMap,refereeId:'',refereeNotes:[]});
  }
- const duration=matchDuration(),strength=matchStrength(home,away),durationMultiplier=duration/90,formationMultiplier=hasRule('formation444')?1.22:(hasRule('formation333') ? .82 : 1);
- let homeCount=poisson(strength.homeLambda*durationMultiplier*formationMultiplier),awayCount=poisson(strength.awayLambda*durationMultiplier*formationMultiplier);
+ const duration=matchDuration(referee),strength=matchStrength(home,away),durationMultiplier=duration/90,formationMultiplier=hasRule('formation444')?1.22:(hasRule('formation333') ? .82 : 1);
+ let homeLambda=strength.homeLambda*durationMultiplier*formationMultiplier,awayLambda=strength.awayLambda*durationMultiplier*formationMultiplier;
+ if(refereeProfile?.rule==='leaderRedCard'&&leaderId){if(home.id===leaderId){homeLambda*=.62;awayLambda*=1.28}else if(away.id===leaderId){awayLambda*=.62;homeLambda*=1.28}}
+ let homeCount=poisson(homeLambda),awayCount=poisson(awayLambda);
  let goals=[...generateGoals(home.id,homeCount,duration),...generateGoals(away.id,awayCount,duration)].sort((a,b)=>a.minute-b.minute||rand()-.5);
- const factor=incidentFactor();
+ const factor=incidentFactor()*(refereeProfile?.rule==='fiveMinuteMatches' ? .08 : 1);
  const makeIncidents=team=>{const yellow=poisson(1.35*factor*(2-team.discipline));let red=rand()<.075*factor?1:0;if(hasRule('yellowEqualsRed'))red=Math.min(3,yellow);return{yellow,red,injuries:rand()<.10*factor?1:0,missedPenalties:rand()<.065*factor?1:0}};
  const homeIncidents=makeIncidents(home),awayIncidents=makeIncidents(away),commentary=[];
- if(hasRule('pinkCardEndsMatch')&&rand()<.16*factor){const minute=randomInt(12,duration);goals=goals.filter(goal=>goal.minute<=minute);commentary.push({minute:`${minute}’`,text:'Cartellino rosa! La partita termina immediatamente.',type:'card'})}
- if(hasRule('cancelFirstGoal')&&goals.length){const goal=goals[0];goal.annulled=true;commentary.push({minute:`${goal.minute}’`,text:`Il VAR annulla il primo gol della partita, segnato da ${goal.playerName}.`,type:'rule'})}
- if(hasRule('cancelLastGoal')){const valid=goals.filter(goal=>!goal.annulled);if(valid.length){const goal=valid[valid.length-1];goal.annulled=true;commentary.push({minute:`${goal.minute}’`,text:`Il VAR annulla l’ultimo gol della partita, segnato da ${goal.playerName}.`,type:'rule'})}}
- const validGoals=goals.filter(goal=>!goal.annulled);
+ if(refereeProfile?.rule==='leaderRedCard'&&leaderId){if(home.id===leaderId){homeIncidents.red=Math.max(1,homeIncidents.red);homeIncidents.refereeRed=true;commentary.push({minute:`${randomInt(12,Math.max(12,duration))}’`,text:`Arbitro severo: espulsione garantita per la capolista ${home.name}.`,type:'referee'});refereeNote(`${home.name}, capolista, ha ricevuto un’espulsione.`)}else if(away.id===leaderId){awayIncidents.red=Math.max(1,awayIncidents.red);awayIncidents.refereeRed=true;commentary.push({minute:`${randomInt(12,Math.max(12,duration))}’`,text:`Arbitro severo: espulsione garantita per la capolista ${away.name}.`,type:'referee'});refereeNote(`${away.name}, capolista, ha ricevuto un’espulsione.`)}}
+ if(refereeProfile?.rule==='homeStartsOne'){const goal=makeRefereeGoal(home.id,0,pickScorer(home.id));goals.push(goal);commentary.push({minute:'0’',text:`Arbitro handicap: ${home.name} parte con un gol di vantaggio.`,type:'referee'});refereeNote(`${home.name} è partita dall’1–0.`)}
+ if(refereeProfile?.rule==='underdogGuaranteedGoal'){const favored=teamOf(referee.favoredTeamId),opponent=favored?.id===home.id?away:home;if(favored&&opponent&&favored.rating<opponent.rating){goals.push(makeRefereeGoal(favored.id,randomInt(6,Math.max(6,duration)),pickScorer(favored.id)));commentary.push({minute:'🟨',text:`Arbitro underdog: gol garantito per ${favored.name}, squadra con OVR inferiore.`,type:'referee'});refereeNote(`${favored.name} ha ricevuto un gol garantito da underdog.`)}else refereeNote('Nessun effetto underdog: la squadra favorita non aveva un OVR inferiore.')}
+ if(refereeProfile?.rule==='bestPlayerGuaranteedGoal'){const favored=teamOf(referee.favoredTeamId);if(favored){const scorer=strongestPlayer(favored.id);goals.push(makeRefereeGoal(favored.id,randomInt(8,Math.max(8,duration)),scorer));commentary.push({minute:'🟨',text:`Arbitro fantacalcio: gol garantito di ${scorer.name}, il giocatore con OVR più alto di ${favored.name}.`,type:'referee'});refereeNote(`${scorer.name} ha segnato il gol garantito per ${favored.name}.`)}}
+ if(hasRule('pinkCardEndsMatch')&&rand()<.16*factor){const minute=randomInt(Math.min(12,Math.max(1,duration)),Math.max(1,duration));goals=goals.filter(goal=>goal.minute<=minute);commentary.push({minute:`${minute}’`,text:'Cartellino rosa! La partita termina immediatamente.',type:'card'})}
+ if(hasRule('cancelFirstGoal')&&goals.length){const goal=[...goals].sort((a,b)=>a.minute-b.minute)[0];goal.annulled=true;commentary.push({minute:`${goal.minute}’`,text:`Il VAR annulla il primo gol della partita, segnato da ${goal.playerName}.`,type:'rule'})}
+ if(hasRule('cancelLastGoal')){const valid=goals.filter(goal=>!goal.annulled).sort((a,b)=>a.minute-b.minute);if(valid.length){const goal=valid[valid.length-1];goal.annulled=true;commentary.push({minute:`${goal.minute}’`,text:`Il VAR annulla l’ultimo gol della partita, segnato da ${goal.playerName}.`,type:'rule'})}}
+ if(refereeProfile?.rule==='cancelTopThreeFirstGoal'){for(const team of [home,away]){if((Number(rankMap[team.id])||99)>3)continue;const goal=goals.filter(item=>item.teamId===team.id&&!item.annulled).sort((a,b)=>a.minute-b.minute)[0];if(goal){goal.annulled=true;commentary.push({minute:`${goal.minute}’`,text:`Arbitro annulla-big: annullato il primo gol di ${team.name}, squadra nella top 3.`,type:'referee'});refereeNote(`Annullato il primo gol di ${team.name}.`)}}}
+ if(refereeProfile?.rule==='opponentGoalsHalfCancelled'){const favoredId=String(referee.favoredTeamId||''),opponentId=favoredId===home.id?away.id:home.id;let cancelled=0;for(const goal of goals.filter(item=>item.teamId===opponentId&&!item.annulled)){if(rand()<.5){goal.annulled=true;cancelled+=1;commentary.push({minute:`${goal.minute}’`,text:`Arbitro cornuti: annullato un gol di ${teamOf(opponentId).name}.`,type:'referee'})}}refereeNote(`${cancelled} gol dell’avversario annullati su decisione dell’Arbitro cornuti.`)}
+ if(refereeProfile?.rule==='homeMaxOneGoal'){const homeValid=goals.filter(item=>item.teamId===home.id&&!item.annulled).sort((a,b)=>a.minute-b.minute);for(const goal of homeValid.slice(1)){goal.annulled=true;commentary.push({minute:`${goal.minute}’`,text:`Arbitro in trasferta: ${home.name} aveva già segnato il massimo consentito di un gol.`,type:'referee'})}if(homeValid.length>1)refereeNote(`${homeValid.length-1} gol oltre il limite sono stati annullati a ${home.name}.`)}
+ if(refereeProfile?.rule==='varFavorsLower'){const homeRank=Number(rankMap[home.id])||99,awayRank=Number(rankMap[away.id])||99,lower=homeRank>=awayRank?home:away,higher=lower.id===home.id?away:home,higherGoal=goals.filter(item=>item.teamId===higher.id&&!item.annulled).sort((a,b)=>a.minute-b.minute)[0];if(higherGoal&&rand()<.5){higherGoal.annulled=true;commentary.push({minute:`${higherGoal.minute}’`,text:`Arbitro al VAR: gol annullato a ${higher.name}, decisione favorevole alla squadra più in basso ${lower.name}.`,type:'referee'});refereeNote(`Il VAR ha annullato un gol a ${higher.name}.`)}else{const scorer=pickScorer(lower.id);goals.push(makeRefereeGoal(lower.id,randomInt(20,Math.max(20,duration)),scorer));commentary.push({minute:'VAR',text:`Arbitro al VAR: rigore concesso a ${lower.name}, la squadra più in basso in classifica.`,type:'referee'});refereeNote(`${lower.name} ha ricevuto un rigore trasformato grazie al VAR.`)}}
+ let validGoals=goals.filter(goal=>!goal.annulled);
  if(hasRule('lateGoalsDouble'))for(const goal of validGoals)if(goal.minute>=80){goal.value=2;commentary.push({minute:`${goal.minute}’`,text:`Regolamento attivo: il gol di ${goal.playerName} vale doppio.`,type:'rule'})}
- for(const goal of validGoals)commentary.push({minute:`${goal.minute}’`,text:`Gol di ${goal.playerName} per ${teamOf(goal.teamId).name}${goal.value===2?' (vale doppio)':''}.`,type:'goal'});
+ for(const goal of validGoals)commentary.push({minute:`${goal.minute}’`,text:`Gol di ${goal.playerName} per ${teamOf(goal.teamId).name}${goal.value===2?' (vale doppio)':''}.`,type:goal.refereeGoal?'referee':'goal'});
  commentary.push(...incidentCommentary(home,homeIncidents,duration),...incidentCommentary(away,awayIncidents,duration));
  let homeGoals=sum(validGoals.filter(goal=>goal.teamId===home.id).map(goal=>goal.value)),awayGoals=sum(validGoals.filter(goal=>goal.teamId===away.id).map(goal=>goal.value));
- if(hasRule('goldenGoal')&&validGoals.length){const first=validGoals[0];homeGoals=first.teamId===home.id?1:0;awayGoals=first.teamId===away.id?1:0;commentary.push({minute:`${first.minute}’`,text:'Golden goal: la partita si chiude sulla prima rete.',type:'rule'})}
- if(hasRule('lastGoalWins')&&validGoals.length){const last=validGoals[validGoals.length-1];homeGoals=last.teamId===home.id?1:0;awayGoals=last.teamId===away.id?1:0;commentary.push({minute:`${last.minute}’`,text:'Conta soltanto l’ultimo gol: il risultato viene riscritto dal regolamento.',type:'rule'})}
+ if(hasRule('goldenGoal')&&validGoals.length){const first=[...validGoals].sort((a,b)=>a.minute-b.minute)[0];homeGoals=first.teamId===home.id?1:0;awayGoals=first.teamId===away.id?1:0;commentary.push({minute:`${first.minute}’`,text:'Golden goal: la partita si chiude sulla prima rete.',type:'rule'})}
+ if(hasRule('lastGoalWins')&&validGoals.length){const last=[...validGoals].sort((a,b)=>a.minute-b.minute)[validGoals.length-1];homeGoals=last.teamId===home.id?1:0;awayGoals=last.teamId===away.id?1:0;commentary.push({minute:`${last.minute}’`,text:'Conta soltanto l’ultimo gol: il risultato viene riscritto dal regolamento.',type:'rule'})}
  if(hasRule('redCardGoal')){homeGoals+=homeIncidents.red;awayGoals+=awayIncidents.red;if(homeIncidents.red||awayIncidents.red)commentary.push({minute:'⚖️',text:'Ogni cartellino rosso ricevuto viene convertito in un gol per la stessa squadra.',type:'rule'})}
  if(hasRule('negativeIncidents')){homeGoals-=homeIncidents.red+homeIncidents.injuries+homeIncidents.missedPenalties;awayGoals-=awayIncidents.red+awayIncidents.injuries+awayIncidents.missedPenalties;commentary.push({minute:'⚖️',text:'Rossi, infortuni e rigori sbagliati sottraggono reti dal risultato.',type:'rule'})}
+ if(refereeProfile?.rule==='playUntilFavoredScores'){const favoredId=String(referee.favoredTeamId||''),favoredScore=favoredId===home.id?homeGoals:awayGoals;if(favoredScore<=0){const minute=randomInt(91,120),needed=1-favoredScore;addRefereeGoals(validGoals,favoredId,needed,minute);if(favoredId===home.id)homeGoals=1;else awayGoals=1;commentary.push({minute:`${minute}’`,text:`Arbitro finché non metti l’ultimo: la partita termina soltanto dopo il gol di ${teamOf(favoredId).name}.`,type:'referee'});refereeNote(`${teamOf(favoredId).name} ha segnato nel recupero prolungato.`)}else refereeNote(`${teamOf(favoredId).name} aveva già segnato: nessun recupero infinito necessario.`)}
  let winnerId=homeGoals>awayGoals?home.id:awayGoals>homeGoals?away.id:'';let decidedByPenalties=false;
- if((hasRule('noDraws')||knockout)&&homeGoals===awayGoals){const homeChance=.5+clamp((home.rating-away.rating)/100,-.18,.18),homeWins=rand()<homeChance;winnerId=homeWins?home.id:away.id;decidedByPenalties=true;commentary.push({minute:'RIG',text:`${teamOf(winnerId).name} vince dopo supplementari e calci di rigore.`,type:'goal'})}
+ if((hasRule('noDraws')||knockout||hasRule('penaltiesOnly'))&&homeGoals===awayGoals){const homeChance=.5+clamp((home.rating-away.rating)/100,-.18,.18),homeWins=rand()<homeChance;winnerId=homeWins?home.id:away.id;decidedByPenalties=true;commentary.push({minute:'RIG',text:`${teamOf(winnerId).name} vince dopo supplementari e calci di rigore.`,type:'goal'})}
+ if(refereeProfile?.rule==='favoredCannotLose'){const favoredId=String(referee.favoredTeamId||''),favoredHome=favoredId===home.id,favoredScore=favoredHome?homeGoals:awayGoals,otherScore=favoredHome?awayGoals:homeGoals;if(favoredScore<otherScore){const needed=otherScore-favoredScore;addRefereeGoals(validGoals,favoredId,needed,91);if(favoredHome)homeGoals=otherScore;else awayGoals=otherScore;winnerId='';decidedByPenalties=false;commentary.push({minute:'90+’',text:`Arbitro amico: ${teamOf(favoredId).name} raggiunge il pareggio e non perde la partita.`,type:'referee'});refereeNote(`${teamOf(favoredId).name} è stata salvata dalla sconfitta.`)}else if(homeGoals===awayGoals&&winnerId&&winnerId!==favoredId){winnerId=favoredId;commentary.push({minute:'RIG',text:`Arbitro amico: ${teamOf(favoredId).name} non perde nemmeno ai rigori.`,type:'referee'});refereeNote(`${teamOf(favoredId).name} è stata favorita nella decisione ai rigori.`)}else refereeNote(`${teamOf(favoredId).name} non stava perdendo: nessuna correzione necessaria.`)}
+ let bollenteCaught=false;
+ if(refereeProfile?.rule==='favoredGuaranteedWin'){const favoredId=String(referee.favoredTeamId||''),favoredHome=favoredId===home.id,otherScore=favoredHome?awayGoals:homeGoals,favoredScore=favoredHome?homeGoals:awayGoals,needed=Math.max(0,otherScore-favoredScore+1);if(needed)addRefereeGoals(validGoals,favoredId,needed,88);if(favoredHome)homeGoals=otherScore+1;else awayGoals=otherScore+1;winnerId=favoredId;decidedByPenalties=false;bollenteCaught=rand()<.2;commentary.push({minute:'🔥',text:`Arbitro bollente: vittoria garantita per ${teamOf(favoredId).name}.`,type:'referee'});refereeNote(`${teamOf(favoredId).name} ha ottenuto la vittoria garantita.${bollenteCaught?' Lo scandalo è stato scoperto.':''}`)}
  commentary.sort((a,b)=>(parseInt(a.minute)||999)-(parseInt(b.minute)||999));
- return finalizeMatch({home,away,goals:validGoals,homeGoals,awayGoals,winnerId,decidedByPenalties,commentary,homeIncidents,awayIncidents,bottomIds,knockout});
+ return finalizeMatch({home,away,goals:validGoals,homeGoals,awayGoals,winnerId,decidedByPenalties,commentary,homeIncidents,awayIncidents,bottomIds,knockout,leaderId,rankMap,pointsMap,refereeId:referee?.id||'',refereeTitle:refereeProfile?.title||'',refereeNotes,bollenteCaught});
 }
-function incidentCommentary(team,incidents,duration){const lines=[];if(incidents.red)lines.push({minute:`${randomInt(12,duration)}’`,text:`Cartellino rosso per ${team.name}.`,type:'card'});if(incidents.injuries)lines.push({minute:`${randomInt(10,duration)}’`,text:`Infortunio per ${team.name}.`,type:'card'});if(incidents.missedPenalties)lines.push({minute:`${randomInt(8,duration)}’`,text:`${team.name} sbaglia un calcio di rigore.`,type:'card'});return lines}
+function incidentCommentary(team,incidents,duration){const lines=[],maxMinute=Math.max(1,Number(duration)||90),minute=min=>randomInt(Math.min(min,maxMinute),maxMinute);if(incidents.red&&!incidents.refereeRed)lines.push({minute:`${minute(12)}’`,text:`Cartellino rosso per ${team.name}.`,type:'card'});if(incidents.injuries)lines.push({minute:`${minute(10)}’`,text:`Infortunio per ${team.name}.`,type:'card'});if(incidents.missedPenalties)lines.push({minute:`${minute(8)}’`,text:`${team.name} sbaglia un calcio di rigore.`,type:'card'});return lines}
 function finalizeMatch(data){
- const {home,away,homeGoals,awayGoals,winnerId,decidedByPenalties,bottomIds,knockout}=data;
+ const {home,away,homeGoals,awayGoals,winnerId,decidedByPenalties,bottomIds,knockout,leaderId='',rankMap={},pointsMap={}}=data;
  let homeBase=0,awayBase=0;
+ const homeWon=winnerId===home.id||(homeGoals>awayGoals&&!winnerId),awayWon=winnerId===away.id||(awayGoals>homeGoals&&!winnerId),draw=!homeWon&&!awayWon&&homeGoals===awayGoals,winner=homeWon?home.id:awayWon?away.id:'',loser=homeWon?away.id:awayWon?home.id:'';
+ const ruleNotes=[];
+ const note=text=>{ruleNotes.push(text);data.commentary=Array.isArray(data.commentary)?data.commentary:[];data.commentary.push({minute:'⚖️',text,type:'rule'})};
  if(!knockout){
   if(winnerId){homeBase=winnerId===home.id?3:0;awayBase=winnerId===away.id?3:0}else if(homeGoals===awayGoals){homeBase=1;awayBase=1}else{homeBase=homeGoals>awayGoals?3:0;awayBase=awayGoals>homeGoals?3:0}
   if(hasRule('pointsEqualGoals')){homeBase=homeGoals;awayBase=awayGoals}
   if(!winnerId&&homeGoals===0&&awayGoals===0&&hasRule('zeroZeroNoPoints'))homeBase=awayBase=0;
   if(!winnerId&&homeGoals===0&&awayGoals===0&&hasRule('zeroZeroSeven'))homeBase=awayBase=7;
   if(hasRule('bottomHalfHelp')){
-   const apply=(teamId,won,draw)=>bottomIds.has(teamId)?won?4:draw?2:1:null;
-   const homeSpecial=apply(home.id,winnerId===home.id,!winnerId&&homeGoals===awayGoals),awaySpecial=apply(away.id,winnerId===away.id,!winnerId&&homeGoals===awayGoals);
+   const apply=(teamId,won,isDraw)=>bottomIds.has(teamId)?won?4:isDraw?2:1:null;
+   const homeSpecial=apply(home.id,homeWon,draw),awaySpecial=apply(away.id,awayWon,draw);
    if(homeSpecial!==null)homeBase=homeSpecial;if(awaySpecial!==null)awayBase=awaySpecial;
   }
-  if(hasRule('lossMinusThree')){if(winnerId===home.id||homeGoals>awayGoals)awayBase=-3;if(winnerId===away.id||awayGoals>homeGoals)homeBase=-3}
+  if(hasRule('lossMinusThree')){if(homeWon)awayBase=-3;if(awayWon)homeBase=-3}
+  if(hasRule('narrowWinFour')&&winner&&Math.abs(Number(homeGoals)-Number(awayGoals))===1){if(homeWon)homeBase=Math.max(homeBase,4);else awayBase=Math.max(awayBase,4);note('Vittoria di misura: la vittoria assegna 4 punti.')}
+  if(hasRule('directMatchFour')&&winner&&Math.abs((Number(pointsMap[home.id])||0)-(Number(pointsMap[away.id])||0))<=3){if(homeWon)homeBase=Math.max(homeBase,4);else awayBase=Math.max(awayBase,4);note('Scontro diretto: la vittoria assegna 4 punti.')}
+  if(hasRule('leaderWinTwo')&&winner&&winner===leaderId){if(homeWon)homeBase=2;else awayBase=2;note('Pressione da primato: la vittoria della capolista vale soltanto 2 punti.')}
+  if(hasRule('underdogTopThreeDrawTwo')&&draw){if((Number(rankMap[home.id])||99)>=11&&(Number(rankMap[away.id])||99)<=3){homeBase=Math.max(homeBase,2);note(`${home.name} ottiene 2 punti grazie al Pareggio d’impresa.`)}if((Number(rankMap[away.id])||99)>=11&&(Number(rankMap[home.id])||99)<=3){awayBase=Math.max(awayBase,2);note(`${away.name} ottiene 2 punti grazie al Pareggio d’impresa.`)}}
  }
  let homeExtra=0,awayExtra=0;
  if(!knockout&&hasRule('concededGoalMinusPoint')){homeExtra-=awayGoals;awayExtra-=homeGoals}
  if(!knockout&&hasRule('cleanSheetBonus')){if(awayGoals===0)homeExtra+=1;if(homeGoals===0)awayExtra+=1}
  if(!knockout&&hasRule('braceBonusPoint')){const homeCounts=scorerCounts(data.goals,home.id),awayCounts=scorerCounts(data.goals,away.id);if(Object.values(homeCounts).some(value=>value>=2))homeExtra+=1;if(Object.values(awayCounts).some(value=>value>=2))awayExtra+=1}
- return {...data,homeId:home.id,awayId:away.id,homePoints:homeBase+homeExtra,awayPoints:awayBase+awayExtra,homeBasePoints:homeBase,awayBasePoints:awayBase,homeExtraPoints:homeExtra,awayExtraPoints:awayExtra,qualityHome:resultQuality(homeGoals,awayGoals,winnerId===home.id),qualityAway:resultQuality(awayGoals,homeGoals,winnerId===away.id),decidedByPenalties:Boolean(decidedByPenalties)};
+ if(!knockout&&hasRule('spectacleBonus')&&Number(homeGoals)+Number(awayGoals)>=4){homeExtra+=1;awayExtra+=1;note('Calcio spettacolo: entrambe le squadre ricevono +1 punto per i 4 o più gol complessivi.')}
+ if(!knockout&&hasRule('lateWinnerBonus')&&winner&&directorLateWinningGoal(data.goals,winner,home.id,away.id,homeGoals,awayGoals)){if(homeWon)homeExtra+=1;else awayExtra+=1;note(`${teamOf(winner).name} riceve +1 punto per il gol decisivo segnato dall’85° minuto.`)}
+ if(!knockout&&hasRule('comebackBonus')&&winner&&directorComebackWinner(data.goals,winner,home.id,away.id)){if(homeWon)homeExtra+=1;else awayExtra+=1;note(`${teamOf(winner).name} riceve +1 punto per la vittoria in rimonta.`)}
+ if(!knockout&&hasRule('beatLeaderBonus')&&winner&&loser===leaderId){if(homeWon)homeExtra+=2;else awayExtra+=2;note(`${teamOf(winner).name} riceve +2 punti per aver battuto la capolista.`)}
+ if(!knockout&&hasRule('underdogTopFiveWinBonus')&&winner&&(Number(rankMap[winner])||99)>=11&&(Number(rankMap[loser])||99)<=5){if(homeWon)homeExtra+=2;else awayExtra+=2;note(`${teamOf(winner).name} riceve +2 punti grazie a Davide contro Golia.`)}
+ if(!knockout&&hasRule('awayWinBonus')&&awayWon){awayExtra+=1;note(`${away.name} riceve +1 punto per la vittoria in trasferta.`)}
+ return {...data,homeId:home.id,awayId:away.id,homePoints:homeBase+homeExtra,awayPoints:awayBase+awayExtra,homeBasePoints:homeBase,awayBasePoints:awayBase,homeExtraPoints:homeExtra,awayExtraPoints:awayExtra,regulationNotes:ruleNotes,qualityHome:resultQuality(homeGoals,awayGoals,homeWon),qualityAway:resultQuality(awayGoals,homeGoals,awayWon),decidedByPenalties:Boolean(decidedByPenalties)};
 }
 function scorerCounts(goals,teamId){const counts={};for(const goal of goals||[])if(goal.teamId===teamId)counts[goal.playerId]=(counts[goal.playerId]||0)+1;return counts}
 function resultQuality(gf,ga,won){return (won?300:gf===ga?120:0)+(gf-ga)*20+gf*4+rand()}
 
 function playCurrentRound(mode){
+ if(state.pendingRefereeId){renderRefereeAssignment();return}
  if(state.pendingChoices?.length){renderInfluenceChoices();return}
  if(state.round>=TOTAL_ROUNDS)return;
  const report=simulateLeagueRound();
@@ -359,10 +544,10 @@ function playCurrentRound(mode){
  showRoundModal(report,mode==='live');
 }
 function simulateLeagueRound(){
- const bottomIds=preRoundBottomIds(),leaderId=sortedTable()[0]?.id||'',matches=currentRoundMatches(),results=[];
- for(const fixture of matches){const skipped=hasRule('leaderRests')&&state.round>0&&(fixture.homeId===leaderId||fixture.awayId===leaderId);results.push(simulateMatch(fixture,{bottomIds,skipped}))}
+ const tableBefore=sortedTable(),bottomIds=preRoundBottomIds(),leaderId=tableBefore[0]?.id||'',rankMap=Object.fromEntries(tableBefore.map((row,index)=>[row.id,index+1])),pointsMap=Object.fromEntries(tableBefore.map(row=>[row.id,Number(row.pts)||0])),matches=currentRoundMatches(),results=[],assignment=state.roundReferee?{...state.roundReferee}:null;
+ for(const fixture of matches){const skipped=hasRule('leaderRests')&&state.round>0&&(fixture.homeId===leaderId||fixture.awayId===leaderId),refereeAssignment=refereeForFixture(fixture);results.push(simulateMatch(fixture,{bottomIds,skipped,leaderId,rankMap,pointsMap,refereeAssignment}))}
  if(hasRule('formulaOne'))applyFormulaOnePoints(results);
- return {round:state.round+1,matches:results,regulations:activeRegulations().map(rule=>rule.id),createdAt:new Date().toISOString()};
+ return {round:state.round+1,matches:results,regulations:activeRegulations().map(rule=>rule.id),refereeAssignment:assignment,bollenteCaught:results.some(match=>match.bollenteCaught),createdAt:new Date().toISOString()};
 }
 function applyFormulaOnePoints(matches){
  const entries=[];
@@ -373,10 +558,15 @@ function applyFormulaOnePoints(matches){
 }
 function commitLeagueRound(report){
  for(const match of report.matches)commitMatchToTable(match);
+ if(report.bollenteCaught){state.table[state.targetTeamId].pts=0;state.meta=state.meta&&typeof state.meta==='object'?state.meta:{};state.meta.refereeScandals=(Number(state.meta.refereeScandals)||0)+1;const history=[...(state.refereeHistory||[])].reverse().find(item=>Number(item.round)===Number(report.round)&&item.id==='bollente');if(history)history.caught=true}
  state.history.push(report);
+ tickDirectorRegulations();
  state.round+=1;
  state.influenceUsedToday=false;
  state.pendingChoices=[];
+ state.pendingChoiceType='regulation';
+ state.pendingRefereeId='';
+ state.roundReferee=null;
  if(state.round>=TOTAL_ROUNDS){state.regularSeasonRank=rankOf(state.targetTeamId);if(hasRule('playoffsTopEight'))preparePlayoffs();else finishSeason(sortedTable()[0]?.id||'')}
  save();
  if(state.phase==='season')render();
@@ -397,7 +587,8 @@ function registerMatchStats(match){
 
 function showRoundModal(report,live){
  const targetMatch=report.matches.find(match=>match.homeId===state.targetTeamId||match.awayId===state.targetTeamId),home=teamOf(targetMatch.homeId),away=teamOf(targetMatch.awayId),lines=targetMatch.commentary?.length?targetMatch.commentary:[{minute:'90’',text:'Partita priva di episodi rilevanti.',type:''}];
- modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal result-modal"><div class="label">Risultato finale · Giornata ${report.round}</div><div class="scoreboard"><div class="scoreboard-team">${esc(home.name)}</div><div class="scoreboard-score">${targetMatch.skipped?'RIPOSO':`${targetMatch.homeGoals}–${targetMatch.awayGoals}`}</div><div class="scoreboard-team">${esc(away.name)}</div></div><div class="commentary" id="commentaryFeed"></div><section class="other-results-modal hidden" id="otherResultsBlock"><h3>Risultati dagli altri campi</h3><div class="modal-result-grid">${report.matches.map(renderResultRow).join('')}</div></section><div class="modal-actions"><button id="skipCommentaryBtn" class="btn gold ${live?'':'hidden'}" type="button">Mostra tutto</button><button id="continueResultBtn" class="btn primary ${live?'hidden':''}" type="button">Continua</button></div></section></div>`;
+ const refereeMatches=report.matches.filter(match=>match.refereeId),allRefereeNotes=refereeMatches.flatMap(match=>match.refereeNotes||[]),refereeNotes=allRefereeNotes.slice(0,4),extraRefereeNotes=Math.max(0,allRefereeNotes.length-refereeNotes.length),refereeReport=report.refereeAssignment?`<section class="referee-round-report ${report.bollenteCaught?'scandal':''}"><b>${report.bollenteCaught?'🚨 SCANDALO ARBITRALE':'🟨 IMPATTO ARBITRALE'}</b><span>${esc(refereeAssignmentDescription(report.refereeAssignment))}</span>${refereeNotes.length?`<small>${refereeNotes.map(esc).join(' · ')}${extraRefereeNotes?` · Altri ${extraRefereeNotes} effetti negli altri campi.`:''}</small>`:''}${report.bollenteCaught?`<strong>I punti in classifica di ${esc(targetTeam().name)} sono stati azzerati.</strong>`:''}</section>`:'';
+ modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal result-modal"><div class="label">Risultato finale · Giornata ${report.round}</div><div class="scoreboard"><div class="scoreboard-team">${esc(home.name)}</div><div class="scoreboard-score">${targetMatch.skipped?'RIPOSO':`${targetMatch.homeGoals}–${targetMatch.awayGoals}`}</div><div class="scoreboard-team">${esc(away.name)}</div></div>${refereeReport}<div class="commentary" id="commentaryFeed"></div><section class="other-results-modal hidden" id="otherResultsBlock"><h3>Risultati dagli altri campi</h3><div class="modal-result-grid">${report.matches.map(renderResultRow).join('')}</div></section><div class="modal-actions"><button id="skipCommentaryBtn" class="btn gold ${live?'':'hidden'}" type="button">Mostra tutto</button><button id="continueResultBtn" class="btn primary ${live?'hidden':''}" type="button">Continua</button></div></section></div>`;
  const feed=document.getElementById('commentaryFeed'),others=document.getElementById('otherResultsBlock'),continueButton=document.getElementById('continueResultBtn'),skipButton=document.getElementById('skipCommentaryBtn');
  const appendLine=line=>feed.insertAdjacentHTML('beforeend',`<div class="commentary-line ${esc(line.type||'')}"><b>${esc(line.minute)}</b><span>${esc(line.text)}</span></div>`);
  const finish=()=>{window.clearInterval(commentaryTimer);commentaryTimer=0;others.classList.remove('hidden');continueButton.classList.remove('hidden');skipButton.classList.add('hidden');feed.scrollTop=feed.scrollHeight};
@@ -580,6 +771,9 @@ function buildDirectorVictoryPayload(directorName){
   punteggio_ds:score.score,
   regolamenti_approvati:approved.length,
   regolamenti:approved.join(' | '),
+  arbitri_designati:(state.refereeHistory||[]).length,
+  arbitri:(state.refereeHistory||[]).map(item=>item.title||refereeById(item.id)?.title||item.id).join(' | '),
+  scandali_arbitrali:Number(state.meta?.refereeScandals)||0,
   playoff_scudetto:Boolean(state.playoff),
   source:'fantaballa-director-sportivo',
   saveTarget:'google-sheets-classifica',
@@ -637,7 +831,7 @@ function renderDirectorSubmissionCard(success){
 }
 function renderFinished(){
  const target=targetTeam(),row=targetRow(),rank=rankOf(target.id),playoffUsed=Boolean(state.playoff),success=state.championId===target.id,closeSecond=!success&&!playoffUsed&&rank===2&&Math.abs(gapFromTop())<=3,bronze=!success&&!closeSecond&&rank>0&&state.startExpectedRank-rank>=5,title=success?'MISSIONE COMPIUTA':closeSecond?'ARGENTO':bronze?'BRONZO':'OBIETTIVO MANCATO',position=success?'🏆':`${rank}°`,subtitle=success?`${target.name} è Campione d’Italia grazie al campionato regolamentare che hai costruito.`:closeSecond?`${target.name} ha sfiorato il titolo per non più di tre punti.`:bronze?`${target.name} ha migliorato di almeno cinque posizioni la previsione iniziale.`:`${target.name} non è riuscito a conquistare il campionato.`,score=directorScoreBreakdown(row.pts,state.influence,state.startExpectedRank);
- screen.innerHTML=`<section class="panel" style="${teamStyle(target)}"><div class="finish-hero"><div class="label" style="color:#ffe96c">Direttore Sportivo · Stagione conclusa</div><h1>${esc(title)}</h1><div class="finish-position">${position}</div><p>${esc(subtitle)}</p></div><div class="finish-grid"><div class="finish-stat"><b>${formatPoints(row.pts)}</b><span>Punti</span></div><div class="finish-stat"><b>${row.w}-${row.d}-${row.l}</b><span>V-N-P</span></div><div class="finish-stat"><b>${score.remaining}</b><span>Influenza rimasta</span></div><div class="finish-stat"><b>${esc(score.label)}</b><span>Difficoltà</span></div></div><section class="panel director-score-card difficulty-${score.key}"><div class="director-score-head"><div><div class="label">Punteggio classifica</div><h3>Punteggio Direttore Sportivo</h3></div><strong>${score.score.toLocaleString('it-IT')}</strong></div><div class="director-score-formula"><span><b>${formatPoints(score.finalPoints)} × 10</b><small>${Math.round(score.pointsValue).toLocaleString('it-IT')} dai punti finali</small></span><i>+</i><span><b>${score.remaining} × 80</b><small>${score.influenceValue.toLocaleString('it-IT')} dall’Influenza rimasta</small></span><i>×</i><span><b>${formatDirectorMultiplier(score.multiplier)}</b><small>${esc(score.label)} · prevista ${state.startExpectedRank}ª</small></span><i>=</i><span class="director-score-total"><b>${score.score.toLocaleString('it-IT')}</b><small>Punteggio DS finale</small></span></div></section>${renderDirectorSubmissionCard(success)}<section class="panel"><h3>Regolamenti approvati</h3>${state.regulationHistory.length?`<div class="active-rules">${state.regulationHistory.map(item=>`<article class="rule-card"><b>G${item.round} · ${esc(item.title)}</b><small>${item.replaced?`Ha sostituito ${esc(item.replaced)}.`:'Applicato al campionato.'}</small></article>`).join('')}</div>`:`<div class="empty">Hai completato la stagione senza usare l’Influenza.</div>`}</section><section class="panel"><h3>Classifica finale</h3>${renderTable()}</section><div class="setup-actions" style="margin-top:16px"><button id="newSeasonBtn" class="btn primary" type="button">Nuova missione casuale</button><a class="btn gold" href="classifica.html?board=director">Classifica Direttore Sportivo</a><a class="btn" href="index.html">Torna al menu</a></div></section>`;
+ screen.innerHTML=`<section class="panel" style="${teamStyle(target)}"><div class="finish-hero"><div class="label" style="color:#ffe96c">Direttore Sportivo · Stagione conclusa</div><h1>${esc(title)}</h1><div class="finish-position">${position}</div><p>${esc(subtitle)}</p></div><div class="finish-grid"><div class="finish-stat"><b>${formatPoints(row.pts)}</b><span>Punti</span></div><div class="finish-stat"><b>${row.w}-${row.d}-${row.l}</b><span>V-N-P</span></div><div class="finish-stat"><b>${score.remaining}</b><span>Influenza rimasta</span></div><div class="finish-stat"><b>${esc(score.label)}</b><span>Difficoltà</span></div></div><section class="panel director-score-card difficulty-${score.key}"><div class="director-score-head"><div><div class="label">Punteggio classifica</div><h3>Punteggio Direttore Sportivo</h3></div><strong>${score.score.toLocaleString('it-IT')}</strong></div><div class="director-score-formula"><span><b>${formatPoints(score.finalPoints)} × 10</b><small>${Math.round(score.pointsValue).toLocaleString('it-IT')} dai punti finali</small></span><i>+</i><span><b>${score.remaining} × 80</b><small>${score.influenceValue.toLocaleString('it-IT')} dall’Influenza rimasta</small></span><i>×</i><span><b>${formatDirectorMultiplier(score.multiplier)}</b><small>${esc(score.label)} · prevista ${state.startExpectedRank}ª</small></span><i>=</i><span class="director-score-total"><b>${score.score.toLocaleString('it-IT')}</b><small>Punteggio DS finale</small></span></div></section>${renderDirectorSubmissionCard(success)}<section class="panel"><h3>Regolamenti approvati</h3>${state.regulationHistory.length?`<div class="active-rules">${state.regulationHistory.map(item=>`<article class="rule-card"><b>G${item.round} · ${esc(item.title)}</b><small>${item.replaced?`Ha sostituito ${esc(item.replaced)}.`:'Applicato al campionato.'}</small></article>`).join('')}</div>`:`<div class="empty">Nessun regolamento approvato.</div>`}</section><section class="panel"><h3>Designazioni arbitrali</h3>${state.refereeHistory?.length?`<div class="active-rules">${state.refereeHistory.map(item=>`<article class="rule-card referee-rule-card ${item.caught?'referee-caught':''}"><b>G${item.round} · ${esc(item.title||refereeById(item.id)?.title||item.id)}</b><small>${esc(refereeAssignmentDescription(item))}${item.caught?' · SCANDALO: punti azzerati.':''}</small></article>`).join('')}</div>`:`<div class="empty">Nessun arbitro designato tramite Influenza.</div>`}</section><section class="panel"><h3>Classifica finale</h3>${renderTable()}</section><div class="setup-actions" style="margin-top:16px"><button id="newSeasonBtn" class="btn primary" type="button">Nuova missione casuale</button><a class="btn gold" href="classifica.html?board=director">Classifica Direttore Sportivo</a><a class="btn" href="index.html">Torna al menu</a></div></section>`;
  const nameInput=document.getElementById('directorNameInput');
  if(nameInput)nameInput.addEventListener('input',()=>{state.directorName=String(nameInput.value||'');save()});
  const sendButton=document.getElementById('sendDirectorVictoryBtn');
@@ -647,7 +841,7 @@ function renderFinished(){
 
 function confirmReset(){
  if(!state){renderSetup();return}
- modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal"><div class="label">Azzera stagione</div><h2>Eliminare la missione?</h2><p class="subline">Classifica, regolamenti, Influenza e cronologia verranno cancellati definitivamente.</p><div class="modal-actions"><button id="confirmResetBtn" class="btn red" type="button">Sì, azzera tutto</button><button id="cancelResetBtn" class="btn" type="button">Annulla</button></div></section></div>`;
+ modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal"><div class="label">Azzera stagione</div><h2>Eliminare la missione?</h2><p class="subline">Classifica, regolamenti, arbitri, Influenza e cronologia verranno cancellati definitivamente.</p><div class="modal-actions"><button id="confirmResetBtn" class="btn red" type="button">Sì, azzera tutto</button><button id="cancelResetBtn" class="btn" type="button">Annulla</button></div></section></div>`;
  document.getElementById('confirmResetBtn').onclick=()=>{localStorage.removeItem(SAVE_KEY);state=null;closeModal();render();toast('Stagione azzerata.')};
  document.getElementById('cancelResetBtn').onclick=closeModal;
 }

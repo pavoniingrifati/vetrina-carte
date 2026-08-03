@@ -1,21 +1,35 @@
-﻿@echo off
-setlocal
+@echo off
+setlocal EnableExtensions
+chcp 65001 >nul
 cd /d "%~dp0"
 echo.
-echo PATCH PUNTEGGIO DIRETTORE SPORTIVO
-if not exist "assets\director\director.js" goto :missing
-if not exist "classifica.html" goto :missing
-if not exist "google-apps-script\invio_vittoria.gs" goto :missing
-echo I file della patch sono presenti.
+echo =====================================================
+echo   FANTABALLA - FIX CALENDARIO CASA/TRASFERTA
+echo =====================================================
 echo.
-echo Copia o estrai questa cartella nella directory principale di Fantaballa,
-echo confermando la sostituzione dei file.
+set "TARGET=%~1"
+if not defined TARGET (
+  set /p "TARGET=Incolla il percorso della cartella principale di Fantaballa: "
+)
+set "TARGET=%TARGET:"=%"
+if not exist "%TARGET%\index.html" (
+  echo.
+  echo [ERRORE] Nel percorso indicato non trovo index.html.
+  echo Controlla di aver selezionato la cartella principale del sito.
+  pause
+  exit /b 1
+)
 echo.
-echo PASSAGGIO OBBLIGATORIO: aggiorna Google Apps Script.
-start "" notepad.exe "AGGIORNA_GOOGLE_SCRIPT.txt"
+echo Copia dei file in corso...
+robocopy "%~dp0" "%TARGET%" /E /R:1 /W:1 /XF "APPLICA_PATCH.bat" "LEGGIMI_PATCH.txt" >nul
+set "RC=%ERRORLEVEL%"
+if %RC% GEQ 8 (
+  echo [ERRORE] La copia non e riuscita. Codice Robocopy: %RC%
+  pause
+  exit /b %RC%
+)
+echo.
+echo [OK] Calendario Direttore Sportivo corretto.
+echo I nuovi campionati avranno 19 gare in casa e 19 in trasferta.
 pause
 exit /b 0
-:missing
-echo [ERRORE] Estrai completamente lo ZIP prima di usare questo file.
-pause
-exit /b 1
