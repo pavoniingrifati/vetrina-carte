@@ -1,6 +1,6 @@
 'use strict';
 
-const DIRECTOR_VERSION=8;
+const DIRECTOR_VERSION=9;
 const SAVE_KEY='fantaballa_director_sportivo_v1';
 const INFLUENCE_START=16;
 const LEGACY_INFLUENCE_START=8;
@@ -68,7 +68,7 @@ function formatDirectorMultiplier(value){return `×${Number(value||1).toFixed(2)
 function toast(message){if(!toastRoot)return;toastRoot.textContent=String(message||'');toastRoot.classList.add('show');window.clearTimeout(toastRoot._timer);toastRoot._timer=window.setTimeout(()=>toastRoot.classList.remove('show'),2400)}
 function closeModal(){window.clearInterval(commentaryTimer);commentaryTimer=0;modalRoot.innerHTML=''}
 function save(){if(!state)return;state.updatedAt=new Date().toISOString();localStorage.setItem(SAVE_KEY,JSON.stringify(state));if(saveStatus){saveStatus.textContent='Salvato';window.clearTimeout(saveStatus._timer);saveStatus._timer=window.setTimeout(()=>saveStatus.textContent='Salvataggio automatico attivo',1100)}}
-function loadSaved(){try{const parsed=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(!parsed||![1,2,3,4,5,6,7,DIRECTOR_VERSION].includes(Number(parsed.version)))return null;return parsed}catch(error){console.warn('Salvataggio Direttore Sportivo non leggibile',error);return null}}
+function loadSaved(){try{const parsed=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(!parsed||![1,2,3,4,5,6,7,8,DIRECTOR_VERSION].includes(Number(parsed.version)))return null;return parsed}catch(error){console.warn('Salvataggio Direttore Sportivo non leggibile',error);return null}}
 
 async function boot(){
  try{
@@ -124,6 +124,7 @@ function repairState(){
  state.pendingChoiceType=state.pendingChoiceType==='referee'?'referee':'regulation';
  state.pendingRefereeId=String(state.pendingRefereeId||'');
  state.pendingChoiceMinimized=Boolean(state.pendingChoiceMinimized);
+ sanitizePendingInfluenceState();
  state.refereeHistory=Array.isArray(state.refereeHistory)?state.refereeHistory:[];
  state.regulationHistory=Array.isArray(state.regulationHistory)?state.regulationHistory:[];
  const currentRound=state.round+1;
@@ -288,7 +289,23 @@ function influenceUsageToday(){
 function influenceModeUsed(type){const usage=influenceUsageToday();return type==='referee'?usage.referee:usage.regulation}
 function availableInfluenceModes(){return state?.influence>0?['regulation','referee']:[]}
 function markInfluenceModeUsed(type){state.influenceUsageToday=influenceUsageToday();state.influenceUsageToday[type==='referee'?'referee':'regulation']+=1;state.influenceUsedToday=true}
-function hasPendingInfluenceDecision(){return Boolean(state?.pendingRefereeId||(state?.pendingChoices?.length))}
+function validPendingChoiceIds(){
+ const ids=Array.isArray(state?.pendingChoices)?state.pendingChoices:[],lookup=state?.pendingChoiceType==='referee'?refereeById:regulationById;
+ return ids.map(String).filter((id,index,list)=>id&&list.indexOf(id)===index&&Boolean(lookup(id)));
+}
+function sanitizePendingInfluenceState(){
+ if(!state)return false;
+ let changed=false;
+ const validIds=validPendingChoiceIds();
+ if(JSON.stringify(validIds)!==JSON.stringify(state.pendingChoices||[])){state.pendingChoices=validIds;changed=true}
+ if(state.pendingRefereeId&&!refereeById(state.pendingRefereeId)){state.pendingRefereeId='';changed=true}
+ if(!state.pendingRefereeId&&!state.pendingChoices.length&&state.pendingChoiceMinimized){state.pendingChoiceMinimized=false;changed=true}
+ return changed;
+}
+function hasPendingInfluenceDecision(){
+ if(!state)return false;
+ return Boolean((state.pendingRefereeId&&refereeById(state.pendingRefereeId))||validPendingChoiceIds().length);
+}
 function pendingInfluenceSummary(){
  if(state?.pendingRefereeId){const referee=refereeById(state.pendingRefereeId);return{icon:'🟨',title:'Designazione da completare',detail:referee?.title||'Scegli la partita'}}
  if(state?.pendingChoiceType==='referee')return{icon:'🟨',title:'4 arbitri in attesa',detail:'Riapri e scegli la designazione'};
@@ -333,16 +350,19 @@ function renderMatchPanel(options={}){
  if(!fixture)return`<section class="panel"><div class="empty">Nessuna partita disponibile.</div></section>`;
  const home=teamOf(fixture.homeId),away=teamOf(fixture.awayId),roundLabel=playoff?playoffStageLabel(state.playoff?.stage):`Giornata ${state.round+1}`,pendingDecision=hasPendingInfluenceDecision(),usage=influenceUsageToday(),canUseInfluence=!playoff&&!pendingDecision&&state.influence>0,assignments=activeRoundReferees();
  const used=usage.regulation+usage.referee,buttonCopy=used?'⚖️ Usa ancora 1 Influenza':'⚖️ Usa 1 Influenza';
- let reason=playoff?'L’Influenza non può essere utilizzata durante i play off.':pendingDecision?'Hai una scelta in attesa: completala prima di giocare o di aprire un altro intervento.':state.influence<=0?'Hai terminato i punti Influenza.':'Puoi usare più volte Consiglio Federale e Designazione arbitrale nella stessa giornata. Ogni utilizzo costa 1 Influenza.';
+ let reason=playoff?'L’Influenza non può essere utilizzata durante i play off.':pendingDecision?'Hai una scelta in attesa: riaprila e completala prima di giocare.':state.influence<=0?'Influenza esaurita: puoi continuare normalmente con Cronaca o Simula.':'Puoi usare più volte Consiglio Federale e Designazione arbitrale nella stessa giornata. Ogni utilizzo costa 1 Influenza.';
  const refereeBanner=!playoff&&assignments.length?`<div class="referee-active-banner"><span>🟨 Designazioni attive · ${assignments.length}</span>${assignments.slice(0,4).map(item=>`<b>${esc(refereeAssignmentDescription(item))}</b>`).join('')}${assignments.length>4?`<small>+${assignments.length-4} altre designazioni.</small>`:`<small>Una designazione specifica sostituisce quella globale soltanto nella partita scelta.</small>`}</div>`:'';
  const status=playoff?'':`<div class="influence-round-status"><span class="available">⚖️ Consiglio Federale <b>${usage.regulation} usi</b></span><span class="available">🟨 Designazione arbitrale <b>${usage.referee} usi</b></span></div>`;
- return `<section class="panel match-panel"><div class="match-panel-head"><div><div class="label">Prossima partita</div><h2>${esc(roundLabel)}</h2></div><span class="round-badge">${fixture.homeId===state.targetTeamId?'La tua missione gioca in casa':'La tua missione gioca in trasferta'}</span></div><div class="matchup"><div class="match-team"><b>${esc(home.name)}</b><span>Casa · OVR ${home.rating.toFixed(1)}</span><span class="team-rank">${rankOf(home.id)||'—'}° in classifica</span></div><div class="versus">VS</div><div class="match-team"><b>${esc(away.name)}</b><span>Trasferta · OVR ${away.rating.toFixed(1)}</span><span class="team-rank">${rankOf(away.id)||'—'}° in classifica</span></div></div>${refereeBanner}${status}<div class="match-actions">${playoff?'':`<button id="useInfluenceBtn" class="btn gold influence-button" type="button" ${canUseInfluence?'':'disabled'}>${buttonCopy} · ${state.influence} rimasti</button>`}<button id="playLiveBtn" class="btn primary" type="button" ${pendingDecision?'disabled':''}>🎙️ Gioca con cronaca</button><button id="playInstantBtn" class="btn soft" type="button" ${pendingDecision?'disabled':''}>📯 Simula</button></div><div class="regulation-reminder">${esc(reason)}</div></section>`;
+ const influenceAction=playoff?'':pendingDecision?`<button id="completePendingInfluenceBtn" class="btn gold influence-button pending" type="button">⚖️ Completa la scelta in attesa</button>`:canUseInfluence?`<button id="useInfluenceBtn" class="btn gold influence-button" type="button">${buttonCopy} · ${state.influence} rimasti</button>`:'';
+ const actionClass=!playoff&&!pendingDecision&&state.influence<=0?' no-influence':'';
+ return `<section class="panel match-panel"><div class="match-panel-head"><div><div class="label">Prossima partita</div><h2>${esc(roundLabel)}</h2></div><span class="round-badge">${fixture.homeId===state.targetTeamId?'La tua missione gioca in casa':'La tua missione gioca in trasferta'}</span></div><div class="matchup"><div class="match-team"><b>${esc(home.name)}</b><span>Casa · OVR ${home.rating.toFixed(1)}</span><span class="team-rank">${rankOf(home.id)||'—'}° in classifica</span></div><div class="versus">VS</div><div class="match-team"><b>${esc(away.name)}</b><span>Trasferta · OVR ${away.rating.toFixed(1)}</span><span class="team-rank">${rankOf(away.id)||'—'}° in classifica</span></div></div>${refereeBanner}${status}<div class="match-actions${actionClass}">${influenceAction}<button id="playLiveBtn" class="btn primary" type="button" ${pendingDecision?'disabled':''}>🎙️ Gioca con cronaca</button><button id="playInstantBtn" class="btn soft" type="button" ${pendingDecision?'disabled':''}>📯 Simula</button></div><div class="regulation-reminder ${state.influence<=0&&!pendingDecision?'influence-finished':''}">${esc(reason)}</div></section>`;
 }
 
 function renderSeason(){
  screen.innerHTML=`${renderMissionHero()}${renderMatchPanel()}<div class="dashboard-grid"><section class="panel"><div class="tabs"><button class="tab active" data-tab="home">Home</button><button class="tab" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="stats">Statistiche</button><button class="tab" data-tab="journey">Percorso</button></div><div id="tab-home" class="tab-view active">${renderHomeTab()}</div><div id="tab-table" class="tab-view">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div><div id="tab-journey" class="tab-view">${renderJourney()}</div></section><aside>${renderSidebar()}</aside></div>${renderPendingInfluenceDock()}`;
  bindDashboardTabs();
  document.getElementById('pendingInfluenceDock')?.addEventListener('click',reopenPendingInfluence);
+ document.getElementById('completePendingInfluenceBtn')?.addEventListener('click',reopenPendingInfluence);
  document.getElementById('useInfluenceBtn')?.addEventListener('click',openInfluenceConfirm);
  document.getElementById('playLiveBtn')?.addEventListener('click',()=>playCurrentRound('live'));
  document.getElementById('playInstantBtn')?.addEventListener('click',()=>playCurrentRound('instant'));
@@ -471,7 +491,7 @@ function renderInfluenceChoices(){
 }
 function renderRegulationChoices(){
  const choices=(state.pendingChoices||[]).map(regulationById).filter(Boolean);
- if(!choices.length){closeModal();return}
+ if(!choices.length){state.pendingChoices=[];state.pendingChoiceMinimized=false;save();render();toast('La scelta non era più valida ed è stata rimossa. Puoi continuare la stagione.');return}
  modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal choice-event"><div class="choice-modal-toolbar"><div class="label">Evento decisionale · Consiglio Federale</div><button class="minimize-choice-btn" type="button" data-minimize-influence aria-label="Riduci le scelte a icona"><span>—</span> Riduci a icona</button></div><h2>Il regolamento deve cambiare</h2><p>Hai speso un punto Influenza. Le quattro proposte sono state estratte casualmente: scegline una da applicare all’intero campionato.</p><div class="regulation-choice-grid">${choices.map((regulation,index)=>`<button class="regulation-choice" type="button" data-regulation-id="${esc(regulation.id)}"><span class="choice-number">${index+1}</span><b>${esc(regulation.title)}</b><p>${esc(regulation.effect)}</p><small>${esc(regulation.duration)} · Origine: ${esc(regulation.sourceEvent)}</small></button>`).join('')}</div><p class="subline forced-choice-note">Puoi ridurre le scelte a icona per consultare classifica, calendario e statistiche. Prima di giocare dovrai comunque approvare una proposta. Dopo la scelta potrai usare nuovamente questa categoria oppure l’altra, finché hai Influenza.</p></section></div>`;
  bindMinimizeInfluenceButton();
  document.querySelectorAll('[data-regulation-id]').forEach(button=>button.addEventListener('click',()=>approveRegulation(button.dataset.regulationId)));
@@ -497,7 +517,7 @@ function applyInstantRegulation(regulation){
 }
 function renderRefereeChoices(){
  const choices=(state.pendingChoices||[]).map(refereeById).filter(Boolean);
- if(!choices.length){closeModal();return}
+ if(!choices.length){state.pendingChoices=[];state.pendingChoiceType='regulation';state.pendingChoiceMinimized=false;save();render();toast('La designazione non era più valida ed è stata rimossa. Puoi continuare la stagione.');return}
  modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal choice-event referee-choice-event"><div class="choice-modal-toolbar"><div class="label">Designazione arbitrale</div><button class="minimize-choice-btn" type="button" data-minimize-influence aria-label="Riduci le scelte a icona"><span>—</span> Riduci a icona</button></div><h2>Scegli un arbitro</h2><p>Hai speso un punto Influenza. Gli arbitri possono ricomparire in qualsiasi giornata: scegli obbligatoriamente uno dei quattro profili estratti.</p><div class="regulation-choice-grid referee-choice-grid">${choices.map((referee,index)=>`<button class="regulation-choice referee-choice ${referee.danger?'danger':''}" type="button" data-referee-id="${esc(referee.id)}"><span class="choice-number">${index+1}</span><b>${esc(referee.title)}</b><p>${esc(referee.effect)}</p><small>${esc(referee.scopeLabel)}</small></button>`).join('')}</div><p class="subline forced-choice-note">Puoi ridurre le scelte a icona per studiare il turno e la classifica. Prima di giocare dovrai completare la designazione. Dopo la scelta potrai effettuare altre designazioni o convocare nuovamente il Consiglio Federale, finché hai Influenza.</p></section></div>`;
  bindMinimizeInfluenceButton();
  document.querySelectorAll('[data-referee-id]').forEach(button=>button.addEventListener('click',()=>beginRefereeAssignment(button.dataset.refereeId)));
@@ -634,8 +654,9 @@ function scorerCounts(goals,teamId){const counts={};for(const goal of goals||[])
 function resultQuality(gf,ga,won){return (won?300:gf===ga?120:0)+(gf-ga)*20+gf*4+rand()}
 
 function playCurrentRound(mode){
- if(state.pendingRefereeId){renderRefereeAssignment();return}
- if(state.pendingChoices?.length){renderInfluenceChoices();return}
+ const repaired=sanitizePendingInfluenceState();if(repaired)save();
+ if(state.pendingRefereeId&&refereeById(state.pendingRefereeId)){renderRefereeAssignment();return}
+ if(validPendingChoiceIds().length){renderInfluenceChoices();return}
  if(state.round>=TOTAL_ROUNDS)return;
  const report=simulateLeagueRound();
  commitLeagueRound(report);
