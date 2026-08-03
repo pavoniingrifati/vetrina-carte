@@ -4,7 +4,7 @@ chcp 65001 >nul
 cd /d "%~dp0"
 echo.
 echo =====================================================
-echo   FANTABALLA - FIX CALENDARIO CASA/TRASFERTA
+echo   FANTABALLA - 16 INFLUENZE E INTERVENTI RIPETIBILI
 echo =====================================================
 echo.
 set "TARGET=%~1"
@@ -29,7 +29,9 @@ if %RC% GEQ 8 (
   exit /b %RC%
 )
 echo.
-echo [OK] Calendario Direttore Sportivo corretto.
-echo I nuovi campionati avranno 19 gare in casa e 19 in trasferta.
+echo [OK] Patch applicata.
+echo Le missioni iniziano con 16 Influenze e puoi usare piu interventi nella stessa giornata.
+echo.
+echo IMPORTANTE: aggiorna anche il deployment Google Apps Script seguendo AGGIORNA_GOOGLE_SCRIPT.txt.
 pause
 exit /b 0

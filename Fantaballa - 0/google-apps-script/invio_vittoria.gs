@@ -313,19 +313,20 @@ function doPost(e) {
       if (Number(row.posizione_prevista) < 1 || Number(row.posizione_prevista) > 20) {
         return postOutput_(e, { ok:false, error:'Posizione prevista della squadra non valida.' });
       }
-      if (Number(row.influenza_iniziale) !== 8) {
-        return postOutput_(e, { ok:false, error:'Influenza iniziale non valida: la modalità assegna 8 punti.' });
+      const influenceStart = Number(row.influenza_iniziale);
+      if (influenceStart !== 8 && influenceStart !== 16) {
+        return postOutput_(e, { ok:false, error:'Influenza iniziale non valida: sono supportate le versioni da 8 e da 16 punti.' });
       }
-      if (Number(row.influenze_usate) < 0 || Number(row.influenze_usate) > 8) {
+      if (Number(row.influenze_usate) < 0 || Number(row.influenze_usate) > influenceStart) {
         return postOutput_(e, { ok:false, error:'Numero di Influenze utilizzate non valido.' });
       }
-      if (Number(row.influenza_rimasta) < 0 || Number(row.influenza_rimasta) > 8 || Number(row.influenze_usate) + Number(row.influenza_rimasta) !== 8) {
+      if (Number(row.influenza_rimasta) < 0 || Number(row.influenza_rimasta) > influenceStart || Number(row.influenze_usate) + Number(row.influenza_rimasta) !== influenceStart) {
         return postOutput_(e, { ok:false, error:'Influenza rimasta non coerente con quella utilizzata.' });
       }
       if (Number(row.punteggio_ds) !== directorScore_(row.punti, row.influenza_rimasta, row.posizione_prevista)) {
         return postOutput_(e, { ok:false, error:'Punteggio Direttore Sportivo non valido.' });
       }
-      if (Number(row.regolamenti_approvati) < 0 || Number(row.regolamenti_approvati) > 8) {
+      if (Number(row.regolamenti_approvati) < 0 || Number(row.regolamenti_approvati) > influenceStart) {
         return postOutput_(e, { ok:false, error:'Numero di regolamenti approvati non valido.' });
       }
     }
