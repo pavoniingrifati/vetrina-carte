@@ -705,6 +705,29 @@
       .championship-board:not(.expanded) .chaos-table tbody td.competition-cell .stat-pill{background:#173957;color:#eaf3fa}.load-more-btn{width:100%}
     }
 
+  
+    .mode-chip.director{background:#315a8b}
+    .director-tab{background:linear-gradient(180deg,#315a8b,#193c65)!important;color:#fff!important;border-color:#102f52!important}
+    .director-table th:nth-child(n+4),.director-table td:nth-child(n+4){text-align:center}
+    .director-table .director-name-cell strong{display:block}.director-table .director-name-cell small{display:block;margin-top:4px;color:#766f63;font-size:10px;font-weight:800}
+    .director-score-pill{display:inline-flex;align-items:center;justify-content:center;min-width:74px;padding:7px 11px;border-radius:999px;background:linear-gradient(180deg,#173f66,#10243a);color:#fff4b6;font-size:14px;font-weight:1000;box-shadow:0 4px 10px rgba(16,36,58,.16)}
+    .director-difficulty-pill{display:inline-flex;align-items:center;justify-content:center;min-width:72px;padding:6px 9px;border-radius:999px;background:#e4ecf7;color:#173f66;font-weight:1000}.director-difficulty-pill.easy{background:#dff4e7;color:#17633a}.director-difficulty-pill.normal{background:#e4ecf7;color:#173f66}.director-difficulty-pill.challenging{background:#fff1b8;color:#72570b}.director-difficulty-pill.hard{background:#ffe2c8;color:#8a4817}.director-difficulty-pill.extreme{background:#ffd6d2;color:#8a2c21}
+    .director-expected-pill{display:inline-flex;align-items:center;justify-content:center;min-width:48px;padding:6px 9px;border-radius:999px;background:#eee8da;color:#514a3e;font-weight:1000}
+    .director-influence-pill{display:inline-flex;align-items:center;justify-content:center;min-width:44px;padding:6px 9px;border-radius:999px;background:#fff0b6;color:#71550b;font-weight:1000}
+    @media(min-width:901px){
+      .director-table th:nth-child(1),.director-table td:nth-child(1){width:5%}
+      .director-table th:nth-child(2),.director-table td:nth-child(2){width:15%}
+      .director-table th:nth-child(3),.director-table td:nth-child(3){width:15%}
+      .director-table th:nth-child(4),.director-table td:nth-child(4){width:11%}
+      .director-table th:nth-child(5),.director-table td:nth-child(5){width:10%}
+      .director-table th:nth-child(6),.director-table td:nth-child(6){width:8%}
+      .director-table th:nth-child(7),.director-table td:nth-child(7){width:8%}
+      .director-table th:nth-child(8),.director-table td:nth-child(8){width:10%}
+      .director-table th:nth-child(9),.director-table td:nth-child(9){width:9%}
+      .director-table th:nth-child(10),.director-table td:nth-child(10){width:9%}
+    }
+    @media(max-width:900px){.director-table{min-width:1080px}}
+
   </style>
   <link rel="stylesheet" href="assets/mobile-responsive.css?v=20260722-1">
   <script defer src="assets/mobile-responsive.js?v=20260722-1"></script>
@@ -967,6 +990,7 @@
       <nav class="leaderboard-tabs" aria-label="Seleziona una classifica">
         <button class="board-tab active" type="button" data-board-key="campionato">Campionato</button>
         <button class="board-tab" type="button" data-board-key="campionatoReal">Fantacampionato</button>
+        <button class="board-tab director-tab" type="button" data-board-key="director">🧠 Direttore Sportivo</button>
         <button class="board-tab worst-tab" type="button" data-board-key="worst">🥄 Fai del tuo peggio</button>
         <button class="board-tab" type="button" data-board-key="chaos">🌀 Caos</button>
         <button class="board-tab" type="button" data-board-key="classic">Classica</button>
@@ -1044,6 +1068,40 @@
         <div class="load-more-wrap" data-load-wrap="campionatoReal">
           <button class="load-more-btn" type="button" data-load-more="campionatoReal">Carica altre</button>
           <span class="load-more-status" id="campionatoRealLoadStatus"></span>
+        </div>
+      </section>
+
+      <section class="mode-board championship-board director-board" id="directorBoard" aria-label="Classifica Direttore Sportivo">
+        <div class="board-head">
+          <div class="board-title-wrap">
+            <div class="label">Missioni Scudetto completate</div>
+            <h2>🧠 Direttore Sportivo</h2>
+            <p class="sub">Punteggio DS = (punti finali × 10 + Influenza rimasta × 80) × coefficiente difficoltà.</p>
+          </div>
+          <button class="expand-btn" type="button" data-toggle-board="directorBoard" aria-expanded="false">Vedi tutti i dati</button>
+        </div>
+        <div class="table-wrap">
+          <table class="championship-table director-table">
+            <thead>
+              <tr>
+                <th><button class="sort-btn" type="button" data-board="director" data-sort="rank">Pos</button></th>
+                <th><button class="sort-btn" type="button" data-board="director" data-sort="director">Direttore</button></th>
+                <th><button class="sort-btn" type="button" data-board="director" data-sort="name">Squadra</button></th>
+                <th><button class="sort-btn" type="button" data-board="director" data-sort="score">Punteggio DS</button></th>
+                <th><button class="sort-btn" type="button" data-board="director" data-sort="difficulty">Difficoltà</button></th>
+                <th><button class="sort-btn" type="button" data-board="director" data-sort="expectedRank">Prevista</button></th>
+                <th><button class="sort-btn" type="button" data-board="director" data-sort="points">Punti</button></th>
+                <th><button class="sort-btn" type="button" data-board="director" data-sort="influenceRemaining">Influenza rimasta</button></th>
+                <th><button class="sort-btn" type="button" data-board="director" data-sort="wins">V-N-P</button></th>
+                <th><button class="sort-btn" type="button" data-board="director" data-sort="goalsFor">GF/GS</button></th>
+              </tr>
+            </thead>
+            <tbody id="directorBody"><tr class="empty-row"><td class="rank-cell"><span class="rank">-</span></td><td class="empty" colspan="9">In attesa della prima missione Direttore Sportivo vinta</td></tr></tbody>
+          </table>
+        </div>
+        <div class="load-more-wrap" data-load-wrap="director">
+          <button class="load-more-btn" type="button" data-load-more="director">Carica altre</button>
+          <span class="load-more-status" id="directorLoadStatus"></span>
         </div>
       </section>
 
@@ -1251,6 +1309,7 @@
       const hardBody = document.getElementById('hardBody');
       const campionatoBody = document.getElementById('campionatoBody');
       const campionatoRealBody = document.getElementById('campionatoRealBody');
+      const directorBody = document.getElementById('directorBody');
       const worstBody = document.getElementById('worstBody');
       const chaosBody = document.getElementById('chaosBody');
       const scorersBody = document.getElementById('scorersBody');
@@ -1264,12 +1323,13 @@
       const heroScorerGoals = document.getElementById('heroScorerGoals');
       const heroRecordPoints = document.getElementById('heroRecordPoints');
       const boardSections = {
-        campionato:'campionatoBoard', campionatoReal:'campionatoRealBoard', worst:'worstBoard', chaos:'caosBoard',
+        campionato:'campionatoBoard', campionatoReal:'campionatoRealBoard', director:'directorBoard', worst:'worstBoard', chaos:'caosBoard',
         classic:'classicBoard', gary:'garyBoard', hard:'hardBoard', scorers:'scorersBoard'
       };
       const boardMeta = {
         campionato:{title:'Campionato del Ca***',description:'Le migliori stagioni vinte nel Campionato.'},
         campionatoReal:{title:'Fantacampionato del Ca***',description:'Le migliori stagioni vinte nel Fantacampionato.'},
+        director:{title:'Direttore Sportivo',description:'Le missioni Scudetto più difficili completate usando l’Influenza Federale.'},
         worst:{title:'Fai del tuo peggio',description:'Solo i vincitori di Campionato e Fantacampionato, ordinati dalla vittoria con meno punti.'},
         chaos:{title:'Modalità Caos',description:'Le imprese più forti con eventi attivi anche sulle avversarie.'},
         classic:{title:'World Cup · Classica',description:'I migliori campioni della modalità Classica.'},
@@ -1277,11 +1337,12 @@
         hard:{title:'World Cup · HARDa Turan',description:'I migliori campioni della modalità più estrema.'},
         scorers:{title:'Capocannonieri',description:'I bomber con più gol registrati nella Hall of Fame.'}
       };
-      let activeBoardKey = 'campionato';
+      const requestedBoardKey = new URLSearchParams(window.location.search).get('board');
+      let activeBoardKey = boardSections[requestedBoardKey] ? requestedBoardKey : 'campionato';
       const SHEETS_CLASSIFICA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
       const CLASSIFICA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
       const LOCAL_CLASSIFICA_FALLBACK = 'data/classifica.json';
-      const CLASSIFICA_CACHE_KEY = 'fantaballa_classifica_online_cache_v3';
+      const CLASSIFICA_CACHE_KEY = 'fantaballa_classifica_online_cache_v4';
       const ONLINE_ATTEMPTS = 3;
       const ONLINE_TIMEOUTS = [14000, 18000, 22000];
       const SHEETS_MESSAGE_TYPE = 'fantaballa-classifica-response-v1';
@@ -1289,7 +1350,7 @@
       let backgroundRetryTimer = null;
       let offlineSourceActive = false;
       let backgroundRetryCount = 0;
-      if (!classicBody || !garyBody || !hardBody || !campionatoBody || !campionatoRealBody || !worstBody || !chaosBody || !scorersBody) return;
+      if (!classicBody || !garyBody || !hardBody || !campionatoBody || !campionatoRealBody || !directorBody || !worstBody || !chaosBody || !scorersBody) return;
 
       const escape = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({
         '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '"':'&quot;'
@@ -1312,6 +1373,7 @@
       const rawModeOf = row => String(valueOf(row, ['modalita','gameMode','mode'], 'Classica')).trim();
       const modeKindOf = row => {
         const explicit = String(valueOf(row, ['modalita_tipo','modalitaTipo','modeType'], '')).trim().toLowerCase().replace(/[\s-]+/g, '_');
+        if (explicit === 'direttore_sportivo' || explicit === 'director_sportivo' || explicit === 'director') return 'director';
         if (explicit === 'sfida_settimana' || explicit === 'weekly_pisa' || explicit === 'tricolore_pisa') return 'weekly';
         if (explicit === 'caos_real' || explicit === 'chaos_real' || explicit === 'fantacaos') return 'chaos';
         if (explicit === 'caos' || explicit === 'chaos') return 'chaos';
@@ -1321,6 +1383,7 @@
         if (explicit === 'gary' || explicit === 'gary_medel') return 'gary';
         if (explicit === 'classica' || explicit === 'classic') return 'classic';
         const raw = rawModeOf(row);
+        if (/direttore sportivo|director sportivo/i.test(raw)) return 'director';
         if (/sfida della settimana|tricolore col pisa|weekly pisa/i.test(raw)) return 'weekly';
         if (/\b(caos|chaos)\b/i.test(raw)) return 'chaos';
         if (/fantacampionato|(campionato|stagione).*real|real.*(campionato|stagione)/i.test(raw)) return 'campionatoReal';
@@ -1339,6 +1402,7 @@
       const modeLabelOf = row => {
         const kind = modeKindOf(row);
         if (kind === 'weekly') return 'Sfida della settimana';
+        if (kind === 'director') return 'Direttore Sportivo';
         if (kind === 'chaos') return `Caos · ${chaosCompetitionOf(row)}`;
         if (kind === 'campionatoReal') return 'Fantacampionato del Ca***';
         if (kind === 'campionato') return 'Campionato del Ca***';
@@ -1409,7 +1473,33 @@
         return [];
       }
 
+      function directorDifficultyProfile(expectedRank) {
+        const rank = Math.max(1, Math.min(20, Math.round(Number(expectedRank) || 1)));
+        if (rank <= 3) return { key:'easy', label:'Facile', multiplier:1.00 };
+        if (rank <= 7) return { key:'normal', label:'Normale', multiplier:1.15 };
+        if (rank <= 12) return { key:'challenging', label:'Impegnativa', multiplier:1.35 };
+        if (rank <= 16) return { key:'hard', label:'Difficile', multiplier:1.60 };
+        return { key:'extreme', label:'Estrema', multiplier:1.90 };
+      }
+
+      function directorScoreData(row) {
+        const expectedRank = numberOf(row, ['posizione_prevista','posizionePrevista','expectedRank','expected_rank'], 0);
+        const profile = directorDifficultyProfile(expectedRank);
+        const points = pointsOf(row);
+        const influenceStart = numberOf(row, ['influenza_iniziale','influenzaIniziale','influenceStart','influence_start'], 8);
+        const influenceUsed = numberOf(row, ['influenze_usate','influenzeUsate','influenceUsed','influence_used'], 0);
+        const explicitRemaining = valueOf(row, ['influenza_rimasta','influenzaRimasta','influenceRemaining','influence_remaining'], '');
+        const influenceRemaining = explicitRemaining === '' ? Math.max(0, influenceStart - influenceUsed) : Math.max(0, Number(explicitRemaining) || 0);
+        const explicitMultiplier = Number(valueOf(row, ['coefficiente_difficolta','coefficienteDifficolta','difficultyMultiplier','difficulty_multiplier'], profile.multiplier));
+        const difficultyMultiplier = Number.isFinite(explicitMultiplier) && explicitMultiplier > 0 ? explicitMultiplier : profile.multiplier;
+        const difficultyLabel = String(valueOf(row, ['difficolta_squadra','difficoltaSquadra','difficultyLabel','difficulty_label'], profile.label)).trim() || profile.label;
+        const explicitScore = Number(valueOf(row, ['punteggio_ds','punteggioDs','directorScore','director_score'], NaN));
+        const directorScore = Number.isFinite(explicitScore) ? Math.round(explicitScore) : Math.round((points * 10 + influenceRemaining * 80) * difficultyMultiplier);
+        return { expectedRank, influenceStart, influenceUsed, influenceRemaining, difficultyMultiplier, difficultyLabel, difficultyKey:profile.key, directorScore };
+      }
+
       function rowView(row) {
+        const directorData = directorScoreData(row);
         return {
           original:row,
           name:nameOf(row),
@@ -1427,6 +1517,18 @@
             ? String(valueOf(row, ['capocannoniere_giocatore','capocannoniereGiocatore','userTopScorer','playerOwnedTopScorer','capocannoniere','capocannoniereSquadra','topScorer','migliorMarcatore'], '—'))
             : scorerTextOf(row),
           coach:coachOf(row),
+          directorName:String(valueOf(row, ['direttore','directorName','director_name','allenatore','coachName'], '')).trim(),
+          expectedRank:directorData.expectedRank,
+          influenceUsed:directorData.influenceUsed,
+          influenceStart:directorData.influenceStart,
+          influenceRemaining:directorData.influenceRemaining,
+          difficultyMultiplier:directorData.difficultyMultiplier,
+          difficultyLabel:directorData.difficultyLabel,
+          difficultyKey:directorData.difficultyKey,
+          directorScore:directorData.directorScore,
+          regulationsCount:numberOf(row, ['regolamenti_approvati','regolamentiApprovati','regulationsApproved','regulations_approved'], 0),
+          regulations:String(valueOf(row, ['regolamenti','regulations'], '')).trim(),
+          playoff:/^(true|1|si|sì|yes)$/i.test(String(valueOf(row, ['playoff_scudetto','playoffScudetto','playoff'], ''))),
           modeKind:modeKindOf(row),
           modeLabel:modeLabelOf(row),
           competition:modeKindOf(row)==='chaos' ? chaosCompetitionOf(row) : modeLabelOf(row)
@@ -1450,6 +1552,7 @@
         hard:{ key:'rank', dir:'asc' },
         campionato:{ key:'rank', dir:'asc' },
         campionatoReal:{ key:'rank', dir:'asc' },
+        director:{ key:'rank', dir:'asc' },
         worst:{ key:'rank', dir:'asc' },
         chaos:{ key:'rank', dir:'asc' },
         scorers:{ key:'rank', dir:'asc' }
@@ -1458,7 +1561,7 @@
 
       const PAGE_SIZE = 10;
       const MAX_VISIBLE_ROWS = 100;
-      const visibleState = { classic:PAGE_SIZE, gary:PAGE_SIZE, hard:PAGE_SIZE, campionato:PAGE_SIZE, campionatoReal:PAGE_SIZE, worst:PAGE_SIZE, chaos:PAGE_SIZE, scorers:PAGE_SIZE };
+      const visibleState = { classic:PAGE_SIZE, gary:PAGE_SIZE, hard:PAGE_SIZE, campionato:PAGE_SIZE, campionatoReal:PAGE_SIZE, director:PAGE_SIZE, worst:PAGE_SIZE, chaos:PAGE_SIZE, scorers:PAGE_SIZE };
 
       const defaultModeCompare = (a, b) =>
         b.wins - a.wins ||
@@ -1476,6 +1579,16 @@
           b.wins - a.wins ||
           a.name.localeCompare(b.name, 'it');
       };
+
+      const defaultDirectorCompare = (a, b) =>
+        b.directorScore - a.directorScore ||
+        b.difficultyMultiplier - a.difficultyMultiplier ||
+        b.influenceRemaining - a.influenceRemaining ||
+        b.points - a.points ||
+        b.expectedRank - a.expectedRank ||
+        b.goalDiff - a.goalDiff ||
+        b.wins - a.wins ||
+        String(a.directorName || '').localeCompare(String(b.directorName || ''), 'it');
 
       const defaultScorerCompare = (a, b) =>
         b.goals - a.goals ||
@@ -1571,6 +1684,25 @@
         });
       }
 
+      function sortDirectorRows(rows) {
+        const state = sortState.director;
+        const key = state.key;
+        const dir = state.dir;
+        return rows.sort((a, b) => {
+          if (key === 'rank') return dir === 'asc' ? defaultDirectorCompare(a, b) : -defaultDirectorCompare(a, b);
+          if (key === 'director') return compareValues(a.directorName, b.directorName, dir, 'text') || defaultDirectorCompare(a, b);
+          if (key === 'name') return compareValues(a.name, b.name, dir, 'text') || defaultDirectorCompare(a, b);
+          if (key === 'score') return compareValues(a.directorScore, b.directorScore, dir) || defaultDirectorCompare(a, b);
+          if (key === 'difficulty') return compareValues(a.difficultyMultiplier, b.difficultyMultiplier, dir) || defaultDirectorCompare(a, b);
+          if (key === 'expectedRank') return compareValues(a.expectedRank, b.expectedRank, dir) || defaultDirectorCompare(a, b);
+          if (key === 'points') return compareValues(a.points, b.points, dir) || defaultDirectorCompare(a, b);
+          if (key === 'influenceRemaining') return compareValues(a.influenceRemaining, b.influenceRemaining, dir) || defaultDirectorCompare(a, b);
+          if (key === 'wins') return compareValues(a.wins, b.wins, dir) || compareValues(a.draws, b.draws, dir) || defaultDirectorCompare(a, b);
+          if (key === 'goalsFor') return compareValues(a.goalsFor, b.goalsFor, dir) || compareValues(a.goalDiff, b.goalDiff, dir) || defaultDirectorCompare(a, b);
+          return defaultDirectorCompare(a, b);
+        });
+      }
+
       function updateSortButtons() {
         document.querySelectorAll('.sort-btn').forEach(button => {
           const board = button.dataset.board;
@@ -1644,6 +1776,28 @@
           <td class="full-col goal-diff-cell" data-label="Differenza reti"><span class="stat-pill">${escape(row.goalDiff)}</span></td>
           <td class="ovr-cell" data-label="OVR medio"><span class="stat-pill">${escape(row.ovr)}</span></td>
           <td class="scorer-cell" data-label="Capocannoniere">${escape(row.scorer)}</td>
+        </tr>`).join('');
+      }
+
+      function renderDirectorTable(tbody, rows, emptyText) {
+        const validRows = sortDirectorRows(rows.map(rowView).filter(row => row.name && row.directorName));
+        updateLoadMore('director', validRows.length);
+        if (!validRows.length) {
+          tbody.innerHTML = `<tr class="empty-row"><td class="rank-cell"><span class="rank">-</span></td><td class="empty" colspan="9">${escape(emptyText)}</td></tr>`;
+          return;
+        }
+        const visibleRows = validRows.slice(0, visibleLimitFor('director', validRows.length));
+        tbody.innerHTML = visibleRows.map((row, index) => `<tr>
+          <td class="rank-cell" data-label="Posizione"><span class="rank">${index + 1}</span></td>
+          <td class="director-name-cell" data-label="Direttore"><strong>${escape(row.directorName)}</strong><small>${escape(row.modeLabel)}</small></td>
+          <td class="team-cell" data-label="Squadra"><strong>${escape(row.name)}</strong><small>Campione d’Italia</small></td>
+          <td data-label="Punteggio DS"><span class="director-score-pill">${escape(Number(row.directorScore || 0).toLocaleString('it-IT'))}</span></td>
+          <td data-label="Difficoltà"><span class="director-difficulty-pill ${escape(row.difficultyKey)}" title="Coefficiente ×${escape(Number(row.difficultyMultiplier || 1).toFixed(2).replace('.', ','))}">${escape(row.difficultyLabel)}</span></td>
+          <td data-label="Posizione prevista"><span class="director-expected-pill">${row.expectedRank ? `${escape(row.expectedRank)}°` : '—'}</span></td>
+          <td class="points-cell" data-label="Punti"><span class="points-pill">${escape(row.points)}</span></td>
+          <td data-label="Influenza rimasta"><span class="director-influence-pill">${escape(row.influenceRemaining)}/${escape(row.influenceStart || 8)}</span></td>
+          <td data-label="V-N-P"><span class="stat-pill">${escape(`${row.wins}-${row.draws}-${row.losses}`)}</span></td>
+          <td class="goals-cell" data-label="Gol fatti/subiti"><span class="stat-pill">${escape(row.goals)}</span></td>
         </tr>`).join('');
       }
 
@@ -1742,6 +1896,7 @@
         const views = lastRows.map(rowView).filter(row => row.name);
         if (boardKey === 'campionato') return sortChampionshipRows(views.filter(row => row.modeKind === 'campionato' && row.finalPosition === 1), 'campionato');
         if (boardKey === 'campionatoReal') return sortChampionshipRows(views.filter(row => row.modeKind === 'campionatoReal' && row.finalPosition === 1), 'campionatoReal');
+        if (boardKey === 'director') return sortDirectorRows(views.filter(row => row.modeKind === 'director' && row.finalPosition === 1));
         if (boardKey === 'worst') return sortWorstRows(views.filter(row => ['campionato','campionatoReal','chaos'].includes(row.modeKind) && row.finalPosition === 1));
         if (boardKey === 'chaos') return sortChampionshipRows(views.filter(row => row.modeKind === 'chaos' && row.finalPosition === 1), 'chaos');
         return sortModeRows(views.filter(row => row.modeKind === boardKey), boardKey);
@@ -1754,7 +1909,8 @@
         const standardNamedRows = standardRows.filter(row => nameOf(row));
         const unique = new Set(standardNamedRows.map(row => normalizeName(nameOf(row))).filter(Boolean));
         const scorerGoals = buildScorers(allRows).reduce((sum, row) => sum + (Number(row.goals) || 0), 0);
-        const recordPoints = standardRows.reduce((best, row) => Math.max(best, pointsOf(row)), 0);
+        // Direttore Sportivo può cambiare il sistema punti: non altera il record punti generale.
+        const recordPoints = standardRows.filter(row => modeKindOf(row) !== 'director').reduce((best, row) => Math.max(best, pointsOf(row)), 0);
         if (heroTotalRuns) heroTotalRuns.textContent = allNamedRows.length.toLocaleString('it-IT');
         if (heroUniqueChampions) heroUniqueChampions.textContent = unique.size.toLocaleString('it-IT');
         if (heroScorerGoals) heroScorerGoals.textContent = scorerGoals.toLocaleString('it-IT');
@@ -1773,6 +1929,11 @@
           meta = 'Capocannoniere generale';
           score = Number(row.goals || 0).toLocaleString('it-IT');
           scoreLabel = 'Gol totali';
+        } else if (boardKey === 'director') {
+          name = row.directorName || 'Direttore non indicato';
+          meta = `${row.name} · ${row.difficultyLabel} ×${Number(row.difficultyMultiplier || 1).toFixed(2).replace('.', ',')} · ${row.influenceRemaining}/${row.influenceStart || 8} Influenza rimasta`;
+          score = Number(row.directorScore || 0).toLocaleString('it-IT');
+          scoreLabel = `Punteggio DS · ${row.points} punti · prevista ${row.expectedRank ? `${row.expectedRank}°` : '—'}`;
         } else if (boardKey === 'worst') {
           meta = `${row.coach || 'Allenatore non indicato'} · ${row.competition} · ${row.wins}V ${row.draws}N ${row.losses}P`;
           score = Number(row.points || 0).toLocaleString('it-IT');
@@ -1841,6 +2002,7 @@
         const hardRows = rows.filter(row => modeKindOf(row) === 'hard');
         const campionatoRows = rows.filter(row => modeKindOf(row) === 'campionato' && finalPositionOf(row) === 1);
         const campionatoRealRows = rows.filter(row => modeKindOf(row) === 'campionatoReal' && finalPositionOf(row) === 1);
+        const directorRows = rows.filter(row => modeKindOf(row) === 'director' && finalPositionOf(row) === 1);
         const worstRows = rows.filter(row => ['campionato','campionatoReal','chaos'].includes(modeKindOf(row)) && finalPositionOf(row) === 1);
         const chaosRows = rows.filter(row => modeKindOf(row) === 'chaos' && finalPositionOf(row) === 1);
         renderModeTable(classicBody, classicRows, 'In attesa del primo campione Classica', 'classic');
@@ -1848,6 +2010,7 @@
         renderModeTable(hardBody, hardRows, 'In attesa del primo campione HARDa Turan', 'hard');
         renderChampionshipTable(campionatoBody, campionatoRows, 'campionato', 'In attesa della prima stagione completata');
         renderChampionshipTable(campionatoRealBody, campionatoRealRows, 'campionatoReal', 'In attesa del primo Fantacampionato vinto');
+        renderDirectorTable(directorBody, directorRows, 'In attesa della prima missione Direttore Sportivo vinta');
         renderWorstTable(worstBody, worstRows, 'In attesa dei primi vincitori di Campionato o Fantacampionato');
         renderChaosTable(chaosBody, chaosRows, 'In attesa della prima stagione Caos vinta');
         const standardRows = rows.filter(row => modeKindOf(row) !== 'weekly');
@@ -2126,6 +2289,7 @@
         renderModeTable(hardBody, [], 'Classifica non disponibile', 'hard');
         renderChampionshipTable(campionatoBody, [], 'campionato', 'In attesa della prima stagione completata');
         renderChampionshipTable(campionatoRealBody, [], 'campionatoReal', 'In attesa del primo Fantacampionato vinto');
+        renderDirectorTable(directorBody, [], 'In attesa della prima missione Direttore Sportivo vinta');
         renderWorstTable(worstBody, [], 'In attesa delle prime stagioni registrate');
         renderChaosTable(chaosBody, [], 'In attesa della prima stagione Caos vinta');
         renderScorers([]);
@@ -2202,7 +2366,7 @@
             current.dir = current.dir === 'asc' ? 'desc' : 'asc';
           } else {
             current.key = key;
-            current.dir = ['name','playerName','finalPosition'].includes(key) || (board === 'worst' && key === 'points') ? 'asc' : 'desc';
+            current.dir = ['name','playerName','finalPosition','director'].includes(key) || (board === 'worst' && key === 'points') ? 'asc' : 'desc';
           }
           renderLeaderboards({ classifica:lastRows });
         });

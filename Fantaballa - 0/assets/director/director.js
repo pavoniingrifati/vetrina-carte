@@ -1,0 +1,655 @@
+'use strict';
+
+const DIRECTOR_VERSION=3;
+const SAVE_KEY='fantaballa_director_sportivo_v1';
+const INFLUENCE_START=8;
+const TOTAL_ROUNDS=38;
+const DIRECTOR_SUBMISSION_ENDPOINT='https://script.google.com/macros/s/AKfycbwadjpez_e-IXMLupqpISLEZ3rrHhrtF9gk_E9v9HB_YcgkXUneOnrW7iYAdGjqz3_G/exec';
+const DIRECTOR_SUBMISSION_PREFIX='direttore_sportivo';
+const screen=document.getElementById('screen');
+const modalRoot=document.getElementById('modalRoot');
+const toastRoot=document.getElementById('toast');
+const saveStatus=document.getElementById('saveStatus');
+let CLUBS=[];
+let PLAYERS=[];
+let REGULATIONS=[];
+let TEAMS=[];
+let TEAM_MAP=new Map();
+let PLAYERS_BY_CLUB=new Map();
+let state=null;
+let commentaryTimer=0;
+
+function esc(value){return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]))}
+function clamp(value,min,max){return Math.max(min,Math.min(max,value))}
+function sum(values){return values.reduce((total,value)=>total+Number(value||0),0)}
+function average(values,fallback=70){const clean=values.map(Number).filter(Number.isFinite);return clean.length?sum(clean)/clean.length:fallback}
+function seedNow(){if(globalThis.crypto?.getRandomValues){const values=new Uint32Array(1);globalThis.crypto.getRandomValues(values);return values[0]||0x9e3779b9}return (Date.now()^Math.floor(Math.random()*0xffffffff))>>>0}
+function rand(){let x=(state?.rng||0x9e3779b9)>>>0;x^=x<<13;x^=x>>>17;x^=x<<5;x>>>=0;if(state)state.rng=x;return x/4294967296}
+function randomInt(min,max){return Math.floor(rand()*(max-min+1))+min}
+function pick(list){return list?.length?list[Math.floor(rand()*list.length)]:null}
+function shuffle(list){const copy=[...list];for(let index=copy.length-1;index>0;index--){const target=Math.floor(rand()*(index+1));[copy[index],copy[target]]=[copy[target],copy[index]]}return copy}
+function hashText(text){let hash=2166136261;for(const char of String(text||'')){hash^=char.charCodeAt(0);hash=Math.imul(hash,16777619)}return hash>>>0}
+function shortBadge(name){const words=String(name||'').trim().split(/\s+/).filter(Boolean);if(!words.length)return'FC';if(words.length===1)return words[0].slice(0,3).toUpperCase();return words.slice(0,3).map(word=>word[0]).join('').toUpperCase()}
+function teamOf(id){return TEAM_MAP.get(String(id))||null}
+function teamStyle(team){const colors=team?.colors||{};return `--target-primary:${colors.primary||'#245786'};--target-secondary:${colors.secondary||'#10243a'};--target-accent:${colors.accent||'#ffe96c'}`}
+function directorDifficultyProfile(expectedRank=state?.startExpectedRank){
+ const rank=clamp(Math.round(Number(expectedRank)||1),1,20);
+ if(rank<=3)return{key:'easy',label:'Facile',multiplier:1,rank};
+ if(rank<=7)return{key:'normal',label:'Normale',multiplier:1.15,rank};
+ if(rank<=12)return{key:'challenging',label:'Impegnativa',multiplier:1.35,rank};
+ if(rank<=16)return{key:'hard',label:'Difficile',multiplier:1.6,rank};
+ return{key:'extreme',label:'Estrema',multiplier:1.9,rank};
+}
+function directorScoreBreakdown(points=targetRow()?.pts,influenceRemaining=state?.influence,expectedRank=state?.startExpectedRank){
+ const profile=directorDifficultyProfile(expectedRank),finalPoints=Number(points)||0,remaining=clamp(Math.round(Number(influenceRemaining)||0),0,INFLUENCE_START),pointsValue=finalPoints*10,influenceValue=remaining*80,base=pointsValue+influenceValue,score=Math.round(base*profile.multiplier);
+ return{...profile,finalPoints,remaining,pointsValue,influenceValue,base,score};
+}
+function formatDirectorMultiplier(value){return `×${Number(value||1).toFixed(2).replace('.',',')}`}
+function toast(message){if(!toastRoot)return;toastRoot.textContent=String(message||'');toastRoot.classList.add('show');window.clearTimeout(toastRoot._timer);toastRoot._timer=window.setTimeout(()=>toastRoot.classList.remove('show'),2400)}
+function closeModal(){window.clearInterval(commentaryTimer);commentaryTimer=0;modalRoot.innerHTML=''}
+function save(){if(!state)return;state.updatedAt=new Date().toISOString();localStorage.setItem(SAVE_KEY,JSON.stringify(state));if(saveStatus){saveStatus.textContent='Salvato';window.clearTimeout(saveStatus._timer);saveStatus._timer=window.setTimeout(()=>saveStatus.textContent='Salvataggio automatico attivo',1100)}}
+function loadSaved(){try{const parsed=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(!parsed||![1,2,DIRECTOR_VERSION].includes(Number(parsed.version)))return null;return parsed}catch(error){console.warn('Salvataggio Direttore Sportivo non leggibile',error);return null}}
+
+async function boot(){
+ try{
+  const [clubs,players,regulations]=await Promise.all([
+   fetch('data/club-real.json',{cache:'no-store'}).then(response=>response.ok?response.json():Promise.reject(new Error('Club non disponibili'))),
+   fetch('data/giocatori-real.json',{cache:'no-store'}).then(response=>response.ok?response.json():Promise.reject(new Error('Giocatori non disponibili'))),
+   fetch('data/events/events-director-regulations.json',{cache:'no-store'}).then(response=>response.ok?response.json():Promise.reject(new Error('Regolamenti non disponibili')))
+  ]);
+  CLUBS=(Array.isArray(clubs)?clubs:[]).filter(club=>club&&club.id&&club.id!=='fantaballa-real');
+  PLAYERS=Array.isArray(players)?players:[];
+  REGULATIONS=Array.isArray(regulations?.regulations)?regulations.regulations:[];
+  buildDataModel();
+  state=loadSaved();
+  if(state)repairState();
+  render();
+  if(state?.pendingChoices?.length)window.setTimeout(renderInfluenceChoices,80);
+ }catch(error){
+  console.error(error);
+  screen.innerHTML=`<section class="panel"><div class="label">Errore di caricamento</div><h2>La modalità non può essere aperta</h2><p>${esc(error.message||error)}</p><button class="btn primary" type="button" onclick="location.reload()">Riprova</button></section>`;
+ }
+}
+
+function buildDataModel(){
+ PLAYERS_BY_CLUB=new Map();
+ for(const player of PLAYERS){const clubId=String(player.club||'');if(!PLAYERS_BY_CLUB.has(clubId))PLAYERS_BY_CLUB.set(clubId,[]);PLAYERS_BY_CLUB.get(clubId).push(player)}
+ TEAMS=CLUBS.map(club=>{
+  const players=PLAYERS_BY_CLUB.get(String(club.id))||[];
+  const sorted=[...players].sort((a,b)=>Number(b.ovr||0)-Number(a.ovr||0));
+  const attackers=players.filter(player=>String(player.role||'').toUpperCase()==='A').sort((a,b)=>Number(b.ovr||0)-Number(a.ovr||0));
+  const midfielders=players.filter(player=>String(player.role||'').toUpperCase()==='C').sort((a,b)=>Number(b.ovr||0)-Number(a.ovr||0));
+  const defenders=players.filter(player=>String(player.role||'').toUpperCase()==='D').sort((a,b)=>Number(b.ovr||0)-Number(a.ovr||0));
+  const keepers=players.filter(player=>String(player.role||'').toUpperCase()==='P').sort((a,b)=>Number(b.ovr||0)-Number(a.ovr||0));
+  const rating=average(sorted.slice(0,14).map(player=>player.ovr),72);
+  const attack=average([...attackers.slice(0,4),...midfielders.slice(0,3)].map(player=>player.ovr),rating);
+  const defense=average([...keepers.slice(0,1),...defenders.slice(0,5)].map(player=>player.ovr),rating);
+  const deterministic=hashText(club.id);
+  return {id:String(club.id),name:String(club.name),shortName:String(club.shortName||shortBadge(club.name)),colors:club.colorClub||{},rating:Math.round(rating*10)/10,attack:Math.round(attack*10)/10,defense:Math.round(defense*10)/10,discipline:.78+((deterministic%17)/100),lateTrait:.86+(((deterministic>>>8)%29)/100),players};
+ });
+ TEAM_MAP=new Map(TEAMS.map(team=>[team.id,team]));
+}
+
+function repairState(){
+ state.version=DIRECTOR_VERSION;
+ state.rng=(Number(state.rng)||seedNow())>>>0;
+ state.influence=clamp(Number(state.influence)||0,0,INFLUENCE_START);
+ state.round=clamp(Number(state.round)||0,0,TOTAL_ROUNDS);
+ state.pendingChoices=Array.isArray(state.pendingChoices)?state.pendingChoices:[];
+ state.seenRegulationIds=Array.isArray(state.seenRegulationIds)?state.seenRegulationIds:[];
+ state.regulations=Array.isArray(state.regulations)?state.regulations:[];
+ state.regulationHistory=Array.isArray(state.regulationHistory)?state.regulationHistory:[];
+ state.history=Array.isArray(state.history)?state.history:[];
+ state.stats=state.stats&&typeof state.stats==='object'?state.stats:{scorers:{},team:{}};
+ state.stats.scorers=state.stats.scorers||{};
+ state.stats.team=state.stats.team||{};
+ state.meta=state.meta&&typeof state.meta==='object'?state.meta:{};
+ state.directorName=String(state.directorName||'');
+ state.submitted=Boolean(state.submitted);
+ if(!state.table||typeof state.table!=='object')state.table=createTable();
+ if(!Number(state.startExpectedRank)&&teamOf(state.targetTeamId))state.startExpectedRank=[...TEAMS].sort((a,b)=>b.rating-a.rating).findIndex(team=>team.id===state.targetTeamId)+1;
+ state.startExpectedRank=clamp(Math.round(Number(state.startExpectedRank)||1),1,20);
+ if(!Array.isArray(state.schedule)||state.schedule.length!==TOTAL_ROUNDS)state.schedule=generateSchedule(TEAMS.map(team=>team.id));
+ if(!teamOf(state.targetTeamId)){localStorage.removeItem(SAVE_KEY);state=null}
+}
+
+function createTable(){return Object.fromEntries(TEAMS.map(team=>[team.id,{id:team.id,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0}]))}
+function generateSchedule(teamIds){
+ let rotating=shuffle(teamIds);
+ if(rotating.length%2)rotating.push('__bye__');
+ const first=[];
+ for(let round=0;round<rotating.length-1;round++){
+  const matches=[];
+  for(let index=0;index<rotating.length/2;index++){
+   const a=rotating[index],b=rotating[rotating.length-1-index];
+   if(a==='__bye__'||b==='__bye__')continue;
+   const flip=(round+index)%2===1;
+   matches.push({homeId:flip?b:a,awayId:flip?a:b});
+  }
+  first.push(matches);
+  rotating=[rotating[0],rotating[rotating.length-1],...rotating.slice(1,-1)];
+ }
+ const second=first.map(round=>round.map(match=>({homeId:match.awayId,awayId:match.homeId})));
+ return [...first,...second];
+}
+
+function startMission(){
+ const seed=seedNow();
+ state={version:DIRECTOR_VERSION,rng:seed,phase:'briefing',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),targetTeamId:'',influence:INFLUENCE_START,influenceUsedToday:false,round:0,schedule:[],table:{},regulations:[],regulationHistory:[],seenRegulationIds:[],pendingChoices:[],history:[],stats:{scorers:{},team:{}},playoff:null,championId:'',regularSeasonRank:0,startExpectedRank:0,directorName:'',submitted:false,meta:{}};
+ const target=pick(TEAMS);
+ state.targetTeamId=target.id;
+ state.schedule=generateSchedule(TEAMS.map(team=>team.id));
+ state.table=createTable();
+ state.startExpectedRank=[...TEAMS].sort((a,b)=>b.rating-a.rating).findIndex(team=>team.id===target.id)+1;
+ save();
+ render();
+}
+function beginSeason(){const difficulty=directorDifficultyProfile();state.phase='season';save();render();toast(`Missione ${difficulty.label}: hai ${INFLUENCE_START} punti Influenza per tutta la stagione.`)}
+
+function sortedTable(){return Object.values(state?.table||{}).sort((a,b)=>Number(b.pts)-Number(a.pts)||(Number(b.gf)-Number(b.ga))-(Number(a.gf)-Number(a.ga))||Number(b.gf)-Number(a.gf)||(teamOf(b.id)?.rating||0)-(teamOf(a.id)?.rating||0)||teamOf(a.id)?.name.localeCompare(teamOf(b.id)?.name,'it'))}
+function rankOf(teamId){const index=sortedTable().findIndex(row=>row.id===String(teamId));return index<0?0:index+1}
+function targetRow(){return state.table[state.targetTeamId]||{p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0}}
+function gapFromTop(){const table=sortedTable(),target=targetRow();return table.length?Number(target.pts)-Number(table[0].pts):0}
+function targetTeam(){return teamOf(state.targetTeamId)}
+function currentRoundMatches(){return state.schedule[state.round]||[]}
+function currentTargetFixture(){return currentRoundMatches().find(match=>match.homeId===state.targetTeamId||match.awayId===state.targetTeamId)||null}
+function activeRegulations(){return (state.regulations||[]).map(item=>REGULATIONS.find(regulation=>regulation.id===item.id)||item).filter(Boolean)}
+function hasRule(rule){return activeRegulations().some(regulation=>regulation.rule===rule)}
+function regulationById(id){return REGULATIONS.find(regulation=>regulation.id===id)||null}
+
+function render(){
+ closeModal();
+ if(!state){renderSetup();return}
+ const target=targetTeam();
+ document.documentElement.style.cssText+=`;${teamStyle(target)}`;
+ if(state.phase==='briefing'){renderBriefing();return}
+ if(state.phase==='season'){renderSeason();return}
+ if(state.phase==='playoffs'){renderPlayoffs();return}
+ if(state.phase==='finished'){renderFinished();return}
+ renderSetup();
+}
+
+function renderSetup(){
+ screen.innerHTML=`<section class="setup-hero"><div class="setup-copy"><span class="setup-kicker">Nuova modalità · 38 giornate</span><h1>Direttore<br>Sportivo</h1><p>Non controlli una squadra: ne ricevi una casuale e devi portarla al titolo manipolando soltanto il regolamento. Nessun mercato, nessun bonus OVR, nessuna Intesa.</p><div class="setup-pills"><span class="setup-pill">⚖️ 8 punti Influenza</span><span class="setup-pill">🎲 4 regolamenti casuali</span><span class="setup-pill">🎙️ Cronaca o Simula</span><span class="setup-pill">🏆 Obiettivo Scudetto</span></div><div class="setup-actions"><button id="newMissionBtn" class="btn gold" type="button">Assegnami una squadra casuale</button><a class="btn" href="index.html">Torna al menu</a></div></div></section>`;
+ document.getElementById('newMissionBtn').onclick=startMission;
+}
+
+function renderBriefing(){
+ const team=targetTeam(),rank=state.startExpectedRank,attack=Math.round(team.attack),defense=Math.round(team.defense),difficulty=directorDifficultyProfile(rank),profile=rank<=3?'Favorita al titolo':rank<=7?'Squadra da zona europea':rank<=12?'Squadra di metà classifica':rank<=16?'Missione difficile':'Missione estrema';
+ screen.innerHTML=`<section class="panel briefing-card" style="${teamStyle(team)}"><div class="club-crest"><span>${esc(team.shortName||shortBadge(team.name))}</span></div><div><div class="label">Missione assegnata casualmente</div><h2>Porta ${esc(team.name)} al titolo</h2><p class="subline">${esc(profile)}. Non potrai modificare la rosa né i valori dei giocatori: il tuo unico strumento sarà l’Influenza Federale.</p><div class="dossier-grid"><div class="dossier-stat"><b>${team.rating.toFixed(1)}</b><span>OVR stimato</span></div><div class="dossier-stat"><b>${attack}</b><span>Attacco</span></div><div class="dossier-stat"><b>${defense}</b><span>Difesa</span></div><div class="dossier-stat"><b>${rank}°</b><span>Forza prevista</span></div><div class="dossier-stat difficulty-${difficulty.key}"><b>${esc(difficulty.label)}</b><span>Difficoltà</span></div><div class="dossier-stat"><b>${formatDirectorMultiplier(difficulty.multiplier)}</b><span>Coeff. impresa</span></div><div class="dossier-stat"><b>${INFLUENCE_START}</b><span>Influenza iniziale</span></div><div class="dossier-stat"><b>Pt×10</b><span>Base classifica</span></div></div><div class="director-score-explainer"><b>Come funziona la classifica</b><span>(Punti finali × 10 + Influenza rimasta × 80) × coefficiente difficoltà</span></div><div class="setup-actions"><button id="beginSeasonBtn" class="btn primary" type="button">Inizia la stagione</button><button id="rerollMissionBtn" class="btn gold" type="button">Estrai un’altra missione</button></div></div></section>`;
+ document.getElementById('beginSeasonBtn').onclick=beginSeason;
+ document.getElementById('rerollMissionBtn').onclick=()=>{localStorage.removeItem(SAVE_KEY);state=null;startMission()};
+}
+
+function renderMissionHero(){
+ const team=targetTeam(),standing=targetRow(),rank=rankOf(team.id),gap=gapFromTop(),active=activeRegulations();
+ const dots=Array.from({length:INFLUENCE_START},(_,index)=>`<span class="influence-dot ${index<state.influence?'active':''}"></span>`).join('');
+ return `<section class="mission-hero" style="${teamStyle(team)}"><div class="mission-grid"><div><div class="mission-head"><div class="mission-mini-crest">${esc(team.shortName)}</div><div class="mission-title"><div class="label" style="color:#ffe96c">Missione stagionale</div><h1>Porta ${esc(team.name)} al titolo</h1><p>Non gestisci la rosa: governi il regolamento del campionato.</p></div></div><div class="influence-meter"><div class="influence-head"><span>Influenza Federale disponibile</span><b>${state.influence}/${INFLUENCE_START}</b></div><div class="influence-dots">${dots}</div></div></div><div class="mission-stats"><div class="mission-stat"><b>${rank||'—'}°</b><span>Posizione</span></div><div class="mission-stat"><b>${standing.pts}</b><span>Punti</span></div><div class="mission-stat"><b>${gap===0?'0':gap}</b><span>Dalla vetta</span></div><div class="mission-stat"><b>${active.length}</b><span>Regole attive</span></div><div class="mission-stat"><b>${esc(directorDifficultyProfile().label)}</b><span>Difficoltà</span></div></div></div></section>`;
+}
+function renderMatchPanel(options={}){
+ const playoff=Boolean(options.playoff),fixture=playoff?options.fixture:currentTargetFixture();
+ if(!fixture)return`<section class="panel"><div class="empty">Nessuna partita disponibile.</div></section>`;
+ const home=teamOf(fixture.homeId),away=teamOf(fixture.awayId),roundLabel=playoff?playoffStageLabel(state.playoff?.stage):`Giornata ${state.round+1}`,used=state.influenceUsedToday||state.influence<=0||playoff;
+ const reason=playoff?'L’Influenza non può essere utilizzata durante i play off.':state.influence<=0?'Hai terminato i punti Influenza.':state.influenceUsedToday?'Hai già convocato il Consiglio Federale in questa giornata.':'Spendendo 1 punto riceverai quattro regolamenti casuali e dovrai approvarne uno.';
+ return `<section class="panel match-panel"><div class="match-panel-head"><div><div class="label">Prossima partita</div><h2>${esc(roundLabel)}</h2></div><span class="round-badge">${fixture.homeId===state.targetTeamId?'La tua missione gioca in casa':'La tua missione gioca in trasferta'}</span></div><div class="matchup"><div class="match-team"><b>${esc(home.name)}</b><span>Casa · OVR ${home.rating.toFixed(1)}</span><span class="team-rank">${rankOf(home.id)||'—'}° in classifica</span></div><div class="versus">VS</div><div class="match-team"><b>${esc(away.name)}</b><span>Trasferta · OVR ${away.rating.toFixed(1)}</span><span class="team-rank">${rankOf(away.id)||'—'}° in classifica</span></div></div><div class="match-actions">${playoff?'':`<button id="useInfluenceBtn" class="btn gold influence-button" type="button" ${used?'disabled':''}>⚖️ Usa 1 Influenza · ${state.influence} rimasti</button>`}<button id="playLiveBtn" class="btn primary" type="button">🎙️ Gioca con cronaca</button><button id="playInstantBtn" class="btn soft" type="button">📯 Simula</button></div><div class="regulation-reminder">${esc(reason)}</div></section>`;
+}
+function renderSeason(){
+ screen.innerHTML=`${renderMissionHero()}${renderMatchPanel()}<div class="dashboard-grid"><section class="panel"><div class="tabs"><button class="tab active" data-tab="home">Home</button><button class="tab" data-tab="table">Classifica</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="stats">Statistiche</button><button class="tab" data-tab="journey">Percorso</button></div><div id="tab-home" class="tab-view active">${renderHomeTab()}</div><div id="tab-table" class="tab-view">${renderTable()}</div><div id="tab-calendar" class="tab-view">${renderCalendar()}</div><div id="tab-stats" class="tab-view">${renderStats()}</div><div id="tab-journey" class="tab-view">${renderJourney()}</div></section><aside>${renderSidebar()}</aside></div>`;
+ bindDashboardTabs();
+ document.getElementById('useInfluenceBtn')?.addEventListener('click',openInfluenceConfirm);
+ document.getElementById('playLiveBtn')?.addEventListener('click',()=>playCurrentRound('live'));
+ document.getElementById('playInstantBtn')?.addEventListener('click',()=>playCurrentRound('instant'));
+}
+function renderHomeTab(){
+ const active=activeRegulations(),last=state.history[state.history.length-1];
+ return `<h3>Regolamenti attivi</h3>${active.length?`<div class="active-rules">${active.map(regulation=>`<article class="rule-card"><b>${esc(regulation.title)}</b><small>${esc(regulation.effect)} · ${esc(regulation.duration||'Fino a fine stagione')}</small></article>`).join('')}</div>`:`<div class="empty">Il campionato segue ancora il regolamento normale. Puoi utilizzare l’Influenza prima di qualsiasi giornata.</div>`}<h3 style="margin-top:18px">${last?'Ultimi risultati':'La stagione deve ancora iniziare'}</h3>${last?renderRoundResults(last.matches):`<div class="empty">Gioca la prima giornata per vedere tutti i risultati del campionato.</div>`}`;
+}
+function renderRoundResults(matches=[]){return `<div class="round-results">${matches.map(match=>renderResultRow(match)).join('')}</div>`}
+function renderResultRow(match){
+ const home=teamOf(match.homeId),away=teamOf(match.awayId),target=match.homeId===state.targetTeamId||match.awayId===state.targetTeamId;
+ if(match.skipped)return`<div class="result-row rested ${target?'target':''}"><span>${esc(home.name)}</span><b class="result-score">RIPOSO</b><span>${esc(away.name)}</span></div>`;
+ const marker=match.decidedByPenalties?' d.c.r.':'';
+ return `<div class="result-row ${target?'target':''}"><span>${esc(home.name)}</span><b class="result-score">${match.homeGoals}–${match.awayGoals}${marker}</b><span>${esc(away.name)}</span></div>`;
+}
+function renderTable(){
+ const rows=sortedTable();
+ return `<div style="overflow:auto"><table><thead><tr><th>#</th><th>Squadra</th><th>Pt</th><th>G</th><th>V</th><th>N</th><th>P</th><th>GF</th><th>GS</th><th>DR</th></tr></thead><tbody>${rows.map((row,index)=>{const team=teamOf(row.id),target=row.id===state.targetTeamId;return`<tr class="${target?'target-row':''} ${index===0?'leader-row':''}"><td>${index+1}</td><td><span class="standing-name"><i class="standing-dot" style="--club-color:${team.colors?.primary||'#777'}"></i>${esc(team.name)}</span></td><td>${formatPoints(row.pts)}</td><td>${row.p}</td><td>${row.w}</td><td>${row.d}</td><td>${row.l}</td><td>${row.gf}</td><td>${row.ga}</td><td>${row.gf-row.ga>=0?'+':''}${row.gf-row.ga}</td></tr>`}).join('')}</tbody></table></div>`;
+}
+function formatPoints(value){const number=Number(value)||0;return Number.isInteger(number)?String(number):number.toFixed(1)}
+function renderCalendar(){
+ return `<div class="calendar-list">${state.schedule.map((round,index)=>{const fixture=round.find(match=>match.homeId===state.targetTeamId||match.awayId===state.targetTeamId),home=teamOf(fixture.homeId),away=teamOf(fixture.awayId),played=index<state.round,current=index===state.round,history=state.history[index],targetMatch=history?.matches?.find(match=>match.homeId===state.targetTeamId||match.awayId===state.targetTeamId);return`<div class="calendar-round ${played?'played':''} ${current?'current':''}"><b>G${index+1}</b><span>${esc(home.name)} vs ${esc(away.name)}</span><span>${targetMatch?(targetMatch.skipped?'Riposo':`${targetMatch.homeGoals}–${targetMatch.awayGoals}`):current?'Prossima':'Da giocare'}</span></div>`}).join('')}</div>`;
+}
+function targetHistory(){return state.history.map(round=>{const match=round.matches.find(item=>item.homeId===state.targetTeamId||item.awayId===state.targetTeamId);return match?{round:round.round,match}:null}).filter(Boolean)}
+function targetOutcome(match){if(match.skipped)return'R';const targetHome=match.homeId===state.targetTeamId,winner=match.winnerId||(match.homeGoals>match.awayGoals?match.homeId:match.awayGoals>match.homeGoals?match.awayId:'');if(!winner)return'D';return winner===state.targetTeamId?'W':'L'}
+function renderJourney(){
+ const history=targetHistory();
+ return history.length?`<div class="history-list">${history.slice().reverse().map(item=>{const match=item.match,opponent=teamOf(match.homeId===state.targetTeamId?match.awayId:match.homeId),outcome=targetOutcome(match),label=outcome==='W'?'Vittoria':outcome==='D'?'Pareggio':outcome==='L'?'Sconfitta':'Riposo';return`<div class="history-item"><span class="history-day">G${item.round}</span><div><b>${esc(opponent.name)} · ${match.homeId===state.targetTeamId?'Casa':'Trasferta'}</b><small>${match.skipped?'Partita non disputata':`${match.homeGoals}–${match.awayGoals}${match.decidedByPenalties?' dopo i rigori':''}`}</small></div><span class="outcome-pill ${outcome==='W'?'win':outcome==='D'||outcome==='R'?'draw':'loss'}">${label}</span></div>`}).join('')}</div>`:`<div class="empty">Il percorso della squadra-obiettivo comparirà dopo la prima giornata.</div>`;
+}
+function renderStats(){
+ const row=targetRow(),history=targetHistory(),goalsPerGame=row.p?row.gf/row.p:0,against=row.p?row.ga/row.p:0,scorers=Object.values(state.stats.scorers||{}).filter(item=>item.teamId===state.targetTeamId).sort((a,b)=>b.goals-a.goals),top=scorers[0];
+ return `<div class="stats-grid"><div class="stat-card"><b>${row.gf}</b><span>Gol fatti</span></div><div class="stat-card"><b>${row.ga}</b><span>Gol subiti</span></div><div class="stat-card"><b>${goalsPerGame.toFixed(2)}</b><span>Gol a partita</span></div><div class="stat-card"><b>${against.toFixed(2)}</b><span>Subiti a partita</span></div><div class="stat-card"><b>${top?esc(top.name):'—'}</b><span>Capocannoniere</span></div><div class="stat-card"><b>${top?.goals||0}</b><span>Gol top scorer</span></div></div>${scorers.length?`<h3 style="margin-top:18px">Marcatori della missione</h3><div class="active-rules">${scorers.slice(0,8).map(item=>`<article class="rule-card"><b>${esc(item.name)}</b><small>${item.goals} gol</small></article>`).join('')}</div>`:''}`;
+}
+function renderSidebar(){
+ const team=targetTeam(),form=targetHistory().slice(-5).map(item=>targetOutcome(item.match)),upcoming=[];
+ for(let index=state.round+1;index<Math.min(TOTAL_ROUNDS,state.round+5);index++){const fixture=state.schedule[index].find(match=>match.homeId===team.id||match.awayId===team.id),opponent=teamOf(fixture.homeId===team.id?fixture.awayId:fixture.homeId);upcoming.push({round:index+1,opponent,venue:fixture.homeId===team.id?'Casa':'Trasferta'})}
+ return `<section class="panel sidebar-card"><div class="label">Stato missione</div><h3>${esc(team.name)}</h3><p class="subline">Forza prevista iniziale: ${state.startExpectedRank}° · ${esc(directorDifficultyProfile().label)} ${formatDirectorMultiplier(directorDifficultyProfile().multiplier)} · OVR ${team.rating.toFixed(1)}</p><div class="target-form">${form.length?form.map(value=>`<span class="form-dot ${value}">${value}</span>`).join(''):'<span class="subline">Nessuna partita</span>'}</div></section><section class="panel sidebar-card"><div class="label">Prossime partite</div><div class="next-fixtures">${upcoming.length?upcoming.map(item=>`<div class="fixture-mini"><strong>G${item.round}</strong><b>${esc(item.opponent.name)}</b><span>${item.venue}</span></div>`).join(''):'<div class="empty">Fine calendario</div>'}</div></section><section class="panel sidebar-card"><div class="label">Influenza utilizzata</div><h3>${INFLUENCE_START-state.influence}/${INFLUENCE_START}</h3><p class="subline">Ogni utilizzo mostra quattro regolamenti casuali. Il punto viene consumato appena le proposte vengono rivelate.</p></section>`;
+}
+function bindDashboardTabs(){document.querySelectorAll('.tab').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(item=>item.classList.toggle('active',item===button));document.querySelectorAll('.tab-view').forEach(view=>view.classList.toggle('active',view.id===`tab-${button.dataset.tab}`))}))}
+
+function openInfluenceConfirm(){
+ if(state.influence<=0||state.influenceUsedToday||state.phase!=='season')return;
+ modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal"><div class="label">Convocazione straordinaria</div><h2>Usare 1 punto Influenza?</h2><p class="subline">Riceverai quattro regolamenti casuali. Dopo averli visti dovrai approvarne uno: non sarà possibile annullare la convocazione o recuperare il punto.</p><div class="modal-actions"><button id="confirmInfluenceBtn" class="btn gold" type="button">Convoca il Consiglio Federale</button><button id="cancelInfluenceBtn" class="btn" type="button">Annulla</button></div></section></div>`;
+ document.getElementById('confirmInfluenceBtn').onclick=revealInfluenceChoices;
+ document.getElementById('cancelInfluenceBtn').onclick=closeModal;
+}
+function availableRegulationPool(){
+ const activeIds=new Set((state.regulations||[]).map(item=>item.id));
+ let pool=REGULATIONS.filter(regulation=>!activeIds.has(regulation.id)&&!state.seenRegulationIds.includes(regulation.id));
+ if(pool.length<4){state.seenRegulationIds=[];pool=REGULATIONS.filter(regulation=>!activeIds.has(regulation.id))}
+ return pool;
+}
+function revealInfluenceChoices(){
+ if(state.influence<=0||state.influenceUsedToday)return;
+ const pool=shuffle(availableRegulationPool()).slice(0,4);
+ if(pool.length<4){toast('Catalogo regolamenti non sufficiente.');return}
+ state.influence-=1;
+ state.influenceUsedToday=true;
+ state.pendingChoices=pool.map(regulation=>regulation.id);
+ state.seenRegulationIds=[...new Set([...state.seenRegulationIds,...state.pendingChoices])];
+ save();
+ renderInfluenceChoices();
+}
+function renderInfluenceChoices(){
+ const choices=(state.pendingChoices||[]).map(regulationById).filter(Boolean);
+ if(!choices.length){closeModal();return}
+ modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal choice-event"><div class="label">Evento decisionale · Consiglio Federale</div><h2>Il regolamento deve cambiare</h2><p>Hai speso un punto Influenza. Le quattro proposte sono state estratte casualmente: scegline una da applicare all’intero campionato.</p><div class="regulation-choice-grid">${choices.map((regulation,index)=>`<button class="regulation-choice" type="button" data-regulation-id="${esc(regulation.id)}"><span class="choice-number">${index+1}</span><b>${esc(regulation.title)}</b><p>${esc(regulation.effect)}</p><small>${esc(regulation.duration)} · Origine: ${esc(regulation.sourceEvent)}</small></button>`).join('')}</div><p class="subline" style="color:#e7edf4;margin-top:14px">La finestra non può essere chiusa finché non approvi una proposta.</p></section></div>`;
+ document.querySelectorAll('[data-regulation-id]').forEach(button=>button.addEventListener('click',()=>approveRegulation(button.dataset.regulationId)));
+}
+function approveRegulation(id){
+ const regulation=regulationById(id);if(!regulation)return;
+ let replaced=null;
+ if(regulation.group&&!regulation.instant){const index=state.regulations.findIndex(item=>item.group===regulation.group);if(index>=0){replaced=regulationById(state.regulations[index].id)||state.regulations[index];state.regulations.splice(index,1)}}
+ if(regulation.instant){applyInstantRegulation(regulation)}else state.regulations.push({id:regulation.id,group:regulation.group,activatedRound:state.round+1});
+ state.regulationHistory.push({id:regulation.id,title:regulation.title,round:state.round+1,replaced:replaced?.title||''});
+ state.pendingChoices=[];
+ save();
+ render();
+ modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal"><div class="label">Regolamento approvato</div><h2>${esc(regulation.title)}</h2><p class="subline">${esc(regulation.effect)}</p>${replaced?`<div class="regulation-reminder">Sostituisce: ${esc(replaced.title)}</div>`:''}<div class="modal-actions"><button id="closeApprovedBtn" class="btn primary" type="button">Torna alla partita</button></div></section></div>`;
+ document.getElementById('closeApprovedBtn').onclick=closeModal;
+}
+function applyInstantRegulation(regulation){
+ if(regulation.rule==='bottomEqualsLeader'){
+  const table=sortedTable();if(table.length){const leader=table[0],bottom=table[table.length-1];bottom.pts=leader.pts;toast(`${teamOf(bottom.id).name} raggiunge la capolista a ${formatPoints(leader.pts)} punti.`)}
+ }
+}
+
+function poisson(lambda){let limit=Math.exp(-Math.max(0,lambda)),product=1,count=0;do{count++;product*=Math.max(.000001,rand())}while(product>limit&&count<12);return count-1}
+function pickScorer(teamId){
+ const players=PLAYERS_BY_CLUB.get(String(teamId))||[];
+ if(!players.length)return{id:`${teamId}-unknown`,name:'Giocatore'};
+ const weighted=[];
+ for(const player of players){const role=String(player.role||'C').toUpperCase(),copies=role==='A'?5:role==='C'?3:role==='D'?1:0;for(let i=0;i<copies;i++)weighted.push(player)}
+ return pick(weighted.length?weighted:players)||players[0];
+}
+function generateGoals(teamId,count,duration){const goals=[];for(let index=0;index<count;index++){const scorer=pickScorer(teamId);goals.push({teamId,minute:randomInt(1,duration),playerId:String(scorer.id),playerName:String(scorer.name),annulled:false,value:1})}return goals}
+function matchStrength(home,away){const homeAttack=(home.attack-away.defense)/22,awayAttack=(away.attack-home.defense)/22,quality=((home.rating+away.rating)/2-73)/35;return{homeLambda:clamp(1.32+homeAttack+quality+.16,.22,3.5),awayLambda:clamp(1.08+awayAttack+quality,.18,3.2)}}
+function matchDuration(){if(hasRule('duration30'))return 30;if(hasRule('duration120'))return 120;return 90}
+function incidentFactor(){let factor=1;if(hasRule('effectiveTime'))factor*=2.15;if(hasRule('duration120'))factor*=1.35;if(hasRule('duration30'))factor*=.55;return factor}
+function preRoundBottomIds(){return new Set(sortedTable().slice(9).map(row=>row.id))}
+function simulateMatch(fixture,context={}){
+ const home=teamOf(fixture.homeId),away=teamOf(fixture.awayId),knockout=Boolean(context.knockout),bottomIds=context.bottomIds||new Set();
+ if(context.skipped)return{homeId:home.id,awayId:away.id,homeGoals:0,awayGoals:0,skipped:true,winnerId:'',homePoints:0,awayPoints:0,commentary:[{minute:'—',text:'La capolista e la sua avversaria osservano un turno di riposo imposto dal regolamento.',type:'rule'}],goals:[],homeIncidents:{yellow:0,red:0,injuries:0,missedPenalties:0},awayIncidents:{yellow:0,red:0,injuries:0,missedPenalties:0}};
+ if(hasRule('penaltiesOnly')){
+  const homeChance=.5+clamp((home.rating-away.rating)/100,-.15,.15),homeWins=rand()<homeChance,winnerId=homeWins?home.id:away.id;
+  return finalizeMatch({home,away,goals:[],homeGoals:0,awayGoals:0,winnerId,decidedByPenalties:true,commentary:[{minute:'0’',text:'Il regolamento manda le squadre direttamente ai calci di rigore.',type:'rule'},{minute:'RIG',text:`${teamOf(winnerId).name} vince la lotteria dei rigori.`,type:'goal'}],homeIncidents:{yellow:0,red:0,injuries:0,missedPenalties:0},awayIncidents:{yellow:0,red:0,injuries:0,missedPenalties:0},bottomIds,knockout});
+ }
+ const duration=matchDuration(),strength=matchStrength(home,away),durationMultiplier=duration/90,formationMultiplier=hasRule('formation444')?1.22:(hasRule('formation333') ? .82 : 1);
+ let homeCount=poisson(strength.homeLambda*durationMultiplier*formationMultiplier),awayCount=poisson(strength.awayLambda*durationMultiplier*formationMultiplier);
+ let goals=[...generateGoals(home.id,homeCount,duration),...generateGoals(away.id,awayCount,duration)].sort((a,b)=>a.minute-b.minute||rand()-.5);
+ const factor=incidentFactor();
+ const makeIncidents=team=>{const yellow=poisson(1.35*factor*(2-team.discipline));let red=rand()<.075*factor?1:0;if(hasRule('yellowEqualsRed'))red=Math.min(3,yellow);return{yellow,red,injuries:rand()<.10*factor?1:0,missedPenalties:rand()<.065*factor?1:0}};
+ const homeIncidents=makeIncidents(home),awayIncidents=makeIncidents(away),commentary=[];
+ if(hasRule('pinkCardEndsMatch')&&rand()<.16*factor){const minute=randomInt(12,duration);goals=goals.filter(goal=>goal.minute<=minute);commentary.push({minute:`${minute}’`,text:'Cartellino rosa! La partita termina immediatamente.',type:'card'})}
+ if(hasRule('cancelFirstGoal')&&goals.length){const goal=goals[0];goal.annulled=true;commentary.push({minute:`${goal.minute}’`,text:`Il VAR annulla il primo gol della partita, segnato da ${goal.playerName}.`,type:'rule'})}
+ if(hasRule('cancelLastGoal')){const valid=goals.filter(goal=>!goal.annulled);if(valid.length){const goal=valid[valid.length-1];goal.annulled=true;commentary.push({minute:`${goal.minute}’`,text:`Il VAR annulla l’ultimo gol della partita, segnato da ${goal.playerName}.`,type:'rule'})}}
+ const validGoals=goals.filter(goal=>!goal.annulled);
+ if(hasRule('lateGoalsDouble'))for(const goal of validGoals)if(goal.minute>=80){goal.value=2;commentary.push({minute:`${goal.minute}’`,text:`Regolamento attivo: il gol di ${goal.playerName} vale doppio.`,type:'rule'})}
+ for(const goal of validGoals)commentary.push({minute:`${goal.minute}’`,text:`Gol di ${goal.playerName} per ${teamOf(goal.teamId).name}${goal.value===2?' (vale doppio)':''}.`,type:'goal'});
+ commentary.push(...incidentCommentary(home,homeIncidents,duration),...incidentCommentary(away,awayIncidents,duration));
+ let homeGoals=sum(validGoals.filter(goal=>goal.teamId===home.id).map(goal=>goal.value)),awayGoals=sum(validGoals.filter(goal=>goal.teamId===away.id).map(goal=>goal.value));
+ if(hasRule('goldenGoal')&&validGoals.length){const first=validGoals[0];homeGoals=first.teamId===home.id?1:0;awayGoals=first.teamId===away.id?1:0;commentary.push({minute:`${first.minute}’`,text:'Golden goal: la partita si chiude sulla prima rete.',type:'rule'})}
+ if(hasRule('lastGoalWins')&&validGoals.length){const last=validGoals[validGoals.length-1];homeGoals=last.teamId===home.id?1:0;awayGoals=last.teamId===away.id?1:0;commentary.push({minute:`${last.minute}’`,text:'Conta soltanto l’ultimo gol: il risultato viene riscritto dal regolamento.',type:'rule'})}
+ if(hasRule('redCardGoal')){homeGoals+=homeIncidents.red;awayGoals+=awayIncidents.red;if(homeIncidents.red||awayIncidents.red)commentary.push({minute:'⚖️',text:'Ogni cartellino rosso ricevuto viene convertito in un gol per la stessa squadra.',type:'rule'})}
+ if(hasRule('negativeIncidents')){homeGoals-=homeIncidents.red+homeIncidents.injuries+homeIncidents.missedPenalties;awayGoals-=awayIncidents.red+awayIncidents.injuries+awayIncidents.missedPenalties;commentary.push({minute:'⚖️',text:'Rossi, infortuni e rigori sbagliati sottraggono reti dal risultato.',type:'rule'})}
+ let winnerId=homeGoals>awayGoals?home.id:awayGoals>homeGoals?away.id:'';let decidedByPenalties=false;
+ if((hasRule('noDraws')||knockout)&&homeGoals===awayGoals){const homeChance=.5+clamp((home.rating-away.rating)/100,-.18,.18),homeWins=rand()<homeChance;winnerId=homeWins?home.id:away.id;decidedByPenalties=true;commentary.push({minute:'RIG',text:`${teamOf(winnerId).name} vince dopo supplementari e calci di rigore.`,type:'goal'})}
+ commentary.sort((a,b)=>(parseInt(a.minute)||999)-(parseInt(b.minute)||999));
+ return finalizeMatch({home,away,goals:validGoals,homeGoals,awayGoals,winnerId,decidedByPenalties,commentary,homeIncidents,awayIncidents,bottomIds,knockout});
+}
+function incidentCommentary(team,incidents,duration){const lines=[];if(incidents.red)lines.push({minute:`${randomInt(12,duration)}’`,text:`Cartellino rosso per ${team.name}.`,type:'card'});if(incidents.injuries)lines.push({minute:`${randomInt(10,duration)}’`,text:`Infortunio per ${team.name}.`,type:'card'});if(incidents.missedPenalties)lines.push({minute:`${randomInt(8,duration)}’`,text:`${team.name} sbaglia un calcio di rigore.`,type:'card'});return lines}
+function finalizeMatch(data){
+ const {home,away,homeGoals,awayGoals,winnerId,decidedByPenalties,bottomIds,knockout}=data;
+ let homeBase=0,awayBase=0;
+ if(!knockout){
+  if(winnerId){homeBase=winnerId===home.id?3:0;awayBase=winnerId===away.id?3:0}else if(homeGoals===awayGoals){homeBase=1;awayBase=1}else{homeBase=homeGoals>awayGoals?3:0;awayBase=awayGoals>homeGoals?3:0}
+  if(hasRule('pointsEqualGoals')){homeBase=homeGoals;awayBase=awayGoals}
+  if(!winnerId&&homeGoals===0&&awayGoals===0&&hasRule('zeroZeroNoPoints'))homeBase=awayBase=0;
+  if(!winnerId&&homeGoals===0&&awayGoals===0&&hasRule('zeroZeroSeven'))homeBase=awayBase=7;
+  if(hasRule('bottomHalfHelp')){
+   const apply=(teamId,won,draw)=>bottomIds.has(teamId)?won?4:draw?2:1:null;
+   const homeSpecial=apply(home.id,winnerId===home.id,!winnerId&&homeGoals===awayGoals),awaySpecial=apply(away.id,winnerId===away.id,!winnerId&&homeGoals===awayGoals);
+   if(homeSpecial!==null)homeBase=homeSpecial;if(awaySpecial!==null)awayBase=awaySpecial;
+  }
+  if(hasRule('lossMinusThree')){if(winnerId===home.id||homeGoals>awayGoals)awayBase=-3;if(winnerId===away.id||awayGoals>homeGoals)homeBase=-3}
+ }
+ let homeExtra=0,awayExtra=0;
+ if(!knockout&&hasRule('concededGoalMinusPoint')){homeExtra-=awayGoals;awayExtra-=homeGoals}
+ if(!knockout&&hasRule('cleanSheetBonus')){if(awayGoals===0)homeExtra+=1;if(homeGoals===0)awayExtra+=1}
+ if(!knockout&&hasRule('braceBonusPoint')){const homeCounts=scorerCounts(data.goals,home.id),awayCounts=scorerCounts(data.goals,away.id);if(Object.values(homeCounts).some(value=>value>=2))homeExtra+=1;if(Object.values(awayCounts).some(value=>value>=2))awayExtra+=1}
+ return {...data,homeId:home.id,awayId:away.id,homePoints:homeBase+homeExtra,awayPoints:awayBase+awayExtra,homeBasePoints:homeBase,awayBasePoints:awayBase,homeExtraPoints:homeExtra,awayExtraPoints:awayExtra,qualityHome:resultQuality(homeGoals,awayGoals,winnerId===home.id),qualityAway:resultQuality(awayGoals,homeGoals,winnerId===away.id),decidedByPenalties:Boolean(decidedByPenalties)};
+}
+function scorerCounts(goals,teamId){const counts={};for(const goal of goals||[])if(goal.teamId===teamId)counts[goal.playerId]=(counts[goal.playerId]||0)+1;return counts}
+function resultQuality(gf,ga,won){return (won?300:gf===ga?120:0)+(gf-ga)*20+gf*4+rand()}
+
+function playCurrentRound(mode){
+ if(state.pendingChoices?.length){renderInfluenceChoices();return}
+ if(state.round>=TOTAL_ROUNDS)return;
+ const report=simulateLeagueRound();
+ commitLeagueRound(report);
+ showRoundModal(report,mode==='live');
+}
+function simulateLeagueRound(){
+ const bottomIds=preRoundBottomIds(),leaderId=sortedTable()[0]?.id||'',matches=currentRoundMatches(),results=[];
+ for(const fixture of matches){const skipped=hasRule('leaderRests')&&state.round>0&&(fixture.homeId===leaderId||fixture.awayId===leaderId);results.push(simulateMatch(fixture,{bottomIds,skipped}))}
+ if(hasRule('formulaOne'))applyFormulaOnePoints(results);
+ return {round:state.round+1,matches:results,regulations:activeRegulations().map(rule=>rule.id),createdAt:new Date().toISOString()};
+}
+function applyFormulaOnePoints(matches){
+ const entries=[];
+ for(const match of matches){if(match.skipped){entries.push({teamId:match.homeId,quality:-999,match,side:'home'},{teamId:match.awayId,quality:-999,match,side:'away'});continue}entries.push({teamId:match.homeId,quality:match.qualityHome,match,side:'home'},{teamId:match.awayId,quality:match.qualityAway,match,side:'away'})}
+ entries.sort((a,b)=>b.quality-a.quality);
+ const points=[25,18,15,12,10,8,6,4,2,1];
+ entries.forEach((entry,index)=>{const value=points[index]||0;if(entry.side==='home')entry.match.homePoints=value+entry.match.homeExtraPoints;else entry.match.awayPoints=value+entry.match.awayExtraPoints});
+}
+function commitLeagueRound(report){
+ for(const match of report.matches)commitMatchToTable(match);
+ state.history.push(report);
+ state.round+=1;
+ state.influenceUsedToday=false;
+ state.pendingChoices=[];
+ if(state.round>=TOTAL_ROUNDS){state.regularSeasonRank=rankOf(state.targetTeamId);if(hasRule('playoffsTopEight'))preparePlayoffs();else finishSeason(sortedTable()[0]?.id||'')}
+ save();
+ if(state.phase==='season')render();
+}
+function commitMatchToTable(match){
+ if(match.skipped)return;
+ const home=state.table[match.homeId],away=state.table[match.awayId];
+ home.p+=1;away.p+=1;home.gf+=match.homeGoals;home.ga+=match.awayGoals;away.gf+=match.awayGoals;away.ga+=match.homeGoals;
+ const winner=match.winnerId||(match.homeGoals>match.awayGoals?match.homeId:match.awayGoals>match.homeGoals?match.awayId:'');
+ if(!winner){home.d+=1;away.d+=1}else if(winner===match.homeId){home.w+=1;away.l+=1}else{away.w+=1;home.l+=1}
+ home.pts+=Number(match.homePoints)||0;away.pts+=Number(match.awayPoints)||0;
+ registerMatchStats(match);
+}
+function registerMatchStats(match){
+ for(const goal of match.goals||[]){const existing=state.stats.scorers[goal.playerId]||{playerId:goal.playerId,name:goal.playerName,teamId:goal.teamId,goals:0};existing.goals+=Number(goal.value)||1;state.stats.scorers[goal.playerId]=existing}
+ for(const side of ['home','away']){const teamId=match[`${side}Id`],incidents=match[`${side}Incidents`]||{},stats=state.stats.team[teamId]||{reds:0,injuries:0,yellows:0};stats.reds+=incidents.red||0;stats.injuries+=incidents.injuries||0;stats.yellows+=incidents.yellow||0;state.stats.team[teamId]=stats}
+}
+
+function showRoundModal(report,live){
+ const targetMatch=report.matches.find(match=>match.homeId===state.targetTeamId||match.awayId===state.targetTeamId),home=teamOf(targetMatch.homeId),away=teamOf(targetMatch.awayId),lines=targetMatch.commentary?.length?targetMatch.commentary:[{minute:'90’',text:'Partita priva di episodi rilevanti.',type:''}];
+ modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal result-modal"><div class="label">Risultato finale · Giornata ${report.round}</div><div class="scoreboard"><div class="scoreboard-team">${esc(home.name)}</div><div class="scoreboard-score">${targetMatch.skipped?'RIPOSO':`${targetMatch.homeGoals}–${targetMatch.awayGoals}`}</div><div class="scoreboard-team">${esc(away.name)}</div></div><div class="commentary" id="commentaryFeed"></div><section class="other-results-modal hidden" id="otherResultsBlock"><h3>Risultati dagli altri campi</h3><div class="modal-result-grid">${report.matches.map(renderResultRow).join('')}</div></section><div class="modal-actions"><button id="skipCommentaryBtn" class="btn gold ${live?'':'hidden'}" type="button">Mostra tutto</button><button id="continueResultBtn" class="btn primary ${live?'hidden':''}" type="button">Continua</button></div></section></div>`;
+ const feed=document.getElementById('commentaryFeed'),others=document.getElementById('otherResultsBlock'),continueButton=document.getElementById('continueResultBtn'),skipButton=document.getElementById('skipCommentaryBtn');
+ const appendLine=line=>feed.insertAdjacentHTML('beforeend',`<div class="commentary-line ${esc(line.type||'')}"><b>${esc(line.minute)}</b><span>${esc(line.text)}</span></div>`);
+ const finish=()=>{window.clearInterval(commentaryTimer);commentaryTimer=0;others.classList.remove('hidden');continueButton.classList.remove('hidden');skipButton.classList.add('hidden');feed.scrollTop=feed.scrollHeight};
+ continueButton.onclick=()=>{closeModal();render()};
+ if(!live){lines.forEach(appendLine);others.classList.remove('hidden');return}
+ let index=0;commentaryTimer=window.setInterval(()=>{if(index>=lines.length){finish();return}appendLine(lines[index++]);feed.scrollTop=feed.scrollHeight},360);
+ skipButton.onclick=()=>{while(index<lines.length)appendLine(lines[index++]);finish()};
+}
+
+function preparePlayoffs(){
+ const top=sortedTable().slice(0,8).map(row=>row.id);
+ state.phase='playoffs';state.playoff={stage:0,contenders:top,fixtures:makePlayoffFixtures(top,0),history:[],championId:''};
+ if(!top.includes(state.targetTeamId)){simulateRemainingPlayoffs();finishSeason(state.playoff.championId)}
+}
+function makePlayoffFixtures(contenders,stage){
+ if(stage===0&&contenders.length===8){const pairs=[[0,7],[3,4],[1,6],[2,5]];return pairs.map(([a,b])=>({homeId:contenders[a],awayId:contenders[b]}))}
+ const fixtures=[];for(let index=0;index<contenders.length;index+=2)fixtures.push({homeId:contenders[index],awayId:contenders[index+1]});return fixtures;
+}
+function playoffStageLabel(stage){return stage===0?'Quarti di finale':stage===1?'Semifinale':'Finale Scudetto'}
+function renderPlayoffs(){
+ const fixture=state.playoff?.fixtures?.find(match=>match.homeId===state.targetTeamId||match.awayId===state.targetTeamId);
+ if(!fixture){simulateRemainingPlayoffs();finishSeason(state.playoff.championId);save();render();return}
+ screen.innerHTML=`${renderMissionHero()}${renderMatchPanel({playoff:true,fixture})}<div class="dashboard-grid"><section class="panel"><div class="label">Play off Scudetto</div><h2>${esc(playoffStageLabel(state.playoff.stage))}</h2><p class="subline">La squadra meglio classificata nella stagione regolare gioca in casa. In caso di parità si procede ai rigori.</p><div class="round-results">${state.playoff.fixtures.map(match=>`<div class="result-row ${match.homeId===state.targetTeamId||match.awayId===state.targetTeamId?'target':''}"><span>${esc(teamOf(match.homeId).name)}</span><b class="result-score">VS</b><span>${esc(teamOf(match.awayId).name)}</span></div>`).join('')}</div></section><aside><section class="panel sidebar-card"><div class="label">Posizione regular season</div><h3>${state.regularSeasonRank}°</h3><p class="subline">Il titolo viene ora assegnato esclusivamente dai play off.</p></section></aside></div>`;
+ document.getElementById('playLiveBtn').onclick=()=>playPlayoffRound('live');
+ document.getElementById('playInstantBtn').onclick=()=>playPlayoffRound('instant');
+}
+function simulatePlayoffFixture(fixture){return simulateMatch(fixture,{knockout:true,bottomIds:new Set()})}
+function playPlayoffRound(mode){
+ const stage=state.playoff.stage,results=state.playoff.fixtures.map(simulatePlayoffFixture),targetMatch=results.find(match=>match.homeId===state.targetTeamId||match.awayId===state.targetTeamId),winners=results.map(match=>match.winnerId);
+ state.playoff.history.push({stage,results});
+ if(winners.length===1){state.playoff.championId=winners[0];finishSeason(winners[0])}else{state.playoff.stage+=1;state.playoff.contenders=winners;state.playoff.fixtures=makePlayoffFixtures(winners,state.playoff.stage);if(!winners.includes(state.targetTeamId)){simulateRemainingPlayoffs();finishSeason(state.playoff.championId)}}
+ save();
+ showPlayoffModal(targetMatch,results,mode==='live',stage);
+}
+function simulateRemainingPlayoffs(){
+ while(state.playoff&&!state.playoff.championId){const stage=state.playoff.stage,results=state.playoff.fixtures.map(simulatePlayoffFixture),winners=results.map(match=>match.winnerId);state.playoff.history.push({stage,results});if(winners.length===1){state.playoff.championId=winners[0];break}state.playoff.stage+=1;state.playoff.contenders=winners;state.playoff.fixtures=makePlayoffFixtures(winners,state.playoff.stage)}
+}
+function showPlayoffModal(targetMatch,results,live,stage){
+ const home=teamOf(targetMatch.homeId),away=teamOf(targetMatch.awayId),lines=targetMatch.commentary||[];
+ modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal result-modal"><div class="label">${esc(playoffStageLabel(stage))}</div><div class="scoreboard"><div class="scoreboard-team">${esc(home.name)}</div><div class="scoreboard-score">${targetMatch.homeGoals}–${targetMatch.awayGoals}</div><div class="scoreboard-team">${esc(away.name)}</div></div><div class="commentary" id="commentaryFeed"></div><section class="other-results-modal hidden" id="otherResultsBlock"><h3>Altri risultati</h3><div class="modal-result-grid">${results.map(renderResultRow).join('')}</div></section><div class="modal-actions"><button id="skipCommentaryBtn" class="btn gold ${live?'':'hidden'}" type="button">Mostra tutto</button><button id="continueResultBtn" class="btn primary ${live?'hidden':''}" type="button">Continua</button></div></section></div>`;
+ const feed=document.getElementById('commentaryFeed'),others=document.getElementById('otherResultsBlock'),continueButton=document.getElementById('continueResultBtn'),skipButton=document.getElementById('skipCommentaryBtn'),append=line=>feed.insertAdjacentHTML('beforeend',`<div class="commentary-line ${esc(line.type||'')}"><b>${esc(line.minute)}</b><span>${esc(line.text)}</span></div>`),finish=()=>{window.clearInterval(commentaryTimer);others.classList.remove('hidden');continueButton.classList.remove('hidden');skipButton.classList.add('hidden')};
+ continueButton.onclick=()=>{closeModal();render()};
+ if(!live){lines.forEach(append);others.classList.remove('hidden');return}
+ let index=0;commentaryTimer=window.setInterval(()=>{if(index>=lines.length){finish();return}append(lines[index++]);feed.scrollTop=feed.scrollHeight},360);skipButton.onclick=()=>{while(index<lines.length)append(lines[index++]);finish()};
+}
+
+function finishSeason(championId){state.championId=championId;state.phase='finished';save()}
+
+function createDirectorSubmissionCode(){
+ state.meta=state.meta&&typeof state.meta==='object'?state.meta:{};
+ if(state.meta.submissionCode)return String(state.meta.submissionCode);
+ const randomPart=(globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function')?globalThis.crypto.randomUUID():`${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+ const created=String(state.createdAt||new Date().toISOString()).replace(/[^0-9]/g,'').slice(0,17)||Date.now().toString(36);
+ state.meta.submissionCode=`${DIRECTOR_SUBMISSION_PREFIX}-${created}-${randomPart}`;
+ return state.meta.submissionCode;
+}
+function directorSubmissionUrl(params={}){
+ const url=new URL(DIRECTOR_SUBMISSION_ENDPOINT,window.location.href);
+ Object.entries(params).forEach(([key,value])=>url.searchParams.set(key,String(value)));
+ url.searchParams.set('_fb',`${Date.now()}_${Math.floor(Math.random()*1000000)}`);
+ return url.toString();
+}
+function waitForDirectorSubmissionStatus(submissionCode,timeoutMs=6500){
+ return new Promise((resolve,reject)=>{
+  if(!submissionCode){reject(new Error('Codice univoco della missione mancante'));return}
+  const callbackName=`fantaballaDirectorStatus_${Date.now()}_${Math.floor(Math.random()*1000000)}`;
+  const script=document.createElement('script');
+  let settled=false;
+  script.async=true;
+  script.referrerPolicy='no-referrer';
+  function cleanup(){
+   window.clearTimeout(timeout);
+   try{delete window[callbackName]}catch(error){window[callbackName]=undefined}
+   if(script.parentNode)script.parentNode.removeChild(script);
+  }
+  function finish(handler,value){if(settled)return;settled=true;cleanup();handler(value)}
+  const timeout=window.setTimeout(()=>finish(reject,new Error('Verifica salvataggio scaduta')),timeoutMs);
+  window[callbackName]=data=>{
+   if(!data||data.ok!==true||typeof data.found!=='boolean'){
+    finish(reject,new Error(String(data&&data.error?data.error:'Risposta di verifica non valida')));
+    return;
+   }
+   finish(resolve,data);
+  };
+  script.onerror=()=>finish(reject,new Error('Verifica Google Apps Script non disponibile'));
+  script.src=directorSubmissionUrl({action:'submission_status',codice_vittoria:submissionCode,callback:callbackName,transport:'jsonp'});
+  document.body.appendChild(script);
+ });
+}
+function submitDirectorPayloadVerified(payload,timeoutMs=24000){
+ return new Promise((resolve,reject)=>{
+  if(!DIRECTOR_SUBMISSION_ENDPOINT||!/^https:\/\/script\.google\.com\//i.test(DIRECTOR_SUBMISSION_ENDPOINT)){
+   reject(new Error('Endpoint Google Apps Script non configurato'));
+   return;
+  }
+  const requestId=`fb_director_${Date.now()}_${Math.floor(Math.random()*1000000)}`;
+  const frameName=`fantaballaDirectorFrame_${requestId}`;
+  const iframe=document.createElement('iframe');
+  const form=document.createElement('form');
+  let settled=false;
+  iframe.name=frameName;
+  iframe.setAttribute('aria-hidden','true');
+  iframe.tabIndex=-1;
+  iframe.style.cssText='position:fixed;width:1px;height:1px;left:-9999px;top:-9999px;border:0;opacity:0;pointer-events:none';
+  form.method='POST';
+  form.action=DIRECTOR_SUBMISSION_ENDPOINT;
+  form.target=frameName;
+  form.acceptCharset='UTF-8';
+  form.style.display='none';
+  [['payload',JSON.stringify(payload)],['transport','iframe'],['requestId',requestId]].forEach(([name,value])=>{
+   const input=document.createElement('input');
+   input.type='hidden';
+   input.name=name;
+   input.value=value;
+   form.appendChild(input);
+  });
+  function cleanup(){
+   window.clearTimeout(timeout);
+   window.removeEventListener('message',onMessage);
+   if(form.parentNode)form.parentNode.removeChild(form);
+   if(iframe.parentNode)iframe.parentNode.removeChild(iframe);
+  }
+  function finish(handler,value){if(settled)return;settled=true;cleanup();handler(value)}
+  function onMessage(event){
+   const message=event&&event.data;
+   if(!message||message.type!=='fantaballa-classifica-response-v1'||message.requestId!==requestId)return;
+   const origin=String(event.origin||'');
+   if(origin!=='null'&&!/^https:\/\/([a-z0-9-]+\.)*(google\.com|googleusercontent\.com)$/i.test(origin))return;
+   const result=message.data;
+   if(!result||typeof result.ok!=='boolean'){finish(reject,new Error('Risposta non valida da Google Apps Script'));return}
+   if(!result.ok){finish(reject,new Error(String(result.error||'Google Apps Script ha rifiutato il risultato')));return}
+   finish(resolve,result);
+  }
+  async function verifySavedRow(){
+   await new Promise(done=>window.setTimeout(done,1200));
+   while(!settled){
+    try{
+     const status=await waitForDirectorSubmissionStatus(payload.codice_vittoria||payload.victoryCode,5000);
+     if(status.found){finish(resolve,{ok:true,duplicate:Boolean(status.duplicate),saved:status.saved||null,verifiedBy:'status'});return}
+    }catch(error){}
+    if(!settled)await new Promise(done=>window.setTimeout(done,1100));
+   }
+  }
+  const timeout=window.setTimeout(()=>finish(reject,new Error('Google Apps Script non ha confermato il salvataggio. Puoi riprovare senza creare duplicati.')),timeoutMs);
+  window.addEventListener('message',onMessage);
+  iframe.onerror=()=>finish(reject,new Error('Impossibile raggiungere Google Apps Script'));
+  document.body.appendChild(iframe);
+  document.body.appendChild(form);
+  verifySavedRow();
+  try{form.submit()}catch(error){finish(reject,error)}
+ });
+}
+function buildDirectorVictoryPayload(directorName){
+ const target=targetTeam(),row=targetRow(),submissionCode=createDirectorSubmissionCode(),approved=(state.regulationHistory||[]).map(item=>item.title).filter(Boolean),score=directorScoreBreakdown(row.pts,state.influence,state.startExpectedRank);
+ return {
+  codice_vittoria:submissionCode,
+  victoryCode:submissionCode,
+  squadra:target.name,
+  teamName:target.name,
+  allenatore:directorName,
+  coachName:directorName,
+  direttore:directorName,
+  modalita:'Direttore Sportivo',
+  modalita_tipo:'direttore_sportivo',
+  posizione_finale:1,
+  punti:Number(row.pts)||0,
+  giornate:Number(row.p)||TOTAL_ROUNDS,
+  vittorie:Number(row.w)||0,
+  pareggi:Number(row.d)||0,
+  sconfitte:Number(row.l)||0,
+  gol_fatti:Number(row.gf)||0,
+  gol_subiti:Number(row.ga)||0,
+  ovr_medio:Number(target.rating)||0,
+  posizione_prevista:Number(state.startExpectedRank)||0,
+  difficolta_squadra:score.label,
+  coefficiente_difficolta:score.multiplier,
+  influenze_usate:INFLUENCE_START-score.remaining,
+  influenza_rimasta:score.remaining,
+  influenza_iniziale:INFLUENCE_START,
+  punteggio_ds:score.score,
+  regolamenti_approvati:approved.length,
+  regolamenti:approved.join(' | '),
+  playoff_scudetto:Boolean(state.playoff),
+  source:'fantaballa-director-sportivo',
+  saveTarget:'google-sheets-classifica',
+  privacyNoticeAccepted:true,
+  privacyVersion:'2026-08-03',
+  sentAtIso:new Date().toISOString()
+ };
+}
+function setDirectorSubmissionMessage(message,type=''){
+ const status=document.getElementById('directorSubmissionStatus');
+ if(!status)return;
+ status.textContent=String(message||'');
+ status.className=`director-submit-status${type?` ${type}`:''}`;
+}
+let directorSubmissionInFlight=false;
+async function sendDirectorVictory(){
+ if(directorSubmissionInFlight)return;
+ const target=targetTeam();
+ if(!target||state.championId!==target.id){toast('Puoi inviare il risultato soltanto dopo aver vinto il campionato.');return}
+ const input=document.getElementById('directorNameInput');
+ const directorName=String(input?.value||state.directorName||'').trim().replace(/\s+/g,' ');
+ if(directorName.length<2){setDirectorSubmissionMessage('Inserisci il nome del Direttore Sportivo.','error');input?.focus();return}
+ if(directorName.length>40){setDirectorSubmissionMessage('Il nome può contenere al massimo 40 caratteri.','error');input?.focus();return}
+ if(state.submitted){setDirectorSubmissionMessage('Questa vittoria è già stata inviata.','ok');return}
+ state.directorName=directorName;
+ state.meta=state.meta&&typeof state.meta==='object'?state.meta:{};
+ state.meta.submissionPendingAt=new Date().toISOString();
+ save();
+ const payload=buildDirectorVictoryPayload(directorName),button=document.getElementById('sendDirectorVictoryBtn');
+ directorSubmissionInFlight=true;
+ if(button){button.disabled=true;button.textContent='Invio in corso…';button.setAttribute('aria-busy','true')}
+ setDirectorSubmissionMessage('Salvataggio nella classifica Direttore Sportivo…','');
+ try{
+  const result=await submitDirectorPayloadVerified(payload);
+  state.submitted=true;
+  state.meta.submittedAt=new Date().toISOString();
+  state.meta.submissionPendingAt='';
+  state.meta.lastSubmissionError='';
+  save();
+  render();
+  toast(result.duplicate?'Risultato già presente: invio confermato':'Vittoria inviata alla classifica Direttore Sportivo');
+ }catch(error){
+  state.submitted=false;
+  state.meta.submissionPendingAt='';
+  state.meta.lastSubmissionError=String(error&&error.message?error.message:error||'Errore sconosciuto');
+  save();
+  setDirectorSubmissionMessage(`Invio non riuscito: ${state.meta.lastSubmissionError}`,'error');
+  if(button){button.disabled=false;button.textContent='Invia vittoria';button.removeAttribute('aria-busy')}
+ }finally{directorSubmissionInFlight=false}
+}
+function renderDirectorSubmissionCard(success){
+ if(!success)return'';
+ const sent=Boolean(state.submitted),name=String(state.directorName||''),score=directorScoreBreakdown();
+ return `<section class="panel director-submit-card"><div class="label">Classifica ufficiale</div><h3>Invia la vittoria Direttore Sportivo</h3><p class="subline">Il piazzamento online è ordinato per <b>Punteggio DS</b>: difficoltà della squadra, punti finali e Influenza non utilizzata.</p><div class="director-submit-score"><div><span>Punteggio DS</span><b>${score.score.toLocaleString('it-IT')}</b></div><p>(${formatPoints(score.finalPoints)} × 10 + ${score.remaining} × 80) × ${String(score.multiplier).replace('.',',')} = <strong>${score.score.toLocaleString('it-IT')}</strong></p></div><div class="director-submit-grid"><label class="director-name-field"><span>Nome Direttore Sportivo</span><input id="directorNameInput" type="text" maxlength="40" autocomplete="nickname" value="${esc(name)}" placeholder="Es. Filba" ${sent?'disabled':''}></label><div class="director-submit-actions"><button id="sendDirectorVictoryBtn" class="btn primary" type="button" ${sent?'disabled':''}>${sent?'Risultato inviato':'Invia vittoria'}</button><a class="btn gold" href="classifica.html?board=director">Vedi classifica</a></div></div><p class="director-privacy-note">Vengono inviati soltanto nome del direttore, squadra assegnata, risultati della stagione, posizione prevista, difficoltà, Influenza e Punteggio DS. Non vengono richiesti login, email o password. <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a></p><div id="directorSubmissionStatus" class="director-submit-status ${sent?'ok':''}">${sent?'Questa vittoria è già presente nella classifica ufficiale.':'Inserisci il tuo nome e invia una sola volta.'}</div></section>`;
+}
+function renderFinished(){
+ const target=targetTeam(),row=targetRow(),rank=rankOf(target.id),playoffUsed=Boolean(state.playoff),success=state.championId===target.id,closeSecond=!success&&!playoffUsed&&rank===2&&Math.abs(gapFromTop())<=3,bronze=!success&&!closeSecond&&rank>0&&state.startExpectedRank-rank>=5,title=success?'MISSIONE COMPIUTA':closeSecond?'ARGENTO':bronze?'BRONZO':'OBIETTIVO MANCATO',position=success?'🏆':`${rank}°`,subtitle=success?`${target.name} è Campione d’Italia grazie al campionato regolamentare che hai costruito.`:closeSecond?`${target.name} ha sfiorato il titolo per non più di tre punti.`:bronze?`${target.name} ha migliorato di almeno cinque posizioni la previsione iniziale.`:`${target.name} non è riuscito a conquistare il campionato.`,score=directorScoreBreakdown(row.pts,state.influence,state.startExpectedRank);
+ screen.innerHTML=`<section class="panel" style="${teamStyle(target)}"><div class="finish-hero"><div class="label" style="color:#ffe96c">Direttore Sportivo · Stagione conclusa</div><h1>${esc(title)}</h1><div class="finish-position">${position}</div><p>${esc(subtitle)}</p></div><div class="finish-grid"><div class="finish-stat"><b>${formatPoints(row.pts)}</b><span>Punti</span></div><div class="finish-stat"><b>${row.w}-${row.d}-${row.l}</b><span>V-N-P</span></div><div class="finish-stat"><b>${score.remaining}</b><span>Influenza rimasta</span></div><div class="finish-stat"><b>${esc(score.label)}</b><span>Difficoltà</span></div></div><section class="panel director-score-card difficulty-${score.key}"><div class="director-score-head"><div><div class="label">Punteggio classifica</div><h3>Punteggio Direttore Sportivo</h3></div><strong>${score.score.toLocaleString('it-IT')}</strong></div><div class="director-score-formula"><span><b>${formatPoints(score.finalPoints)} × 10</b><small>${Math.round(score.pointsValue).toLocaleString('it-IT')} dai punti finali</small></span><i>+</i><span><b>${score.remaining} × 80</b><small>${score.influenceValue.toLocaleString('it-IT')} dall’Influenza rimasta</small></span><i>×</i><span><b>${formatDirectorMultiplier(score.multiplier)}</b><small>${esc(score.label)} · prevista ${state.startExpectedRank}ª</small></span><i>=</i><span class="director-score-total"><b>${score.score.toLocaleString('it-IT')}</b><small>Punteggio DS finale</small></span></div></section>${renderDirectorSubmissionCard(success)}<section class="panel"><h3>Regolamenti approvati</h3>${state.regulationHistory.length?`<div class="active-rules">${state.regulationHistory.map(item=>`<article class="rule-card"><b>G${item.round} · ${esc(item.title)}</b><small>${item.replaced?`Ha sostituito ${esc(item.replaced)}.`:'Applicato al campionato.'}</small></article>`).join('')}</div>`:`<div class="empty">Hai completato la stagione senza usare l’Influenza.</div>`}</section><section class="panel"><h3>Classifica finale</h3>${renderTable()}</section><div class="setup-actions" style="margin-top:16px"><button id="newSeasonBtn" class="btn primary" type="button">Nuova missione casuale</button><a class="btn gold" href="classifica.html?board=director">Classifica Direttore Sportivo</a><a class="btn" href="index.html">Torna al menu</a></div></section>`;
+ const nameInput=document.getElementById('directorNameInput');
+ if(nameInput)nameInput.addEventListener('input',()=>{state.directorName=String(nameInput.value||'');save()});
+ const sendButton=document.getElementById('sendDirectorVictoryBtn');
+ if(sendButton)sendButton.onclick=sendDirectorVictory;
+ document.getElementById('newSeasonBtn').onclick=()=>{localStorage.removeItem(SAVE_KEY);state=null;render()};
+}
+
+function confirmReset(){
+ if(!state){renderSetup();return}
+ modalRoot.innerHTML=`<div class="modal-backdrop"><section class="modal"><div class="label">Azzera stagione</div><h2>Eliminare la missione?</h2><p class="subline">Classifica, regolamenti, Influenza e cronologia verranno cancellati definitivamente.</p><div class="modal-actions"><button id="confirmResetBtn" class="btn red" type="button">Sì, azzera tutto</button><button id="cancelResetBtn" class="btn" type="button">Annulla</button></div></section></div>`;
+ document.getElementById('confirmResetBtn').onclick=()=>{localStorage.removeItem(SAVE_KEY);state=null;closeModal();render();toast('Stagione azzerata.')};
+ document.getElementById('cancelResetBtn').onclick=closeModal;
+}
+document.getElementById('resetBtn')?.addEventListener('click',confirmReset);
+boot();

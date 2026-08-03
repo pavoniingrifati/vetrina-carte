@@ -14,7 +14,8 @@
   - Campionato del Ca***: vengono accettate soltanto le stagioni vinte
   - Fantacampionato del Ca***: modalità REAL separata, accettata soltanto se vinta
   - Modalità Caos e Caos REAL: classifiche separate, accettate soltanto se vinte
-  - Sfida della settimana: classifica separata, accettata soltanto se il Pisa chiude al 1° posto
+  - Direttore Sportivo: classifica dedicata ordinata per Punteggio DS (difficoltà, punti finali, Influenza rimasta)
+  - Sfida della settimana: resta leggibile per compatibilità con i vecchi risultati
   - Invio verificato dal browser tramite risposta iframe (niente falsi messaggi di successo)
   - Invio delle stagioni REAL senza limiti massimi di giornate
   - Salvataggio del tipo di allenatore scelto dall'utente
@@ -42,7 +43,18 @@ const HEADERS = [
   'ovr_medio',
   'capocannoniere',
   'capocannoniere_giocatore',
-  'capocannoniere_campionato'
+  'capocannoniere_campionato',
+  'direttore',
+  'posizione_prevista',
+  'difficolta_squadra',
+  'coefficiente_difficolta',
+  'influenze_usate',
+  'influenza_rimasta',
+  'influenza_iniziale',
+  'punteggio_ds',
+  'regolamenti_approvati',
+  'regolamenti',
+  'playoff_scudetto'
 ];
 
 function getSheet_() {
@@ -82,11 +94,28 @@ function firstValue_(payload, keys, fallback) {
   return fallback;
 }
 
+function directorDifficultyProfile_(expectedRank) {
+  const rank = Math.max(1, Math.min(20, Math.round(Number(expectedRank) || 1)));
+  if (rank <= 3) return { label:'Facile', multiplier:1.00 };
+  if (rank <= 7) return { label:'Normale', multiplier:1.15 };
+  if (rank <= 12) return { label:'Impegnativa', multiplier:1.35 };
+  if (rank <= 16) return { label:'Difficile', multiplier:1.60 };
+  return { label:'Estrema', multiplier:1.90 };
+}
+
+function directorScore_(points, influenceRemaining, expectedRank) {
+  const profile = directorDifficultyProfile_(expectedRank);
+  return Math.round(((Number(points) || 0) * 10 + (Number(influenceRemaining) || 0) * 80) * profile.multiplier);
+}
+
 
 function normalizeMode_(modeValue, explicitType) {
   const rawMode = String(modeValue || 'Classica').trim();
   const rawType = String(explicitType || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
 
+  if (rawType === 'direttore_sportivo' || rawType === 'director_sportivo' || rawType === 'director') {
+    return { label:'Direttore Sportivo', type:'direttore_sportivo' };
+  }
   if (rawType === 'sfida_settimana' || rawType === 'weekly_pisa' || rawType === 'tricolore_pisa') {
     return { label:'Sfida della settimana', type:'sfida_settimana' };
   }
@@ -112,6 +141,9 @@ function normalizeMode_(modeValue, explicitType) {
     return { label:'Classica', type:'classica' };
   }
 
+  if (/direttore sportivo|director sportivo/i.test(rawMode)) {
+    return { label:'Direttore Sportivo', type:'direttore_sportivo' };
+  }
   if (/sfida della settimana|tricolore col pisa/i.test(rawMode)) {
     return { label:'Sfida della settimana', type:'sfida_settimana' };
   }
@@ -144,7 +176,7 @@ function isChampionshipMode_(type) {
 }
 
 function requiresSubmissionCode_(type) {
-  return isChampionshipMode_(type) || type === 'sfida_settimana';
+  return isChampionshipMode_(type) || type === 'sfida_settimana' || type === 'direttore_sportivo';
 }
 
 function normalizePayload_(payload) {
@@ -155,17 +187,29 @@ function normalizePayload_(payload) {
     firstValue_(payload, ['modalita', 'gameMode', 'mode'], 'Classica'),
     firstValue_(payload, ['modalita_tipo', 'modalitaTipo', 'modeType'], '')
   );
+  const points = explicitPoints === '' ? wins * 3 + draws : safeNumber_(explicitPoints, wins * 3 + draws);
+  const expectedRank = safeNumber_(firstValue_(payload, ['posizione_prevista', 'posizionePrevista', 'expectedRank', 'expected_rank'], ''), '');
+  const influenceUsed = safeNumber_(firstValue_(payload, ['influenze_usate', 'influenzeUsate', 'influenceUsed', 'influence_used'], ''), '');
+  const influenceStart = safeNumber_(firstValue_(payload, ['influenza_iniziale', 'influenzaIniziale', 'influenceStart', 'influence_start'], ''), '');
+  const explicitRemaining = firstValue_(payload, ['influenza_rimasta', 'influenzaRimasta', 'influenceRemaining', 'influence_remaining'], '');
+  const influenceRemaining = explicitRemaining === ''
+    ? (influenceStart === '' || influenceUsed === '' ? '' : Math.max(0, Number(influenceStart) - Number(influenceUsed)))
+    : Math.max(0, safeNumber_(explicitRemaining, 0));
+  const difficulty = expectedRank === '' ? { label:'', multiplier:'' } : directorDifficultyProfile_(expectedRank);
+  const directorScore = modeInfo.type === 'direttore_sportivo' && expectedRank !== '' && influenceRemaining !== ''
+    ? directorScore_(points, influenceRemaining, expectedRank)
+    : '';
 
   return {
     data_invio: new Date(),
     codice_vittoria: String(firstValue_(payload, ['victoryCode', 'codice_vittoria'], '')).trim(),
     squadra: String(firstValue_(payload, ['squadra', 'nome_squadra', 'teamName', 'team_name'], '')).trim(),
-    allenatore: String(firstValue_(payload, ['allenatore', 'coachName', 'coach_name', 'nome_allenatore', 'coach'], '')).trim(),
+    allenatore: String(firstValue_(payload, ['allenatore', 'coachName', 'coach_name', 'nome_allenatore', 'coach', 'direttore', 'directorName'], '')).trim(),
     tipo_allenatore: String(firstValue_(payload, ['tipo_allenatore', 'tipoAllenatore', 'coachType', 'coach_type', 'profilo_allenatore', 'coachProfile'], '')).trim(),
     modalita: modeInfo.label,
     modalita_tipo: modeInfo.type,
     posizione_finale: safeNumber_(firstValue_(payload, ['posizione_finale', 'piazzamento_finale', 'finalPosition', 'final_position'], ''), ''),
-    punti: explicitPoints === '' ? wins * 3 + draws : safeNumber_(explicitPoints, wins * 3 + draws),
+    punti: points,
     giornate: safeNumber_(firstValue_(payload, ['giornate', 'matchesPlayed', 'partite_giocate'], ''), ''),
     vittorie: wins,
     pareggi: draws,
@@ -176,7 +220,18 @@ function normalizePayload_(payload) {
     ovr_medio: safeNumber_(firstValue_(payload, ['ovr_medio', 'avgOvr', 'averageOvr'], ''), ''),
     capocannoniere: String(firstValue_(payload, ['capocannoniere', 'capocannoniereSquadra', 'topScorer', 'migliorMarcatore'], '')).trim(),
     capocannoniere_giocatore: String(firstValue_(payload, ['capocannoniere_giocatore', 'capocannoniereGiocatore', 'userTopScorer', 'playerOwnedTopScorer', 'capocannoniere'], '')).trim(),
-    capocannoniere_campionato: String(firstValue_(payload, ['capocannoniere_campionato', 'capocannoniereCampionato', 'leagueTopScorer'], '')).trim()
+    capocannoniere_campionato: String(firstValue_(payload, ['capocannoniere_campionato', 'capocannoniereCampionato', 'leagueTopScorer'], '')).trim(),
+    direttore: String(firstValue_(payload, ['direttore', 'directorName', 'director_name', 'allenatore', 'coachName'], '')).trim(),
+    posizione_prevista: expectedRank,
+    difficolta_squadra: difficulty.label,
+    coefficiente_difficolta: difficulty.multiplier,
+    influenze_usate: influenceUsed,
+    influenza_rimasta: influenceRemaining,
+    influenza_iniziale: influenceStart,
+    punteggio_ds: directorScore,
+    regolamenti_approvati: safeNumber_(firstValue_(payload, ['regolamenti_approvati', 'regolamentiApprovati', 'regulationsApproved', 'regulations_approved'], ''), ''),
+    regolamenti: String(firstValue_(payload, ['regolamenti', 'regulations'], '')).trim(),
+    playoff_scudetto: String(firstValue_(payload, ['playoff_scudetto', 'playoffScudetto', 'playoff'], '')).toLowerCase() === 'true'
   };
 }
 
@@ -244,6 +299,35 @@ function doPost(e) {
     }
     if (row.modalita_tipo === 'sfida_settimana' && Number(row.posizione_finale) !== 1) {
       return postOutput_(e, { ok:false, error:'Il risultato della Sfida della settimana può essere salvato solo vincendo il campionato.' });
+    }
+    if (row.modalita_tipo === 'direttore_sportivo') {
+      if (Number(row.posizione_finale) !== 1) {
+        return postOutput_(e, { ok:false, error:'La modalità Direttore Sportivo può essere salvata soltanto vincendo il campionato.' });
+      }
+      if (!row.direttore) {
+        return postOutput_(e, { ok:false, error:'Nome del Direttore Sportivo mancante.' });
+      }
+      if (Number(row.giornate || 0) < 38) {
+        return postOutput_(e, { ok:false, error:'La missione Direttore Sportivo deve aver completato almeno 38 giornate.' });
+      }
+      if (Number(row.posizione_prevista) < 1 || Number(row.posizione_prevista) > 20) {
+        return postOutput_(e, { ok:false, error:'Posizione prevista della squadra non valida.' });
+      }
+      if (Number(row.influenza_iniziale) !== 8) {
+        return postOutput_(e, { ok:false, error:'Influenza iniziale non valida: la modalità assegna 8 punti.' });
+      }
+      if (Number(row.influenze_usate) < 0 || Number(row.influenze_usate) > 8) {
+        return postOutput_(e, { ok:false, error:'Numero di Influenze utilizzate non valido.' });
+      }
+      if (Number(row.influenza_rimasta) < 0 || Number(row.influenza_rimasta) > 8 || Number(row.influenze_usate) + Number(row.influenza_rimasta) !== 8) {
+        return postOutput_(e, { ok:false, error:'Influenza rimasta non coerente con quella utilizzata.' });
+      }
+      if (Number(row.punteggio_ds) !== directorScore_(row.punti, row.influenza_rimasta, row.posizione_prevista)) {
+        return postOutput_(e, { ok:false, error:'Punteggio Direttore Sportivo non valido.' });
+      }
+      if (Number(row.regolamenti_approvati) < 0 || Number(row.regolamenti_approvati) > 8) {
+        return postOutput_(e, { ok:false, error:'Numero di regolamenti approvati non valido.' });
+      }
     }
     if (requiresSubmissionCode_(row.modalita_tipo) && !row.codice_vittoria) {
       return postOutput_(e, { ok:false, error:'Codice univoco della stagione mancante.' });
@@ -337,16 +421,30 @@ function doGet(e) {
         ovr_medio: item.ovr_medio || '',
         capocannoniere: item.capocannoniere || '',
         capocannoniere_giocatore: item.capocannoniere_giocatore || item.capocannoniere || '',
-        capocannoniere_campionato: item.capocannoniere_campionato || ''
+        capocannoniere_campionato: item.capocannoniere_campionato || '',
+        direttore: item.direttore || item.allenatore || '',
+        posizione_prevista: item.posizione_prevista === '' ? '' : Number(item.posizione_prevista || 0),
+        difficolta_squadra: item.difficolta_squadra || (item.posizione_prevista === '' ? '' : directorDifficultyProfile_(item.posizione_prevista).label),
+        coefficiente_difficolta: item.coefficiente_difficolta === '' || item.coefficiente_difficolta === undefined ? (item.posizione_prevista === '' ? '' : directorDifficultyProfile_(item.posizione_prevista).multiplier) : Number(item.coefficiente_difficolta || 0),
+        influenze_usate: item.influenze_usate === '' ? '' : Number(item.influenze_usate || 0),
+        influenza_rimasta: item.influenza_rimasta === '' || item.influenza_rimasta === undefined ? Math.max(0, Number(item.influenza_iniziale || 8) - Number(item.influenze_usate || 0)) : Number(item.influenza_rimasta || 0),
+        influenza_iniziale: item.influenza_iniziale === '' ? '' : Number(item.influenza_iniziale || 0),
+        punteggio_ds: item.punteggio_ds === '' || item.punteggio_ds === undefined ? (item.posizione_prevista === '' ? '' : directorScore_(storedPoints === '' || storedPoints === undefined ? wins * 3 + draws : Number(storedPoints || 0), Math.max(0, Number(item.influenza_iniziale || 8) - Number(item.influenze_usate || 0)), item.posizione_prevista)) : Number(item.punteggio_ds || 0),
+        regolamenti_approvati: item.regolamenti_approvati === '' ? '' : Number(item.regolamenti_approvati || 0),
+        regolamenti: item.regolamenti || '',
+        playoff_scudetto: String(item.playoff_scudetto || '').toLowerCase() === 'true'
       };
     });
 
   const requestedMode = String(
     requestParams.modalita_tipo || requestParams.modalitaTipo || requestParams.modeType || requestParams.mode || ''
   ).trim().toLowerCase().replace(/[\s-]+/g, '_');
-  const filteredClassifica = requestedMode === 'sfida_settimana' || requestedMode === 'weekly_pisa' || requestedMode === 'tricolore_pisa'
-    ? classifica.filter(item => item.modalita_tipo === 'sfida_settimana' || /^sfida_settimana_pisa[-_]/i.test(String(item.codice_vittoria || '')))
-    : classifica;
+  let filteredClassifica = classifica;
+  if (requestedMode === 'sfida_settimana' || requestedMode === 'weekly_pisa' || requestedMode === 'tricolore_pisa') {
+    filteredClassifica = classifica.filter(item => item.modalita_tipo === 'sfida_settimana' || /^sfida_settimana_pisa[-_]/i.test(String(item.codice_vittoria || '')));
+  } else if (requestedMode === 'direttore_sportivo' || requestedMode === 'director_sportivo' || requestedMode === 'director') {
+    filteredClassifica = classifica.filter(item => item.modalita_tipo === 'direttore_sportivo');
+  }
 
   const data = {
     aggiornato_il: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm'),
