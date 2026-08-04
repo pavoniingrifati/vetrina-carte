@@ -17,9 +17,9 @@ if not exist "%TARGET%\direttore-sportivo.html" (
 copy /Y "direttore-sportivo.html" "%TARGET%\direttore-sportivo.html" >nul
 if not exist "%TARGET%\assets\director" mkdir "%TARGET%\assets\director"
 copy /Y "assets\director\director.js" "%TARGET%\assets\director\director.js" >nul
-copy /Y "assets\director\director.css" "%TARGET%\assets\director\director.css" >nul
-copy /Y "CORREZIONE_INFLUENZA_ESAURITA.txt" "%TARGET%\CORREZIONE_INFLUENZA_ESAURITA.txt" >nul
+copy /Y "CORREZIONE_QUOTA_SALVATAGGIO.txt" "%TARGET%\CORREZIONE_QUOTA_SALVATAGGIO.txt" >nul
 echo.
 echo Patch applicata correttamente.
+echo Il salvataggio esistente verra compattato automaticamente.
 echo Non serve aggiornare Google Apps Script.
 pause

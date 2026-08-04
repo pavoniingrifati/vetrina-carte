@@ -1,6 +1,6 @@
 'use strict';
 
-const DIRECTOR_VERSION=9;
+const DIRECTOR_VERSION=10;
 const SAVE_KEY='fantaballa_director_sportivo_v1';
 const INFLUENCE_START=16;
 const LEGACY_INFLUENCE_START=8;
@@ -67,8 +67,48 @@ function directorScoreBreakdown(points=targetRow()?.pts,influenceRemaining=state
 function formatDirectorMultiplier(value){return `×${Number(value||1).toFixed(2).replace('.',',')}`}
 function toast(message){if(!toastRoot)return;toastRoot.textContent=String(message||'');toastRoot.classList.add('show');window.clearTimeout(toastRoot._timer);toastRoot._timer=window.setTimeout(()=>toastRoot.classList.remove('show'),2400)}
 function closeModal(){window.clearInterval(commentaryTimer);commentaryTimer=0;modalRoot.innerHTML=''}
-function save(){if(!state)return;state.updatedAt=new Date().toISOString();localStorage.setItem(SAVE_KEY,JSON.stringify(state));if(saveStatus){saveStatus.textContent='Salvato';window.clearTimeout(saveStatus._timer);saveStatus._timer=window.setTimeout(()=>saveStatus.textContent='Salvataggio automatico attivo',1100)}}
-function loadSaved(){try{const parsed=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(!parsed||![1,2,3,4,5,6,7,8,DIRECTOR_VERSION].includes(Number(parsed.version)))return null;return parsed}catch(error){console.warn('Salvataggio Direttore Sportivo non leggibile',error);return null}}
+function compactHistoryMatch(match={}){
+ const compact={homeId:String(match.homeId||''),awayId:String(match.awayId||''),homeGoals:Number(match.homeGoals)||0,awayGoals:Number(match.awayGoals)||0};
+ if(match.skipped)compact.skipped=true;
+ if(match.winnerId)compact.winnerId=String(match.winnerId);
+ if(match.decidedByPenalties)compact.decidedByPenalties=true;
+ return compact;
+}
+function compactRoundReport(report={},index=0){return{round:Number(report.round)||index+1,matches:(Array.isArray(report.matches)?report.matches:[]).map(compactHistoryMatch)}}
+function compactRefereeRecord(item={}){
+ const compact={id:String(item.id||''),round:Number(item.round)||0};
+ for(const key of ['assignmentId','title','scope','fixtureKey','homeId','awayId','favoredTeamId','replaced'])if(item[key])compact[key]=String(item[key]);
+ if(item.caught)compact.caught=true;
+ return compact;
+}
+function compactRegulationRecord(item={}){return{id:String(item.id||''),title:String(item.title||''),round:Number(item.round)||0,replaced:String(item.replaced||'')}}
+function compactPersistentState(){
+ if(!state)return;
+ state.history=(Array.isArray(state.history)?state.history:[]).map(compactRoundReport);
+ state.refereeHistory=(Array.isArray(state.refereeHistory)?state.refereeHistory:[]).map(compactRefereeRecord);
+ state.regulationHistory=(Array.isArray(state.regulationHistory)?state.regulationHistory:[]).map(compactRegulationRecord);
+ state.roundReferees=(Array.isArray(state.roundReferees)?state.roundReferees:[]).map(compactRefereeRecord);
+ if(state.playoff&&Array.isArray(state.playoff.history))state.playoff.history=state.playoff.history.map((item,index)=>({stage:Number(item?.stage)||index,results:(Array.isArray(item?.results)?item.results:[]).map(compactHistoryMatch)}));
+ state.meta=state.meta&&typeof state.meta==='object'?state.meta:{};
+ state.meta.storageFormat=2;
+}
+function isQuotaError(error){return Boolean(error&&(error.name==='QuotaExceededError'||error.name==='NS_ERROR_DOM_QUOTA_REACHED'||error.code===22||error.code===1014))}
+function markSaveSuccess(){if(saveStatus){saveStatus.textContent='Salvato';window.clearTimeout(saveStatus._timer);saveStatus._timer=window.setTimeout(()=>saveStatus.textContent='Salvataggio automatico attivo',1100)}}
+function save(){
+ if(!state)return true;
+ state.updatedAt=new Date().toISOString();
+ compactPersistentState();
+ try{localStorage.setItem(SAVE_KEY,JSON.stringify(state));markSaveSuccess();return true}
+ catch(error){
+  if(!isQuotaError(error))throw error;
+  console.warn('Salvataggio troppo grande: applicata la compattazione di emergenza.',error);
+  state.meta=state.meta&&typeof state.meta==='object'?state.meta:{};state.meta.storageRecoveryAt=new Date().toISOString();
+  state.seenRegulationIds=[...new Set((state.seenRegulationIds||[]).map(String))].slice(-Math.max(40,REGULATIONS.length));
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(state));markSaveSuccess();toast('Salvataggio ottimizzato automaticamente.');return true}
+  catch(secondError){console.error('Spazio locale insufficiente anche dopo la compattazione.',secondError);if(saveStatus)saveStatus.textContent='Salvataggio non riuscito: spazio locale esaurito';toast('Spazio del browser esaurito: il progresso corrente non è stato salvato.');return false}
+ }
+}
+function loadSaved(){try{const parsed=JSON.parse(localStorage.getItem(SAVE_KEY)||'null'),version=Number(parsed?.version)||0;if(!parsed||version<1||version>DIRECTOR_VERSION)return null;return parsed}catch(error){console.warn('Salvataggio Direttore Sportivo non leggibile',error);return null}}
 
 async function boot(){
  try{
@@ -144,7 +184,7 @@ function repairState(){
  state.influenceUsedToday=(state.influenceUsageToday.regulation+state.influenceUsageToday.referee)>0;
  state.seenRegulationIds=Array.isArray(state.seenRegulationIds)?state.seenRegulationIds:[];
  state.regulations=(Array.isArray(state.regulations)?state.regulations:[]).map(item=>{const catalog=REGULATIONS.find(regulation=>regulation.id===item.id);const rounds=Number(item.remainingRounds);return{...item,remainingRounds:Number.isFinite(rounds)?Math.max(0,rounds):(Number(catalog?.rounds)||0)}}).filter(item=>!Number(REGULATIONS.find(regulation=>regulation.id===item.id)?.rounds)||Number(item.remainingRounds)>0);
- state.history=Array.isArray(state.history)?state.history:[];
+ state.history=(Array.isArray(state.history)?state.history:[]).map(compactRoundReport);
  state.stats=state.stats&&typeof state.stats==='object'?state.stats:{scorers:{},team:{}};
  state.stats.scorers=state.stats.scorers||{}; state.stats.team=state.stats.team||{};
  state.meta=state.meta&&typeof state.meta==='object'?state.meta:{};
@@ -680,7 +720,7 @@ function applyFormulaOnePoints(matches){
 function commitLeagueRound(report){
  for(const match of report.matches)commitMatchToTable(match);
  if(report.bollenteCaught){state.table[state.targetTeamId].pts=0;state.meta=state.meta&&typeof state.meta==='object'?state.meta:{};state.meta.refereeScandals=(Number(state.meta.refereeScandals)||0)+1;const caught=new Set(report.bollenteCaughtAssignmentIds||[]);for(const item of state.refereeHistory||[])if(caught.has(String(item.assignmentId||'')))item.caught=true}
- state.history.push(report);tickDirectorRegulations();state.round+=1;state.influenceUsedToday=false;state.influenceUsageToday={regulation:0,referee:0};state.pendingChoices=[];state.pendingChoiceType='regulation';state.pendingRefereeId='';state.roundReferees=[];state.roundReferee=null;
+ state.history.push(compactRoundReport(report,state.history.length));tickDirectorRegulations();state.round+=1;state.influenceUsedToday=false;state.influenceUsageToday={regulation:0,referee:0};state.pendingChoices=[];state.pendingChoiceType='regulation';state.pendingRefereeId='';state.roundReferees=[];state.roundReferee=null;
  if(state.round>=TOTAL_ROUNDS){state.regularSeasonRank=rankOf(state.targetTeamId);if(hasRule('playoffsTopEight'))preparePlayoffs();else finishSeason(sortedTable()[0]?.id||'')}save();if(state.phase==='season')render();
 }
 
