@@ -290,15 +290,15 @@ function runChaosOpponentMidseason(){
 }
 
 function opponentMatchPower(team){
- if(!team||team.id===USER_ID)return matchPower();
+ if(!team||team.id===USER_ID){const base=matchPower();return typeof sharedRegulationEffectivePower==='function'?sharedRegulationEffectivePower(USER_ID,base):base}
  const nameccOverride=typeof nameccOpponentRuleOvr==='function'?nameccOpponentRuleOvr(team):null;
- if(nameccOverride!==null&&nameccOverride!==undefined&&Number.isFinite(Number(nameccOverride)))return Number(nameccOverride);
+ if(nameccOverride!==null&&nameccOverride!==undefined&&Number.isFinite(Number(nameccOverride))){const base=Number(nameccOverride);return typeof sharedRegulationEffectivePower==='function'?sharedRegulationEffectivePower(team,base):base}
  const lineup=teamMatchLineup(team),target=Math.max(1,activeAiMatchSlots(team).length);
  const values=lineup.map(entry=>isEmergencyYouthEntry(entry)?50:(Number(entry?.player?.ovr)||50));
  while(values.length<target)values.push(50);
  const chaos=ensureChaosTeam(team),nonItalianShare=lineup.length?lineup.filter(entry=>entry?.player&&!isItalianPlayer(entry.player)).length/lineup.length:0;
- const closedPortsPenalty=chaos?.nonItalianChemZero?nonItalianShare*4:0;
- return avg(values)+chaosPowerBonus(team)-closedPortsPenalty;
+ const closedPortsPenalty=chaos?.nonItalianChemZero?nonItalianShare*4:0,base=avg(values)+chaosPowerBonus(team)-closedPortsPenalty;
+ return typeof sharedRegulationEffectivePower==='function'?sharedRegulationEffectivePower(team,base):base;
 }
 function nationalStrength(nation){
  const ids=buildNationRoster(nation);

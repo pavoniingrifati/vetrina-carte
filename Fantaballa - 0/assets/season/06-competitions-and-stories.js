@@ -37,12 +37,12 @@ function parallelCupUserId(){return String(parallelCupState().userParticipantId|
 function parallelCupParticipantName(id){return parallelCupParticipant(id)?.name||'Squadra'}
 function parallelCupParticipantPower(participant){
  if(!participant)return 60;
- if(participant.user)return Math.max(35,matchPower());
- if(participant.origin==='current'){
-   const team=teamById(participant.teamId);
-   return Math.max(35,team?opponentMatchPower(team):(Number(participant.strength)||60));
- }
- return Math.max(35,Number(participant.strength)||60);
+ let base=60,id=String(participant.id||'');
+ if(participant.user){base=matchPower();id=String(USER_ID)}
+ else if(participant.origin==='current'){const team=teamById(participant.teamId);base=team?opponentMatchPower(team):(Number(participant.strength)||60);id=String(participant.teamId||participant.id||'')}
+ else base=Number(participant.strength)||60;
+ const effective=typeof sharedRegulationEffectivePower==='function'?sharedRegulationEffectivePower(id,base):base,min=typeof sharedRegulationActive==='function'&&sharedRegulationActive('chaoticOvr')?5:35;
+ return Math.max(min,effective);
 }
 function makeParallelCupTie(teamAId,teamBId,stageIndex,index){return{id:`cup-${stageIndex}-${index}`,teamAId:String(teamAId),teamBId:String(teamBId),legs:[],winnerId:'',aggregateA:0,aggregateB:0,penalties:''}}
 function parallelCupEligibleOtherClubs(){
@@ -193,7 +193,7 @@ function parallelCupCompleteLeg(pending,userData){
    if(userInTie&&userData){
      homeGoals=Math.max(0,Number(userData.homeGoals)||0);awayGoals=Math.max(0,Number(userData.awayGoals)||0);event=userData.event||null;homeEvents=Array.isArray(userData.homeEvents)?userData.homeEvents:[];awayEvents=Array.isArray(userData.awayEvents)?userData.awayEvents:[];commentary=Array.isArray(userData.commentary)?userData.commentary:[];
    }else{
-     const homePower=parallelCupParticipantPower(home),awayPower=parallelCupParticipantPower(away);[homeGoals,awayGoals]=simulateScore(homePower,awayPower,.14,90);
+     const homePower=parallelCupParticipantPower(home),awayPower=parallelCupParticipantPower(away),homeTeam=parallelCupParticipantTeam(home),awayTeam=parallelCupParticipantTeam(away),homeLineup=parallelCupParticipantLineup(home),awayLineup=parallelCupParticipantLineup(away);[homeGoals,awayGoals]=simulateScore(homePower,awayPower,.14,90);homeEvents=buildTeamGoals(homeGoals,homeLineup,homeTeam,awayTeam,[],90);awayEvents=buildTeamGoals(awayGoals,awayLineup,awayTeam,homeTeam,[],90);const sharedOutcome=typeof sharedRegulationScoreEffects==='function'?sharedRegulationScoreEffects({homeTeam,awayTeam,homeEvents,awayEvents,homeScore:homeGoals,awayScore:awayGoals,homePower,awayPower,duration:90}):{homeScore:homeGoals,awayScore:awayGoals,notes:[]};homeGoals=sharedOutcome.homeScore;awayGoals=sharedOutcome.awayScore;commentary=(sharedOutcome.notes||[]).map(text=>({minute:90,type:'rule',icon:'⚖️',title:'Regolamento federale',text,teamId:'',scoreAfter:`${homeGoals}–${awayGoals}`}));
    }
    const aGoals=legIndex===0?homeGoals:awayGoals,bGoals=legIndex===0?awayGoals:homeGoals;
    const leg={matchday:Number(pending.matchday),leg:legIndex+1,homeId:home.id,awayId:away.id,homeName:home.name,awayName:away.name,homeGoals,awayGoals,aGoals,bGoals,event};

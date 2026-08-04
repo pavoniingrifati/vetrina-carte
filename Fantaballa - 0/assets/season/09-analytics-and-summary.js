@@ -55,6 +55,7 @@ function seasonRuleSummary(){
  if(leagueFormation==='3-3-3')extras.push('Regola FGCI 3-3-3: le squadre giocano in 9');
  if(state.seasonRules.userFormationOverride)extras.push(`Eccezione personale ATAKARE: la tua squadra gioca con il ${state.seasonRules.userFormationOverride}`);
  const mandatoryNames=mandatoryMidseasonPlayerIds().map(id=>playerById(id)?.name).filter(Boolean);if(mandatoryNames.length)extras.push(`Scambi obbligatori: ${mandatoryNames.join(', ')}`)
+ const sharedRules=typeof activeSharedRegulations==='function'?activeSharedRegulations():[];sharedRules.forEach(item=>{let label=`${item.title}: ${sharedRegulationDurationLabel(item)}`;if(item.rule==='chaoticOvr'&&typeof sharedRegulationEffectivePower==='function')label+=` · tua squadra OVR ${Math.round(sharedRegulationEffectivePower(USER_ID,matchPower()))}`;extras.push(label)});
  return `<div class="season-rules-card"><b>Regole alterate dagli eventi</b><br>Modalità: ${chaosEnabled()?'Caos (19 avversarie attive)':'Normale'} · Draft di metà stagione: ${target} ${target===1?'cambio':'cambi'} · Decisioni: ${decisionMode} · Draft: ${marketMode} · Eventi unici: ${(state.seenDecisionEvents||[]).length}/${DECISIONS.length}${extras.length?`<br>${extras.map(esc).join(' · ')}`:''}</div>`;
 }
 function isEmergencyYouthEntry(entry){return Boolean(entry?.emergencyYouth||entry?.player?.emergencyYouth)}

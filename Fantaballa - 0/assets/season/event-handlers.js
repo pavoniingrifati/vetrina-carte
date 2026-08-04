@@ -333,6 +333,27 @@ function applyCellPerfectAfterMatch(result){
  result.cellPerfectOutcome={type:won?'victory-boost':'defeat-reset',changes,message};result.eventUpdates=Array.isArray(result.eventUpdates)?result.eventUpdates:[];result.eventUpdates.push({success:won,title:'Arriva Cell sulla Terra!',message});return result.cellPerfectOutcome;
 }
 
+/* SHARED REGULATION EVENT ACTIVATORS 2026-08-03 */
+function activateSharedEventRegulation(rule,title,effect,rounds){return activateSharedRegulation({id:rule,rule,title,effect,rounds})}
+function activateTvSpectacle(){return activateSharedEventRegulation('spectacleBonus','Calcio spettacolo','Se una partita termina con almeno 4 gol complessivi, entrambe le squadre ricevono +1 punto.',4)}
+function activateTvLateWinner(){return activateSharedEventRegulation('lateWinnerBonus','Finale da brividi','Chi segna il gol decisivo dall’85° minuto riceve +1 punto.',4)}
+function activateCharacterComeback(){return activateSharedEventRegulation('comebackBonus','Rimonta da prima serata','Una squadra che vince dopo essere stata in svantaggio riceve +1 punto.',4)}
+function activateCharacterNarrowWin(){return activateSharedEventRegulation('narrowWinFour','Vittoria di misura','Una vittoria con un solo gol di scarto assegna almeno 4 punti.',4)}
+function activateAntiDominationLeaderHunt(){return activateSharedEventRegulation('beatLeaderBonus','Caccia alla capolista','Battere la squadra prima in classifica prima del turno assegna +2 punti.',5)}
+function activateAntiDominationPressure(){return activateSharedEventRegulation('leaderWinTwo','Pressione da primato','Le vittorie della squadra prima in classifica prima del turno assegnano soltanto 2 punti.',3)}
+function activateUnderdogWinPrize(){return activateSharedEventRegulation('underdogTopFiveWinBonus','Davide contro Golia','Una squadra dall’11° posto in giù che batte una delle prime cinque riceve +2 punti.',5)}
+function activateUnderdogDrawPrize(){return activateSharedEventRegulation('underdogTopThreeDrawTwo','Pareggio d’impresa','Una squadra dall’11° posto in giù che pareggia contro una delle prime tre riceve 2 punti.',5)}
+function activateAwayWinPrize(){return activateSharedEventRegulation('awayWinBonus','Trasferta di lusso','Ogni vittoria in trasferta assegna +1 punto.',4)}
+function activateDirectMatchPrize(){return activateSharedEventRegulation('directMatchFour','Scontro diretto','Se due squadre distano al massimo 3 punti prima della partita, la vittoria assegna almeno 4 punti.',5)}
+function activateDavidSling(){return activateSharedEventRegulation('underdogGoalChance','La fionda di Davide','La squadra con OVR più basso ha il 35% di probabilità di ricevere un gol bonus.',5)}
+function activateGoliathArmor(){return activateSharedEventRegulation('favoriteFirstGoalSave','La corazza di Golia','La squadra con OVR più alto ha il 30% di probabilità di annullare il primo gol subito.',5)}
+function activateTechnicalParachute(){return activateSharedEventRegulation('underdogDeficitCap75','Partita sempre aperta','La squadra con OVR più basso non può essere sotto di più di due gol prima del 75°.',5)}
+function activateChaoticOvr(){
+ const values={};const ids=[String(USER_ID),...(state.teams||[]).map(team=>String(team?.id||'')).filter(Boolean)];
+ [...new Set(ids)].forEach(id=>values[id]=Math.floor(5+Math.random()*196));
+ return activateSharedRegulation({id:'chaoticOvr',rule:'chaoticOvr',title:'OVR caotico',effect:'Ogni squadra riceve un OVR casuale da 5 a 200, compresa la tua.',rounds:3,data:{values}});
+}
+
 const SEASON_EVENT_HANDLERS=Object.freeze({
  autoApply:Object.freeze({
 "auto-1":function(){const r=pick(getStarterEntries());if(r){setOwnPlayerInjury(r,2);return `${r.player.name} è infortunato per 2 giornate.${state.seasonRules.futureInjuryZeroPoints?' Punti azzerati dalla regola del futuro.':''}`}return 'Nessun titolare disponibile.'},
@@ -661,7 +682,21 @@ const SEASON_EVENT_HANDLERS=Object.freeze({
 "campionato-a-namecc:0":function(){return activateNameccOpponentRule('gimenez')},
 "campionato-a-namecc:1":function(){return activateNameccOpponentRule('cahill')},
 "arriva-cell-sulla-terra:0":function(){return activateCellPerfect()},
-"arriva-cell-sulla-terra:1":function(){return activateCellCyborg()}
+"arriva-cell-sulla-terra:1":function(){return activateCellCyborg()},
+"nuovo-contratto-televisivo:0":function(){return activateTvSpectacle()},
+"nuovo-contratto-televisivo:1":function(){return activateTvLateWinner()},
+"premio-al-carattere:0":function(){return activateCharacterComeback()},
+"premio-al-carattere:1":function(){return activateCharacterNarrowWin()},
+"piano-anti-dominio:0":function(){return activateAntiDominationLeaderHunt()},
+"piano-anti-dominio:1":function(){return activateAntiDominationPressure()},
+"premio-alle-imprese:0":function(){return activateUnderdogWinPrize()},
+"premio-alle-imprese:1":function(){return activateUnderdogDrawPrize()},
+"riforma-del-calendario:0":function(){return activateAwayWinPrize()},
+"riforma-del-calendario:1":function(){return activateDirectMatchPrize()},
+"legge-davide-golia:0":function(){return activateDavidSling()},
+"legge-davide-golia:1":function(){return activateGoliathArmor()},
+"paracadute-tecnico:0":function(){return activateTechnicalParachute()},
+"paracadute-tecnico:1":function(){return activateChaoticOvr()}
  })
 });
 const SEASON_EVENT_HANDLER_IDS=Object.freeze({
