@@ -1,7 +1,7 @@
 window.FANTABALLA_SEASON_CONFIG=Object.freeze({
  mode:'real',
  storage:{
-  saveBase:'fantaballa_campionato_real_v1',
+  saveBase:'fantaballa_campionato_real_2026_27_v1',
   legacySaveKeys:[],
   activeSlotKey:'fantaballa_campionato_real_active_slot',
   teamNameKey:'fantaballa_campionato_real_team_name',
@@ -22,7 +22,7 @@ window.FANTABALLA_SEASON_CONFIG=Object.freeze({
   secondaryClubs:'data/club.json',
   commentary:'data/cronaca-gol.json',
   variants:{
-   'serie-a':{id:'serie-a',label:'Serie A',players:'data/giocatori-real.json',clubs:'data/club-real.json',playerCount:455,description:'I club e i calciatori della Serie A 2025/26.'},
+   'serie-a':{id:'serie-a',label:'Serie A',players:'data/giocatori-real.json',clubs:'data/club-real.json',playerCount:494,description:'I club e i calciatori della Serie A 2026/2027.'},
    legend:{id:'legend',label:'Legend',players:'data/storico/giocatori-storici.json',clubs:'data/storico/club-storiche.json',playerCount:796,description:'Quaranta squadre storiche italiane e internazionali. Ogni run seleziona casualmente 19 avversarie, mentre il draft usa l’intero database.'}
   }
  },
