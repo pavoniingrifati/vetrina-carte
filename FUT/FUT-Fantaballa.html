@@ -1037,14 +1037,78 @@ const toggleFav = id => { const s=new Set(loadFavs()); s.has(id)? s.delete(id): 
 function updateFavCount(){ const n = loadFavs().length; const el=$('#favCount'); if(el) el.textContent = n? `(${n})` : ''; }
 
 let CARDS = [];
+const FALLBACK_CARD_IMAGE = 'img/nEW%20pLAYER.png';
+const CARD_JSON_SOURCES = ['data/cards.json', 'cards.json'];
+
+function buildImageCandidates(rawPath){
+  const out = [];
+  const push = (v) => {
+    if (!v) return;
+    const s = String(v).trim().replace(/^\.\//, '').replace(/^FUT\//, '');
+    if (s && !out.includes(s)) out.push(s);
+  };
+  push(rawPath);
+  const base = out[0] || '';
+  if (/^img\/.+\.png$/i.test(base)) push(base.replace(/\.png$/i, '.webp'));
+  if (/^img\/.+\.webp$/i.test(base)) push(base.replace(/\.webp$/i, '.png'));
+  if (!out.length) out.push(FALLBACK_CARD_IMAGE);
+  return out;
+}
+
+function normalizeLoadedCard(card){
+  if (!card || typeof card !== 'object') return null;
+  const copy = { ...card };
+  copy.imgCandidates = buildImageCandidates(copy.img);
+  copy.img = copy.imgCandidates[0] || FALLBACK_CARD_IMAGE;
+  return copy;
+}
+
+function bindSmartImage(el, cardOrPath, altText='Immagine carta'){
+  if (!el) return;
+  const candidates = Array.isArray(cardOrPath?.imgCandidates)
+    ? cardOrPath.imgCandidates.slice()
+    : buildImageCandidates(cardOrPath?.img || cardOrPath);
+  let idx = 0;
+  el.alt = altText;
+  el.onerror = function(){
+    idx += 1;
+    if (idx < candidates.length) {
+      el.src = candidates[idx];
+    } else {
+      el.onerror = null;
+      el.src = FALLBACK_CARD_IMAGE;
+    }
+  };
+  el.src = candidates[0] || FALLBACK_CARD_IMAGE;
+}
+
+async function fetchCardsFromSources(){
+  let lastErr = null;
+  for (const src of CARD_JSON_SOURCES){
+    try{
+      const res = await fetch(src, { cache: 'no-store' });
+      if (!res.ok) throw new Error(src + ' -> HTTP ' + res.status);
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error(src + ' non contiene un array di carte');
+      console.info('[cards] caricate da', src, '(', data.length, 'record )');
+      return data;
+    }catch(err){
+      console.warn('[cards] sorgente non disponibile:', src, err);
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error('Nessuna sorgente cards.json disponibile');
+}
+
 async function loadCards(){
   try{
-    const res = await fetch('cards.json', { cache: 'no-store' });
-    if(!res.ok) throw new Error('cards.json non trovato');
-    CARDS = await res.json();
+    const rawCards = await fetchCardsFromSources();
+    CARDS = rawCards.map(normalizeLoadedCard).filter(Boolean);
+    window.CARDS = CARDS;
   }catch(e){
     console.error('[ERRORE CARICAMENTO CARTE]', e);
     CARDS = [];
+    window.CARDS = CARDS;
   } finally {
     // 🔹 Aggiorna il numero di carte disponibili
     document.getElementById('cardsCount').textContent = "Carte disponibili: " + CARDS.length;
@@ -1181,7 +1245,7 @@ function renderGrid(items){
     if (rarSlug) node.classList.add('r-' + rarSlug);
     node.querySelector('.badge').textContent = c.rarity;
     const img = node.querySelector('.thumb');
-    img.src = c.img; img.loading='lazy'; img.alt = `Carta ${c.name}`;
+    img.loading='lazy'; bindSmartImage(img, c, `Carta ${c.name}`);
     img.addEventListener('click', ()=> openModal(c));
     node.querySelector('.name').textContent = c.name;
     node.querySelector('.meta').textContent = `${c.game} • ${c.series} • ${c.role || '—'}`;
@@ -1254,7 +1318,7 @@ function openByIndex(i){ if(!LAST_ITEMS.length) return; if(i<0) i = LAST_ITEMS.l
 
 async function openModal(card){
   current = card; currentIndex = LAST_ITEMS.findIndex(x=> x.id===card.id);
-  dlgImg.src = card.img; dlgName.textContent = card.name; dlgMeta.textContent = `${card.game} • ${card.series} • ${card.role || '—'}`;
+  bindSmartImage(dlgImg, card, `Carta ${card.name}`); dlgName.textContent = card.name; dlgMeta.textContent = `${card.game} • ${card.series} • ${card.role || '—'}`;
 
   // 🔥 cornice infuocata nella modale se onFire
   dlgImg.classList.toggle('on-fire', !!card.onFire);
@@ -1819,7 +1883,7 @@ window.dispatchEvent(new CustomEvent('firebase-ready'));
         const img = new Image();
         img.loading = "eager";
         img.decoding = "async";
-        img.src = c.img;
+        bindSmartImage(img, c, c.name || 'Carta');
         img.alt = "";
         // Random position (avoid the left-top quarter too much to keep title readable)
         const x = rand(W*0.25, W*0.92);
@@ -1904,14 +1968,22 @@ window.dispatchEvent(new CustomEvent('firebase-ready'));
     });
     return out;
   }
-  function loadOK(url){
-    return new Promise(function(resolve){
-      var im = new Image();
-      im.onload = function(){ resolve(true); };
-      im.onerror = function(){ resolve(false); };
-      try{ im.referrerPolicy = "no-referrer"; }catch(e){}
-      im.src = url;
-    });
+  async function resolveLoadableImage(cardOrPath){
+    var candidates = Array.isArray(cardOrPath && cardOrPath.imgCandidates)
+      ? cardOrPath.imgCandidates.slice()
+      : buildImageCandidates(cardOrPath && cardOrPath.img ? cardOrPath.img : cardOrPath);
+    for (var i=0; i<candidates.length; i++) {
+      var url = candidates[i];
+      var ok = await new Promise(function(resolve){
+        var im = new Image();
+        im.onload = function(){ resolve(true); };
+        im.onerror = function(){ resolve(false); };
+        try{ im.referrerPolicy = "no-referrer"; }catch(e){}
+        im.src = url;
+      });
+      if (ok) return url;
+    }
+    return null;
   }
   async function setFeatured(cards){
     try{
@@ -1944,15 +2016,15 @@ window.dispatchEvent(new CustomEvent('firebase-ready'));
       for (var i=0, bi=0; i<selected.length && bi<boxes.length; i++){
         var c = selected[i];
         if(!c || !c.img) continue;
-        var ok = await loadOK(c.img);
-        if(!ok) continue;
+        var resolvedImg = await resolveLoadableImage(c);
+        if(!resolvedImg) continue;
         var box = boxes[bi++];
         var img = box.querySelector('img.fit');
         if(img){
-          img.src = c.img;
+          img.src = resolvedImg;
           img.alt = (c.name || "Carta") + (c.series ? " • " + c.series : "");
         }
-        box.style.setProperty('--bg', 'url(' + c.img + ')');
+        box.style.setProperty('--bg', 'url(' + resolvedImg + ')');
         box.title = (c.name || "") + (c.series ? " • " + c.series : "");
         var label = box.querySelector('.label');
         if(label){
