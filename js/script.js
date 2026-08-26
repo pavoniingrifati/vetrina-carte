@@ -705,20 +705,26 @@ function renderFutRandomCards(cards) {
 async function loadFutCards() {
   if (!futRandomCards) return;
 
+  // data/cards.json è la sorgente principale del database.
+  // data/cards.js resta solo come fallback per evitare che una copia vecchia
+  // del database sovrascriva le immagini WebP o le nuove serie.
+  try {
+    const res = await fetch(cardsEndpoint, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const cards = await res.json();
+    if (!Array.isArray(cards) || !cards.length) throw new Error('cards.json vuoto o non valido');
+    renderFutRandomCards(cards);
+    return;
+  } catch (error) {
+    console.warn('[cards.json] fallback su data/cards.js', error);
+  }
+
   if (Array.isArray(window.FANTABALLA_CARDS) && window.FANTABALLA_CARDS.length) {
     renderFutRandomCards(window.FANTABALLA_CARDS);
     return;
   }
 
-  try {
-    const res = await fetch(cardsEndpoint, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const cards = await res.json();
-    renderFutRandomCards(cards);
-  } catch (error) {
-    console.error(error);
-    futRandomCards.innerHTML = '<span class="fut-cards-error">Errore cards.json</span>';
-  }
+  futRandomCards.innerHTML = '<span class="fut-cards-error">Errore cards.json</span>';
 }
 
 document.addEventListener('mouseenter', event => {
