@@ -25,7 +25,7 @@ window.FUTTU_CONFIG = {
   homeUrl: 'https://pavoniingrifati.github.io/vetrina-carte/',
   myCardsUrl: 'https://pavoniingrifati.github.io/vetrina-carte/my-cards',
   sections: {
-    featured: ['Patatine','Dannazione','Gotham Tots','Legend','Fusion2','Gold','Silver','Bronze'],
+    featured: ['Patatine','Dannazione','Gotham Tots','World Cup','Legend','Fusion2','Gold','Silver','Bronze'],
     stock: ['Gotham Tots','Legend','Fusion2','Strumenti'],
     foryou: ['Patatine','Dannazione','Legend','Fusion2'],
     classic: ['Gold','Silver','Bronze'],
@@ -36,6 +36,7 @@ window.FUTTU_CONFIG = {
     { name:'Patatine', kind:'finite', size:1, cost:0, scope:'mode', excludeRarity:['Season','Leggendaria'], weightByRarity:{'Comune':4,'Non Comune':3,'Rara':2,'Ultra Rara':1}, cover:'img/patatrine.webp', description:'Contiene 1 carta Gotham City FC, con rarità pesate.' },
     { name:'Dannazione', kind:'finite', size:1, cost:0, scope:'mode-or-shared', series:['Cursed'], cover:'img/back%20dannazione.webp', description:'Contiene 1 carta Cursed. I pacchetti sono finiti.' },
     { name:'Gotham Tots', kind:'finite', size:3, cost:0, scope:'mode', anyOf:[{tagsAny:['Tots12','Tots13']},{nameIncludesAny:['tots12','tots13']}], cover:'img/Deck%20back%20Tots.webp', description:'Contiene 3 carte TOTS12 o TOTS13 di Gotham City FC.' },
+    { name:'World Cup', kind:'finite', size:3, cost:0, scope:'mode', series:['World Cup'], uniqueWithinPack:true, cover:'img/back%20world.webp', description:'Contiene carte World Cup di Gotham City FC. Nessun doppione: ogni carta compare una sola volta nella sequenza dei pacchetti.' },
     { name:'Legend', kind:'gotham-legend-infinite', size:3, cost:0, scope:'mode', cover:'img/Back%20legend.webp', description:'Contiene 2 carte normali e una carta finale speciale.' },
     { name:'Fusion2', kind:'finite', size:3, cost:0, scope:'mode', anyOf:[{series:['Fusion2']},{tagsAny:['Fusion2']}], cover:'img/fusione2%20back.webp', description:'Contiene 3 carte Fusion2 di Gotham City FC.' },
     { name:'Oggetti', kind:'infinite', size:3, cost:0, scope:'mode-or-shared', series:['Oggetto'], cover:'img/Deck%20back%20tactcs.webp', description:'Contiene 3 carte Oggetto utilizzabili nella tua collezione.' },
