@@ -166,7 +166,7 @@ btnCSV.onclick = () => {
 };
 
 async function loadReport() {
-  setStatus("Carico season, tiers e progress utenti… (modalità NO-INDEX)");
+  setStatus("Carico stagione corrente e progress stagionali…");
 
   const season = await getCurrentSeason();
   statSeason.textContent = String(season);
@@ -190,103 +190,127 @@ async function loadReport() {
     return;
   }
 
-  // Supporta sia il vecchio path users/{uid}/gamepass/progress sia il nuovo:
-  // users/{uid}/seasons/season_N/gamepass/progress. Se esistono entrambi,
-  // il documento stagionale ha precedenza sul legacy.
+  // IMPORTANTE:
+  // Il report della stagione corrente usa SOLO il nuovo percorso stagionale:
+  // users/{uid}/seasons/season_N/gamepass/progress
+  //
+  // Il vecchio users/{uid}/gamepass/progress viene ignorato completamente.
+  // Questo evita che gli XP della vecchia stagione ricompaiano nel report.
   const byUid = new Map();
+  const currentSeason = normalizeSeason(season);
+  const expectedSeasonKey = `season_${currentSeason}`;
 
   for (const d of snap.docs.filter(d => d.id === "progress")) {
     const seg = d.ref.path.split('/');
-    const uid = seg[1] || '';
+
+    // Accetta esclusivamente:
+    // users/{uid}/seasons/season_N/gamepass/progress
+    const isScopedProgress =
+      seg.length === 6 &&
+      seg[0] === "users" &&
+      seg[2] === "seasons" &&
+      seg[4] === "gamepass" &&
+      seg[5] === "progress";
+
+    if (!isScopedProgress) continue;
+    if (seg[3] !== expectedSeasonKey) continue;
+
+    const uid = seg[1] || "";
     if (!uid) continue;
 
     const data = d.data() || {};
-    const isScoped = seg[2] === 'seasons';
-
-    let rowSeason = recordSeason(data);
-    if (isScoped) {
-      const m = (seg[3] || '').match(/^season_(\d+)$/);
-      if (m) rowSeason = normalizeSeason(m[1]);
-    }
-
-    if (rowSeason !== normalizeSeason(season)) continue;
-
-    const candidate = {
+    byUid.set(uid, {
       uid,
-      season: rowSeason,
-      points: Number(data.points || 0) || 0,
-      name: (data.name || data.displayName || '').toString(),
-      email: (data.email || '').toString(),
-      _priority: isScoped ? 2 : 1
-    };
-
-    const prev = byUid.get(uid);
-    if (!prev || candidate._priority > prev._priority) byUid.set(uid, candidate);
+      season: currentSeason,
+      points: Math.max(0, Number(data.points || 0) || 0),
+      name: (data.name || data.displayName || "").toString(),
+      email: (data.email || "").toString()
+    });
   }
 
-  rowsAll = [...byUid.values()].map(({ _priority, ...r }) => r);
-  rowsAll.sort((a,b) => b.points - a.points);
-
-
-  // Fallback 1: prova a riempire name/email dalle requests più recenti (se mancanti)
+  // Le richieste della stagione corrente ci permettono anche di includere
+  // utenti che non hanno ancora un progress stagionale: per loro XP = 0.
   try {
     const reqSnap = await getDocs(query(
       collection(db, "requests"),
       orderBy("createdAt", "desc"),
       limit(2000)
     ));
-    const map = new Map(); // uid -> {name,email}
+
     for (const d of reqSnap.docs) {
       const data = d.data() || {};
-      if (recordSeason(data) !== normalizeSeason(season)) continue;
-      const uid = (data.uid || '').toString();
-      if (!uid || map.has(uid)) continue;
-      const name = (data.requesterName || '').toString();
-      const email = (data.requesterEmail || '').toString();
-      if (name || email) map.set(uid, { name, email });
-    }
+      if (recordSeason(data) !== currentSeason) continue;
 
-    rowsAll = rowsAll.map(r => {
-      const p = map.get(r.uid);
-      return {
-        ...r,
-        name: (r.name || (p?.name || '')),
-        email: (r.email || (p?.email || '')),
+      const uid = (data.uid || "").toString().trim();
+      if (!uid) continue;
+
+      const current = byUid.get(uid) || {
+        uid,
+        season: currentSeason,
+        points: 0,
+        name: "",
+        email: ""
       };
-    });
+
+      if (!current.name) {
+        current.name = (data.requesterName || "").toString();
+      }
+      if (!current.email) {
+        current.email = (data.requesterEmail || "").toString();
+      }
+
+      byUid.set(uid, current);
+    }
   } catch (e) {
-    console.warn('Fallback requests fallito:', e);
+    console.warn("Fallback requests fallito:", e);
   }
 
-  // Fallback 2: usa users/{uid}/profile/main.displayName come name (serve read ai moderatori)
+  // I profili servono sia per il nickname sia per mostrare a 0 XP
+  // gli utenti conosciuti che non hanno ancora iniziato la nuova stagione.
   try {
     const profSnap = await getDocs(query(
       collectionGroup(db, "profile"),
       limit(5000)
     ));
 
-    const pmap = new Map(); // uid -> displayName
     for (const d of profSnap.docs) {
-      if (d.id !== 'main') continue;
-      const seg = d.ref.path.split('/'); // users/{uid}/profile/main
-      const uid = seg[1] || '';
-      if (!uid || pmap.has(uid)) continue;
-      const data = d.data() || {};
-      const dn = (data.displayName || '').toString().trim();
-      if (dn) pmap.set(uid, dn);
-    }
+      if (d.id !== "main") continue;
 
-    rowsAll = rowsAll.map(r => ({
-      ...r,
-      name: (pmap.get(r.uid) || r.name || ''),
-    }));
+      const seg = d.ref.path.split("/"); // users/{uid}/profile/main
+      const uid = seg[1] || "";
+      if (!uid) continue;
+
+      const data = d.data() || {};
+      const current = byUid.get(uid) || {
+        uid,
+        season: currentSeason,
+        points: 0,
+        name: "",
+        email: ""
+      };
+
+      const dn = (data.displayName || "").toString().trim();
+      if (dn) current.name = dn;
+
+      byUid.set(uid, current);
+    }
   } catch (e) {
-    console.warn('Fallback profile/main fallito:', e);
+    console.warn("Fallback profile/main fallito:", e);
   }
+
+  rowsAll = [...byUid.values()];
+  rowsAll.sort((a, b) =>
+    (b.points - a.points) ||
+    (a.name || a.email || a.uid).localeCompare(
+      b.name || b.email || b.uid,
+      "it",
+      { sensitivity: "base" }
+    )
+  );
 
   hint.textContent = `${rowsAll.length} righe`;
   renderTable(rowsAll);
-  setStatus(`Ok. Season ${season} • Utenti: ${rowsAll.length} • Tiers: ${tiersSorted.length}`);
+  setStatus(`Ok. Season ${season} • Utenti: ${rowsAll.length} • Solo progress stagionali • Tiers: ${tiersSorted.length}`);
 }
 
 onUser(async (user) => {

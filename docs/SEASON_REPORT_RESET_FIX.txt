@@ -1,0 +1,18 @@
+FIX SEASON REPORT - NUOVA STAGIONE
+
+Problema:
+season_report.js leggeva sia:
+- users/{uid}/gamepass/progress        (legacy)
+- users/{uid}/seasons/season_N/gamepass/progress
+
+Se il vecchio documento legacy aveva ancora season uguale alla stagione corrente,
+i vecchi XP comparivano nella classifica.
+
+Correzione:
+- il report IGNORA completamente users/{uid}/gamepass/progress;
+- legge esclusivamente users/{uid}/seasons/season_N/gamepass/progress;
+- un utente conosciuto tramite profile/main o requests della stagione corrente
+  viene mostrato a 0 XP se non ha ancora un progress della stagione;
+- i vecchi dati Firebase possono rimanere dove sono: non influenzano più il report.
+
+Non servono modifiche alle Firestore Rules per questo fix.
