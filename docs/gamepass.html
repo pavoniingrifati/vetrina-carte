@@ -1504,6 +1504,123 @@ progress#gpProgressBar::-webkit-progress-value{background:linear-gradient(90deg,
   .pctline{display:grid!important;gap:6px!important}
   .stats{grid-template-columns:1fr!important}
 }
+
+
+/* ===== ACCESSO PROFILO DAL GAME PASS ===== */
+.profile-nav-link{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+}
+.profile-nav-link::before{
+  content:"";
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--home-field, #44c553);
+  box-shadow:0 0 12px rgba(68,197,83,.6);
+  flex:0 0 auto;
+}
+
+.profile-shortcut{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:190px;
+  max-width:280px;
+  padding:7px 10px 7px 7px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.045);
+  color:#fff;
+  text-decoration:none;
+  transition:.18s ease;
+}
+.profile-shortcut:hover{
+  transform:translateY(-1px);
+  border-color:rgba(78,229,216,.30);
+  background:rgba(78,229,216,.075);
+}
+.profile-avatar{
+  width:38px;
+  height:38px;
+  flex:0 0 38px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:
+    linear-gradient(145deg,rgba(78,229,216,.20),rgba(34,166,255,.12)),
+    #111923;
+  border:1px solid rgba(255,255,255,.12);
+  background-size:cover;
+  background-position:center;
+  font-size:17px;
+  overflow:hidden;
+}
+.profile-shortcut-copy{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  line-height:1.05;
+  flex:1;
+}
+.profile-shortcut-label{
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.11em;
+  color:rgba(78,229,216,.88);
+  white-space:nowrap;
+}
+.profile-shortcut-name{
+  display:block;
+  margin-top:5px;
+  max-width:175px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:rgba(242,245,247,.92)!important;
+  font-size:12px!important;
+  font-weight:850;
+}
+.profile-shortcut-arrow{
+  font-size:22px;
+  line-height:1;
+  color:rgba(255,255,255,.44);
+}
+
+/* Mantiene il profilo visibile anche dove il vecchio CSS nasconde i link non attivi */
+.ut-nav .profile-nav-link{
+  display:inline-flex!important;
+}
+
+@media(max-width:980px){
+  .profile-shortcut{
+    min-width:0;
+    width:46px;
+    height:46px;
+    padding:4px;
+    border-radius:14px;
+  }
+  .profile-shortcut-copy,
+  .profile-shortcut-arrow{
+    display:none;
+  }
+  .profile-avatar{
+    width:36px;
+    height:36px;
+    flex-basis:36px;
+  }
+}
+
+@media(max-width:680px){
+  .ut-nav .profile-nav-link{
+    display:inline-flex!important;
+  }
+  .profile-nav-link::before{
+    display:none;
+  }
+}
+
 </style>
 </head>
 
@@ -1523,13 +1640,21 @@ progress#gpProgressBar::-webkit-progress-value{background:linear-gradient(90deg,
       <nav class="ut-nav" aria-label="Navigazione principale">
         <a href="./index.html">Home</a>
         <a class="is-active" href="./gamepass.html">Game Pass</a>
+        <a class="profile-nav-link" href="./profile.html">Il mio profilo</a>
         <a href="#achievements">Obiettivi</a>
         <a href="#rewards">Ricompense</a>
         <a href="#requests">Community</a>
       </nav>
 
       <div class="actions">
-        <span id="userInfo"></span>
+        <a id="profileShortcut" class="profile-shortcut" href="./profile.html" style="display:none;" aria-label="Apri il mio profilo">
+          <span id="profileAvatar" class="profile-avatar" aria-hidden="true">👤</span>
+          <span class="profile-shortcut-copy">
+            <span class="profile-shortcut-label">IL MIO PROFILO</span>
+            <span id="userInfo" class="profile-shortcut-name"></span>
+          </span>
+          <span class="profile-shortcut-arrow" aria-hidden="true">›</span>
+        </a>
         <button id="btnLogin" class="btnx primary">Login Google</button>
         <button id="btnLogout" class="btnx" style="display:none;">Logout</button>
       </div>

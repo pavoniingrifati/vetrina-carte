@@ -37,6 +37,8 @@ const reqList = qs("#reqList");
 const btnLogin = qs("#btnLogin");
 const btnLogout = qs("#btnLogout");
 const userInfo = qs("#userInfo");
+const profileShortcut = qs("#profileShortcut");
+const profileAvatar = qs("#profileAvatar");
 
 
 const achSearch = qs("#achSearch");
@@ -1513,6 +1515,12 @@ async function loadAll(uid) {
 onUser(async (user) => {
   if (!user) {
     userInfo.textContent = "";
+    if (profileShortcut) profileShortcut.style.display = "none";
+    if (profileAvatar) {
+      profileAvatar.textContent = "👤";
+      profileAvatar.style.backgroundImage = "";
+      profileAvatar.style.color = "";
+    }
     btnLogin.style.display = "";
     btnLogout.style.display = "none";
 
@@ -1538,7 +1546,20 @@ onUser(async (user) => {
 
   btnLogin.style.display = "none";
   btnLogout.style.display = "";
-  userInfo.textContent = user.email || user.uid;
+
+  const profileName = (user.displayName || user.email || user.uid || "Profilo").toString();
+  userInfo.textContent = profileName;
+
+  if (profileShortcut) profileShortcut.style.display = "flex";
+
+  if (profileAvatar) {
+    const initial = profileName.trim().charAt(0).toUpperCase() || "👤";
+    profileAvatar.textContent = initial;
+    profileAvatar.style.backgroundImage = user.photoURL
+      ? `url("${String(user.photoURL).replace(/"/g, "%22")}")`
+      : "";
+    profileAvatar.style.color = user.photoURL ? "transparent" : "";
+  }
 
   await loadAll(user.uid);
 });
