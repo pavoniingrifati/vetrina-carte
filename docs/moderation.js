@@ -58,6 +58,37 @@ const btnXpSet = qs("#btnXpSet");
 const btnXpDelta = qs("#btnXpDelta");
 const xpEditStatus = qs("#xpEditStatus");
 
+// Creazione Achievement / Tier
+const catalogManager = qs("#catalogManager");
+const catalogAchCount = qs("#catalogAchCount");
+const catalogTierCount = qs("#catalogTierCount");
+const btnCatalogReload = qs("#btnCatalogReload");
+
+const achCreateId = qs("#achCreateId");
+const achCreateType = qs("#achCreateType");
+const achCreateTitle = qs("#achCreateTitle");
+const achCreateDesc = qs("#achCreateDesc");
+const achCreatePoints = qs("#achCreatePoints");
+const achCreatePrereq = qs("#achCreatePrereq");
+const achCreateActive = qs("#achCreateActive");
+const achCreateLinkRequest = qs("#achCreateLinkRequest");
+const achCreateLinkUrl = qs("#achCreateLinkUrl");
+const achLinkField = qs("#achLinkField");
+const btnCreateAchievement = qs("#btnCreateAchievement");
+const achCreateStatus = qs("#achCreateStatus");
+
+const tierCreateId = qs("#tierCreateId");
+const tierCreateRequired = qs("#tierCreateRequired");
+const tierRewardType = qs("#tierRewardType");
+const tierRewardRarity = qs("#tierRewardRarity");
+const tierRewardLabel = qs("#tierRewardLabel");
+const tierRewardTitle = qs("#tierRewardTitle");
+const tierRewardImg = qs("#tierRewardImg");
+const tierRewardOverall = qs("#tierRewardOverall");
+const tierCreateActive = qs("#tierCreateActive");
+const btnCreateTier = qs("#btnCreateTier");
+const tierCreateStatus = qs("#tierCreateStatus");
+
 let CURRENT_SEASON = 1;
 let XP_DIRECTORY = [];
 let SELECTED_XP_USER = null;
@@ -143,6 +174,294 @@ async function getProfileName(uid) {
   return v;
 }
 
+
+
+function setCatalogStatus(elm, msg, cls = "") {
+  if (!elm) return;
+  elm.className = `catalog-status ${cls}`.trim();
+  elm.textContent = msg || "";
+}
+
+function cleanDocId(raw) {
+  return (raw || "").toString().trim();
+}
+
+function validDocId(id) {
+  return !!id && id.length <= 150 && !id.includes("/");
+}
+
+function parsePrereq(raw) {
+  return Array.from(new Set(
+    (raw || "")
+      .toString()
+      .split(",")
+      .map(v => v.trim())
+      .filter(Boolean)
+  )).slice(0, 30);
+}
+
+async function loadCatalogSummary() {
+  if (!catalogAchCount || !catalogTierCount) return;
+
+  try {
+    const [achSnap, tierSnap] = await Promise.all([
+      getDocs(collection(db, "achievements")),
+      getDocs(collection(db, "gp_tiers"))
+    ]);
+
+    catalogAchCount.textContent = String(achSnap.size);
+    catalogTierCount.textContent = String(tierSnap.size);
+  } catch (e) {
+    console.warn("loadCatalogSummary", e);
+    catalogAchCount.textContent = "?";
+    catalogTierCount.textContent = "?";
+  }
+}
+
+function resetAchievementForm() {
+  achCreateId.value = "";
+  achCreateTitle.value = "";
+  achCreateDesc.value = "";
+  achCreatePoints.value = "";
+  achCreatePrereq.value = "";
+  achCreateType.value = "FUT";
+  achCreateActive.checked = true;
+  achCreateLinkRequest.checked = false;
+  achCreateLinkUrl.value = "";
+  achLinkField.style.display = "none";
+}
+
+function resetTierForm() {
+  tierCreateId.value = "";
+  tierCreateRequired.value = "";
+  tierRewardType.value = "card";
+  tierRewardRarity.value = "common";
+  tierRewardLabel.value = "";
+  tierRewardTitle.value = "";
+  tierRewardImg.value = "";
+  tierRewardOverall.value = "";
+  tierCreateActive.checked = true;
+}
+
+async function createAchievementFromPanel() {
+  const id = cleanDocId(achCreateId.value);
+  const title = (achCreateTitle.value || "").trim();
+  const desc = (achCreateDesc.value || "").trim();
+  const type = (achCreateType.value || "").trim().toUpperCase();
+  const points = Number(achCreatePoints.value);
+  const prereq = parsePrereq(achCreatePrereq.value);
+  const active = !!achCreateActive.checked;
+  const linkRequest = !!achCreateLinkRequest.checked;
+  const linkUrl = (achCreateLinkUrl.value || "").trim();
+
+  if (!validDocId(id)) {
+    setCatalogStatus(achCreateStatus, "Inserisci un ID valido, senza '/'.", "catalog-warning");
+    return;
+  }
+
+  if (!title) {
+    setCatalogStatus(achCreateStatus, "Inserisci il titolo dell'achievement.", "catalog-warning");
+    achCreateTitle.focus();
+    return;
+  }
+
+  if (!Number.isInteger(points) || points < 0) {
+    setCatalogStatus(achCreateStatus, "Gli XP devono essere un numero intero ≥ 0.", "catalog-warning");
+    achCreatePoints.focus();
+    return;
+  }
+
+  if (!["FUT","WWE","F1","LIVE","SOCIAL"].includes(type)) {
+    setCatalogStatus(achCreateStatus, "Categoria non valida.", "catalog-warning");
+    return;
+  }
+
+  if (linkRequest && !/^https?:\/\//i.test(linkUrl)) {
+    setCatalogStatus(achCreateStatus, "Per un achievement con link inserisci un URL http/https valido.", "catalog-warning");
+    achCreateLinkUrl.focus();
+    return;
+  }
+
+  if (prereq.includes(id)) {
+    setCatalogStatus(achCreateStatus, "Un achievement non può avere se stesso come prerequisito.", "catalog-warning");
+    return;
+  }
+
+  btnCreateAchievement.disabled = true;
+  setCatalogStatus(achCreateStatus, "Controllo ID…");
+
+  try {
+    const ref = doc(db, "achievements", id);
+    const existing = await getDoc(ref);
+
+    if (existing.exists()) {
+      throw new Error(`Esiste già un achievement con ID "${id}".`);
+    }
+
+    const ok = confirm(
+      `Creare questo Achievement?\n\n` +
+      `ID: ${id}\n` +
+      `Titolo: ${title}\n` +
+      `Categoria: ${type}\n` +
+      `XP: ${points}\n` +
+      `Prerequisiti: ${prereq.length ? prereq.join(", ") : "nessuno"}\n` +
+      `Attivo: ${active ? "sì" : "no"}`
+    );
+    if (!ok) return;
+
+    await setDoc(ref, {
+      title,
+      desc,
+      points,
+      type,
+      active,
+      prereq,
+      linkRequest,
+      linkUrl: linkRequest ? linkUrl : "",
+      createdAt: serverTimestamp(),
+      createdBy: auth.currentUser.uid
+    });
+
+    setCatalogStatus(
+      achCreateStatus,
+      `✓ Achievement "${id}" creato.`,
+      "catalog-ok"
+    );
+
+    resetAchievementForm();
+    await loadCatalogSummary();
+  } catch (e) {
+    console.error(e);
+    setCatalogStatus(
+      achCreateStatus,
+      e?.message || "Errore nella creazione dell'achievement.",
+      "catalog-warning"
+    );
+  } finally {
+    btnCreateAchievement.disabled = false;
+  }
+}
+
+async function createTierFromPanel() {
+  const id = cleanDocId(tierCreateId.value);
+  const requiredPoints = Number(tierCreateRequired.value);
+  const type = (tierRewardType.value || "").trim().toLowerCase();
+  const rarity = (tierRewardRarity.value || "").trim().toLowerCase();
+  const label = (tierRewardLabel.value || "").trim();
+  const title = (tierRewardTitle.value || "").trim() || label;
+  const imgUrl = (tierRewardImg.value || "").trim();
+  const overallRaw = (tierRewardOverall.value || "").trim();
+  const overall = overallRaw === "" ? null : Number(overallRaw);
+  const active = !!tierCreateActive.checked;
+
+  if (!validDocId(id)) {
+    setCatalogStatus(tierCreateStatus, "Inserisci un ID valido, senza '/'.", "catalog-warning");
+    return;
+  }
+
+  if (!Number.isInteger(requiredPoints) || requiredPoints <= 0) {
+    setCatalogStatus(tierCreateStatus, "Gli XP richiesti devono essere un intero > 0.", "catalog-warning");
+    tierCreateRequired.focus();
+    return;
+  }
+
+  if (!["card","skin","color","item"].includes(type)) {
+    setCatalogStatus(tierCreateStatus, "Tipo premio non valido.", "catalog-warning");
+    return;
+  }
+
+  if (!["common","rare","epic","legendary"].includes(rarity)) {
+    setCatalogStatus(tierCreateStatus, "Rarità non valida.", "catalog-warning");
+    return;
+  }
+
+  if (!label) {
+    setCatalogStatus(tierCreateStatus, "Inserisci la label del premio.", "catalog-warning");
+    tierRewardLabel.focus();
+    return;
+  }
+
+  if (imgUrl && !/^(https?:|data:)/i.test(imgUrl)) {
+    setCatalogStatus(tierCreateStatus, "L'immagine deve essere un URL http/https oppure data:.", "catalog-warning");
+    tierRewardImg.focus();
+    return;
+  }
+
+  if (overall !== null && (!Number.isInteger(overall) || overall < 0 || overall > 999)) {
+    setCatalogStatus(tierCreateStatus, "Overall non valido.", "catalog-warning");
+    tierRewardOverall.focus();
+    return;
+  }
+
+  btnCreateTier.disabled = true;
+  setCatalogStatus(tierCreateStatus, "Controllo ID…");
+
+  try {
+    const ref = doc(db, "gp_tiers", id);
+    const existing = await getDoc(ref);
+
+    if (existing.exists()) {
+      throw new Error(`Esiste già un Tier con ID "${id}".`);
+    }
+
+    const ok = confirm(
+      `Creare questo Tier?\n\n` +
+      `ID: ${id}\n` +
+      `XP richiesti: ${requiredPoints}\n` +
+      `Premio: ${label}\n` +
+      `Tipo: ${type}\n` +
+      `Rarità: ${rarity}\n` +
+      `Attivo: ${active ? "sì" : "no"}`
+    );
+    if (!ok) return;
+
+    const reward = {
+      type,
+      rarity,
+      label,
+      title,
+      imgUrl
+    };
+
+    if (overall !== null) reward.overall = overall;
+
+    await setDoc(ref, {
+      active,
+      requiredPoints,
+      reward,
+      createdAt: serverTimestamp(),
+      createdBy: auth.currentUser.uid
+    });
+
+    setCatalogStatus(
+      tierCreateStatus,
+      `✓ Tier "${id}" creato.`,
+      "catalog-ok"
+    );
+
+    resetTierForm();
+    await loadCatalogSummary();
+  } catch (e) {
+    console.error(e);
+    setCatalogStatus(
+      tierCreateStatus,
+      e?.message || "Errore nella creazione del Tier.",
+      "catalog-warning"
+    );
+  } finally {
+    btnCreateTier.disabled = false;
+  }
+}
+
+achCreateLinkRequest?.addEventListener("change", () => {
+  const enabled = !!achCreateLinkRequest.checked;
+  achLinkField.style.display = enabled ? "" : "none";
+  if (!enabled) achCreateLinkUrl.value = "";
+});
+
+btnCreateAchievement?.addEventListener("click", createAchievementFromPanel);
+btnCreateTier?.addEventListener("click", createTierFromPanel);
+btnCatalogReload?.addEventListener("click", loadCatalogSummary);
 
 async function getCurrentSeason() {
   try {
@@ -507,7 +826,8 @@ async function loadXpManager() {
 async function reloadModeratorData() {
   await Promise.all([
     loadQueue(),
-    loadXpManager()
+    loadXpManager(),
+    loadCatalogSummary()
   ]);
 }
 
@@ -695,6 +1015,7 @@ onUser(async (user) => {
     btnLogout.style.display = "none";
     btnReload.style.display = "none";
     if (xpManager) xpManager.style.display = "none";
+    if (catalogManager) catalogManager.style.display = "none";
     queue.innerHTML = "";
     SELECTED_XP_USER = null;
     setStatus("Fai login. Serve essere presente in /moderators/{uid}.");
@@ -709,6 +1030,7 @@ onUser(async (user) => {
   if (!ok) {
     btnReload.style.display = "none";
     if (xpManager) xpManager.style.display = "none";
+    if (catalogManager) catalogManager.style.display = "none";
     queue.innerHTML = "";
     setStatus("Non autorizzato: non sei in /moderators/{tuoUID}.");
     return;
@@ -716,5 +1038,6 @@ onUser(async (user) => {
 
   btnReload.style.display = "";
   if (xpManager) xpManager.style.display = "";
+  if (catalogManager) catalogManager.style.display = "";
   await reloadModeratorData();
 });

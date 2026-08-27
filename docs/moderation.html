@@ -155,6 +155,114 @@
   }
 </style>
 
+
+<style>
+  .catalog-admin{
+    margin-top:18px;
+    margin-bottom:18px;
+  }
+  .catalog-admin-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  .catalog-box{
+    min-width:0;
+  }
+  .catalog-form{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:14px;
+  }
+  .catalog-field{
+    min-width:0;
+  }
+  .catalog-field.full{
+    grid-column:1/-1;
+  }
+  .catalog-field label{
+    display:block;
+    margin-bottom:5px;
+    font-size:11px;
+    font-weight:800;
+    opacity:.72;
+  }
+  .catalog-field input,
+  .catalog-field textarea,
+  .catalog-field select{
+    width:100%;
+    box-sizing:border-box;
+  }
+  .catalog-field textarea{
+    min-height:86px;
+    resize:vertical;
+  }
+  .catalog-check{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-height:38px;
+    font-size:12px;
+  }
+  .catalog-check input{
+    width:auto;
+  }
+  .catalog-actions{
+    grid-column:1/-1;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:3px;
+  }
+  .catalog-status{
+    font-size:11px;
+    line-height:1.4;
+  }
+  .catalog-summary{
+    display:flex;
+    gap:7px;
+    flex-wrap:wrap;
+    margin-top:8px;
+  }
+  .catalog-pill{
+    padding:5px 8px;
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:999px;
+    font-size:10px;
+    opacity:.78;
+    background:rgba(255,255,255,.035);
+  }
+  .catalog-help{
+    margin-top:10px;
+    padding:9px 10px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,.08);
+    background:rgba(255,255,255,.025);
+    font-size:10px;
+    line-height:1.5;
+    opacity:.67;
+  }
+  .catalog-ok{ color:#9ef0bf; }
+  .catalog-warning{ color:#ffd48d; }
+
+  @media(max-width:900px){
+    .catalog-admin-grid{
+      grid-template-columns:1fr;
+    }
+  }
+  @media(max-width:620px){
+    .catalog-form{
+      grid-template-columns:1fr;
+    }
+    .catalog-field.full,
+    .catalog-actions{
+      grid-column:auto;
+    }
+  }
+</style>
+
 </head>
 <body>
 <header>
@@ -177,6 +285,186 @@
 
 <div class="container">
   <div id="status" class="card small">Caricamento…</div>
+
+
+  <section id="catalogManager" class="catalog-admin" style="display:none;">
+    <div class="mod-section-head">
+      <div>
+        <div class="mod-title">Gestione contenuti Game Pass</div>
+        <div class="mod-sub">
+          Crea Achievement e Tier direttamente dal pannello moderazione.
+          I documenti vengono salvati nelle collection <span class="mono">achievements</span>
+          e <span class="mono">gp_tiers</span>.
+        </div>
+        <div class="catalog-summary">
+          <span class="catalog-pill">Achievement: <b id="catalogAchCount">—</b></span>
+          <span class="catalog-pill">Tier: <b id="catalogTierCount">—</b></span>
+        </div>
+      </div>
+      <button id="btnCatalogReload" class="btn">Aggiorna catalogo</button>
+    </div>
+
+    <div class="catalog-admin-grid">
+      <div class="card catalog-box">
+        <div class="mod-title" style="font-size:16px;">Crea Achievement</div>
+        <div class="mod-sub">L'ID è quello usato anche nei prerequisiti e nelle richieste.</div>
+
+        <div class="catalog-form">
+          <div class="catalog-field">
+            <label for="achCreateId">ID documento *</label>
+            <input id="achCreateId" type="text" maxlength="150"
+                   placeholder="es. fut_vinci_10" />
+          </div>
+
+          <div class="catalog-field">
+            <label for="achCreateType">Categoria *</label>
+            <select id="achCreateType">
+              <option value="FUT">FUT</option>
+              <option value="WWE">WWE</option>
+              <option value="F1">F1</option>
+              <option value="LIVE">LIVE</option>
+              <option value="SOCIAL">SOCIAL</option>
+            </select>
+          </div>
+
+          <div class="catalog-field full">
+            <label for="achCreateTitle">Titolo *</label>
+            <input id="achCreateTitle" type="text" maxlength="120"
+                   placeholder="es. Vinci 10 partite FUT" />
+          </div>
+
+          <div class="catalog-field full">
+            <label for="achCreateDesc">Descrizione</label>
+            <textarea id="achCreateDesc" maxlength="600"
+                      placeholder="Descrivi cosa deve fare l'utente per completarlo."></textarea>
+          </div>
+
+          <div class="catalog-field">
+            <label for="achCreatePoints">XP assegnati *</label>
+            <input id="achCreatePoints" type="number" min="0" step="1"
+                   placeholder="es. 500" />
+          </div>
+
+          <div class="catalog-field">
+            <label for="achCreatePrereq">Prerequisiti</label>
+            <input id="achCreatePrereq" type="text"
+                   placeholder="id_1, id_2, id_3" />
+          </div>
+
+          <div class="catalog-field">
+            <label class="catalog-check">
+              <input id="achCreateActive" type="checkbox" checked />
+              Attivo e visibile nel Game Pass
+            </label>
+          </div>
+
+          <div class="catalog-field">
+            <label class="catalog-check">
+              <input id="achCreateLinkRequest" type="checkbox" />
+              Achievement con link
+            </label>
+          </div>
+
+          <div id="achLinkField" class="catalog-field full" style="display:none;">
+            <label for="achCreateLinkUrl">Link da aprire/allegare</label>
+            <input id="achCreateLinkUrl" type="url"
+                   placeholder="https://..." />
+          </div>
+
+          <div class="catalog-actions">
+            <button id="btnCreateAchievement" class="btn primary">Crea Achievement</button>
+            <span id="achCreateStatus" class="catalog-status"></span>
+          </div>
+        </div>
+
+        <div class="catalog-help">
+          I prerequisiti vanno inseriti usando gli ID esatti degli altri achievement,
+          separati da virgola. Esempio: <span class="mono">fut_1, fut_2</span>.
+        </div>
+      </div>
+
+      <div class="card catalog-box">
+        <div class="mod-title" style="font-size:16px;">Crea Tier</div>
+        <div class="mod-sub">Il Game Pass ordina i Tier automaticamente in base agli XP richiesti.</div>
+
+        <div class="catalog-form">
+          <div class="catalog-field">
+            <label for="tierCreateId">ID documento *</label>
+            <input id="tierCreateId" type="text" maxlength="150"
+                   placeholder="es. p15 oppure 36000" />
+          </div>
+
+          <div class="catalog-field">
+            <label for="tierCreateRequired">XP richiesti *</label>
+            <input id="tierCreateRequired" type="number" min="1" step="1"
+                   placeholder="es. 36000" />
+          </div>
+
+          <div class="catalog-field">
+            <label for="tierRewardType">Tipo premio *</label>
+            <select id="tierRewardType">
+              <option value="card">Carta</option>
+              <option value="skin">Skin</option>
+              <option value="color">Colore</option>
+              <option value="item">Altro premio</option>
+            </select>
+          </div>
+
+          <div class="catalog-field">
+            <label for="tierRewardRarity">Rarità *</label>
+            <select id="tierRewardRarity">
+              <option value="common">Common</option>
+              <option value="rare">Rare</option>
+              <option value="epic">Epic</option>
+              <option value="legendary">Legendary</option>
+            </select>
+          </div>
+
+          <div class="catalog-field full">
+            <label for="tierRewardLabel">Label premio *</label>
+            <input id="tierRewardLabel" type="text" maxlength="180"
+                   placeholder="es. [SOLO ABBONATI] Scelta ruolo mondiale" />
+          </div>
+
+          <div class="catalog-field full">
+            <label for="tierRewardTitle">Titolo premio</label>
+            <input id="tierRewardTitle" type="text" maxlength="180"
+                   placeholder="Se vuoto usa la stessa Label" />
+          </div>
+
+          <div class="catalog-field full">
+            <label for="tierRewardImg">URL immagine</label>
+            <input id="tierRewardImg" type="url"
+                   placeholder="https://..." />
+          </div>
+
+          <div class="catalog-field">
+            <label for="tierRewardOverall">Overall carta</label>
+            <input id="tierRewardOverall" type="number" min="0" max="999" step="1"
+                   placeholder="opzionale" />
+          </div>
+
+          <div class="catalog-field">
+            <label class="catalog-check">
+              <input id="tierCreateActive" type="checkbox" checked />
+              Tier attivo
+            </label>
+          </div>
+
+          <div class="catalog-actions">
+            <button id="btnCreateTier" class="btn primary">Crea Tier</button>
+            <span id="tierCreateStatus" class="catalog-status"></span>
+          </div>
+        </div>
+
+        <div class="catalog-help">
+          L'ID può essere come quelli che usi già: <span class="mono">p14</span>,
+          <span class="mono">8.1</span>, <span class="mono">31000</span>, ecc.
+          Non deve coincidere per forza con gli XP richiesti.
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section id="xpManager" class="mod-section" style="display:none; margin-top:18px;">
     <div class="card">
