@@ -81,7 +81,7 @@ const reqList = qs("#reqList");
 const myCards = qs("#myCards");
 const myCardsSub = qs("#myCardsSub");
 const myCardsBtn = qs("#myCardsBtn");
-const OFFICIAL_CARDS_BASE = "https://fantaballa.it/FUT/cards/";
+const OFFICIAL_CARDS_BASE = "https://fantaballa.it/FUT/img/";
 
 let ALL_CARDS_CACHE = null;
 let PROFILE_PREFS = {
@@ -159,7 +159,7 @@ function buildImgCandidates(rawSrc){
   const src0 = (rawSrc ?? "").toString().trim();
   if (!src0) return [];
 
-  // Fantaballa è sempre la prima fonte tentata.
+  // Fantaballa /FUT/img è sempre la prima fonte tentata.
   const official = officialCardUrlFromSource(src0);
 
   // Tutte le carte sono WebP.
