@@ -1,0 +1,406 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* === Helper globali === */
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Moderatori: basta creare un doc in /moderators/{uid}
+    function isModerator() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/moderators/$(request.auth.uid));
+    }
+
+    // Stagione Game Pass attiva (config/gamepass.season); fallback a 1.
+    function currentGamepassSeason() {
+      return exists(/databases/$(database)/documents/config/gamepass)
+        ? get(/databases/$(database)/documents/config/gamepass).data.season
+        : 1;
+    }
+
+    /* === Carte pubbliche === */
+    match /cards/{cardId} {
+      allow read: if true;
+
+      match /ratings/{userId} {
+        allow read: if true;
+        allow write: if request.auth != null
+                     && request.auth.uid == userId
+                     && request.resource.data.value is number
+                     && request.resource.data.value >= 1
+                     && request.resource.data.value <= 5;
+      }
+
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if request.auth != null
+                      && request.resource.data.uid == request.auth.uid
+                      && request.resource.data.author is string
+                      && request.resource.data.text is string
+                      && request.resource.data.text.size() > 0
+                      && request.resource.data.text.size() <= 1000;
+        allow delete: if request.auth != null
+                      && request.auth.uid == resource.data.uid;
+      }
+    }
+
+    /* === Wallet utente: users/{uid} === */
+    match /users/{userId} {
+      function isOwner() { return request.auth != null && request.auth.uid == userId; }
+
+      // request.resource.data.diff(...) NON vede i transform; consenti keys ridotte.
+      function changedOnlyWallet(allowedKeys) {
+        let keys = request.resource.data.diff(resource.data).changedKeys();
+
+        // Consenti ['points'] quando allowed include 'updatedAt', perché 'updatedAt' può arrivare come transform
+        return (
+          keys.hasOnly(allowedKeys)
+          || (allowedKeys.hasOnly(['points','updatedAt']) && keys.hasOnly(['points']))
+          || (allowedKeys.hasOnly(['points','lastDailyAt','updatedAt']) && (keys.hasOnly(['points']) || keys.hasOnly(['points','lastDailyAt'])))
+        );
+      }
+
+      // Calcola delta punti (positivo se stai scalando)
+      function deltaPoints() {
+        return resource.data.points - request.resource.data.points;
+      }
+
+      allow read: if isOwner();
+
+      // Creazione iniziale del wallet
+      allow create: if isOwner()
+                    && !exists(/databases/$(database)/documents/users/$(userId))
+                    && request.resource.data.keys().hasOnly(['points','createdAt','updatedAt'])
+                    && request.resource.data.points == 10;
+
+      // Apertura pacchetto (o decrementi legacy): scala 1..1800 punti in un solo update
+      function isOpenPack() {
+        return changedOnlyWallet(['points','updatedAt'])
+               && deltaPoints() >= 1
+               && deltaPoints() <= 1800
+               && request.resource.data.points >= 0;
+      }
+
+      // Bonus giornaliero: +1 punto ogni 24h
+      function isDailyBonus() {
+        return changedOnlyWallet(['points','lastDailyAt','updatedAt'])
+               && request.resource.data.points == resource.data.points + 1
+               && (
+                    !('lastDailyAt' in resource.data)
+                    || request.time >= resource.data.lastDailyAt + duration.value(24, 'h')
+                  );
+      }
+
+      allow update: if isOwner() && (isOpenPack() || isDailyBonus());
+      allow delete: if false;
+    }
+
+    /* === Inventario: users/{uid}/inventory/{cardId} === */
+    match /users/{userId}/inventory/{cardId} {
+      function isOwner() { return request.auth != null && request.auth.uid == userId; }
+      function isGoogle() { return request.auth.token.firebase.sign_in_provider == "google.com"; }
+
+      allow read: if isOwner();
+
+      allow create: if isOwner() && isGoogle()
+                    && request.resource.data.keys().hasOnly(['name','rarity','series','img','count','updatedAt'])
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.rarity is string
+                    && request.resource.data.rarity.size() > 0
+                    && (!('series' in request.resource.data) || request.resource.data.series is string)
+                    && (!('img' in request.resource.data) || request.resource.data.img is string);
+
+      allow update: if isOwner() && isGoogle()
+                    && request.resource.data.diff(resource.data).changedKeys()
+                       .hasOnly(['name','rarity','series','img','count','updatedAt'])
+                    && request.resource.data.name is string
+                    && request.resource.data.rarity is string
+                    && (!('series' in request.resource.data) || request.resource.data.series is string)
+                    && (!('img' in request.resource.data) || request.resource.data.img is string);
+
+      allow delete: if false;
+    }
+
+    /* === GAME PASS === */
+
+    // Catalogo achievement (pubblico in lettura)
+    match /achievements/{achId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Lista moderatori (solo lettura ai moderatori, opzionale)
+   match /moderators/{uid} {
+  // Ognuno può leggere SOLO il proprio doc (serve per capire se è moderatore)
+  allow read: if request.auth != null && request.auth.uid == uid;
+  allow write: if false;
+}
+
+
+    // Richieste: utente crea/legge le sue; moderatore legge e aggiorna (approve/reject)
+    match /requests/{requestId} {
+      // utente crea solo richieste proprie
+      allow create: if signedIn()
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.season == currentGamepassSeason()
+                    && request.resource.data.status == "pending"
+                    && request.resource.data.reviewedAt == null
+                    && request.resource.data.reviewedBy == null;
+
+      // utente legge solo le sue, moderatore legge tutte
+      allow read: if signedIn()
+                  && (resource.data.uid == request.auth.uid || isModerator());
+
+      // moderatore aggiorna status/note/reviewedAt/reviewedBy (approva/rifiuta)
+      allow update: if isModerator();
+
+      allow delete: if false;
+    }
+
+    // Earned: leggibile dall'utente, scrivibile solo da moderatori (se vuoi farlo manuale senza Functions)
+    match /users/{userId}/earned/{achievementId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create, update: if isModerator();
+      allow delete: if false;
+    }
+
+    // Reward Game Pass: separato dalle carte per non rompere /inventory
+    match /users/{userId}/gp_items/{itemId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create, update: if isModerator();
+      allow delete: if false;
+    }
+    
+match /users/{userId}/gamepass/{docId} {
+  function isOwner() { return signedIn() && request.auth.uid == userId; }
+
+  function seasonNow() {
+    return exists(/databases/$(database)/documents/config/gamepass)
+      ? get(/databases/$(database)/documents/config/gamepass).data.season
+      : 1;
+  }
+
+  function dailyXp() { return 100; } // deve combaciare con DAILY_XP nel gamepass.js
+
+  // Se nel progress ci sono name/email, l'utente NON li può cambiare
+  function keepProfile() {
+    return (!('name' in resource.data) || request.resource.data.name == resource.data.name)
+      && (!('email' in resource.data) || request.resource.data.email == resource.data.email);
+  }
+
+  function canClaimDaily() {
+    return !('lastDailyAt' in resource.data)
+      || request.time >= resource.data.lastDailyAt + duration.value(24, 'h');
+  }
+
+  function isDailyIncrement() {
+    return docId == "progress"
+      && isOwner()
+      && request.resource.data.season == seasonNow()
+      && request.resource.data.points == resource.data.points + dailyXp()
+      && canClaimDaily()
+      && request.resource.data.lastDailyAt == request.time
+      && keepProfile();
+  }
+
+  // lettura: owner o moderatore (serve per report)
+  allow read: if isModerator() || isOwner();
+
+  // LEGACY: l'utente può ancora usare questo path solo finché la stagione attiva è la 1.
+  // Dalla Stagione 2 in poi il client usa esclusivamente /users/{uid}/seasons/...
+  allow create: if isModerator()
+    || (
+      seasonNow() == 1
+      && docId == "progress"
+      && isOwner()
+      && request.resource.data.season == 1
+      && request.resource.data.points == dailyXp()
+      && request.resource.data.lastDailyAt == request.time
+      && request.resource.data.keys().hasOnly(['season','points','lastDailyAt','updatedAt','name','email'])
+    );
+
+  allow update: if isModerator()
+    || (seasonNow() == 1 && isDailyIncrement());
+
+  allow delete: if false;
+}
+
+
+// === GAME PASS STAGIONALE ===
+// Nuovo schema:
+// users/{uid}/seasons/season_N/gamepass/progress
+// users/{uid}/seasons/season_N/earned/{achievementId}
+// users/{uid}/seasons/season_N/gp_claims/{tierId}
+
+// Progress XP della singola stagione
+match /users/{userId}/seasons/{seasonId}/gamepass/{docId} {
+  function isOwner() {
+    return signedIn() && request.auth.uid == userId;
+  }
+
+  function dailyXp() {
+    return 100;
+  }
+
+  function canClaimDaily() {
+    return !('lastDailyAt' in resource.data)
+      || request.time >= resource.data.lastDailyAt + duration.value(24, 'h');
+  }
+
+  // Primo accesso a una nuova stagione: crea progress a 0.
+  // Subito dopo gamepass.js applica il bonus giornaliero con un update separato.
+  function isInitialSeasonProgress() {
+    return docId == "progress"
+      && isOwner()
+      && request.resource.data.season == currentGamepassSeason()
+      && request.resource.data.points == 0
+      && request.resource.data.keys()
+         .hasOnly(['season','points','createdAt','updatedAt']);
+  }
+
+  // Migrazione automatica dei vecchi progress della Stagione 1.
+  // L'utente può SOLO copiare invariati i vecchi dati, aggiungendo
+  // i metadati di migrazione: non può aumentarsi gli XP.
+  function isLegacySeason1Migration() {
+    return docId == "progress"
+      && isOwner()
+      && currentGamepassSeason() == 1
+      && request.resource.data.season == 1
+      && exists(/databases/$(database)/documents/users/$(userId)/gamepass/progress)
+      && request.resource.data.points
+         == get(/databases/$(database)/documents/users/$(userId)/gamepass/progress).data.points
+      && request.resource.data.migratedFromLegacy == true
+      && request.resource.data
+         .diff(get(/databases/$(database)/documents/users/$(userId)/gamepass/progress).data)
+         .affectedKeys()
+         .hasOnly(['season','migratedFromLegacy','migratedAt','updatedAt']);
+  }
+
+  // L'utente può aumentare gli XP da solo esclusivamente per il daily +100.
+  function isDailyIncrement() {
+    return docId == "progress"
+      && isOwner()
+      && resource.data.season == currentGamepassSeason()
+      && request.resource.data.season == resource.data.season
+      && request.resource.data.points == resource.data.points + dailyXp()
+      && canClaimDaily()
+      && request.resource.data.lastDailyAt == request.time
+      && request.resource.data.diff(resource.data).affectedKeys()
+         .hasOnly(['points','lastDailyAt','updatedAt']);
+  }
+
+  allow read: if isModerator() || isOwner();
+
+  allow create: if isModerator()
+    || isInitialSeasonProgress()
+    || isLegacySeason1Migration();
+
+  allow update: if isModerator()
+    || isDailyIncrement();
+
+  allow delete: if false;
+}
+
+// Achievement ottenuti nella singola stagione
+match /users/{userId}/seasons/{seasonId}/earned/{achievementId} {
+  allow read: if isModerator()
+              || (signedIn() && request.auth.uid == userId);
+  allow create, update: if isModerator();
+  allow delete: if false;
+}
+
+// Tier/premi sbloccati nella singola stagione
+match /users/{userId}/seasons/{seasonId}/gp_claims/{tierId} {
+  function isOwner() {
+    return signedIn() && request.auth.uid == userId;
+  }
+
+  allow read: if isModerator() || isOwner();
+
+  allow create: if isOwner()
+                && request.resource.data.season == currentGamepassSeason()
+                && request.resource.data.tierId == tierId
+                && !exists(/databases/$(database)/documents/users/$(userId)/seasons/$(seasonId)/gp_claims/$(tierId))
+                && exists(/databases/$(database)/documents/users/$(userId)/seasons/$(seasonId)/gamepass/progress)
+                && get(/databases/$(database)/documents/users/$(userId)/seasons/$(seasonId)/gamepass/progress).data.season
+                   == currentGamepassSeason()
+                && get(/databases/$(database)/documents/users/$(userId)/seasons/$(seasonId)/gamepass/progress).data.points
+                   >= get(/databases/$(database)/documents/gp_tiers/$(tierId)).data.requiredPoints;
+
+  allow update, delete: if false;
+}
+
+// Permette ai moderatori di leggere QUALSIASI subcollection "gamepass" (serve per collectionGroup)
+match /{path=**}/gamepass/{docId} {
+  allow read: if isModerator();
+}
+// Permette ai moderatori di leggere QUALSIASI subcollection "profile" (serve per collectionGroup nel report)
+match /{path=**}/profile/{docId} {
+  allow read: if isModerator();
+}
+
+
+
+// Premi / soglie Game Pass (tiers)
+match /gp_tiers/{tierId} {
+  allow read: if true;
+  allow write: if false;
+}
+
+// Premi riscattati (claim) dall'utente
+match /users/{userId}/gp_claims/{tierId} {
+  // l'utente legge i suoi claim
+  allow read: if signedIn() && request.auth.uid == userId;
+
+  // l'utente può creare il claim SOLO se ha abbastanza punti per quel tier
+  allow create: if signedIn()
+                && request.auth.uid == userId
+                && currentGamepassSeason() == 1
+                && !exists(/databases/$(database)/documents/users/$(userId)/gp_claims/$(tierId))
+                && get(/databases/$(database)/documents/users/$(userId)/gamepass/progress).data.points
+                   >= get(/databases/$(database)/documents/gp_tiers/$(tierId)).data.requiredPoints;
+
+  allow update, delete: if false;
+}
+
+match /config/gamepass {
+  allow read: if true;
+  allow create, update: if isModerator();
+  allow delete: if false;
+}
+
+match /users/{userId}/profile/{docId} {
+  // MOD: può leggere tutti i profili (serve per season_report)
+  // USER: legge solo il suo
+  allow read: if isModerator() || (signedIn() && request.auth.uid == userId);
+
+  // l’utente può scrivere SOLO il suo profilo (main)
+  allow create, update: if signedIn()
+    && request.auth.uid == userId
+    && docId == "main"
+    && request.resource.data.keys().hasOnly([
+      "displayName","bio","photoURL","featuredAchievementIds","favoriteCardId","updatedAt"
+    ])
+    && request.resource.data.displayName is string
+    && request.resource.data.displayName.size() >= 2
+    && request.resource.data.displayName.size() <= 24
+    && (!("bio" in request.resource.data) || request.resource.data.bio is string)
+    && (!("photoURL" in request.resource.data) || request.resource.data.photoURL is string)
+    && (!("favoriteCardId" in request.resource.data)
+        || (request.resource.data.favoriteCardId is string
+            && request.resource.data.favoriteCardId.size() <= 160))
+    && (!("featuredAchievementIds" in request.resource.data)
+        || (request.resource.data.featuredAchievementIds is list
+            && request.resource.data.featuredAchievementIds.size() <= 3));
+
+  allow delete: if false;
+}
+
+
+
+
+  }
+}

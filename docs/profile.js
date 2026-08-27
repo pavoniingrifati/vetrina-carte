@@ -5,7 +5,8 @@ import {
   normalizeSeason,
   recordSeason,
   seasonProgressPath,
-  seasonEarnedCollectionPath
+  seasonEarnedCollectionPath,
+  seasonClaimsCollectionPath
 } from "./season-utils.js";
 
 import {
@@ -47,8 +48,29 @@ const gpBar = qs("#gpBar");
 const gpPct = qs("#gpPct");
 const gpHint = qs("#gpHint");
 
+const heroLevel = qs("#heroLevel");
+const heroSeason = qs("#heroSeason");
+const heroTierText = qs("#heroTierText");
+const heroXpText = qs("#heroXpText");
+const heroXpBar = qs("#heroXpBar");
+
+const favoriteCardEmpty = qs("#favoriteCardEmpty");
+const favoriteCardVisual = qs("#favoriteCardVisual");
+const favoriteCardImg = qs("#favoriteCardImg");
+const favoriteCardName = qs("#favoriteCardName");
+const favoriteCardMeta = qs("#favoriteCardMeta");
+
+const featuredGrid = qs("#featuredGrid");
+const earnedPicker = qs("#earnedPicker");
+const featuredHint = qs("#featuredHint");
+const seasonHistory = qs("#seasonHistory");
+
 // Stats
+const statLevel = qs("#statLevel");
+const statXP = qs("#statXP");
 const statEarned = qs("#statEarned");
+const statRewards = qs("#statRewards");
+const statCards = qs("#statCards");
 const statReq = qs("#statReq");
 const statPending = qs("#statPending");
 const statApproved = qs("#statApproved");
@@ -61,6 +83,15 @@ const myCardsSub = qs("#myCardsSub");
 const myCardsBtn = qs("#myCardsBtn");
 
 let ALL_CARDS_CACHE = null;
+let PROFILE_PREFS = {
+  featuredAchievementIds: [],
+  favoriteCardId: ""
+};
+let CURRENT_UID = null;
+let CURRENT_SEASON = 1;
+let CURRENT_LINKED_CARDS = [];
+let CURRENT_EARNED = [];
+let CURRENT_TIERS = [];
 
 function norm(s){ return (s||"").toString().trim().toLowerCase(); }
 
@@ -203,9 +234,65 @@ function chipClassForRarity(r){
   return "common";
 }
 
+function renderFavoriteShowcase(){
+  if (!favoriteCardVisual || !favoriteCardEmpty) return;
+  const favoriteId = PROFILE_PREFS.favoriteCardId || "";
+  const card = CURRENT_LINKED_CARDS.find(c => String(c?.id || "") === String(favoriteId));
+
+  if (!card){
+    favoriteCardVisual.style.display = "none";
+    favoriteCardEmpty.style.display = "";
+    return;
+  }
+
+  favoriteCardEmpty.style.display = "none";
+  favoriteCardVisual.style.display = "";
+  favoriteCardName.textContent = card.name || card.id || "Carta";
+  favoriteCardMeta.textContent = [card.rarity, card.series, card.role].filter(Boolean).join(" • ") || "Fantaballa";
+  setImgSrcWithFallback(favoriteCardImg, card.img);
+}
+
+async function saveProfilePreferences(patch){
+  if (!CURRENT_UID) return;
+  const next = { ...PROFILE_PREFS, ...patch };
+  next.featuredAchievementIds = Array.from(new Set(
+    Array.isArray(next.featuredAchievementIds) ? next.featuredAchievementIds.map(String) : []
+  )).slice(0, 3);
+  next.favoriteCardId = (next.favoriteCardId || "").toString();
+
+  const displayName = (inpName?.value || "").trim();
+  if (displayName.length < 2) {
+    throw new Error("Salva prima un nickname di almeno 2 caratteri.");
+  }
+
+  await setDoc(doc(db, `users/${CURRENT_UID}/profile/main`), {
+    displayName,
+    bio: (inpBio?.value || "").trim(),
+    featuredAchievementIds: next.featuredAchievementIds,
+    favoriteCardId: next.favoriteCardId,
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+
+  PROFILE_PREFS = next;
+}
+
+async function setFavoriteCard(cardId){
+  try{
+    const nextId = PROFILE_PREFS.favoriteCardId === String(cardId) ? "" : String(cardId);
+    await saveProfilePreferences({ favoriteCardId: nextId });
+    renderLinkedCards(CURRENT_LINKED_CARDS, (inpName?.value || "").trim());
+    renderFavoriteShowcase();
+  }catch(e){
+    console.error(e);
+    setStatus(e?.message || "Non riesco a salvare la carta preferita.");
+  }
+}
+
 function renderLinkedCards(list, query){
   if(!myCards) return;
 
+  CURRENT_LINKED_CARDS = Array.isArray(list) ? list : [];
+  if (statCards) statCards.textContent = String(CURRENT_LINKED_CARDS.length);
   myCards.innerHTML = "";
 
   if (!list.length){
@@ -214,6 +301,7 @@ function renderLinkedCards(list, query){
         document.createTextNode("Nessuna carta trovata per questo testo. (Controlla che in cards.json il campo 'name' delle carte inizi con la radice che hai inserito, es: 'Fork'.)")
       ])
     );
+    renderFavoriteShowcase();
     return;
   }
 
@@ -222,17 +310,16 @@ function renderLinkedCards(list, query){
       ? `./index.html?q=${encodeURIComponent(query)}&card=${encodeURIComponent(c.id)}`
       : `./index.html?card=${encodeURIComponent(c.id)}`;
 
-    const cardNode = el("a", { class: "tier-card", href }, [
+    const cardLink = el("a", { class: "tier-card", href }, [
       el("div", { class: "tier-top" }, [
         el("span", { class: "chip " + chipClassForRarity(c.rarity) }, [document.createTextNode(c.rarity || "Carta")]),
         el("span", { class: "small" }, [document.createTextNode(c.role || "—")])
       ]),
       (() => {
-  const imgEl = el("img", { class: "tier-img", alt: c.name || c.id || "Carta", loading: "lazy" });
-  setImgSrcWithFallback(imgEl, c.img);
-  return el("div", { class: "tier-imgwrap" }, [ imgEl ]);
-})(),
-
+        const imgEl = el("img", { class: "tier-img", alt: c.name || c.id || "Carta", loading: "lazy" });
+        setImgSrcWithFallback(imgEl, c.img);
+        return el("div", { class: "tier-imgwrap" }, [ imgEl ]);
+      })(),
       el("div", { class: "tier-title" }, [document.createTextNode(c.name || c.id || "Carta")]),
       el("div", { class: "tier-foot" }, [
         el("span", { class: "mono" }, [document.createTextNode(c.game || "—")]),
@@ -240,8 +327,22 @@ function renderLinkedCards(list, query){
       ])
     ]);
 
-    myCards.append(cardNode);
+    const favBtn = el("button", {
+      class: "favorite-toggle" + (PROFILE_PREFS.favoriteCardId === String(c.id) ? " active" : ""),
+      type: "button",
+      title: "Imposta come carta preferita"
+    }, [document.createTextNode(PROFILE_PREFS.favoriteCardId === String(c.id) ? "★ Preferita" : "☆ Preferita")]);
+
+    favBtn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      setFavoriteCard(c.id);
+    });
+
+    myCards.append(el("div", { class: "tier-card-wrap" }, [cardLink, favBtn]));
   }
+
+  renderFavoriteShowcase();
 }
 
 async function updateLinkedCards(){
@@ -251,6 +352,9 @@ async function updateLinkedCards(){
   if(!root){
     myCardsSub && (myCardsSub.textContent = "Inserisci una radice nel campo Nome per collegare le carte (in base al campo 'name' di cards.json).");
     myCards.innerHTML = "";
+    CURRENT_LINKED_CARDS = [];
+    if (statCards) statCards.textContent = "0";
+    renderFavoriteShowcase();
     return;
   }
 
@@ -334,6 +438,13 @@ async function loadProfile(uid, user) {
 
   const data = snap.exists() ? (snap.data() || {}) : {};
 
+  PROFILE_PREFS = {
+    featuredAchievementIds: Array.isArray(data.featuredAchievementIds)
+      ? data.featuredAchievementIds.map(String).slice(0, 3)
+      : [],
+    favoriteCardId: (data.favoriteCardId || "").toString()
+  };
+
   inpName.value = (data.displayName || defaultName || "").toString();
   inpBio.value = (data.bio || "").toString();
 
@@ -406,11 +517,21 @@ async function loadGamepass(uid) {
   kvXP.textContent = fmt(xp);
   kvTier.textContent = tiers.length ? `${tierIdx}/${tiers.length}` : "—";
 
+  CURRENT_SEASON = season;
+  CURRENT_TIERS = tiers;
+  if (statLevel) statLevel.textContent = String(tierIdx);
+  if (statXP) statXP.textContent = fmt(xp);
+  if (heroLevel) heroLevel.textContent = `LV. ${tierIdx}`;
+  if (heroSeason) heroSeason.textContent = `STAGIONE ${season}`;
+  if (heroTierText) heroTierText.textContent = tiers.length ? `Livello ${tierIdx} / ${tiers.length}` : "Game Pass";
+  if (heroXpText) heroXpText.textContent = `${fmt(xp)} XP`;
+
   if (tiers.length) {
     if (tierIdx >= tiers.length) {
       kvNext.textContent = "Completato ✅";
       badgeGP.textContent = "🏁 Pass completato";
       gpBar.style.width = "100%";
+      if (heroXpBar) heroXpBar.style.width = "100%";
       gpPct.textContent = "100%";
       gpHint.textContent = "Hai raggiunto l’ultima soglia.";
     } else {
@@ -418,6 +539,7 @@ async function loadGamepass(uid) {
       badgeGP.textContent = `🎯 Prossimo tier: ${tierIdx + 1}`;
       const frac = clamp01((xp - prevReq) / Math.max(1, (nextReq - prevReq)));
       gpBar.style.width = `${Math.round(frac * 100)}%`;
+      if (heroXpBar) heroXpBar.style.width = `${Math.round(frac * 100)}%`;
       gpPct.textContent = `${Math.round(frac * 100)}%`;
       gpHint.textContent = `Mancano ${fmt(Math.max(0, nextReq - xp))} XP`;
     }
@@ -425,11 +547,12 @@ async function loadGamepass(uid) {
     kvNext.textContent = "—";
     badgeGP.textContent = "Configura i tiers";
     gpBar.style.width = "0%";
+    if (heroXpBar) heroXpBar.style.width = "0%";
     gpPct.textContent = "0%";
     gpHint.textContent = "Crea i documenti in gp_tiers.";
   }
 
-  return { season, xp };
+  return { season, xp, tiers, tierIdx };
 }
 
 function badgeForStatus(s) {
@@ -490,18 +613,233 @@ async function loadRequests(uid, season) {
 }
 
 async function loadEarned(uid, season) {
+  const earnedMap = new Map();
+
   const scopedSnap = await getDocs(
     collection(db, seasonEarnedCollectionPath(uid, season))
   );
-  const ids = new Set(scopedSnap.docs.map(d => d.id));
+  for (const d of scopedSnap.docs) earnedMap.set(d.id, { id: d.id, ...d.data() });
 
   // I vecchi earned sono considerati Stagione 1.
   if (normalizeSeason(season) === LEGACY_SEASON) {
     const legacySnap = await getDocs(collection(db, `users/${uid}/earned`));
-    for (const d of legacySnap.docs) ids.add(d.id);
+    for (const d of legacySnap.docs) {
+      if (!earnedMap.has(d.id)) earnedMap.set(d.id, { id: d.id, ...d.data() });
+    }
   }
 
-  statEarned.textContent = String(ids.size);
+  let catalog = new Map();
+  try{
+    const achSnap = await getDocs(collection(db, "achievements"));
+    catalog = new Map(achSnap.docs.map(d => [d.id, { id:d.id, ...d.data() }]));
+  }catch(e){
+    console.warn("[profile] catalogo achievement non disponibile", e);
+  }
+
+  CURRENT_EARNED = Array.from(earnedMap.values()).map(row => ({
+    ...row,
+    ...(catalog.get(row.id) || {}),
+    id: row.id
+  }));
+
+  statEarned.textContent = String(CURRENT_EARNED.length);
+  renderFeaturedAchievements();
+  return CURRENT_EARNED;
+}
+
+function achievementTitle(a){
+  return (a?.title || a?.name || a?.label || a?.achievementTitle || a?.id || "Achievement").toString();
+}
+
+function achievementDescription(a){
+  return (a?.description || a?.desc || a?.subtitle || "").toString();
+}
+
+function renderFeaturedAchievements(){
+  if (!featuredGrid || !earnedPicker) return;
+
+  const earnedById = new Map(CURRENT_EARNED.map(a => [String(a.id), a]));
+  const selected = PROFILE_PREFS.featuredAchievementIds
+    .map(String)
+    .filter(id => earnedById.has(id))
+    .slice(0, 3);
+
+  // Pulisce in memoria eventuali riferimenti ad achievement non più earned.
+  PROFILE_PREFS.featuredAchievementIds = selected;
+
+  featuredGrid.innerHTML = "";
+  for (let i = 0; i < 3; i++){
+    const id = selected[i];
+    const a = id ? earnedById.get(id) : null;
+
+    if (!a){
+      featuredGrid.append(el("div", { class:"featured-ach empty" }, [
+        document.createTextNode(`Slot ${i + 1} • scegli un achievement sotto`)
+      ]));
+      continue;
+    }
+
+    const removeBtn = el("button", { class:"ach-remove", type:"button", title:"Rimuovi dagli achievement in evidenza" }, [
+      document.createTextNode("×")
+    ]);
+    removeBtn.addEventListener("click", async () => {
+      try{
+        const next = PROFILE_PREFS.featuredAchievementIds.filter(x => String(x) !== String(id));
+        await saveProfilePreferences({ featuredAchievementIds: next });
+        renderFeaturedAchievements();
+      }catch(e){
+        console.error(e);
+        setStatus(e?.message || "Errore nel salvataggio degli achievement in evidenza.");
+      }
+    });
+
+    const xp = Number(a.xp || a.points || a.rewardXp || 0) || 0;
+    featuredGrid.append(el("div", { class:"featured-ach" }, [
+      removeBtn,
+      el("div", { class:"ach-icon" }, [document.createTextNode("🏆")]),
+      el("div", { class:"ach-title" }, [document.createTextNode(achievementTitle(a))]),
+      el("div", { class:"ach-desc" }, [document.createTextNode(achievementDescription(a) || "Achievement completato.")]),
+      el("div", { class:"ach-meta" }, [document.createTextNode(xp ? `+${fmt(xp)} XP` : "Completato")])
+    ]));
+  }
+
+  earnedPicker.innerHTML = "";
+  if (!CURRENT_EARNED.length){
+    featuredHint.textContent = "Completa un achievement per poterlo mettere in evidenza.";
+    return;
+  }
+
+  featuredHint.textContent = `Selezionati ${selected.length}/3 • clicca un achievement per aggiungerlo o rimuoverlo.`;
+
+  const pickerRows = CURRENT_EARNED
+    .slice()
+    .sort((a,b) => achievementTitle(a).localeCompare(achievementTitle(b), "it"))
+    .slice(0, 30);
+
+  for (const a of pickerRows){
+    const id = String(a.id);
+    const active = selected.includes(id);
+    const btn = el("button", {
+      class:"earned-choice" + (active ? " active" : ""),
+      type:"button"
+    }, [document.createTextNode((active ? "✓ " : "+ ") + achievementTitle(a))]);
+
+    btn.addEventListener("click", async () => {
+      try{
+        let next = PROFILE_PREFS.featuredAchievementIds.map(String);
+        if (next.includes(id)){
+          next = next.filter(x => x !== id);
+        }else{
+          if (next.length >= 3){
+            setStatus("Puoi mettere in evidenza al massimo 3 achievement.");
+            return;
+          }
+          next.push(id);
+        }
+        await saveProfilePreferences({ featuredAchievementIds: next });
+        renderFeaturedAchievements();
+        setStatus(`Achievement in evidenza: ${PROFILE_PREFS.featuredAchievementIds.length}/3.`);
+      }catch(e){
+        console.error(e);
+        setStatus(e?.message || "Errore nel salvataggio.");
+      }
+    });
+
+    earnedPicker.append(btn);
+  }
+}
+
+async function getSeasonEarnedCount(uid, season){
+  const ids = new Set();
+  try{
+    const scoped = await getDocs(collection(db, seasonEarnedCollectionPath(uid, season)));
+    for (const d of scoped.docs) ids.add(d.id);
+  }catch(e){}
+
+  if (normalizeSeason(season) === LEGACY_SEASON){
+    try{
+      const legacy = await getDocs(collection(db, `users/${uid}/earned`));
+      for (const d of legacy.docs) ids.add(d.id);
+    }catch(e){}
+  }
+  return ids.size;
+}
+
+async function getSeasonClaimsCount(uid, season){
+  const ids = new Set();
+  try{
+    const scoped = await getDocs(collection(db, seasonClaimsCollectionPath(uid, season)));
+    for (const d of scoped.docs) ids.add(d.id);
+  }catch(e){}
+
+  if (normalizeSeason(season) === LEGACY_SEASON){
+    try{
+      const legacy = await getDocs(collection(db, `users/${uid}/gp_claims`));
+      for (const d of legacy.docs) ids.add(d.id);
+    }catch(e){}
+  }
+  return ids.size;
+}
+
+function tierIndexForXp(xp, tiers){
+  let idx = 0;
+  for (let i = 0; i < tiers.length; i++){
+    if (xp >= Number(tiers[i].requiredPoints || 0)) idx = i + 1;
+  }
+  return idx;
+}
+
+async function loadSeasonHistory(uid, currentSeason, tiers){
+  if (!seasonHistory) return;
+  seasonHistory.innerHTML = "";
+
+  const rows = [];
+  for (let season = 1; season <= normalizeSeason(currentSeason); season++){
+    const [progress, earnedCount, claimsCount] = await Promise.all([
+      getSeasonProgressData(uid, season),
+      getSeasonEarnedCount(uid, season),
+      getSeasonClaimsCount(uid, season)
+    ]);
+
+    const xp = Number(progress?.points || 0) || 0;
+    const level = tierIndexForXp(xp, tiers);
+    const hasData = !!progress || earnedCount > 0 || claimsCount > 0;
+
+    if (hasData || season === normalizeSeason(currentSeason)){
+      rows.push({ season, xp, level, earnedCount, claimsCount });
+    }
+  }
+
+  rows.sort((a,b) => b.season - a.season);
+
+  if (!rows.length){
+    seasonHistory.append(el("div", { class:"small" }, [document.createTextNode("Nessuno storico disponibile.")]));
+    return;
+  }
+
+  for (const row of rows){
+    const card = el("div", { class:"history-card" + (row.season === normalizeSeason(currentSeason) ? " current" : "") }, [
+      el("div", { class:"history-season" }, [
+        document.createTextNode(`Stagione ${row.season}${row.season === normalizeSeason(currentSeason) ? " • IN CORSO" : ""}`)
+      ]),
+      el("div", { class:"history-xp" }, [document.createTextNode(`${fmt(row.xp)} XP`)]),
+      el("div", { class:"history-meta" }, [
+        el("div", {}, [
+          el("b", {}, [document.createTextNode(String(row.level))]),
+          el("span", {}, [document.createTextNode("Livello")])
+        ]),
+        el("div", {}, [
+          el("b", {}, [document.createTextNode(String(row.earnedCount))]),
+          el("span", {}, [document.createTextNode("Achievement")])
+        ]),
+        el("div", {}, [
+          el("b", {}, [document.createTextNode(String(row.claimsCount))]),
+          el("span", {}, [document.createTextNode("Premi")])
+        ])
+      ])
+    ]);
+    seasonHistory.append(card);
+  }
 }
 
 on_attach_listeners();
@@ -532,10 +870,27 @@ onUser(async (user) => {
     gpPct.textContent = "0%";
     gpHint.textContent = "—";
     reqList.innerHTML = "";
+    if (statLevel) statLevel.textContent = "0";
+    if (statXP) statXP.textContent = "0";
     statEarned.textContent = "0";
+    if (statRewards) statRewards.textContent = "0";
+    if (statCards) statCards.textContent = "0";
     statReq.textContent = "0";
     statPending.textContent = "0";
     statApproved.textContent = "0";
+    if (heroLevel) heroLevel.textContent = "LV. —";
+    if (heroSeason) heroSeason.textContent = "STAGIONE —";
+    if (heroTierText) heroTierText.textContent = "Livello Game Pass";
+    if (heroXpText) heroXpText.textContent = "0 XP";
+    if (heroXpBar) heroXpBar.style.width = "0%";
+    if (featuredGrid) featuredGrid.innerHTML = "";
+    if (earnedPicker) earnedPicker.innerHTML = "";
+    if (seasonHistory) seasonHistory.innerHTML = "";
+    PROFILE_PREFS = { featuredAchievementIds: [], favoriteCardId: "" };
+    CURRENT_UID = null;
+    CURRENT_LINKED_CARDS = [];
+    CURRENT_EARNED = [];
+    renderFavoriteShowcase();
     if (myCardsSub) myCardsSub.textContent = "Fai login per vedere le tue carte."; 
     if (myCards) myCards.innerHTML = "";
     avatar.removeAttribute("src");
@@ -548,6 +903,7 @@ onUser(async (user) => {
   btnLogin.style.display = "none";
   btnLogout.style.display = "";
   userInfo.textContent = user.email || user.uid;
+  CURRENT_UID = user.uid;
 
   kvEmail.textContent = user.email || "—";
   kvUid.textContent = user.uid;
@@ -561,10 +917,16 @@ onUser(async (user) => {
   btnSave.onclick = async () => { await saveProfile(user.uid); await updateLinkedCards(); };
 
   try {
-    const { season } = await loadGamepass(user.uid);
-    await loadRequests(user.uid, season);
-    await loadEarned(user.uid, season);
-    setStatus(`Ok. Stagione ${season}.`);
+    const { season, tiers } = await loadGamepass(user.uid);
+    await Promise.all([
+      loadRequests(user.uid, season),
+      loadEarned(user.uid, season)
+    ]);
+    const rewardCount = await getSeasonClaimsCount(user.uid, season);
+    if (statRewards) statRewards.textContent = String(rewardCount);
+    await loadSeasonHistory(user.uid, season, tiers);
+    renderFavoriteShowcase();
+    setStatus(`Profilo aggiornato • Stagione ${season}.`);
   } catch (e) {
     console.error(e);
     setStatus(e?.message || "Errore nel caricare i dati.");
