@@ -81,6 +81,7 @@ const reqList = qs("#reqList");
 const myCards = qs("#myCards");
 const myCardsSub = qs("#myCardsSub");
 const myCardsBtn = qs("#myCardsBtn");
+const OFFICIAL_CARDS_BASE = "https://fantaballa.it/FUT/cards/";
 
 let ALL_CARDS_CACHE = null;
 let PROFILE_PREFS = {
@@ -130,57 +131,93 @@ function decodeMany(s){
   return out;
 }
 
+function officialCardUrlFromSource(rawSrc){
+  const src0 = (rawSrc ?? "").toString().trim();
+  if (!src0 || /^(data:|blob:)/i.test(src0)) return "";
+
+  try{
+    let path = src0;
+
+    if (/^https?:/i.test(src0)){
+      path = new URL(src0).pathname;
+    }else{
+      path = src0.split("?")[0].split("#")[0];
+    }
+
+    path = decodeMany(path).replace(/\\/g, "/");
+    let filename = path.split("/").filter(Boolean).pop() || "";
+    filename = filename.replace(/\.png$/i, ".webp");
+
+    if (!filename) return "";
+    return new URL(filename, OFFICIAL_CARDS_BASE).href;
+  }catch(e){
+    return "";
+  }
+}
+
 function buildImgCandidates(rawSrc){
   const src0 = (rawSrc ?? "").toString().trim();
   if (!src0) return [];
 
-  // Tutte le carte sono ora WebP. Se arriva ancora un vecchio riferimento PNG,
-  // prova PRIMA la stessa risorsa con estensione .webp.
+  // Fantaballa è sempre la prima fonte tentata.
+  const official = officialCardUrlFromSource(src0);
+
+  // Tutte le carte sono WebP.
   const preferWebp = (src) => src.replace(/\.png(?=([?#]|$))/i, ".webp");
 
-  // URL esterne: preferisci WebP, mantenendo comunque il vecchio path come fallback.
+  // URL esterne: Fantaballa -> vecchio URL WebP -> vecchio URL originale.
   if (/^(https?:|data:|blob:)/i.test(src0)) {
     if (/^(data:|blob:)/i.test(src0)) return [src0];
-    return Array.from(new Set([preferWebp(src0), src0]));
+
+    return Array.from(new Set(
+      [official, preferWebp(src0), src0].filter(Boolean)
+    ));
   }
 
-  // Normalizza: elimina doppia codifica e prefissi tipo "./"
-  let clean = preferWebp(decodeMany(src0)).replace(/^\.\/+/, "").replace(/^\/+/, "");
-  // Se qualcuno ha messo "vetrina-carte/img/..." nel JSON, togli il prefisso repo per evitare duplicati
+  // Fallback per eventuali vecchi percorsi locali.
+  let clean = preferWebp(decodeMany(src0))
+    .replace(/^\.\/+/, "")
+    .replace(/^\/+/, "");
+
   const repoSeg = (location.pathname.split("/").filter(Boolean)[0] || "").trim();
-  if (repoSeg && clean.startsWith(repoSeg + "/")) clean = clean.slice(repoSeg.length + 1);
+  if (repoSeg && clean.startsWith(repoSeg + "/")){
+    clean = clean.slice(repoSeg.length + 1);
+  }
 
-  // Se nel JSON manca la cartella (es: "Fork Altezza.webp"), prova anche dentro "img/"
-  const cleanImg = (!clean.includes("/") && !clean.startsWith("img/")) ? ("img/" + clean) : null;
+  const cleanImg = (!clean.includes("/") && !clean.startsWith("img/"))
+    ? ("img/" + clean)
+    : null;
 
-  const rootBase = projectRootUrl();               // .../vetrina-carte/
-  const pageBase = new URL("./", document.baseURI).href; // cartella corrente della pagina
+  const rootBase = projectRootUrl();
+  const pageBase = new URL("./", document.baseURI).href;
 
-  // NB: usando new URL() lasciamo che il browser codifichi gli spazi una sola volta (%20)
   const candidates = [
-    new URL(clean, rootBase).href,  // ✅ quello “giusto” per la tua struttura: /vetrina-carte/img/...
-    new URL(clean, pageBase).href   // fallback: relativo alla cartella della pagina
-  ];
+    official,
+    new URL(clean, rootBase).href,
+    new URL(clean, pageBase).href
+  ].filter(Boolean);
 
   if (cleanImg){
     candidates.push(new URL(cleanImg, rootBase).href);
     candidates.push(new URL(cleanImg, pageBase).href);
   }
 
-  // Se la pagina è in sottocartella e il JSON è "img/...", prova anche "../img/..."
   if (clean.startsWith("img/")){
     candidates.push(new URL("../" + clean, pageBase).href);
   }
 
-  // Se pubblichi da root ma tieni assets in /docs/
   candidates.push(new URL("docs/" + clean, rootBase).href);
 
-  // Dedup
   return Array.from(new Set(candidates));
 }
 
-function setImgSrcWithFallback(imgEl, rawSrc){
-  const candidates = buildImgCandidates(rawSrc);
+function setImgSrcWithFallback(imgEl, ...rawSources){
+  const candidates = Array.from(new Set(
+    rawSources
+      .filter(Boolean)
+      .flatMap(src => buildImgCandidates(src))
+  ));
+
   if (!candidates.length) return;
 
   let i = 0;
@@ -256,7 +293,7 @@ function renderFavoriteShowcase(){
   favoriteCardVisual.style.display = "";
   favoriteCardName.textContent = card.name || card.id || "Carta";
   favoriteCardMeta.textContent = [card.rarity, card.series, card.role].filter(Boolean).join(" • ") || "Fantaballa";
-  setImgSrcWithFallback(favoriteCardImg, card.img);
+  setImgSrcWithFallback(favoriteCardImg, card.img, card.imgFallback);
 }
 
 async function saveProfilePreferences(patch){
@@ -324,7 +361,7 @@ function renderLinkedCards(list, query){
       ]),
       (() => {
         const imgEl = el("img", { class: "tier-img", alt: c.name || c.id || "Carta", loading: "lazy" });
-        setImgSrcWithFallback(imgEl, c.img);
+        setImgSrcWithFallback(imgEl, c.img, c.imgFallback);
         return el("div", { class: "tier-imgwrap" }, [ imgEl ]);
       })(),
       el("div", { class: "tier-title" }, [document.createTextNode(c.name || c.id || "Carta")]),
