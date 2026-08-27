@@ -321,14 +321,35 @@ async function saveProfilePreferences(patch){
 }
 
 async function setFavoriteCard(cardId){
+  const previousId = PROFILE_PREFS.favoriteCardId || "";
+  const nextId = previousId === String(cardId) ? "" : String(cardId);
+
   try{
-    const nextId = PROFILE_PREFS.favoriteCardId === String(cardId) ? "" : String(cardId);
-    await saveProfilePreferences({ favoriteCardId: nextId });
+    // Aggiornamento immediato della UI.
+    PROFILE_PREFS.favoriteCardId = nextId;
     renderLinkedCards(CURRENT_LINKED_CARDS, (inpName?.value || "").trim());
     renderFavoriteShowcase();
+
+    await saveProfilePreferences({ favoriteCardId: nextId });
+
+    setStatus(
+      nextId
+        ? "★ Carta preferita salvata nel profilo."
+        : "Carta preferita rimossa."
+    );
   }catch(e){
+    // Se Firebase rifiuta la scrittura, ripristina il valore precedente.
+    PROFILE_PREFS.favoriteCardId = previousId;
+    renderLinkedCards(CURRENT_LINKED_CARDS, (inpName?.value || "").trim());
+    renderFavoriteShowcase();
+
     console.error(e);
-    setStatus(e?.message || "Non riesco a salvare la carta preferita.");
+    const msg = String(e?.message || "");
+    if (msg.toLowerCase().includes("permission") || msg.toLowerCase().includes("insufficient")) {
+      setStatus("Firebase ha bloccato il salvataggio della preferita: pubblica anche le Firestore Rules aggiornate incluse nel progetto.");
+    } else {
+      setStatus(msg || "Non riesco a salvare la carta preferita.");
+    }
   }
 }
 
@@ -350,11 +371,18 @@ function renderLinkedCards(list, query){
   }
 
   for (const c of list){
-    const href = query
-      ? `./index.html?q=${encodeURIComponent(query)}&card=${encodeURIComponent(c.id)}`
-      : `./index.html?card=${encodeURIComponent(c.id)}`;
+    const isFavorite = PROFILE_PREFS.favoriteCardId === String(c.id);
 
-    const cardLink = el("a", { class: "tier-card", href }, [
+    // NON è più un <a>: cliccare immagine/carta imposta la preferita
+    // invece di navigare a /docs/index.html?q=...&card=...
+    const cardBox = el("div", {
+      class: "tier-card selectable-card" + (isFavorite ? " is-favorite-card" : ""),
+      role: "button",
+      tabindex: "0",
+      title: isFavorite
+        ? "Clicca per rimuovere questa carta dai preferiti"
+        : "Clicca per impostare questa carta come preferita"
+    }, [
       el("div", { class: "tier-top" }, [
         el("span", { class: "chip " + chipClassForRarity(c.rarity) }, [document.createTextNode(c.rarity || "Carta")]),
         el("span", { class: "small" }, [document.createTextNode(c.role || "—")])
@@ -368,27 +396,41 @@ function renderLinkedCards(list, query){
       el("div", { class: "tier-foot" }, [
         el("span", { class: "mono" }, [document.createTextNode(c.game || "—")]),
         el("span", { class: "small" }, [document.createTextNode(`${c.series || "—"} • ${c.role || "—"}`)])
+      ]),
+      el("div", { class: "card-favorite-hint" }, [
+        document.createTextNode(isFavorite ? "★ CARTA PREFERITA" : "☆ CLICCA PER SCEGLIERLA")
       ])
     ]);
 
-    const favBtn = el("button", {
-      class: "favorite-toggle" + (PROFILE_PREFS.favoriteCardId === String(c.id) ? " active" : ""),
-      type: "button",
-      title: "Imposta come carta preferita"
-    }, [document.createTextNode(PROFILE_PREFS.favoriteCardId === String(c.id) ? "★ Preferita" : "☆ Preferita")]);
-
-    favBtn.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      ev.stopPropagation();
+    const chooseFavorite = (ev) => {
+      ev?.preventDefault?.();
+      ev?.stopPropagation?.();
       setFavoriteCard(c.id);
+    };
+
+    cardBox.addEventListener("click", chooseFavorite);
+    cardBox.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" || ev.key === " ") chooseFavorite(ev);
     });
 
-    myCards.append(el("div", { class: "tier-card-wrap" }, [cardLink, favBtn]));
+    // Pulsante esplicito mantenuto, ma ora è sotto la carta e non può essere coperto.
+    const favBtn = el("button", {
+      class: "favorite-toggle favorite-toggle-bottom" + (isFavorite ? " active" : ""),
+      type: "button",
+      title: isFavorite ? "Rimuovi carta preferita" : "Imposta come carta preferita"
+    }, [
+      document.createTextNode(isFavorite ? "★ Preferita" : "☆ Imposta come preferita")
+    ]);
+
+    favBtn.addEventListener("click", chooseFavorite);
+
+    myCards.append(
+      el("div", { class: "tier-card-wrap" }, [cardBox, favBtn])
+    );
   }
 
   renderFavoriteShowcase();
 }
-
 async function updateLinkedCards(){
   if(!myCards) return;
 
@@ -419,7 +461,7 @@ async function updateLinkedCards(){
       : `Trovate ${list.length} carte con nome che contiene: "${root}"`;
   }
   if (myCardsBtn){
-    myCardsBtn.href = `./index.html?q=${encodeURIComponent(root)}`;
+    myCardsBtn.href = "https://fantaballa.it/FUT/cards/";
   }
 
   renderLinkedCards(list, root);

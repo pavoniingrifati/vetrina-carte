@@ -1113,7 +1113,61 @@
       .history-meta{ grid-template-columns:1fr 1fr 1fr; }
     }
 
-  </style>
+  
+
+/* ===== FIX SELEZIONE CARTA PREFERITA ===== */
+.selectable-card{
+  cursor:pointer;
+  user-select:none;
+  transition:transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+.selectable-card:hover{
+  transform:translateY(-3px);
+  border-color:rgba(251,191,36,.42);
+}
+.selectable-card:focus-visible{
+  outline:2px solid rgba(251,191,36,.92);
+  outline-offset:3px;
+}
+.selectable-card.is-favorite-card{
+  border-color:rgba(251,191,36,.72)!important;
+  box-shadow:
+    0 34px 90px rgba(0,0,0,.62),
+    0 0 0 2px rgba(251,191,36,.14),
+    0 0 34px rgba(251,191,36,.18)!important;
+}
+.card-favorite-hint{
+  position:relative;
+  z-index:2;
+  margin-top:auto;
+  padding:8px 9px;
+  border-radius:11px;
+  text-align:center;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.07em;
+  color:rgba(255,255,255,.72);
+  border:1px solid rgba(255,255,255,.09);
+  background:rgba(0,0,0,.24);
+}
+.is-favorite-card .card-favorite-hint{
+  color:#fff1b5;
+  border-color:rgba(251,191,36,.30);
+  background:rgba(251,191,36,.11);
+}
+
+/* Il vecchio bottone era assoluto sopra la carta.
+   Ora è un controllo normale sotto la carta: impossibile che il link/immagine lo intercetti. */
+.favorite-toggle.favorite-toggle-bottom{
+  position:static!important;
+  display:block;
+  width:100%;
+  margin-top:8px;
+  padding:9px 10px;
+  z-index:auto;
+}
+
+</style>
 </head>
 
 <body>
@@ -1243,7 +1297,7 @@
           <div class="favorite-kicker">★ Carta preferita</div>
           <div id="favoriteCardEmpty" class="favorite-empty">
             <span class="star">☆</span>
-            Scegli la tua carta preferita dalla sezione “Le tue carte”.
+            Clicca direttamente su una carta nella sezione “Le tue carte” per impostarla come preferita.
           </div>
           <div id="favoriteCardVisual" style="display:none;">
             <img id="favoriteCardImg" class="favorite-img" alt="Carta preferita" />
@@ -1303,9 +1357,9 @@
       <div class="panel-head">
         <div>
           <div class="panel-title">Le tue carte</div>
-          <div class="panel-sub" id="myCardsSub">Collegate automaticamente al testo che inserisci nel campo Nome (in base al campo 'name' di cards.json).</div>
+          <div class="panel-sub" id="myCardsSub">Clicca una carta per impostarla come preferita. Le carte sono collegate automaticamente al tuo Nome.</div>
         </div>
-        <a class="btn" id="myCardsBtn" href="./index.html" style="text-decoration:none; white-space:nowrap;">Apri collezione</a>
+        <a class="btn" id="myCardsBtn" href="https://fantaballa.it/FUT/cards/" style="text-decoration:none; white-space:nowrap;">Apri collezione</a>
       </div>
 
       <div class="cards-wrap">
