@@ -3,8 +3,158 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Moderazione-Achievement</title>
+  <title>Moderazione • Fantaballa Game Pass</title>
   <link rel="stylesheet" href="./styles.css" />
+
+<style>
+  .mod-section{
+    margin-bottom:18px;
+  }
+  .mod-section-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  .mod-title{
+    font-size:19px;
+    font-weight:900;
+  }
+  .mod-sub{
+    margin-top:4px;
+    opacity:.72;
+    font-size:12px;
+    line-height:1.45;
+  }
+  .xp-tools{
+    display:grid;
+    grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);
+    gap:12px;
+  }
+  .xp-search-row{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:8px;
+  }
+  .xp-results{
+    margin-top:10px;
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+    max-height:360px;
+    overflow:auto;
+  }
+  .xp-user-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:10px;
+    align-items:center;
+    padding:10px;
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:12px;
+    background:rgba(255,255,255,.025);
+  }
+  .xp-user-row:hover{
+    background:rgba(255,255,255,.055);
+  }
+  .xp-user-name{
+    font-weight:850;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .xp-user-meta{
+    margin-top:3px;
+    font-size:11px;
+    opacity:.62;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .xp-selected-empty{
+    min-height:250px;
+    display:grid;
+    place-items:center;
+    text-align:center;
+    opacity:.65;
+    line-height:1.55;
+  }
+  .xp-selected-head{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+  .xp-current{
+    font-size:34px;
+    line-height:1;
+    font-weight:950;
+    margin-top:10px;
+  }
+  .xp-current small{
+    font-size:12px;
+    opacity:.55;
+    font-weight:700;
+  }
+  .xp-editor-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:14px;
+  }
+  .xp-field label{
+    display:block;
+    margin-bottom:5px;
+    font-size:11px;
+    opacity:.68;
+    font-weight:800;
+  }
+  .xp-field.full{
+    grid-column:1/-1;
+  }
+  .xp-action{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+  .xp-note{
+    margin-top:12px;
+    padding:9px 10px;
+    border-radius:10px;
+    border:1px solid rgba(255,210,90,.18);
+    background:rgba(255,210,90,.055);
+    font-size:11px;
+    line-height:1.45;
+    opacity:.82;
+  }
+  .xp-ok{
+    color:#9ef0bf;
+  }
+  .xp-warning{
+    color:#ffd48d;
+  }
+  .queue-title{
+    margin:6px 0 12px;
+    font-size:18px;
+    font-weight:900;
+  }
+  @media(max-width:780px){
+    .xp-tools{
+      grid-template-columns:1fr;
+    }
+    .xp-editor-grid{
+      grid-template-columns:1fr;
+    }
+    .xp-field.full{
+      grid-column:auto;
+    }
+  }
+</style>
+
 </head>
 <body>
 <header>
@@ -27,7 +177,94 @@
 
 <div class="container">
   <div id="status" class="card small">Caricamento…</div>
+
+  <section id="xpManager" class="mod-section" style="display:none; margin-top:18px;">
+    <div class="card">
+      <div class="mod-section-head">
+        <div>
+          <div class="mod-title">Modifica XP utente</div>
+          <div class="mod-sub">
+            Modifica esclusivamente gli XP della stagione corrente.
+            Stagione attiva: <strong id="xpSeason">—</strong>
+          </div>
+        </div>
+        <button id="btnXpReload" class="btn">Aggiorna utenti</button>
+      </div>
+
+      <div class="xp-tools">
+        <div>
+          <div class="xp-search-row">
+            <input id="xpSearch" type="search" autocomplete="off"
+                   placeholder="Cerca nickname, email o UID…" />
+            <button id="btnXpUid" class="btn">Carica UID</button>
+          </div>
+          <div id="xpDirectoryHint" class="small" style="margin-top:7px;">
+            Caricamento utenti…
+          </div>
+          <div id="xpResults" class="xp-results"></div>
+        </div>
+
+        <div id="xpSelected" class="card" style="padding:14px;">
+          <div id="xpSelectedEmpty" class="xp-selected-empty">
+            Seleziona un utente per vedere e modificare gli XP della stagione corrente.
+          </div>
+
+          <div id="xpSelectedContent" style="display:none;">
+            <div class="xp-selected-head">
+              <div>
+                <strong id="xpSelectedName">—</strong>
+                <div id="xpSelectedEmail" class="small">—</div>
+                <div id="xpSelectedUid" class="mono" style="margin-top:4px;">—</div>
+              </div>
+              <span id="xpSelectedSeason" class="badge">STAGIONE —</span>
+            </div>
+
+            <div class="xp-current">
+              <span id="xpCurrentPoints">0</span>
+              <small> XP attuali</small>
+            </div>
+            <div id="xpProgressHint" class="small" style="margin-top:5px;">—</div>
+
+            <div class="sep"></div>
+
+            <div class="xp-editor-grid">
+              <div class="xp-field">
+                <label for="xpSetValue">Imposta XP esatti</label>
+                <input id="xpSetValue" type="number" min="0" step="1" placeholder="es. 2500" />
+              </div>
+
+              <div class="xp-field">
+                <label for="xpDeltaValue">Aggiungi / sottrai</label>
+                <input id="xpDeltaValue" type="number" step="1" placeholder="es. 500 oppure -200" />
+              </div>
+
+              <div class="xp-field full">
+                <label for="xpReason">Motivo della modifica</label>
+                <input id="xpReason" type="text" maxlength="180"
+                       placeholder="es. Correzione XP assegnati per errore" />
+              </div>
+            </div>
+
+            <div class="xp-action">
+              <button id="btnXpSet" class="btn primary">Imposta XP</button>
+              <button id="btnXpDelta" class="btn">Applica variazione</button>
+            </div>
+
+            <div id="xpEditStatus" class="small" style="margin-top:10px;"></div>
+
+            <div class="xp-note">
+              La modifica riguarda solo il progress della stagione corrente.
+              Abbassare gli XP non cancella automaticamente eventuali premi già registrati;
+              aumentando gli XP, i tier si riallineano quando l'utente apre il Game Pass.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="sep"></div>
+  <div class="queue-title">Richieste achievement in attesa</div>
   <div id="queue" class="grid"></div>
 </div>
 

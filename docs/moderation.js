@@ -12,6 +12,7 @@ import {
 
 import {
   collection,
+  collectionGroup,
   getDocs,
   query,
   where,
@@ -22,7 +23,9 @@ import {
   updateDoc,
   serverTimestamp,
   setDoc,
-  increment
+  increment,
+  runTransaction,
+  addDoc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const statusBox = qs("#status");
@@ -32,11 +35,43 @@ const btnLogout = qs("#btnLogout");
 const btnReload = qs("#btnReload");
 const userInfo = qs("#userInfo");
 
+// Gestione XP
+const xpManager = qs("#xpManager");
+const xpSeason = qs("#xpSeason");
+const btnXpReload = qs("#btnXpReload");
+const xpSearch = qs("#xpSearch");
+const btnXpUid = qs("#btnXpUid");
+const xpDirectoryHint = qs("#xpDirectoryHint");
+const xpResults = qs("#xpResults");
+const xpSelectedEmpty = qs("#xpSelectedEmpty");
+const xpSelectedContent = qs("#xpSelectedContent");
+const xpSelectedName = qs("#xpSelectedName");
+const xpSelectedEmail = qs("#xpSelectedEmail");
+const xpSelectedUid = qs("#xpSelectedUid");
+const xpSelectedSeason = qs("#xpSelectedSeason");
+const xpCurrentPoints = qs("#xpCurrentPoints");
+const xpProgressHint = qs("#xpProgressHint");
+const xpSetValue = qs("#xpSetValue");
+const xpDeltaValue = qs("#xpDeltaValue");
+const xpReason = qs("#xpReason");
+const btnXpSet = qs("#btnXpSet");
+const btnXpDelta = qs("#btnXpDelta");
+const xpEditStatus = qs("#xpEditStatus");
+
+let CURRENT_SEASON = 1;
+let XP_DIRECTORY = [];
+let SELECTED_XP_USER = null;
+
 btnLogin.onclick = () => login().catch(err => alert(err.message));
 btnLogout.onclick = () => logout().catch(err => alert(err.message));
-btnReload.onclick = () => auth.currentUser && loadQueue();
+btnReload.onclick = () => auth.currentUser && reloadModeratorData();
 
 function setStatus(msg) { statusBox.textContent = msg; }
+function setXpStatus(msg, cls = "") {
+  if (!xpEditStatus) return;
+  xpEditStatus.className = `small ${cls}`.trim();
+  xpEditStatus.textContent = msg || "";
+}
 
 async function checkModerator(uid) {
   const modSnap = await getDoc(doc(db, "moderators", uid));
@@ -107,6 +142,392 @@ async function getProfileName(uid) {
   profileNameCache.set(uid, v);
   return v;
 }
+
+
+async function getCurrentSeason() {
+  try {
+    const cfg = await getDoc(doc(db, "config", "gamepass"));
+    return normalizeSeason(cfg.exists() ? cfg.data()?.season : 1);
+  } catch (e) {
+    console.warn("getCurrentSeason", e);
+    return 1;
+  }
+}
+
+function uidFromProfilePath(path) {
+  const seg = String(path || "").split("/");
+  return seg[0] === "users" && seg[2] === "profile" ? (seg[1] || "") : "";
+}
+
+function upsertDirectoryUser(map, uid, patch = {}) {
+  uid = (uid || "").toString().trim();
+  if (!uid) return;
+
+  const current = map.get(uid) || {
+    uid,
+    name: "",
+    email: ""
+  };
+
+  if (patch.name && !current.name) current.name = String(patch.name).trim();
+  if (patch.email && !current.email) current.email = String(patch.email).trim();
+
+  map.set(uid, current);
+}
+
+async function loadXpDirectory() {
+  if (!xpDirectoryHint || !xpResults) return;
+
+  xpDirectoryHint.textContent = "Carico profili utenti…";
+  xpResults.innerHTML = "";
+
+  const byUid = new Map();
+
+  // Fonte principale: profile/main
+  try {
+    const profilesSnap = await getDocs(
+      query(collectionGroup(db, "profile"), limit(5000))
+    );
+
+    for (const d of profilesSnap.docs) {
+      if (d.id !== "main") continue;
+      const uid = uidFromProfilePath(d.ref.path);
+      if (!uid) continue;
+
+      const data = d.data() || {};
+      upsertDirectoryUser(byUid, uid, {
+        name: data.displayName || ""
+      });
+    }
+  } catch (e) {
+    console.warn("load profiles for XP editor", e);
+  }
+
+  // Fallback nome/email: richieste inviate nel tempo.
+  try {
+    const reqSnap = await getDocs(
+      query(collection(db, "requests"), limit(2000))
+    );
+
+    for (const d of reqSnap.docs) {
+      const r = d.data() || {};
+      upsertDirectoryUser(byUid, r.uid, {
+        name: r.requesterName || "",
+        email: r.requesterEmail || ""
+      });
+    }
+  } catch (e) {
+    console.warn("load requests for XP editor", e);
+  }
+
+  XP_DIRECTORY = Array.from(byUid.values())
+    .sort((a, b) =>
+      (a.name || a.email || a.uid).localeCompare(
+        b.name || b.email || b.uid,
+        "it",
+        { sensitivity: "base" }
+      )
+    );
+
+  xpDirectoryHint.textContent =
+    `${XP_DIRECTORY.length} utenti trovati • cerca per nome, email o UID`;
+
+  renderXpSearchResults();
+}
+
+function renderXpSearchResults() {
+  if (!xpResults || !xpSearch) return;
+
+  const term = (xpSearch.value || "").trim().toLowerCase();
+
+  let rows = XP_DIRECTORY;
+  if (term) {
+    rows = rows.filter(u =>
+      (u.uid || "").toLowerCase().includes(term) ||
+      (u.name || "").toLowerCase().includes(term) ||
+      (u.email || "").toLowerCase().includes(term)
+    );
+  }
+
+  rows = rows.slice(0, 30);
+  xpResults.innerHTML = "";
+
+  if (!rows.length) {
+    xpResults.append(
+      el("div", { class: "small", style: "padding:10px;" }, [
+        document.createTextNode(
+          term
+            ? "Nessun risultato. Se conosci l'UID esatto, usa “Carica UID”."
+            : "Nessun utente trovato."
+        )
+      ])
+    );
+    return;
+  }
+
+  for (const u of rows) {
+    const openBtn = el("button", {
+      class: "btn",
+      type: "button",
+      onclick: () => selectXpUser(u.uid, u)
+    }, [document.createTextNode("Seleziona")]);
+
+    xpResults.append(
+      el("div", { class: "xp-user-row" }, [
+        el("div", {}, [
+          el("div", { class: "xp-user-name" }, [
+            document.createTextNode(u.name || u.email || "Utente senza nome")
+          ]),
+          el("div", { class: "xp-user-meta" }, [
+            document.createTextNode(
+              [u.email, u.uid].filter(Boolean).join(" • ")
+            )
+          ])
+        ]),
+        openBtn
+      ])
+    );
+  }
+}
+
+async function resolveUserInfo(uid, hint = null) {
+  const info = {
+    uid,
+    name: hint?.name || "",
+    email: hint?.email || ""
+  };
+
+  if (!info.name) {
+    try {
+      const profileSnap = await getDoc(doc(db, `users/${uid}/profile/main`));
+      if (profileSnap.exists()) {
+        info.name = (profileSnap.data()?.displayName || "").toString().trim();
+      }
+    } catch (e) {
+      console.warn("resolve profile", e);
+    }
+  }
+
+  return info;
+}
+
+async function selectXpUser(uid, hint = null) {
+  uid = (uid || "").toString().trim();
+  if (!uid) return;
+
+  setXpStatus("Carico XP utente…");
+
+  try {
+    const info = await resolveUserInfo(uid, hint);
+    const progressRef = doc(db, seasonProgressPath(uid, CURRENT_SEASON));
+    const progressSnap = await getDoc(progressRef);
+    const data = progressSnap.exists() ? (progressSnap.data() || {}) : {};
+    const points = Math.max(0, Number(data.points || 0) || 0);
+
+    SELECTED_XP_USER = {
+      ...info,
+      points,
+      progressExists: progressSnap.exists()
+    };
+
+    xpSelectedEmpty.style.display = "none";
+    xpSelectedContent.style.display = "";
+
+    xpSelectedName.textContent = info.name || "Utente senza nome";
+    xpSelectedEmail.textContent = info.email || "Email non disponibile";
+    xpSelectedUid.textContent = uid;
+    xpSelectedSeason.textContent = `STAGIONE ${CURRENT_SEASON}`;
+    xpCurrentPoints.textContent = String(points);
+    xpProgressHint.textContent = progressSnap.exists()
+      ? `Progress season_${CURRENT_SEASON} esistente`
+      : `Nessun progress per season_${CURRENT_SEASON}: attualmente vale 0 XP`;
+
+    xpSetValue.value = "";
+    xpDeltaValue.value = "";
+    xpReason.value = "";
+    setXpStatus("");
+  } catch (e) {
+    console.error(e);
+    setXpStatus(e?.message || "Errore nel caricamento dell'utente.", "xp-warning");
+  }
+}
+
+async function writeXpAudit({ uid, name, oldPoints, newPoints, reason }) {
+  const moderator = auth.currentUser;
+  if (!moderator) return;
+
+  await addDoc(collection(db, "xp_adjustments"), {
+    uid,
+    targetName: name || "",
+    season: CURRENT_SEASON,
+    oldPoints,
+    newPoints,
+    delta: newPoints - oldPoints,
+    reason,
+    moderatorUid: moderator.uid,
+    moderatorEmail: moderator.email || "",
+    createdAt: serverTimestamp()
+  });
+}
+
+async function applyXpChange(mode) {
+  if (!SELECTED_XP_USER) {
+    setXpStatus("Seleziona prima un utente.", "xp-warning");
+    return;
+  }
+
+  const reason = (xpReason.value || "").trim();
+  if (reason.length < 3) {
+    setXpStatus("Inserisci un motivo per la modifica.", "xp-warning");
+    xpReason.focus();
+    return;
+  }
+
+  let inputValue;
+  if (mode === "set") {
+    inputValue = Number(xpSetValue.value);
+    if (!Number.isFinite(inputValue) || inputValue < 0 || !Number.isInteger(inputValue)) {
+      setXpStatus("Inserisci un valore XP intero maggiore o uguale a 0.", "xp-warning");
+      return;
+    }
+  } else {
+    inputValue = Number(xpDeltaValue.value);
+    if (!Number.isFinite(inputValue) || inputValue === 0 || !Number.isInteger(inputValue)) {
+      setXpStatus("Inserisci una variazione intera diversa da 0, es. 500 oppure -200.", "xp-warning");
+      return;
+    }
+  }
+
+  const uid = SELECTED_XP_USER.uid;
+  const progressRef = doc(db, seasonProgressPath(uid, CURRENT_SEASON));
+
+  // Anteprima basata sul valore appena letto; la transazione ricalcolerà
+  // comunque tutto sul dato Firestore più recente.
+  const previewOld = Number(SELECTED_XP_USER.points || 0) || 0;
+  const previewNew = mode === "set"
+    ? inputValue
+    : previewOld + inputValue;
+
+  if (previewNew < 0) {
+    setXpStatus("La modifica porterebbe gli XP sotto zero.", "xp-warning");
+    return;
+  }
+
+  const shownName = SELECTED_XP_USER.name || uid;
+  const ok = confirm(
+    `Confermi la modifica XP?\n\n` +
+    `Utente: ${shownName}\n` +
+    `Stagione: ${CURRENT_SEASON}\n` +
+    `XP attuali: ${previewOld}\n` +
+    `XP dopo modifica: ${previewNew}\n\n` +
+    `Motivo: ${reason}`
+  );
+  if (!ok) return;
+
+  btnXpSet.disabled = true;
+  btnXpDelta.disabled = true;
+  setXpStatus("Salvataggio in corso…");
+
+  try {
+    const result = await runTransaction(db, async (tx) => {
+      const snap = await tx.get(progressRef);
+      const oldPoints = snap.exists()
+        ? Math.max(0, Number(snap.data()?.points || 0) || 0)
+        : 0;
+
+      const newPoints = mode === "set"
+        ? inputValue
+        : oldPoints + inputValue;
+
+      if (!Number.isInteger(newPoints) || newPoints < 0) {
+        throw new Error("La modifica porterebbe gli XP a un valore non valido.");
+      }
+
+      const payload = {
+        season: CURRENT_SEASON,
+        points: newPoints,
+        updatedAt: serverTimestamp()
+      };
+
+      if (snap.exists()) {
+        tx.set(progressRef, payload, { merge: true });
+      } else {
+        tx.set(progressRef, {
+          ...payload,
+          createdAt: serverTimestamp()
+        });
+      }
+
+      return { oldPoints, newPoints };
+    });
+
+    let auditOk = true;
+    try {
+      await writeXpAudit({
+        uid,
+        name: SELECTED_XP_USER.name,
+        oldPoints: result.oldPoints,
+        newPoints: result.newPoints,
+        reason
+      });
+    } catch (auditError) {
+      auditOk = false;
+      console.error("Audit XP non salvato", auditError);
+    }
+
+    SELECTED_XP_USER.points = result.newPoints;
+    SELECTED_XP_USER.progressExists = true;
+    xpCurrentPoints.textContent = String(result.newPoints);
+    xpProgressHint.textContent = `Progress season_${CURRENT_SEASON} aggiornato`;
+    xpSetValue.value = "";
+    xpDeltaValue.value = "";
+
+    setXpStatus(
+      auditOk
+        ? `✓ XP aggiornati: ${result.oldPoints} → ${result.newPoints}`
+        : `XP aggiornati: ${result.oldPoints} → ${result.newPoints}. ATTENZIONE: log audit non salvato.`,
+      auditOk ? "xp-ok" : "xp-warning"
+    );
+  } catch (e) {
+    console.error(e);
+    setXpStatus(e?.message || "Errore durante la modifica XP.", "xp-warning");
+  } finally {
+    btnXpSet.disabled = false;
+    btnXpDelta.disabled = false;
+  }
+}
+
+async function loadXpManager() {
+  CURRENT_SEASON = await getCurrentSeason();
+  xpSeason.textContent = String(CURRENT_SEASON);
+  xpSelectedSeason.textContent = `STAGIONE ${CURRENT_SEASON}`;
+  await loadXpDirectory();
+}
+
+async function reloadModeratorData() {
+  await Promise.all([
+    loadQueue(),
+    loadXpManager()
+  ]);
+}
+
+xpSearch?.addEventListener("input", renderXpSearchResults);
+
+btnXpUid?.addEventListener("click", async () => {
+  const uid = (xpSearch?.value || "").trim();
+  if (!uid) {
+    setXpStatus("Scrivi prima l'UID esatto nel campo di ricerca.", "xp-warning");
+    return;
+  }
+  await selectXpUser(uid, XP_DIRECTORY.find(u => u.uid === uid) || null);
+});
+
+btnXpReload?.addEventListener("click", () => {
+  if (auth.currentUser) loadXpDirectory();
+});
+
+btnXpSet?.addEventListener("click", () => applyXpChange("set"));
+btnXpDelta?.addEventListener("click", () => applyXpChange("delta"));
 
 async function loadQueue() {
   setStatus("Carico richieste pending…");
@@ -273,7 +694,9 @@ onUser(async (user) => {
     btnLogin.style.display = "";
     btnLogout.style.display = "none";
     btnReload.style.display = "none";
+    if (xpManager) xpManager.style.display = "none";
     queue.innerHTML = "";
+    SELECTED_XP_USER = null;
     setStatus("Fai login. Serve essere presente in /moderators/{uid}.");
     return;
   }
@@ -285,11 +708,13 @@ onUser(async (user) => {
   const ok = await checkModerator(user.uid);
   if (!ok) {
     btnReload.style.display = "none";
+    if (xpManager) xpManager.style.display = "none";
     queue.innerHTML = "";
     setStatus("Non autorizzato: non sei in /moderators/{tuoUID}.");
     return;
   }
 
   btnReload.style.display = "";
-  await loadQueue();
+  if (xpManager) xpManager.style.display = "";
+  await reloadModeratorData();
 });
