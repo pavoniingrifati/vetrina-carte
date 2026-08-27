@@ -134,16 +134,23 @@ function buildImgCandidates(rawSrc){
   const src0 = (rawSrc ?? "").toString().trim();
   if (!src0) return [];
 
-  // URL esterne: ok così
-  if (/^(https?:|data:|blob:)/i.test(src0)) return [src0];
+  // Tutte le carte sono ora WebP. Se arriva ancora un vecchio riferimento PNG,
+  // prova PRIMA la stessa risorsa con estensione .webp.
+  const preferWebp = (src) => src.replace(/\.png(?=([?#]|$))/i, ".webp");
+
+  // URL esterne: preferisci WebP, mantenendo comunque il vecchio path come fallback.
+  if (/^(https?:|data:|blob:)/i.test(src0)) {
+    if (/^(data:|blob:)/i.test(src0)) return [src0];
+    return Array.from(new Set([preferWebp(src0), src0]));
+  }
 
   // Normalizza: elimina doppia codifica e prefissi tipo "./"
-  let clean = decodeMany(src0).replace(/^\.\/+/, "").replace(/^\/+/, "");
+  let clean = preferWebp(decodeMany(src0)).replace(/^\.\/+/, "").replace(/^\/+/, "");
   // Se qualcuno ha messo "vetrina-carte/img/..." nel JSON, togli il prefisso repo per evitare duplicati
   const repoSeg = (location.pathname.split("/").filter(Boolean)[0] || "").trim();
   if (repoSeg && clean.startsWith(repoSeg + "/")) clean = clean.slice(repoSeg.length + 1);
 
-  // Se nel JSON manca la cartella (es: "Fork Altezza.png"), prova anche dentro "img/"
+  // Se nel JSON manca la cartella (es: "Fork Altezza.webp"), prova anche dentro "img/"
   const cleanImg = (!clean.includes("/") && !clean.startsWith("img/")) ? ("img/" + clean) : null;
 
   const rootBase = projectRootUrl();               // .../vetrina-carte/
