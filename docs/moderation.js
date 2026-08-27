@@ -2,6 +2,13 @@
 // Moderazione richieste Game Pass + fallback nome da /users/{uid}/profile/main
 
 import { onUser, login, logout, qs, el, db, auth } from "./common.js";
+import {
+  LEGACY_SEASON,
+  normalizeSeason,
+  recordSeason,
+  seasonProgressPath,
+  seasonEarnedDocPath
+} from "./season-utils.js";
 
 import {
   collection,
@@ -34,6 +41,46 @@ function setStatus(msg) { statusBox.textContent = msg; }
 async function checkModerator(uid) {
   const modSnap = await getDoc(doc(db, "moderators", uid));
   return modSnap.exists();
+}
+
+async function addPointsToSeasonProgress(uid, season, pts) {
+  const seasonNum = normalizeSeason(season);
+  const scopedRef = doc(db, seasonProgressPath(uid, seasonNum));
+  const scopedSnap = await getDoc(scopedRef);
+
+  if (scopedSnap.exists()) {
+    await setDoc(scopedRef, {
+      season: seasonNum,
+      points: increment(pts),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+    return;
+  }
+
+  // Prima scrittura nel nuovo schema: per la Stagione 1 recupera gli XP legacy.
+  let basePoints = 0;
+  let legacyDailyAt = null;
+  if (seasonNum === LEGACY_SEASON) {
+    const legacySnap = await getDoc(doc(db, `users/${uid}/gamepass/progress`));
+    if (legacySnap.exists()) {
+      const d = legacySnap.data() || {};
+      if (recordSeason(d) === LEGACY_SEASON) {
+        basePoints = Number(d.points || 0) || 0;
+        legacyDailyAt = d.lastDailyAt || null;
+      }
+    }
+  }
+
+  const payload = {
+    season: seasonNum,
+    points: basePoints + pts,
+    migratedFromLegacy: basePoints > 0 || !!legacyDailyAt,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+  if (legacyDailyAt) payload.lastDailyAt = legacyDailyAt;
+
+  await setDoc(scopedRef, payload, { merge: true });
 }
 
 // Cache profili (evita getDoc ripetuti)
@@ -114,27 +161,30 @@ async function loadQueue() {
           if (!achSnap.exists()) throw new Error("Achievement non trovato");
           const ach = achSnap.data() || {};
 
-          // 2) aggiorno la richiesta -> approved
+          const reqSeason = recordSeason(r);
+
+          // 2) aggiorno la richiesta -> approved mantenendo la sua stagione
           await updateDoc(doc(db, "requests", r.id), {
+            season: reqSeason,
             status: "approved",
             note: note.value.trim(),
             reviewedAt: serverTimestamp(),
             reviewedBy: auth.currentUser.uid
           });
 
-          // 3) segno earned
-          await setDoc(doc(db, `users/${r.uid}/earned/${r.achievementId}`), {
+          // 3) segno earned nella stagione della richiesta
+          await setDoc(doc(db, seasonEarnedDocPath(r.uid, reqSeason, r.achievementId)), {
+            season: reqSeason,
+            achievementId: r.achievementId,
+            requestId: r.id,
             approvedAt: serverTimestamp(),
             approvedBy: auth.currentUser.uid
           }, { merge: true });
 
-          // 4) aggiungo punti Game Pass
+          // 4) aggiungo i punti solo al progress della stagione corretta
           const pts = Number(ach.points) || 0;
           if (pts) {
-            await setDoc(doc(db, `users/${r.uid}/gamepass/progress`), {
-              points: increment(pts),
-              updatedAt: serverTimestamp()
-            }, { merge: true });
+            await addPointsToSeasonProgress(r.uid, reqSeason, pts);
           }
 
           await loadQueue();
@@ -155,7 +205,9 @@ async function loadQueue() {
         approveBtn.disabled = true;
 
         try {
+          const reqSeason = recordSeason(r);
           await updateDoc(doc(db, "requests", r.id), {
+            season: reqSeason,
             status: "rejected",
             note: note.value.trim(),
             reviewedAt: serverTimestamp(),
@@ -195,6 +247,7 @@ async function loadQueue() {
     const card = el("div", { class: "card" }, [
       el("div", { class: "row" }, [
         el("strong", {}, [document.createTextNode(r.achievementTitle || r.achievementId)]),
+        el("span", { class: "badge" }, [document.createTextNode(`STAGIONE ${recordSeason(r)}`)]),
         el("span", { class: "badge" }, [document.createTextNode("⏳ pending")]),
       ]),
       el("div", { class: "small" }, [

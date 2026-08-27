@@ -5,6 +5,15 @@
 // - Auto-sblocco: quando raggiungi la soglia crea users/{uid}/gp_claims/{tierId}
 
 import { onUser, login, logout, qs, el, db, auth } from "./common.js";
+import {
+  LEGACY_SEASON,
+  normalizeSeason,
+  recordSeason,
+  seasonProgressPath,
+  seasonEarnedCollectionPath,
+  seasonClaimsCollectionPath,
+  seasonClaimDocPath
+} from "./season-utils.js";
 
 import {
   collection,
@@ -294,6 +303,81 @@ async function getCurrentSeason() {
   }
 }
 
+async function getSeasonProgressData(uid, season) {
+  const scopedRef = doc(db, seasonProgressPath(uid, season));
+  const scopedSnap = await getDoc(scopedRef);
+  if (scopedSnap.exists()) {
+    return { ref: scopedRef, data: scopedSnap.data() || {}, source: "season" };
+  }
+
+  // Compatibilità con i dati creati prima della separazione per stagione.
+  if (normalizeSeason(season) === LEGACY_SEASON) {
+    const legacyRef = doc(db, `users/${uid}/gamepass/progress`);
+    const legacySnap = await getDoc(legacyRef);
+    if (legacySnap.exists()) {
+      const legacyData = legacySnap.data() || {};
+      if (recordSeason(legacyData) === LEGACY_SEASON) {
+        return { ref: scopedRef, data: legacyData, source: "legacy" };
+      }
+    }
+  }
+
+  return { ref: scopedRef, data: null, source: "empty" };
+}
+
+async function ensureSeasonProgressDocument(uid, season) {
+  const current = await getSeasonProgressData(uid, season);
+  if (current.source === "season") return current;
+
+  const base = current.data
+    ? {
+        ...current.data,
+        season: normalizeSeason(season),
+        migratedFromLegacy: true,
+        migratedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }
+    : {
+        season: normalizeSeason(season),
+        points: 0,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+  await setDoc(current.ref, base, { merge: true });
+  return { ref: current.ref, data: base, source: "season" };
+}
+
+async function getEarnedSetForSeason(uid, season) {
+  const scopedSnap = await getDocs(
+    collection(db, seasonEarnedCollectionPath(uid, season))
+  );
+  const out = new Set(scopedSnap.docs.map(d => d.id));
+
+  // I vecchi earned non avevano season: appartengono alla Stagione 1.
+  if (normalizeSeason(season) === LEGACY_SEASON) {
+    const legacySnap = await getDocs(collection(db, `users/${uid}/earned`));
+    for (const d of legacySnap.docs) out.add(d.id);
+  }
+
+  return out;
+}
+
+async function getClaimedSetForSeason(uid, season) {
+  const scopedSnap = await getDocs(
+    collection(db, seasonClaimsCollectionPath(uid, season))
+  );
+  const out = new Set(scopedSnap.docs.map(d => d.id));
+
+  // I vecchi claim non avevano season: appartengono alla Stagione 1.
+  if (normalizeSeason(season) === LEGACY_SEASON) {
+    const legacySnap = await getDocs(collection(db, `users/${uid}/gp_claims`));
+    for (const d of legacySnap.docs) out.add(d.id);
+  }
+
+  return out;
+}
+
 function msToHMS(ms) {
   ms = Math.max(0, ms);
   const totalSec = Math.floor(ms / 1000);
@@ -464,35 +548,14 @@ function renderDaily(season, progressData, uid) {
     btn.disabled = true;
 
     try {
-      const progRef = doc(
-        db,
-        `users/${uid}/gamepass/progress`
-      );
+      const { ref: progRef } = await ensureSeasonProgressDocument(uid, season);
 
-      const snap = await getDoc(progRef);
-
-      if (
-        !snap.exists() ||
-        Number(snap.data()?.season || 0) !== season
-      ) {
-        await setDoc(
-          progRef,
-          {
-            season,
-            points: DAILY_XP,
-            lastDailyAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          },
-          { merge: true }
-        );
-      } else {
-        await updateDoc(progRef, {
-          season,
-          points: increment(DAILY_XP),
-          lastDailyAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-      }
+      await setDoc(progRef, {
+        season: normalizeSeason(season),
+        points: increment(DAILY_XP),
+        lastDailyAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
 
       await loadAll(uid);
     } catch (e) {
@@ -975,6 +1038,7 @@ function renderTiersCards(points, tiers, claimedSet) {
 
 async function autoRecordUnlocked(
   uid,
+  season,
   points,
   tiers,
   claimedSet
@@ -999,8 +1063,10 @@ async function autoRecordUnlocked(
   for (const t of toCreate) {
     try {
       await setDoc(
-        doc(db, `users/${uid}/gp_claims/${t.id}`),
+        doc(db, seasonClaimDocPath(uid, season, t.id)),
         {
+          season: normalizeSeason(season),
+          tierId: t.id,
           unlockedAt: serverTimestamp(),
           pointsAtUnlock: points,
           requiredPoints:
@@ -1108,8 +1174,11 @@ function renderAchievements(
             } catch {}
           }
 
+          const requestSeason = await getCurrentSeason();
+
           await addDoc(collection(db, "requests"), {
             uid: auth.currentUser.uid,
+            season: normalizeSeason(requestSeason),
             requesterEmail:
               auth.currentUser.email || "",
             requesterName:
@@ -1353,6 +1422,12 @@ function renderRequests(requests) {
 async function loadAll(uid) {
   setStatus("Carico achievements e stato…");
 
+  const season = await getCurrentSeason();
+
+  // La stagione mostrata nella hero segue sempre config/gamepass.season.
+  const seasonChip = document.querySelector(".season-chip");
+  if (seasonChip) seasonChip.textContent = `STAGIONE ${season} · FANTACALCIO`;
+
   const achSnap = await getDocs(
     collection(db, "achievements")
   );
@@ -1364,39 +1439,16 @@ async function loadAll(uid) {
     }))
     .filter(a => a.active !== false);
 
-  const earnedSnap = await getDocs(
-    collection(db, `users/${uid}/earned`)
-  );
-
-  const earnedSet = new Set(
-    earnedSnap.docs.map(d => d.id)
-  );
+  const earnedSet = await getEarnedSetForSeason(uid, season);
 
   if (statChallenges) {
     statChallenges.textContent =
       String(earnedSet.size);
   }
 
-  const season = await getCurrentSeason();
-
-  const gpSnap = await getDoc(
-    doc(db, `users/${uid}/gamepass/progress`)
-  );
-
-  let gpPoints = 0;
-  let gpDataCurrent = null;
-
-  if (gpSnap.exists()) {
-    const data = gpSnap.data() || {};
-    const s = Number(data.season || 0);
-
-    if (s === season) {
-      gpPoints =
-        Number(data.points || 0) || 0;
-
-      gpDataCurrent = data;
-    }
-  }
+  const progress = await getSeasonProgressData(uid, season);
+  const gpDataCurrent = progress.data;
+  const gpPoints = Number(gpDataCurrent?.points || 0) || 0;
 
   const tiersSnap = await getDocs(
     collection(db, "gp_tiers")
@@ -1407,16 +1459,11 @@ async function loadAll(uid) {
     ...d.data()
   }));
 
-  const claimsSnap = await getDocs(
-    collection(db, `users/${uid}/gp_claims`)
-  );
-
-  const claimedSet = new Set(
-    claimsSnap.docs.map(d => d.id)
-  );
+  const claimedSet = await getClaimedSetForSeason(uid, season);
 
   await autoRecordUnlocked(
     uid,
+    season,
     gpPoints,
     tiers,
     claimedSet
@@ -1429,19 +1476,23 @@ async function loadAll(uid) {
     tiers,
     claimedSet
   );
-    const reqQ = query(
+
+  // Leggiamo tutte le richieste dell'utente e filtriamo lato client per evitare
+  // nuovi indici Firestore. Le richieste legacy senza season = Stagione 1.
+  const reqSnap = await getDocs(query(
     collection(db, "requests"),
-    where("uid", "==", uid),
-    orderBy("createdAt", "desc"),
-    limit(50)
-  );
+    where("uid", "==", uid)
+  ));
 
-  const reqSnap = await getDocs(reqQ);
-
-  const requests = reqSnap.docs.map(d => ({
-    id: d.id,
-    ...d.data()
-  }));
+  const requests = reqSnap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(r => recordSeason(r) === normalizeSeason(season))
+    .sort((a, b) => {
+      const ta = a.createdAt?.toMillis?.() || 0;
+      const tb = b.createdAt?.toMillis?.() || 0;
+      return tb - ta;
+    })
+    .slice(0, 50);
 
   _achAll = achievements;
   _earnedSet = earnedSet;

@@ -3,6 +3,7 @@
 // e permette export CSV.
 
 import { onUser, login, logout, qs, el, db, auth } from "./common.js";
+import { normalizeSeason, recordSeason } from "./season-utils.js";
 
 import {
   doc,
@@ -189,23 +190,41 @@ async function loadReport() {
     return;
   }
 
-  rowsAll = snap.docs
-    .filter(d => d.id === "progress")
-    .map(d => {
-      const seg = d.ref.path.split('/'); // users/{uid}/gamepass/progress
-      const uid = seg[1] || '';
-      const data = d.data() || {};
-      return {
-        uid,
-        season: Number(data.season || 0) || 0,
-        points: Number(data.points || 0) || 0,
-        name: (data.name || data.displayName || '').toString(),
-        email: (data.email || '').toString(),
-      };
-    })
-    .filter(r => r.season === season);
+  // Supporta sia il vecchio path users/{uid}/gamepass/progress sia il nuovo:
+  // users/{uid}/seasons/season_N/gamepass/progress. Se esistono entrambi,
+  // il documento stagionale ha precedenza sul legacy.
+  const byUid = new Map();
 
+  for (const d of snap.docs.filter(d => d.id === "progress")) {
+    const seg = d.ref.path.split('/');
+    const uid = seg[1] || '';
+    if (!uid) continue;
 
+    const data = d.data() || {};
+    const isScoped = seg[2] === 'seasons';
+
+    let rowSeason = recordSeason(data);
+    if (isScoped) {
+      const m = (seg[3] || '').match(/^season_(\d+)$/);
+      if (m) rowSeason = normalizeSeason(m[1]);
+    }
+
+    if (rowSeason !== normalizeSeason(season)) continue;
+
+    const candidate = {
+      uid,
+      season: rowSeason,
+      points: Number(data.points || 0) || 0,
+      name: (data.name || data.displayName || '').toString(),
+      email: (data.email || '').toString(),
+      _priority: isScoped ? 2 : 1
+    };
+
+    const prev = byUid.get(uid);
+    if (!prev || candidate._priority > prev._priority) byUid.set(uid, candidate);
+  }
+
+  rowsAll = [...byUid.values()].map(({ _priority, ...r }) => r);
   rowsAll.sort((a,b) => b.points - a.points);
 
 
@@ -219,6 +238,7 @@ async function loadReport() {
     const map = new Map(); // uid -> {name,email}
     for (const d of reqSnap.docs) {
       const data = d.data() || {};
+      if (recordSeason(data) !== normalizeSeason(season)) continue;
       const uid = (data.uid || '').toString();
       if (!uid || map.has(uid)) continue;
       const name = (data.requesterName || '').toString();

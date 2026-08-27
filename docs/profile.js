@@ -1,5 +1,12 @@
 // docs/profile.js
 import { onUser, login, logout, qs, el, db, auth } from "./common.js";
+import {
+  LEGACY_SEASON,
+  normalizeSeason,
+  recordSeason,
+  seasonProgressPath,
+  seasonEarnedCollectionPath
+} from "./season-utils.js";
 
 import {
   doc,
@@ -288,6 +295,22 @@ async function getCurrentSeason() {
   }
 }
 
+async function getSeasonProgressData(uid, season) {
+  const scopedSnap = await getDoc(doc(db, seasonProgressPath(uid, season)));
+  if (scopedSnap.exists()) return scopedSnap.data() || {};
+
+  // Compatibilità: i progress precedenti al nuovo schema sono Stagione 1.
+  if (normalizeSeason(season) === LEGACY_SEASON) {
+    const legacySnap = await getDoc(doc(db, `users/${uid}/gamepass/progress`));
+    if (legacySnap.exists()) {
+      const d = legacySnap.data() || {};
+      if (recordSeason(d) === LEGACY_SEASON) return d;
+    }
+  }
+
+  return null;
+}
+
 function fmt(n) {
   const x = Number(n || 0) || 0;
   return x.toLocaleString("it-IT");
@@ -360,12 +383,8 @@ async function saveProfile(uid) {
 async function loadGamepass(uid) {
   const season = await getCurrentSeason();
 
-  const progSnap = await getDoc(doc(db, `users/${uid}/gamepass/progress`));
-  let xp = 0;
-  if (progSnap.exists()) {
-    const d = progSnap.data() || {};
-    if (Number(d.season || 0) === season) xp = Number(d.points || 0) || 0;
-  }
+  const progressData = await getSeasonProgressData(uid, season);
+  const xp = Number(progressData?.points || 0) || 0;
 
   // tiers
   const tiersSnap = await getDocs(collection(db, "gp_tiers"));
@@ -419,31 +438,40 @@ function badgeForStatus(s) {
   return "⏳ pending";
 }
 
-async function loadRequests(uid) {
+async function loadRequests(uid, season) {
   reqList.innerHTML = "";
-  const q = query(
+
+  // Nessun nuovo indice necessario: prendiamo le richieste dell'utente e
+  // separiamo la stagione lato client. Le richieste legacy = Stagione 1.
+  const snap = await getDocs(query(
     collection(db, "requests"),
-    where("uid", "==", uid),
-    orderBy("createdAt", "desc"),
-    limit(10)
-  );
+    where("uid", "==", uid)
+  ));
 
-  const snap = await getDocs(q);
-  const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const allSeasonRows = snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(r => recordSeason(r) === normalizeSeason(season))
+    .sort((a, b) => {
+      const ta = a.createdAt?.toMillis?.() || 0;
+      const tb = b.createdAt?.toMillis?.() || 0;
+      return tb - ta;
+    });
 
-  // stats richieste
-  statReq.textContent = String(rows.length);
+  // Stats realmente riferite alla stagione corrente, non solo alle ultime 10.
+  statReq.textContent = String(allSeasonRows.length);
 
   let pending = 0, approved = 0;
-  for (const r of rows) {
+  for (const r of allSeasonRows) {
     if (r.status === "pending") pending++;
     if (r.status === "approved") approved++;
   }
   statPending.textContent = String(pending);
   statApproved.textContent = String(approved);
 
+  const rows = allSeasonRows.slice(0, 10);
+
   if (!rows.length) {
-    reqList.append(el("div", { class: "item small" }, [document.createTextNode("Nessuna richiesta ancora.")]));
+    reqList.append(el("div", { class: "item small" }, [document.createTextNode("Nessuna richiesta in questa stagione.")]));
     return;
   }
 
@@ -461,10 +489,19 @@ async function loadRequests(uid) {
   }
 }
 
-async function loadEarned(uid) {
-  // Conta earned (può essere molti doc: per ora facciamo getDocs e length)
-  const snap = await getDocs(collection(db, `users/${uid}/earned`));
-  statEarned.textContent = String(snap.size);
+async function loadEarned(uid, season) {
+  const scopedSnap = await getDocs(
+    collection(db, seasonEarnedCollectionPath(uid, season))
+  );
+  const ids = new Set(scopedSnap.docs.map(d => d.id));
+
+  // I vecchi earned sono considerati Stagione 1.
+  if (normalizeSeason(season) === LEGACY_SEASON) {
+    const legacySnap = await getDocs(collection(db, `users/${uid}/earned`));
+    for (const d of legacySnap.docs) ids.add(d.id);
+  }
+
+  statEarned.textContent = String(ids.size);
 }
 
 on_attach_listeners();
@@ -524,10 +561,10 @@ onUser(async (user) => {
   btnSave.onclick = async () => { await saveProfile(user.uid); await updateLinkedCards(); };
 
   try {
-    await loadGamepass(user.uid);
-    await loadRequests(user.uid);
-    await loadEarned(user.uid);
-    setStatus("Ok.");
+    const { season } = await loadGamepass(user.uid);
+    await loadRequests(user.uid, season);
+    await loadEarned(user.uid, season);
+    setStatus(`Ok. Stagione ${season}.`);
   } catch (e) {
     console.error(e);
     setStatus(e?.message || "Errore nel caricare i dati.");
