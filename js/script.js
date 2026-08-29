@@ -48,42 +48,42 @@ const categoryFallback = {
 };
 
 const championsLeagueClubs = [
-  { name: "Paris", domain: "psg.fr" },
-  { name: "Bayern München", domain: "fcbayern.com" },
-  { name: "Real Madrid", domain: "realmadrid.com" },
-  { name: "Liverpool", domain: "liverpoolfc.com" },
-  { name: "Inter", domain: "inter.it" },
-  { name: "Manchester City", domain: "mancity.com" },
-  { name: "Arsenal", domain: "arsenal.com" },
-  { name: "Barcelona", domain: "fcbarcelona.com" },
-  { name: "Atlético de Madrid", domain: "atleticodemadrid.com" },
-  { name: "Borussia Dortmund", domain: "bvb.de" },
-  { name: "Roma", domain: "asroma.com" },
-  { name: "Sporting CP", domain: "sporting.pt" },
-  { name: "Aston Villa", domain: "avfc.co.uk" },
-  { name: "Porto", domain: "fcporto.pt" },
-  { name: "Manchester United", domain: "manutd.com" },
-  { name: "Club Brugge", domain: "clubbrugge.be" },
-  { name: "Real Betis", domain: "realbetisbalompie.es" },
-  { name: "PSV", domain: "psv.nl" },
-  { name: "Feyenoord", domain: "feyenoord.com" },
-  { name: "Lille", domain: "losc.fr" },
-  { name: "Bodø/Glimt", domain: "glimt.no" },
-  { name: "Napoli", domain: "sscnapoli.it" },
-  { name: "Leipzig", domain: "rbleipzig.com" },
-  { name: "Villarreal", domain: "villarrealcf.es" },
-  { name: "Fenerbahçe", domain: "fenerbahce.org" },
-  { name: "Shakhtar", domain: "shakhtar.com" },
-  { name: "Galatasaray", domain: "galatasaray.org" },
-  { name: "Slavia Praha", domain: "slavia.cz" },
-  { name: "Slovan Bratislava", domain: "skslovan.com" },
-  { name: "Stuttgart", domain: "vfb.de" },
-  { name: "AEK Athens", domain: "aekfc.gr" },
-  { name: "LASK", domain: "lask.at" },
-  { name: "Como", domain: "comofootball.com" },
-  { name: "Lens", domain: "rclens.fr" },
-  { name: "Viking", domain: "vikingfotball.no" },
-  { name: "Sabah", domain: "sabahfc.az" }
+  { name: "Paris", wikiTitle: "Paris Saint-Germain F.C." },
+  { name: "Bayern München", wikiTitle: "FC Bayern Munich" },
+  { name: "Real Madrid", wikiTitle: "Real Madrid CF" },
+  { name: "Liverpool", wikiTitle: "Liverpool F.C." },
+  { name: "Inter", wikiTitle: "Inter Milan" },
+  { name: "Manchester City", wikiTitle: "Manchester City F.C." },
+  { name: "Arsenal", wikiTitle: "Arsenal F.C." },
+  { name: "Barcelona", wikiTitle: "FC Barcelona" },
+  { name: "Atlético de Madrid", wikiTitle: "Atlético Madrid" },
+  { name: "Borussia Dortmund", wikiTitle: "Borussia Dortmund" },
+  { name: "Roma", wikiTitle: "AS Roma" },
+  { name: "Sporting CP", wikiTitle: "Sporting CP" },
+  { name: "Aston Villa", wikiTitle: "Aston Villa F.C." },
+  { name: "Porto", wikiTitle: "FC Porto" },
+  { name: "Manchester United", wikiTitle: "Manchester United F.C." },
+  { name: "Club Brugge", wikiTitle: "Club Brugge KV" },
+  { name: "Real Betis", wikiTitle: "Real Betis" },
+  { name: "PSV", wikiTitle: "PSV Eindhoven" },
+  { name: "Feyenoord", wikiTitle: "Feyenoord" },
+  { name: "Lille", wikiTitle: "Lille OSC" },
+  { name: "Bodø/Glimt", wikiTitle: "FK Bodø/Glimt" },
+  { name: "Napoli", wikiTitle: "SSC Napoli" },
+  { name: "Leipzig", wikiTitle: "RB Leipzig" },
+  { name: "Villarreal", wikiTitle: "Villarreal CF" },
+  { name: "Fenerbahçe", wikiTitle: "Fenerbahçe S.K. (football)" },
+  { name: "Shakhtar", wikiTitle: "FC Shakhtar Donetsk" },
+  { name: "Galatasaray", wikiTitle: "Galatasaray S.K. (football)" },
+  { name: "Slavia Praha", wikiTitle: "SK Slavia Prague" },
+  { name: "Slovan Bratislava", wikiTitle: "ŠK Slovan Bratislava" },
+  { name: "Stuttgart", wikiTitle: "VfB Stuttgart" },
+  { name: "AEK Athens", wikiTitle: "AEK Athens F.C." },
+  { name: "LASK", wikiTitle: "LASK" },
+  { name: "Como", wikiTitle: "Como 1907" },
+  { name: "Lens", wikiTitle: "RC Lens" },
+  { name: "Viking", wikiTitle: "Viking FK" },
+  { name: "Sabah", wikiTitle: "Sabah FC (Azerbaijan)" }
 ];
 
 const storageKey = 'fantaballa.objectives.saved.v2';
@@ -219,6 +219,101 @@ function shuffleArray(values) {
   return copy;
 }
 
+const championsLogoCache = new Map();
+
+function clubInitials(name) {
+  const ignored = new Set(['fc', 'cf', 'fk', 'sk', 'as', 'rc', 'cp']);
+  const parts = String(name)
+    .replace(/[()]/g, ' ')
+    .split(/\s+/)
+    .map(part => part.trim())
+    .filter(Boolean)
+    .filter(part => !ignored.has(part.toLowerCase()));
+
+  if (!parts.length) return 'CL';
+  if (parts.length === 1) return parts[0].slice(0, 3).toUpperCase();
+  return parts.slice(0, 3).map(part => part[0]).join('').toUpperCase();
+}
+
+async function getHighQualityClubLogo(club) {
+  const cacheKey = club.wikiTitle || club.name;
+  if (championsLogoCache.has(cacheKey)) {
+    return championsLogoCache.get(cacheKey);
+  }
+
+  const params = new URLSearchParams({
+    action: 'query',
+    titles: cacheKey,
+    prop: 'pageimages',
+    piprop: 'original|thumbnail',
+    pithumbsize: '800',
+    redirects: '1',
+    format: 'json',
+    origin: '*'
+  });
+
+  const response = await fetch(`https://en.wikipedia.org/w/api.php?${params.toString()}`, {
+    cache: 'force-cache'
+  });
+
+  if (!response.ok) {
+    throw new Error(`Logo non disponibile per ${club.name}`);
+  }
+
+  const data = await response.json();
+  const page = Object.values(data?.query?.pages || {})[0];
+  const logoUrl = page?.original?.source || page?.thumbnail?.source || '';
+
+  if (!logoUrl) {
+    throw new Error(`Nessuna immagine trovata per ${club.name}`);
+  }
+
+  championsLogoCache.set(cacheKey, logoUrl);
+  return logoUrl;
+}
+
+function showClubFallback(media, club) {
+  media.replaceChildren();
+  media.classList.remove('is-logo-loading');
+  media.classList.add('is-logo-fallback');
+  media.dataset.initials = clubInitials(club.name);
+  media.setAttribute('role', 'img');
+  media.setAttribute('aria-label', `Club ${club.name}`);
+}
+
+async function renderChampionsClubLogo(media, club) {
+  media.replaceChildren();
+  media.classList.remove('is-logo-fallback');
+  media.classList.add('is-logo-loading');
+  media.dataset.initials = clubInitials(club.name);
+  media.style.backgroundImage = 'none';
+  media.setAttribute('aria-label', `Logo ${club.name}`);
+
+  try {
+    const logoUrl = await getHighQualityClubLogo(club);
+    const img = document.createElement('img');
+    img.className = 'champions-club-logo';
+    img.alt = `Stemma ${club.name}`;
+    img.decoding = 'async';
+    img.loading = 'lazy';
+    img.referrerPolicy = 'no-referrer';
+
+    img.addEventListener('load', () => {
+      media.classList.remove('is-logo-loading');
+    }, { once: true });
+
+    img.addEventListener('error', () => {
+      showClubFallback(media, club);
+    }, { once: true });
+
+    img.src = logoUrl;
+    media.appendChild(img);
+  } catch (error) {
+    console.warn(error);
+    showClubFallback(media, club);
+  }
+}
+
 function applyRandomChampionsLeagueClubs() {
   const championsTiles = Array.from(document.querySelectorAll('[data-random-club="true"]'));
   if (!championsTiles.length) return;
@@ -231,9 +326,7 @@ function applyRandomChampionsLeagueClubs() {
     const label = tile.querySelector('.world-flag-label');
 
     if (media) {
-      const logoUrl = `https://www.google.com/s2/favicons?sz=256&domain=${encodeURIComponent(club.domain)}`;
-      media.style.backgroundImage = `url("${logoUrl}")`;
-      media.setAttribute('aria-label', `Logo ${club.name}`);
+      renderChampionsClubLogo(media, club);
     }
 
     if (label) {
