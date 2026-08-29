@@ -219,7 +219,10 @@ function shuffleArray(values) {
   return copy;
 }
 
-const championsLogoCache = new Map();
+const championsWallpapers = [
+  'assets/champions-wallpaper-1.webp',
+  'assets/champions-wallpaper-2.webp'
+];
 
 function clubInitials(name) {
   const ignored = new Set(['fc', 'cf', 'fk', 'sk', 'as', 'rc', 'cp']);
@@ -235,83 +238,17 @@ function clubInitials(name) {
   return parts.slice(0, 3).map(part => part[0]).join('').toUpperCase();
 }
 
-async function getHighQualityClubLogo(club) {
-  const cacheKey = club.wikiTitle || club.name;
-  if (championsLogoCache.has(cacheKey)) {
-    return championsLogoCache.get(cacheKey);
-  }
-
-  const params = new URLSearchParams({
-    action: 'query',
-    titles: cacheKey,
-    prop: 'pageimages',
-    piprop: 'original|thumbnail',
-    pithumbsize: '800',
-    redirects: '1',
-    format: 'json',
-    origin: '*'
-  });
-
-  const response = await fetch(`https://en.wikipedia.org/w/api.php?${params.toString()}`, {
-    cache: 'force-cache'
-  });
-
-  if (!response.ok) {
-    throw new Error(`Logo non disponibile per ${club.name}`);
-  }
-
-  const data = await response.json();
-  const page = Object.values(data?.query?.pages || {})[0];
-  const logoUrl = page?.original?.source || page?.thumbnail?.source || '';
-
-  if (!logoUrl) {
-    throw new Error(`Nessuna immagine trovata per ${club.name}`);
-  }
-
-  championsLogoCache.set(cacheKey, logoUrl);
-  return logoUrl;
-}
-
-function showClubFallback(media, club) {
+function applyChampionsWallpaper(media, club, wallpaperUrl, tileIndex) {
   media.replaceChildren();
-  media.classList.remove('is-logo-loading');
-  media.classList.add('is-logo-fallback');
+  media.classList.remove('is-logo-loading', 'is-logo-fallback');
   media.dataset.initials = clubInitials(club.name);
+  media.style.backgroundImage = `url(${wallpaperUrl})`;
+  media.style.backgroundSize = 'cover';
+  media.style.backgroundRepeat = 'no-repeat';
+  const positions = ['center center', 'left center', 'right center', '60% center', '40% center'];
+  media.style.backgroundPosition = positions[tileIndex % positions.length];
   media.setAttribute('role', 'img');
-  media.setAttribute('aria-label', `Club ${club.name}`);
-}
-
-async function renderChampionsClubLogo(media, club) {
-  media.replaceChildren();
-  media.classList.remove('is-logo-fallback');
-  media.classList.add('is-logo-loading');
-  media.dataset.initials = clubInitials(club.name);
-  media.style.backgroundImage = 'none';
-  media.setAttribute('aria-label', `Logo ${club.name}`);
-
-  try {
-    const logoUrl = await getHighQualityClubLogo(club);
-    const img = document.createElement('img');
-    img.className = 'champions-club-logo';
-    img.alt = `Stemma ${club.name}`;
-    img.decoding = 'async';
-    img.loading = 'lazy';
-    img.referrerPolicy = 'no-referrer';
-
-    img.addEventListener('load', () => {
-      media.classList.remove('is-logo-loading');
-    }, { once: true });
-
-    img.addEventListener('error', () => {
-      showClubFallback(media, club);
-    }, { once: true });
-
-    img.src = logoUrl;
-    media.appendChild(img);
-  } catch (error) {
-    console.warn(error);
-    showClubFallback(media, club);
-  }
+  media.setAttribute('aria-label', `Wallpaper Champions League - ${club.name}`);
 }
 
 function applyRandomChampionsLeagueClubs() {
@@ -324,9 +261,10 @@ function applyRandomChampionsLeagueClubs() {
     const club = clubs[index % clubs.length];
     const media = tile.querySelector('.flag-media');
     const label = tile.querySelector('.world-flag-label');
+    const wallpaperUrl = championsWallpapers[index % championsWallpapers.length];
 
     if (media) {
-      renderChampionsClubLogo(media, club);
+      applyChampionsWallpaper(media, club, wallpaperUrl, index);
     }
 
     if (label) {
