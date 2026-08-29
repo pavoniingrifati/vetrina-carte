@@ -943,7 +943,129 @@
     </footer>
   </main>
 
+  <script id="objectives-isolation-bootstrap">
+    // Isola la UI Obiettivi dal vecchio js/script.js: il resto del sito continua a usare lo script originale.
+    (() => {
+      const ids = ['objectivesList','generateAllObjectives','clearSavedObjectives','objectivesSaveStatus'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.id = `fb-local-${id}`;
+      });
+    })();
+  </script>
   <script src="data/cards.js"></script>
-  <script src="js/script.js?v=20260829-3"></script>
+  <script src="js/script.js?v=20260829-5"></script>
+  <script id="objectives-standalone-controller">
+    (() => {
+      const categories = {"live": {"label": "Obiettivi Live", "kicker": "Live", "goals": {"bronze": ["5 diversi benefattori", "Una singola donazione da 10+", "Presenza in campo del top liker", "20 mila like", "Sentire un coro di un giocatore", "1 nuovo follower", "Trovare un giocatore doppione nei pacchetti", "1 nuovo iscritto al progetto", "Pacchetto patatine trovare carta over bronze", "Raggiungere un totale di 100 monete", "Max 2 tiri in porta subiti", "500 like per i primi 5 top liker", "Un gol nei primi 30 minuti", "Presenza del top donator"], "silver": ["10 diversi benefattori", "Una singola donazione da 100+", "Assist o gol del top liker", "50 mila like", "Raggiungere un totale di 500 monete", "Pacchetto patatine trovare carta over Silver", "Top donator del mese deve essere in live", "1000 like per i primi 5 top liker", "Vincere con 2 gol di scarto", "Max 1 tiro in porta subito", "Vincere senza cambi", "Un gol nei primi 20 minuti", "Non utilizzare nessun oro per una partita", "Donazione poco prima di un gol"], "gold": ["15 diversi benefattori", "Un gol nei primi 10 minuti", "0 tiri in porta subiti", "Una singola donazione da 500+", "Gol del top liker", "Gol del top donator", "Vincere con 3 gol di scarto", "Trovare nei pacchetti patatina una carta tots o special", "Trovare una nuova carta o un doppione special o tots", "100 mila like", "Sentire un coro di un giocatore 2 volte consecutivamente", "Raggiungere un totale di 1000 monete", "Pacchetto patatine trovare carta over Gold", "Qualcuno fa Jackpot", "2000 like per i primi 5 top liker", "Qualcuno indovina un risultato", "Vincere senza Ali per una partita", "Giocatore di movimento in porta per 15 min", "Chi dona 500+ segna un gol"]}}, "match": {"label": "Obiettivi Match", "kicker": "Partita", "goals": {"bronze": ["1 clean sheet", "Segnare 2 gol", "Non subire un rigore", "Non subire autogol", "Segnare almeno in 2 partite", "Fare gol con assist", "Fare un MVP", "Non subire una tripletta", "Max 4 gol subiti in una partita", "Gol di un attaccante centrale", "MVP deve essere chi segna il gol", "Non subire gol da un ex giocatore", "Non subire gol dopo il 90+", "Non ricevere nessun rosso", "Non subire gol nei primi 10 minuti di gioco", "Non sbagliare rigori"], "silver": ["MVP deve essere sempre un giocatore offensivo", "Non subire gol da fuori area", "Fare gol con un subentrato", "Non subire gol da calcio d'angolo", "Non subire una doppietta", "Segnare almeno 4 gol", "Ricevere meno gialli dell'avversario", "Non farsi superare in nessuna classifica", "Max 3 gol subiti in una partita", "Non subire gol nei primi 20 minuti di gioco", "Non subire gol nei tempi di recupero", "Gol di un centrocampista (anche TRQ)"], "gold": ["2 clean sheet", "Nessun MVP degli avversari", "MVP non deve essere chi segna il gol", "Segnare in tutte le partite", "Segnare almeno 8 gol", "Il giocatore più costoso degli avversari non deve segnare", "0 sconfitte", "4 vittorie", "Superare in classifica una squadra", "Non subire gol nei primi 40 minuti di gioco", "Non andare mai in svantaggio", "Max 2 gol subiti in una partita", "Gol di un difensore (anche terzini)", "Non perdere in campionato o in coppa"]}}, "cursed": {"label": "Obiettivi Cursed", "kicker": "Cursed", "goals": {"bronze": ["Segnare con un giocatore fuori ruolo", "Andare in svantaggio e vincere comunque", "Fare gol vittoria dopo il 90'", "Prendere un rosso e restare imbattuti", "Sboccare il match con un autogol avversario", "Gol decisivo del giocatore col l'overall più basso in campo", "Vincere tutte le partite senza subire gol"], "silver": ["Andare sotto di 2 gol e rimontare", "Vincere 1-0 con un rigore", "Segnare in inferiorità numerica", "Fare 2 gol con un subentrato", "Colpire 3 legni in una partita", "Vincere una partita con 60% o più di posesso palla", "Vincere una partita con 40% o meno di posesso palla"], "gold": ["Farsi rimontare un 2-0 e pareggiare o perdere la partita", "Subire 2 gol nei 2 tempi di recupero di recupero", "Subire gol dal portiere", "Perdere una partita 1-0 con un rigore", "Non fare tiri in porta", "Non segnare per 2 partite consecutive"]}}};
+      const order = ['live', 'match', 'cursed'];
+      const difficulties = ['bronze', 'silver', 'gold'];
+      const difficultyLabels = { bronze: 'Bronzo', silver: 'Argento', gold: 'Oro' };
+      const storageKey = 'fantaballa.objectives.standalone.v1';
+
+      // Ripristina gli ID dopo che lo script generale ha completato l'inizializzazione.
+      const restore = {
+        objectivesList: 'fb-local-objectivesList',
+        generateAllObjectives: 'fb-local-generateAllObjectives',
+        clearSavedObjectives: 'fb-local-clearSavedObjectives',
+        objectivesSaveStatus: 'fb-local-objectivesSaveStatus'
+      };
+      Object.entries(restore).forEach(([wanted, temporary]) => {
+        const el = document.getElementById(temporary);
+        if (el) el.id = wanted;
+      });
+
+      const list = document.getElementById('objectivesList');
+      const generateBtn = document.getElementById('generateAllObjectives');
+      const resetBtn = document.getElementById('clearSavedObjectives');
+      const status = document.getElementById('objectivesSaveStatus');
+      if (!list || !generateBtn) return;
+
+      const setStatus = text => { if (status) status.textContent = text; };
+      const getSaved = () => {
+        try {
+          const raw = localStorage.getItem(storageKey);
+          return raw ? JSON.parse(raw) : null;
+        } catch (e) { return null; }
+      };
+      const save = payload => {
+        try { localStorage.setItem(storageKey, JSON.stringify(payload)); }
+        catch (e) { console.warn('LocalStorage non disponibile', e); }
+      };
+      const pick = (pool, previous = '') => {
+        if (!Array.isArray(pool) || !pool.length) return 'Obiettivo da configurare';
+        const alternatives = pool.length > 1 ? pool.filter(v => v !== previous) : pool;
+        const source = alternatives.length ? alternatives : pool;
+        return source[Math.floor(Math.random() * source.length)];
+      };
+      const generate = previousPayload => {
+        const objectives = {};
+        order.forEach(categoryKey => {
+          const previousItems = previousPayload?.objectives?.[categoryKey] || [];
+          objectives[categoryKey] = difficulties.map(diff => {
+            const oldText = previousItems.find(item => item.difficulty === diff)?.text || '';
+            return { difficulty: diff, text: pick(categories[categoryKey].goals[diff], oldText) };
+          });
+        });
+        return { generatedAt: new Date().toISOString(), objectives };
+      };
+      const render = payload => {
+        order.forEach(categoryKey => {
+          const holder = document.getElementById(`objectives-${categoryKey}`);
+          if (!holder) return;
+          const info = categories[categoryKey];
+          holder.replaceChildren();
+          (payload.objectives[categoryKey] || []).forEach(item => {
+            const card = document.createElement('article');
+            card.className = `objective-card ${categoryKey} ${item.difficulty}`;
+
+            const top = document.createElement('div');
+            top.className = 'objective-card-top';
+            const kicker = document.createElement('span');
+            kicker.textContent = info.kicker;
+            const diff = document.createElement('strong');
+            diff.textContent = difficultyLabels[item.difficulty] || item.difficulty;
+            top.append(kicker, diff);
+
+            const rule = document.createElement('div');
+            rule.className = 'objective-card-rule';
+            rule.textContent = item.text;
+
+            const foot = document.createElement('div');
+            foot.className = 'objective-card-foot';
+            foot.textContent = `${info.label} • ${difficultyLabels[item.difficulty] || item.difficulty}`;
+
+            card.append(top, rule, foot);
+            holder.append(card);
+          });
+        });
+        const d = new Date(payload.generatedAt);
+        setStatus(`Nuovo set generato • ${d.toLocaleDateString('it-IT')} ${d.toLocaleTimeString('it-IT', {hour:'2-digit',minute:'2-digit',second:'2-digit'})}`);
+        list.classList.remove('is-revealing');
+        void list.offsetWidth;
+        list.classList.add('is-revealing');
+      };
+      const createNew = () => {
+        const payload = generate(getSaved());
+        save(payload);
+        render(payload);
+      };
+
+      generateBtn.addEventListener('click', event => {
+        event.preventDefault();
+        createNew();
+      });
+      if (resetBtn) resetBtn.addEventListener('click', event => {
+        event.preventDefault();
+        try { localStorage.removeItem(storageKey); } catch (e) {}
+        createNew();
+      });
+
+      const saved = getSaved();
+      if (saved?.objectives) render(saved);
+      else createNew();
+    })();
+  </script>
+
 </body>
 </html>
