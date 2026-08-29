@@ -47,55 +47,43 @@ const categoryFallback = {
   cursed: { label: 'Obiettivi Cursed', kicker: 'Cursed' }
 };
 
-const worldCupCountries = [
-  { code: 'mx', name: 'Messico' },
-  { code: 'za', name: 'Sudafrica' },
-  { code: 'kr', name: 'Corea del Sud' },
-  { code: 'cz', name: 'Cechia' },
-  { code: 'ca', name: 'Canada' },
-  { code: 'ba', name: 'Bosnia Erzegovina' },
-  { code: 'qa', name: 'Qatar' },
-  { code: 'ch', name: 'Svizzera' },
-  { code: 'br', name: 'Brasile' },
-  { code: 'ma', name: 'Marocco' },
-  { code: 'ht', name: 'Haiti' },
-  { code: 'gb-sct', name: 'Scozia' },
-  { code: 'us', name: 'Stati Uniti' },
-  { code: 'py', name: 'Paraguay' },
-  { code: 'au', name: 'Australia' },
-  { code: 'tr', name: 'Turchia' },
-  { code: 'de', name: 'Germania' },
-  { code: 'cw', name: 'Curaçao' },
-  { code: 'ci', name: "Costa d'Avorio" },
-  { code: 'ec', name: 'Ecuador' },
-  { code: 'nl', name: 'Paesi Bassi' },
-  { code: 'jp', name: 'Giappone' },
-  { code: 'se', name: 'Svezia' },
-  { code: 'tn', name: 'Tunisia' },
-  { code: 'be', name: 'Belgio' },
-  { code: 'eg', name: 'Egitto' },
-  { code: 'ir', name: 'Iran' },
-  { code: 'nz', name: 'Nuova Zelanda' },
-  { code: 'es', name: 'Spagna' },
-  { code: 'cv', name: 'Capo Verde' },
-  { code: 'sa', name: 'Arabia Saudita' },
-  { code: 'uy', name: 'Uruguay' },
-  { code: 'fr', name: 'Francia' },
-  { code: 'sn', name: 'Senegal' },
-  { code: 'iq', name: 'Iraq' },
-  { code: 'no', name: 'Norvegia' },
-  { code: 'ar', name: 'Argentina' },
-  { code: 'dz', name: 'Algeria' },
-  { code: 'at', name: 'Austria' },
-  { code: 'jo', name: 'Giordania' },
-  { code: 'pt', name: 'Portogallo' },
-  { code: 'cd', name: 'RD Congo' },
-  { code: 'uz', name: 'Uzbekistan' },
-  { code: 'co', name: 'Colombia' },
-  { code: 'gb-eng', name: 'Inghilterra' },
-  { code: 'hr', name: 'Croazia' },
-  { code: 'gh', name: 'Ghana' },
-  { code: 'pa', name: 'Panama' }
+const championsLeagueClubs = [
+  { name: "Paris", domain: "psg.fr" },
+  { name: "Bayern München", domain: "fcbayern.com" },
+  { name: "Real Madrid", domain: "realmadrid.com" },
+  { name: "Liverpool", domain: "liverpoolfc.com" },
+  { name: "Inter", domain: "inter.it" },
+  { name: "Manchester City", domain: "mancity.com" },
+  { name: "Arsenal", domain: "arsenal.com" },
+  { name: "Barcelona", domain: "fcbarcelona.com" },
+  { name: "Atlético de Madrid", domain: "atleticodemadrid.com" },
+  { name: "Borussia Dortmund", domain: "bvb.de" },
+  { name: "Roma", domain: "asroma.com" },
+  { name: "Sporting CP", domain: "sporting.pt" },
+  { name: "Aston Villa", domain: "avfc.co.uk" },
+  { name: "Porto", domain: "fcporto.pt" },
+  { name: "Manchester United", domain: "manutd.com" },
+  { name: "Club Brugge", domain: "clubbrugge.be" },
+  { name: "Real Betis", domain: "realbetisbalompie.es" },
+  { name: "PSV", domain: "psv.nl" },
+  { name: "Feyenoord", domain: "feyenoord.com" },
+  { name: "Lille", domain: "losc.fr" },
+  { name: "Bodø/Glimt", domain: "glimt.no" },
+  { name: "Napoli", domain: "sscnapoli.it" },
+  { name: "Leipzig", domain: "rbleipzig.com" },
+  { name: "Villarreal", domain: "villarrealcf.es" },
+  { name: "Fenerbahçe", domain: "fenerbahce.org" },
+  { name: "Shakhtar", domain: "shakhtar.com" },
+  { name: "Galatasaray", domain: "galatasaray.org" },
+  { name: "Slavia Praha", domain: "slavia.cz" },
+  { name: "Slovan Bratislava", domain: "skslovan.com" },
+  { name: "Stuttgart", domain: "vfb.de" },
+  { name: "AEK Athens", domain: "aekfc.gr" },
+  { name: "LASK", domain: "lask.at" },
+  { name: "Como", domain: "comofootball.com" },
+  { name: "Lens", domain: "rclens.fr" },
+  { name: "Viking", domain: "vikingfotball.no" },
+  { name: "Sabah", domain: "sabahfc.az" }
 ];
 
 const storageKey = 'fantaballa.objectives.saved.v2';
@@ -231,23 +219,25 @@ function shuffleArray(values) {
   return copy;
 }
 
-function applyRandomWorldCupFlags() {
-  const worldCupTiles = Array.from(document.querySelectorAll('[data-random-flag="true"]'));
-  if (!worldCupTiles.length) return;
+function applyRandomChampionsLeagueClubs() {
+  const championsTiles = Array.from(document.querySelectorAll('[data-random-club="true"]'));
+  if (!championsTiles.length) return;
 
-  const flags = shuffleArray(worldCupCountries);
+  const clubs = shuffleArray(championsLeagueClubs);
 
-  worldCupTiles.forEach((tile, index) => {
-    const country = flags[index % flags.length];
+  championsTiles.forEach((tile, index) => {
+    const club = clubs[index % clubs.length];
     const media = tile.querySelector('.flag-media');
     const label = tile.querySelector('.world-flag-label');
 
     if (media) {
-      media.style.backgroundImage = `url("https://flagcdn.com/w640/${country.code}.png")`;
+      const logoUrl = `https://www.google.com/s2/favicons?sz=256&domain=${encodeURIComponent(club.domain)}`;
+      media.style.backgroundImage = `url("${logoUrl}")`;
+      media.setAttribute('aria-label', `Logo ${club.name}`);
     }
 
     if (label) {
-      label.textContent = country.name;
+      label.textContent = club.name;
     }
   });
 }
@@ -813,7 +803,7 @@ window.addEventListener('keydown', event => {
   }
 });
 
-applyRandomWorldCupFlags();
+applyRandomChampionsLeagueClubs();
 updateNews(0);
 restartNewsTimer();
 loadObjectives();
