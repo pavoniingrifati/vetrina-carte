@@ -296,7 +296,13 @@ function saveObjectives(generated) {
     generatedAt: new Date().toISOString(),
     objectives: generated
   };
-  localStorage.setItem(storageKey, JSON.stringify(payload));
+
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(payload));
+  } catch (error) {
+    console.warn('[obiettivi] localStorage non disponibile: continuo senza salvataggio persistente', error);
+  }
+
   return payload;
 }
 
@@ -306,6 +312,8 @@ function getSavedObjectives() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || !parsed.objectives) return null;
+    const hasCurrentCategories = objectiveOrder.every(categoryKey => Array.isArray(parsed.objectives[categoryKey]));
+    if (!hasCurrentCategories) return null;
     return parsed;
   } catch {
     return null;
@@ -359,17 +367,18 @@ function renderObjectives(payload) {
 }
 
 function createNewObjectives() {
-  if (!objectivesData) {
-    setStatus('Attendi: caricamento obiettivi in corso...');
-    return;
-  }
+  if (!objectivesData) return;
   const generated = generateAllCategoryObjectives();
   const saved = saveObjectives(generated);
   renderObjectives(saved);
 }
 
 function clearObjectivesSave() {
-  localStorage.removeItem(storageKey);
+  try {
+    localStorage.removeItem(storageKey);
+  } catch (error) {
+    console.warn('[obiettivi] impossibile cancellare localStorage: genero comunque un nuovo set', error);
+  }
   createNewObjectives();
 }
 
@@ -380,9 +389,6 @@ async function loadObjectives() {
     const res = await fetch('data/obiettivi.json', { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     objectivesData = await res.json();
-    if (!objectivesData?.categories?.live || !objectivesData?.categories?.match || !objectivesData?.categories?.cursed) {
-      throw new Error('Categorie obiettivi mancanti o non valide');
-    }
   } catch (error) {
     console.error(error);
     setStatus('Errore: non riesco a caricare data/obiettivi.json');
