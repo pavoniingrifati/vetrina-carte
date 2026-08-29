@@ -33,7 +33,7 @@ const newsSlides = [
   }
 ];
 
-const objectiveOrder = ['live', 'stagionali', 'match', 'cursed'];
+const objectiveOrder = ['live', 'match', 'cursed'];
 const difficultyOrder = ['bronze', 'silver', 'gold'];
 const difficultyLabels = {
   bronze: 'Bronzo',
@@ -43,7 +43,6 @@ const difficultyLabels = {
 
 const categoryFallback = {
   live: { label: 'Obiettivi Live', kicker: 'Live' },
-  stagionali: { label: 'Obiettivi Stagionali', kicker: 'Stagione' },
   match: { label: 'Obiettivi Match', kicker: 'Partita' },
   cursed: { label: 'Obiettivi Cursed', kicker: 'Cursed' }
 };
@@ -99,7 +98,7 @@ const worldCupCountries = [
   { code: 'pa', name: 'Panama' }
 ];
 
-const storageKey = 'fantaballa.objectives.saved.v1';
+const storageKey = 'fantaballa.objectives.saved.v2';
 const subscribersEndpoint = 'data/abbonati.json';
 const cardsEndpoint = 'data/cards.json';
 const cardsBaseUrl = 'https://pavoniingrifati.github.io/vetrina-carte/';
@@ -360,7 +359,10 @@ function renderObjectives(payload) {
 }
 
 function createNewObjectives() {
-  if (!objectivesData) return;
+  if (!objectivesData) {
+    setStatus('Attendi: caricamento obiettivi in corso...');
+    return;
+  }
   const generated = generateAllCategoryObjectives();
   const saved = saveObjectives(generated);
   renderObjectives(saved);
@@ -378,6 +380,9 @@ async function loadObjectives() {
     const res = await fetch('data/obiettivi.json', { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     objectivesData = await res.json();
+    if (!objectivesData?.categories?.live || !objectivesData?.categories?.match || !objectivesData?.categories?.cursed) {
+      throw new Error('Categorie obiettivi mancanti o non valide');
+    }
   } catch (error) {
     console.error(error);
     setStatus('Errore: non riesco a caricare data/obiettivi.json');
