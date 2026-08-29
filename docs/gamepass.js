@@ -857,17 +857,54 @@ function renderRoad(points, tiers) {
   const minW = Math.max(820, list.length * 140);
   gpRoad.style.minWidth = `${minW}px`;
 
-  const max =
-    Number(list[list.length - 1].requiredPoints) ||
-    100;
+  // I marker dei tier sono distribuiti in modo uniforme per indice,
+  // quindi anche cursore e riempimento devono usare la STESSA scala.
+  // Usare points / ultimoTier.requiredPoints fa disallineare la barra
+  // quando le soglie XP non sono equidistanti (es. 10k -> 22k -> 36k).
+  const currentPoints = Math.max(0, Number(points || 0) || 0);
+  const n = list.length;
 
-  const fillPct = Math.max(
-    0,
-    Math.min(
-      100,
-      (Number(points || 0) / max) * 100
-    )
-  );
+  let fillPct = 0;
+
+  if (n <= 1) {
+    fillPct = currentPoints >= (Number(list[0].requiredPoints) || 0) ? 100 : 0;
+  } else {
+    const firstReq = Number(list[0].requiredPoints) || 0;
+    const lastReq = Number(list[n - 1].requiredPoints) || 0;
+
+    if (currentPoints < firstReq) {
+      fillPct = 0;
+    } else if (currentPoints >= lastReq) {
+      fillPct = 100;
+    } else {
+      // Trova l'intervallo di tier in cui si trovano gli XP correnti.
+      let lowerIdx = 0;
+
+      for (let i = 0; i < n - 1; i++) {
+        const a = Number(list[i].requiredPoints) || 0;
+        const b = Number(list[i + 1].requiredPoints) || 0;
+
+        if (currentPoints >= a && currentPoints < b) {
+          lowerIdx = i;
+          break;
+        }
+      }
+
+      const lowerReq = Number(list[lowerIdx].requiredPoints) || 0;
+      const upperReq = Number(list[lowerIdx + 1].requiredPoints) || lowerReq;
+
+      // Ogni tratto tra due marker occupa 1/(n-1) della timeline.
+      const segmentStartPct = (lowerIdx / (n - 1)) * 100;
+      const segmentEndPct = ((lowerIdx + 1) / (n - 1)) * 100;
+      const segmentXp = upperReq - lowerReq;
+      const localProgress = segmentXp > 0
+        ? Math.max(0, Math.min(1, (currentPoints - lowerReq) / segmentXp))
+        : 0;
+
+      fillPct = segmentStartPct +
+        ((segmentEndPct - segmentStartPct) * localProgress);
+    }
+  }
 
   const line = el("div", { class: "roadline" }, [
     el("div", { class: "roadbar" }, [
@@ -879,7 +916,6 @@ function renderRoad(points, tiers) {
   ]);
 
   const marks = el("div", { class: "roadmarks" }, []);
-  const n = list.length;
 
   list.forEach((t, idx) => {
     const req = Number(t.requiredPoints) || 0;
