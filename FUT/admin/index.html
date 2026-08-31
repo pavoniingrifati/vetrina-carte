@@ -48,7 +48,7 @@
     .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
     .toolbar input,.toolbar select{width:auto;min-width:150px;flex:1}
     .list{border:1px solid var(--line);border-radius:12px;overflow:hidden}
-    .row{display:grid;grid-template-columns:58px minmax(160px,1.5fr) 110px 140px 120px 104px;gap:9px;align-items:center;padding:9px 10px;border-bottom:1px solid #1d2a37;background:#0a1119}
+    .row{display:grid;grid-template-columns:34px 58px minmax(160px,1.5fr) 110px 140px 120px 112px;gap:9px;align-items:center;padding:9px 10px;border-bottom:1px solid #1d2a37;background:#0a1119}
     .row:last-child{border-bottom:0}
     .row.head{position:sticky;top:0;z-index:2;background:#101923;font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em}
     .thumb{width:48px;height:62px;object-fit:contain;background:#030608;border-radius:6px}
@@ -63,12 +63,21 @@
     .bulk summary{padding:13px;cursor:pointer;font-weight:800}
     .bulk .inside{padding:0 13px 13px}
     .footer-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+
+    .select-col{display:flex;align-items:center;justify-content:center}
+    .select-col input{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+    .delete-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 12px;padding:10px;
+      background:#130d10;border:1px solid #56303a;border-radius:11px}
+    .delete-tools .hint{color:#d7a8b0;font-size:12px;flex:1;min-width:210px}
+    .btn.delete-selected{background:#33131a;border-color:#7d3341;color:#ff9cac}
+    .btn.delete-selected:disabled{opacity:.45;cursor:not-allowed}
+
     #toast{position:fixed;right:18px;bottom:18px;max-width:390px;padding:12px 14px;background:#101923;border:1px solid #35506a;border-radius:11px;display:none;z-index:50}
     @media(max-width:1050px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:760px){
       .shell{padding:12px}.grid2{grid-template-columns:1fr}.preview{grid-template-columns:92px 1fr}.preview img{width:82px;height:115px}
-      .row{grid-template-columns:50px minmax(130px,1fr) 88px}.row>:nth-child(4),.row>:nth-child(5){display:none}
-      .row.head>:nth-child(4),.row.head>:nth-child(5){display:none}.stats{grid-template-columns:1fr 1fr}
+      .row{grid-template-columns:32px 50px minmax(130px,1fr) 94px}.row>:nth-child(5),.row>:nth-child(6){display:none}
+      .row.head>:nth-child(5),.row.head>:nth-child(6){display:none}.stats{grid-template-columns:1fr 1fr}
     }
   </style>
 </head>
@@ -77,7 +86,7 @@
   <div class="top">
     <div>
       <h1>Gestione Carte FUT</h1>
-      <div class="sub">Modifica il database senza toccare il codice. Questa pagina lavora solo nel browser: nulla viene scritto automaticamente su GitHub o Firebase.</div>
+      <div class="sub">Aggiungi, modifica ed elimina le carte senza toccare il codice. Questa pagina lavora solo nel browser: nulla viene scritto automaticamente su GitHub o Firebase.</div>
     </div>
     <div id="loadStatus" class="status">Caricamento cards.json…</div>
   </div>
@@ -190,8 +199,16 @@
         <select id="filterSeries"><option value="">Tutte le serie</option></select>
       </div>
 
+      <div class="delete-tools">
+        <button id="selectVisible" class="btn ghost" type="button">Seleziona visibili</button>
+        <button id="clearSelection" class="btn ghost" type="button">Deseleziona</button>
+        <button id="deleteSelected" class="btn delete-selected" type="button" disabled>Elimina selezionate (0)</button>
+        <span class="hint">L'eliminazione diventa effettiva sul sito solo dopo aver esportato e sostituito <b>cards.json</b>.</span>
+      </div>
+
       <div class="list">
         <div class="row head">
+          <div class="select-col"><input id="selectAllVisible" type="checkbox" aria-label="Seleziona tutte le carte visibili"></div>
           <div>Img</div><div>Carta</div><div>Ruolo</div><div>Serie</div><div>Squadra</div><div>Azioni</div>
         </div>
         <div id="rows"></div>
@@ -277,14 +294,14 @@
   }
 
   function fillOptions(){
-    const games = unique('game');
     const roles = unique('role');
     const series = unique('series');
     const rarities = unique('rarity');
 
-    const gameValues = [...new Set(['Fantaballa FC','Gotham City',...games])];
+    // Le uniche modalità attuali ammesse per nuove carte.
+    const gameValues = ['Fantaballa FC','Gotham City'];
     els.game.innerHTML = gameValues.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
-    $('filterGame').innerHTML = '<option value="">Tutte le squadre</option>' + gameValues.map(v=>`<option>${escapeHtml(v)}</option>`).join('');
+    $('filterGame').innerHTML = '<option value="">Tutte le squadre</option>' + gameValues.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
     $('roleList').innerHTML = roles.map(v=>`<option value="${escapeHtml(v)}"></option>`).join('');
     $('seriesList').innerHTML = series.map(v=>`<option value="${escapeHtml(v)}"></option>`).join('');
     $('rarityList').innerHTML = rarities.map(v=>`<option value="${escapeHtml(v)}"></option>`).join('');
@@ -323,6 +340,7 @@
 
     els.rows.innerHTML = filtered.map(({c,i})=>`
       <div class="row">
+        <div class="select-col"><input type="checkbox" class="card-select" data-select="${i}" aria-label="Seleziona ${escapeHtml(c.name||'carta')}"></div>
         <div><img class="thumb" src="${escapeHtml(cardImageUrl(c))}" alt="" data-fallback="1"></div>
         <div><div class="name">${escapeHtml(c.name||'Senza nome')}</div><div class="meta">${escapeHtml(c.id||'')} · ${escapeHtml(c.rarity||'')}</div></div>
         <div>${escapeHtml(c.role||'—')}</div>
@@ -330,7 +348,7 @@
         <div>${escapeHtml(c.game||'—')}</div>
         <div class="mini">
           <button type="button" data-edit="${i}">Modifica</button>
-          <button type="button" class="del" data-del="${i}">Elimina</button>
+          <button type="button" class="del" data-del="${i}" title="Elimina questa carta">🗑 Elimina</button>
         </div>
       </div>`).join('');
 
@@ -339,6 +357,41 @@
     });
     els.rows.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editCard(Number(b.dataset.edit))));
     els.rows.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>deleteCard(Number(b.dataset.del))));
+    els.rows.querySelectorAll('.card-select').forEach(cb=>cb.addEventListener('change',updateSelectionUi));
+    updateSelectionUi();
+  }
+
+  function selectedIndexes(){
+    return [...els.rows.querySelectorAll('.card-select:checked')]
+      .map(cb=>Number(cb.dataset.select))
+      .filter(Number.isInteger);
+  }
+
+  function updateSelectionUi(){
+    const count = selectedIndexes().length;
+    const btn = $('deleteSelected');
+    btn.disabled = count===0;
+    btn.textContent = `Elimina selezionate (${count})`;
+    const boxes = [...els.rows.querySelectorAll('.card-select')];
+    const all = $('selectAllVisible');
+    if (all){
+      all.checked = boxes.length>0 && boxes.every(cb=>cb.checked);
+      all.indeterminate = boxes.some(cb=>cb.checked) && !all.checked;
+    }
+  }
+
+  function deleteSelectedCards(){
+    const indexes = [...new Set(selectedIndexes())].sort((a,b)=>b-a);
+    if (!indexes.length) return;
+    const names = indexes.slice(0,5).map(i=>cards[i]&&cards[i].name).filter(Boolean);
+    const suffix = indexes.length>5 ? ` e altre ${indexes.length-5}` : '';
+    if (!confirm(`Eliminare ${indexes.length} carte dal database locale?\n\n${names.join('\n')}${suffix}`)) return;
+    indexes.forEach(i=>cards.splice(i,1));
+    editingIndex = -1;
+    resetForm();
+    fillOptions();
+    render();
+    toast(`${indexes.length} carte eliminate dal database locale`);
   }
 
   function generateUniqueId(){
@@ -416,7 +469,7 @@
     els.formTitle.textContent = 'Modifica carta';
     els.save.textContent = 'Salva modifiche';
     els.name.value = c.name||'';
-    els.game.value = c.game||'Fantaballa FC';
+    els.game.value = /gotham/i.test(String(c.game||'')) ? 'Gotham City' : 'Fantaballa FC';
     els.role.value = c.role||'';
     els.seriesInput.value = c.series||'';
     els.rarity.value = c.rarity||'';
@@ -433,7 +486,7 @@
 
   function deleteCard(i){
     const c=cards[i];
-    if(!confirm(`Eliminare "${c.name}" dal database locale?`)) return;
+    if(!confirm(`Eliminare definitivamente "${c.name}" dal nuovo cards.json?\n\nLa carta sparirà dal sito dopo che avrai esportato e sostituito FUT/data/cards.json.`)) return;
     cards.splice(i,1);
     if (editingIndex===i) resetForm();
     else if (editingIndex>i) editingIndex--;
@@ -537,6 +590,19 @@
     els.localFile.value='';
   });
   $('bulkImport').addEventListener('click',importBulk);
+  $('selectVisible').addEventListener('click',()=>{
+    els.rows.querySelectorAll('.card-select').forEach(cb=>cb.checked=true);
+    updateSelectionUi();
+  });
+  $('clearSelection').addEventListener('click',()=>{
+    els.rows.querySelectorAll('.card-select').forEach(cb=>cb.checked=false);
+    updateSelectionUi();
+  });
+  $('selectAllVisible').addEventListener('change',e=>{
+    els.rows.querySelectorAll('.card-select').forEach(cb=>cb.checked=e.target.checked);
+    updateSelectionUi();
+  });
+  $('deleteSelected').addEventListener('click',deleteSelectedCards);
 
   autoLoad();
 })();
