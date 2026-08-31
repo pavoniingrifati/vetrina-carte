@@ -16,14 +16,14 @@ window.FANTABALLA_SEASON_CONFIG=Object.freeze({
   fallbackClub:{id:'fantaballa-real',name:'Fantaballa REAL',shortName:'REAL',colorClub:{primary:'#173A61',secondary:'#F2C84B',accent:'#E84A3A',text:'#FFFFFF'}}
  },
  data:{
-  primaryPlayers:'data/giocatori-real.json',
-  primaryClubs:'data/club-real.json',
-  secondaryPlayers:'data/giocatori.json',
-  secondaryClubs:'data/club.json',
-  commentary:'data/cronaca-gol.json',
+  primaryPlayers:'data/giocatori-real.json?v=f1935b487f74',
+  primaryClubs:'data/club-real.json?v=5fb25c7dcb21',
+  secondaryPlayers:'data/giocatori.json?v=4660acc7579f',
+  secondaryClubs:'data/club.json?v=1fd1a1a16d68',
+  commentary:'data/cronaca-gol.json?v=2c486bc8c395',
   variants:{
-   'serie-a':{id:'serie-a',label:'Serie A',players:'data/giocatori-real.json',clubs:'data/club-real.json',playerCount:494,description:'I club e i calciatori della Serie A 2026/2027.'},
-   legend:{id:'legend',label:'Legend',players:'data/storico/giocatori-storici.json',clubs:'data/storico/club-storiche.json',playerCount:796,description:'Quaranta squadre storiche italiane e internazionali. Ogni run seleziona casualmente 19 avversarie, mentre il draft usa l’intero database.'}
+   'serie-a':{id:'serie-a',label:'Serie A',players:'data/giocatori-real.json?v=f1935b487f74',clubs:'data/club-real.json?v=5fb25c7dcb21',playerCount:494,description:'I club e i calciatori della Serie A 2026/2027.'},
+   legend:{id:'legend',label:'Legend',players:'data/storico/giocatori-storici.json?v=4ea5df59d634',clubs:'data/storico/club-storiche.json?v=eb3557845d3a',playerCount:796,description:'Quaranta squadre storiche italiane e internazionali. Ogni run seleziona casualmente 19 avversarie, mentre il draft usa l’intero database.'}
   }
  },
  validation:{
@@ -47,8 +47,8 @@ window.FANTABALLA_SEASON_CONFIG=Object.freeze({
   chaosType:'caos_real'
  },
  events:{
-  commonCatalog:'data/events/events-common.json',
-  modeCatalog:'data/events/events-real.json',
+  commonCatalog:'data/events/events-common.json?v=b3e293a5bc8c',
+  modeCatalog:'data/events/events-real.json?v=b700642af15a',
   excludedAutoEventTitles:['Sostegno degli abbonati'],
   excludedDecisionIds:['whatsapp-pubblicato','cuggino-influencer','tiktok-boomer','ma-che-mollo']
  }

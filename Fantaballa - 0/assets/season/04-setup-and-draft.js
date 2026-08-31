@@ -96,16 +96,22 @@ function formatSignedIntesa(value){const n=Math.round(Number(value)||0);return `
 function isItalianPlayer(player){const nation=normalizeName(player?.nation||'');return nation==='italia'||nation==='italy'||nation==='italiano'||nation==='italiana'}
 function closedPortsAffects(player,rules=state?.seasonRules){return Boolean(rules?.nonItalianChemZero)&&Boolean(player)&&!isItalianPlayer(player)}
 function playerClubChemistryKey(player){return normalizeName(player&&player.club||'')}
+const UNKNOWN_CHEMISTRY_NATIONS=new Set(['nonindicata','nonindicato','nonnota','sconosciuta','sconosciuto','unknown','na','nessuna']);
+function chemistryNationKey(playerOrNation){
+ const raw=playerOrNation&&typeof playerOrNation==='object'?playerOrNation.nation:playerOrNation;
+ const key=normalizeName(raw||'');
+ return key&&!UNKNOWN_CHEMISTRY_NATIONS.has(key)?key:'';
+}
 function nationMirrorsClub(player){
- const club=clubById(player&&player.club);
- return !!club&&normalizeName(player&&player.nation||'')===normalizeName(club.name||'');
+ const club=clubById(player&&player.club),nationKey=chemistryNationKey(player);
+ return !!club&&!!nationKey&&nationKey===normalizeName(club.name||'');
 }
 function nationChemistryBonus(player,list){
  if(!player||nationMirrorsClub(player))return 0;
  const playerId=String(player.id);
- const nationKey=normalizeName(player.nation||'');
+ const nationKey=chemistryNationKey(player);
  if(!nationKey)return 0;
- const sameNation=(list||[]).filter(other=>other&&String(other.id)!==playerId&&normalizeName(other.nation||'')===nationKey).length;
+ const sameNation=(list||[]).filter(other=>other&&String(other.id)!==playerId&&chemistryNationKey(other)===nationKey).length;
  return Math.min(8,sameNation);
 }
 function clubChemistryBonus(player,list){
@@ -122,7 +128,7 @@ function draftChemistry(source=starterEntries()){
  const entries=(Array.isArray(source)?source:[]).filter(item=>item&&!item.bench);
  const players=entries.map(item=>item.player||item).filter(Boolean);
  const subscriberNationCounts={};
- players.forEach(player=>{if(isSubscriber(player)){const key=normalizeName(player.nation);subscriberNationCounts[key]=(subscriberNationCounts[key]||0)+1}});
+ players.forEach(player=>{if(isSubscriber(player)){const key=chemistryNationKey(player);if(key)subscriberNationCounts[key]=(subscriberNationCounts[key]||0)+1}});
  const playerBonus={};
  const playerBaseBonus={};
  const playerClubBonus={};
@@ -133,9 +139,9 @@ function draftChemistry(source=starterEntries()){
    if(closedPortsAffects(player)){playerBaseBonus[playerId]=0;playerClubBonus[playerId]=0;playerSubscriberBonus[playerId]=0;playerCoachBonus[playerId]=0;playerBonus[playerId]=0;return}
    const base=nationChemistryBonus(player,players);
    const clubBonus=clubChemistryBonus(player,players);
-   const nationKey=normalizeName(player.nation);
+   const nationKey=chemistryNationKey(player);
    const subscriberBase=isSubscriber(player)?5:0;
-   const subscriberPair=isSubscriber(player)&&(subscriberNationCounts[nationKey]||0)>=2?10:0;
+   const subscriberPair=isSubscriber(player)&&!!nationKey&&(subscriberNationCounts[nationKey]||0)>=2?10:0;
    const subscriberTotal=subscriberBase+subscriberPair;
    const coachBonus=(normalizeName(player.name)===normalizeName(state.coachName)?10:0)+youngBeautifulChemistryBonus(player);
    playerBaseBonus[playerId]=base;

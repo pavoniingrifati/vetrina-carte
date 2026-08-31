@@ -257,7 +257,17 @@ function positions(p){return String(p.Position||p.position||p.role||'').split(',
 function naturalCompatible(p,code){return positions(p).includes(code)}
 function compatible(p,code){return naturalCompatible(p,code)}
 function userCompatible(p,code){return (coachIs('ductility')&&!(typeof noMisterCoachBonusesDisabled==='function'&&noMisterCoachBonusesDisabled()))||naturalCompatible(p,code)}
-function roleOf(p){return p.role||POSITION_ROLE[positions(p)[0]]||'C'}
+function normalizeMacroRole(value){
+ const raw=String(value||'').trim().toUpperCase();
+ if(raw==='P'||raw==='D'||raw==='C'||raw==='A')return raw;
+ return POSITION_ROLE[raw]||'';
+}
+function roleOf(p){
+ const explicit=normalizeMacroRole(p?.role);
+ if(explicit)return explicit;
+ const mapped=positions(p).map(code=>POSITION_ROLE[code]).find(Boolean);
+ return mapped||'C';
+}
 const DRAFT_ROLE_ORDER={P:0,D:1,C:2,A:3};
 const DRAFT_POSITION_ORDER=['P','DC','TS','TD','DC/TS','DC/TD','TS/TD','CDC','CC','COC','CC/CDC','CC/COC','ATT','AS','AD','AS/ATT','AD/ATT','ATT/COC','AS/COC','AD/COC'];
 function comparePlayersByRole(a,b){

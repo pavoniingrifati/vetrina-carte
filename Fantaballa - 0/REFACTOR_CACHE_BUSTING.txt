@@ -1,0 +1,94 @@
+FANTABALLA — PASSATA 4: CACHE-BUSTING AUTOMATICO
+=================================================
+
+OBIETTIVO
+---------
+Eliminare la manutenzione manuale delle query del tipo:
+
+  ?v=20260722-1
+  ?v=20260804-ovr-regulations1
+  ?v=4
+
+Ora la versione viene calcolata automaticamente dal contenuto reale del file tramite
+SHA-256 abbreviato a 12 caratteri esadecimali.
+
+Esempio:
+
+  assets/season/12-match-simulation.js?v=38b71913a3aa
+
+Se il file non cambia, l'URL resta identico e il browser può riutilizzare la cache.
+Se il file cambia, cambia automaticamente soltanto il suo hash.
+
+COSA VIENE VERSIONATO
+---------------------
+- JavaScript locali in assets/...
+- CSS locali in assets/...
+- JSON locali in data/...
+- favicon, icone PWA e site.webmanifest
+
+Sono coperti anche i JSON caricati da:
+- Season Community
+- Fantacampionato REAL
+- Legend
+- cataloghi eventi
+- homepage
+- World Cup
+- pagina Giocatori
+- fallback locale della Classifica
+
+Direttore Sportivo continua a usare cache:'no-store' per i propri JSON; i suoi JS/CSS
+sono comunque versionati automaticamente nelle pagine.
+
+FILE INTRODOTTI
+---------------
+  scripts/lib/cache-busting.mjs
+      Libreria condivisa: calcolo SHA-256 e riscrittura degli URL locali.
+
+  scripts/build-cache-busting.mjs
+      Aggiorna le pagine statiche, le config Season e il manifest.
+
+INTEGRAZIONE CON I CAMPIONATI
+-----------------------------
+`src/campionato.template.html` non contiene più alcuna versione manuale.
+
+`scripts/build-campionati.mjs`:
+1. aggiorna prima gli hash dei JSON nelle season-config;
+2. genera Community e REAL dal template unico;
+3. applica automaticamente gli hash corretti a JS/CSS/JSON/icon/manifest.
+
+Quindi modificare un file Season non richiede più ricordarsi di cambiare ?v= a mano.
+
+COMANDO NORMALE
+---------------
+Windows:
+  GENERA_CAMPIONATI.bat
+
+Terminale:
+  ./GENERA_CAMPIONATI.sh
+
+La sequenza è:
+1. rigenera il legacy di 08-special-rules;
+2. aggiorna il cache-busting delle pagine/config;
+3. rigenera campionato.html e campionato-real.html.
+
+CONTROLLO PRIMA DEL DEPLOY
+--------------------------
+Windows:
+  VERIFICA_REFACTOR.bat
+
+Terminale:
+  ./VERIFICA_REFACTOR.sh
+
+Oppure manualmente:
+  node scripts/build-cache-busting.mjs --check
+
+Il check termina con errore se un asset è cambiato ma una pagina/config contiene ancora
+l'hash precedente.
+
+PROPRIETA' IMPORTANTI
+---------------------
+- Idempotente: eseguire il build due volte non produce nuove modifiche.
+- Per-file: cambiare un asset non invalida inutilmente tutti gli altri.
+- Deterministico: stesso contenuto = stesso hash.
+- Nessuna dipendenza npm: usa soltanto moduli standard di Node.js.
+- Nessun cambio di gameplay o di UI.

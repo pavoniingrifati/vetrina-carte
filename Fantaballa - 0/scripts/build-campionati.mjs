@@ -2,6 +2,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { updateVersionedFile, versionLocalUrls } from './lib/cache-busting.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const TEMPLATE_PATH = resolve(ROOT, 'src/campionato.template.html');
@@ -23,7 +24,7 @@ const variants = {
       HEADER_META: 'Una stagione · 38 giornate · Regole Gary MEDel',
       HERO_TEXT_ID: '',
       HERO_TEXT: 'Draft iniziale, 11 titolari e 3 panchinari. Posizioni precise, infortuni, squalifiche, eventi e decisioni casuali. Dopo la giornata 19 il draft permette da 1 a 3 cambi, in base agli eventi della stagione.',
-      CONFIG_SCRIPT: 'assets/season-config-community.js?v=20260722-1'
+      CONFIG_SCRIPT: 'assets/season-config-community.js'
     }
   },
   real: {
@@ -42,7 +43,7 @@ const variants = {
       HEADER_META: 'Serie A · 38 giornate · 20 club · 494 calciatori reali',
       HERO_TEXT_ID: ' id="competitionHeroText"',
       HERO_TEXT: 'I calciatori e i club della stagione 2026/2027 dentro il Campionato di Fantaballa: draft, 38 giornate, eventi, infortuni, squalifiche e mercato di metà stagione.',
-      CONFIG_SCRIPT: 'assets/season-config-real.js?v=20260805-season2627full1'
+      CONFIG_SCRIPT: 'assets/season-config-real.js'
     }
   }
 };
@@ -61,13 +62,24 @@ function render(template, variant) {
   return output;
 }
 
-const template = await readFile(TEMPLATE_PATH, 'utf8');
 const checkOnly = process.argv.includes('--check');
+
+// Le config contengono URL dei JSON: aggiorniamole prima di calcolarne l'hash nelle pagine.
+for (const relative of ['site.webmanifest', 'assets/season-config-community.js', 'assets/season-config-real.js']) {
+  const result = await updateVersionedFile(resolve(ROOT, relative), { root: ROOT, checkOnly });
+  if (checkOnly && result.stale) {
+    console.error(`✗ cache-busting non aggiornato: ${relative}`);
+    process.exitCode = 1;
+  }
+}
+
+const template = await readFile(TEMPLATE_PATH, 'utf8');
 let stale = false;
 
 for (const [name, variant] of Object.entries(variants)) {
   const outputPath = resolve(ROOT, variant.output);
-  const generated = render(template, variant);
+  const generatedBare = render(template, variant);
+  const generated = await versionLocalUrls(generatedBare, { root: ROOT });
   if (checkOnly) {
     let current = '';
     try { current = await readFile(outputPath, 'utf8'); } catch {}

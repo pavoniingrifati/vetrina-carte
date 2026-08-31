@@ -1,0 +1,66 @@
+REFACTOR 08-SPECIAL-RULES.JS
+============================
+Data: 31/08/2026
+
+OBIETTIVO
+---------
+Il vecchio assets/season/08-special-rules.js conteneva 1.290 righe e molte
+feature scollegate fra loro. Il file è stato diviso senza cambiare il codice
+eseguito né l'ordine originale delle dichiarazioni.
+
+NUOVE SORGENTI
+--------------
+assets/season/rules/01-roster-and-creators.js
+  - infortuni evento, mascotte, creator, Stefano Finari, sostituzioni rosa,
+    multiverso e rimmigrazione.
+
+assets/season/rules/02-federation-and-playoffs.js
+  - regole federali FIGC/FGIC e playoff Scudetto.
+
+assets/season/rules/03-competition-formats.js
+  - Formula 1, niente pareggio, punti/risultati FGCI, Video, Catenaccio,
+    reset parità, struttura/calendario, campionati espansi ed élite.
+
+assets/season/rules/04-special-events.js
+  - carta rosa, omonimo allenatore, Future Scorer, stagione 76 giornate,
+    Hunger Games, Maradona, Mister FM, Tattico, Fantaguru, Lakaka/Lukaku,
+    Presidente parsimonioso e helper mercato/eventi.
+
+assets/season/rules/05-tactics-and-modifiers.js
+  - durata/gol, garanzie allenatore, layout e formazioni, Death Match,
+    Magia Nera, Duttilità, boost/malus permanenti e gestione rimozione rosa.
+
+assets/season/rules/06-crossover-and-curva.js
+  - Space Jam, evento Francia, sfide 60 punti, chimica, swap formazione,
+    Curva e cambio squadra controllata.
+
+assets/season/rules/07-shared-regulations.js
+  - regolamenti temporanei condivisi e relativi modificatori di gol/punti.
+
+COME FUNZIONA ORA
+-----------------
+campionato.html e campionato-real.html caricano direttamente i 7 moduli,
+nello stesso ordine in cui il loro contenuto compariva nel vecchio file.
+
+Il vecchio assets/season/08-special-rules.js viene mantenuto SOLO come output
+legacy, per compatibilità con eventuali vecchie pagine rimaste in cache.
+Non modificarlo direttamente.
+
+Per rigenerarlo:
+  node scripts/build-special-rules.mjs
+
+Per controllare che sia sincronizzato:
+  node scripts/build-special-rules.mjs --check
+
+GENERA_CAMPIONATI.bat / GENERA_CAMPIONATI.sh rigenerano prima il file legacy
+e poi campionato.html e campionato-real.html.
+
+GARANZIE DEL REFACTOR
+---------------------
+- I 7 moduli concatenati ricostruiscono esattamente il precedente
+  08-special-rules.js.
+- L'ordine del codice è invariato.
+- Nessuna funzione è stata rinominata.
+- Nessun handler evento è stato modificato.
+- Nessuna formula o probabilità è stata modificata.
+- Il file legacy resta disponibile per retrocompatibilità.

@@ -16,11 +16,11 @@ window.FANTABALLA_SEASON_CONFIG=Object.freeze({
   fallbackClub:{id:'fantaballa-fc',name:'Fantaballa FC',shortName:'FAN',colorClub:{primary:'#1769AA',secondary:'#FFFFFF',accent:'#E4C84E',text:'#FFFFFF'}}
  },
  data:{
-  primaryPlayers:'data/giocatori.json',
-  primaryClubs:'data/club.json',
-  secondaryPlayers:'data/giocatori-real.json',
-  secondaryClubs:'data/club-real.json',
-  commentary:'data/cronaca-gol.json'
+  primaryPlayers:'data/giocatori.json?v=4660acc7579f',
+  primaryClubs:'data/club.json?v=1fd1a1a16d68',
+  secondaryPlayers:'data/giocatori-real.json?v=f1935b487f74',
+  secondaryClubs:'data/club-real.json?v=5fb25c7dcb21',
+  commentary:'data/cronaca-gol.json?v=2c486bc8c395'
  },
  validation:{
   minimumClubCount:20,
@@ -43,8 +43,8 @@ window.FANTABALLA_SEASON_CONFIG=Object.freeze({
   chaosType:'caos'
  },
  events:{
-  commonCatalog:'data/events/events-common.json',
-  modeCatalog:'data/events/events-community.json',
+  commonCatalog:'data/events/events-common.json?v=b3e293a5bc8c',
+  modeCatalog:'data/events/events-community.json?v=75428ba7000b',
   excludedAutoEventTitles:[],
   excludedDecisionIds:[]
  }
