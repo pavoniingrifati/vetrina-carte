@@ -1,0 +1,68 @@
+FANTABALLA — ANALISI DIFFERENZE CAMPIONATO / REAL — PASSATA 2
+=============================================================
+
+RISULTATO
+---------
+Le differenze CSS accidentali tra le due vecchie pagine sono state eliminate.
+Il template condiviso non contiene più blocchi {{#if COMMUNITY}} / {{#if REAL}}.
+
+DRIFT ALLINEATO
+---------------
+1. next-team-meta / next-team-ovr
+   Il Season Engine genera questi elementi per entrambe le modalità.
+   Il CSS completo esisteva solo in Community: ora è condiviso.
+
+2. next-team-card
+   Margin, opacity, centratura meta e sfondo OVR erano divergenti senza una ragione
+   di gameplay/configurazione. Ora il componente condiviso ha uno stile condiviso.
+
+3. resolved-tag-creator / resolved-tag-item
+   Il markup viene generato dal JS condiviso per entrambe le modalità.
+   Le regole base e mobile erano presenti solo in Community: ora sono comuni.
+
+4. Icona Creator
+   REAL applicava il prefisso anche a .resolved-tag-creator, Community no.
+   Ora il comportamento è identico.
+
+5. Box score draft + play off scudetto
+   Il fix era presente solo in Community. I play off sono attivati da
+   events-common.json e gestiti da 08-special-rules.js condiviso, quindi il fix
+   deve valere anche nel Fantacampionato.
+
+6. CSS setup REAL ridondante
+   Alcune regole iniziali .season-competition-grid / .season-setup-subsection erano
+   completamente sovrascritte da regole comuni più avanti nello stesso foglio.
+   Sono state rimosse; resta la sola personalizzazione Legend realmente necessaria.
+
+7. Classe body REAL
+   season-top.css applica 16 regole responsive tramite body.page-season.
+   campionato-real.html aveva solo page-season-real e non le ereditava.
+   Ora usa: page-season page-season-real.
+
+DIFFERENZE CONFERMATE COME VOLUTE
+---------------------------------
+- Immagine di sfondo Community vs Fantacampionato.
+- Posizionamento della hero legato alle due immagini diverse.
+- SEO/canonical/title/description.
+- Titoli, metadati e copy della modalità.
+- ID competitionHeaderMeta / competitionHeroText necessari a REAL/Legend.
+- Config script differente.
+- Su 681–760 px il nome squadra resta:
+    Community -> singola riga compatta;
+    REAL/Legend -> multilinea, perché i club storici arrivano a nomi sensibilmente
+                   più lunghi rispetto ai club della modalità standard.
+
+VALIDAZIONI ESEGUITE
+--------------------
+- node scripts/build-campionati.mjs --check: OK.
+- Sintassi di tutti i file .js/.mjs: OK.
+- Parsing HTML campionato.html e campionato-real.html: OK.
+- Riferimenti statici locali src/href mancanti: 0.
+- Placeholder template irrisolti: 0.
+
+TEST BROWSER
+------------
+È stato tentato anche un avvio automatico in Chromium/Playwright, ma il browser del
+contenitore blocca per policy amministrativa sia le navigazioni localhost sia file://.
+Per questo la passata 2 è validata staticamente; non viene dichiarato un test E2E che
+l'ambiente non ha permesso di eseguire.

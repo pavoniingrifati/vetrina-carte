@@ -9,7 +9,6 @@ const TEMPLATE_PATH = resolve(ROOT, 'src/campionato.template.html');
 const variants = {
   community: {
     output: 'campionato.html',
-    flags: { COMMUNITY: true, REAL: false },
     values: {
       BACKGROUND_IMAGE: 'assets/macro-modes/season-bg.webp',
       PAGE_TITLE: 'Campionato di 0-0-0 – Roguelike sul calcio | Fantaballa',
@@ -29,7 +28,6 @@ const variants = {
   },
   real: {
     output: 'campionato-real.html',
-    flags: { COMMUNITY: false, REAL: true },
     values: {
       BACKGROUND_IMAGE: 'assets/macro-modes/fantacampionato-real-bg.webp',
       PAGE_TITLE: 'Fantacampionato di 0-0-0 | Fantaballa',
@@ -38,7 +36,7 @@ const variants = {
       HERO_DESKTOP_POSITION: 'center 46%',
       HERO_MIN_HEIGHT: '270px',
       HERO_MOBILE_POSITION: 'center 48%',
-      BODY_CLASS: 'page-season-real',
+      BODY_CLASS: 'page-season page-season-real',
       BRAND_TITLE: 'Fantacampionato del Ca***',
       HEADER_META_ID: ' id="competitionHeaderMeta"',
       HEADER_META: 'Serie A · 38 giornate · 20 club · 494 calciatori reali',
@@ -51,11 +49,6 @@ const variants = {
 
 function render(template, variant) {
   let output = template.replace('<!-- SORGENTE UNICA: modifica questo file e rigenera con scripts/build-campionati.mjs -->\n', '');
-
-  for (const [flag, enabled] of Object.entries(variant.flags)) {
-    const re = new RegExp(`\\{\\{#if ${flag}\\}\\}([\\s\\S]*?)\\{\\{\\/if\\}\\}`, 'g');
-    output = output.replace(re, enabled ? '$1' : '');
-  }
 
   for (const [key, value] of Object.entries(variant.values)) {
     output = output.replaceAll(`{{${key}}}`, value);

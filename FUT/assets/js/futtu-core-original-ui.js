@@ -8,7 +8,8 @@ var db = firebase.firestore();
 var VALID_GAMES = FUTTU_CONFIG.packs.map(p => p.name);
 var PACK_CONFIG_BY_GAME = Object.fromEntries(FUTTU_CONFIG.packs.map(p => [p.name, p]));
 var PACK_BACK_BY_GAME = Object.fromEntries(FUTTU_CONFIG.packs.map(p => [p.name, p.cover]));
-var PACK_COST_PER_GAME = Object.fromEntries(FUTTU_CONFIG.packs.map(p => [p.name, Number(p.cost || 0)]));
+var PACK_COST_PER_GAME = Object.fromEntries(FUTTU_CONFIG.packs.map(p => [p.name, Number(p.cost || 0)])); // solo valore indicativo
+var PACK_LIKE_COST_PER_GAME = Object.fromEntries(FUTTU_CONFIG.packs.map(p => [p.name, Number(p.likeCost ?? p.cost ?? 0)])); // solo valore indicativo
 var PACK_SIZE_PER_GAME = Object.fromEntries(FUTTU_CONFIG.packs.map(p => [p.name, Number(p.size || 1)]));
 var CONFIG = { CARDS_JSON: FUTTU_CONFIG.cardsSources[0], FETCH_TIMEOUT_MS: 8000 };
 
@@ -31,7 +32,7 @@ var GAME_STATE = {
 
 Object.assign(window, {
   FUTTU_CONFIG, VALID_GAMES, PACK_CONFIG_BY_GAME, PACK_BACK_BY_GAME,
-  PACK_COST_PER_GAME, PACK_SIZE_PER_GAME, GAME_STATE
+  PACK_COST_PER_GAME, PACK_LIKE_COST_PER_GAME, PACK_SIZE_PER_GAME, GAME_STATE
 });
 
 document.title = FUTTU_CONFIG.pageTitle || document.title;
@@ -87,19 +88,8 @@ async function ensureWallet10() {
   });
 }
 async function debitPackCostOrThrow(cost) {
-  if (cost <= 0) return await getCurrentPoints();
-  const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
-  if (!uid) throw new Error('login-required');
-  const ref = db.collection('users').doc(uid);
-  return await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    if (!snap.exists) throw new Error('wallet-missing');
-    const pts = Number(snap.data().points || 0);
-    if (pts < cost) { const e = new Error('no-points'); e.code = 'no-points'; throw e; }
-    const now = firebase.firestore.FieldValue.serverTimestamp();
-    tx.update(ref, { points: pts - cost, updatedAt: now });
-    return pts - cost;
-  });
+  // I costi dei pack sono SOLO indicativi: l'apertura non scala mai punti/monete/like.
+  return await getCurrentPoints();
 }
 async function getCurrentPoints(){
   const u = firebase.auth().currentUser;
@@ -405,7 +395,7 @@ function renderGamePicker(){
     const total=(GAME_STATE.packs[game]||[]).length,left=packsLeft(game),btn=document.createElement('button');btn.type='button';btn.className='choice';btn.dataset.game=game;btn.setAttribute('aria-selected',String(GAME_STATE.selected===game));
     btn.innerHTML=`<div class="prev" style="background-image:url('${PACK_BACK_BY_GAME[game]}')"></div><div class="meta"><span class="name">${game}</span><span class="price">${isInfinitePack(game)?'∞ pacchetti':`${left}/${total} pacchetti`} • ${cardCount(game)} carte</span></div>`;
     btn.addEventListener('click',()=>{GAME_STATE.selected=game;applyPackVisual();updateOpenBtnEnabled();});frag.appendChild(btn);
-  });gamePicker.appendChild(frag);pricePill.textContent=`💰 Costo: ${PACK_COST_PER_GAME[GAME_STATE.selected]||0}`;
+  });gamePicker.appendChild(frag);pricePill.textContent='Apertura: GRATIS';
 }
 function applyPackVisual(){
   resetPackPreviewState(true);
@@ -415,11 +405,12 @@ function applyPackVisual(){
     packEl.style.opacity='1';
     packEl.style.visibility='visible';
   }
-  if(pricePill)pricePill.textContent=`💰 Costo: ${PACK_COST_PER_GAME[GAME_STATE.selected]||0}`;
+  if(pricePill)pricePill.textContent='Apertura: GRATIS';
 }
 function updateOpenBtnEnabled(){
-  const game=GAME_STATE.selected,pack=PACK_CONFIG_BY_GAME[game],left=packsLeft(game),cost=PACK_COST_PER_GAME[game]||0,badge=pointsBadge?.textContent||'Punti: 0',pts=Number((badge.split(':')[1]||'0').trim())||0;
-  openBtn.disabled=GAME_STATE.opening||(!isInfinitePack(game)&&left<=0)||(cost>0&&pts<cost)||!GAME_STATE.loaded;
+  const game=GAME_STATE.selected,pack=PACK_CONFIG_BY_GAME[game],left=packsLeft(game);
+  // Il saldo non abilita/disabilita mai il pack: i costi sono soltanto un riferimento visivo.
+  openBtn.disabled=GAME_STATE.opening||(!isInfinitePack(game)&&left<=0)||!GAME_STATE.loaded;
   renderGamePicker();renderPacksStrip();
 }
 
@@ -502,25 +493,21 @@ openBtn.addEventListener('click', async () => {
     updateOpenBtnEnabled();
   };
 
-  let newPts = await getCurrentPoints();
   try {
+    // L'apertura è sempre gratuita. Il login serve solo per salvare le carte nell'inventario.
     let user = firebase.auth().currentUser;
     if (!user || user.isAnonymous) user = await ensureGoogleUser();
     await ensureWallet10();
-    newPts = await debitPackCostOrThrow(cost);
-    if (log) log.textContent = cost > 0
-      ? `✅ ${cost} punti scalati. Punti rimasti: ${newPts}`
-      : '🆓 Pacchetto gratuito aperto.';
+    if (log) log.textContent = '🆓 Apertura gratuita. I valori mostrati sotto ai pack sono solo indicativi.';
   } catch (error) {
     if (error.message === 'redirecting') {
       GAME_STATE.opening = false;
       return;
     }
     const code = error.code || error.message || 'unknown';
-    let message = '⚠️ Errore durante la scalatura punti.';
-    if (code === 'login-required') message = '🔐 Accedi con Google per aprire un pacchetto.';
-    else if (code === 'no-points') message = `😕 Punti insufficienti (costo: ${cost}).`;
-    else if (code === 'permission-denied') message = '⛔ Permessi Firestore insufficienti per scrivere sul wallet.';
+    let message = '⚠️ Impossibile avviare il pacchetto.';
+    if (code === 'login-required') message = '🔐 Accedi con Google per salvare le carte.';
+    else if (code === 'permission-denied') message = '⛔ Permessi Firestore insufficienti.';
     else if (code === 'unavailable') message = '📡 Sei offline o Firestore non è raggiungibile.';
     abort(`${message} (${code})`);
     return;
@@ -610,9 +597,7 @@ openBtn.addEventListener('click', async () => {
       : '⚠️ Le carte sono state mostrate, ma il salvataggio non è riuscito. Riprova.';
   } else if (log) {
     const messageTail = `<a href="${FUTTU_CONFIG.myCardsUrl}">Vai alle mie carte →</a>`;
-    log.innerHTML = (cost > 0
-      ? `✅ Pacchetto salvato. Punti rimasti: <b>${newPts}</b>. `
-      : '✅ Pacchetto salvato. ') + messageTail;
+    log.innerHTML = '✅ Pacchetto salvato. Apertura gratuita. ' + messageTail;
   }
 });
 
@@ -622,4 +607,4 @@ window.addEventListener('DOMContentLoaded',async()=>{
   document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!openBtn.disabled)openBtn.click();});
 });
 
-Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COST_PER_GAME,PACK_SIZE_PER_GAME,GAME_STATE,packsLeft,cardCount,isInfinitePack,renderGamePicker,renderPacksStrip,applyPackVisual,updateOpenBtnEnabled,resetPackPreviewState,buildFinitePacks,makeCardEl,showStage});
+Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COST_PER_GAME,PACK_LIKE_COST_PER_GAME,PACK_SIZE_PER_GAME,GAME_STATE,packsLeft,cardCount,isInfinitePack,renderGamePicker,renderPacksStrip,applyPackVisual,updateOpenBtnEnabled,resetPackPreviewState,buildFinitePacks,makeCardEl,showStage});

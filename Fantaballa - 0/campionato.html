@@ -156,6 +156,9 @@
     @media(max-width:620px){.app{width:min(100% - 10px,1180px)}.topbar{align-items:flex-start}.brand span{display:none}.setup-grid,.candidate-grid,.choice-grid,.mid-grid{grid-template-columns:1fr}.season-strip,.final-grid{grid-template-columns:repeat(2,1fr)}.hero{padding:20px}.panel{padding:14px}.next-match{grid-template-columns:1fr}.versus{font-size:24px}.calendar-row{grid-template-columns:60px 1fr}}
   
 
+    /* La classe competition-legend viene attivata solo dalla config REAL/Legend. */
+    body.competition-legend .hero.hero-season{background:linear-gradient(92deg,rgba(19,12,38,.98) 0%,rgba(49,29,75,.94) 42%,rgba(45,29,70,.66) 64%,rgba(45,29,70,.2) 100%),url('assets/macro-modes/fantacampionato-real-bg.webp') center 46%/cover no-repeat}
+
     /* DRAFT CAMPIONATO — STILE GARY MEDEL */
     .season-setup-card{
       background:linear-gradient(145deg,rgba(255,250,240,.98),rgba(242,229,194,.98));
@@ -2207,7 +2210,10 @@
 
       .season-match-panel .next-match{grid-template-columns:minmax(0,1fr) 31px minmax(0,1fr)!important;gap:6px;padding:9px;border-radius:16px}
       .season-match-panel .next-team-card{width:100%;min-height:82px;padding:10px 6px;border-radius:14px;display:grid;align-content:center}
-      .season-match-panel .team-name{font-size:clamp(10px,3.15vw,15px)!important;line-height:1.02!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;overflow-wrap:normal!important;word-break:keep-all!important;max-width:100%}
+      /* Community: nomi club molto vari, una riga compatta evita overflow. */
+      body.page-season:not(.page-season-real) .season-match-panel .team-name{font-size:clamp(10px,3.15vw,15px)!important;line-height:1.02!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;overflow-wrap:normal!important;word-break:keep-all!important;max-width:100%}
+      /* REAL/Legend: i nomi storici possono essere lunghi, quindi consentiamo due righe. */
+      body.page-season-real .season-match-panel .team-name{font-size:clamp(13px,4vw,19px)!important;line-height:.98;overflow-wrap:anywhere;white-space:normal;text-overflow:clip}
       .season-match-panel .next-team-meta{gap:5px}
       .season-match-panel .next-team-ovr{min-width:58px;padding:4px 6px;font-size:10px}
       .season-match-panel .subline{font-size:9px;margin-top:5px}
@@ -3185,7 +3191,7 @@
       background:linear-gradient(180deg,#a9edff,#35c3ff);border:1px solid #0b9bd9;
       color:#05304a!important;font-size:9px;font-weight:1000;letter-spacing:.06em;box-shadow:0 2px 7px rgba(0,121,179,.2)
     }
-    .season-chip.creator::before,.creator-inline-tag::before{content:'🎬';font-size:10px}
+    .season-chip.creator::before,.resolved-tag-creator::before,.creator-inline-tag::before{content:'🎬';font-size:10px}
     .season-roster-line.creator{background:linear-gradient(90deg,rgba(56,200,255,.22),rgba(255,255,255,.07));border-left:4px solid #21bdf5}
     .season-roster-line.creator .season-roster-ovr{background:linear-gradient(180deg,#a9edff,#35c3ff);color:#05304a}
     .season-roster-bench-card.filled.creator{border-color:#38c8ff;box-shadow:0 0 0 3px rgba(56,200,255,.16) inset,0 5px 15px rgba(0,122,184,.12)}
@@ -3306,7 +3312,7 @@
     }
 
 
-    /* FIX draft box score + playoff scudetto palette */
+    /* FIX condiviso: draft box score + playoff scudetto palette */
     .season-box-score-number{display:inline-block!important;flex:0 0 auto!important;min-width:3ch;white-space:nowrap!important;text-align:right;line-height:.92!important;font-variant-numeric:tabular-nums;color:#ffe96c!important;font-size:clamp(34px,5vw,44px)!important}
     .playoff-stage-modal{background:linear-gradient(180deg,#fffaf0 0%,#f6edd6 100%)!important;border:5px solid #e0be3f!important;box-shadow:0 28px 80px rgba(0,0,0,.42)!important;color:#10243a!important}
     .playoff-stage-modal .label{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:linear-gradient(180deg,#16395c,#0f2740);color:#f0da69;font-size:12px;font-weight:1000;letter-spacing:.18em;text-transform:uppercase}

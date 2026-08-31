@@ -3,26 +3,31 @@ FANTABALLA — SORGENTE UNICA CAMPIONATO / FANTACAMPIONATO REAL
 
 OBIETTIVO
 ---------
-campionato.html e campionato-real.html non vanno più mantenuti come due sorgenti separate.
+campionato.html e campionato-real.html non sono più due sorgenti da mantenere a mano.
 Entrambi vengono generati da:
 
   src/campionato.template.html
 
-Le differenze tra Community e REAL (SEO, sfondo, testi, config JS e le poche differenze CSS
-preesistenti) sono dichiarate in:
+Le differenze di prodotto tra Community e REAL sono dichiarate come valori in:
 
   scripts/build-campionati.mjs
+
+Il template NON contiene più blocchi condizionali Community/REAL: il markup e il CSS
+condiviso hanno quindi una sola sorgente reale.
 
 COME MODIFICARE LE DUE PAGINE
 -----------------------------
 1. Per una modifica comune a entrambe le modalità:
    modifica SOLO src/campionato.template.html
 
-2. Per una differenza specifica Community/REAL:
-   modifica i valori o i blocchi variante in scripts/build-campionati.mjs e/o i blocchi
-   {{#if COMMUNITY}} / {{#if REAL}} del template.
+2. Per una differenza di contenuto/configurazione Community/REAL:
+   modifica i valori della relativa variante in scripts/build-campionati.mjs.
 
-3. Rigenera le pagine con:
+3. Per uno stile realmente specifico della modalità usa le classi del body:
+   - page-season = classe base comune
+   - page-season-real = modificatore REAL/Legend
+
+4. Rigenera le pagine con:
 
    Windows:  GENERA_CAMPIONATI.bat
    Terminale: node scripts/build-campionati.mjs
@@ -37,14 +42,65 @@ Esegui:
 
   node scripts/build-campionati.mjs --check
 
-Se i due HTML non corrispondono al template, il comando termina con errore.
-Questo permette anche di usarlo in futuro in una GitHub Action/CI.
+Se uno dei due HTML è stato modificato direttamente o non corrisponde più al template,
+il comando termina con errore.
+
+PASSATA 1 — ELIMINAZIONE DUPLICAZIONE
+-------------------------------------
+Il primo refactor ha introdotto template + generatore mantenendo entrambi gli HTML
+identici byte-per-byte agli originali. Questo ha permesso di separare il refactor
+strutturale dalle successive correzioni di drift.
+
+PASSATA 2 — ALLINEAMENTO DEL DRIFT
+----------------------------------
+Sono state analizzate tutte le differenze residue tra le due vecchie pagine.
+Sono state rese comuni le regole che appartengono a componenti prodotti dallo stesso
+Season Engine, tra cui:
+
+  - layout OVR/meta della card "prossima partita";
+  - stile della card squadra e del badge OVR;
+  - tag Creator e Oggetto nella formazione effettiva, anche mobile;
+  - icona Creator nella formazione effettiva;
+  - fix del box score del draft;
+  - palette/modal dei play off scudetto, evento disponibile dal catalogo comune.
+
+Sono inoltre state eliminate regole CSS REAL duplicate e già completamente sovrascritte
+da regole condivise successive.
+
+FIX RESPONSIVE REAL
+-------------------
+Il Fantacampionato usava soltanto:
+
+  page-season-real
+
+mentre assets/season/season-top.css contiene varie regole responsive comuni agganciate a:
+
+  body.page-season
+
+Il body REAL ora usa correttamente entrambe:
+
+  page-season page-season-real
+
+In questo modo REAL eredita la base comune, conservando page-season-real per le sue
+personalizzazioni.
+
+DIFFERENZE VOLUTE CHE RESTANO
+-----------------------------
+Le differenze finali tra i due HTML generati sono soltanto dati/identità della modalità:
+
+  - sfondo e posizione dello sfondo;
+  - SEO, canonical, title e description;
+  - classe modificatore page-season-real;
+  - titolo e copy della testata;
+  - id dinamici della testata usati dalla variante Legend;
+  - season-config-community.js / season-config-real.js.
+
+Rimane inoltre uno stile responsive specifico per i nomi squadra:
+  - Community: una riga compatta con ellissi;
+  - REAL/Legend: può andare su più righe, utile per i nomi dei club storici molto lunghi.
 
 IMPORTANTE
 ----------
 I due HTML finali restano presenti perché GitHub Pages deve poterli servire direttamente
-con gli URL attuali. La duplicazione esiste quindi solo nell'OUTPUT generato, non più nella
+con gli URL attuali. La duplicazione esiste solo nell'OUTPUT generato, non più nella
 sorgente da mantenere.
-
-Il primo refactor è stato validato confrontando gli output generati con i due file originali:
-entrambi risultano identici byte-per-byte, quindi non introduce modifiche funzionali.
