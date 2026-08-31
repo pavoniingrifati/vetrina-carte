@@ -79,8 +79,17 @@
     if (brand) brand.textContent = 'FUTTU Ultimate Team';
     const right = document.querySelector('.fc-right');
     if (right) {
-      let wallet = document.getElementById('balanceCenter');
-      if (wallet && wallet.parentElement !== right) right.appendChild(wallet);
+      // Monete e Like devono restare centrati sopra il carosello dei pacchetti.
+      const wallet = document.getElementById('balanceCenter');
+      const packsWrap = document.querySelector('.packs-sticky .wrap');
+      const packsStrip = document.getElementById('packsStrip');
+      if (wallet && packsWrap && wallet.parentElement !== packsWrap) {
+        packsWrap.insertBefore(wallet, packsStrip || packsWrap.firstChild);
+      } else if (wallet && packsWrap && packsStrip && wallet.nextElementSibling !== packsStrip) {
+        packsWrap.insertBefore(wallet, packsStrip);
+      }
+
+      // Login/Punti e costo restano nella barra superiore.
       let topPoints = right.querySelector('.ut-top-points');
       if (!topPoints) {
         topPoints = document.createElement('div');
