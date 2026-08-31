@@ -138,7 +138,7 @@
       background:linear-gradient(145deg,rgba(4,10,34,.91),rgba(7,14,43,.88));
       border:1px solid rgba(120,153,255,.28);box-shadow:var(--shadow);backdrop-filter:blur(14px);
     }
-    .filters{display:grid;grid-template-columns:minmax(280px,1.5fr) repeat(3,minmax(145px,.75fr)) minmax(180px,.8fr);gap:10px;align-items:end}
+    .filters{display:grid;grid-template-columns:minmax(320px,1.6fr) minmax(170px,.8fr) minmax(190px,.9fr);gap:10px;align-items:end}
     .field label{display:block;margin:0 0 6px;color:#96a9df;font-size:10px;font-weight:950;letter-spacing:.09em;text-transform:uppercase}
     .field input,.field select{
       width:100%;height:50px;padding:0 13px;border:1px solid rgba(124,157,255,.28);border-radius:13px;
@@ -246,15 +246,7 @@
         <div class="filters">
           <div class="field search-wrap">
             <label for="searchInput">Cerca</label>
-            <input id="searchInput" type="search" autocomplete="off" placeholder="Nome utente, motivo o club">
-          </div>
-          <div class="field">
-            <label for="probabilityFilter">Probabilità</label>
-            <select id="probabilityFilter"><option value="">Tutte</option></select>
-          </div>
-          <div class="field">
-            <label for="reasonFilter">Motivo</label>
-            <select id="reasonFilter"><option value="">Tutti i motivi</option></select>
+            <input id="searchInput" type="search" autocomplete="off" placeholder="Nome utente o club">
           </div>
           <div class="field">
             <label for="clubFilter">Club</label>
@@ -341,20 +333,16 @@
   }
 
   function refreshFilters(){
-    const probabilities=[...new Set(state.users.map(user=>user.probabilita))].sort((a,b)=>b-a);
-    const reasons=[...new Set(state.users.map(user=>user.motivo).filter(Boolean))].sort(compareText);
     const clubs=[...new Set(state.users.map(user=>user.club).filter(Boolean))].sort(compareText);
-    el('probabilityFilter').innerHTML='<option value="">Tutte</option>'+probabilities.map(value=>`<option value="${value}">${value}%</option>`).join('');
-    el('reasonFilter').innerHTML=optionMarkup(reasons,'Tutti i motivi');
     el('clubFilter').innerHTML=optionMarkup(clubs,'Tutti i club');
   }
 
   function bindEvents(){
-    ['searchInput','probabilityFilter','reasonFilter','clubFilter','sortFilter'].forEach(id=>{
+    ['searchInput','clubFilter','sortFilter'].forEach(id=>{
       el(id).addEventListener(id==='searchInput'?'input':'change',()=>{state.page=1;applyFilters()});
     });
     el('clearFilters').addEventListener('click',()=>{
-      el('searchInput').value='';el('probabilityFilter').value='';el('reasonFilter').value='';el('clubFilter').value='';el('sortFilter').value='prob-desc';state.page=1;applyFilters();
+      el('searchInput').value='';el('clubFilter').value='';el('sortFilter').value='prob-desc';state.page=1;applyFilters();
     });
   }
 
@@ -371,13 +359,11 @@
 
   function applyFilters(){
     const query=normalize(el('searchInput').value);
-    const probability=el('probabilityFilter').value;
-    const reason=el('reasonFilter').value;
     const club=el('clubFilter').value;
     const sort=el('sortFilter').value;
     let users=state.users.filter(user=>{
-      const searchable=normalize(`${user.nome} ${user.motivo} ${user.club}`);
-      return (!query||searchable.includes(query))&&(!probability||String(user.probabilita)===probability)&&(!reason||user.motivo===reason)&&(!club||user.club===club);
+      const searchable=normalize(`${user.nome} ${user.club}`);
+      return (!query||searchable.includes(query))&&(!club||user.club===club);
     });
     users.sort((a,b)=>{
       if(sort==='prob-asc')return a.probabilita-b.probabilita||compareText(a.nome,b.nome);
