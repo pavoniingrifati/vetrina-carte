@@ -33,6 +33,27 @@ button:disabled{opacity:.5;cursor:wait}
 @media(max-width:1050px){.cards{grid-template-columns:repeat(3,minmax(120px,170px))}.stage{min-height:650px}}@media(max-width:650px){header{padding:0 12px}.pill{display:none}main{padding:24px 12px 40px}.pack{width:210px;height:290px}.stage{min-height:720px;padding:14px}.cards{grid-template-columns:repeat(2,minmax(115px,150px));gap:10px}.results h2{font-size:22px}}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important}}
 </style>
+
+<style id="demo-true-center-fix">
+#stage{
+  justify-content:center!important;
+  align-items:center!important;
+}
+#results.results{
+  flex:0 1 1180px!important;
+  width:min(1180px,100%)!important;
+  margin:0 auto!important;
+  align-self:center!important;
+  text-align:center!important;
+}
+#results .cards{
+  width:100%!important;
+  margin:0 auto!important;
+  justify-content:center!important;
+  align-content:center!important;
+}
+</style>
+
 </head>
 <body>
 <div id="app">
@@ -60,8 +81,8 @@ packimg.addEventListener('error',()=>{packimg.style.display='none';const d=docum
 async function load(){try{const r=await fetch('../data/cards.json?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();if(!Array.isArray(d)||!d.length)throw new Error('vuoto');cards=d.filter(c=>c&&(c.name||c.id));open.disabled=false}catch(e){err.textContent='Non riesco a caricare FUT/data/cards.json. Pubblica questa pagina dentro FUT/demo/.';err.classList.add('show');open.disabled=true;console.error(e)}}
 function pick(){const a=cards.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a.slice(0,6)}
 function render(a){cardsEl.innerHTML=a.map(c=>'<article class="card"><div class="art"><img data-ci src="'+esc(img(c))+'" alt="'+esc(c.name||'Carta FUT')+'"></div><div class="cn">'+esc(c.name||c.id||'Carta FUT')+'</div><div class="cm">'+esc([c.role,c.rarity,c.series].filter(Boolean).join(' · '))+'</div></article>').join('');cardsEl.querySelectorAll('[data-ci]').forEach(i=>i.addEventListener('error',()=>{i.src='../img/nEW%20pLAYER.webp'},{once:true}))}
-function doOpen(){if(busy||!cards.length)return;busy=true;open.disabled=true;results.classList.remove('show');app.classList.remove('opening');void app.offsetWidth;app.classList.add('opening');const p=pick();setTimeout(()=>{render(p);wrap.style.visibility='hidden';results.classList.add('show');document.getElementById('stage').scrollIntoView({behavior:'smooth',block:'center'});busy=false},900)}
-function reset(){app.classList.remove('opening');wrap.style.visibility='visible';results.classList.remove('show');cardsEl.innerHTML='';open.disabled=false;document.getElementById('stage').scrollIntoView({behavior:'smooth',block:'center'})}
+function doOpen(){if(busy||!cards.length)return;busy=true;open.disabled=true;results.classList.remove('show');app.classList.remove('opening');void app.offsetWidth;app.classList.add('opening');const p=pick();setTimeout(()=>{render(p);wrap.style.display='none';results.classList.add('show');document.getElementById('stage').scrollIntoView({behavior:'smooth',block:'center'});busy=false},900)}
+function reset(){app.classList.remove('opening');wrap.style.display='block';results.classList.remove('show');cardsEl.innerHTML='';open.disabled=false;document.getElementById('stage').scrollIntoView({behavior:'smooth',block:'center'})}
 open.addEventListener('click',doOpen);pack.addEventListener('click',doOpen);pack.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();doOpen()}});again.addEventListener('click',reset);open.disabled=true;load();
 })();
 </script>
