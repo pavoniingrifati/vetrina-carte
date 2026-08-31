@@ -1,0 +1,50 @@
+FANTABALLA — SORGENTE UNICA CAMPIONATO / FANTACAMPIONATO REAL
+=============================================================
+
+OBIETTIVO
+---------
+campionato.html e campionato-real.html non vanno più mantenuti come due sorgenti separate.
+Entrambi vengono generati da:
+
+  src/campionato.template.html
+
+Le differenze tra Community e REAL (SEO, sfondo, testi, config JS e le poche differenze CSS
+preesistenti) sono dichiarate in:
+
+  scripts/build-campionati.mjs
+
+COME MODIFICARE LE DUE PAGINE
+-----------------------------
+1. Per una modifica comune a entrambe le modalità:
+   modifica SOLO src/campionato.template.html
+
+2. Per una differenza specifica Community/REAL:
+   modifica i valori o i blocchi variante in scripts/build-campionati.mjs e/o i blocchi
+   {{#if COMMUNITY}} / {{#if REAL}} del template.
+
+3. Rigenera le pagine con:
+
+   Windows:  GENERA_CAMPIONATI.bat
+   Terminale: node scripts/build-campionati.mjs
+
+Il comando scrive automaticamente:
+  - campionato.html
+  - campionato-real.html
+
+CONTROLLO PRIMA DEL DEPLOY
+--------------------------
+Esegui:
+
+  node scripts/build-campionati.mjs --check
+
+Se i due HTML non corrispondono al template, il comando termina con errore.
+Questo permette anche di usarlo in futuro in una GitHub Action/CI.
+
+IMPORTANTE
+----------
+I due HTML finali restano presenti perché GitHub Pages deve poterli servire direttamente
+con gli URL attuali. La duplicazione esiste quindi solo nell'OUTPUT generato, non più nella
+sorgente da mantenere.
+
+Il primo refactor è stato validato confrontando gli output generati con i due file originali:
+entrambi risultano identici byte-per-byte, quindi non introduce modifiche funzionali.
