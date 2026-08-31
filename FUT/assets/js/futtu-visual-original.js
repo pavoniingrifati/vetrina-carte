@@ -180,8 +180,10 @@
     const frag = document.createDocumentFragment();
     games.forEach(game=>{
       const back = (window.PACK_BACK_BY_GAME && window.PACK_BACK_BY_GAME[game]) || 'patatrine.png';
-      const coinCost = Number((window.PACK_COST_PER_GAME && window.PACK_COST_PER_GAME[game]) || 0);
-      const likeCost = Number((window.PACK_LIKE_COST_PER_GAME && window.PACK_LIKE_COST_PER_GAME[game]) ?? coinCost);
+      const packCfg = (window.PACK_CONFIG_BY_GAME && window.PACK_CONFIG_BY_GAME[game]) || {};
+      const referenceCost = Number(packCfg.referenceCost || 0);
+      const referenceCurrency = String(packCfg.referenceCurrency || 'none');
+      const formattedReferenceCost = new Intl.NumberFormat('it-IT').format(referenceCost);
       const left = packLeft(game);
       const total = packTotal(game);
       const count = cardCount(game);
@@ -195,9 +197,12 @@
         <div class="ut-pack-bottom">
           <div class="ut-pack-name">${esc(game)}</div>
           <div class="ut-pack-price" title="Valore indicativo: il pacchetto si apre sempre gratis">
-            <span class="ut-coin" aria-hidden="true"></span><span class="ut-cost-value">${coinCost}</span>
-            <span class="ut-cost-sep">•</span>
-            <span class="ut-like" aria-hidden="true">♥</span><span class="ut-cost-value">${likeCost}</span>
+            ${referenceCost <= 0
+              ? `<span class="ut-cost-value">0</span>`
+              : referenceCurrency === 'likes'
+                ? `<span class="ut-like" aria-hidden="true">♥</span><span class="ut-cost-value">${formattedReferenceCost}</span>`
+                : `<span class="ut-coin" aria-hidden="true"></span><span class="ut-cost-value">${formattedReferenceCost}</span>`
+            }
           </div>
           <div class="ut-pack-reference">VALORE INDICATIVO • APERTURA GRATIS</div>
           <div class="ut-pack-sub">${INFINITE_PACKS.has(game) ? '∞ pacchetti' : `${left}/${total} pacchetti`} • ${count} carte</div>
