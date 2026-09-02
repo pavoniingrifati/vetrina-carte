@@ -1508,29 +1508,10 @@ measurementId: "G-C8Q8K5B52C"
 };
 
 firebase.initializeApp(firebaseConfig);
+try { await firebase.auth().signInAnonymously(); } catch(e){ console.error('[firebase auth]', e); }
 
-/* 🔐 Auth: niente popup Google. Manteniamo l'anonimo solo per rating/commenti. */
+/* 🔐 Google Auth (niente login anonimo) */
 const auth = firebase.auth();
-
-try {
-  await auth.getRedirectResult();
-} catch(e) {
-  console.warn('[redirectResult]', e);
-}
-
-await new Promise((resolve) => {
-  let unsub = null;
-  const done = () => {
-    try { if (unsub) unsub(); } catch(e) {}
-    resolve();
-  };
-  unsub = auth.onAuthStateChanged(done, done);
-});
-
-if (!auth.currentUser) {
-  try { await auth.signInAnonymously(); }
-  catch(e){ console.error('[firebase anonymous auth]', e); }
-}
 
 async function safeGoogleSignIn() {
   const provider = new firebase.auth.GoogleAuthProvider();
@@ -1540,19 +1521,26 @@ async function safeGoogleSignIn() {
     const user = auth.currentUser;
 
     if (user && user.isAnonymous) {
-      await user.linkWithRedirect(provider);
-    } else if (!user) {
-      await auth.signInWithRedirect(provider);
-    } else {
-      return user;
+      const result = await user.linkWithPopup(provider);
+      return result.user;
     }
 
-    return null; // la pagina verrà reindirizzata
-  } catch (e) {
-    console.warn('[safeGoogleSignIn redirect]', e.code, e.message);
+    if (user && !user.isAnonymous) return user;
 
+    const result = await auth.signInWithPopup(provider);
+    return result.user;
+  } catch (e) {
+    console.warn('[safeGoogleSignIn popup]', e.code, e.message);
+
+    if (e && e.code === 'auth/popup-blocked') {
+      alert('Consenti i popup per fantaballa.it e riprova.');
+      return null;
+    }
+    if (e && e.code === 'auth/popup-closed-by-user') {
+      return null;
+    }
     if (e && e.code === 'auth/unauthorized-domain') {
-      alert('Dominio non autorizzato in Firebase. Aggiungi fantaballa.it in Authentication → Settings → Authorized domains.');
+      alert('Dominio fantaballa.it non autorizzato in Firebase Authentication.');
       return null;
     }
     throw e;
@@ -1576,9 +1564,11 @@ btnLogout?.addEventListener('click', async ()=>{
   catch(e){ console.error('[logout]', e); }
 });
 
+  }
+}).catch(function(err){ console.warn('[redirectResult]', err); });
 
 auth.onAuthStateChanged((user)=>{
-  const logged = !!user && !user.isAnonymous;
+  const logged = !!user;
   if (btnLogin)  btnLogin.style.display  = logged ? 'none' : '';
   if (btnLogout) btnLogout.style.display = logged ? '' : 'none';
 

@@ -49,14 +49,11 @@ loginBtn.onclick=async()=>{
   const p=new firebase.auth.GoogleAuthProvider();
   p.setCustomParameters({prompt:'select_account'});
   try{
-    await auth.signInWithRedirect(p);
+    await auth.signInWithPopup(p);
   }catch(e){
-    console.error('[Google redirect login]',e);
-    if(e&&e.code==='auth/unauthorized-domain'){
-      alert('Dominio fantaballa.it non autorizzato in Firebase Authentication.');
-    }
+    console.error('[Google popup login]',e);
+    if(e&&e.code==='auth/popup-blocked')alert('Consenti i popup per fantaballa.it e riprova.');
   }
-};logoutBtn.onclick=()=>auth.signOut();
-auth.getRedirectResult().catch(e=>console.warn('[redirectResult]',e));['search','game','sort'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));
+};logoutBtn.onclick=()=>auth.signOut();['search','game','sort'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));
 auth.onAuthStateChanged(u=>{if(u&&!u.isAnonymous){$('userLabel').textContent=u.displayName||u.email||'Utente';loginBtn.classList.add('hidden');logoutBtn.classList.remove('hidden');loadInventory(u)}else{$('userLabel').textContent='Non autenticato';loginBtn.classList.remove('hidden');logoutBtn.classList.add('hidden');items=[];grid.innerHTML='';status.textContent='Accedi per vedere il tuo inventario.'}});
 </script></body></html>

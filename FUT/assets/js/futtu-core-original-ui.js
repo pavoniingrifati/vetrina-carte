@@ -48,66 +48,40 @@ var homeLinks = Array.from(document.querySelectorAll('a.btn')).filter(a => /Torn
 homeLinks.forEach(a => { if (FUTTU_CONFIG.homeUrl) a.href = FUTTU_CONFIG.homeUrl; });
 
 /** AUTH */
-function waitForFirebaseAuth() {
-  const auth = firebase.auth();
-  if (auth.currentUser) return Promise.resolve(auth.currentUser);
-  return new Promise((resolve) => {
-    let unsub = null;
-    const done = (user) => {
-      try { if (unsub) unsub(); } catch(e) {}
-      resolve(user || null);
-    };
-    unsub = auth.onAuthStateChanged(done, function(err){
-      console.warn('[auth state]', err);
-      done(null);
-    });
-  });
-}
-
-async function completeGoogleRedirect() {
-  const auth = firebase.auth();
-  try {
-    const result = await auth.getRedirectResult();
-    if (result && result.user) {
-      await result.user.getIdToken(true);
-      return result.user;
-    }
-  } catch (e) {
-    console.error('[Google redirect result]', e);
-    throw e;
-  }
-  return await waitForFirebaseAuth();
-}
-
 async function ensureGoogleUser() {
   const auth = firebase.auth();
-  let u = auth.currentUser || await waitForFirebaseAuth();
+  const current = auth.currentUser;
 
-  if (u && !u.isAnonymous) {
-    await u.getIdToken(true);
-    return u;
+  if (current && !current.isAnonymous) {
+    await current.getIdToken(true);
+    return current;
   }
 
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
 
   try {
-    sessionStorage.setItem('futtu_google_redirect_pending', '1');
-
-    if (u && u.isAnonymous) {
-      await u.linkWithRedirect(provider);
-    } else {
-      await auth.signInWithRedirect(provider);
+    if (current && current.isAnonymous) {
+      // Mantiene lo stesso utente/inventario collegando Google all'account anonimo.
+      const result = await current.linkWithPopup(provider);
+      await result.user.getIdToken(true);
+      return result.user;
     }
 
-    throw new Error('redirecting');
+    const result = await auth.signInWithPopup(provider);
+    await result.user.getIdToken(true);
+    return result.user;
   } catch (e) {
-    if (e && e.message === 'redirecting') throw e;
-    sessionStorage.removeItem('futtu_google_redirect_pending');
+    console.error('[Google popup login]', e);
 
-    if (e && e.code === 'auth/unauthorized-domain') {
-      throw new Error('Dominio fantaballa.it non autorizzato in Firebase Authentication.');
+    if (e && e.code === 'auth/popup-blocked') {
+      alert('Chrome ha bloccato il popup. Consenti i popup per fantaballa.it e riprova.');
+    } else if (e && e.code === 'auth/popup-closed-by-user') {
+      // Nessun alert: l'utente ha semplicemente chiuso la finestra.
+    } else if (e && e.code === 'auth/unauthorized-domain') {
+      alert('Aggiungi fantaballa.it ai domini autorizzati in Firebase Authentication.');
     }
+
     throw e;
   }
 }
@@ -158,7 +132,7 @@ function updateBonusUI(){
 setInterval(updateBonusUI, 60*1000);
 async function initPointsUI(){
   try{
-    const user = firebase.auth().currentUser || await waitForFirebaseAuth();
+    const user = firebase.auth().currentUser;
     if (!user || user.isAnonymous){
       pointsBadge.innerHTML = '🔐 Accedi con Google';
       pointsBadge.style.cursor = 'pointer';
@@ -640,17 +614,8 @@ openBtn.addEventListener('click', async () => {
 
 window.addEventListener('DOMContentLoaded',async()=>{
   Object.values(PACK_BACK_BY_GAME).forEach(src=>{const im=new Image();im.decoding='async';im.src=src;});
-
-  try {
-    await completeGoogleRedirect();
-    sessionStorage.removeItem('futtu_google_redirect_pending');
-  } catch (e) {
-    sessionStorage.removeItem('futtu_google_redirect_pending');
-    console.error('[completeGoogleRedirect]', e);
-  }
-
   applyPackVisual();
-  await initPointsUI();
+  initPointsUI();
   await loadCards();
   document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!openBtn.disabled)openBtn.click();});
 });
