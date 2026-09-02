@@ -1508,56 +1508,53 @@ measurementId: "G-C8Q8K5B52C"
 };
 
 firebase.initializeApp(firebaseConfig);
-try { await firebase.auth().signInAnonymously(); } catch(e){ console.error('[firebase auth]', e); }
 
-/* 🔐 Google Auth (niente login anonimo) */
+/* 🔐 Auth: niente popup Google. Manteniamo l'anonimo solo per rating/commenti. */
 const auth = firebase.auth();
+
+try {
+  await auth.getRedirectResult();
+} catch(e) {
+  console.warn('[redirectResult]', e);
+}
+
+await new Promise((resolve) => {
+  let unsub = null;
+  const done = () => {
+    try { if (unsub) unsub(); } catch(e) {}
+    resolve();
+  };
+  unsub = auth.onAuthStateChanged(done, done);
+});
+
+if (!auth.currentUser) {
+  try { await auth.signInAnonymously(); }
+  catch(e){ console.error('[firebase anonymous auth]', e); }
+}
 
 async function safeGoogleSignIn() {
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
+
   try {
-    if (auth.currentUser && auth.currentUser.isAnonymous) {
-      const { user } = await auth.currentUser.linkWithPopup(provider);
+    const user = auth.currentUser;
+
+    if (user && user.isAnonymous) {
+      await user.linkWithRedirect(provider);
+    } else if (!user) {
+      await auth.signInWithRedirect(provider);
+    } else {
       return user;
     }
-    const { user } = await auth.signInWithPopup(provider);
-    return user;
-  } catch (e) {
-    console.warn('[safeGoogleSignIn]', e.code, e.message);
 
-    // Common cases on static hosts / mobile browsers
-    if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || /blocked/i.test(e.message||''))) {
-      try {
-        await auth.signInWithRedirect(provider);
-        return; // will redirect
-      } catch (er) {
-        console.error('[redirectSignIn]', er);
-      }
-    }
+    return null; // la pagina verrà reindirizzata
+  } catch (e) {
+    console.warn('[safeGoogleSignIn redirect]', e.code, e.message);
 
     if (e && e.code === 'auth/unauthorized-domain') {
-      alert('Dominio non autorizzato in Firebase.\nAggiungi "pavoniingrifati.github.io" in Firebase Console → Authentication → Settings → Authorized domains.');
-      return;
+      alert('Dominio non autorizzato in Firebase. Aggiungi fantaballa.it in Authentication → Settings → Authorized domains.');
+      return null;
     }
-
-    if (e.code === 'auth/credential-already-in-use' && e.credential) {
-      const { user } = await auth.signInWithCredential(e.credential);
-      return user;
-    }
-
-    if (e.code === 'auth/account-exists-with-different-credential' && e.email) {
-      const methods = await auth.fetchSignInMethodsForEmail(e.email);
-      if (methods.includes('google.com') && e.credential) {
-        const { user } = await auth.signInWithCredential(e.credential);
-        return user;
-      }
-      alert(
-        'Quest’email è già usata con: ' + methods.join(', ') +
-        '. Accedi con quel metodo, poi potrai collegare Google dalle impostazioni del tuo profilo.'
-      );
-    }
-
     throw e;
   }
 }
@@ -1579,15 +1576,9 @@ btnLogout?.addEventListener('click', async ()=>{
   catch(e){ console.error('[logout]', e); }
 });
 
-// Complete redirect-based sign-in if present
-auth.getRedirectResult().then(function(res){
-  if (res && res.user) {
-    console.log('[redirectResult] signed-in as', res.user.uid);
-  }
-}).catch(function(err){ console.warn('[redirectResult]', err); });
 
 auth.onAuthStateChanged((user)=>{
-  const logged = !!user;
+  const logged = !!user && !user.isAnonymous;
   if (btnLogin)  btnLogin.style.display  = logged ? 'none' : '';
   if (btnLogout) btnLogout.style.display = logged ? '' : 'none';
 

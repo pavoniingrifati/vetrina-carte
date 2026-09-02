@@ -45,6 +45,18 @@ function smartImg(el,path){
 }
 function render(){const q=$('search').value.trim().toLowerCase(),g=$('game').value,s=$('sort').value;let list=items.filter(c=>(!g||c.game===g)&&(!q||[c.name,c.series,c.rarity,c.game].join(' ').toLowerCase().includes(q)));list.sort((a,b)=>s==='count'?(b.count||0)-(a.count||0):String(a[s]||'').localeCompare(String(b[s]||''),'it'));grid.innerHTML='';if(!list.length){grid.innerHTML='<div class="empty">Nessuna carta da mostrare.</div>';return}for(const c of list){const d=document.createElement('article');d.className='card';const im=document.createElement('img');im.alt=c.name||'Carta';smartImg(im,c.img);d.append(im);d.insertAdjacentHTML('beforeend',`<span class="count">×${c.count||1}</span><div class="name"></div><div class="meta"></div>`);d.querySelector('.name').textContent=c.name||'Carta';d.querySelector('.meta').textContent=[c.rarity,c.series,c.game].filter(Boolean).join(' • ');grid.append(d)}}
 async function loadInventory(u){status.textContent='Caricamento inventario…';try{const snap=await db.collection('users').doc(u.uid).collection('inventory').get();items=snap.docs.map(d=>({id:d.id,...d.data()}));status.textContent=`${items.length} carte diverse · ${items.reduce((n,c)=>n+(Number(c.count)||1),0)} copie totali`;render()}catch(e){console.error(e);status.textContent='Errore nel caricamento dell’inventario.'}}
-loginBtn.onclick=async()=>{const p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});await auth.signInWithPopup(p)};logoutBtn.onclick=()=>auth.signOut();['search','game','sort'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));
+loginBtn.onclick=async()=>{
+  const p=new firebase.auth.GoogleAuthProvider();
+  p.setCustomParameters({prompt:'select_account'});
+  try{
+    await auth.signInWithRedirect(p);
+  }catch(e){
+    console.error('[Google redirect login]',e);
+    if(e&&e.code==='auth/unauthorized-domain'){
+      alert('Dominio fantaballa.it non autorizzato in Firebase Authentication.');
+    }
+  }
+};logoutBtn.onclick=()=>auth.signOut();
+auth.getRedirectResult().catch(e=>console.warn('[redirectResult]',e));['search','game','sort'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));
 auth.onAuthStateChanged(u=>{if(u&&!u.isAnonymous){$('userLabel').textContent=u.displayName||u.email||'Utente';loginBtn.classList.add('hidden');logoutBtn.classList.remove('hidden');loadInventory(u)}else{$('userLabel').textContent='Non autenticato';loginBtn.classList.remove('hidden');logoutBtn.classList.add('hidden');items=[];grid.innerHTML='';status.textContent='Accedi per vedere il tuo inventario.'}});
 </script></body></html>
