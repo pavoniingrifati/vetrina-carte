@@ -165,9 +165,8 @@
             <small>${escapeHtml(team.owner)}</small>
           </div>
         </div>
-        <span class="formation-chip">${escapeHtml(team.formation)}</span>
-        <span class="result-chip">${numeric(team.fmPosition) ? `${numeric(team.fmPosition)}°` : "—"}</span>
-        <div class="points-cell"><strong>${numeric(team.points)}</strong><small>punti</small></div>
+        <span class="result-chip"><strong>${numeric(team.fmPosition) ? `${numeric(team.fmPosition)}°` : "—"}</strong><small>${numeric(team.points)} punti</small></span>
+        <span class="cup-chip ${isYes(team.vittoriaCoppa ?? team.coppaItalia) ? "cup-yes" : "cup-no"}">${yesNo(team.vittoriaCoppa ?? team.coppaItalia)}</span>
         <div class="rating-cell">
           <span class="rating-ring" style="--value:${numeric(team.rating)}"><strong>${numeric(team.rating)}</strong></span>
           <span class="rating-label"><small>su 100</small><span>${escapeHtml(ratingLabel(team.rating))}</span></span>
