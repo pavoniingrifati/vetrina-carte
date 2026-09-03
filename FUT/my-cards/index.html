@@ -10,7 +10,7 @@
 </head>
 <body>
 <header class="top"><h1>🗂️ Le mie carte</h1><span class="user" id="userLabel">Non autenticato</span><button class="btn primary" id="loginBtn">Accedi con Google</button><button class="btn hidden" id="logoutBtn">Esci</button><a class="btn" href="../store.html?mode=fantaballa">Store</a><a class="btn" href="../cards/">Vetrina</a></header>
-<main class="wrap"><div class="controls"><input id="search" placeholder="Cerca nome, serie, rarità…"><select id="game"><option value="">Tutte le squadre</option><option>Fantaballa FC</option><option>Gotham City</option></select><select id="sort"><option value="name">Nome</option><option value="rarity">Rarità</option><option value="count">Quantità</option></select></div><div class="status" id="status">Accedi per vedere il tuo inventario.</div><div class="grid" id="grid"></div></main>
+<main class="wrap"><div class="controls"><input id="search" placeholder="Cerca nome, serie, rarità…"><select id="game"><option value="">Tutte le squadre</option><option>Fantaballa FC</option><option>Gotham City</option></select><select id="sort"><option value="recent">Più recenti</option><option value="name">Nome</option><option value="rarity">Rarità</option><option value="count">Quantità</option></select></div><div class="status" id="status">Accedi per vedere il tuo inventario.</div><div class="grid" id="grid"></div></main>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -77,7 +77,21 @@ function render(){
     if(b==='fantaballa fc')return a==='fantaballa fc';
     return a===b;
   };
-  let list=items.filter(c=>sameGame(c.game,g)&&(!q||[c.name,c.series,c.rarity,c.game].join(' ').toLowerCase().includes(q)));list.sort((a,b)=>s==='count'?(b.count||0)-(a.count||0):String(a[s]||'').localeCompare(String(b[s]||''),'it'));grid.innerHTML='';if(!list.length){grid.innerHTML='<div class="empty">Nessuna carta da mostrare.</div>';return}for(const c of list){const d=document.createElement('article');d.className='card';const im=document.createElement('img');im.alt=c.name||'Carta';smartImg(im,c.img);d.append(im);d.insertAdjacentHTML('beforeend',`<span class="count">×${c.count||1}</span><div class="name"></div><div class="meta"></div>`);d.querySelector('.name').textContent=c.name||'Carta';d.querySelector('.meta').textContent=[c.rarity,c.series,c.game].filter(Boolean).join(' • ');grid.append(d)}}
+  let list=items.filter(c=>sameGame(c.game,g)&&(!q||[c.name,c.series,c.rarity,c.game].join(' ').toLowerCase().includes(q)));list.sort((a,b)=>{
+    if(s==='recent'){
+      const toMs=v=>{
+        if(!v)return 0;
+        if(typeof v.toMillis==='function')return v.toMillis();
+        if(typeof v.seconds==='number')return v.seconds*1000;
+        if(typeof v==='number')return v;
+        const d=Date.parse(v);
+        return Number.isNaN(d)?0:d;
+      };
+      return toMs(b.updatedAt)-toMs(a.updatedAt);
+    }
+    if(s==='count')return (b.count||0)-(a.count||0);
+    return String(a[s]||'').localeCompare(String(b[s]||''),'it');
+  });grid.innerHTML='';if(!list.length){grid.innerHTML='<div class="empty">Nessuna carta da mostrare.</div>';return}for(const c of list){const d=document.createElement('article');d.className='card';const im=document.createElement('img');im.alt=c.name||'Carta';smartImg(im,c.img);d.append(im);d.insertAdjacentHTML('beforeend',`<span class="count">×${c.count||1}</span><div class="name"></div><div class="meta"></div>`);d.querySelector('.name').textContent=c.name||'Carta';d.querySelector('.meta').textContent=[c.rarity,c.series,c.game].filter(Boolean).join(' • ');grid.append(d)}}
 async function loadInventory(u){
   console.log('[MY CARDS INVENTORY] Lettura UID:',u.uid);
   status.textContent='Caricamento inventario…';
