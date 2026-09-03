@@ -439,7 +439,6 @@
       : null;
     document.getElementById("heroStats").innerHTML = `
       <div class="hero-stat"><strong>${TEAMS.length}</strong><span>Squadre analizzate</span></div>
-      <div class="hero-stat"><strong>${TEAMS.length * numeric(SITE_CONFIG.matchesPerSeason, 38)}</strong><span>Partite di campionato</span></div>
       <div class="hero-stat"><strong>${avg ?? "—"}</strong><span>Valutazione media</span></div>
     `;
   };
