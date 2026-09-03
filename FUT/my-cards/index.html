@@ -16,7 +16,10 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script>
 const firebaseConfig={apiKey:"AIzaSyDv23gasgBuAtPeDJeztyJ5P2S7NWq1svo",authDomain:"fantaball-9e19c.firebaseapp.com",projectId:"fantaball-9e19c",storageBucket:"fantaball-9e19c.appspot.com",messagingSenderId:"683304379837",appId:"1:683304379837:web:d2bbe7a814e2e40e075ed4",measurementId:"G-C8Q8K5B52C"};
-if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.firestore();let items=[];
+if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.firestore();let items=[];
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .catch(e=>console.warn('[MY CARDS persistence]',e));
 const $=id=>document.getElementById(id),grid=$('grid'),status=$('status'),loginBtn=$('loginBtn'),logoutBtn=$('logoutBtn');
 function imgCandidates(v){
   v=String(v||'').trim().replace(/^\.\//,'').replace(/^FUT\//,'');
@@ -44,12 +47,17 @@ function smartImg(el,path){
   el.src=a[0];
 }
 function render(){const q=$('search').value.trim().toLowerCase(),g=$('game').value,s=$('sort').value;let list=items.filter(c=>(!g||c.game===g)&&(!q||[c.name,c.series,c.rarity,c.game].join(' ').toLowerCase().includes(q)));list.sort((a,b)=>s==='count'?(b.count||0)-(a.count||0):String(a[s]||'').localeCompare(String(b[s]||''),'it'));grid.innerHTML='';if(!list.length){grid.innerHTML='<div class="empty">Nessuna carta da mostrare.</div>';return}for(const c of list){const d=document.createElement('article');d.className='card';const im=document.createElement('img');im.alt=c.name||'Carta';smartImg(im,c.img);d.append(im);d.insertAdjacentHTML('beforeend',`<span class="count">×${c.count||1}</span><div class="name"></div><div class="meta"></div>`);d.querySelector('.name').textContent=c.name||'Carta';d.querySelector('.meta').textContent=[c.rarity,c.series,c.game].filter(Boolean).join(' • ');grid.append(d)}}
-async function loadInventory(u){status.textContent='Caricamento inventario…';try{const snap=await db.collection('users').doc(u.uid).collection('inventory').get();items=snap.docs.map(d=>({id:d.id,...d.data()}));status.textContent=`${items.length} carte diverse · ${items.reduce((n,c)=>n+(Number(c.count)||1),0)} copie totali`;render()}catch(e){console.error(e);status.textContent='Errore nel caricamento dell’inventario.'}}
+async function loadInventory(u){console.log('[MY CARDS INVENTORY] Lettura UID:',u.uid);status.textContent='Caricamento inventario…';try{const snap=await db.collection('users').doc(u.uid).collection('inventory').get();items=snap.docs.map(d=>({id:d.id,...d.data()}));status.textContent=`${items.length} carte diverse · ${items.reduce((n,c)=>n+(Number(c.count)||1),0)} copie totali`;render()}catch(e){console.error(e);status.textContent='Errore nel caricamento dell’inventario.'}}
 loginBtn.onclick=async()=>{
   const p=new firebase.auth.GoogleAuthProvider();
   p.setCustomParameters({prompt:'select_account'});
   try{
-    await auth.signInWithPopup(p);
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    if(auth.currentUser&&auth.currentUser.isAnonymous)await auth.signOut();
+    if(!auth.currentUser){
+      const r=await auth.signInWithPopup(p);
+      console.log('[MY CARDS AUTH] Google UID:',r.user?.uid);
+    }
   }catch(e){
     console.error('[Google popup login]',e);
     if(e&&e.code==='auth/popup-blocked')alert('Consenti i popup per fantaballa.it e riprova.');

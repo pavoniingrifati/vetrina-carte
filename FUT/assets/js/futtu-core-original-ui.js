@@ -50,38 +50,46 @@ homeLinks.forEach(a => { if (FUTTU_CONFIG.homeUrl) a.href = FUTTU_CONFIG.homeUrl
 /** AUTH */
 async function ensureGoogleUser() {
   const auth = firebase.auth();
-  const current = auth.currentUser;
+
+  try {
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  } catch (e) {
+    console.warn('[FUT auth persistence]', e);
+  }
+
+  let current = auth.currentUser;
 
   if (current && !current.isAnonymous) {
     await current.getIdToken(true);
+    console.log('[FUT AUTH] Google UID:', current.uid);
     return current;
+  }
+
+  // L'inventario deve appartenere SEMPRE all'account Google.
+  // Non colleghiamo più un UID anonimo a Google.
+  if (current && current.isAnonymous) {
+    await auth.signOut();
+    current = null;
   }
 
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
 
   try {
-    if (current && current.isAnonymous) {
-      // Mantiene lo stesso utente/inventario collegando Google all'account anonimo.
-      const result = await current.linkWithPopup(provider);
-      await result.user.getIdToken(true);
-      return result.user;
-    }
-
     const result = await auth.signInWithPopup(provider);
-    await result.user.getIdToken(true);
-    return result.user;
+    const user = result.user;
+    if (!user || user.isAnonymous) throw new Error('google-login-invalid');
+    await user.getIdToken(true);
+    console.log('[FUT AUTH] Google UID:', user.uid);
+    return user;
   } catch (e) {
     console.error('[Google popup login]', e);
 
     if (e && e.code === 'auth/popup-blocked') {
       alert('Chrome ha bloccato il popup. Consenti i popup per fantaballa.it e riprova.');
-    } else if (e && e.code === 'auth/popup-closed-by-user') {
-      // Nessun alert: l'utente ha semplicemente chiuso la finestra.
     } else if (e && e.code === 'auth/unauthorized-domain') {
       alert('Aggiungi fantaballa.it ai domini autorizzati in Firebase Authentication.');
     }
-
     throw e;
   }
 }
@@ -193,13 +201,26 @@ function playByRarity(r){if(r==='Comune'||r==='Non Comune'){tone(520,.07,.06,'tr
 
 /** INVENTARIO */
 var safeDocId=(id)=>String(id||Math.random().toString(36).slice(2)).replace(/[\/#?\[\]]/g,'_').slice(0,120);
-async function saveInventario(cards){
-  const u=firebase.auth().currentUser;
+async function saveInventario(cards,user){
+  const u=user||firebase.auth().currentUser;
   if(!u||u.isAnonymous)throw new Error('login-required');
-  const batch=db.batch();const now=firebase.firestore.FieldValue.serverTimestamp();
+
+  console.log('[FUT INVENTORY] Salvataggio UID:',u.uid);
+
+  const batch=db.batch();
+  const now=firebase.firestore.FieldValue.serverTimestamp();
   for(const c of cards){
     const ref=db.collection('users').doc(u.uid).collection('inventory').doc(safeDocId(c.id));
-    batch.set(ref,{name:c.name,rarity:c.rarity,series:c.series||'',game:c.game||'',mode:FUTTU_CONFIG.id,img:c.img||'',count:firebase.firestore.FieldValue.increment(1),updatedAt:now},{merge:true});
+    batch.set(ref,{
+      name:c.name,
+      rarity:c.rarity,
+      series:c.series||'',
+      game:c.game||'',
+      mode:FUTTU_CONFIG.id,
+      img:c.img||'',
+      count:firebase.firestore.FieldValue.increment(1),
+      updatedAt:now
+    },{merge:true});
   }
   await batch.commit();
 }
@@ -504,12 +525,16 @@ openBtn.addEventListener('click', async () => {
     updateOpenBtnEnabled();
   };
 
+  let authenticatedUser = null;
   try {
-    // L'apertura è sempre gratuita. Il login serve solo per salvare le carte nell'inventario.
-    let user = firebase.auth().currentUser;
-    if (!user || user.isAnonymous) user = await ensureGoogleUser();
+    // L'apertura è sempre gratuita. Il login serve per salvare sul proprio UID Google.
+    authenticatedUser = firebase.auth().currentUser;
+    if (!authenticatedUser || authenticatedUser.isAnonymous) {
+      authenticatedUser = await ensureGoogleUser();
+    }
+    if (!authenticatedUser || authenticatedUser.isAnonymous) throw new Error('login-required');
     await ensureWallet10();
-    if (log) log.textContent = '🆓 Apertura gratuita. I valori mostrati sotto ai pack sono solo indicativi.';
+    if (log) log.textContent = '🆓 Apertura gratuita. Carte collegate al tuo account Google.';
   } catch (error) {
     if (error.message === 'redirecting') {
       GAME_STATE.opening = false;
@@ -548,7 +573,7 @@ openBtn.addEventListener('click', async () => {
      durante il reveal, le carte sono già state registrate nell'inventario. */
   let saveError = null;
   try {
-    await saveInventario(chosen);
+    await saveInventario(chosen,authenticatedUser);
   } catch (error) {
     saveError = error;
     console.error('[saveInventario]', error);
