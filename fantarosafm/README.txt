@@ -10,41 +10,63 @@ ANTEPRIMA LOCALE SU WINDOWS
 6. Dopo una modifica, salva il file e aggiorna la pagina con CTRL+F5.
 7. Per fermare il server, premi CTRL+C nella finestra nera.
 
-Il server viene avviato direttamente dentro la cartella del progetto. Per questo
-l'anteprima locale usa http://localhost:8000/, mentre su GitHub Pages il sito
-continua a funzionare nella cartella /fantarosafm.
-
 CONTENUTI DEL SITO
 Tutti i contenuti modificabili si trovano in:
 
 data/contenuti.json
 
-Dentro questo file puoi cambiare:
-- nome del progetto
-- stagione
-- link del profilo TikTok
-- nome della competizione
-- fasce delle valutazioni
-- elenco completo delle squadre
-- colore principale e colore secondario di ogni squadra
+Dentro questo file puoi cambiare nome del progetto, stagione, link TikTok,
+competizione, colori, formazioni, giocatori e risultati stagionali.
+
+VALUTAZIONE AUTOMATICA SU 100
+Il campo "rating" non va piu inserito manualmente nelle squadre.
+Il sito calcola automaticamente il voto usando questi parametri:
+
+- Punti in campionato: massimo 55 punti di valutazione
+- Vittoria campionato: +15
+- Vittoria Coppa: +10
+- Capocannoniere: +5
+- MVP: +5
+- Miglior attacco: +5
+- Miglior difesa: +5
+
+I pesi sono modificabili dentro:
+site > ratingSystem
+
+Il contributo dei punti di campionato usa una curva calibrata per non penalizzare
+troppo le stagioni con punteggi realistici. Con la configurazione attuale,
+77 punti di campionato valgono 46/55.
+
+ESEMPIO PAVONI INGRIFATI
+77 punti + campionato vinto + miglior attacco =
+46 + 15 + 5 = 66/100.
+
+PARAMETRI DA INSERIRE PER OGNI SQUADRA
+"points": 77,
+"goalsFor": 67,
+"goalsAgainst": 32,
+"vittoriaCampionato": true,
+"vittoriaCoppa": false,
+"capocannoniere": false,
+"mvp": false,
+"migliorAttacco": true,
+"migliorDifesa": false
 
 COME AGGIUNGERE UNA SQUADRA
 1. Apri data/esempio-squadra.json.
 2. Copia tutto l'oggetto della squadra.
 3. Incollalo dentro l'array "teams" di data/contenuti.json.
 4. Se aggiungi piu squadre, separale con una virgola.
-5. Salva il file rispettando la sintassi JSON.
+5. Modifica i dati e salva rispettando la sintassi JSON.
 
 COLORI DELLA SQUADRA
 Per ogni squadra puoi impostare:
 - "color": colore principale della maglia e degli elementi grafici
-- "secondaryColor": colore dei numeri sulla maglia e delle iniziali nello stemma
+- "secondaryColor": colore dei numeri e delle iniziali nello stemma
 
-Esempio:
-"color": "#e30613",
-"secondaryColor": "#ffffff"
-
-Se "secondaryColor" manca, il sito usa automaticamente il nero (#000000).
+FORMAZIONE
+L'ordine dei titolari per il 4-3-3 e:
+1 portiere, 4 difensori, 3 centrocampisti, 3 attaccanti.
 
 PUBBLICAZIONE SU GITHUB
 Carica l'intera cartella fantarosafm nella directory principale del repository.
@@ -55,21 +77,8 @@ STRUTTURA
 - index.html: struttura della pagina
 - css/style.css: grafica
 - js/app.js: lettura del JSON e funzioni del sito
-- data/contenuti.json: unico database dei contenuti
+- data/contenuti.json: database dei contenuti e configurazione punteggi
 - data/esempio-squadra.json: modello da copiare
 - assets/: loghi e immagini
 - start-server.bat: avvio dell'anteprima locale
 - server.ps1: server locale PowerShell senza installazioni
-
-AGGIORNAMENTO MOBILE
-Il layout è ottimizzato per smartphone da 320 px in su, tablet e dispositivi touch.
-La classifica mobile non richiede scorrimento orizzontale; menu, pulsanti e schede squadra sono adattati al touch.
-
-NUOVE STATISTICHE MODIFICABILI
-------------------------------
-Per ogni squadra puoi aggiungere o modificare queste due voci in data/contenuti.json:
-
-"capocannoniere": "Sì",
-"coppaItalia": "No"
-
-Sono accettati sia "Sì"/"No" sia true/false. Nel sito vengono mostrate nella scheda della squadra, dentro "Risultato simulazione".

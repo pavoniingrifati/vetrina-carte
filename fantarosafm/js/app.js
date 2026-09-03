@@ -5,6 +5,7 @@
   let SITE_CONFIG = {};
   let TEAMS = [];
   let RATING_BANDS = [];
+  let RATING_SYSTEM = {};
 
   const rankingList = document.getElementById("rankingList");
   const teamGrid = document.getElementById("teamGrid");
@@ -51,6 +52,37 @@
   };
 
   const yesNo = (value) => isYes(value) ? "Sì" : "No";
+
+  const calculateRatingBreakdown = (team) => {
+    const maxLeaguePoints = Math.max(1, numeric(RATING_SYSTEM.maxLeaguePoints, 114));
+    const leaguePointsWeight = numeric(RATING_SYSTEM.leaguePointsWeight, 55);
+    const exponent = numeric(RATING_SYSTEM.leaguePointsExponent, 0.455);
+    const points = Math.min(maxLeaguePoints, Math.max(0, numeric(team.points)));
+    const leaguePoints = Math.round(leaguePointsWeight * Math.pow(points / maxLeaguePoints, exponent));
+
+    const breakdown = {
+      leaguePoints,
+      leagueWinner: isYes(team.vittoriaCampionato) ? numeric(RATING_SYSTEM.leagueWinnerBonus, 15) : 0,
+      cupWinner: isYes(team.vittoriaCoppa ?? team.coppaItalia) ? numeric(RATING_SYSTEM.cupWinnerBonus, 10) : 0,
+      topScorer: isYes(team.capocannoniere) ? numeric(RATING_SYSTEM.topScorerBonus, 5) : 0,
+      mvp: isYes(team.mvp) ? numeric(RATING_SYSTEM.mvpBonus, 5) : 0,
+      bestAttack: isYes(team.migliorAttacco) ? numeric(RATING_SYSTEM.bestAttackBonus, 5) : 0,
+      bestDefense: isYes(team.migliorDifesa) ? numeric(RATING_SYSTEM.bestDefenseBonus, 5) : 0
+    };
+
+    breakdown.total = Math.min(100, Math.max(0, Math.round(
+      breakdown.leaguePoints +
+      breakdown.leagueWinner +
+      breakdown.cupWinner +
+      breakdown.topScorer +
+      breakdown.mvp +
+      breakdown.bestAttack +
+      breakdown.bestDefense
+    )));
+    return breakdown;
+  };
+
+  const calculateRating = (team) => calculateRatingBreakdown(team).total;
 
   const ratingLabel = (rating) => {
     const value = numeric(rating);
@@ -226,14 +258,27 @@
               <div class="modal-stat"><span>Punti</span><strong>${numeric(team.points)}</strong></div>
               <div class="modal-stat"><span>Gol fatti</span><strong>${numeric(team.goalsFor)}</strong></div>
               <div class="modal-stat"><span>Gol subiti</span><strong>${numeric(team.goalsAgainst)}</strong></div>
+              <div class="modal-stat"><span>Campionato</span><strong class="${isYes(team.vittoriaCampionato) ? "stat-yes" : "stat-no"}">${isYes(team.vittoriaCampionato) ? "Vinto" : "No"}</strong></div>
+              <div class="modal-stat"><span>Coppa</span><strong class="${isYes(team.vittoriaCoppa ?? team.coppaItalia) ? "stat-yes" : "stat-no"}">${yesNo(team.vittoriaCoppa ?? team.coppaItalia)}</strong></div>
               <div class="modal-stat"><span>Capocannoniere</span><strong class="${isYes(team.capocannoniere) ? "stat-yes" : "stat-no"}">${yesNo(team.capocannoniere)}</strong></div>
-              <div class="modal-stat"><span>Coppa Italia</span><strong class="${isYes(team.coppaItalia) ? "stat-yes" : "stat-no"}">${yesNo(team.coppaItalia)}</strong></div>
+              <div class="modal-stat"><span>MVP</span><strong class="${isYes(team.mvp) ? "stat-yes" : "stat-no"}">${yesNo(team.mvp)}</strong></div>
+              <div class="modal-stat"><span>Miglior attacco</span><strong class="${isYes(team.migliorAttacco) ? "stat-yes" : "stat-no"}">${yesNo(team.migliorAttacco)}</strong></div>
+              <div class="modal-stat"><span>Miglior difesa</span><strong class="${isYes(team.migliorDifesa) ? "stat-yes" : "stat-no"}">${yesNo(team.migliorDifesa)}</strong></div>
             </div>
           </section>
           <section class="panel">
-            <div class="panel-title"><h3>La mia valutazione</h3><span>${escapeHtml(team.verdict)}</span></div>
-            <p class="review-text">${escapeHtml(team.review)}</p>
-            <div class="review-score"><span class="rating-ring" style="--value:${numeric(team.rating)}"><strong>${numeric(team.rating)}</strong></span><div><h4>${escapeHtml(ratingLabel(team.rating))}</h4><p>Valutazione complessiva su 100</p></div></div>
+            <div class="panel-title"><h3>Valutazione automatica</h3><span>${escapeHtml(ratingLabel(team.rating))}</span></div>
+            ${team.review ? `<p class="review-text">${escapeHtml(team.review)}</p>` : ""}
+            <div class="review-score"><span class="rating-ring" style="--value:${numeric(team.rating)}"><strong>${numeric(team.rating)}</strong></span><div><h4>${escapeHtml(ratingLabel(team.rating))}</h4><p>Calcolata dai risultati oggettivi della stagione</p></div></div>
+            <div class="rating-breakdown">
+              <div><span>Punti campionato</span><strong>${numeric(team.ratingBreakdown?.leaguePoints)}/${numeric(RATING_SYSTEM.leaguePointsWeight, 55)}</strong></div>
+              <div><span>Vittoria campionato</span><strong>+${numeric(team.ratingBreakdown?.leagueWinner)}</strong></div>
+              <div><span>Vittoria Coppa</span><strong>+${numeric(team.ratingBreakdown?.cupWinner)}</strong></div>
+              <div><span>Capocannoniere</span><strong>+${numeric(team.ratingBreakdown?.topScorer)}</strong></div>
+              <div><span>MVP</span><strong>+${numeric(team.ratingBreakdown?.mvp)}</strong></div>
+              <div><span>Miglior attacco</span><strong>+${numeric(team.ratingBreakdown?.bestAttack)}</strong></div>
+              <div><span>Miglior difesa</span><strong>+${numeric(team.ratingBreakdown?.bestDefense)}</strong></div>
+            </div>
             <a class="button video-link" href="${escapeHtml(team.videoUrl || SITE_CONFIG.tiktokProfile)}" target="_blank" rel="noopener">Guarda il video su TikTok ↗</a>
           </section>
           <section class="panel"><div class="panel-title"><h3>Verdetto stagionale</h3></div><div class="result-chip">${escapeHtml(team.fmResult)}</div></section>
@@ -418,8 +463,12 @@
       if (!response.ok) throw new Error(`Errore HTTP ${response.status}`);
       const data = await response.json();
       SITE_CONFIG = data.site || {};
-      TEAMS = Array.isArray(data.teams) ? data.teams : [];
+      RATING_SYSTEM = SITE_CONFIG.ratingSystem || {};
       RATING_BANDS = Array.isArray(data.ratingBands) ? data.ratingBands : [];
+      TEAMS = Array.isArray(data.teams) ? data.teams.map(team => {
+        const ratingBreakdown = calculateRatingBreakdown(team);
+        return { ...team, ratingBreakdown, rating: ratingBreakdown.total };
+      }) : [];
       initPage();
       populateFilters();
       renderRanking();
