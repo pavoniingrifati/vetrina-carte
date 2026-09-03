@@ -215,14 +215,13 @@ async function saveInventario(cards,user){
       name:c.name,
       rarity:c.rarity,
       series:c.series||'',
-      game:c.game||'',
-      mode:FUTTU_CONFIG.id,
       img:c.img||'',
       count:firebase.firestore.FieldValue.increment(1),
       updatedAt:now
     },{merge:true});
   }
   await batch.commit();
+  console.log('[FUT INVENTORY] Salvataggio completato:', cards.length, 'carte');
 }
 
 /** FILTRI CONFIGURABILI */
