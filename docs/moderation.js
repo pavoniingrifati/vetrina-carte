@@ -25,7 +25,8 @@ import {
   setDoc,
   increment,
   runTransaction,
-  addDoc
+  addDoc,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const statusBox = qs("#status");
@@ -75,7 +76,11 @@ const achCreateLinkRequest = qs("#achCreateLinkRequest");
 const achCreateLinkUrl = qs("#achCreateLinkUrl");
 const achLinkField = qs("#achLinkField");
 const btnCreateAchievement = qs("#btnCreateAchievement");
+const btnCancelAchievementEdit = qs("#btnCancelAchievementEdit");
 const achCreateStatus = qs("#achCreateStatus");
+const achFormTitle = qs("#achFormTitle");
+const achCatalogSearch = qs("#achCatalogSearch");
+const achCatalogList = qs("#achCatalogList");
 
 const tierCreateId = qs("#tierCreateId");
 const tierCreateRequired = qs("#tierCreateRequired");
@@ -87,11 +92,20 @@ const tierRewardImg = qs("#tierRewardImg");
 const tierRewardOverall = qs("#tierRewardOverall");
 const tierCreateActive = qs("#tierCreateActive");
 const btnCreateTier = qs("#btnCreateTier");
+const btnCancelTierEdit = qs("#btnCancelTierEdit");
 const tierCreateStatus = qs("#tierCreateStatus");
+const tierFormTitle = qs("#tierFormTitle");
+const tierCatalogSearch = qs("#tierCatalogSearch");
+const tierCatalogList = qs("#tierCatalogList");
 
 let CURRENT_SEASON = 1;
 let XP_DIRECTORY = [];
 let SELECTED_XP_USER = null;
+
+let ACHIEVEMENT_CATALOG = [];
+let TIER_CATALOG = [];
+let EDITING_ACHIEVEMENT_ID = null;
+let EDITING_TIER_ID = null;
 
 btnLogin.onclick = () => login().catch(err => alert(err.message));
 btnLogout.onclick = () => logout().catch(err => alert(err.message));
@@ -209,17 +223,50 @@ async function loadCatalogSummary() {
       getDocs(collection(db, "gp_tiers"))
     ]);
 
-    catalogAchCount.textContent = String(achSnap.size);
-    catalogTierCount.textContent = String(tierSnap.size);
+    ACHIEVEMENT_CATALOG = achSnap.docs.map(d => ({
+      id: d.id,
+      ...(d.data() || {})
+    }));
+
+    TIER_CATALOG = tierSnap.docs.map(d => ({
+      id: d.id,
+      ...(d.data() || {})
+    }));
+
+    ACHIEVEMENT_CATALOG.sort((a,b) => {
+      const ta = (a.type || "").toString();
+      const tb = (b.type || "").toString();
+      if (ta !== tb) return ta.localeCompare(tb, "it");
+      return (a.title || a.name || a.id).toString()
+        .localeCompare((b.title || b.name || b.id).toString(), "it");
+    });
+
+    TIER_CATALOG.sort((a,b) =>
+      (Number(a.requiredPoints || 0) - Number(b.requiredPoints || 0)) ||
+      String(a.id).localeCompare(String(b.id), "it")
+    );
+
+    catalogAchCount.textContent = String(ACHIEVEMENT_CATALOG.length);
+    catalogTierCount.textContent = String(TIER_CATALOG.length);
+
+    renderAchievementCatalog();
+    renderTierCatalog();
   } catch (e) {
     console.warn("loadCatalogSummary", e);
     catalogAchCount.textContent = "?";
     catalogTierCount.textContent = "?";
+    if (achCatalogList) achCatalogList.textContent = "Errore nel caricamento Achievement.";
+    if (tierCatalogList) tierCatalogList.textContent = "Errore nel caricamento Tier.";
   }
 }
 
 function resetAchievementForm() {
+  EDITING_ACHIEVEMENT_ID = null;
+
   achCreateId.value = "";
+  achCreateId.disabled = false;
+  achCreateId.classList.remove("catalog-id-locked");
+
   achCreateTitle.value = "";
   achCreateDesc.value = "";
   achCreatePoints.value = "";
@@ -229,10 +276,19 @@ function resetAchievementForm() {
   achCreateLinkRequest.checked = false;
   achCreateLinkUrl.value = "";
   achLinkField.style.display = "none";
+
+  if (achFormTitle) achFormTitle.textContent = "Crea Achievement";
+  btnCreateAchievement.textContent = "Crea Achievement";
+  if (btnCancelAchievementEdit) btnCancelAchievementEdit.style.display = "none";
 }
 
 function resetTierForm() {
+  EDITING_TIER_ID = null;
+
   tierCreateId.value = "";
+  tierCreateId.disabled = false;
+  tierCreateId.classList.remove("catalog-id-locked");
+
   tierCreateRequired.value = "";
   tierRewardType.value = "card";
   tierRewardRarity.value = "common";
@@ -241,6 +297,315 @@ function resetTierForm() {
   tierRewardImg.value = "";
   tierRewardOverall.value = "";
   tierCreateActive.checked = true;
+
+  if (tierFormTitle) tierFormTitle.textContent = "Crea Tier";
+  btnCreateTier.textContent = "Crea Tier";
+  if (btnCancelTierEdit) btnCancelTierEdit.style.display = "none";
+}
+
+
+function renderAchievementCatalog() {
+  if (!achCatalogList) return;
+
+  const term = (achCatalogSearch?.value || "").trim().toLowerCase();
+  const rows = ACHIEVEMENT_CATALOG.filter(a => {
+    if (!term) return true;
+    return [
+      a.id,
+      a.title,
+      a.name,
+      a.desc,
+      a.description,
+      a.type
+    ].some(v => (v || "").toString().toLowerCase().includes(term));
+  });
+
+  achCatalogList.innerHTML = "";
+
+  if (!rows.length) {
+    achCatalogList.append(
+      el("div", { class:"small", style:"padding:10px;" }, [
+        document.createTextNode("Nessun Achievement trovato.")
+      ])
+    );
+    return;
+  }
+
+  for (const a of rows) {
+    const title = (a.title || a.name || a.id || "Achievement").toString();
+    const type = (a.type || "—").toString();
+    const points = Number(a.points ?? a.xp ?? 0) || 0;
+    const active = a.active !== false;
+
+    const editBtn = el("button", {
+      class:"btn",
+      type:"button",
+      onclick:() => startEditAchievement(a.id)
+    }, [document.createTextNode("Modifica")]);
+
+    const deleteBtn = el("button", {
+      class:"btn danger",
+      type:"button",
+      onclick:() => deleteAchievementFromPanel(a.id)
+    }, [document.createTextNode("Elimina")]);
+
+    achCatalogList.append(
+      el("div", {
+        class:"catalog-existing-row" +
+          (EDITING_ACHIEVEMENT_ID === a.id ? " catalog-editing" : "")
+      }, [
+        el("div", { class:"catalog-existing-main" }, [
+          el("div", { class:"catalog-existing-name" }, [
+            document.createTextNode(title)
+          ]),
+          el("div", { class:"catalog-existing-meta" }, [
+            document.createTextNode(
+              `${a.id} • ${type} • ${points} XP • ${active ? "attivo" : "non attivo"}`
+            )
+          ])
+        ]),
+        el("div", { class:"catalog-existing-actions" }, [editBtn, deleteBtn])
+      ])
+    );
+  }
+}
+
+function renderTierCatalog() {
+  if (!tierCatalogList) return;
+
+  const term = (tierCatalogSearch?.value || "").trim().toLowerCase();
+  const rows = TIER_CATALOG.filter(t => {
+    if (!term) return true;
+    const reward = t.reward || {};
+    return [
+      t.id,
+      t.requiredPoints,
+      reward.label,
+      reward.title,
+      reward.type,
+      reward.rarity
+    ].some(v => (v ?? "").toString().toLowerCase().includes(term));
+  });
+
+  tierCatalogList.innerHTML = "";
+
+  if (!rows.length) {
+    tierCatalogList.append(
+      el("div", { class:"small", style:"padding:10px;" }, [
+        document.createTextNode("Nessun Tier trovato.")
+      ])
+    );
+    return;
+  }
+
+  for (const t of rows) {
+    const reward = t.reward || {};
+    const label = (reward.label || reward.title || t.id || "Tier").toString();
+    const requiredPoints = Number(t.requiredPoints || 0) || 0;
+    const active = t.active !== false;
+
+    const editBtn = el("button", {
+      class:"btn",
+      type:"button",
+      onclick:() => startEditTier(t.id)
+    }, [document.createTextNode("Modifica")]);
+
+    const deleteBtn = el("button", {
+      class:"btn danger",
+      type:"button",
+      onclick:() => deleteTierFromPanel(t.id)
+    }, [document.createTextNode("Elimina")]);
+
+    tierCatalogList.append(
+      el("div", {
+        class:"catalog-existing-row" +
+          (EDITING_TIER_ID === t.id ? " catalog-editing" : "")
+      }, [
+        el("div", { class:"catalog-existing-main" }, [
+          el("div", { class:"catalog-existing-name" }, [
+            document.createTextNode(label)
+          ]),
+          el("div", { class:"catalog-existing-meta" }, [
+            document.createTextNode(
+              `${t.id} • ${requiredPoints} XP • ${reward.rarity || "—"} • ${active ? "attivo" : "non attivo"}`
+            )
+          ])
+        ]),
+        el("div", { class:"catalog-existing-actions" }, [editBtn, deleteBtn])
+      ])
+    );
+  }
+}
+
+function startEditAchievement(id) {
+  const a = ACHIEVEMENT_CATALOG.find(x => x.id === id);
+  if (!a) return;
+
+  EDITING_ACHIEVEMENT_ID = id;
+
+  achCreateId.value = id;
+  achCreateId.disabled = true;
+  achCreateId.classList.add("catalog-id-locked");
+
+  achCreateTitle.value = (a.title || a.name || "").toString();
+  achCreateDesc.value = (a.desc || a.description || "").toString();
+  achCreatePoints.value = String(Number(a.points ?? a.xp ?? 0) || 0);
+
+  const type = (a.type || "FUT").toString().toUpperCase();
+  achCreateType.value = ["FUT","WWE","F1","LIVE","SOCIAL"].includes(type)
+    ? type
+    : "FUT";
+
+  const prereq = Array.isArray(a.prereq)
+    ? a.prereq
+    : (Array.isArray(a.prerequisites) ? a.prerequisites : []);
+  achCreatePrereq.value = prereq.join(", ");
+
+  achCreateActive.checked = a.active !== false;
+  achCreateLinkRequest.checked = !!a.linkRequest;
+  achCreateLinkUrl.value = (a.linkUrl || "").toString();
+  achLinkField.style.display = achCreateLinkRequest.checked ? "" : "none";
+
+  if (achFormTitle) achFormTitle.textContent = `Modifica Achievement • ${id}`;
+  btnCreateAchievement.textContent = "Salva modifiche";
+  if (btnCancelAchievementEdit) btnCancelAchievementEdit.style.display = "";
+
+  setCatalogStatus(achCreateStatus, "Modalità modifica: l'ID non può essere cambiato.");
+  renderAchievementCatalog();
+
+  achCreateTitle.scrollIntoView({ behavior:"smooth", block:"center" });
+}
+
+function startEditTier(id) {
+  const t = TIER_CATALOG.find(x => x.id === id);
+  if (!t) return;
+
+  const reward = t.reward || {};
+  EDITING_TIER_ID = id;
+
+  tierCreateId.value = id;
+  tierCreateId.disabled = true;
+  tierCreateId.classList.add("catalog-id-locked");
+
+  tierCreateRequired.value = String(Number(t.requiredPoints || 0) || 0);
+
+  const type = (reward.type || "card").toString().toLowerCase();
+  tierRewardType.value = ["card","skin","color","item"].includes(type)
+    ? type
+    : "item";
+
+  const rarity = (reward.rarity || "common").toString().toLowerCase();
+  tierRewardRarity.value = ["common","rare","epic","legendary"].includes(rarity)
+    ? rarity
+    : "common";
+
+  tierRewardLabel.value = (reward.label || reward.title || "").toString();
+  tierRewardTitle.value = (reward.title || reward.label || "").toString();
+  tierRewardImg.value = (reward.imgUrl || "").toString();
+  tierRewardOverall.value =
+    reward.overall === undefined || reward.overall === null
+      ? ""
+      : String(reward.overall);
+
+  tierCreateActive.checked = t.active !== false;
+
+  if (tierFormTitle) tierFormTitle.textContent = `Modifica Tier • ${id}`;
+  btnCreateTier.textContent = "Salva modifiche";
+  if (btnCancelTierEdit) btnCancelTierEdit.style.display = "";
+
+  setCatalogStatus(tierCreateStatus, "Modalità modifica: l'ID non può essere cambiato.");
+  renderTierCatalog();
+
+  tierCreateRequired.scrollIntoView({ behavior:"smooth", block:"center" });
+}
+
+async function deleteAchievementFromPanel(id) {
+  const a = ACHIEVEMENT_CATALOG.find(x => x.id === id);
+  if (!a) return;
+
+  const usedBy = ACHIEVEMENT_CATALOG
+    .filter(other => {
+      const prereq = Array.isArray(other.prereq)
+        ? other.prereq
+        : (Array.isArray(other.prerequisites) ? other.prerequisites : []);
+      return other.id !== id && prereq.map(String).includes(String(id));
+    })
+    .map(other => other.id);
+
+  const title = (a.title || a.name || id).toString();
+  let warning =
+    `ELIMINARE DEFINITIVAMENTE questo Achievement?\n\n` +
+    `ID: ${id}\nTitolo: ${title}\n`;
+
+  if (usedBy.length) {
+    warning +=
+      `\nATTENZIONE: è usato come prerequisito da:\n` +
+      `${usedBy.slice(0,10).join(", ")}${usedBy.length > 10 ? "…" : ""}\n`;
+  }
+
+  warning +=
+    `\nLe richieste/earned già registrate agli utenti non verranno cancellate automaticamente.` +
+    `\n\nPremi OK per confermare.`;
+
+  if (!confirm(warning)) return;
+
+  try {
+    await deleteDoc(doc(db, "achievements", id));
+
+    if (EDITING_ACHIEVEMENT_ID === id) resetAchievementForm();
+
+    setCatalogStatus(
+      achCreateStatus,
+      `✓ Achievement "${id}" eliminato.`,
+      "catalog-ok"
+    );
+    await loadCatalogSummary();
+  } catch (e) {
+    console.error(e);
+    setCatalogStatus(
+      achCreateStatus,
+      e?.message || "Errore durante l'eliminazione dell'Achievement.",
+      "catalog-warning"
+    );
+  }
+}
+
+async function deleteTierFromPanel(id) {
+  const t = TIER_CATALOG.find(x => x.id === id);
+  if (!t) return;
+
+  const reward = t.reward || {};
+  const label = (reward.label || reward.title || id).toString();
+
+  const warning =
+    `ELIMINARE DEFINITIVAMENTE questo Tier?\n\n` +
+    `ID: ${id}\n` +
+    `XP richiesti: ${Number(t.requiredPoints || 0) || 0}\n` +
+    `Premio: ${label}\n\n` +
+    `ATTENZIONE: eventuali gp_claims già creati per gli utenti NON verranno cancellati automaticamente.` +
+    `\n\nPremi OK per confermare.`;
+
+  if (!confirm(warning)) return;
+
+  try {
+    await deleteDoc(doc(db, "gp_tiers", id));
+
+    if (EDITING_TIER_ID === id) resetTierForm();
+
+    setCatalogStatus(
+      tierCreateStatus,
+      `✓ Tier "${id}" eliminato.`,
+      "catalog-ok"
+    );
+    await loadCatalogSummary();
+  } catch (e) {
+    console.error(e);
+    setCatalogStatus(
+      tierCreateStatus,
+      e?.message || "Errore durante l'eliminazione del Tier.",
+      "catalog-warning"
+    );
+  }
 }
 
 async function createAchievementFromPanel() {
@@ -293,13 +658,18 @@ async function createAchievementFromPanel() {
   try {
     const ref = doc(db, "achievements", id);
     const existing = await getDoc(ref);
+    const isEditing = EDITING_ACHIEVEMENT_ID === id;
 
-    if (existing.exists()) {
+    if (!isEditing && existing.exists()) {
       throw new Error(`Esiste già un achievement con ID "${id}".`);
     }
+    if (isEditing && !existing.exists()) {
+      throw new Error(`L'Achievement "${id}" non esiste più.`);
+    }
 
+    const actionLabel = isEditing ? "Salvare le modifiche a" : "Creare";
     const ok = confirm(
-      `Creare questo Achievement?\n\n` +
+      `${actionLabel} questo Achievement?\n\n` +
       `ID: ${id}\n` +
       `Titolo: ${title}\n` +
       `Categoria: ${type}\n` +
@@ -309,22 +679,37 @@ async function createAchievementFromPanel() {
     );
     if (!ok) return;
 
-    await setDoc(ref, {
-      title,
-      desc,
-      points,
-      type,
-      active,
-      prereq,
-      linkRequest,
-      linkUrl: linkRequest ? linkUrl : "",
-      createdAt: serverTimestamp(),
-      createdBy: auth.currentUser.uid
-    });
+    if (isEditing) {
+      await updateDoc(ref, {
+        title,
+        desc,
+        points,
+        type,
+        active,
+        prereq,
+        linkRequest,
+        linkUrl: linkRequest ? linkUrl : "",
+        updatedAt: serverTimestamp(),
+        updatedBy: auth.currentUser.uid
+      });
+    } else {
+      await setDoc(ref, {
+        title,
+        desc,
+        points,
+        type,
+        active,
+        prereq,
+        linkRequest,
+        linkUrl: linkRequest ? linkUrl : "",
+        createdAt: serverTimestamp(),
+        createdBy: auth.currentUser.uid
+      });
+    }
 
     setCatalogStatus(
       achCreateStatus,
-      `✓ Achievement "${id}" creato.`,
+      `✓ Achievement "${id}" ${isEditing ? "aggiornato" : "creato"}.`,
       "catalog-ok"
     );
 
@@ -399,13 +784,17 @@ async function createTierFromPanel() {
   try {
     const ref = doc(db, "gp_tiers", id);
     const existing = await getDoc(ref);
+    const isEditing = EDITING_TIER_ID === id;
 
-    if (existing.exists()) {
+    if (!isEditing && existing.exists()) {
       throw new Error(`Esiste già un Tier con ID "${id}".`);
+    }
+    if (isEditing && !existing.exists()) {
+      throw new Error(`Il Tier "${id}" non esiste più.`);
     }
 
     const ok = confirm(
-      `Creare questo Tier?\n\n` +
+      `${isEditing ? "Salvare le modifiche a" : "Creare"} questo Tier?\n\n` +
       `ID: ${id}\n` +
       `XP richiesti: ${requiredPoints}\n` +
       `Premio: ${label}\n` +
@@ -415,7 +804,13 @@ async function createTierFromPanel() {
     );
     if (!ok) return;
 
+    const existingReward =
+      isEditing && existing.exists() && existing.data()?.reward
+        ? existing.data().reward
+        : {};
+
     const reward = {
+      ...existingReward,
       type,
       rarity,
       label,
@@ -424,18 +819,29 @@ async function createTierFromPanel() {
     };
 
     if (overall !== null) reward.overall = overall;
+    else delete reward.overall;
 
-    await setDoc(ref, {
-      active,
-      requiredPoints,
-      reward,
-      createdAt: serverTimestamp(),
-      createdBy: auth.currentUser.uid
-    });
+    if (isEditing) {
+      await updateDoc(ref, {
+        active,
+        requiredPoints,
+        reward,
+        updatedAt: serverTimestamp(),
+        updatedBy: auth.currentUser.uid
+      });
+    } else {
+      await setDoc(ref, {
+        active,
+        requiredPoints,
+        reward,
+        createdAt: serverTimestamp(),
+        createdBy: auth.currentUser.uid
+      });
+    }
 
     setCatalogStatus(
       tierCreateStatus,
-      `✓ Tier "${id}" creato.`,
+      `✓ Tier "${id}" ${isEditing ? "aggiornato" : "creato"}.`,
       "catalog-ok"
     );
 
@@ -462,6 +868,21 @@ achCreateLinkRequest?.addEventListener("change", () => {
 btnCreateAchievement?.addEventListener("click", createAchievementFromPanel);
 btnCreateTier?.addEventListener("click", createTierFromPanel);
 btnCatalogReload?.addEventListener("click", loadCatalogSummary);
+
+btnCancelAchievementEdit?.addEventListener("click", () => {
+  resetAchievementForm();
+  setCatalogStatus(achCreateStatus, "");
+  renderAchievementCatalog();
+});
+
+btnCancelTierEdit?.addEventListener("click", () => {
+  resetTierForm();
+  setCatalogStatus(tierCreateStatus, "");
+  renderTierCatalog();
+});
+
+achCatalogSearch?.addEventListener("input", renderAchievementCatalog);
+tierCatalogSearch?.addEventListener("input", renderTierCatalog);
 
 async function getCurrentSeason() {
   try {
