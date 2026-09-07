@@ -1,7 +1,7 @@
 'use strict';
 
 const DIRECTOR_VERSION=15;
-const SAVE_KEY='fantaballa_director_sportivo_2026_27_v1';
+const SAVE_KEY='fantaballa_director_sportivo_2026_27_v2';
 const INFLUENCE_START=16;
 const INFLUENCE_BONUS_CAP=INFLUENCE_START+1;
 const SELF_DISADVANTAGE_REWARD=2;

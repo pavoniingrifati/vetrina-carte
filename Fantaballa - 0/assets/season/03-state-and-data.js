@@ -226,7 +226,7 @@ function showBootError(error){
 function updateCompetitionChrome(){
  const profile=competitionVariantProfile(state?.competitionVariant),legend=profile.id==='legend';
  document.body?.classList.toggle('competition-legend',legend);
- const meta=document.getElementById('competitionHeaderMeta');if(meta)meta.textContent=legend?'Legend · 38 giornate · 20 squadre per run · 40 club disponibili · 796 campioni · OVR fino a 116':'Serie A · 38 giornate · 20 club · 494 calciatori reali';
+ const meta=document.getElementById('competitionHeaderMeta');if(meta)meta.textContent=legend?'Legend · 38 giornate · 20 squadre per run · 40 club disponibili · 796 campioni · OVR fino a 116':'Serie A · 38 giornate · 20 club · 531 calciatori reali';
  const hero=document.getElementById('competitionHeroText');if(hero)hero.textContent=legend?'Le squadre che hanno fatto la storia del calcio mondiale dentro il Fantacampionato: draft tra 40 club leggendari, 38 giornate, eventi, infortuni, squalifiche e mercato di metà stagione.':'I calciatori e i club della stagione 2026/2027 dentro il Campionato di Fantaballa: draft, 38 giornate, eventi, infortuni, squalifiche e mercato di metà stagione.';
 }
 function applyCompetitionVariantData(value){

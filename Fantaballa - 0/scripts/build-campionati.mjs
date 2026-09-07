@@ -40,7 +40,7 @@ const variants = {
       BODY_CLASS: 'page-season page-season-real',
       BRAND_TITLE: 'Fantacampionato del Ca***',
       HEADER_META_ID: ' id="competitionHeaderMeta"',
-      HEADER_META: 'Serie A · 38 giornate · 20 club · 494 calciatori reali',
+      HEADER_META: 'Serie A · 38 giornate · 20 club · 531 calciatori reali',
       HERO_TEXT_ID: ' id="competitionHeroText"',
       HERO_TEXT: 'I calciatori e i club della stagione 2026/2027 dentro il Campionato di Fantaballa: draft, 38 giornate, eventi, infortuni, squalifiche e mercato di metà stagione.',
       CONFIG_SCRIPT: 'assets/season-config-real.js'

@@ -18,8 +18,8 @@ window.FANTABALLA_SEASON_CONFIG=Object.freeze({
  data:{
   primaryPlayers:'data/giocatori.json?v=4660acc7579f',
   primaryClubs:'data/club.json?v=1fd1a1a16d68',
-  secondaryPlayers:'data/giocatori-real.json?v=f1935b487f74',
-  secondaryClubs:'data/club-real.json?v=5fb25c7dcb21',
+  secondaryPlayers:'data/giocatori-real.json?v=f41541ba5cbd',
+  secondaryClubs:'data/club-real.json?v=a81019ee5dde',
   commentary:'data/cronaca-gol.json?v=2c486bc8c395'
  },
  validation:{
