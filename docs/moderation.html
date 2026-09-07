@@ -341,6 +341,12 @@
   }
 </style>
 
+
+<style>
+.category-manager-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.85fr);gap:14px;align-items:start}
+.category-badge-preview{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);font-size:10px;font-weight:850}
+@media(max-width:900px){.category-manager-grid{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <header>
@@ -377,9 +383,59 @@
         <div class="catalog-summary">
           <span class="catalog-pill">Achievement: <b id="catalogAchCount">—</b></span>
           <span class="catalog-pill">Tier: <b id="catalogTierCount">—</b></span>
+          <span class="catalog-pill">Categorie: <b id="catalogTypeCount">—</b></span>
         </div>
       </div>
       <button id="btnCatalogReload" class="btn">Aggiorna catalogo</button>
+    </div>
+
+    <div class="card catalog-box category-manager-card" style="margin-bottom:14px;">
+      <div class="mod-section-head" style="margin-bottom:8px;">
+        <div>
+          <div id="typeFormTitle" class="mod-title" style="font-size:16px;">Gestione categorie Achievement</div>
+          <div class="mod-sub">
+            Crea categorie come FUT, LIVE, TWITCH, FM, CHAMPIONS… Verranno usate automaticamente nel Game Pass.
+          </div>
+        </div>
+        <input id="typeCatalogSearch" type="search" placeholder="Cerca categoria…" style="max-width:230px;" />
+      </div>
+
+      <div class="category-manager-grid">
+        <div>
+          <div class="catalog-form">
+            <div class="catalog-field">
+              <label for="typeCreateId">Codice categoria *</label>
+              <input id="typeCreateId" type="text" maxlength="32" placeholder="es. TWITCH" />
+            </div>
+            <div class="catalog-field">
+              <label for="typeCreateLabel">Nome visualizzato *</label>
+              <input id="typeCreateLabel" type="text" maxlength="50" placeholder="es. Twitch" />
+            </div>
+            <div class="catalog-field">
+              <label for="typeCreateIcon">Icona</label>
+              <input id="typeCreateIcon" type="text" maxlength="12" placeholder="es. 🎥" />
+            </div>
+            <div class="catalog-field">
+              <label for="typeCreateOrder">Ordine</label>
+              <input id="typeCreateOrder" type="number" min="0" max="9999" step="1" value="100" />
+            </div>
+            <div class="catalog-field">
+              <label class="catalog-check"><input id="typeCreateActive" type="checkbox" checked /> Categoria attiva</label>
+            </div>
+            <div class="catalog-actions">
+              <button id="btnCreateType" class="btn primary">Crea categoria</button>
+              <button id="btnCancelTypeEdit" class="btn" type="button" style="display:none;">Annulla modifica</button>
+              <span id="typeCreateStatus" class="catalog-status"></span>
+            </div>
+          </div>
+          <div class="catalog-help">
+            Il codice viene salvato in maiuscolo. Sono ammessi lettere, numeri, trattino e underscore:
+            <span class="mono">TWITCH</span>, <span class="mono">FM_26</span>, <span class="mono">CHAMPIONS</span>.
+            Disattivando una categoria, i suoi Achievement restano nel database ma vengono nascosti nel Game Pass.
+          </div>
+        </div>
+        <div><div id="typeCatalogList" class="catalog-existing-list"></div></div>
+      </div>
     </div>
 
     <div class="catalog-admin-grid">
@@ -397,11 +453,7 @@
           <div class="catalog-field">
             <label for="achCreateType">Categoria *</label>
             <select id="achCreateType">
-              <option value="FUT">FUT</option>
-              <option value="WWE">WWE</option>
-              <option value="F1">F1</option>
-              <option value="LIVE">LIVE</option>
-              <option value="SOCIAL">SOCIAL</option>
+              <option value="">Caricamento categorie…</option>
             </select>
           </div>
 

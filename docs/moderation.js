@@ -63,7 +63,20 @@ const xpEditStatus = qs("#xpEditStatus");
 const catalogManager = qs("#catalogManager");
 const catalogAchCount = qs("#catalogAchCount");
 const catalogTierCount = qs("#catalogTierCount");
+const catalogTypeCount = qs("#catalogTypeCount");
 const btnCatalogReload = qs("#btnCatalogReload");
+
+const typeFormTitle = qs("#typeFormTitle");
+const typeCreateId = qs("#typeCreateId");
+const typeCreateLabel = qs("#typeCreateLabel");
+const typeCreateIcon = qs("#typeCreateIcon");
+const typeCreateOrder = qs("#typeCreateOrder");
+const typeCreateActive = qs("#typeCreateActive");
+const btnCreateType = qs("#btnCreateType");
+const btnCancelTypeEdit = qs("#btnCancelTypeEdit");
+const typeCreateStatus = qs("#typeCreateStatus");
+const typeCatalogSearch = qs("#typeCatalogSearch");
+const typeCatalogList = qs("#typeCatalogList");
 
 const achCreateId = qs("#achCreateId");
 const achCreateType = qs("#achCreateType");
@@ -104,8 +117,11 @@ let SELECTED_XP_USER = null;
 
 let ACHIEVEMENT_CATALOG = [];
 let TIER_CATALOG = [];
+let ACHIEVEMENT_TYPE_CATALOG = [];
 let EDITING_ACHIEVEMENT_ID = null;
 let EDITING_TIER_ID = null;
+let EDITING_TYPE_ID = null;
+const LEGACY_TYPE_ORDER = { FUT:10, WWE:20, F1:30, LIVE:40, SOCIAL:50 };
 
 btnLogin.onclick = () => login().catch(err => alert(err.message));
 btnLogout.onclick = () => logout().catch(err => alert(err.message));
@@ -216,49 +232,64 @@ function parsePrereq(raw) {
 
 async function loadCatalogSummary() {
   if (!catalogAchCount || !catalogTierCount) return;
-
   try {
-    const [achSnap, tierSnap] = await Promise.all([
+    const [achSnap, tierSnap, typeSnap] = await Promise.all([
       getDocs(collection(db, "achievements")),
-      getDocs(collection(db, "gp_tiers"))
+      getDocs(collection(db, "gp_tiers")),
+      getDocs(collection(db, "achievement_types"))
     ]);
-
-    ACHIEVEMENT_CATALOG = achSnap.docs.map(d => ({
-      id: d.id,
-      ...(d.data() || {})
-    }));
-
-    TIER_CATALOG = tierSnap.docs.map(d => ({
-      id: d.id,
-      ...(d.data() || {})
-    }));
-
-    ACHIEVEMENT_CATALOG.sort((a,b) => {
-      const ta = (a.type || "").toString();
-      const tb = (b.type || "").toString();
-      if (ta !== tb) return ta.localeCompare(tb, "it");
-      return (a.title || a.name || a.id).toString()
-        .localeCompare((b.title || b.name || b.id).toString(), "it");
-    });
-
-    TIER_CATALOG.sort((a,b) =>
-      (Number(a.requiredPoints || 0) - Number(b.requiredPoints || 0)) ||
-      String(a.id).localeCompare(String(b.id), "it")
-    );
-
-    catalogAchCount.textContent = String(ACHIEVEMENT_CATALOG.length);
-    catalogTierCount.textContent = String(TIER_CATALOG.length);
-
-    renderAchievementCatalog();
-    renderTierCatalog();
-  } catch (e) {
-    console.warn("loadCatalogSummary", e);
-    catalogAchCount.textContent = "?";
-    catalogTierCount.textContent = "?";
-    if (achCatalogList) achCatalogList.textContent = "Errore nel caricamento Achievement.";
-    if (tierCatalogList) tierCatalogList.textContent = "Errore nel caricamento Tier.";
+    ACHIEVEMENT_CATALOG = achSnap.docs.map(d => ({ id:d.id, ...(d.data()||{}) }));
+    TIER_CATALOG = tierSnap.docs.map(d => ({ id:d.id, ...(d.data()||{}) }));
+    const typeMap = new Map();
+    for (const d of typeSnap.docs) {
+      const data=d.data()||{}; const id=String(d.id||"").trim().toUpperCase(); if(!id) continue;
+      typeMap.set(id,{id,label:(data.label||id).toString(),icon:(data.icon||"").toString(),order:Number.isFinite(Number(data.order))?Number(data.order):100,active:data.active!==false,_virtual:false});
+    }
+    for (const a of ACHIEVEMENT_CATALOG) {
+      const id=String(a.type||a.category||a.game||"").trim().toUpperCase();
+      if(!id||typeMap.has(id)) continue;
+      typeMap.set(id,{id,label:id,icon:"",order:LEGACY_TYPE_ORDER[id]??100,active:true,_virtual:true});
+    }
+    if(!typeMap.size){
+      for(const id of ["FUT","WWE","F1","LIVE","SOCIAL"]) typeMap.set(id,{id,label:id,icon:"",order:LEGACY_TYPE_ORDER[id]??100,active:true,_virtual:true});
+    }
+    ACHIEVEMENT_TYPE_CATALOG=[...typeMap.values()].sort((a,b)=>(Number(a.order||0)-Number(b.order||0))||a.label.localeCompare(b.label,"it"));
+    ACHIEVEMENT_CATALOG.sort((a,b)=>{const ta=(a.type||"").toString(),tb=(b.type||"").toString();if(ta!==tb)return ta.localeCompare(tb,"it");return (a.title||a.name||a.id).toString().localeCompare((b.title||b.name||b.id).toString(),"it")});
+    TIER_CATALOG.sort((a,b)=>(Number(a.requiredPoints||0)-Number(b.requiredPoints||0))||String(a.id).localeCompare(String(b.id),"it"));
+    catalogAchCount.textContent=String(ACHIEVEMENT_CATALOG.length); catalogTierCount.textContent=String(TIER_CATALOG.length); if(catalogTypeCount) catalogTypeCount.textContent=String(ACHIEVEMENT_TYPE_CATALOG.length);
+    populateAchievementTypeSelect(EDITING_ACHIEVEMENT_ID ? (ACHIEVEMENT_CATALOG.find(a=>a.id===EDITING_ACHIEVEMENT_ID)?.type||"") : "");
+    renderAchievementCatalog(); renderTierCatalog(); renderTypeCatalog();
+  } catch(e) {
+    console.warn("loadCatalogSummary",e); catalogAchCount.textContent="?"; catalogTierCount.textContent="?"; if(catalogTypeCount)catalogTypeCount.textContent="?";
+    if(achCatalogList)achCatalogList.textContent="Errore nel caricamento Achievement."; if(tierCatalogList)tierCatalogList.textContent="Errore nel caricamento Tier."; if(typeCatalogList)typeCatalogList.textContent="Errore nel caricamento categorie.";
   }
 }
+
+
+function normalizeTypeId(raw){return (raw||"").toString().trim().toUpperCase().replace(/\s+/g,"_")}
+function validTypeId(id){return /^[A-Z0-9_-]{1,32}$/.test(id)}
+function typeLabel(t){return t?`${t.icon?t.icon+" ":""}${t.label||t.id}`.trim():""}
+function populateAchievementTypeSelect(preferred=""){
+  if(!achCreateType)return; const wanted=normalizeTypeId(preferred||achCreateType.value||""); achCreateType.innerHTML="";
+  let rows=ACHIEVEMENT_TYPE_CATALOG.filter(t=>t.active!==false);
+  if(wanted&&!rows.some(t=>t.id===wanted)){const x=ACHIEVEMENT_TYPE_CATALOG.find(t=>t.id===wanted);if(x)rows=[...rows,x]}
+  if(!rows.length){const o=document.createElement("option");o.value="";o.textContent="Nessuna categoria disponibile";achCreateType.append(o);return}
+  for(const t of rows){const o=document.createElement("option");o.value=t.id;o.textContent=typeLabel(t)+(t.active===false?" (disattiva)":"");achCreateType.append(o)}
+  const fallback=rows.find(t=>t.id==="FUT")?.id||rows[0]?.id||""; achCreateType.value=rows.some(t=>t.id===wanted)?wanted:fallback;
+}
+function resetTypeForm(){EDITING_TYPE_ID=null;typeCreateId.value="";typeCreateId.disabled=false;typeCreateId.classList.remove("catalog-id-locked");typeCreateLabel.value="";typeCreateIcon.value="";typeCreateOrder.value="100";typeCreateActive.checked=true;if(typeFormTitle)typeFormTitle.textContent="Gestione categorie Achievement";btnCreateType.textContent="Crea categoria";if(btnCancelTypeEdit)btnCancelTypeEdit.style.display="none"}
+function renderTypeCatalog(){
+  if(!typeCatalogList)return;const term=(typeCatalogSearch?.value||"").trim().toLowerCase();const rows=ACHIEVEMENT_TYPE_CATALOG.filter(t=>!term||[t.id,t.label,t.icon].some(v=>(v||"").toString().toLowerCase().includes(term)));typeCatalogList.innerHTML="";
+  if(!rows.length){typeCatalogList.append(el("div",{class:"small",style:"padding:10px;"},[document.createTextNode("Nessuna categoria trovata.")]));return}
+  for(const t of rows){const used=ACHIEVEMENT_CATALOG.filter(a=>normalizeTypeId(a.type||a.category||a.game||"")===t.id).length;const eb=el("button",{class:"btn",type:"button",onclick:()=>startEditType(t.id)},[document.createTextNode(t._virtual?"Configura":"Modifica")]);const db=el("button",{class:"btn danger",type:"button",onclick:()=>deleteTypeFromPanel(t.id)},[document.createTextNode("Elimina")]);typeCatalogList.append(el("div",{class:"catalog-existing-row"+(EDITING_TYPE_ID===t.id?" catalog-editing":"")},[el("div",{class:"catalog-existing-main"},[el("div",{class:"catalog-existing-name"},[el("span",{class:"category-badge-preview"},[document.createTextNode(typeLabel(t))])]),el("div",{class:"catalog-existing-meta"},[document.createTextNode(`${t.id} • ordine ${t.order} • ${used} achievement • ${t.active?"attiva":"disattiva"}${t._virtual?" • legacy/non salvata":""}`)])]),el("div",{class:"catalog-existing-actions"},[eb,db])]))}
+}
+function startEditType(id){const t=ACHIEVEMENT_TYPE_CATALOG.find(x=>x.id===id);if(!t)return;EDITING_TYPE_ID=id;typeCreateId.value=id;typeCreateId.disabled=true;typeCreateId.classList.add("catalog-id-locked");typeCreateLabel.value=t.label||id;typeCreateIcon.value=t.icon||"";typeCreateOrder.value=String(Number(t.order||0));typeCreateActive.checked=t.active!==false;if(typeFormTitle)typeFormTitle.textContent=`Modifica categoria • ${id}`;btnCreateType.textContent=t._virtual?"Salva categoria":"Salva modifiche";if(btnCancelTypeEdit)btnCancelTypeEdit.style.display="";setCatalogStatus(typeCreateStatus,t._virtual?"Categoria legacy: salvando verrà creata in achievement_types.":"Modalità modifica: il codice non può essere cambiato.");renderTypeCatalog();typeCreateLabel.scrollIntoView({behavior:"smooth",block:"center"})}
+async function createOrUpdateTypeFromPanel(){
+  const id=normalizeTypeId(typeCreateId.value),label=(typeCreateLabel.value||"").trim(),icon=(typeCreateIcon.value||"").trim(),order=Number(typeCreateOrder.value),active=!!typeCreateActive.checked;
+  if(!validTypeId(id)){setCatalogStatus(typeCreateStatus,"Codice non valido. Usa solo lettere, numeri, - e _ (max 32).","catalog-warning");return} if(!label||label.length>50){setCatalogStatus(typeCreateStatus,"Inserisci un nome visualizzato valido.","catalog-warning");return} if(!Number.isInteger(order)||order<0||order>9999){setCatalogStatus(typeCreateStatus,"L'ordine deve essere un intero tra 0 e 9999.","catalog-warning");return}
+  const ref=doc(db,"achievement_types",id); try{btnCreateType.disabled=true;const existing=await getDoc(ref),editing=EDITING_TYPE_ID===id;if(!editing&&existing.exists())throw new Error(`Esiste già una categoria con codice "${id}".`);if(!confirm(`${editing||existing.exists()?"Salvare":"Creare"} questa categoria?\n\nCodice: ${id}\nNome: ${label}\nIcona: ${icon||"—"}\nOrdine: ${order}\nAttiva: ${active?"sì":"no"}`))return;if(existing.exists())await updateDoc(ref,{label,icon,order,active,updatedAt:serverTimestamp(),updatedBy:auth.currentUser.uid});else await setDoc(ref,{label,icon,order,active,createdAt:serverTimestamp(),createdBy:auth.currentUser.uid});resetTypeForm();setCatalogStatus(typeCreateStatus,`✓ Categoria "${id}" salvata.`,"catalog-ok");await loadCatalogSummary()}catch(e){console.error(e);setCatalogStatus(typeCreateStatus,e?.message||"Errore nel salvataggio della categoria.","catalog-warning")}finally{btnCreateType.disabled=false}
+}
+async function deleteTypeFromPanel(id){const t=ACHIEVEMENT_TYPE_CATALOG.find(x=>x.id===id);if(!t)return;const used=ACHIEVEMENT_CATALOG.filter(a=>normalizeTypeId(a.type||a.category||a.game||"")===id);if(used.length){alert(`Non puoi eliminare "${id}" perché è usata da ${used.length} Achievement.\n\nSposta prima quegli Achievement in un'altra categoria oppure disattiva la categoria.`);return}if(t._virtual){alert("Questa è una categoria legacy non ancora salvata in achievement_types: non c'è alcun documento da eliminare.");return}if(!confirm(`Eliminare definitivamente la categoria "${typeLabel(t)}" (${id})?`))return;try{await deleteDoc(doc(db,"achievement_types",id));if(EDITING_TYPE_ID===id)resetTypeForm();setCatalogStatus(typeCreateStatus,`✓ Categoria "${id}" eliminata.`,"catalog-ok");await loadCatalogSummary()}catch(e){console.error(e);setCatalogStatus(typeCreateStatus,e?.message||"Errore durante l'eliminazione della categoria.","catalog-warning")}}
 
 function resetAchievementForm() {
   EDITING_ACHIEVEMENT_ID = null;
@@ -271,7 +302,7 @@ function resetAchievementForm() {
   achCreateDesc.value = "";
   achCreatePoints.value = "";
   achCreatePrereq.value = "";
-  achCreateType.value = "FUT";
+  populateAchievementTypeSelect("FUT");
   achCreateActive.checked = true;
   achCreateLinkRequest.checked = false;
   achCreateLinkUrl.value = "";
@@ -451,10 +482,9 @@ function startEditAchievement(id) {
   achCreateDesc.value = (a.desc || a.description || "").toString();
   achCreatePoints.value = String(Number(a.points ?? a.xp ?? 0) || 0);
 
-  const type = (a.type || "FUT").toString().toUpperCase();
-  achCreateType.value = ["FUT","WWE","F1","LIVE","SOCIAL"].includes(type)
-    ? type
-    : "FUT";
+  const type = normalizeTypeId(a.type || a.category || a.game || "FUT");
+  populateAchievementTypeSelect(type);
+  achCreateType.value = type;
 
   const prereq = Array.isArray(a.prereq)
     ? a.prereq
@@ -636,10 +666,9 @@ async function createAchievementFromPanel() {
     return;
   }
 
-  if (!["FUT","WWE","F1","LIVE","SOCIAL"].includes(type)) {
-    setCatalogStatus(achCreateStatus, "Categoria non valida.", "catalog-warning");
-    return;
-  }
+  const typeEntry = ACHIEVEMENT_TYPE_CATALOG.find(t => t.id === type);
+  if (!typeEntry) { setCatalogStatus(achCreateStatus, "Categoria non valida o non caricata.", "catalog-warning"); return; }
+  if (typeEntry.active === false && EDITING_ACHIEVEMENT_ID !== id) { setCatalogStatus(achCreateStatus, "La categoria selezionata è disattivata.", "catalog-warning"); return; }
 
   if (linkRequest && !/^https?:\/\//i.test(linkUrl)) {
     setCatalogStatus(achCreateStatus, "Per un achievement con link inserisci un URL http/https valido.", "catalog-warning");
@@ -867,7 +896,10 @@ achCreateLinkRequest?.addEventListener("change", () => {
 
 btnCreateAchievement?.addEventListener("click", createAchievementFromPanel);
 btnCreateTier?.addEventListener("click", createTierFromPanel);
+btnCreateType?.addEventListener("click", createOrUpdateTypeFromPanel);
 btnCatalogReload?.addEventListener("click", loadCatalogSummary);
+btnCancelTypeEdit?.addEventListener("click", () => { resetTypeForm(); setCatalogStatus(typeCreateStatus, ""); renderTypeCatalog(); });
+typeCatalogSearch?.addEventListener("input", renderTypeCatalog);
 
 btnCancelAchievementEdit?.addEventListener("click", () => {
   resetAchievementForm();

@@ -85,7 +85,17 @@ let _earnedSet = new Set();
 let _reqByAch = new Map();
 let _filtersReady = false;
 
-const ORDER_TYPE = { FUT: 1, WWE: 2, F1: 3, LIVE: 4, SOCIAL: 5 };
+let _achievementTypes = [];
+let _achievementTypeMap = new Map();
+const LEGACY_TYPE_ORDER = { FUT:10, WWE:20, F1:30, LIVE:40, SOCIAL:50 };
+function normalizeAchievementType(raw){const v=(raw||"").toString().trim().toUpperCase();return v||"ALTRO"}
+function achievementTypeOf(ach){return normalizeAchievementType(ach?.type||ach?.category||ach?.game||"")}
+function achievementTypeMeta(typeId){const id=normalizeAchievementType(typeId);return _achievementTypeMap.get(id)||{id,label:id,icon:"",order:LEGACY_TYPE_ORDER[id]??100,active:true}}
+function achievementTypeLabel(typeId){const m=achievementTypeMeta(typeId);return `${m.icon?m.icon+" ":""}${m.label||m.id}`.trim()}
+function achievementTypeClass(typeId){return "type-"+normalizeAchievementType(typeId).toLowerCase().replace(/[^a-z0-9_-]+/g,"-")}
+function populateAchievementTypeFilter(){if(!achTypeSel)return;const prev=(achTypeSel.value||"all").toUpperCase();achTypeSel.innerHTML="";const all=document.createElement("option");all.value="all";all.textContent="Tutte le categorie";achTypeSel.append(all);for(const t of _achievementTypes.filter(t=>t.active!==false)){const o=document.createElement("option");o.value=t.id;o.textContent=achievementTypeLabel(t.id);achTypeSel.append(o)}achTypeSel.value=[...achTypeSel.options].some(o=>o.value.toUpperCase()===prev)?prev:"all"}
+async function loadAchievementTypes(achievements=[]){const map=new Map();try{const snap=await getDocs(collection(db,"achievement_types"));for(const d of snap.docs){const x=d.data()||{},id=normalizeAchievementType(d.id);map.set(id,{id,label:(x.label||id).toString(),icon:(x.icon||"").toString(),order:Number.isFinite(Number(x.order))?Number(x.order):100,active:x.active!==false})}}catch(e){console.warn("loadAchievementTypes",e)}for(const ach of achievements||[]){const id=achievementTypeOf(ach);if(!map.has(id))map.set(id,{id,label:id,icon:"",order:LEGACY_TYPE_ORDER[id]??100,active:true})}if(!map.size){for(const id of ["FUT","WWE","F1","LIVE","SOCIAL"])map.set(id,{id,label:id,icon:"",order:LEGACY_TYPE_ORDER[id]??100,active:true})}_achievementTypes=[...map.values()].sort((a,b)=>(Number(a.order||0)-Number(b.order||0))||a.label.localeCompare(b.label,"it"));_achievementTypeMap=new Map(_achievementTypes.map(t=>[t.id,t]));populateAchievementTypeFilter()}
+
 
 function buildReqByAch(requests) {
   // requests è già ordinato DESC per createdAt
@@ -141,8 +151,8 @@ function applyAchievementFilters() {
     const desc = norm(ach.desc || "");
     const id = norm(ach.id || "");
 
-    const rawType = (ach.type || ach.category || ach.game || "").toString().trim().toUpperCase();
-    const type = (["FUT","WWE","F1","LIVE","SOCIAL"].includes(rawType)) ? rawType : "LIVE";
+    const type = achievementTypeOf(ach);
+    const typeMeta = achievementTypeMeta(type);
 
     const missing = prereqMissing(ach, _earnedSet);
     const locked = missing.length > 0;
@@ -151,6 +161,7 @@ function applyAchievementFilters() {
 
     if (q && !(title.includes(q) || desc.includes(q) || id.includes(q))) return false;
 
+    if (typeMeta.active === false) return false;
     if (typeSel !== "ALL" && type !== typeSel) return false;
 
     if (stateSel !== "all") {
@@ -171,12 +182,13 @@ function applyAchievementFilters() {
   });
 
   out.sort((a, b) => {
-    const ta = (a.type || a.category || a.game || "").toString().trim().toUpperCase();
-    const tb = (b.type || b.category || b.game || "").toString().trim().toUpperCase();
-
-    const ra = ORDER_TYPE[ta] ?? 99;
-    const rb = ORDER_TYPE[tb] ?? 99;
+    const ta = achievementTypeOf(a);
+    const tb = achievementTypeOf(b);
+    const ra = Number(achievementTypeMeta(ta).order ?? 100);
+    const rb = Number(achievementTypeMeta(tb).order ?? 100);
     if (ra !== rb) return ra - rb;
+    const tc = achievementTypeLabel(ta).localeCompare(achievementTypeLabel(tb), "it");
+    if (tc !== 0) return tc;
 
     const aa = (a.title || a.id || "").toString().toLowerCase();
     const bb = (b.title || b.id || "").toString().toLowerCase();
@@ -1280,26 +1292,13 @@ function renderAchievements(
     const pointsText =
       ach.points != null ? `+${ach.points} XP` : "—";
 
-    const rawType = (
-      ach.type ||
-      ach.category ||
-      ach.game ||
-      ""
-    ).toString().trim().toUpperCase();
-
-    const type = (
-      ["FUT", "WWE", "F1", "LIVE", "SOCIAL"]
-        .includes(rawType)
-    )
-      ? rawType
-      : "LIVE";
-
-    const typeCls = `type-${type.toLowerCase()}`;
+    const type = achievementTypeOf(ach);
+    const typeCls = achievementTypeClass(type);
 
     const typeTag = el("span", {
       class: `typeTag ${typeCls}`
     }, [
-      document.createTextNode(type)
+      document.createTextNode(achievementTypeLabel(type))
     ]);
 
     const card = el("div", {
@@ -1476,6 +1475,8 @@ async function loadAll(uid) {
       ...d.data()
     }))
     .filter(a => a.active !== false);
+
+  await loadAchievementTypes(achievements);
 
   const earnedSet = await getEarnedSetForSeason(uid, season);
 
