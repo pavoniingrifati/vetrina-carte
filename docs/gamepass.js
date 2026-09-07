@@ -88,13 +88,29 @@ let _filtersReady = false;
 let _achievementTypes = [];
 let _achievementTypeMap = new Map();
 const LEGACY_TYPE_ORDER = { FUT:10, WWE:20, F1:30, LIVE:40, SOCIAL:50 };
+const LEGACY_TYPE_COLOR = {
+  FUT:"#B9FF00",
+  WWE:"#FF3B30",
+  F1:"#EF4444",
+  LIVE:"#10D7FF",
+  SOCIAL:"#FF2BD6"
+};
+const AUTO_TYPE_COLORS = [
+  "#10D7FF","#B9FF00","#FF2BD6","#FFE500","#FF6B35",
+  "#8B5CF6","#22C55E","#F43F5E","#06B6D4","#F59E0B",
+  "#14B8A6","#A855F7"
+];
+function normalizeHexColor(raw,fallback="#10D7FF"){const v=(raw||"").toString().trim().toUpperCase();return /^#[0-9A-F]{6}$/.test(v)?v:fallback}
+function autoTypeColor(id){const key=normalizeAchievementType(id);if(LEGACY_TYPE_COLOR[key])return LEGACY_TYPE_COLOR[key];let h=0;for(let i=0;i<key.length;i++)h=((h*31)+key.charCodeAt(i))>>>0;return AUTO_TYPE_COLORS[h%AUTO_TYPE_COLORS.length]}
+function shiftHexColor(hex,amount=-42){const c=normalizeHexColor(hex);const n=parseInt(c.slice(1),16);const r=Math.max(0,Math.min(255,(n>>16)+amount)),g=Math.max(0,Math.min(255,((n>>8)&255)+amount)),b=Math.max(0,Math.min(255,(n&255)+amount));return "#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("").toUpperCase()}
+
 function normalizeAchievementType(raw){const v=(raw||"").toString().trim().toUpperCase();return v||"ALTRO"}
 function achievementTypeOf(ach){return normalizeAchievementType(ach?.type||ach?.category||ach?.game||"")}
-function achievementTypeMeta(typeId){const id=normalizeAchievementType(typeId);return _achievementTypeMap.get(id)||{id,label:id,icon:"",order:LEGACY_TYPE_ORDER[id]??100,active:true}}
+function achievementTypeMeta(typeId){const id=normalizeAchievementType(typeId);return _achievementTypeMap.get(id)||{id,label:id,icon:"",color:autoTypeColor(id),order:LEGACY_TYPE_ORDER[id]??100,active:true}}
 function achievementTypeLabel(typeId){const m=achievementTypeMeta(typeId);return `${m.icon?m.icon+" ":""}${m.label||m.id}`.trim()}
 function achievementTypeClass(typeId){return "type-"+normalizeAchievementType(typeId).toLowerCase().replace(/[^a-z0-9_-]+/g,"-")}
 function populateAchievementTypeFilter(){if(!achTypeSel)return;const prev=(achTypeSel.value||"all").toUpperCase();achTypeSel.innerHTML="";const all=document.createElement("option");all.value="all";all.textContent="Tutte le categorie";achTypeSel.append(all);for(const t of _achievementTypes.filter(t=>t.active!==false)){const o=document.createElement("option");o.value=t.id;o.textContent=achievementTypeLabel(t.id);achTypeSel.append(o)}achTypeSel.value=[...achTypeSel.options].some(o=>o.value.toUpperCase()===prev)?prev:"all"}
-async function loadAchievementTypes(achievements=[]){const map=new Map();try{const snap=await getDocs(collection(db,"achievement_types"));for(const d of snap.docs){const x=d.data()||{},id=normalizeAchievementType(d.id);map.set(id,{id,label:(x.label||id).toString(),icon:(x.icon||"").toString(),order:Number.isFinite(Number(x.order))?Number(x.order):100,active:x.active!==false})}}catch(e){console.warn("loadAchievementTypes",e)}for(const ach of achievements||[]){const id=achievementTypeOf(ach);if(!map.has(id))map.set(id,{id,label:id,icon:"",order:LEGACY_TYPE_ORDER[id]??100,active:true})}if(!map.size){for(const id of ["FUT","WWE","F1","LIVE","SOCIAL"])map.set(id,{id,label:id,icon:"",order:LEGACY_TYPE_ORDER[id]??100,active:true})}_achievementTypes=[...map.values()].sort((a,b)=>(Number(a.order||0)-Number(b.order||0))||a.label.localeCompare(b.label,"it"));_achievementTypeMap=new Map(_achievementTypes.map(t=>[t.id,t]));populateAchievementTypeFilter()}
+async function loadAchievementTypes(achievements=[]){const map=new Map();try{const snap=await getDocs(collection(db,"achievement_types"));for(const d of snap.docs){const x=d.data()||{},id=normalizeAchievementType(d.id);map.set(id,{id,label:(x.label||id).toString(),icon:(x.icon||"").toString(),color:normalizeHexColor(x.color,autoTypeColor(id)),order:Number.isFinite(Number(x.order))?Number(x.order):100,active:x.active!==false})}}catch(e){console.warn("loadAchievementTypes",e)}for(const ach of achievements||[]){const id=achievementTypeOf(ach);if(!map.has(id))map.set(id,{id,label:id,icon:"",color:autoTypeColor(id),order:LEGACY_TYPE_ORDER[id]??100,active:true})}if(!map.size){for(const id of ["FUT","WWE","F1","LIVE","SOCIAL"])map.set(id,{id,label:id,icon:"",color:autoTypeColor(id),order:LEGACY_TYPE_ORDER[id]??100,active:true})}_achievementTypes=[...map.values()].sort((a,b)=>(Number(a.order||0)-Number(b.order||0))||a.label.localeCompare(b.label,"it"));_achievementTypeMap=new Map(_achievementTypes.map(t=>[t.id,t]));populateAchievementTypeFilter()}
 
 
 function buildReqByAch(requests) {
@@ -1294,15 +1310,21 @@ function renderAchievements(
 
     const type = achievementTypeOf(ach);
     const typeCls = achievementTypeClass(type);
+    const typeMeta = achievementTypeMeta(type);
+    const typeColor = normalizeHexColor(typeMeta.color, autoTypeColor(type));
+    const typeColor2 = shiftHexColor(typeColor, -42);
+    const typeStyle = `--type-color:${typeColor};--type-color-2:${typeColor2};`;
 
     const typeTag = el("span", {
-      class: `typeTag ${typeCls}`
+      class: `typeTag ${typeCls} type-dynamic`,
+      style: typeStyle
     }, [
       document.createTextNode(achievementTypeLabel(type))
     ]);
 
     const card = el("div", {
-      class: `card ${typeCls}`
+      class: `card ${typeCls} type-dynamic`,
+      style: typeStyle
     }, [
       el("div", { class: "row" }, [
         el("strong", {}, [
@@ -2077,6 +2099,22 @@ onUser(async (user) => {
       color:#060606 !important;
       border:0 !important;
       box-shadow:0 12px 28px rgba(0,0,0,.26);
+    }
+
+    /* Categorie dinamiche: vale anche per VIDEO, TWITCH, FM, ecc. */
+    #achGrid .card.type-dynamic::before{
+      background:
+        linear-gradient(180deg,var(--type-color),var(--type-color-2)) !important;
+    }
+
+    #achGrid .typeTag.type-dynamic{
+      background:
+        linear-gradient(135deg,var(--type-color),var(--type-color-2)) !important;
+      color:#060606 !important;
+      border:0 !important;
+      box-shadow:
+        0 12px 28px rgba(0,0,0,.28),
+        inset 0 1px 0 rgba(255,255,255,.28) !important;
     }
 
     .btn,

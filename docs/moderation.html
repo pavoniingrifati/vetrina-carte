@@ -343,10 +343,49 @@
 
 
 <style>
-.category-manager-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.85fr);gap:14px;align-items:start}
-.category-badge-preview{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);font-size:10px;font-weight:850}
-@media(max-width:900px){.category-manager-grid{grid-template-columns:1fr}}
+  .category-manager-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(320px,.85fr);
+    gap:14px;
+    align-items:start;
+  }
+  .category-badge-preview{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 9px;
+    border-radius:999px;
+    border:0;
+    background:rgba(255,255,255,.08);
+    color:#070707;
+    box-shadow:0 8px 20px rgba(0,0,0,.22);
+    font-size:10px;
+    font-weight:900;
+  }
+  .catalog-color-row{
+    display:grid;
+    grid-template-columns:56px minmax(0,1fr);
+    gap:8px;
+    align-items:center;
+  }
+  .catalog-color-row input[type="color"]{
+    width:56px;
+    min-width:56px;
+    height:42px;
+    padding:3px;
+    border-radius:10px;
+    cursor:pointer;
+  }
+  .category-virtual-note{
+    color:#ffd48d;
+  }
+  @media(max-width:900px){
+    .category-manager-grid{
+      grid-template-columns:1fr;
+    }
+  }
 </style>
+
 </head>
 <body>
 <header>
@@ -405,36 +444,63 @@
           <div class="catalog-form">
             <div class="catalog-field">
               <label for="typeCreateId">Codice categoria *</label>
-              <input id="typeCreateId" type="text" maxlength="32" placeholder="es. TWITCH" />
+              <input id="typeCreateId" type="text" maxlength="32"
+                     placeholder="es. TWITCH" />
             </div>
+
             <div class="catalog-field">
               <label for="typeCreateLabel">Nome visualizzato *</label>
-              <input id="typeCreateLabel" type="text" maxlength="50" placeholder="es. Twitch" />
+              <input id="typeCreateLabel" type="text" maxlength="50"
+                     placeholder="es. Twitch" />
             </div>
+
             <div class="catalog-field">
               <label for="typeCreateIcon">Icona</label>
-              <input id="typeCreateIcon" type="text" maxlength="12" placeholder="es. 🎥" />
+              <input id="typeCreateIcon" type="text" maxlength="12"
+                     placeholder="es. 🎥" />
             </div>
+
+            <div class="catalog-field">
+              <label for="typeCreateColor">Colore targhetta</label>
+              <div class="catalog-color-row">
+                <input id="typeCreateColor" type="color" value="#10d7ff"
+                       aria-label="Colore categoria" />
+                <input id="typeCreateColorHex" type="text" maxlength="7"
+                       value="#10D7FF" placeholder="#10D7FF" />
+              </div>
+            </div>
+
             <div class="catalog-field">
               <label for="typeCreateOrder">Ordine</label>
-              <input id="typeCreateOrder" type="number" min="0" max="9999" step="1" value="100" />
+              <input id="typeCreateOrder" type="number" min="0" max="9999" step="1"
+                     value="100" />
             </div>
+
             <div class="catalog-field">
-              <label class="catalog-check"><input id="typeCreateActive" type="checkbox" checked /> Categoria attiva</label>
+              <label class="catalog-check">
+                <input id="typeCreateActive" type="checkbox" checked />
+                Categoria attiva
+              </label>
             </div>
+
             <div class="catalog-actions">
               <button id="btnCreateType" class="btn primary">Crea categoria</button>
               <button id="btnCancelTypeEdit" class="btn" type="button" style="display:none;">Annulla modifica</button>
               <span id="typeCreateStatus" class="catalog-status"></span>
             </div>
           </div>
+
           <div class="catalog-help">
             Il codice viene salvato in maiuscolo. Sono ammessi lettere, numeri, trattino e underscore:
             <span class="mono">TWITCH</span>, <span class="mono">FM_26</span>, <span class="mono">CHAMPIONS</span>.
+            Il colore controlla la targhetta e la barra laterale degli Achievement.
             Disattivando una categoria, i suoi Achievement restano nel database ma vengono nascosti nel Game Pass.
           </div>
         </div>
-        <div><div id="typeCatalogList" class="catalog-existing-list"></div></div>
+
+        <div>
+          <div id="typeCatalogList" class="catalog-existing-list"></div>
+        </div>
       </div>
     </div>
 
