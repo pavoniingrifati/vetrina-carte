@@ -12,6 +12,8 @@ const runtimeText=await readFile(resolve(ROOT,'assets/season/14-runtime.js'),'ut
 const stateText=await readFile(resolve(ROOT,'assets/season/03-state-and-data.js'),'utf8');
 const setupText=await readFile(resolve(ROOT,'assets/season/04-setup-and-draft.js'),'utf8');
 const playoffRulesText=await readFile(resolve(ROOT,'assets/season/rules/02-federation-and-playoffs.js'),'utf8');
+const championsText=await readFile(resolve(ROOT,'assets/season/06b-champions-league.js'),'utf8');
+const championsCss=await readFile(resolve(ROOT,'assets/season/champions.css'),'utf8');
 const players=await readJson('data/champions/giocatori-champions.json');
 const realClubs=clubs.filter(c=>!c.championsUser), userClub=clubs.find(c=>c.championsUser);
 const errors=[]; const ok=(cond,msg)=>{if(!cond)errors.push(msg)};
@@ -25,6 +27,12 @@ ok(runtimeText.includes("SEASON_DATASETS.champions"),'bootstrap senza dataset Ch
 ok(stateText.includes("'champions-knockout'"),'salvataggio/migrazione senza fase champions-knockout');
 ok(stateText.includes('next.champions.stage='),'normalizzazione stato Champions mancante');
 ok(playoffRulesText.includes('if(isChampionsCompetition()){advanceChampionsAfterLeaguePhase();return;}'),'fine fase campionato non instradata verso Champions');
+ok(championsText.includes('id=\"playChampionsLive\"'),'knockout Champions senza pulsante cronaca');
+ok(championsText.includes('id=\"playChampionsInstant\"'),'knockout Champions senza pulsante simulazione');
+ok(championsText.includes('function championsPlayUserLeg'),'motore knockout senza partita utente dedicata');
+ok(championsText.includes('playLiveMatch({commentary:payload.commentary'),'partita Champions non collegata alla telecronaca del campionato');
+ok(championsCss.includes('.champions-history-row{color:#10243a'),'storico knockout senza contrasto testo esplicito');
+ok(championsCss.includes('.champions-tie-card{color:#10243a'),'tabellone knockout senza contrasto testo esplicito');
 ok(realClubs.length===36,`club reali ${realClubs.length}/36`); ok(Boolean(userClub),'club Fantaballa mancante'); ok(players.length===970,`giocatori ${players.length}/970`);
 const expected={
  1:['paris','bayern','real-madrid','liverpool','inter','man-city','arsenal','barcelona','atleti'],
@@ -66,5 +74,24 @@ const qf=context.championsBuildBracketTies(r16Results,'quarter');ok(qf.length===
 const qfResults=qf.map(t=>({...t,winnerId:t.teamBId}));
 const sf=context.championsBuildBracketTies(qfResults,'semi');ok(sf.length===2,`semifinali ${sf.length}/2`);ok(sf.every(t=>t.pathRank<=2),`semifinali senza percorso Top 2`);
 const sfResults=sf.map(t=>({...t,winnerId:t.teamBId}));const final=context.championsBuildBracketTies(sfResults,'final');ok(final.length===1&&final[0].single,`finale non singola`);
+
+// User knockout flow: andata -> ritorno -> tie completato.
+Object.assign(context,{
+ teamById:id=>({id:String(id),name:String(id)==='fantaballa-real-xi'?'Fantaballa':'Avversario',clubId:String(id)}),
+ matchPower:()=>82,opponentMatchPower:()=>79,
+ simulateScore:(a,b,adv,duration)=>Number(duration)===30?[1,0]:[1,1],
+ simulatePenaltyShootout:()=>({scoreA:5,scoreB:4}),
+ teamMatchLineup:team=>[{playerId:`p-${team.id}`,player:{id:`p-${team.id}`,name:`P ${team.id}`,ovr:80,Position:'ATT'},slot:'ATT'}],
+ buildTeamGoals:(total,lineup,team)=>Array.from({length:Number(total)||0},(_,i)=>({minute:20+i*10,playerId:lineup[0].playerId,player:lineup[0].player.name,assistId:'',assist:'',teamId:String(team.id),goalValue:1,description:'Gol'})),
+ buildMatchCommentary:()=>[],recordLeagueMatchPlayerStats:()=>({}),save:()=>{},render:()=>{}
+});
+const userFlowTie={...context.championsTie('fantaballa-real-xi',realClubs[0].id,{stage:'round16',rankMap:{'fantaballa-real-xi':2,[realClubs[0].id]:18},secondLegHomeId:'fantaballa-real-xi'}),status:'pending'};
+const firstLeg=context.championsNextUserLeg(userFlowTie);ok(firstLeg?.legIndex===0&&firstLeg.homeId===String(realClubs[0].id),'knockout utente: andata non costruita correttamente');
+const firstPayload=context.championsDetailedUserLeg(userFlowTie,firstLeg);context.championsCommitUserLeg(userFlowTie,firstPayload);ok(userFlowTie.status==='in-progress'&&Boolean(userFlowTie.result?.leg1),'knockout utente: andata non salvata');
+const secondLeg=context.championsNextUserLeg(userFlowTie);ok(secondLeg?.legIndex===1&&secondLeg.homeId==='fantaballa-real-xi','knockout utente: ritorno non costruito correttamente');
+const secondPayload=context.championsDetailedUserLeg(userFlowTie,secondLeg);context.championsCommitUserLeg(userFlowTie,secondPayload);ok(userFlowTie.status==='completed'&&Boolean(userFlowTie.result?.leg2)&&Boolean(userFlowTie.winnerId),'knockout utente: ritorno/tie non completato');
+
 if(errors.length){console.error(`CHAMPIONS CHECK: ${errors.length} ERRORE/I`);errors.slice(0,40).forEach(e=>console.error(' - '+e));process.exit(1)}
 console.log('CHAMPIONS CHECK: OK');console.log(` - 36 club UEFA + Fantaballa (37 record DB)`);console.log(` - 970 giocatori validati`);console.log(` - 4 fasce UEFA da 9 validate`);console.log(` - ${STRESS_RUNS} sorteggi completi: 8 giornate, 18 partite/giornata, vincoli UEFA obbligatori OK`);console.log(` - qualità calendario: ${qualityNote}`);console.log(` - playoff/ottavi/quarti/semifinali/finale e seeding ereditato OK`);
+console.log(` - partite utente knockout: andata/ritorno, cronaca e simulazione collegate OK`);
+console.log(` - contrasto tabellone/storico knockout verificato`);
