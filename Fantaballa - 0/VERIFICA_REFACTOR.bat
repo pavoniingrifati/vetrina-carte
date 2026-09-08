@@ -12,8 +12,11 @@ node scripts\check-gameplay-fixes.mjs
 if errorlevel 1 goto :errore
 node scripts\check-champions-mode.mjs
 if errorlevel 1 goto :errore
+node scripts\check-champions-positions.mjs
+if errorlevel 1 goto :errore
 node --check scripts\build-champions-data.mjs || goto :errore
 node --check scripts\check-champions-mode.mjs || goto :errore
+node --check scripts\check-champions-positions.mjs || goto :errore
 node --check scripts\build-cache-busting.mjs || goto :errore
 node --check scripts\lib\cache-busting.mjs || goto :errore
 for %%F in (assets\season\*.js assets\season\rules\*.js) do node --check "%%F" || goto :errore

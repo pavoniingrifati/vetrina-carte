@@ -24,7 +24,7 @@ window.FANTABALLA_SEASON_CONFIG=Object.freeze({
   variants:{
    'serie-a':{id:'serie-a',label:'Serie A',players:'data/giocatori-real.json?v=f41541ba5cbd',clubs:'data/club-real.json?v=a81019ee5dde',playerCount:531,description:'I club e i calciatori della Serie A 2026/2027.'},
    legend:{id:'legend',label:'Legend',players:'data/storico/giocatori-storici.json?v=4ea5df59d634',clubs:'data/storico/club-storiche.json?v=eb3557845d3a',playerCount:796,description:'Quaranta squadre storiche italiane e internazionali. Ogni run seleziona casualmente 19 avversarie, mentre il draft usa l’intero database.'},
-   champions:{id:'champions',label:'Champions League',players:'data/champions/giocatori-champions.json?v=97963cb4ff37',clubs:'data/champions/club-champions.json?v=eda1412649ce',playerCount:970,description:'Trentasei club UEFA, quattro fasce e fase campionato da 8 giornate, seguita da playoff e tabellone a eliminazione diretta.'}
+   champions:{id:'champions',label:'Champions League',players:'data/champions/giocatori-champions.json?v=569b518fc53e',clubs:'data/champions/club-champions.json?v=eda1412649ce',playerCount:970,description:'Trentasei club UEFA, quattro fasce e fase campionato da 8 giornate, seguita da playoff e tabellone a eliminazione diretta.'}
   }
  },
  validation:{

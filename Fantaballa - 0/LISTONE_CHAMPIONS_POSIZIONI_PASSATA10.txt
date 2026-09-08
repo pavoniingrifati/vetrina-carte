@@ -1,0 +1,45 @@
+FANTABALLA — PASSATA 10
+REVISIONE POSIZIONI LISTONE CHAMPIONS 2026/27
+Data: 08/09/2026
+
+OBIETTIVO
+Eliminare l'assegnazione pseudo-casuale delle posizioni precise del listone Champions.
+La vecchia funzione choosePos() poteva assegnare, ad esempio, Kane AD, Haaland AD,
+Hakimi DC o Van Dijk TS pur mantenendo corretto il macro-reparto.
+
+RISULTATO
+- 970 giocatori Champions coperti da un record posizione esplicito.
+- 0 posizioni generate tramite hash/nome.
+- 546 record rivisti ad alta confidenza.
+- 108 portieri con posizione P esatta dalla categoria UEFA.
+- 10 record di posizione riutilizzati direttamente dal listone Fantaballa REAL.
+- 306 giocatori di movimento senza una posizione dettagliata sufficientemente affidabile
+  usano un fallback CONSERVATIVO del reparto UEFA: D -> DC, C -> CC, A -> ATT.
+  Il fallback non inventa fasce, trequartista o seconde posizioni.
+
+CORREZIONI SENTINELLA
+Harry Kane             ATT
+Christopher Nkunku     ATT, AS
+Erling Haaland         ATT
+Bukayo Saka            AD
+Achraf Hakimi          TD, AD
+Virgil van Dijk        DC
+Alphonso Davies        TS, AS
+Michael Olise          AD, COC
+Arda Güler             AD, COC
+Ayden Heaven           DC
+
+FILE SORGENTE DELLE POSIZIONI
+data/champions/posizioni-champions-2026-27.json
+
+Questo file è ora la fonte di verità per ruolo e Position del listone Champions.
+Quando aggiungi un nuovo calciatore alla rosa UEFA devi aggiungere anche la sua posizione qui.
+Se manca, build-champions-data.mjs si FERMA con errore invece di inventarne una.
+
+FILE GENERATO USATO DAL GIOCO
+data/champions/giocatori-champions.json
+
+CONTROLLO AUTOMATICO
+scripts/check-champions-positions.mjs
+
+VERIFICA_REFACTOR.bat / .sh esegue anche questo controllo e blocca regressioni note.
