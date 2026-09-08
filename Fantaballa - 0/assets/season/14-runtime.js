@@ -6,16 +6,18 @@ function showBootProgress(title,detail){
  const target=document.getElementById('screen');if(!target)return;
  target.innerHTML=`<section class="panel season-boot-status" role="status" aria-live="polite" aria-atomic="true"><div class="label">Avvio del gioco</div><h2>${esc(title)}</h2><p>${esc(detail||'')}</p></section>`;
 }
-function render(){updateCompetitionChrome();updateSaveStatus();if(!PLAYERS.length||!CLUBS.length){screen.innerHTML='<section class="panel"><h2>Caricamento database giocatori...</h2></section>';applyError404VisualState();return}if(state.phase==='setup')showSetup();else if(state.phase==='draft')showDraft();else if(state.phase==='season')showSeason();else if(state.phase==='midseason')showMidseason();else if(state.phase==='story-final')showMeritStoryFinale();else if(state.phase==='italia-2006-final')showItalia2006Final();else if(state.phase==='fantaballopoli-final')showFantaballopoliFinal();else if(state.phase==='fantaballopoli-restart')showFantaballopoliRestart();else if(state.phase==='playoffs')showLeaguePlayoffs();else if(state.phase==='royal-rumble')showRoyalRumble();else if(state.phase==='finished')showFinished();applyError404VisualState();updateSaveStatus()}
+function render(){updateCompetitionChrome();updateSaveStatus();if(!PLAYERS.length||!CLUBS.length){screen.innerHTML='<section class="panel"><h2>Caricamento database giocatori...</h2></section>';applyError404VisualState();return}if(state.phase==='setup')showSetup();else if(state.phase==='draft')showDraft();else if(state.phase==='season')showSeason();else if(state.phase==='midseason')showMidseason();else if(state.phase==='story-final')showMeritStoryFinale();else if(state.phase==='italia-2006-final')showItalia2006Final();else if(state.phase==='fantaballopoli-final')showFantaballopoliFinal();else if(state.phase==='fantaballopoli-restart')showFantaballopoliRestart();else if(state.phase==='playoffs')showLeaguePlayoffs();else if(state.phase==='royal-rumble')showRoyalRumble();else if(state.phase==='champions-knockout')showChampionsKnockout();else if(state.phase==='finished')(isChampionsCompetition()?showChampionsFinished():showFinished());applyError404VisualState();updateSaveStatus()}
 async function boot(){
  showBootProgress('Caricamento database…','Giocatori, club, cronaca ed eventi.');
  try{
-   const serieAProfile=competitionVariantProfile('serie-a'),legendProfile=competitionVariantProfile('legend');
-   const [serieAPlayers,serieAClubs,legendPlayers,legendClubs,commentary,secondaryPlayers,secondaryClubs]=await Promise.all([
+   const serieAProfile=competitionVariantProfile('serie-a'),legendProfile=competitionVariantProfile('legend'),championsProfile=COMPETITION_VARIANT_CONFIG.champions?competitionVariantProfile('champions'):null;
+   const [serieAPlayers,serieAClubs,legendPlayers,legendClubs,championsPlayers,championsClubs,commentary,secondaryPlayers,secondaryClubs]=await Promise.all([
      fetchJsonResource(serieAProfile.players,serieAProfile.players),
      fetchJsonResource(serieAProfile.clubs,serieAProfile.clubs),
      fetchJsonResource(legendProfile.players,legendProfile.players),
      fetchJsonResource(legendProfile.clubs,legendProfile.clubs),
+     championsProfile?fetchJsonResource(championsProfile.players,championsProfile.players):Promise.resolve([]),
+     championsProfile?fetchJsonResource(championsProfile.clubs,championsProfile.clubs):Promise.resolve([]),
      fetchJsonResource(SEASON_CONFIG.data.commentary,SEASON_CONFIG.data.commentary,{optional:true}),
      fetchJsonResource(SEASON_CONFIG.data.secondaryPlayers,SEASON_CONFIG.data.secondaryPlayers,{optional:true}),
      fetchJsonResource(SEASON_CONFIG.data.secondaryClubs,SEASON_CONFIG.data.secondaryClubs,{optional:true}),
@@ -26,6 +28,7 @@ async function boot(){
     'serie-a':{players:serieAPlayers,clubs:serieAClubs,validation:SEASON_CONFIG.validation},
     legend:{players:legendPlayers,clubs:legendClubs,validation:{...(SEASON_CONFIG.validation||{}),maximumOvr:120,minimumClubCount:41,expectedClubCount:41,minimumClubMessage:'Sono presenti soltanto {count} record club: servono la squadra utente e 40 club Legend.',expectedClubMessage:'Sono presenti {count} record club invece dei 40 club Legend più la squadra utente.'}}
    };
+   if(championsProfile)SEASON_DATASETS.champions={players:championsPlayers,clubs:championsClubs,validation:{...(SEASON_CONFIG.validation||{}),maximumOvr:100,minimumClubCount:37,expectedClubCount:37,minimumClubMessage:'Sono presenti soltanto {count} record club: servono Fantaballa e le 36 partecipanti Champions.',expectedClubMessage:'Sono presenti {count} record club invece di Fantaballa più le 36 partecipanti Champions.'}};
    COMMENTARY=commentary;OTHER_CLUBS=Array.isArray(secondaryClubs)?secondaryClubs:[];CLASSIC_PLAYERS=Array.isArray(secondaryPlayers)?secondaryPlayers:[];
    const portalState=typeof consumeSeasonPortalTransfer==='function'?consumeSeasonPortalTransfer():null;if(portalState)state=portalState;
    applyCompetitionVariantData(state?.competitionVariant);

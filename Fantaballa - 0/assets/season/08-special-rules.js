@@ -193,6 +193,7 @@ function bottomHelpRuleActive(){return fgicLeagueRuleActive('bottom-help')}
 function leaguePlayoffsRuleActive(){return fgicLeagueRuleActive('playoffs')}
 function fgicLeagueRuleLabel(rule=state.seasonRules?.fgicLeagueRule){return rule==='playoffs'?'Play off scudetto':rule==='bottom-help'?'Aiuto dal fondo':''}
 function activateFgicLeagueRule(rule='playoffs'){
+ if(isChampionsCompetition())return 'Formato Champions protetto: qualificazione e playoff seguono il tabellone UEFA e non possono essere sostituiti dai playoff scudetto.';
  const normalized=rule==='bottom-help'?'bottom-help':'playoffs';
  state.seasonRules.fgicLeagueRule=normalized;
  state.seasonRules.bottomHelpRoundTeamIds=[];
@@ -241,6 +242,7 @@ function buildNextLeaguePlayoffTies(winners=[]){
 }
 function finishAfterLeaguePlayoffs(){if(!prepareFantaballopoliFinale()&&!prepareMysteryCharacterFinale()&&!prepareMeritStoryFinale())state.phase='finished'}
 function advanceAfterRegularSeason(){
+ if(isChampionsCompetition()){advanceChampionsAfterLeaguePhase();return;}
  if(Number(state.matchday)>=seasonLength()&&leaguePlayoffsRuleActive()){
    const p=leaguePlayoffState();if(p.status!=='completed'&&initializeLeaguePlayoffs())return;
  }
@@ -574,6 +576,7 @@ function createExpandedLeagueTeam(club,index){
  return{id:teamId,clubId:teamId,originalClubId:String(club.id),name:String(club.name||`Nuova squadra ${index+1}`),shortName:String(club.shortName||club.name||'NEW').slice(0,4).toUpperCase(),colors:club.colorClub||null,strength:Math.round(avg(values)*10)/10,roster,statuses:{},mascot:null,playerOverrides:{},externalCompetition:sourceKey,chaos:{activeEffects:[],seenDecisionEvents:[],decisions:0,midseasonPickDelta:0,matchDuration:90,futureScorerId:'',futureInjuryZeroPoints:false,sixtyPointFear:false,eventChanceMultiplier:1,nonItalianChemZero:false,formation:'',latestDecision:null}};
 }
 function activateExpandedLeague(){
+ if(isChampionsCompetition())return 'Formato Champions protetto: la fase campionato deve restare a 36 squadre.';
  if(state.seasonRules.dynamicLeague)return `La struttura della lega è già stata modificata da ${state.seasonRules.dynamicLeagueLabel||'un altro evento'}.`;
  const clubs=expandedLeagueClubPool().slice(0,20);if(clubs.length<20)return `Nell’altro database sono disponibili soltanto ${clubs.length} club completi: il campionato non può essere allargato a 40 squadre.`;
  const leaderPoints=Math.max(0,...Object.values(state.standings||{}).map(row=>Number(row?.pts)||0));
@@ -589,6 +592,7 @@ function activateExpandedLeague(){
  return `Campionato allargato attivato: entrano 20 club casuali da ${otherCompetitionName()} con punti iniziali casuali da 0 a ${pointCap}, il punteggio della capolista al momento dell'evento. Ora partecipano ${activeIds.length} squadre e la stagione arriverà a ${state.schedule.length} giornate${state.seasonRules.marathon?' perché la Maratona raddoppia anche il nuovo campionato':''}.`;
 }
 function activateEliteLeague(){
+ if(isChampionsCompetition())return 'Formato Champions protetto: la fase campionato deve restare a 36 squadre.';
  if(state.seasonRules.dynamicLeague)return `La struttura della lega è già stata modificata da ${state.seasonRules.dynamicLeagueLabel||'un altro evento'}.`;
  const fullTable=Object.values(state.standings||{}).sort((a,b)=>b.pts-a.pts||((b.gf-b.ga)-(a.gf-a.ga))||b.gf-a.gf||b.w-a.w);if(fullTable.length<11)return 'Non ci sono abbastanza squadre per creare il Campionato élite.';
  const qualified=fullTable.slice(0,10).map(row=>String(row.id)),removed=fullTable.slice(10).map(row=>String(row.id));
@@ -630,13 +634,14 @@ function futureScorerGoalEvent(team,opponent,duration=90){
  return {minute,playerId:String(player.id),assistId:'',player:player.name,assist:'',teamId:String(team?.id||USER_ID),teamName:team?.name||state.teamName,goalValue:1,isFutureGoal:true,description:'Conosceva già il risultato: il giocatore dal futuro segna come previsto.'};
 }
 function extendSeasonTo76(){
+ if(isChampionsCompetition())return 'Formato Champions protetto: la fase campionato resta di 8 giornate e non può diventare una Maratona.';
  state.seasonRules.marathon=true;state.seasonRules.winPoints=1.5;state.seasonRules.drawPoints=0;state.seasonRules.pointsEqualGoals=false;
  const activeIds=leagueStructureTeamIds(state);if(state.seasonRules.dynamicLeague&&!state.seasonRules.dynamicLeagueTeamIds.length)state.seasonRules.dynamicLeagueTeamIds=[...activeIds];
  const target=desiredLeagueSeasonLength(state,activeIds);rebuildRemainingLeagueSchedule(activeIds,target);
  return `Maratona attivata: con ${activeIds.length} squadre la stagione dura il doppio e arriva a ${state.schedule.length} giornate. Le giornate già disputate e i risultati restano invariati. Ogni vittoria vale 1,5 punti e ogni pareggio vale 0 punti.`;
 }
 function isTeamEliminated(id){return Boolean((state.seasonRules?.eliminatedTeamIds||[]).map(String).includes(String(id)))}
-function activateHungerGames(){state.seasonRules.hungerGames=true;state.seasonRules.eliminatedTeamIds=Array.isArray(state.seasonRules.eliminatedTeamIds)?state.seasonRules.eliminatedTeamIds:[];return 'Da ora chi perde una partita viene eliminato fino al termine della stagione e scompare dalla classifica. Le gare future contro squadre eliminate diventano vittorie a tavolino.'}
+function activateHungerGames(){if(isChampionsCompetition())return 'Formato Champions protetto: nessuna squadra può essere eliminata durante le 8 giornate della fase campionato.';state.seasonRules.hungerGames=true;state.seasonRules.eliminatedTeamIds=Array.isArray(state.seasonRules.eliminatedTeamIds)?state.seasonRules.eliminatedTeamIds:[];return 'Da ora chi perde una partita viene eliminato fino al termine della stagione e scompare dalla classifica. Le gare future contro squadre eliminate diventano vittorie a tavolino.'}
 function applyHungerGamesResult(homeId,awayId,homeScore,awayScore){
  if(!state.seasonRules.hungerGames||Number(homeScore)===Number(awayScore))return '';
  const loserId=Number(homeScore)<Number(awayScore)?String(homeId):String(awayId);if(isTeamEliminated(loserId))return '';

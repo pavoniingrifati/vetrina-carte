@@ -30,13 +30,14 @@ function futureScorerGoalEvent(team,opponent,duration=90){
  return {minute,playerId:String(player.id),assistId:'',player:player.name,assist:'',teamId:String(team?.id||USER_ID),teamName:team?.name||state.teamName,goalValue:1,isFutureGoal:true,description:'Conosceva già il risultato: il giocatore dal futuro segna come previsto.'};
 }
 function extendSeasonTo76(){
+ if(isChampionsCompetition())return 'Formato Champions protetto: la fase campionato resta di 8 giornate e non può diventare una Maratona.';
  state.seasonRules.marathon=true;state.seasonRules.winPoints=1.5;state.seasonRules.drawPoints=0;state.seasonRules.pointsEqualGoals=false;
  const activeIds=leagueStructureTeamIds(state);if(state.seasonRules.dynamicLeague&&!state.seasonRules.dynamicLeagueTeamIds.length)state.seasonRules.dynamicLeagueTeamIds=[...activeIds];
  const target=desiredLeagueSeasonLength(state,activeIds);rebuildRemainingLeagueSchedule(activeIds,target);
  return `Maratona attivata: con ${activeIds.length} squadre la stagione dura il doppio e arriva a ${state.schedule.length} giornate. Le giornate già disputate e i risultati restano invariati. Ogni vittoria vale 1,5 punti e ogni pareggio vale 0 punti.`;
 }
 function isTeamEliminated(id){return Boolean((state.seasonRules?.eliminatedTeamIds||[]).map(String).includes(String(id)))}
-function activateHungerGames(){state.seasonRules.hungerGames=true;state.seasonRules.eliminatedTeamIds=Array.isArray(state.seasonRules.eliminatedTeamIds)?state.seasonRules.eliminatedTeamIds:[];return 'Da ora chi perde una partita viene eliminato fino al termine della stagione e scompare dalla classifica. Le gare future contro squadre eliminate diventano vittorie a tavolino.'}
+function activateHungerGames(){if(isChampionsCompetition())return 'Formato Champions protetto: nessuna squadra può essere eliminata durante le 8 giornate della fase campionato.';state.seasonRules.hungerGames=true;state.seasonRules.eliminatedTeamIds=Array.isArray(state.seasonRules.eliminatedTeamIds)?state.seasonRules.eliminatedTeamIds:[];return 'Da ora chi perde una partita viene eliminato fino al termine della stagione e scompare dalla classifica. Le gare future contro squadre eliminate diventano vittorie a tavolino.'}
 function applyHungerGamesResult(homeId,awayId,homeScore,awayScore){
  if(!state.seasonRules.hungerGames||Number(homeScore)===Number(awayScore))return '';
  const loserId=Number(homeScore)<Number(awayScore)?String(homeId):String(awayId);if(isTeamEliminated(loserId))return '';

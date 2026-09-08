@@ -1,0 +1,71 @@
+FANTABALLA — PASSATA 8
+MODALITÀ FANTACAMPIONATO CHAMPIONS LEAGUE 2026/27
+===================================================
+
+DOVE SI TROVA
+-------------
+Aprire campionato-real.html e, nel setup Fantacampionato, scegliere:
+  Serie A | Legend | Champions League
+
+FORMATO IMPLEMENTATO
+--------------------
+- 36 squadre nella fase campionato.
+- 4 fasce da 9.
+- Fantaballa entra in quarta fascia sostituendo casualmente una delle 9 squadre reali di Pot 4, così il torneo resta sempre a 36 partecipanti.
+- 8 giornate, 18 partite per giornata.
+- Ogni squadra affronta 2 avversarie per fascia: una in casa e una in trasferta.
+- Nessuna sfida contro club della stessa federazione.
+- Massimo 2 avversarie della stessa altra federazione.
+- Classifica unica da 36 con criteri di spareggio UEFA disponibili nei dati di gioco: punti, differenza reti, gol fatti, gol fuori casa, vittorie, vittorie fuori casa e forza collettiva degli avversari.
+- 1ª–8ª: accesso diretto agli ottavi.
+- 9ª–24ª: knockout phase play-offs.
+- 25ª–36ª: eliminate.
+- Playoff, ottavi, quarti e semifinali su andata/ritorno; finale secca.
+- Niente regola dei gol in trasferta nei turni a eliminazione.
+- Seeding e percorso ereditato nel tabellone.
+
+DATABASE
+--------
+Sorgente facile da aggiornare:
+  data/champions/rose-uefa-2026-27.json
+
+File generati:
+  data/champions/giocatori-champions.json
+  data/champions/club-champions.json
+
+Numeri attuali:
+  36 club UEFA reali + Fantaballa come record utente
+  970 giocatori
+  64 record riusati dal listone Fantaballa REAL 2026/27
+
+Gli OVR dei giocatori già presenti nel listone italiano vengono riutilizzati. Gli altri sono calibrati nella scala Fantaballa e possono essere aggiornati facilmente nel generatore.
+
+BUILD
+-----
+GENERA_CAMPIONATI.bat / .sh ora esegue nell'ordine:
+1. build-champions-data.mjs
+2. build-special-rules.mjs
+3. build-cache-busting.mjs
+4. build-campionati.mjs
+
+QA
+--
+VERIFICA_REFACTOR.bat / .sh controlla anche la Champions.
+check-champions-mode.mjs verifica:
+- 36 club e quattro fasce da 9
+- 970 giocatori, ID, club, posizioni e OVR
+- caricamento della modalità nel setup/runtime
+- stato e fase champions-knockout nei salvataggi
+- sorteggi completi con vincoli UEFA obbligatori
+- struttura playoff -> ottavi -> quarti -> semifinali -> finale
+- seeding e vantaggio del ritorno in casa
+
+Stress test finale eseguito anche su 100 sorteggi consecutivi: 100/100 validi sui vincoli obbligatori.
+
+NOTA CALENDARIO
+---------------
+Il criterio UEFA secondo cui, in linea di principio, una squadra non dovrebbe avere più di due gare consecutive in casa o fuori è trattato come best-effort e non come vincolo bloccante. UEFA stessa consente deroghe. I vincoli competitivi del sorteggio restano invece obbligatori e validati.
+
+VERSIONE MOTORE
+---------------
+Season Engine 1.4.0

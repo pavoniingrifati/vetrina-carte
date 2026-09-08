@@ -354,6 +354,7 @@ function finalizeDraft(){
  state.seasonRules.userFormationOverride=coachIs('three-five-two')?'3-5-2':'';
  const draftedIds=currentUserPlayerIds();
  setAchievementCareerFlag('initialRosterIds',draftedIds.map(String));
+ if(isChampionsCompetition()){finalizeChampionsDraft(userClub,draftedIds);return;}
  const opponents=shuffle(CLUBS.filter(club=>club.id!==userClub.id)).slice(0,19);
  state.leagueClubIds=opponents.map(club=>String(club.id));
  state.teams=[{

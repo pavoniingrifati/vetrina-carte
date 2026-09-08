@@ -3,7 +3,7 @@
  * Modulo classico: l'ordine di caricamento è definito negli HTML del Campionato.
  */
 function generateSchedule(ids){let arr=[...ids],rounds=[];for(let r=0;r<arr.length-1;r++){let matches=[];for(let i=0;i<arr.length/2;i++){let h=arr[i],a=arr[arr.length-1-i];if(r%2&&i===0)[h,a]=[a,h];matches.push({home:h,away:a})}rounds.push(matches);arr=[arr[0],arr[arr.length-1],...arr.slice(1,-1)]}return rounds.concat(rounds.map(rd=>rd.map(m=>({home:m.away,away:m.home}))));}
-function sortedTable(){return Object.values(state.standings).filter(team=>!isTeamEliminated(team.id)).sort((a,b)=>b.pts-a.pts||((b.gf-b.ga)-(a.gf-a.ga))||b.gf-a.gf||b.w-a.w)}
+function sortedTable(){if(typeof isChampionsCompetition==='function'&&isChampionsCompetition()&&typeof championsSortedTable==='function')return championsSortedTable();return Object.values(state.standings).filter(team=>!isTeamEliminated(team.id)).sort((a,b)=>b.pts-a.pts||((b.gf-b.ga)-(a.gf-a.ga))||b.gf-a.gf||b.w-a.w)}
 function userStanding(){return state.standings[USER_ID]}
 function teamById(id){return state.teams.find(t=>t.id===id)}
 function currentRound(){return state.schedule[state.matchday]||[]}
@@ -27,7 +27,7 @@ function parallelCupState(){
 function parallelCupChemistryMultiplier(){return parallelCupState().rewardType==='chemistry_x2'?2:1}
 function parallelCupChemistryZero(){return parallelCupState().penaltyType==='chemistry_zero'}
 function parallelCupDisciplineImmunity(){return parallelCupState().rewardType==='discipline_immunity'}
-function currentCompetitionName(){if(PLAYERS===REAL_PLAYERS&&state?.competitionVariant==='legend')return'Fantacampionato Legend';return PLAYERS===REAL_PLAYERS?'Fantacampionato del Ca***':'Campionato del Ca***'}
+function currentCompetitionName(){if(PLAYERS===REAL_PLAYERS&&state?.competitionVariant==='champions')return'Fantacampionato Champions League';if(PLAYERS===REAL_PLAYERS&&state?.competitionVariant==='legend')return'Fantacampionato Legend';return PLAYERS===REAL_PLAYERS?'Fantacampionato del Ca***':'Campionato del Ca***'}
 function otherCompetitionName(){return PLAYERS===REAL_PLAYERS?'Campionato del Ca***':'Fantacampionato del Ca***'}
 function otherCompetitionPlayers(){return PLAYERS===REAL_PLAYERS?CLASSIC_PLAYERS:REAL_PLAYERS}
 function otherClubPlayerPool(clubId){return (otherCompetitionPlayers()||[]).filter(player=>String(player.club)===String(clubId)).sort((a,b)=>(Number(b.ovr)||0)-(Number(a.ovr)||0))}

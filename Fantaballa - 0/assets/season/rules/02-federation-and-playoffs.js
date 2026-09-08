@@ -64,6 +64,7 @@ function bottomHelpRuleActive(){return fgicLeagueRuleActive('bottom-help')}
 function leaguePlayoffsRuleActive(){return fgicLeagueRuleActive('playoffs')}
 function fgicLeagueRuleLabel(rule=state.seasonRules?.fgicLeagueRule){return rule==='playoffs'?'Play off scudetto':rule==='bottom-help'?'Aiuto dal fondo':''}
 function activateFgicLeagueRule(rule='playoffs'){
+ if(isChampionsCompetition())return 'Formato Champions protetto: qualificazione e playoff seguono il tabellone UEFA e non possono essere sostituiti dai playoff scudetto.';
  const normalized=rule==='bottom-help'?'bottom-help':'playoffs';
  state.seasonRules.fgicLeagueRule=normalized;
  state.seasonRules.bottomHelpRoundTeamIds=[];
@@ -112,6 +113,7 @@ function buildNextLeaguePlayoffTies(winners=[]){
 }
 function finishAfterLeaguePlayoffs(){if(!prepareFantaballopoliFinale()&&!prepareMysteryCharacterFinale()&&!prepareMeritStoryFinale())state.phase='finished'}
 function advanceAfterRegularSeason(){
+ if(isChampionsCompetition()){advanceChampionsAfterLeaguePhase();return;}
  if(Number(state.matchday)>=seasonLength()&&leaguePlayoffsRuleActive()){
    const p=leaguePlayoffState();if(p.status!=='completed'&&initializeLeaguePlayoffs())return;
  }

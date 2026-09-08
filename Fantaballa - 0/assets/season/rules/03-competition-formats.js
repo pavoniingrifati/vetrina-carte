@@ -270,6 +270,7 @@ function createExpandedLeagueTeam(club,index){
  return{id:teamId,clubId:teamId,originalClubId:String(club.id),name:String(club.name||`Nuova squadra ${index+1}`),shortName:String(club.shortName||club.name||'NEW').slice(0,4).toUpperCase(),colors:club.colorClub||null,strength:Math.round(avg(values)*10)/10,roster,statuses:{},mascot:null,playerOverrides:{},externalCompetition:sourceKey,chaos:{activeEffects:[],seenDecisionEvents:[],decisions:0,midseasonPickDelta:0,matchDuration:90,futureScorerId:'',futureInjuryZeroPoints:false,sixtyPointFear:false,eventChanceMultiplier:1,nonItalianChemZero:false,formation:'',latestDecision:null}};
 }
 function activateExpandedLeague(){
+ if(isChampionsCompetition())return 'Formato Champions protetto: la fase campionato deve restare a 36 squadre.';
  if(state.seasonRules.dynamicLeague)return `La struttura della lega è già stata modificata da ${state.seasonRules.dynamicLeagueLabel||'un altro evento'}.`;
  const clubs=expandedLeagueClubPool().slice(0,20);if(clubs.length<20)return `Nell’altro database sono disponibili soltanto ${clubs.length} club completi: il campionato non può essere allargato a 40 squadre.`;
  const leaderPoints=Math.max(0,...Object.values(state.standings||{}).map(row=>Number(row?.pts)||0));
@@ -285,6 +286,7 @@ function activateExpandedLeague(){
  return `Campionato allargato attivato: entrano 20 club casuali da ${otherCompetitionName()} con punti iniziali casuali da 0 a ${pointCap}, il punteggio della capolista al momento dell'evento. Ora partecipano ${activeIds.length} squadre e la stagione arriverà a ${state.schedule.length} giornate${state.seasonRules.marathon?' perché la Maratona raddoppia anche il nuovo campionato':''}.`;
 }
 function activateEliteLeague(){
+ if(isChampionsCompetition())return 'Formato Champions protetto: la fase campionato deve restare a 36 squadre.';
  if(state.seasonRules.dynamicLeague)return `La struttura della lega è già stata modificata da ${state.seasonRules.dynamicLeagueLabel||'un altro evento'}.`;
  const fullTable=Object.values(state.standings||{}).sort((a,b)=>b.pts-a.pts||((b.gf-b.ga)-(a.gf-a.ga))||b.gf-a.gf||b.w-a.w);if(fullTable.length<11)return 'Non ci sono abbastanza squadre per creare il Campionato élite.';
  const qualified=fullTable.slice(0,10).map(row=>String(row.id)),removed=fullTable.slice(10).map(row=>String(row.id));

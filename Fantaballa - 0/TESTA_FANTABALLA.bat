@@ -14,7 +14,7 @@ echo            FANTABALLA - TEST LOCALE
 echo ====================================================
 echo.
 echo   1. Campionato del Ca***
-echo   2. Fantacampionato del Ca***
+echo   2. Fantacampionato (Serie A / Legend / Champions League)
 echo   3. Home
 echo   4. Esci
 echo.
