@@ -17,6 +17,11 @@ if(players.length!==970)fail(`attesi 970 giocatori Champions, trovati ${players.
 if(clubs.filter(c=>c.uefa202627).length!==36)fail('attesi 36 club reali Champions');
 const sentinels={'Harry Kane':'ATT','Christopher Nkunku':'ATT, AS','Bukayo Saka':'AD','Achraf Hakimi':'TD, AD'};
 for(const [name,pos] of Object.entries(sentinels)){
- const p=players.find(x=>x.name===name); if(!p)fail(`manca ${name}`); else if(p.Position!==pos)fail(`${name}: ${p.Position} != ${pos}`);
+ const p=players.find(x=>(x.fullName||x.name)===name); if(!p)fail(`manca ${name}`); else if(p.Position!==pos)fail(`${name}: ${p.Position} != ${pos}`);
 }
-if(!process.exitCode)console.log(`[DATABASE CHAMPIONS] OK: giocatori.html espone i ${players.length} giocatori Champions e i 36 club UEFA.`);
+const displayKeysByClub=new Set();
+for(const p of players){if(!String(p.fullName||'').trim())fail(`${p.id}: fullName mancante`);const key=`${p.club}|${String(p.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}`;if(displayKeysByClub.has(key))fail(`nome breve duplicato nello stesso club: ${p.club} / ${p.name}`);displayKeysByClub.add(key);}
+const shortSentinels={'Harry Kane':'Kane','Christopher Nkunku':'Nkunku','Erling Haaland':'Haaland','Bukayo Saka':'Saka','Achraf Hakimi':'Hakimi','Virgil van Dijk':'van Dijk'};
+for(const [full,short] of Object.entries(shortSentinels)){const p=players.find(x=>x.fullName===full);if(!p)fail(`manca ${full}`);else if(p.name!==short)fail(`${full}: nome breve atteso ${short}, trovato ${p.name}`);}
+if(!/player\.fullName\|\|''/.test(html))fail('la ricerca del database non include fullName');
+if(!process.exitCode)console.log(`[DATABASE CHAMPIONS] OK: giocatori.html espone i ${players.length} giocatori Champions con cognome/nome breve e conserva fullName.`);

@@ -538,7 +538,7 @@ function renderPlayerAvatarSvg(player,sub=false){
       const [communityPlayers,realPlayers,championsPlayers,legendPlayers,communityClubs,realClubs,championsClubs,legendClubs]=await Promise.all([
         loadJson('data/giocatori.json?v=4660acc7579f'),
         loadJson('data/giocatori-real.json?v=f41541ba5cbd'),
-        loadJson('data/champions/giocatori-champions.json?v=569b518fc53e'),
+        loadJson('data/champions/giocatori-champions.json?v=592a35e3f4c4'),
         loadJson('data/storico/giocatori-storici.json?v=4ea5df59d634'),
         loadJson('data/club.json?v=1fd1a1a16d68'),
         loadJson('data/club-real.json?v=a81019ee5dde'),
@@ -610,7 +610,7 @@ function renderPlayerAvatarSvg(player,sub=false){
     const sort=el('sortFilter').value;
     let players=datasetPlayers().filter(player=>{
       const subscribed=isSubscriber(player),creator=isCreator(player);
-      const searchable=normalize(`${player.name} ${clubName(player)} ${player.nation||''} ${player.Position||''} ${subscribed?'abbonato tik tok':'non abbonato'} ${creator?'creator content creator':'non creator'}`);
+      const searchable=normalize(`${player.name} ${player.fullName||''} ${clubName(player)} ${player.nation||''} ${player.Position||''} ${subscribed?'abbonato tik tok':'non abbonato'} ${creator?'creator content creator':'non creator'}`);
       return (!query||searchable.includes(query))&&(!club||clubName(player)===club)&&(!nation||(player.nation||'Non indicata')===nation)&&(!role||macroRole(player)===role)&&(!subscriber||(subscriber==='yes'?subscribed:!subscribed));
     });
     const compareText=(a,b)=>String(a).localeCompare(String(b),'it',{sensitivity:'base'});

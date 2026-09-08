@@ -45,8 +45,47 @@ const star={
 };
 function generatedOvr(club,role,index,name){if(star[name]!=null)return star[name];const depth=index===0?2:index<=2?1:index>=10?-7:index>=7?-5:index>=5?-3:index>=3?-1:0;const jitter=(hashInt(`${club.id}|${name}`)%5)-2;const roleAdj=role==='P'?0:role==='A'?1:0;return Math.max(60,Math.min(93,Math.round(club.baseOvr+depth+jitter+roleAdj)))}
 function palette(id,pot){const h=hashInt(id);const hue=h%360;const hue2=(hue+140+(pot*7))%360;return{primary:`hsl(${hue} 66% 38%)`,secondary:`hsl(${hue2} 60% 34%)`,accent:`hsl(${(hue+48)%360} 80% 55%)`,text:'#FFFFFF'}}
-const players=[];let reused=0;const ids=new Set();
-for(const club of source.clubs){for(const sourceRole of ['P','D','C','A']){club.players[sourceRole].forEach((raw,index)=>{const real=bestRealMatch(club.id,raw.name);const pos=positionRecord(club.id,raw.name);const role=pos.role;const Position=pos.Position;let id=`ucl-${club.id}-${slug(raw.name)}`;let suffix=2;while(ids.has(id))id=`ucl-${club.id}-${slug(raw.name)}-${suffix++}`;ids.add(id);let player;if(real){reused++;player={...real,id,name:raw.name,club:club.id,role,Position,roleLabel:roleLabel[role],uefaNat:raw.nat,positionSource:pos.source||'manual',positionConfidence:pos.confidence||'high',ovrSource:'fantaballa-real-2026-27'};}else{const ovr=generatedOvr(club,role,index,raw.name);player={id,name:raw.name,role,Position,roleLabel:roleLabel[role],nation:natNames[raw.nat]||raw.nat||'Non indicata',ovr,subscriber:'no',abbonato:'no',club:club.id,uefaNat:raw.nat,positionSource:pos.source||'manual',positionConfidence:pos.confidence||'medium',ovrSource:star[raw.name]!=null?'fantaballa-star-calibration':'fantaballa-ucl-calibration'};}players.push(player)})}}
+const SURNAME_PARTICLES=new Set(['da','de','del','della','di','do','dos','das','van','von','der','den','ten','ter','la','le','du','lo','el','al','bin','mac','st','saint']);
+const SURNAME_SUFFIXES=new Set(['junior','júnior','jr','jr.','filho','neto']);
+function cleanNameToken(v){return String(v||'').toLocaleLowerCase('it').replace(/[.,]+$/g,'')}
+function surnameBase(fullName){
+ const tokens=String(fullName||'').trim().split(/\s+/).filter(Boolean);
+ if(tokens.length<=1)return tokens[0]||'Giocatore';
+ let start=tokens.length-1;
+ if(SURNAME_SUFFIXES.has(cleanNameToken(tokens[start]))&&start>0)start--;
+ while(start>0&&SURNAME_PARTICLES.has(cleanNameToken(tokens[start-1])))start--;
+ return tokens.slice(start).join(' ');
+}
+function givenNamePart(fullName,surname){
+ const fullTokens=String(fullName||'').trim().split(/\s+/).filter(Boolean),surnameTokens=String(surname||'').trim().split(/\s+/).filter(Boolean);
+ return fullTokens.slice(0,Math.max(0,fullTokens.length-surnameTokens.length)).join(' ');
+}
+function displayKey(v){return norm(v)}
+function shortestGivenPrefix(givenNames,index){
+ const first=String(givenNames[index]||'').split(/\s+/)[0]||'';
+ if(!first)return '';
+ for(let len=1;len<=first.length;len++){const prefix=first.slice(0,len);if(givenNames.filter(name=>(String(name||'').split(/\s+/)[0]||'').slice(0,len).toLocaleLowerCase('it')===prefix.toLocaleLowerCase('it')).length===1)return prefix;}
+ const extra=String(givenNames[index]||'').split(/\s+/).filter(Boolean).slice(1);
+ return `${first}${extra.length?` ${extra[0][0]}`:''}`;
+}
+const draftPlayers=[];let reused=0;const ids=new Set();
+for(const club of source.clubs){for(const sourceRole of ['P','D','C','A']){club.players[sourceRole].forEach((raw,index)=>{const real=bestRealMatch(club.id,raw.name);const pos=positionRecord(club.id,raw.name);const role=pos.role;const Position=pos.Position;let id=`ucl-${club.id}-${slug(raw.name)}`;let suffix=2;while(ids.has(id))id=`ucl-${club.id}-${slug(raw.name)}-${suffix++}`;ids.add(id);const ovr=real?Number(real.ovr)||generatedOvr(club,role,index,raw.name):generatedOvr(club,role,index,raw.name);draftPlayers.push({club,raw,index,real,pos,role,Position,id,ovr,baseDisplay:String(surnameBase(raw.name)).trim()||raw.name});if(real)reused++;})}}
+const groups=new Map();
+for(const item of draftPlayers){const key=`${item.club.id}|${displayKey(item.baseDisplay)}`;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(item)}
+for(const group of groups.values()){
+ if(group.length===1){group[0].displayName=group[0].baseDisplay;continue;}
+ const given=group.map(item=>givenNamePart(item.raw.name,surnameBase(item.raw.name)));
+ group.forEach((item,index)=>{let qualifier=shortestGivenPrefix(given,index);item.displayName=`${item.baseDisplay}${qualifier?` ${qualifier}.`:''}`;});
+}
+const usedDisplayByClub=new Set();
+for(const item of draftPlayers){
+ let label=item.displayName||item.baseDisplay;let n=2;const key=()=>`${item.club.id}|${displayKey(label)}`;while(usedDisplayByClub.has(key()))label=`${item.displayName||item.baseDisplay} ${n++}`;usedDisplayByClub.add(key());item.displayName=label;
+}
+const players=draftPlayers.map(({club,raw,index,real,pos,role,Position,id,ovr,displayName})=>{
+ const common={id,name:displayName,fullName:raw.name,club:club.id,role,Position,roleLabel:roleLabel[role],uefaNat:raw.nat,positionSource:pos.source||'manual',positionConfidence:pos.confidence||(real?'high':'medium')};
+ if(real)return {...real,...common,ovrSource:'fantaballa-real-2026-27'};
+ return {...common,nation:natNames[raw.nat]||raw.nat||'Non indicata',ovr,subscriber:'no',abbonato:'no',ovrSource:star[raw.name]!=null?'fantaballa-star-calibration':'fantaballa-ucl-calibration'};
+});
 const user=realClubs.find(c=>String(c.id)==='fantaballa-real')||{id:'fantaballa-real',name:'Fantaballa REAL',shortName:'REAL',colorClub:{primary:'#173A61',secondary:'#F2C84B',accent:'#E84A3A',text:'#FFFFFF'},defaultFormation:'4-3-3'};
 const clubs=[{...user,pot:4,association:'FBA',championsUser:true,rosterSize:14},...source.clubs.map(c=>({id:c.id,name:c.name,shortName:c.shortName,colorClub:palette(c.id,c.pot),rosterSize:players.filter(p=>p.club===c.id).length,defaultFormation:'4-3-3',pot:c.pot,association:c.association,baseOvr:c.baseOvr,uefa202627:true}))];
 function writeOrCheck(file,data){const text=JSON.stringify(data,null,2)+'\n';if(CHECK){const current=fs.existsSync(file)?fs.readFileSync(file,'utf8'):'';if(current!==text){console.error(`[CHAMPIONS] OUTDATED ${path.relative(ROOT,file)}`);process.exitCode=1}else console.log(`[CHAMPIONS] OK ${path.relative(ROOT,file)}`)}else{fs.writeFileSync(file,text,'utf8');console.log(`[CHAMPIONS] scritto ${path.relative(ROOT,file)}`)}}

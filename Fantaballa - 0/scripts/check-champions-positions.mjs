@@ -18,9 +18,9 @@ for(const p of players){
  const tokens=String(p.Position||'').split(',').map(v=>v.trim()).filter(Boolean);
  if(!tokens.length||tokens.some(v=>!allowed.has(v)))fail(`${p.name}: posizione non valida ${p.Position}`);
  if(roleOf[tokens[0]]!==p.role)fail(`${p.name}: macro-ruolo ${p.role} incoerente con ${p.Position}`);
- const src=posDb.players[p.name];
- if(!src)fail(`${p.name}: manca nel database posizioni`);
- else if(src.Position!==p.Position||src.role!==p.role)fail(`${p.name}: output non allineato alla fonte posizioni`);
+ const src=posDb.players[p.fullName||p.name];
+ if(!src)fail(`${p.fullName||p.name}: manca nel database posizioni`);
+ else if(src.Position!==p.Position||src.role!==p.role)fail(`${p.fullName||p.name}: output non allineato alla fonte posizioni`);
 }
 if(/function\s+choosePos\s*\(/.test(generator)||/const\s+posPatterns\s*=/.test(generator))fail('il generatore contiene ancora assegnazione pseudo-casuale delle posizioni');
 const expected={
@@ -35,7 +35,7 @@ const expected={
  'Arda Güler':'AD, COC',
  'Ayden Heaven':'DC'
 };
-const byName=new Map(players.map(p=>[p.name,p]));
+const byName=new Map(players.map(p=>[p.fullName||p.name,p]));
 for(const [name,pos] of Object.entries(expected)){
  const p=byName.get(name); if(!p)fail(`manca ${name}`); else if(p.Position!==pos)fail(`${name}: atteso ${pos}, trovato ${p.Position}`);
 }
