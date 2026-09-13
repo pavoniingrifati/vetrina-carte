@@ -616,10 +616,6 @@
 
       <div class="credits credits-large"><span>Crediti rimanenti</span><strong id="creditsText">350/350</strong></div>
 
-      <div class="score-summary">
-        <div class="score-card"><span>CA titolari</span><strong id="startersProjection">0.0</strong></div>
-        <div class="score-card"><span>CA rosa</span><strong id="rosterProjection">0.0</strong></div>
-      </div>
 
       <div class="teamline">
         <div class="team-actions">
@@ -660,7 +656,7 @@
       <div class="filters">
         <button class="chip active" data-role="all">T1</button><button class="chip" data-role="P">P</button><button class="chip" data-role="D">D</button><button class="chip" data-role="C">C</button><button class="chip" data-role="A">A</button>
         <select class="nation-select" id="nationFilter"><option value="all">Tutti</option></select>
-        <select class="sort-select" id="sortSelect"><option value="cost_desc">Costo ↓</option><option value="cost_asc">Costo ↑</option><option value="rating_desc">CA ↓</option><option value="rating_asc">CA ↑</option><option value="name_asc">Nome A-Z</option></select>
+        <select class="sort-select" id="sortSelect"><option value="cost_desc">Costo ↓</option><option value="cost_asc">Costo ↑</option><option value="name_asc">Nome A-Z</option></select>
       </div>
 
       <div class="official-count" id="officialCount"></div><div class="players-list" id="playersList"></div>
@@ -692,12 +688,12 @@
 <script>
 const GOOGLE_SHEET_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxH16fXwZydHJ4CZB_26m7W-1JM3d6NHWgcwu9VFq6aY-EuTajkDkGanfgGxEHiY3tRbg/exec';
 const GOOGLE_SHEET_SECRET = 'fantamondiale2026';
-// Versione club/CA: il campo interno 'nation' viene usato come CLUB per non rompere il resto del sito.
+// Versione club: il campo interno 'nation' viene usato come club per non rompere il resto del sito.
 
 let OFFICIAL_PLAYERS = [];
 const NATIONAL_TEAMS = [];
 // I giocatori vengono caricati dal file esterno players_stats.json.
-// Manteniamo internamente il campo 'nation' come CLUB per non rompere il resto del sito.
+// Manteniamo internamente il campo 'nation' come club per non rompere il resto del sito.
 const FLAGS = ["","","","","",""];
 const ROLE_LABEL = { P: 'P', D: 'D', C: 'C', A: 'A', J: 'ALL' };
 const BUDGET = 350;
@@ -861,9 +857,7 @@ function shirtStyle(nation) {
 }
 function shirtMarkup(p, pitch = false) {
   const codeClass = pitch ? 'pitch-shirt-code' : 'shirt-code';
-  const numClass = pitch ? 'pitch-shirt-num' : 'shirt-num';
-  const num = String(p.rating || 0);
-  return `<span class="${codeClass}">${nationCode(p.nation)}</span><span class="${numClass}">${num}</span>`;
+  return `<span class="${codeClass}">${nationCode(p.nation)}</span>`;
 }
 
 function populateNations(reset = false) {
@@ -891,7 +885,7 @@ function slotHTML(slot) {
     <div class="pitch-player">
       <div class="pitch-shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, true)}</div>
       <div class="slot-name" title="${p.name}">${p.name}</div>
-      <div class="slot-info"><span>${String(p.cost).replace('.', ',')}</span><span>CA ${p.rating}</span></div>
+      <div class="slot-info"><span>${String(p.cost).replace('.', ',')} crediti</span></div>
       <div class="slot-nation">${ROLE_LABEL[p.role]} · ${p.nation}</div>
     </div>
   </button>`;
@@ -938,7 +932,7 @@ function renderPlayers() {
 
   els.playersList.innerHTML = shownList.map(p => {
     const canAfford = remaining() >= p.cost;
-    return `<button class="player-card ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'} onclick="pickPlayer(${p.id})"><div class="shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, false)}</div><div><div class="pname"><span class="role-mini">${p.role}</span>${p.name}</div><div class="pmeta"><span>${p.nation}</span><span>RUOLO ${p.role}</span><span class="stat-tag">CA ${p.rating}</span><span>COSTO ${p.cost}</span></div></div><div class="price">${p.cost}</div></button>`;
+    return `<button class="player-card ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'} onclick="pickPlayer(${p.id})"><div class="shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, false)}</div><div><div class="pname"><span class="role-mini">${p.role}</span>${p.name}</div><div class="pmeta"><span>${p.nation}</span><span>RUOLO ${p.role}</span><span>COSTO ${p.cost}</span></div></div><div class="price">${p.cost}</div></button>`;
   }).join('') || '<div style="color:#555;font-weight:900;text-align:center;padding:30px">Nessun giocatore disponibile</div>';
 }
 
@@ -1032,7 +1026,7 @@ function buildShareCard() {
       <div class="share-meta">
         <div class="share-pill"><span>Modulo</span><strong>${moduleText}</strong></div>
         <div class="share-pill"><span>Crediti</span><strong>${remaining()}</strong></div>
-        <div class="share-pill"><span>CA titolari</span><strong>${formatOneDecimal(startersProjection())}</strong></div>
+        <div class="share-pill"><span>Titolari</span><strong>11</strong></div>
       </div>
     </div>
     <div class="pitch-wrap"></div>
@@ -1164,8 +1158,6 @@ function drawShirt(ctx, x, y, w, h, p) {
   ctx.textBaseline = 'middle';
   ctx.font = '900 13px Inter, Arial';
   ctx.fillText(nationCode(p.nation), x + w / 2, y + h * .28);
-  ctx.font = '1000 25px Inter, Arial';
-  ctx.fillText(String(p.rating || 0), x + w / 2, y + h * .68);
   ctx.restore();
 }
 
@@ -1191,7 +1183,7 @@ function drawPlayerCard(ctx, cx, cy, p) {
   drawRoundedRect(ctx, x + 12, y + 107, w - 24, 22, 6, '#f2f2f2', '#d8d8d8', 1);
   ctx.fillStyle = '#111111';
   ctx.font = '900 10px Inter, Arial';
-  ctx.fillText(`${ROLE_LABEL[p.role]} · CA ${p.rating}`, cx, y + 118);
+  ctx.fillText(`${ROLE_LABEL[p.role]}`, cx, y + 118);
 
   ctx.fillStyle = '#606060';
   ctx.font = '900 9px Inter, Arial';
@@ -1244,7 +1236,7 @@ function drawBenchSlot(ctx, cx, cy, slot) {
   ctx.fillStyle = '#111111';
   ctx.textAlign = 'center';
   ctx.font = '900 10px Inter, Arial';
-  ctx.fillText(`CA ${p.rating}`, x + 122, y + 94);
+  ctx.fillText(`${p.cost} crediti`, x + 122, y + 94);
 }
 
 function drawPitch(ctx, x, y, w, h) {
@@ -1325,7 +1317,7 @@ async function createRosterCanvas() {
   const pills = [
     ['MODULO', moduleText],
     ['CREDITI', String(remaining())],
-    ['CA TIT.', formatOneDecimal(startersProjection())]
+    ['TITOLARI', '11']
   ];
   pills.forEach((item, i) => {
     const px = 110 + i * 305;
@@ -1334,7 +1326,7 @@ async function createRosterCanvas() {
     ctx.font = '900 15px Inter, Arial';
     ctx.textAlign = 'center';
     ctx.fillText(item[0], px + pillW / 2, pillY + 24);
-    ctx.fillStyle = item[0] === 'CA TIT.' ? '#d6ff00' : '#ffffff';
+    ctx.fillStyle = item[0] === 'TITOLARI' ? '#d6ff00' : '#ffffff';
     ctx.font = '1000 34px Inter, Arial';
     ctx.fillText(item[1], px + pillW / 2, pillY + 58);
   });
