@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scouting giocatori - Fantaballa</title>
+  <style>
+    :root {
+      --bg: #101010;
+      --panel: #1b1b1b;
+      --panel2: #242424;
+      --text: #f5f5f5;
+      --muted: #a7a7a7;
+      --green: #00c875;
+      --gold: #d6ff00;
+      --red: #ff4e64;
+      --line: rgba(255,255,255,.12);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(0,200,117,.15), transparent 38%),
+        radial-gradient(circle at top right, rgba(214,255,0,.10), transparent 34%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; border: 0; }
+
+    .wrap {
+      width: min(1280px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 30px 0 42px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .kicker {
+      color: var(--green);
+      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .12em;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 7vw, 72px);
+      line-height: .88;
+      letter-spacing: -0.065em;
+      text-transform: uppercase;
+      font-weight: 1000;
+    }
+
+    .hero p {
+      color: var(--muted);
+      margin: 14px 0 0;
+      max-width: 690px;
+      font-weight: 650;
+      line-height: 1.4;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 42px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #171717;
+      color: #fff;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .dash-card {
+      background: linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      min-height: 88px;
+    }
+
+    .dash-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 950;
+      margin-bottom: 8px;
+    }
+
+    .dash-card strong {
+      font-size: 30px;
+      line-height: 1;
+      font-weight: 1000;
+      letter-spacing: -0.04em;
+      color: var(--gold);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 26px 0 12px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -0.03em;
+      font-weight: 1000;
+      text-transform: uppercase;
+    }
+
+    .club-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .club-card {
+      background: rgba(24,24,24,.88);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .club-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .shirt {
+      width: 52px;
+      height: 46px;
+      position: relative;
+      flex: 0 0 auto;
+      clip-path: polygon(18% 0, 36% 0, 42% 10%, 58% 10%, 64% 0, 82% 0, 100% 18%, 86% 42%, 86% 100%, 14% 100%, 14% 42%, 0 18%);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 1000;
+      text-shadow: 0 1px 5px rgba(0,0,0,.35);
+    }
+
+    .shirt.small { width: 42px; height: 36px; font-size: 9px; }
+    .club-name { min-width: 0; }
+    .club-name strong { display: block; font-weight: 1000; letter-spacing: -0.03em; }
+    .club-name span { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+    .club-body {
+      padding: 12px 14px 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .mini-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .mini-stat {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 9px 10px;
+      min-width: 0;
+    }
+
+    .mini-stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 950;
+      margin-bottom: 4px;
+    }
+
+    .mini-stat strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 1000;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      gap: 10px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(16px);
+    }
+
+    input, select {
+      width: 100%;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: #121212;
+      color: #fff;
+      padding: 0 12px;
+      font-weight: 800;
+      outline: none;
+    }
+
+    input:focus, select:focus { border-color: var(--green); }
+
+    .players-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+      margin: 12px 2px;
+    }
+
+    .players-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .player-card {
+      background: #181818;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 13px;
+      display: grid;
+      gap: 11px;
+      transition: transform .12s ease, border .12s ease, background .12s ease;
+      min-width: 0;
+    }
+
+    .player-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(0,200,117,.45);
+      background: #1d1d1d;
+    }
+
+    .player-head {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .player-name {
+      min-width: 0;
+    }
+
+    .player-name strong {
+      display: block;
+      font-weight: 1000;
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .player-name span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ca-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: var(--gold);
+      color: #111;
+      font-size: 19px;
+      font-weight: 1000;
+      letter-spacing: -0.06em;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.08);
+      font-size: 11px;
+      font-weight: 950;
+    }
+
+    .badge.green { color: #111; background: var(--green); }
+    .badge.gold { color: #111; background: var(--gold); }
+    .badge.dark { background: #0f0f0f; }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 6px;
+    }
+
+    .score {
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 10px;
+      padding: 7px;
+    }
+
+    .score span {
+      display: block;
+      color: var(--muted);
+      font-size: 8px;
+      text-transform: uppercase;
+      font-weight: 1000;
+      letter-spacing: .08em;
+      margin-bottom: 3px;
+    }
+
+    .score strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 1000;
+    }
+
+    .skill-list {
+      display: grid;
+      gap: 5px;
+    }
+
+    .skill-row {
+      display: grid;
+      grid-template-columns: 1fr 34px;
+      gap: 8px;
+      align-items: center;
+      color: #e9e9e9;
+      font-size: 12px;
+      font-weight: 800;
+      min-width: 0;
+    }
+
+    .skill-row span:first-child {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .skill-row b {
+      justify-self: end;
+      color: var(--gold);
+      font-weight: 1000;
+    }
+
+    .details-btn {
+      height: 38px;
+      border-radius: 12px;
+      background: #fff;
+      color: #111;
+      font-weight: 1000;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      width: min(1040px, 100%);
+      max-height: 92vh;
+      overflow: auto;
+      background: #171717;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 22px;
+      box-shadow: 0 30px 90px rgba(0,0,0,.45);
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(23,23,23,.96);
+      backdrop-filter: blur(14px);
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .modal-title strong {
+      display: block;
+      font-size: 24px;
+      font-weight: 1000;
+      letter-spacing: -0.04em;
+    }
+
+    .modal-title span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .close {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: #fff;
+      color: #111;
+      font-weight: 1000;
+      font-size: 20px;
+    }
+
+    .modal-body {
+      padding: 16px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .profile-card {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .profile-card span {
+      display: block;
+      font-size: 9px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 1000;
+      letter-spacing: .08em;
+      margin-bottom: 5px;
+    }
+
+    .profile-card strong {
+      display: block;
+      font-size: 18px;
+      font-weight: 1000;
+    }
+
+    .attr-groups {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+    }
+
+    .attr-group {
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 12px;
+    }
+
+    .attr-group h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+      font-weight: 1000;
+      letter-spacing: .05em;
+    }
+
+    .attr {
+      display: grid;
+      grid-template-columns: 116px 1fr 28px;
+      gap: 8px;
+      align-items: center;
+      margin: 7px 0;
+      font-size: 12px;
+      font-weight: 850;
+      color: #e7e7e7;
+    }
+
+    .bar {
+      height: 8px;
+      background: rgba(255,255,255,.10);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--gold));
+      border-radius: 999px;
+    }
+
+    .attr b {
+      justify-self: end;
+      color: var(--gold);
+      font-weight: 1000;
+    }
+
+    .empty {
+      color: var(--muted);
+      border: 1px dashed rgba(255,255,255,.18);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      font-weight: 850;
+    }
+
+    @media (max-width: 1050px) {
+      .dashboard { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .club-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .players-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+      .controls { grid-template-columns: 1fr 1fr; }
+      .profile-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .attr-groups { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .wrap { width: min(100% - 20px, 1280px); padding-top: 18px; }
+      .hero { grid-template-columns: 1fr; align-items: start; }
+      .dashboard { grid-template-columns: 1fr 1fr; }
+      .club-grid, .players-grid, .attr-groups { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; position: static; }
+      .profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .modal-header { grid-template-columns: auto 1fr auto; }
+      .attr { grid-template-columns: 98px 1fr 28px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div>
+        <div class="kicker">Fantaballa scouting room</div>
+        <h1>Skill giocatori</h1>
+        <p>Consulta CA, costo, club, ruolo e skill complete. Usa filtri e ordinamento per trovare il profilo migliore prima di costruire la rosa.</p>
+      </div>
+      <a class="back-btn" href="index.html">← Torna al builder rosa</a>
+    </section>
+
+    <section class="dashboard" id="dashboard"></section>
+
+    <section class="section-title">
+      <h2>Club, maglie e dati stampa</h2>
+    </section>
+    <section class="club-grid" id="clubGrid"></section>
+
+    <section class="section-title">
+      <h2>Database giocatori</h2>
+    </section>
+
+    <section class="controls">
+      <input id="search" placeholder="Cerca giocatore..." />
+      <select id="clubFilter"><option value="all">Tutti i club</option></select>
+      <select id="roleFilter">
+        <option value="all">Tutti i ruoli</option>
+        <option value="P">Portieri</option>
+        <option value="D">Difensori</option>
+        <option value="C">Centrocampisti</option>
+        <option value="A">Attaccanti</option>
+      </select>
+      <select id="profileFilter">
+        <option value="all">Tutti i profili</option>
+        <option value="Tecnico">Tecnico</option>
+        <option value="Finalizzatore">Finalizzatore</option>
+        <option value="Difensore">Difensore</option>
+        <option value="Fisico">Fisico</option>
+        <option value="Mentale">Mentale</option>
+        <option value="Fascia">Fascia</option>
+        <option value="Piazzati">Piazzati</option>
+      </select>
+      <select id="sortBy">
+        <option value="overall_desc">CA ↓</option>
+        <option value="cost_desc">Costo ↓</option>
+        <option value="value_desc">Valore qualità/prezzo ↓</option>
+        <option value="technical_desc">Tecnica ↓</option>
+        <option value="attacking_desc">Attacco ↓</option>
+        <option value="defending_desc">Difesa ↓</option>
+        <option value="physical_desc">Fisico ↓</option>
+        <option value="name_asc">Nome A-Z</option>
+      </select>
+    </section>
+
+    <div class="players-top">
+      <span id="resultCount">Caricamento...</span>
+      <span>Click su “Dettagli” per vedere tutte le skill</span>
+    </div>
+
+    <section class="players-grid" id="playersGrid"></section>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header" id="modalHeader"></div>
+      <div class="modal-body" id="modalBody"></div>
+    </section>
+  </div>
+
+  <script>
+    const ROLE_LABEL = { P: 'Portiere', D: 'Difensore', C: 'Centrocampista', A: 'Attaccante' };
+    const CLUB_CODES = {
+      'New Team': 'NEW',
+      'Drago Bianco': 'DB',
+      'Kame House': 'KH',
+      'Isotopi di Springfield': 'ISO',
+      'Small Soldiers': 'SS',
+      'Digimon': 'DIG'
+    };
+
+    const ATTR_LABELS = {
+      Corners: 'Corner',
+      Dribbling: 'Dribbling',
+      Crossing: 'Crossing',
+      Finishing: 'Finalizzazione',
+      'First Touch': 'Primo controllo',
+      Freekicks: 'Punizioni',
+      Heading: 'Colpo di testa',
+      Longshots: 'Tiri da lontano',
+      Longthrows: 'Rimesse lunghe',
+      Marking: 'Marcatura',
+      Passing: 'Passaggi',
+      'Penalty Taking': 'Rigori',
+      Tackling: 'Contrasti',
+      Technique: 'Tecnica',
+      Aggression: 'Aggressività',
+      Anticipation: 'Anticipo',
+      Bravery: 'Coraggio',
+      Composure: 'Freddezza',
+      Decisions: 'Decisioni',
+      Concentration: 'Concentrazione',
+      Determination: 'Determinazione',
+      Flair: 'Estro',
+      Leadership: 'Leadership',
+      Positioning: 'Posizionamento',
+      'Off The Ball': 'Senza palla',
+      Teamwork: 'Gioco di squadra',
+      Vision: 'Visione',
+      Workrate: 'Intensità',
+      Acceleration: 'Accelerazione',
+      Agility: 'Agilità',
+      'Balance (E)': 'Equilibrio',
+      Jumping: 'Elevazione',
+      'Natural Fitness': 'Integrità fisica',
+      Pace: 'Velocità',
+      Stamina: 'Resistenza',
+      Strength: 'Forza'
+    };
+
+    const GROUPS = {
+      'Tecniche': ['Corners','Dribbling','Crossing','Finishing','First Touch','Freekicks','Heading','Longshots','Longthrows','Marking','Passing','Penalty Taking','Tackling','Technique'],
+      'Mentali': ['Aggression','Anticipation','Bravery','Composure','Decisions','Concentration','Determination','Flair','Leadership','Positioning','Off The Ball','Teamwork','Vision','Workrate'],
+      'Fisiche': ['Acceleration','Agility','Balance (E)','Jumping','Natural Fitness','Pace','Stamina','Strength']
+    };
+
+    let players = [];
+    let clubs = [];
+    let clubByName = {};
+
+    const els = {
+      dashboard: document.getElementById('dashboard'),
+      clubGrid: document.getElementById('clubGrid'),
+      playersGrid: document.getElementById('playersGrid'),
+      resultCount: document.getElementById('resultCount'),
+      search: document.getElementById('search'),
+      clubFilter: document.getElementById('clubFilter'),
+      roleFilter: document.getElementById('roleFilter'),
+      profileFilter: document.getElementById('profileFilter'),
+      sortBy: document.getElementById('sortBy'),
+      modalBackdrop: document.getElementById('modalBackdrop'),
+      modalHeader: document.getElementById('modalHeader'),
+      modalBody: document.getElementById('modalBody')
+    };
+
+    function esc(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[char]));
+    }
+
+    function normalize(value) {
+      return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function clubKit(club) {
+      return clubByName[club]?.kit || {
+        css: 'background:#1c4fb8;color:#fff;border:2px solid #163d8d;'
+      };
+    }
+
+    function clubCode(club) {
+      return CLUB_CODES[club] || String(club || '').replace(/[^A-Za-z]/g, '').slice(0,3).toUpperCase();
+    }
+
+    function shirt(club, small = false) {
+      return `<span class="shirt ${small ? 'small' : ''}" style="${clubKit(club).css}">${esc(clubCode(club))}</span>`;
+    }
+
+    function attrLabel(key) {
+      return ATTR_LABELS[key] || key;
+    }
+
+    function renderDashboard() {
+      const total = players.length;
+      const avgCA = total ? (players.reduce((s,p) => s + Number(p.overall || 0), 0) / total).toFixed(1) : '0.0';
+      const maxCA = players.reduce((m,p) => Math.max(m, Number(p.overall || 0)), 0);
+      const avgCost = total ? (players.reduce((s,p) => s + Number(p.cost || 0), 0) / total).toFixed(1) : '0.0';
+
+      els.dashboard.innerHTML = `
+        <div class="dash-card"><span>Giocatori</span><strong>${total}</strong></div>
+        <div class="dash-card"><span>Club</span><strong>${clubs.length}</strong></div>
+        <div class="dash-card"><span>CA medio</span><strong>${avgCA}</strong></div>
+        <div class="dash-card"><span>Costo medio</span><strong>${avgCost}</strong></div>
+      `;
+    }
+
+    function renderClubs() {
+      els.clubGrid.innerHTML = clubs.map(c => `
+        <article class="club-card">
+          <div class="club-head">
+            ${shirt(c.name)}
+            <div class="club-name">
+              <strong>${esc(c.name)}</strong>
+              <span>${c.playersCount || 0} giocatori · CA medio ${esc(c.avgCA ?? '-')}</span>
+            </div>
+          </div>
+          <div class="club-body">
+            <div class="mini-row">
+              <div class="mini-stat"><span>Quota vittoria</span><strong>${c.odds ? esc(c.odds) : 'Da inserire'}</strong></div>
+              <div class="mini-stat"><span>Modulo stampa</span><strong>${c.predictedFormation ? esc(c.predictedFormation) : 'Da inserire'}</strong></div>
+            </div>
+            <div class="mini-stat"><span>Favorite stampa</span><strong>${esc(c.pressFavoriteLabel || 'Da inserire')}</strong></div>
+            <div class="mini-stat"><span>Probabile XI</span><strong>${c.predictedXI?.length ? esc(c.predictedXI.join(', ')) : 'Da inserire'}</strong></div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function populateFilters() {
+      clubs.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.name;
+        opt.textContent = c.name;
+        els.clubFilter.appendChild(opt);
+      });
+    }
+
+    function filteredPlayers() {
+      const q = normalize(els.search.value);
+      const club = els.clubFilter.value;
+      const role = els.roleFilter.value;
+      const profile = els.profileFilter.value;
+
+      let list = players.filter(p => {
+        const hay = normalize(`${p.name} ${p.club} ${p.position} ${p.bestProfile}`);
+        return (!q || hay.includes(q))
+          && (club === 'all' || p.club === club)
+          && (role === 'all' || p.role === role)
+          && (profile === 'all' || p.bestProfile === profile);
+      });
+
+      const sort = els.sortBy.value;
+      const score = (p, k) => Number(p.scores?.[k] || 0);
+      list.sort((a,b) => {
+        if (sort === 'overall_desc') return Number(b.overall||0) - Number(a.overall||0) || a.name.localeCompare(b.name);
+        if (sort === 'cost_desc') return Number(b.cost||0) - Number(a.cost||0) || a.name.localeCompare(b.name);
+        if (sort === 'value_desc') return ((Number(b.overall||0) / Math.max(1, Number(b.cost||1))) - (Number(a.overall||0) / Math.max(1, Number(a.cost||1)))) || a.name.localeCompare(b.name);
+        if (sort === 'technical_desc') return score(b,'Tecnico') - score(a,'Tecnico') || a.name.localeCompare(b.name);
+        if (sort === 'attacking_desc') return score(b,'Finalizzatore') - score(a,'Finalizzatore') || a.name.localeCompare(b.name);
+        if (sort === 'defending_desc') return score(b,'Difensore') - score(a,'Difensore') || a.name.localeCompare(b.name);
+        if (sort === 'physical_desc') return score(b,'Fisico') - score(a,'Fisico') || a.name.localeCompare(b.name);
+        if (sort === 'name_asc') return a.name.localeCompare(b.name);
+        return 0;
+      });
+
+      return list;
+    }
+
+    function renderPlayers() {
+      const list = filteredPlayers();
+      els.resultCount.textContent = `${list.length} giocatori mostrati su ${players.length}`;
+
+      if (!list.length) {
+        els.playersGrid.innerHTML = '<div class="empty">Nessun giocatore trovato con questi filtri.</div>';
+        return;
+      }
+
+      els.playersGrid.innerHTML = list.map(p => {
+        const topSkills = (p.topSkills || []).slice(0, 4).map(s => `
+          <div class="skill-row"><span>${esc(s.name)}</span><b>${esc(s.value)}</b></div>
+        `).join('');
+
+        return `
+          <article class="player-card">
+            <div class="player-head">
+              ${shirt(p.club, true)}
+              <div class="player-name">
+                <strong title="${esc(p.name)}">${esc(p.name)}</strong>
+                <span>${esc(p.club)} · ${esc(p.position || p.positions || '')}</span>
+              </div>
+              <div class="ca-box">${esc(p.overall)}</div>
+            </div>
+            <div class="badge-row">
+              <span class="badge green">${esc(ROLE_LABEL[p.role] || p.role)}</span>
+              <span class="badge gold">${esc(p.cost)} crediti</span>
+              <span class="badge dark">${esc(p.bestProfile)}</span>
+            </div>
+            <div class="score-grid">
+              <div class="score"><span>Tec</span><strong>${esc(p.scores?.Tecnico ?? '-')}</strong></div>
+              <div class="score"><span>Att</span><strong>${esc(p.scores?.Finalizzatore ?? '-')}</strong></div>
+              <div class="score"><span>Dif</span><strong>${esc(p.scores?.Difensore ?? '-')}</strong></div>
+            </div>
+            <div class="skill-list">${topSkills}</div>
+            <button class="details-btn" type="button" onclick="openPlayer('${esc(p.key)}')">Dettagli</button>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function attrRow(player, key) {
+      const value = Number(player.skills?.[key] || 0);
+      const width = Math.max(0, Math.min(100, value * 5));
+      return `
+        <div class="attr">
+          <span>${esc(attrLabel(key))}</span>
+          <div class="bar"><div class="fill" style="width:${width}%"></div></div>
+          <b>${value}</b>
+        </div>
+      `;
+    }
+
+    function openPlayer(key) {
+      const p = players.find(x => x.key === key);
+      if (!p) return;
+
+      els.modalHeader.innerHTML = `
+        ${shirt(p.club)}
+        <div class="modal-title">
+          <strong>${esc(p.name)}</strong>
+          <span>${esc(p.club)} · ${esc(ROLE_LABEL[p.role] || p.role)} · ${esc(p.position || p.positions)} · CA ${esc(p.overall)} · ${esc(p.cost)} crediti</span>
+        </div>
+        <button class="close" type="button" onclick="closeModal()">×</button>
+      `;
+
+      const profiles = Object.entries(p.scores || {}).map(([name,value]) => `
+        <div class="profile-card">
+          <span>${esc(name)}</span>
+          <strong>${esc(value)}</strong>
+        </div>
+      `).join('');
+
+      const groups = Object.entries(GROUPS).map(([group, attrs]) => `
+        <section class="attr-group">
+          <h3>${esc(group)}</h3>
+          ${attrs.map(a => attrRow(p, a)).join('')}
+        </section>
+      `).join('');
+
+      els.modalBody.innerHTML = `
+        <section class="profile-grid">${profiles}</section>
+        <section class="attr-groups">${groups}</section>
+      `;
+
+      els.modalBackdrop.classList.add('open');
+      els.modalBackdrop.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal() {
+      els.modalBackdrop.classList.remove('open');
+      els.modalBackdrop.setAttribute('aria-hidden', 'true');
+    }
+
+    els.modalBackdrop.addEventListener('click', event => {
+      if (event.target === els.modalBackdrop) closeModal();
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeModal();
+    });
+
+    ['input','change'].forEach(eventName => {
+      els.search.addEventListener(eventName, renderPlayers);
+      els.clubFilter.addEventListener(eventName, renderPlayers);
+      els.roleFilter.addEventListener(eventName, renderPlayers);
+      els.profileFilter.addEventListener(eventName, renderPlayers);
+      els.sortBy.addEventListener(eventName, renderPlayers);
+    });
+
+    async function loadData() {
+      try {
+        const [playersRes, clubsRes] = await Promise.all([
+          fetch(`players_skills.json?v=${Date.now()}`, { cache: 'no-store' }),
+          fetch(`clubs_data.json?v=${Date.now()}`, { cache: 'no-store' })
+        ]);
+
+        if (!playersRes.ok) throw new Error('players_skills.json non trovato');
+        if (!clubsRes.ok) throw new Error('clubs_data.json non trovato');
+
+        players = await playersRes.json();
+        clubs = await clubsRes.json();
+        clubByName = Object.fromEntries(clubs.map(c => [c.name, c]));
+
+        renderDashboard();
+        populateFilters();
+        renderClubs();
+        renderPlayers();
+      } catch (err) {
+        els.resultCount.textContent = 'Errore caricamento dati';
+        els.playersGrid.innerHTML = `<div class="empty">Non riesco a caricare i JSON. Controlla che scouting.html, players_skills.json e clubs_data.json siano nella stessa cartella online.<br><br>${esc(err.message)}</div>`;
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
