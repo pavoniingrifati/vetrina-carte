@@ -14,6 +14,10 @@
       --green: #00c875;
       --gold: #d6ff00;
       --red: #ff4e64;
+      --elite: #ff4e64;
+      --top: #d6ff00;
+      --good: #00c875;
+      --solid: #43a7ff;
       --line: rgba(255,255,255,.12);
     }
 
@@ -253,6 +257,32 @@
       margin: 12px 2px;
     }
 
+    .legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .legend-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 1000;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .legend-pill.elite { color: #fff; background: rgba(255,78,100,.28); border-color: rgba(255,78,100,.42); }
+    .legend-pill.top { color: #111; background: var(--top); border-color: rgba(214,255,0,.55); }
+    .legend-pill.good { color: #111; background: var(--good); border-color: rgba(0,200,117,.55); }
+
     .players-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -389,6 +419,20 @@
       min-width: 0;
     }
 
+    .skill-row.skill-solid,
+    .skill-row.skill-good,
+    .skill-row.skill-top,
+    .skill-row.skill-elite {
+      padding: 5px 7px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .skill-row.skill-solid { background: rgba(67,167,255,.13); border-color: rgba(67,167,255,.26); }
+    .skill-row.skill-good { background: rgba(0,200,117,.15); border-color: rgba(0,200,117,.30); }
+    .skill-row.skill-top { background: rgba(214,255,0,.16); border-color: rgba(214,255,0,.36); color: #fff; }
+    .skill-row.skill-elite { background: linear-gradient(90deg, rgba(255,78,100,.30), rgba(214,255,0,.12)); border-color: rgba(255,78,100,.46); color: #fff; }
+
     .skill-row span:first-child {
       white-space: nowrap;
       overflow: hidden;
@@ -397,9 +441,14 @@
 
     .skill-row b {
       justify-self: end;
-      color: var(--gold);
+      color: var(--muted);
       font-weight: 1000;
     }
+
+    .skill-row.skill-solid b { color: var(--solid); }
+    .skill-row.skill-good b { color: var(--good); }
+    .skill-row.skill-top b { color: var(--top); }
+    .skill-row.skill-elite b { color: var(--elite); }
 
     .details-btn {
       height: 38px;
@@ -549,11 +598,26 @@
       border-radius: 999px;
     }
 
+    .attr.skill-solid .fill { background: linear-gradient(90deg, var(--solid), rgba(67,167,255,.72)); }
+    .attr.skill-good .fill { background: linear-gradient(90deg, var(--green), rgba(0,200,117,.80)); }
+    .attr.skill-top .fill { background: linear-gradient(90deg, var(--green), var(--gold)); }
+    .attr.skill-elite .fill { background: linear-gradient(90deg, var(--elite), var(--gold)); box-shadow: 0 0 14px rgba(255,78,100,.30); }
+
+    .attr.skill-solid { color: #fff; }
+    .attr.skill-good { color: #fff; }
+    .attr.skill-top { color: #fff; }
+    .attr.skill-elite { color: #fff; }
+
     .attr b {
       justify-self: end;
-      color: var(--gold);
+      color: var(--muted);
       font-weight: 1000;
     }
+
+    .attr.skill-solid b { color: var(--solid); }
+    .attr.skill-good b { color: var(--good); }
+    .attr.skill-top b { color: var(--top); }
+    .attr.skill-elite b { color: var(--elite); }
 
     .empty {
       color: var(--muted);
@@ -641,7 +705,11 @@
 
     <div class="players-top">
       <span id="resultCount">Caricamento...</span>
-      <span>Click su “Dettagli” per vedere tutte le skill</span>
+      <span class="legend" title="Colori applicati in base al valore della skill">
+        <span class="legend-pill elite">16+ élite</span>
+        <span class="legend-pill top">14-15 top</span>
+        <span class="legend-pill good">12-13 alta</span>
+      </span>
     </div>
 
     <section class="players-grid" id="playersGrid"></section>
@@ -757,6 +825,16 @@
       return ATTR_LABELS[key] || key;
     }
 
+
+    function valueClass(value) {
+      const n = Number(value || 0);
+      if (n >= 16) return 'skill-elite';
+      if (n >= 14) return 'skill-top';
+      if (n >= 12) return 'skill-good';
+      if (n >= 10) return 'skill-solid';
+      return 'skill-normal';
+    }
+
     function renderDashboard() {
       const total = players.length;
       const avgCA = total ? (players.reduce((s,p) => s + Number(p.overall || 0), 0) / total).toFixed(1) : '0.0';
@@ -844,7 +922,7 @@
 
       els.playersGrid.innerHTML = list.map(p => {
         const topSkills = (p.topSkills || []).slice(0, 4).map(s => `
-          <div class="skill-row"><span>${esc(s.name)}</span><b>${esc(s.value)}</b></div>
+          <div class="skill-row ${valueClass(s.value)}"><span>${esc(s.name)}</span><b>${esc(s.value)}</b></div>
         `).join('');
 
         return `
@@ -878,7 +956,7 @@
       const value = Number(player.skills?.[key] || 0);
       const width = Math.max(0, Math.min(100, value * 5));
       return `
-        <div class="attr">
+        <div class="attr ${valueClass(value)}">
           <span>${esc(attrLabel(key))}</span>
           <div class="bar"><div class="fill" style="width:${width}%"></div></div>
           <b>${value}</b>
