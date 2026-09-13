@@ -659,7 +659,7 @@
 
       <div class="filters">
         <button class="chip active" data-role="all">T1</button><button class="chip" data-role="P">P</button><button class="chip" data-role="D">D</button><button class="chip" data-role="C">C</button><button class="chip" data-role="A">A</button>
-        <select class="nation-select" id="nationFilter"><option value="all">Club</option></select>
+        <select class="nation-select" id="nationFilter"><option value="all">Tutti</option></select>
         <select class="sort-select" id="sortSelect"><option value="cost_desc">Costo ↓</option><option value="cost_asc">Costo ↑</option><option value="rating_desc">CA ↓</option><option value="rating_asc">CA ↑</option><option value="name_asc">Nome A-Z</option></select>
       </div>
 
@@ -868,7 +868,7 @@ function shirtMarkup(p, pitch = false) {
 
 function populateNations(reset = false) {
   if (reset) {
-    els.nationFilter.innerHTML = '<option value="all">Club</option>';
+    els.nationFilter.innerHTML = '<option value="all">Tutti</option>';
   }
 
   const existing = new Set(Array.from(els.nationFilter.options).map(o => o.value));
@@ -938,7 +938,7 @@ function renderPlayers() {
 
   els.playersList.innerHTML = shownList.map(p => {
     const canAfford = remaining() >= p.cost;
-    return `<button class="player-card ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'} onclick="pickPlayer(${p.id})"><div class="shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, false)}</div><div><div class="pname"><span class="role-mini">${p.role}</span>${p.name}</div><div class="pmeta"><span>CLUB ${p.nation}</span><span>RUOLO ${p.role}</span><span class="stat-tag">CA ${p.rating}</span><span>COSTO ${p.cost}</span></div></div><div class="price">${p.cost}</div></button>`;
+    return `<button class="player-card ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'} onclick="pickPlayer(${p.id})"><div class="shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, false)}</div><div><div class="pname"><span class="role-mini">${p.role}</span>${p.name}</div><div class="pmeta"><span>${p.nation}</span><span>RUOLO ${p.role}</span><span class="stat-tag">CA ${p.rating}</span><span>COSTO ${p.cost}</span></div></div><div class="price">${p.cost}</div></button>`;
   }).join('') || '<div style="color:#555;font-weight:900;text-align:center;padding:30px">Nessun giocatore disponibile</div>';
 }
 
