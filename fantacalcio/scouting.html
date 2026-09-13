@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Scouting giocatori - Fantaballa</title>
+  <title>Caratteristiche giocatori - Fantaballa</title>
   <style>
     :root {
       --bg: #101010;
@@ -654,8 +654,8 @@
     <section class="hero">
       <div>
         <div class="kicker">Fantaballa scouting room</div>
-        <h1>Skill giocatori</h1>
-        <p>Consulta CA, costo, club, ruolo e skill complete. Usa filtri e ordinamento per trovare il profilo migliore prima di costruire la rosa.</p>
+        <h1>Caratteristiche giocatori</h1>
+        <p>Consulta CA, costo, club, ruolo e caratteristiche complete. Usa filtri e ordinamento per trovare il profilo migliore prima di costruire la rosa.</p>
       </div>
       <a class="back-btn" href="index.html">← Torna al builder rosa</a>
     </section>
@@ -705,7 +705,7 @@
 
     <div class="players-top">
       <span id="resultCount">Caricamento...</span>
-      <span class="legend" title="Colori applicati in base al valore della skill">
+      <span class="legend" title="Colori applicati in base al valore della caratteristica">
         <span class="legend-pill elite">16+ élite</span>
         <span class="legend-pill top">14-15 top</span>
         <span class="legend-pill good">12-13 alta</span>
@@ -734,13 +734,13 @@
     };
 
     const ATTR_LABELS = {
-      Corners: 'Corner',
+      Corners: "Calci d'angolo",
       Dribbling: 'Dribbling',
-      Crossing: 'Crossing',
+      Crossing: 'Cross',
       Finishing: 'Finalizzazione',
-      'First Touch': 'Primo controllo',
-      Freekicks: 'Punizioni',
-      Heading: 'Colpo di testa',
+      'First Touch': 'Controllo di palla',
+      Freekicks: 'Calci piazzati',
+      Heading: 'Colpi di testa',
       Longshots: 'Tiri da lontano',
       Longthrows: 'Rimesse lunghe',
       Marking: 'Marcatura',
@@ -749,23 +749,23 @@
       Tackling: 'Contrasti',
       Technique: 'Tecnica',
       Aggression: 'Aggressività',
-      Anticipation: 'Anticipo',
+      Anticipation: 'Intuito',
       Bravery: 'Coraggio',
       Composure: 'Freddezza',
       Decisions: 'Decisioni',
       Concentration: 'Concentrazione',
       Determination: 'Determinazione',
-      Flair: 'Estro',
-      Leadership: 'Leadership',
-      Positioning: 'Posizionamento',
+      Flair: 'Fantasia',
+      Leadership: 'Carisma',
+      Positioning: 'Posizione',
       'Off The Ball': 'Senza palla',
       Teamwork: 'Gioco di squadra',
-      Vision: 'Visione',
-      Workrate: 'Intensità',
+      Vision: 'Visione di gioco',
+      Workrate: 'Impegno',
       Acceleration: 'Accelerazione',
       Agility: 'Agilità',
       'Balance (E)': 'Equilibrio',
-      Jumping: 'Elevazione',
+      Jumping: 'Massima elevazione',
       'Natural Fitness': 'Integrità fisica',
       Pace: 'Velocità',
       Stamina: 'Resistenza',
@@ -774,7 +774,7 @@
 
     const GROUPS = {
       'Tecniche': ['Corners','Dribbling','Crossing','Finishing','First Touch','Freekicks','Heading','Longshots','Longthrows','Marking','Passing','Penalty Taking','Tackling','Technique'],
-      'Mentali': ['Aggression','Anticipation','Bravery','Composure','Decisions','Concentration','Determination','Flair','Leadership','Positioning','Off The Ball','Teamwork','Vision','Workrate'],
+      'Psicologia': ['Aggression','Anticipation','Bravery','Composure','Decisions','Concentration','Determination','Flair','Leadership','Positioning','Off The Ball','Teamwork','Vision','Workrate'],
       'Fisiche': ['Acceleration','Agility','Balance (E)','Jumping','Natural Fitness','Pace','Stamina','Strength']
     };
 
@@ -823,6 +823,45 @@
 
     function attrLabel(key) {
       return ATTR_LABELS[key] || key;
+    }
+
+
+    const POSITION_ROLE_LABELS = {
+      GK: 'Portiere',
+      D: 'Difensore',
+      WB: 'Terzino',
+      DM: 'Mediano',
+      M: 'Centrocampista',
+      AM: 'Trequartista',
+      ST: 'Attaccante'
+    };
+
+    const POSITION_SIDE_LABELS = {
+      R: 'Destra',
+      L: 'Sinistra',
+      C: 'Centrale'
+    };
+
+    function positionLabel(value) {
+      const raw = String(value || '').replace(/\u00a0/g, ' ').trim();
+      if (!raw) return '';
+
+      const parts = raw.split(/\s+/);
+      const rolesPart = parts[0] || '';
+      const sidesPart = parts[1] || '';
+
+      const roles = rolesPart
+        .split('/')
+        .filter(Boolean)
+        .map(token => POSITION_ROLE_LABELS[token] || token);
+
+      const sides = sidesPart
+        .split('')
+        .filter(Boolean)
+        .map(token => POSITION_SIDE_LABELS[token] || token);
+
+      if (!roles.length) return raw;
+      return sides.length ? `${roles.join(' / ')} (${sides.join('/')})` : roles.join(' / ');
     }
 
 
@@ -922,7 +961,7 @@
 
       els.playersGrid.innerHTML = list.map(p => {
         const topSkills = (p.topSkills || []).slice(0, 4).map(s => `
-          <div class="skill-row ${valueClass(s.value)}"><span>${esc(s.name)}</span><b>${esc(s.value)}</b></div>
+          <div class="skill-row ${valueClass(s.value)}"><span>${esc(attrLabel(s.key || s.name))}</span><b>${esc(s.value)}</b></div>
         `).join('');
 
         return `
@@ -931,7 +970,7 @@
               ${shirt(p.club, true)}
               <div class="player-name">
                 <strong title="${esc(p.name)}">${esc(p.name)}</strong>
-                <span>${esc(p.club)} · ${esc(p.position || p.positions || '')}</span>
+                <span>${esc(p.club)} · ${esc(positionLabel(p.position || p.positions || ''))}</span>
               </div>
               <div class="ca-box">${esc(p.overall)}</div>
             </div>
@@ -972,7 +1011,7 @@
         ${shirt(p.club)}
         <div class="modal-title">
           <strong>${esc(p.name)}</strong>
-          <span>${esc(p.club)} · ${esc(ROLE_LABEL[p.role] || p.role)} · ${esc(p.position || p.positions)} · CA ${esc(p.overall)} · ${esc(p.cost)} crediti</span>
+          <span>${esc(p.club)} · ${esc(ROLE_LABEL[p.role] || p.role)} · ${esc(positionLabel(p.position || p.positions))} · CA ${esc(p.overall)} · ${esc(p.cost)} crediti</span>
         </div>
         <button class="close" type="button" onclick="closeModal()">×</button>
       `;

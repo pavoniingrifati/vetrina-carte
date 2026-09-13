@@ -16,3 +16,9 @@ Istruzioni:
 Nota:
 Le quote/favorite stampa e le probabili formazioni NON sono state inventate:
 nel file attuale sono predisposte come "Da inserire".
+Aggiornamento: nel builder rosa i ruoli sono mostrati solo in forma semplificata P / D / C / A. Le posizioni FM dettagliate restano disponibili nella pagina scouting.
+
+Aggiornamento traduzioni:
+- Ruoli/posizioni della pagina scouting tradotti in italiano.
+- Nomi caratteristiche tradotti seguendo le diciture italiane di Football Manager, come Colpi di testa, Contrasti, Controllo di palla, Intuito, Posizione, Massima elevazione, ecc.
+- Il builder rosa mantiene i ruoli semplificati P / D / C / A.
