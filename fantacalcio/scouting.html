@@ -218,6 +218,48 @@
       text-overflow: ellipsis;
     }
 
+    .mini-stat.wide strong {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
+      line-height: 1.35;
+      font-size: 13px;
+    }
+
+    .rank-badge {
+      display: inline-grid;
+      place-items: center;
+      min-width: 34px;
+      height: 30px;
+      border-radius: 999px;
+      padding: 0 10px;
+      background: rgba(214,255,0,.15);
+      color: var(--gold);
+      border: 1px solid rgba(214,255,0,.38);
+      font-weight: 1000;
+      letter-spacing: -0.04em;
+    }
+
+    .xi-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .xi-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
     .controls {
       display: grid;
       grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
@@ -655,7 +697,7 @@
       <div>
         <div class="kicker">Fantaballa scouting room</div>
         <h1>Caratteristiche giocatori</h1>
-        <p>Consulta CA, costo, club, ruolo e caratteristiche complete. Usa filtri e ordinamento per trovare il profilo migliore prima di costruire la rosa.</p>
+        <p>Consulta CA, costo, club, ruolo, caratteristiche complete, classifica prevista e probabili formazioni prima di costruire la rosa.</p>
       </div>
       <a class="back-btn" href="index.html">← Torna al builder rosa</a>
     </section>
@@ -663,7 +705,7 @@
     <section class="dashboard" id="dashboard"></section>
 
     <section class="section-title">
-      <h2>Club, maglie e dati stampa</h2>
+      <h2>Club, classifica prevista e probabili formazioni</h2>
     </section>
     <section class="club-grid" id="clubGrid"></section>
 
@@ -888,8 +930,19 @@
       `;
     }
 
+    function ordinalRank(rank) {
+      const n = Number(rank || 0);
+      return n ? `${n}ª` : 'Da inserire';
+    }
+
+    function renderXI(players) {
+      if (!players || !players.length) return '<strong>Da inserire</strong>';
+      return `<div class="xi-list">${players.map(name => `<span class="xi-chip">${esc(name)}</span>`).join('')}</div>`;
+    }
+
     function renderClubs() {
-      els.clubGrid.innerHTML = clubs.map(c => `
+      const orderedClubs = [...clubs].sort((a,b) => Number(a.predictedRank || 999) - Number(b.predictedRank || 999));
+      els.clubGrid.innerHTML = orderedClubs.map(c => `
         <article class="club-card">
           <div class="club-head">
             ${shirt(c.name)}
@@ -900,11 +953,18 @@
           </div>
           <div class="club-body">
             <div class="mini-row">
-              <div class="mini-stat"><span>Quota vittoria</span><strong>${c.odds ? esc(c.odds) : 'Da inserire'}</strong></div>
+              <div class="mini-stat"><span>Classifica prevista</span><strong><span class="rank-badge">${esc(ordinalRank(c.predictedRank))}</span></strong></div>
               <div class="mini-stat"><span>Modulo stampa</span><strong>${c.predictedFormation ? esc(c.predictedFormation) : 'Da inserire'}</strong></div>
             </div>
-            <div class="mini-stat"><span>Favorite stampa</span><strong>${esc(c.pressFavoriteLabel || 'Da inserire')}</strong></div>
-            <div class="mini-stat"><span>Probabile XI</span><strong>${c.predictedXI?.length ? esc(c.predictedXI.join(', ')) : 'Da inserire'}</strong></div>
+            <div class="mini-row">
+              <div class="mini-stat"><span>Stile di gioco</span><strong>${esc(c.tactics?.playingStyle || 'Da inserire')}</strong></div>
+              <div class="mini-stat"><span>Pressing</span><strong>${esc(c.tactics?.pressing || 'Da inserire')}</strong></div>
+            </div>
+            <div class="mini-row">
+              <div class="mini-stat"><span>Marcatura</span><strong>${esc(c.tactics?.marking || 'Da inserire')}</strong></div>
+              <div class="mini-stat"><span>Età media</span><strong>${esc(c.tactics?.averageAge ?? 'Da inserire')}</strong></div>
+            </div>
+            <div class="mini-stat wide"><span>Probabile XI</span>${renderXI(c.predictedXI)}</div>
           </div>
         </article>
       `).join('');
@@ -1072,6 +1132,7 @@
 
         players = await playersRes.json();
         clubs = await clubsRes.json();
+        clubs.sort((a,b) => Number(a.predictedRank || 999) - Number(b.predictedRank || 999));
         clubByName = Object.fromEntries(clubs.map(c => [c.name, c]));
 
         renderDashboard();
