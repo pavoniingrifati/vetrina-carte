@@ -53,15 +53,30 @@
 
   const yesNo = (value) => isYes(value) ? "Sì" : "No";
 
+  const getPositionBonus = (position) => {
+    const pos = numeric(position, 999);
+    if (pos === 1) return numeric(RATING_SYSTEM.positionBonuses?.["1"], 10);
+    if (pos === 2) return numeric(RATING_SYSTEM.positionBonuses?.["2"], 8);
+    if (pos === 3) return numeric(RATING_SYSTEM.positionBonuses?.["3"], 7);
+    if (pos === 4) return numeric(RATING_SYSTEM.positionBonuses?.["4"], 6);
+    if (pos === 5) return numeric(RATING_SYSTEM.positionBonuses?.["5"], 5);
+    if (pos === 6) return numeric(RATING_SYSTEM.positionBonuses?.["6"], 4);
+    if (pos === 7) return numeric(RATING_SYSTEM.positionBonuses?.["7"], 3);
+    if (pos === 8) return numeric(RATING_SYSTEM.positionBonuses?.["8"], 2);
+    if (pos <= 10) return numeric(RATING_SYSTEM.positionBonuses?.[String(pos)], 1);
+    return 0;
+  };
+
   const calculateRatingBreakdown = (team) => {
     const maxLeaguePoints = Math.max(1, numeric(RATING_SYSTEM.maxLeaguePoints, 114));
-    const leaguePointsWeight = numeric(RATING_SYSTEM.leaguePointsWeight, 55);
+    const leaguePointsWeight = numeric(RATING_SYSTEM.leaguePointsWeight, 45);
     const exponent = numeric(RATING_SYSTEM.leaguePointsExponent, 0.455);
     const points = Math.min(maxLeaguePoints, Math.max(0, numeric(team.points)));
     const leaguePoints = Math.round(leaguePointsWeight * Math.pow(points / maxLeaguePoints, exponent));
 
     const breakdown = {
       leaguePoints,
+      position: getPositionBonus(team.fmPosition),
       leagueWinner: isYes(team.vittoriaCampionato) ? numeric(RATING_SYSTEM.leagueWinnerBonus, 15) : 0,
       cupWinner: isYes(team.vittoriaCoppa ?? team.coppaItalia) ? numeric(RATING_SYSTEM.cupWinnerBonus, 10) : 0,
       topScorer: isYes(team.capocannoniere) ? numeric(RATING_SYSTEM.topScorerBonus, 5) : 0,
@@ -72,6 +87,7 @@
 
     breakdown.total = Math.min(100, Math.max(0, Math.round(
       breakdown.leaguePoints +
+      breakdown.position +
       breakdown.leagueWinner +
       breakdown.cupWinner +
       breakdown.topScorer +
