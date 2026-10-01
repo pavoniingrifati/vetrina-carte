@@ -318,7 +318,7 @@ function buildFantaballaLegend(pool,size){
   const base=rarePlus.filter(c=>!match(c,/senatore/i)&&!match(c,/\blegend\b/i)&&!match(c,/hall\s*of\s*fame/i));
   const packs=buildFinitePacks(base,size).map(p=>p.slice(0,size));
   function inject(bag,p){const choices=bag.filter(c=>!p.some(x=>x.id===c.id));if(!choices.length)return false;p[Math.floor(Math.random()*p.length)]=choices[Math.floor(Math.random()*choices.length)];return true;}
-  packs.forEach(p=>{let done=false;if(!done&&Math.random()<1/5)done=inject(sen,p);if(!done&&Math.random()<1/10)done=inject(leg,p);if(!done&&Math.random()<1/15)inject(hof,p);});
+  packs.forEach(p=>{const roll=Math.random();if(roll<0.30)inject(sen,p);else if(roll<0.44)inject(leg,p);else if(roll<0.50)inject(hof,p);});
   const used=new Set();return packs.filter(p=>{const sig=[...new Set(p.map(c=>c.id))].sort().join('+');if(used.has(sig))return false;used.add(sig);return true;});
 }
 function buildPool(pack,cards){
@@ -487,7 +487,7 @@ function generateGothamLegend(pack){
   const all=GAME_STATE.pools[pack.name]||[];const special=id=>{const s=norm(id);return s.includes('senatore')||s.includes('leggendaria')||s.includes('hall of fame');};
   let normal=all.filter(c=>['rara','ultra rara'].includes(norm(c.rarity))&&!special(c.id));if(!normal.length)normal=all;
   if(!normal.length)return[];
-  const rand=Math.random()*100;let needle=rand<10?'leggendaria':rand<17?'hall of fame':rand<37?'senatore':'';
+  const rand=Math.random()*100;let needle=rand<30?'senatore':rand<44?'leggendaria':rand<50?'hall of fame':'';
   let finalPool=needle?all.filter(c=>norm(c.id).includes(needle)):normal;if(!finalPool.length)finalPool=normal;
   const first=pickDistinct(normal,2),used=new Set(first.map(c=>c.id)),final=pickDistinct(finalPool,1,used)[0]||finalPool[Math.floor(Math.random()*finalPool.length)];return[...first,final].filter(Boolean);
 }
