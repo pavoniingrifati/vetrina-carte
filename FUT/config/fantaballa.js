@@ -25,8 +25,8 @@ window.FUTTU_CONFIG = {
   homeUrl: 'index.html',
   myCardsUrl: 'my-cards/',
   sections: {
-    featured: ['Patatine','Dannazione','Fantaballa Tots','World Cup','Legend','Gold','Silver','Bronze'],
-    stock: ['Fantaballa Tots','Legend','Strumenti','Sfere del drago'],
+    featured: ['Patatine','Dannazione','Fantaballa Tots','World Cup','Fantacalcio','Legend','Gold','Silver','Bronze'],
+    stock: ['Fantaballa Tots','World Cup','Fantacalcio','Legend','Strumenti','Sfere del drago'],
     foryou: ['Patatine','Dannazione','Legend','Gold'],
     classic: ['Gold','Silver','Bronze'],
     stadium: ['Oggetti','Cosmetic','Strumenti'],
@@ -37,6 +37,7 @@ window.FUTTU_CONFIG = {
     { name:'Dannazione', kind:'infinite', size:1, cost:0, referenceCost:0, referenceCurrency:'none', scope:'mode-or-shared', series:['Cursed'], cover:'img/back%20dannazione.webp', description:'Contiene 1 carta della serie Cursed. Selezionalo e aprilo quando vuoi.' },
     { name:'Fantaballa Tots', kind:'finite', size:3, cost:0, referenceCost:1000, referenceCurrency:'coins', scope:'mode', series:['Tots'], tagsAny:['Tots16'], cover:'img/Deck%20back%20Tots.webp', description:'Contiene 3 carte Tots16 di Fantaballa FC.' },
     { name:'World Cup', kind:'finite', size:3, cost:0, referenceCost:1500, referenceCurrency:'coins', scope:'mode', series:['World Cup'], uniqueWithinPack:true, cover:'img/back%20world.webp', description:'Contiene carte World Cup di Fantaballa FC. Nessun doppione: ogni carta compare una sola volta nella sequenza dei pacchetti.' },
+    { name:'Fantacalcio', kind:'finite', size:3, cost:0, referenceCost:1500, referenceCurrency:'coins', scope:'mode', series:['Fantacalcio'], uniqueWithinPack:true, cover:'img/Back%20Fanta.webp', description:'Contiene 3 carte Fantacalcio di Fantaballa FC. Nessun doppione: ogni carta compare una sola volta nella sequenza dei pacchetti.' },
     { name:'Legend', kind:'fantaballa-legend-finite', size:3, cost:0, scope:'mode', cover:'img/Back%20legend.webp', description:'Contiene 3 carte Fantaballa rare o superiori, con possibilità di carte speciali.' },
     { name:'Oggetti', kind:'infinite', size:3, cost:0, scope:'mode-or-shared', series:['Oggetto'], cover:'img/Deck%20back%20tactcs.webp', description:'Contiene 3 carte Oggetto utilizzabili nella tua collezione.' },
     { name:'Gold', kind:'composite', size:9, cost:0, referenceCost:800, referenceCurrency:'coins', cover:'img/Deck%20back%20ORO.webp', parts:[{count:3,scope:'mode-or-shared',series:['Oggetto']},{count:6,scope:'mode',series:['Gold']}], description:'Contiene 9 carte: 3 oggetti e 6 carte della serie Gold.' },
