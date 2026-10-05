@@ -18,7 +18,7 @@ var norm = (v)=>String(v||'').trim().toLowerCase();
 var delay = ms => new Promise(r=>setTimeout(r,ms));
 var STORAGE_KEYS = {
   cursors: `futtu_cursors_${FUTTU_CONFIG.id}`,
-  finite: `futtu_finite_packs_${FUTTU_CONFIG.id}_v2`
+  finite: `futtu_finite_packs_${FUTTU_CONFIG.id}_v3_tagspecial`
 };
 
 var GAME_STATE = {
@@ -272,6 +272,23 @@ function buildFinitePacks(cards,size){
   if(size>1&&packs.length>1&&packs[packs.length-1].length===1){const prev=packs[packs.length-2],last=packs[packs.length-1];if(prev.length>2)last.unshift(prev.pop());}
   return packs.filter(p=>p.length>0);
 }
+function assertFiniteSequenceIntegrity(packs,uniqueWithinPack=false){
+  const across=new Set();
+  for(const p of packs||[]){
+    const inside=new Set();
+    for(const c of p||[]){
+      const id=String(c&&c.id||'');if(!id)continue;
+      if(uniqueWithinPack&&inside.has(id))throw new Error('duplicato-nel-pacchetto');
+      inside.add(id);
+      // Nei pack finite costruiti da un pool senza copie, ogni id deve apparire
+      // una sola volta nell'intera sequenza. Se il pool prevede copies>1,
+      // la regola globale non viene applicata.
+      if(across.has(id))return false;
+      across.add(id);
+    }
+  }
+  return true;
+}
 function readFiniteStore(){try{return JSON.parse(localStorage.getItem(STORAGE_KEYS.finite)||'{}')||{};}catch{return {};}}
 function writeFiniteStore(store){try{localStorage.setItem(STORAGE_KEYS.finite,JSON.stringify(store||{}));}catch{}}
 function finiteSignature(game,cards,size){return JSON.stringify({game,size,ids:(cards||[]).map(c=>String(c.id)).sort()});}
@@ -280,10 +297,27 @@ function restoreOrBuildFinitePacks(game,cards,size,builder=buildFinitePacks){
   if(saved&&saved.signature===signature&&Array.isArray(saved.packs)){
     const restored=saved.packs.map(ids=>ids.map(id=>byId.get(String(id))).filter(Boolean)).filter(p=>p.length);
     const expected=saved.packs.reduce((s,p)=>s+p.length,0),actual=restored.reduce((s,p)=>s+p.length,0);
-    if(restored.length&&expected===actual)return restored;
+    if(restored.length&&expected===actual){
+      // Sequenza e avanzamento viaggiano nello stesso record persistente.
+      // Questo evita che, dopo chiusura/riapertura, un cursore vecchio venga
+      // applicato a una sequenza rimescolata.
+      const max=restored.length;
+      const savedCursor=Number(saved.cursor);
+      if(Number.isFinite(savedCursor))GAME_STATE.cursor[game]=Math.max(0,Math.min(max,savedCursor));
+      return restored;
+    }
   }
   const built=builder(cards,size);
-  store[game]={signature,createdAt:Date.now(),packs:built.map(p=>p.map(c=>String(c.id)))};writeFiniteStore(store);return built;
+  // Se cambia il pool (firma diversa) nasce una NUOVA sequenza e il progresso
+  // riparte da zero: non si trascina mai il cursore della sequenza precedente.
+  GAME_STATE.cursor[game]=0;
+  store[game]={signature,createdAt:Date.now(),cursor:0,packs:built.map(p=>p.map(c=>String(c.id)))};writeFiniteStore(store);return built;
+}
+function persistFiniteCursor(game,cursor){
+  const store=readFiniteStore();const entry=store[game];
+  if(!entry||!Array.isArray(entry.packs))return;
+  const max=entry.packs.length;entry.cursor=Math.max(0,Math.min(max,Number(cursor)||0));entry.updatedAt=Date.now();
+  store[game]=entry;writeFiniteStore(store);
 }
 function clearFiniteStore(game){const s=readFiniteStore();if(game)delete s[game];else Object.keys(s).forEach(k=>delete s[k]);writeFiniteStore(s);}
 function isInfinitePack(game){return ['infinite','composite','gotham-legend-infinite'].includes((PACK_CONFIG_BY_GAME[game]||{}).kind);}
@@ -309,13 +343,21 @@ async function fetchCards(){
   const detail=lastError&&lastError.message?lastError.message:'nessun dettaglio';
   throw new Error(`Impossibile caricare le carte. Sorgenti provate: ${attempted.join(', ')}. Ultimo errore: ${detail}`);
 }
+function specialCardTag(card){
+  const tags=Array.isArray(card&&card.tags)?card.tags.map(norm):[];
+  // Il tag e' la fonte unica per classificare le tre rarita speciali.
+  // Precedenza dalla piu rara alla meno rara in caso di dati anomali con piu tag.
+  if(tags.includes('hall of fame'))return'hall of fame';
+  if(tags.includes('legend'))return'legend';
+  if(tags.includes('senatore'))return'senatore';
+  return'';
+}
 function buildFantaballaLegend(pool,size){
   const rarePlus=pool.filter(c=>['rara','epica','ultra rara','leggendaria'].includes(norm(c.rarity)));
-  const match=(c,re)=>re.test(String(c.name||''))||(Array.isArray(c.tags)&&c.tags.some(t=>re.test(String(t||''))));
-  const sen=rarePlus.filter(c=>match(c,/senatore/i));
-  const leg=rarePlus.filter(c=>match(c,/\blegend\b/i));
-  const hof=rarePlus.filter(c=>match(c,/hall\s*of\s*fame/i));
-  const base=rarePlus.filter(c=>!match(c,/senatore/i)&&!match(c,/\blegend\b/i)&&!match(c,/hall\s*of\s*fame/i));
+  const sen=pool.filter(c=>specialCardTag(c)==='senatore');
+  const leg=pool.filter(c=>specialCardTag(c)==='legend');
+  const hof=pool.filter(c=>specialCardTag(c)==='hall of fame');
+  const base=rarePlus.filter(c=>!specialCardTag(c));
   const packs=buildFinitePacks(base,size).map(p=>p.slice(0,size));
   function inject(bag,p){const choices=bag.filter(c=>!p.some(x=>x.id===c.id));if(!choices.length)return false;p[Math.floor(Math.random()*p.length)]=choices[Math.floor(Math.random()*choices.length)];return true;}
   packs.forEach(p=>{const roll=Math.random();if(roll<0.30)inject(sen,p);else if(roll<0.44)inject(leg,p);else if(roll<0.50)inject(hof,p);});
@@ -348,13 +390,36 @@ async function loadCards(){
           return built.map(p=>{const seen=new Set();return p.filter(c=>!seen.has(c.id)&&seen.add(c.id));}).filter(p=>p.length);
         };
         GAME_STATE.packs[game]=restoreOrBuildFinitePacks(game,pool,pack.size,builder);
+        if(Number(pack.copies||1)<=1){
+          const ok=assertFiniteSequenceIntegrity(GAME_STATE.packs[game],!!pack.uniqueWithinPack);
+          if(!ok){
+            // Dati persistenti anomali: elimina SOLO questa sequenza e ricreala.
+            clearFiniteStore(game);GAME_STATE.cursor[game]=0;
+            GAME_STATE.packs[game]=restoreOrBuildFinitePacks(game,pool,pack.size,builder);
+          }
+        }
       }else if(pack.kind==='fantaballa-legend-finite'){
         GAME_STATE.packs[game]=restoreOrBuildFinitePacks(game,pool,pack.size,(cards,size)=>buildFantaballaLegend(cards,size));
       }else GAME_STATE.packs[game]=[];
     }
     try{
-      const saved=JSON.parse(localStorage.getItem(STORAGE_KEYS.cursors)||'{}');
-      for(const g of VALID_GAMES)GAME_STATE.cursor[g]=Number(saved[g]||0);
+      const legacy=JSON.parse(localStorage.getItem(STORAGE_KEYS.cursors)||'{}');
+      const finiteStore=readFiniteStore();
+      for(const g of VALID_GAMES){
+        const pack=PACK_CONFIG_BY_GAME[g]||{};
+        const entry=finiteStore[g];
+        if(!isInfinitePack(g)&&entry&&Array.isArray(entry.packs)){
+          // Preferisci sempre il cursore salvato insieme alla sequenza.
+          // Per installazioni precedenti che non avevano ancora entry.cursor,
+          // migra una sola volta il vecchio cursore senza perdere il progresso.
+          let cursor=Number(entry.cursor);
+          if(!Number.isFinite(cursor))cursor=Number(legacy[g]||0);
+          cursor=Math.max(0,Math.min(entry.packs.length,cursor));
+          GAME_STATE.cursor[g]=cursor;
+          if(entry.cursor!==cursor){entry.cursor=cursor;entry.updatedAt=Date.now();finiteStore[g]=entry;}
+        }else GAME_STATE.cursor[g]=Number(legacy[g]||0);
+      }
+      writeFiniteStore(finiteStore);
     }catch{}
     GAME_STATE.loaded=true;
     renderGamePicker();applyPackVisual();updateOpenBtnEnabled();
@@ -484,11 +549,14 @@ function generateComposite(pack){
   return chosen;
 }
 function generateGothamLegend(pack){
-  const all=GAME_STATE.pools[pack.name]||[];const special=id=>{const s=norm(id);return s.includes('senatore')||s.includes('leggendaria')||s.includes('hall of fame');};
-  let normal=all.filter(c=>['rara','ultra rara'].includes(norm(c.rarity))&&!special(c.id));if(!normal.length)normal=all;
+  const all=GAME_STATE.pools[pack.name]||[];
+  let normal=all.filter(c=>['rara','ultra rara'].includes(norm(c.rarity))&&!specialCardTag(c));
+  if(!normal.length)normal=all.filter(c=>!specialCardTag(c));
   if(!normal.length)return[];
-  const rand=Math.random()*100;let needle=rand<30?'senatore':rand<44?'leggendaria':rand<50?'hall of fame':'';
-  let finalPool=needle?all.filter(c=>norm(c.id).includes(needle)):normal;if(!finalPool.length)finalPool=normal;
+  const rand=Math.random()*100;
+  const needle=rand<30?'senatore':rand<44?'legend':rand<50?'hall of fame':'';
+  const tagged=needle?all.filter(c=>specialCardTag(c)===needle):[];
+  const finalPool=tagged.length?tagged:normal;
   const first=pickDistinct(normal,2),used=new Set(first.map(c=>c.id)),final=pickDistinct(finalPool,1,used)[0]||finalPool[Math.floor(Math.random()*finalPool.length)];return[...first,final].filter(Boolean);
 }
 function choosePack(game){
@@ -499,7 +567,17 @@ function choosePack(game){
     const pool=GAME_STATE.pools[game]||[];if(!pool.length)throw new Error('pool-vuota');return Array.from({length:pack.size||1},()=>pool[Math.floor(Math.random()*pool.length)]);
   }
   const list=GAME_STATE.packs[game]||[],idx=Number(GAME_STATE.cursor[game]||0);if(idx>=list.length||!Array.isArray(list[idx])||!list[idx].length)throw new Error('pacchetti-finiti');
-  const chosen=list[idx].slice();GAME_STATE.cursor[game]=idx+1;try{localStorage.setItem(STORAGE_KEYS.cursors,JSON.stringify(GAME_STATE.cursor));}catch{}return chosen;
+  const chosen=list[idx].slice();
+  // Doppia protezione: anche se una configurazione futura introducesse copie
+  // duplicate nel pool, un pack finite non restituisce mai due volte lo stesso id.
+  if(pack.uniqueWithinPack){
+    const ids=chosen.map(c=>String(c&&c.id));
+    if(new Set(ids).size!==ids.length)throw new Error('duplicato-nel-pacchetto');
+  }
+  GAME_STATE.cursor[game]=idx+1;
+  persistFiniteCursor(game,GAME_STATE.cursor[game]);
+  // Manteniamo anche la vecchia chiave per retrocompatibilita'.
+  try{localStorage.setItem(STORAGE_KEYS.cursors,JSON.stringify(GAME_STATE.cursor));}catch{}return chosen;
 }
 
 var flashLine=document.getElementById('flashLine'),flashScreen=document.getElementById('flashScreen'),packArea=document.getElementById('packArea'),packBox=document.getElementById('pack');
