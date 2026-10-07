@@ -949,7 +949,7 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
     const old = document.getElementById(ROOT_ID);
     if(old) old.remove();
     if(!Array.isArray(cards) || !cards.length) return;
-    const simpleClassicPack = ['bronze','silver','gold'].includes(normV2(packName));
+    const simpleClassicPack = ['bronze','silver','gold','patatine'].includes(normV2(packName));
 
     const root = document.createElement('div');
     root.id = ROOT_ID;
@@ -1090,7 +1090,7 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
         if(skipRequested) break;
 
         if(simpleClassicPack){
-          /* Bronze / Silver / Gold: apertura rapida senza flash. */
+          /* Bronze / Silver / Gold / Patatine: apertura rapida senza flash. */
           flash.classList.remove('go');
           wrap.classList.add('revealed');
           softBeep('reveal');
@@ -1193,5 +1193,5 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
     }
   }
 
-  window.FUTTU_PACK_OPENING = { version:'3.6.0', play:playOpening };
+  window.FUTTU_PACK_OPENING = { version:'3.7.0', play:playOpening };
 })();
