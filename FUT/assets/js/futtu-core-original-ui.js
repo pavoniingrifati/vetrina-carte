@@ -937,6 +937,7 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
     }catch(e){}
   }
 
+  const DEFAULT_NEW_PLAYER_IMG = 'img/nEW%20pLAYER.webp';
   function imgSrc(card){ return card && card.img ? card.img : ''; }
 
   function textSafe(value){ return String(value == null ? '' : value); }
@@ -1039,12 +1040,14 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
       {label:'SERIE', get:c=>c.series}
     ];
     const showFallback = (card) => {
-      frontFace.classList.add('fallback');
+      frontFace.classList.remove('fallback');
       fallback.classList.remove('show');
       const oldPlaceholder = frontFace.querySelector('.new-card-placeholder');
       if(oldPlaceholder) oldPlaceholder.remove();
-      frontImg.style.display = 'none';
-      addSimpleFallback(frontFace, card || {name:'New Player',rarity:'',series:''});
+      frontImg.style.display = '';
+      frontImg.alt = textSafe(card && card.name ? card.name : 'New Player');
+      frontImg.onerror = null;
+      frontImg.src = DEFAULT_NEW_PLAYER_IMG;
     };
     const setCardImage = (card) => {
       frontFace.classList.remove('fallback');
@@ -1142,16 +1145,12 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
         const picture=document.createElement('img');
         picture.alt=textSafe(card.name);
         const addSummaryFallback=()=>{
-          if(tile.querySelector('.fx-summary-new-player')) return;
-          picture.remove();
-          const face=document.createElement('div');
-          face.className='front fx-summary-new-player';
-          addSimpleFallback(face, card || {name:'New Player',rarity:'',series:''});
-          tile.prepend(face);
+          picture.onerror=null;
+          picture.src=DEFAULT_NEW_PLAYER_IMG;
         };
         picture.onerror=addSummaryFallback;
         const src=imgSrc(card);
-        if(src) picture.src=src; else queueMicrotask(addSummaryFallback);
+        if(src) picture.src=src; else addSummaryFallback();
         const name=document.createElement('span'); name.textContent=textSafe(card.name||'Carta');
         tile.append(picture,name);
         if(tier !== 'normal'){
@@ -1194,5 +1193,5 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
     }
   }
 
-  window.FUTTU_PACK_OPENING = { version:'3.5.0', play:playOpening };
+  window.FUTTU_PACK_OPENING = { version:'3.6.0', play:playOpening };
 })();
