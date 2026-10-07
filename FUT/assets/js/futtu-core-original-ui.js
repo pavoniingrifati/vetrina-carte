@@ -814,6 +814,21 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
 #${ROOT_ID}.tier-hof{--fx-a:#f7da73;--fx-b:#fff4bd}
 #${ROOT_ID}.tier-hof .fx-card-wrap::before{opacity:1;filter:blur(44px)}
 #${ROOT_ID}.tier-hof .fx-beams{opacity:1}
+#${ROOT_ID}.tier-senatore{background:radial-gradient(circle at 50% 42%,rgba(240,189,103,.24),transparent 32%),linear-gradient(180deg,#080604 0%,#171006 64%,#020201 100%)}
+#${ROOT_ID}.tier-senatore .fx-particle{background:#ffd48a;box-shadow:0 0 14px #e7a83f}
+#${ROOT_ID}.tier-senatore .fx-stage.charge{height:2px;box-shadow:0 0 32px #f0bd67,0 0 80px rgba(240,189,103,.35)}
+#${ROOT_ID}.tier-senatore .fx-card-wrap.fx-charging{animation:fxSenatoreCharge .82s ease-in-out infinite alternate}
+#${ROOT_ID}.tier-legend{background:radial-gradient(circle at 50% 42%,rgba(164,92,255,.23),transparent 31%),linear-gradient(180deg,#030206 0%,#0d0618 64%,#010102 100%)}
+#${ROOT_ID}.tier-legend .fx-vignette{background:radial-gradient(circle at center,transparent 18%,rgba(7,0,15,.42) 56%,rgba(0,0,0,.94) 100%)}
+#${ROOT_ID}.tier-legend .fx-beams{opacity:.92;animation-duration:5.5s}
+#${ROOT_ID}.tier-legend .fx-particle{width:4px;height:4px;background:#c99cff;box-shadow:0 0 18px #a45cff}
+#${ROOT_ID}.tier-legend .fx-card-wrap.fx-charging{animation:fxLegendCharge .64s ease-in-out infinite alternate}
+#${ROOT_ID}.tier-hof{background:radial-gradient(circle at 50% 40%,rgba(255,244,189,.32),transparent 30%),linear-gradient(180deg,#090805 0%,#191503 62%,#020201 100%)}
+#${ROOT_ID}.tier-hof .fx-vignette{background:radial-gradient(circle at center,transparent 22%,rgba(34,27,4,.23) 56%,rgba(0,0,0,.9) 100%)}
+#${ROOT_ID}.tier-hof .fx-particle{width:4px;height:4px;background:#fff7c9;box-shadow:0 0 20px #f7da73}
+#${ROOT_ID}.tier-hof .fx-stage.charge{height:3px;box-shadow:0 0 36px #fff4bd,0 0 110px rgba(247,218,115,.58)}
+#${ROOT_ID}.tier-hof .fx-card-wrap.fx-charging{animation:fxHofCharge .5s ease-in-out infinite alternate}
+#${ROOT_ID}.tier-hof .fx-flash.go{animation:fxHofFlash 1s ease-out forwards}
 #${ROOT_ID} .fx-summary{position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5vh 4vw;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--fx-a) 16%,transparent),transparent 42%);opacity:0;pointer-events:none}
 #${ROOT_ID} .fx-summary.show{opacity:1;pointer-events:auto;transition:opacity .4s ease}
 #${ROOT_ID} .fx-summary-title{font-size:clamp(28px,3vw,54px);font-weight:950;letter-spacing:-.04em;text-transform:uppercase;margin-bottom:4vh}
@@ -869,6 +884,10 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
 @keyframes fxV3Pop{0%{opacity:0;transform:translateY(14px) scale(.95);filter:blur(6px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
 @keyframes fxCharge{from{transform:scale(.94);opacity:.62}to{transform:scale(1.2);opacity:1}}
 @keyframes fxChargeCard{from{transform:translateY(1px) scale(1);filter:drop-shadow(0 0 24px var(--fx-a))}to{transform:translateY(-8px) scale(1.025);filter:drop-shadow(0 0 48px var(--fx-a))}}
+@keyframes fxSenatoreCharge{from{transform:translateY(1px) scale(1);filter:drop-shadow(0 0 26px #c98b34)}to{transform:translateY(-7px) scale(1.03);filter:drop-shadow(0 0 58px #f0bd67)}}
+@keyframes fxLegendCharge{from{transform:translateY(2px) scale(.995) rotateZ(-.15deg);filter:drop-shadow(0 0 30px #5d2e96)}to{transform:translateY(-10px) scale(1.04) rotateZ(.15deg);filter:drop-shadow(0 0 72px #a45cff)}}
+@keyframes fxHofCharge{from{transform:translateY(1px) scale(1);filter:drop-shadow(0 0 32px #b89c35) brightness(1)}to{transform:translateY(-11px) scale(1.055);filter:drop-shadow(0 0 88px #fff0a8) brightness(1.12)}}
+@keyframes fxHofFlash{0%{opacity:0}8%{opacity:1}21%{opacity:.18}34%{opacity:.9}48%{opacity:.32}100%{opacity:0}}
 @media(max-width:700px){#${ROOT_ID} .fx-card-wrap{width:min(84vw,calc(67vh * 690 / 987));max-height:67vh}#${ROOT_ID} .fx-scene{padding-top:9vh}#${ROOT_ID} .fx-top{top:7vh}#${ROOT_ID} .fx-skip{top:1.6vh;right:3vw}#${ROOT_ID} .fx-summary{justify-content:flex-start;padding:8vh 3vw 5vh}#${ROOT_ID} .fx-summary-card{width:min(42vw,205px)}#${ROOT_ID} .fx-summary-title{font-size:clamp(23px,6vw,38px)}#${ROOT_ID} .fx-stage{top:18vh}}
 @media(max-height:650px){#${ROOT_ID} .fx-card-wrap{width:min(32vw,calc(65vh * 690 / 987));max-height:65vh}#${ROOT_ID} .fx-top{top:2vh}#${ROOT_ID} .fx-meta{font-size:clamp(22px,4vh,42px)}#${ROOT_ID} .fx-summary{justify-content:flex-start;padding-top:6vh}}
 
@@ -1080,7 +1099,7 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
             if(skipRequested) break;
           }
           if(skipRequested) break;
-          setHeadline(tierLabel(tier) || 'SCOPRI LA CARTA','');
+          setHeadline('SCOPRI LA CARTA','');
           wrap.classList.add('fx-charging');
           stage.classList.add('charge');
           if(tier !== 'normal') softBeep('special');
@@ -1093,7 +1112,7 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
           softBeep('reveal');
           await sleep(reducedMotion ? 20 : 380);
           if(skipRequested) break;
-          setHeadline('',`HAI TROVATO ${textSafe(card.name || 'CARTA')}`);
+          setHeadline(tierLabel(tier),`HAI TROVATO ${textSafe(card.name || 'CARTA')}`);
           progress.style.width = `${((i+1)/cards.length)*100}%`;
           await waitFor();
         }
@@ -1169,5 +1188,5 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
     }
   }
 
-  window.FUTTU_PACK_OPENING = { version:'3.3.0', play:playOpening };
+  window.FUTTU_PACK_OPENING = { version:'3.4.0', play:playOpening };
 })();
