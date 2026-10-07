@@ -2,7 +2,7 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
 const root=path.resolve(__dirname,'..');
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
-const app=read('app_v302.js');
+const app=require('./helpers/production-source').readProductionSource();
 const b=JSON.parse(read('data/serie-b.json'));
 const a=JSON.parse(read('data/serie-a.json'));
 const originalSerieAClubs=a.clubs;

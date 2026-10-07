@@ -1,5 +1,5 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
-const app=fs.readFileSync(path.join(__dirname,'../app_v302.js'),'utf8');
+const app=require('./helpers/production-source').readProductionSource();
 for(const credits of [24,25]){
  const trade={stage:'open',completed:0,attempts:1,pending:{rivalId:'cpu',outgoingId:'a',incomingId:'b',credits:24}};
  let completed=false,evaluated=false;

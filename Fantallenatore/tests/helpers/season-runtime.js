@@ -7,6 +7,7 @@ function createRuntime(seed='balance-0'){
  const document={getElementById:()=>null,querySelector:()=>null,querySelectorAll:()=>[]};
  const ctx=vm.createContext({window,document,console,Math:math,Date,Blob,TextEncoder,TextDecoder,btoa,atob,setTimeout,clearTimeout,setInterval,clearInterval});
  for(const file of ['data_v302.js','js/pokemon-catalog.js','js/serie-b-catalog.js','js/game-rules.js','js/core-utils.js','js/save-codec.js','js/save-manager.js','js/season-engine.js','js/transfer-engine.js','js/career-engine.js','js/auction-engine.js','js/auction-events.js','js/live-match-state.js','js/season-recap.js','js/storage-snapshot.js','js/cpu-lineup-policy.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),ctx,{filename:file});
+ for(const file of require('./production-source').domainFiles())vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),ctx,{filename:file});
  const source=fs.readFileSync(path.join(root,'app_v302.js'),'utf8'),marker='  // Events\n',end=source.indexOf(marker);if(end<0)throw Error('Confine bootstrap UI mancante');
  vm.runInContext(source.slice(0,end)+`
  // Only presentation boundaries are disabled; match generation and evolution remain verbatim.
@@ -40,9 +41,11 @@ function createRuntime(seed='balance-0'){
  showMalusNotice(day,force=false){return showOpponentMalusNotice(day,force);},
  closeMalusNotice(acknowledge=false){return closeOpponentMalusNotice(acknowledge);},
  cpuLineup(manager){return buildAutoLineup(manager,cpuFormationForDay(manager,state.season.currentMatchday));},
+ performanceText(performance){return performanceText(performance);},
  storageSnapshot(source=state){return buildStorageSnapshot(source);},
  parseSave(payload){return parseStoredPayload(payload);},
  packApply(draft){return applyPreAuctionPack(draft);},packRules(draft){return generatePreAuctionLeagueRules(draft);},
+
  getState(){return state;},players(){return window.FANTA_PLAYERS;},buildVersion:GAME_CONFIG.buildVersion
  };
 })();`,ctx,{filename:'app_v302.js:headless'});

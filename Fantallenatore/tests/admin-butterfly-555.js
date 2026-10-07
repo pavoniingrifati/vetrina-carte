@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('assert');
-const source=fs.readFileSync(path.join(__dirname,'..','app_v302.js'),'utf8');
+const source=require('./helpers/production-source').readProductionSource();
 const start=source.indexOf('  function makeFormationSlots(');
 const end=source.indexOf('  let lineupDraft = null;',start);
 assert(start>=0&&end>start);

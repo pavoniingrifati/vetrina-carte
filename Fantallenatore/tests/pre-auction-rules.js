@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('assert'),fs=require('fs'),path=require('path'),vm=require('vm');
 const root=path.resolve(__dirname,'..');
-const app=fs.readFileSync(path.join(root,'app_v302.js'),'utf8');
+const app=require('./helpers/production-source').readProductionSource();
 const context={console};vm.createContext(context);
 function extract(from,to){const start=app.indexOf(from),end=app.indexOf(to,start);assert(start>=0&&end>start,`Sezione mancante: ${from}`);return app.slice(start,end)}
 vm.runInContext(`

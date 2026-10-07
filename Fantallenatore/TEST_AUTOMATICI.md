@@ -1,3 +1,13 @@
+# Verifiche V224
+
+Nuovi controlli: `domain-integration.js` carica le factory reali e confronta nove giornate con la V223; `save-performance-details.js` verifica il round-trip compresso dei dettagli e dei riepiloghi; `css-build.js` verifica sorgenti, ordine e percorsi del CSS runtime. Il test GOD non applicabile è sostituito da `production-edition.js`.
+
+I test che isolano singole funzioni leggono una vista ricostruita dai moduli di produzione. I runtime di integrazione caricano direttamente i file di dominio. Non è stata rigenerata nessuna fixture preesistente per adattarla al refactoring.
+
+I risultati di questa consegna sono in `reports/REFACTOR_V224.md`, `reports/test-latest.json`, `reports/css-v224.json` e `reports/auction-v224.json`. La verifica visiva su browser rimane non eseguita.
+
+---
+
 # Test automatici di Fantallenatore — copertura e limiti
 
 ## Avvio rapido su Windows

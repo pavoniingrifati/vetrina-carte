@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('assert');
-const app=fs.readFileSync(path.join(__dirname,'..','app_v302.js'),'utf8');
+const app=require('./helpers/production-source').readProductionSource();
 const start=app.indexOf('  let expertStoryState=null;'),end=app.indexOf('  function renderExpertAdvice(){',start);
 assert(start>=0&&end>start);
 const elements=new Map();

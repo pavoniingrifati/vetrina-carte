@@ -2,7 +2,7 @@
 // Load production functions verbatim. Missing functions/dependencies must fail loudly.
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'../..');
-const source=fs.readFileSync(path.join(root,'app_v302.js'),'utf8');
+const source=require('./production-source').readProductionSource();
 function productionFunction(name){
   const start=source.indexOf(`  function ${name}(`);
   assert(start>=0,`Funzione di produzione mancante: ${name}`);

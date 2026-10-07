@@ -1,5 +1,5 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
-const app=fs.readFileSync(require('path').join(__dirname,'../app_v302.js'),'utf8');
+const app=require('./helpers/production-source').readProductionSource();
 const records={};let hash=.1;
 const context={state:{season:{currentMatchday:20}},currentPlayerOvr:p=>p.ovr,baseAuctionValue:p=>p.fvm,playerFormMetrics:()=>({score:0}),playerSeasonStat:()=>({}),playerSeasonStatus:id=>records[id]||{},playerStatusForDay:id=>({unavailable:(records[id]?.injuryUntil||0)>=20,type:'injury'}),careerHash:()=>hash,ROLE_PLURALS:{A:'Attaccanti'}};
 vm.createContext(context);vm.runInContext(app.slice(app.indexOf('  function tradeAvailabilityFactor('),app.indexOf('  function completeTrade(')),context);

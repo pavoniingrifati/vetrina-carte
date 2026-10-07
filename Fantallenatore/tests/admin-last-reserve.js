@@ -1,5 +1,5 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
-const s=fs.readFileSync(path.join(__dirname,'../app_v302.js'),'utf8');
+const s=require('./helpers/production-source').readProductionSource();
 const ctx={state:{season:{currentMatchday:1}},adminBlockedStarterForManager:()=> 'top'};
 vm.createContext(ctx);vm.runInContext(s.slice(s.indexOf('  function enforceAdminLastReserve('),s.indexOf('  function enforcePlayerBenchedInLineup('))+s.slice(s.indexOf('  function lineupBenchPlayers('),s.indexOf('  function classicDefenseModifierResult(')),ctx);
 for(const id of ['user','cpu']){

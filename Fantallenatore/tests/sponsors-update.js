@@ -25,7 +25,7 @@ season.sponsor=E.createSeasonSponsor({id:'future_auction'});
 assert.strictEqual(E.grantFutureAuctionBonus(career,season),30);
 assert.strictEqual(E.grantFutureAuctionBonus(career,season),0);
 
-const app=fs.readFileSync(path.join(root,'app_v302.js'),'utf8');
+const app=require('./helpers/production-source').readProductionSource();
 const between=(a,b)=>{const from=app.indexOf(`  function ${a}(`),to=app.indexOf(`  function ${b}(`,from);assert(from>=0&&to>from);return app.slice(from,to)};
 const player={id:'a',role:'A',name:'Attaccante'},other={id:'b',role:'D',name:'Difensore'};
 const user={id:'user',roster:[player,other]};

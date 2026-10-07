@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const path=require('node:path');
 const root=path.resolve(__dirname,'..');
-const source=fs.readFileSync(path.join(root,'app_v302.js'),'utf8');
+const source=require('./helpers/production-source').readProductionSource();
 const start=source.indexOf('  function pokemonBasePlayers(');
 const end=source.indexOf('\n\n  // V2.1',start);
 assert(start>0 && end>start,'Funzioni del catalogo mancanti');

@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');const s=fs.readFileSync(path.join(__dirname,'../app_v302.js'),'utf8');let modifier='off';
+const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');const s=require('./helpers/production-source').readProductionSource();let modifier='off';
 const ctx={clamp:(n,a,b)=>Math.max(a,Math.min(b,n)),currentPlayerOvr:p=>p.ovr,playerStatusForDay:()=>({unavailable:false}),assistantAutoLineupCapabilities:()=>({}),activeFormationChoice:()=>null,activeAdminRuleEffect:()=>null,fantasyRuleForDay:()=>({defenseModifier:modifier})};vm.createContext(ctx);vm.runInContext(s.slice(s.indexOf('  function tacticalExpectedPlayerPoints('),s.indexOf('  function adaptTacticalProLineup(')),ctx);
 const d={id:'d',role:'D',ovr:82},a={id:'a',role:'A',ovr:79};assert(ctx.tacticalExpectedPlayerPoints(a,1).points>ctx.tacticalExpectedPlayerPoints(d,1).points);
 const roster=[{id:'p',role:'P',ovr:82},d,...['d2','d3','d4'].map(id=>({id,role:'D',ovr:82})),a];const manager={roster};const normal={starters:{p:'p',d:'d',d2:'d2',d3:'d3',d4:'d4'}};const wild={starters:{...normal.starters,d:'a'}};

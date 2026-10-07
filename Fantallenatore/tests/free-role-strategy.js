@@ -1,5 +1,5 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
-const src=fs.readFileSync(path.join(__dirname,'../app_v302.js'),'utf8');
+const src=require('./helpers/production-source').readProductionSource();
 const players=new Map();for(const role of ['D','A'])for(let i=0;i<20;i++)players.set(role+i,{id:role+i,role,value:role==='A'?100:20});
 const manager={budget:150};const context={state:{availableIds:[...players.keys()],managers:[manager]},playerMap:players,roleSlotsRemaining:()=>4,slotsRemaining:()=>8,canOwn:()=>true,maxLegalBid:()=>100,baseAuctionValue:p=>p.value,TOP_VALUE_THRESHOLD:{D:40,A:100},targetFor:()=>100,roleSpend:()=>0,clamp:(n,a,b)=>Math.max(a,Math.min(b,n))};
 vm.createContext(context);vm.runInContext(src.slice(src.indexOf('  function freeRoleNominationWeights('),src.indexOf('  function chooseNomination(')),context);

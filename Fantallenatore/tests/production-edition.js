@@ -1,0 +1,11 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {createRuntime}=require('./helpers/season-runtime');
+const source=require('./helpers/production-source').readProductionSource();
+assert(source.includes("dbName:'fantallenatore_db'"));
+assert(!source.includes("dbName:'fantallenatore_god_db'"));
+assert(!/function godRun\(/.test(source));
+const api=createRuntime('production-edition');
+assert.equal(api.getState().version,24);
+assert.equal(api.buildVersion,'3.2.35.56.227');
+console.log('OK: edizione standard, namespace produzione e schema compatibile.');

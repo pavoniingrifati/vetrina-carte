@@ -1,41 +1,19 @@
-# Architettura CSS
+# CSS V224
 
-## Ordine della cascata
+Le sorgenti restano nei 23 file di `css/modules/`, nell'ordine del manifest `styles_v302.css`. L'HTML carica soltanto `css/game.css`, generato in quello stesso ordine: elimina la catena di download degli @import senza riordinare la cascata. I percorsi delle risorse locali sono adattati alla posizione del file generato. `css/manifest.json` esplicita l'ordine; il responsive resta ultimo.
 
-Il manifest `styles_v302.css` carica i fogli in questo ordine:
+La consolidazione ha eliminato 1.065 dichiarazioni precedenti: 330 duplicati identici e 735 ulteriori dichiarazioni superate da valori letterali riconosciuti. Gli `!important` attivi passano da 6.571 a 5.745. Le 17.590 combinazioni finali di selettore, contesto, proprietà e priorità sono invariate rispetto alla V223. La verifica indipendente con tinycss2 non rileva errori sintattici prima o dopo.
 
-1. `00-design-tokens.css`: valori condivisi, senza componenti.
-2. `01-auction-core.css`: setup, selezione e asta.
-3. `02-season-foundation.css`: fondamenta della stagione e formazione.
-4. `03-auction-events.css`: eventi, rivali e Fantapoteri.
-5. `04-career-season.css`: schermate della carriera.
-6. `05-live-match.css`: Diretta Gol.
-7. `06-season-polish.css`: rifiniture storiche ancora da assorbire.
-8. `07-live-review.css`: controlli finali della Diretta Gol.
-9. `08-typography-system.css`: sistema tipografico a due font.
-10. `09-dashboard-overhaul.css`: contenuto specifico della dashboard.
-11. `10-career-shell.css`: componente canonico di header e navigazione.
-12. `11-accessibility.css`: focus, leggibilita minima e preferenze assistive.
-13. `12-responsive-qa.css`: salvaguardie responsive validate sulle viewport principali.
+Il criterio di rimozione richiede lo stesso selettore, le stesse condizioni e la stessa priorità. Il valore successivo deve essere identico, oppure appartenere alla whitelist di valori letterali supportati nello script. Le dichiarazioni dinamiche, le variabili, i valori nuovi e i possibili fallback non vengono eliminati indiscriminatamente. Le priorità residue restano numerose: questa consegna non pretende di averle azzerate.
 
-## Regole di manutenzione
+## Modifica e build
 
-- Un componente deve avere un solo modulo proprietario.
-- Colori, ombre, spaziature e altezze condivise vanno aggiunti ai token, non duplicati.
-- `styles_v302.css` e un manifest: non deve contenere regole grafiche.
-- Le immagini della navigazione appartengono esclusivamente a `10-career-shell.css`.
-- Le nuove correzioni vanno integrate nella regola esistente, non aggiunte in fondo come nuovo override.
-- `!important` e ammesso nei moduli storici; nei nuovi componenti va usato soltanto quando serve a prevalere sulla cascata legacy.
-- Ogni nuovo modulo deve essere incluso nei test di struttura e asset.
+Modificare il modulo che contiene la regola; evitare correzioni aggiunte in un nuovo file in fondo alla cascata. Non modificare direttamente `css/game.css`.
 
-## Strategia di migrazione
+```text
+python tools/consolidate-css.py
+python tools/consolidate-css.py --check
+node tests/css-build.js
+```
 
-La riorganizzazione e incrementale per non alterare il look consolidato. Quando un componente viene migrato:
-
-1. si raccolgono tutte le sue regole finali;
-2. si trasferiscono in un unico modulo proprietario;
-3. si eliminano i duplicati dal modulo precedente;
-4. si mantengono valori e breakpoint invariati;
-5. si aggiunge un test che impedisca una nuova duplicazione.
-
-Il primo componente migrato e la shell della carriera. I prossimi candidati sono pulsanti condivisi, modali e card informative.
+Lo script usa soltanto la libreria standard Python, è idempotente e mantiene l'ordine delle regole superstiti. Il controllo Node verifica che il CSS runtime coincida con le sorgenti e che tutti i percorsi locali esistano. `reports/css-v224.json` registra il confronto con la V223. La verifica visiva su browser non è stata eseguita: Chromium non era disponibile.

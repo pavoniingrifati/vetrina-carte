@@ -1,4 +1,4 @@
-const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');const src=fs.readFileSync(path.join(__dirname,'../app_v302.js'),'utf8');
+const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');const src=require('./helpers/production-source').readProductionSource();
 let effect={ruleId:'forced_turnover_3'},wildcard=0;
 const roster=Array.from({length:8},(_,i)=>({id:String(i),name:'P'+i,role:i===7?'A':'D',value:i<4?80:75}));
 const previous={a:'0',b:'1',c:'2',d:'3'};

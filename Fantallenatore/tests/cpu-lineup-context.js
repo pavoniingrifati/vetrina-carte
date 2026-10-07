@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
-const source=fs.readFileSync(path.join(__dirname,'../app_v302.js'),'utf8');
+const source=require('./helpers/production-source').readProductionSource();
 const ctx={window:{},state:{career:{division:1},season:{currentMatchday:1}},clamp:(n,a,b)=>Math.max(a,Math.min(b,n)),lineupPlayerValue:p=>p.ovr*100,leagueRulesFor:()=>({maxFantasySubs:5,firstGoalThreshold:66,captainBonus:'off',cleanSheetBonus:0}),cpuLeagueRuleSensitivity:()=>1,estimatedStarterProbability:p=>p.probability,currentPlayerOvr:p=>p.ovr,playerFormMetrics:id=>({score:id==='fit'?1:0}),playerSeasonStat:()=>null,serieAMatchupDifficulty:p=>({key:p.matchup||'normal',home:false})};
 vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/cpu-lineup-policy.js'),'utf8'),ctx);const start=source.indexOf('  function cpuLeagueRuleLineupValue('),end=source.indexOf('\n  }',start)+4;vm.runInContext(source.slice(start,end),ctx);
 const high={id:'high',role:'A',ovr:90,probability:20},reliable={id:'reliable',role:'A',ovr:84,probability:90};

@@ -4,7 +4,7 @@ const path=require('path');
 const vm=require('vm');
 const assert=require('assert');
 const root=path.resolve(__dirname,'..');
-const app=fs.readFileSync(path.join(root,'app_v302.js'),'utf8');
+const app=require('./helpers/production-source').readProductionSource();
 
 function functionsBetween(start,end,context){
   const source=app.slice(app.indexOf(`  function ${start}(`),app.indexOf(`  function ${end}(`));

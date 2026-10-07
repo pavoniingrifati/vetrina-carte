@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const path=require('node:path');
 const root=path.resolve(__dirname,'..');
-const src=fs.readFileSync(path.join(root,'app_v302.js'),'utf8');
+const src=require('./helpers/production-source').readProductionSource();
 const from=src.indexOf('  const LEAGUE_RULE_DEFAULTS =');
 const to=src.indexOf('  function leagueRuleCardData(',from);
 assert(from>=0&&to>from);

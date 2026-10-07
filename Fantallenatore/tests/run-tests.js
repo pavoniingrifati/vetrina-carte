@@ -31,6 +31,7 @@ function assert(condition, message) {
 }
 
 function read(relativePath) {
+  if(relativePath==='app_v302.js') return require('./helpers/production-source').readProductionSource();
   return fs.readFileSync(path.join(ROOT, relativePath), 'utf8');
 }
 
@@ -844,7 +845,7 @@ test('Sostituzioni fantasy: anche un titolare reale SV viene sostituito', () => 
 
 
 test('Eventi rari/epici: nuove carte speciali presenti', () => {
-  const app = fs.readFileSync(path.join(ROOT, 'app_v302.js'), 'utf8');
+  const app = require('./helpers/production-source').readProductionSource();
   assert(app.includes("id:'boost-penalty-specialist'"), 'Manca Rigorista d’eccezione');
   assert(app.includes("id:'boost-grace-moment'"), 'Manca Momento di grazia');
   assert(app.includes("id:'boost-life-chance'"), 'Manca Occasione della vita');

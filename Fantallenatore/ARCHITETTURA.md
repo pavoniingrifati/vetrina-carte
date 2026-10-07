@@ -1,38 +1,50 @@
-# Architettura e regole di modifica
+# Architettura V224
 
-V162 introduce confini espliciti per due responsabilità prima inserite nell'app principale. Non completa la modularizzazione: schermate, gestione degli eventi e numerose transizioni restano accoppiate in app_v302.js.
+Il file principale è passato da 16.233 a 5.385 righe e da 774 a 74 funzioni dichiarate. Le 700 funzioni estratte hanno un proprietario esplicito in 24 moduli. I file sono script locali: funzionano senza fetch e senza build JavaScript.
 
-| Area | Responsabilità | Dipendenze e divieti |
-|---|---|---|
-| app_v302.js | Stato carriera, orchestrazione e UI | Collega i moduli allo stato corrente; mantiene adattatori brevi |
-| js/storage-snapshot.js | Proiezione dello stato da salvare, compattazione | Factory con compactMarketState; nessun DOM, storage, timer o scrittura |
-| js/cpu-lineup-policy.js | Valutazione dei giocatori e confronto moduli CPU | Dati e funzioni pre-partita espliciti; nessun accesso diretto a stato globale, UI o esiti futuri |
-| js/save-manager.js | Coda, backend, backup e flush | Non decide quali dati di gioco conservare |
-| js/transfer-engine.js | Piani e materializzazione del mondo di mercato | Contiene compattazione e idempotenza dei piani |
-| js/season-engine.js | Calendari e classifiche | Dati espliciti, nessuna UI |
-| tests/helpers/season-runtime.js | Adapter diagnostico dell'app reale | Disabilita bootstrap UI, persistenza e feedback visivo; non sostituisce formule calcistiche |
+`app_v302.js` conserva stato condiviso, dati statici, collegamento delle dipendenze, bootstrap e registrazione degli eventi. Le factory in `js/domains/` ricevono getter e setter espliciti sul contesto: leggono sempre lo stato corrente, anche dopo caricamenti e cambio carriera. La costruzione delle factory non legge anticipatamente lo stato. Non sono presenti copie alternative del motore.
 
-## Modificare i salvataggi
+Questa separazione riduce il file principale e delimita le responsabilità, ma non rende tutte le schermate indipendenti: diversi moduli condividono ancora lo stato e si richiamano. Non aggiungere nuove regole di dominio al file principale. La lista completa delle dipendenze è in `js/domains/manifest.json`.
 
-Intervenire in storage-snapshot.js per cambiare il formato compatto, in save-manager.js per cambiare il backend. Stato live e Big Match devono restare ripristinabili. Non alterare input durante la serializzazione. Le migrazioni restano nell'app; una modifica di schema deve dichiarare la compatibilità e avere un test di salvataggio precedente.
+| Modulo | Funzioni |
+|---|---:|
+| `auction-policy` | 39 |
+| `persistence-controller` | 13 |
+| `auction-controller` | 89 |
+| `trade-roster-controller` | 29 |
+| `career-market-controller` | 59 |
+| `league-views` | 31 |
+| `shop-controller` | 51 |
+| `assistant-policy` | 8 |
+| `datacenter-views` | 13 |
+| `social-controller` | 21 |
+| `expert-controller` | 14 |
+| `dashboard-controller` | 36 |
+| `matchday-controller` | 2 |
+| `lineup-controller` | 56 |
+| `matchday-events-controller` | 72 |
+| `football-engine` | 43 |
+| `live-controller` | 40 |
+| `player-development` | 9 |
+| `result-controller` | 5 |
+| `ready-rosters-controller` | 5 |
+| `auction-events-controller` | 29 |
+| `pack-controller` | 2 |
+| `visual-identity` | 12 |
+| `career-setup-controller` | 22 |
 
-## Modificare le CPU
+## Salvataggi
 
-Intervenire in cpu-lineup-policy.js per i pesi, lasciando agli adattatori dell'app le letture dello stato. Il modulo riceve probabilità, forma, statistiche e matchup tramite funzioni esplicite. Non usare risultati già generati della giornata come informazione disponibile prima della formazione. La costruzione della rosa schierata e l'applicazione delle carte restano nell'app.
+`js/storage-snapshot.js` decide quali dati conservare; `js/save-manager.js` gestisce backend, coda e backup. Lo schema resta 24 e il namespace del database non cambia. I bonus opzionali del capitano, gol decisivo, Cesarini, panchina d'oro e underdog, minuti e riferimenti del sostituito vengono conservati nelle prestazioni della partita dell'utente, compreso l'avversario. I risultati delle altre partite continuano a conservare i totali senza tutte le prestazioni.
 
-## Controlli da eseguire
+I vecchi salvataggi sono caricabili. I dettagli già cancellati da una versione precedente non possono essere ricostruiti dai soli totali; il fix previene nuove perdite.
 
-`node tests/run-all.js --core`
+## Verifica
 
-- module-boundaries.js confronta snapshot e 144 punteggi con fixture registrate dal codice V161 prima dell'estrazione; verifica input non mutati, assenza di logica duplicata e ordine di caricamento.
-- long-career-storage.js verifica salvataggi compatti, migrazione, contatori e mercato invariato.
-- cpu-lineup-context.js verifica decisioni contestuali e costruzione reale di una formazione.
-- balance-production.js verifica il percorso di simulazione attraverso l'app e i moduli reali.
+`node tests/run-all.js --core` carica i moduli reali nei runtime integrati. `tests/domain-integration.js` confronta nove giornate con hash acquisiti dalla V223 prima dell'estrazione (tre semi). `tests/save-performance-details.js` verifica compattazione, compressione, caricamento, testo dei bonus, totali e compatibilità con campi assenti.
 
-Se una modifica cambia intenzionalmente il comportamento, documentare il cambiamento e aggiornare soltanto le aspettative coinvolte. Non rigenerare tutte le fixture per far passare il runner. Un refactoring strutturale deve conservare le aspettative.
+`tests/helpers/production-source.js` ricostruisce dalle implementazioni reali una vista per i vecchi test che estraggono funzioni isolate; non è codice del gioco e non sostituisce il test dei moduli reali. Le fixture V161 preesistenti restano invariate.
 
-I test core non sono test browser. Per il caricamento e lo smoke UI usare la suite browser con Chromium disponibile. In questa consegna il browser resta non verificato.
+Il test GOD preesistente richiamava una funzione assente nell'edizione standard. È sostituito dal controllo dell'edizione di produzione e del namespace corretto, senza introdurre comandi GOD.
 
-## Passi successivi
-
-Separare progressivamente costruzione delle formazioni, controller dell'asta e transizioni di giornata. Prima di ciascuna estrazione, registrare il comportamento di riferimento, individuare le dipendenze e distinguere dominio da UI. I test che estraggono testo dall'app sono ancora presenti: convertirli a test delle API durante l'estrazione della relativa responsabilità.
+Lo smoke browser resta distinto dai test del motore e richiede Chromium.

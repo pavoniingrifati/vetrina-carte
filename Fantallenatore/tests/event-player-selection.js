@@ -1,5 +1,5 @@
 const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('assert'),crypto=require('crypto');
-const app=fs.readFileSync(path.join(__dirname,'../app_v302.js'),'utf8');
+const app=require('./helpers/production-source').readProductionSource();
 const roster=Array.from({length:25},(_,i)=>({id:String(i),name:'Player '+i,role:i<3?'P':i<11?'D':i<19?'C':'A'}));
 let seed='career';const context={state:{career:{seasonNumber:1}},ensureSeasonState:()=>({}),currentUserFixture:()=>null,userOpponentIdForDay:()=> 'cpu',managerById:()=>({roster}),playerStatusForDay:()=>({unavailable:false}),careerHash:key=>crypto.createHash('sha256').update(seed+'|'+key).digest().readUInt32BE()/4294967296};
 vm.createContext(context);vm.runInContext(app.slice(app.indexOf('  function hashPick('),app.indexOf('  const SERIEA_DERBY_PAIRS'))+app.slice(app.indexOf('  function formationChoiceContextForManagers('),app.indexOf('  function fantasyAppearanceRate(')),context);

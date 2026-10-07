@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
-const root=path.resolve(__dirname,'..'),app=fs.readFileSync(path.join(root,'app_v302.js'),'utf8');
+const root=path.resolve(__dirname,'..'),app=require('./helpers/production-source').readProductionSource();
 function section(from,to){const a=app.indexOf(from),b=app.indexOf(to,a);assert(a>=0&&b>a,`Sezione non trovata: ${from}`);return app.slice(a,b)}
 const ctx={window:{},console,TextEncoder,TextDecoder,Uint8Array,Date,Math};vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(root,'js/save-codec.js'),'utf8'),ctx);

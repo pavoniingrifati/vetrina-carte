@@ -3,7 +3,7 @@ const assert=require('assert');
 const fs=require('fs');
 const vm=require('vm');
 const path=require('path');
-const app=fs.readFileSync(path.join(__dirname,'../app_v302.js'),'utf8');
+const app=require('./helpers/production-source').readProductionSource();
 const chanceSource=app.slice(app.indexOf('  function seasonShockChance('),app.indexOf('  function formationChoiceRarity('));
 const chanceContext={state:{career:{division:4}},GAME_CONFIG:{startingDivision:4},Math};
 vm.runInNewContext(chanceSource,chanceContext);

@@ -4,7 +4,7 @@
     if(typeof compactMarketState!=='function')throw new TypeError('compactMarketState richiesto');
   function compactPerformanceForSave(p) {
     if (!p || typeof p!=='object') return p;
-    const keys=['playerId','name','club','role','day','noVote','vote','fantasy','goals','assists','yellow','red','secondYellow','ownGoal','missedPenalty','savedPenalty','goalsConceded','cleanSheetBonus','injury','riskDelta','socialMotivationDelta','socialMotivationOutcome','lineupSource','replacedPlayerName'];
+    const keys=['playerId','name','club','role','day','noVote','vote','fantasy','goals','assists','yellow','red','secondYellow','ownGoal','missedPenalty','savedPenalty','goalsConceded','cleanSheetBonus','captainBonus','decisiveGoalBonus','cesariniBonus','goldenBenchBonus','underdogBonus','decisiveGoals','lateGoals','minutes','replacedPlayerId','injury','riskDelta','socialMotivationDelta','socialMotivationOutcome','lineupSource','replacedPlayerName'];
     const out={};
     keys.forEach(k=>{ if(p[k]!==undefined) out[k]=p[k]; });
     return out;
