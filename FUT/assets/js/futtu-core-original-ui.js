@@ -580,6 +580,153 @@ function choosePack(game){
   try{localStorage.setItem(STORAGE_KEYS.cursors,JSON.stringify(GAME_STATE.cursor));}catch{}return chosen;
 }
 
+
+/* ==========================================================================\n   FUTTU CINEMATIC PACK OPENING V1\n   Hook premium già previsto dal core: window.FUTTU_PACK_OPENING\n   Sequenza: back -> ruolo -> rarità -> serie -> flash -> carta -> riepilogo.\n   ========================================================================== */
+(function installFuttuCinematicPackOpening(){
+  if(window.FUTTU_PACK_OPENING && window.FUTTU_PACK_OPENING.__cinematicV1)return;
+
+  const STYLE_ID='futtu-cinematic-opening-v1-style';
+  function ensureStyle(){
+    if(document.getElementById(STYLE_ID))return;
+    const style=document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent=`
+      .futtu-cine{position:fixed;inset:0;z-index:999999;overflow:hidden;background:
+        radial-gradient(circle at 50% 45%,rgba(111,52,183,.32) 0,rgba(34,13,61,.18) 30%,rgba(4,7,16,.96) 72%),#050711;
+        color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;display:flex;align-items:center;justify-content:center;isolation:isolate}
+      .futtu-cine::before{content:"";position:absolute;inset:-20%;background:
+        radial-gradient(ellipse at center,rgba(136,85,255,.22),transparent 42%);filter:blur(30px);animation:futtuCineBreathe 2.3s ease-in-out infinite alternate;pointer-events:none}
+      .futtu-cine__spot{position:absolute;top:-8vh;width:26vw;height:84vh;background:linear-gradient(to bottom,rgba(255,255,255,.17),rgba(173,114,255,.08) 55%,transparent);filter:blur(22px);opacity:.8;transform-origin:top center;pointer-events:none}
+      .futtu-cine__spot.s1{left:17%;transform:rotate(15deg)} .futtu-cine__spot.s2{right:17%;transform:rotate(-15deg)}
+      .futtu-cine__particles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+      .futtu-cine__particle{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;box-shadow:0 0 10px #c8a5ff;opacity:0;animation:futtuFloat 3.4s linear infinite}
+      .futtu-cine__hud{position:absolute;top:4.5vh;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:.34em;text-transform:uppercase;font-weight:800;opacity:.68;white-space:nowrap}
+      .futtu-cine__prompt{position:absolute;top:12vh;left:50%;transform:translateX(-50%);text-align:center;min-height:98px;width:min(92vw,900px);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;pointer-events:none}
+      .futtu-cine__label{font-size:11px;letter-spacing:.4em;text-transform:uppercase;font-weight:800;opacity:.5;margin-bottom:8px}
+      .futtu-cine__value{font-size:clamp(28px,4.1vw,62px);line-height:1;font-weight:950;letter-spacing:-.035em;text-transform:uppercase;text-shadow:0 0 26px rgba(193,151,255,.34);animation:futtuPromptIn .42s cubic-bezier(.2,.8,.2,1)}
+      .futtu-cine__center{position:relative;display:flex;align-items:center;justify-content:center;perspective:1100px;margin-top:6vh}
+      .futtu-cine__cardWrap{position:relative;width:min(28vw,320px);aspect-ratio:0.70;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 22px 52px rgba(0,0,0,.58))}
+      .futtu-cine__cardWrap::before{content:"";position:absolute;inset:-9%;border-radius:28px;background:radial-gradient(circle,rgba(169,104,255,.55),rgba(109,42,221,.15) 44%,transparent 69%);filter:blur(18px);animation:futtuGlowPulse 1.55s ease-in-out infinite alternate}
+      .futtu-cine__back,.futtu-cine__front{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;backface-visibility:hidden;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .38s ease,filter .38s ease}
+      .futtu-cine__back{transform:rotateY(0deg) scale(.97);filter:drop-shadow(0 0 20px rgba(164,103,255,.72))}
+      .futtu-cine__front{transform:rotateY(180deg) scale(.95);opacity:0;filter:drop-shadow(0 0 23px rgba(187,131,255,.88))}
+      .futtu-cine.is-revealed .futtu-cine__back{transform:rotateY(-180deg) scale(1.03);opacity:0}
+      .futtu-cine.is-revealed .futtu-cine__front{transform:rotateY(0deg) scale(1);opacity:1}
+      .futtu-cine__mystery{position:absolute;z-index:2;font-weight:1000;font-size:70px;opacity:.8;text-shadow:0 0 30px rgba(255,255,255,.32);pointer-events:none;transition:opacity .25s ease}
+      .futtu-cine.is-revealed .futtu-cine__mystery{opacity:0}
+      .futtu-cine__name{position:absolute;bottom:7vh;left:50%;transform:translateX(-50%) translateY(18px);width:min(92vw,1000px);text-align:center;opacity:0;transition:.48s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+      .futtu-cine.is-revealed .futtu-cine__name{opacity:1;transform:translateX(-50%) translateY(0)}
+      .futtu-cine__small{font-size:10px;letter-spacing:.48em;text-transform:uppercase;font-weight:850;opacity:.54;margin-bottom:4px}
+      .futtu-cine__nameText{font-size:clamp(34px,5vw,72px);font-weight:1000;letter-spacing:-.045em;text-transform:uppercase;text-shadow:0 0 32px rgba(200,162,255,.3)}
+      .futtu-cine__hint{position:absolute;right:24px;bottom:22px;border:1px solid rgba(255,255,255,.2);background:rgba(11,14,27,.66);backdrop-filter:blur(12px);padding:10px 15px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.04em;opacity:.84}
+      .futtu-cine__flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;mix-blend-mode:screen;z-index:30}
+      .futtu-cine.flash .futtu-cine__flash{animation:futtuFlash .48s ease-out}
+      .futtu-cine__summary{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;padding:5vh 4vw;background:radial-gradient(circle at 50% 45%,rgba(105,50,178,.28),transparent 54%)}
+      .futtu-cine.summary .futtu-cine__summary{display:flex}.futtu-cine.summary .futtu-cine__prompt,.futtu-cine.summary .futtu-cine__center,.futtu-cine.summary .futtu-cine__name,.futtu-cine.summary .futtu-cine__hud{display:none}
+      .futtu-cine__summaryTitle{font-size:clamp(26px,4vw,52px);font-weight:1000;text-transform:uppercase;margin-bottom:4vh;text-align:center}
+      .futtu-cine__summaryCards{display:flex;align-items:center;justify-content:center;gap:clamp(14px,2vw,30px);width:100%;flex-wrap:wrap}
+      .futtu-cine__summaryItem{width:min(21vw,240px);text-align:center;animation:futtuSummaryIn .5s cubic-bezier(.2,.8,.2,1) both}
+      .futtu-cine__summaryItem img{width:100%;max-height:52vh;object-fit:contain;filter:drop-shadow(0 14px 26px rgba(0,0,0,.45)) drop-shadow(0 0 14px rgba(155,94,255,.38))}
+      .futtu-cine__summaryItem b{display:block;margin-top:7px;font-size:clamp(13px,1.4vw,18px)}
+      .futtu-cine__continue{margin-top:4vh;border:1px solid rgba(255,255,255,.24);background:linear-gradient(135deg,#7f46ef,#4ba7ff);color:#fff;font-weight:900;padding:13px 22px;border-radius:12px;cursor:pointer;box-shadow:0 0 24px rgba(111,72,236,.32)}
+      @keyframes futtuCineBreathe{to{transform:scale(1.08);opacity:.85}}
+      @keyframes futtuGlowPulse{from{opacity:.55;transform:scale(.95)}to{opacity:1;transform:scale(1.06)}}
+      @keyframes futtuPromptIn{from{opacity:0;transform:translateY(-8px) scale(.97);filter:blur(5px)}to{opacity:1;transform:none;filter:none}}
+      @keyframes futtuFlash{0%{opacity:0}16%{opacity:.96}100%{opacity:0}}
+      @keyframes futtuSummaryIn{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:none}}
+      @keyframes futtuFloat{0%{opacity:0;transform:translateY(20vh) scale(.6)}20%{opacity:.65}100%{opacity:0;transform:translateY(-80vh) scale(1.3)}}
+      @media(max-width:700px){.futtu-cine__cardWrap{width:min(58vw,290px)}.futtu-cine__prompt{top:9vh}.futtu-cine__summaryItem{width:min(29vw,180px)}.futtu-cine__hint{right:12px;bottom:12px;font-size:10px}}
+      @media(prefers-reduced-motion:reduce){.futtu-cine *, .futtu-cine *::before{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function wait(ms){return new Promise(r=>setTimeout(r,ms));}
+  function nextGesture(root){
+    return new Promise(resolve=>{
+      let done=false;
+      const finish=()=>{if(done)return;done=true;cleanup();resolve();};
+      const key=e=>{if(e.key==='Enter'||e.key===' '||e.key==='ArrowRight'){e.preventDefault();finish();}};
+      const click=e=>{if(e.target.closest('.futtu-cine__continue'))return;finish();};
+      const cleanup=()=>{root.removeEventListener('click',click);document.removeEventListener('keydown',key);};
+      root.addEventListener('click',click,{once:false});document.addEventListener('keydown',key);
+    });
+  }
+  function makeParticles(){
+    let s='';for(let i=0;i<24;i++){
+      const l=(3+Math.random()*94).toFixed(1),d=(Math.random()*2.9).toFixed(2),dur=(2.6+Math.random()*2.4).toFixed(2),sz=(1+Math.random()*2.5).toFixed(1);
+      s+=`<i class="futtu-cine__particle" style="left:${l}%;bottom:-4%;animation-delay:${d}s;animation-duration:${dur}s;width:${sz}px;height:${sz}px"></i>`;
+    }return s;
+  }
+  function setPrompt(root,label,value){
+    const p=root.querySelector('.futtu-cine__prompt');
+    p.innerHTML=`<div class="futtu-cine__label">${esc(label)}</div><div class="futtu-cine__value">${esc(value||'—')}</div>`;
+  }
+  function cardImage(card){return card&&card.img?String(card.img):'';}
+  function doFlash(root){root.classList.remove('flash');void root.offsetWidth;root.classList.add('flash');setTimeout(()=>root.classList.remove('flash'),520);}
+
+  async function play({packName,cover,cards}){
+    ensureStyle();
+    const safeCards=Array.isArray(cards)?cards.filter(Boolean):[];
+    if(!safeCards.length)return;
+
+    const old=document.getElementById('futtuCinematicOpeningV1');if(old)old.remove();
+    const root=document.createElement('div');root.id='futtuCinematicOpeningV1';root.className='futtu-cine';root.tabIndex=-1;
+    root.innerHTML=`
+      <div class="futtu-cine__spot s1"></div><div class="futtu-cine__spot s2"></div>
+      <div class="futtu-cine__particles">${makeParticles()}</div>
+      <div class="futtu-cine__hud"></div>
+      <div class="futtu-cine__prompt"></div>
+      <div class="futtu-cine__center"><div class="futtu-cine__cardWrap">
+        <img class="futtu-cine__back" alt="Pack"><img class="futtu-cine__front" alt="Carta">
+        <div class="futtu-cine__mystery">?</div>
+      </div></div>
+      <div class="futtu-cine__name"><div class="futtu-cine__small">Hai trovato</div><div class="futtu-cine__nameText"></div></div>
+      <div class="futtu-cine__hint">Clicca / SPAZIO per continuare</div>
+      <div class="futtu-cine__flash"></div>
+      <div class="futtu-cine__summary"><div class="futtu-cine__summaryTitle">Il tuo pacchetto</div><div class="futtu-cine__summaryCards"></div><button class="futtu-cine__continue" type="button">Continua</button></div>`;
+    document.body.appendChild(root);root.focus({preventScroll:true});
+
+    const hud=root.querySelector('.futtu-cine__hud'),back=root.querySelector('.futtu-cine__back'),front=root.querySelector('.futtu-cine__front'),name=root.querySelector('.futtu-cine__nameText');
+    back.src=cover||'';
+    document.documentElement.style.overflow='hidden';
+
+    try{
+      for(let i=0;i<safeCards.length;i++){
+        const c=safeCards[i];
+        root.classList.remove('is-revealed');
+        hud.textContent=`CARTA ${i+1} DI ${safeCards.length} • ${packName||'PACK'}`;
+        front.src=cardImage(c);name.textContent=c.name||'';
+        setPrompt(root,'Pronto?','PACCHETTO MISTERIOSO');
+        await wait(160);await nextGesture(root);
+
+        setPrompt(root,'Ruolo',c.role||'—');
+        await wait(110);await nextGesture(root);
+
+        setPrompt(root,'Rarità',c.rarity||'—');
+        await wait(110);await nextGesture(root);
+
+        setPrompt(root,'Serie',c.series||'—');
+        await wait(110);await nextGesture(root);
+
+        doFlash(root);await wait(150);root.classList.add('is-revealed');setPrompt(root,'','');
+        await wait(500);await nextGesture(root);
+      }
+
+      root.classList.add('summary');
+      const box=root.querySelector('.futtu-cine__summaryCards');
+      box.innerHTML=safeCards.map((c,i)=>`<div class="futtu-cine__summaryItem" style="animation-delay:${i*.1}s"><img src="${esc(cardImage(c))}" alt="${esc(c.name||'Carta')}"><b>${esc(c.name||'')}</b></div>`).join('');
+      await new Promise(resolve=>root.querySelector('.futtu-cine__continue').addEventListener('click',resolve,{once:true}));
+    } finally {
+      document.documentElement.style.removeProperty('overflow');
+      root.remove();
+    }
+  }
+
+  window.FUTTU_PACK_OPENING={play,__cinematicV1:true};
+})();
+
 var flashLine=document.getElementById('flashLine'),flashScreen=document.getElementById('flashScreen'),packArea=document.getElementById('packArea'),packBox=document.getElementById('pack');
 document.addEventListener('click',()=>{try{ensureAudio();}catch{}},{once:true});
 openBtn.addEventListener('click', async () => {
