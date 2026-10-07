@@ -780,6 +780,19 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
 #${ROOT_ID} .fx-card-wrap::before{content:"";position:absolute;inset:-14%;border-radius:40px;background:radial-gradient(circle,color-mix(in srgb,var(--fx-a) 50%,transparent),transparent 64%);filter:blur(28px);z-index:-2;opacity:.68;animation:fxPulse 1.8s ease-in-out infinite alternate}
 #${ROOT_ID} .fx-card{position:absolute;inset:0;border-radius:18px;overflow:hidden;transform-style:preserve-3d;backface-visibility:hidden;background:linear-gradient(145deg,#171922,#07080c);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 0 0 2px color-mix(in srgb,var(--fx-a) 30%,transparent),0 0 35px color-mix(in srgb,var(--fx-a) 35%,transparent)}
 #${ROOT_ID} .fx-card img{width:100%;height:100%;display:block;object-fit:contain;background:transparent}
+#${ROOT_ID} .fx-front{display:flex;align-items:stretch;justify-content:stretch}
+#${ROOT_ID} .fx-front .fx-default-player{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:9%;background:linear-gradient(160deg,#10b8ee 0%,#0976df 48%,#1731a8 100%);color:#fff;text-align:center;overflow:hidden}
+#${ROOT_ID} .fx-front .fx-default-player::before{content:"";position:absolute;inset:-20%;background:repeating-radial-gradient(ellipse at 50% 115%,rgba(255,255,255,.10) 0 18px,transparent 19px 42px);transform:rotate(-8deg);opacity:.85}
+#${ROOT_ID} .fx-front .fx-default-player.show{display:flex}
+#${ROOT_ID} .fx-default-new{position:absolute;left:8%;top:7%;padding:3px 7px;border-radius:4px;background:#07151f;color:#00f6ff;font-size:clamp(9px,.7vw,12px);font-weight:950;letter-spacing:.08em;z-index:2}
+#${ROOT_ID} .fx-default-icon{position:relative;z-index:2;width:42%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.28);box-shadow:0 0 32px rgba(255,255,255,.12);font-size:clamp(34px,5vw,78px);font-weight:950;margin-bottom:8%}
+#${ROOT_ID} .fx-default-name{position:relative;z-index:2;font-size:clamp(28px,3.5vw,58px);font-weight:1000;line-height:.9;text-transform:uppercase;letter-spacing:-.05em;text-shadow:0 3px 0 rgba(0,0,0,.14);max-width:100%;overflow-wrap:anywhere}
+#${ROOT_ID} .fx-default-sub{position:relative;z-index:2;margin-top:6%;font-size:clamp(11px,.9vw,15px);font-weight:850;text-transform:uppercase;letter-spacing:.12em;opacity:.9}
+#${ROOT_ID} .fx-default-series{position:relative;z-index:2;margin-top:3%;font-size:clamp(10px,.78vw,13px);font-weight:750;opacity:.75}
+#${ROOT_ID} .fx-front.fallback img{display:none}
+#${ROOT_ID} .fx-summary-card .fx-summary-fallback{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10%;background:linear-gradient(160deg,#10b8ee,#0976df 50%,#1731a8);border-radius:16px;text-align:center;font-weight:900}
+#${ROOT_ID} .fx-summary-card .fx-summary-fallback b{font-size:clamp(16px,1.7vw,28px);line-height:.95;text-transform:uppercase;overflow-wrap:anywhere}
+#${ROOT_ID} .fx-summary-card .fx-summary-fallback em{font-style:normal;margin-top:8px;font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:.08em}
 #${ROOT_ID} .fx-back{display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,color-mix(in srgb,var(--fx-a) 18%,#1a1525),#08090e 76%)}
 #${ROOT_ID} .fx-back img{object-fit:contain;filter:saturate(1.1) contrast(1.03)}
 #${ROOT_ID} .fx-mystery{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(56px,7vw,120px);font-weight:900;color:rgba(255,255,255,.82);text-shadow:0 0 38px var(--fx-a)}
@@ -844,6 +857,13 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
 #${ROOT_ID} .fx-summary-card span{font-size:clamp(11px,1.05vw,15px);letter-spacing:.01em;overflow-wrap:anywhere}
 #${ROOT_ID} .fx-summary-title{margin-bottom:2vh}
 #${ROOT_ID} .fx-summary-close{margin-top:2vh}
+#${ROOT_ID}.simple-classic .fx-beams{opacity:.28}
+#${ROOT_ID}.simple-classic .fx-stage{display:none}
+#${ROOT_ID}.simple-classic .fx-card-wrap{width:min(34vw,520px);max-height:70vh;filter:drop-shadow(0 0 22px color-mix(in srgb,var(--fx-a) 38%,transparent))}
+#${ROOT_ID}.simple-classic .fx-card-wrap::before{opacity:.35;filter:blur(22px)}
+#${ROOT_ID}.simple-classic .fx-meta{font-size:clamp(28px,3.6vw,62px)}
+#${ROOT_ID}.simple-classic .fx-kicker{display:none}
+#${ROOT_ID}.simple-classic .fx-floor{opacity:.35}
 #${ROOT_ID} .fx-hint{pointer-events:none}
 #${ROOT_ID}.tier-hof .fx-flash.go{animation-duration:.85s}
 @keyframes fxV3Pop{0%{opacity:0;transform:translateY(14px) scale(.95);filter:blur(6px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
@@ -905,10 +925,12 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
     const old = document.getElementById(ROOT_ID);
     if(old) old.remove();
     if(!Array.isArray(cards) || !cards.length) return;
+    const simpleClassicPack = ['bronze','silver','gold'].includes(normV2(packName));
 
     const root = document.createElement('div');
     root.id = ROOT_ID;
     root.className = normV2(mode).includes('gotham') ? 'is-gotham' : 'is-fantaballa';
+    if(simpleClassicPack) root.classList.add('simple-classic');
     root.style.setProperty('--fx-a', palette.a);
     root.style.setProperty('--fx-b', palette.b);
     root.style.setProperty('--fx-bg', palette.c);
@@ -916,7 +938,7 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
       <div class="fx-progress"></div><div class="fx-beams"></div><div class="fx-floor"></div>
       <div class="fx-top"><div class="fx-count"></div><div class="fx-kicker"></div><div class="fx-meta"></div></div>
       <div class="fx-stage" aria-hidden="true"></div>
-      <div class="fx-scene"><div class="fx-card-wrap"><div class="fx-card fx-back"></div><div class="fx-card fx-front"><img alt=""></div></div></div>
+      <div class="fx-scene"><div class="fx-card-wrap"><div class="fx-card fx-back"></div><div class="fx-card fx-front"><img alt=""><div class="fx-default-player"><span class="fx-default-new">NEW</span><div class="fx-default-icon"></div><div class="fx-default-name"></div><div class="fx-default-sub">Grafica in arrivo</div><div class="fx-default-series"></div></div></div></div></div>
       <button class="fx-skip" type="button">Salta animazione ↠</button>
       <div class="fx-hint">Clic / Spazio per continuare</div><div class="fx-flash"></div><div class="fx-vignette"></div>
       <div class="fx-summary"><div class="fx-summary-title">Pacchetto completato</div><div class="fx-summary-grid"></div><button class="fx-summary-close" type="button">Continua</button></div>`;
@@ -928,7 +950,12 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
     const meta = root.querySelector('.fx-meta');
     const wrap = root.querySelector('.fx-card-wrap');
     const back = root.querySelector('.fx-back');
+    const frontFace = root.querySelector('.fx-front');
     const frontImg = root.querySelector('.fx-front img');
+    const fallback = root.querySelector('.fx-default-player');
+    const fallbackIcon = root.querySelector('.fx-default-icon');
+    const fallbackName = root.querySelector('.fx-default-name');
+    const fallbackSeries = root.querySelector('.fx-default-series');
     const flash = root.querySelector('.fx-flash');
     const progress = root.querySelector('.fx-progress');
     const stage = root.querySelector('.fx-stage');
@@ -941,18 +968,17 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
     let skipRequested = false;
     let waiting = null;
     let closed = false;
-    const waitFor = (ms) => new Promise(resolve => {
+    /* V3.2: ogni step avanza SOLO su input dell'utente. Nessun timeout automatico. */
+    const waitFor = () => new Promise(resolve => {
       if(skipRequested){ resolve(); return; }
-      const current = {timer:null, done:false, resolve};
+      const current = {done:false, resolve};
       current.finish = () => {
         if(current.done) return;
         current.done = true;
-        clearTimeout(current.timer);
         if(waiting === current) waiting = null;
         resolve();
       };
       waiting = current;
-      current.timer = setTimeout(current.finish,ms);
     });
     const advance = () => { if(waiting) waiting.finish(); };
     const requestSkip = () => {
@@ -989,6 +1015,23 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
       {label:'RARITÀ', get:c=>c.rarity},
       {label:'SERIE', get:c=>c.series}
     ];
+    const showFallback = (card) => {
+      frontFace.classList.add('fallback');
+      fallback.classList.add('show');
+      fallbackIcon.textContent = initialsFromName(card && card.name ? card.name : 'NP');
+      fallbackName.textContent = textSafe(card && card.name ? card.name : 'New Player');
+      fallbackSeries.textContent = textSafe((card && (card.rarity || card.series)) || '');
+    };
+    const setCardImage = (card) => {
+      frontFace.classList.remove('fallback');
+      fallback.classList.remove('show');
+      const src = imgSrc(card);
+      frontImg.removeAttribute('src');
+      frontImg.alt = textSafe(card && card.name ? card.name : 'Carta');
+      frontImg.onerror = () => showFallback(card);
+      if(src) frontImg.src = src; else showFallback(card);
+    };
+
     const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let afterSummary = null;
     try {
@@ -1003,8 +1046,7 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
         wrap.classList.remove('revealed','fx-charging');
         stage.classList.remove('charge');
         flash.classList.remove('go');
-        frontImg.src = imgSrc(card);
-        frontImg.alt = textSafe(card.name || 'Carta');
+        setCardImage(card);
         back.replaceChildren();
         if(cover){
           const backImg = document.createElement('img');
@@ -1014,33 +1056,47 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
           question.className='fx-mystery'; question.textContent='?'; back.append(question);
         }
         setHeadline(String(packName||'PACK').toUpperCase(),'');
-        if(!reducedMotion) await waitFor(220);
+        await waitFor();
         if(skipRequested) break;
-        for(const step of steps){
-          const value = textSafe(step.get(card)).trim();
-          if(!value) continue; // Nessun trattino per valori mancanti.
-          setHeadline(step.label,value);
-          softBeep('step');
-          await waitFor(reducedMotion ? 100 : tier === 'normal' ? 670 : 810);
+
+        if(simpleClassicPack){
+          /* Bronze / Silver / Gold: apertura rapida. Un click rivela subito la carta completa. */
+          flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+          wrap.classList.add('revealed');
+          softBeep('reveal');
+          await sleep(reducedMotion ? 20 : 260);
           if(skipRequested) break;
+          setHeadline('',`HAI TROVATO ${textSafe(card.name || 'CARTA')}`);
+          progress.style.width = `${((i+1)/cards.length)*100}%`;
+          await waitFor();
+        }else{
+          /* Pack rari/speciali: reveal completo e manuale, uno step per click. */
+          for(const step of steps){
+            const value = textSafe(step.get(card)).trim();
+            if(!value) continue;
+            setHeadline(step.label,value);
+            softBeep('step');
+            await waitFor();
+            if(skipRequested) break;
+          }
+          if(skipRequested) break;
+          setHeadline(tierLabel(tier) || 'SCOPRI LA CARTA','');
+          wrap.classList.add('fx-charging');
+          stage.classList.add('charge');
+          if(tier !== 'normal') softBeep('special');
+          await waitFor();
+          if(skipRequested) break;
+          wrap.classList.remove('fx-charging');
+          stage.classList.remove('charge');
+          flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+          wrap.classList.add('revealed');
+          softBeep('reveal');
+          await sleep(reducedMotion ? 20 : 380);
+          if(skipRequested) break;
+          setHeadline('',`HAI TROVATO ${textSafe(card.name || 'CARTA')}`);
+          progress.style.width = `${((i+1)/cards.length)*100}%`;
+          await waitFor();
         }
-        if(skipRequested) break;
-        setHeadline(tierLabel(tier) || 'SCOPRI LA CARTA','');
-        wrap.classList.add('fx-charging');
-        stage.classList.add('charge');
-        if(tier !== 'normal') softBeep('special');
-        await waitFor(reducedMotion ? 50 : tier === 'hof' ? 750 : tier === 'legend' ? 540 : tier === 'senatore' ? 410 : 240);
-        if(skipRequested) break;
-        wrap.classList.remove('fx-charging');
-        stage.classList.remove('charge');
-        flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
-        wrap.classList.add('revealed');
-        softBeep('reveal');
-        await waitFor(reducedMotion ? 30 : 400);
-        if(skipRequested) break;
-        setHeadline('',`HAI TROVATO ${textSafe(card.name || 'CARTA')}`);
-        progress.style.width = `${((i+1)/cards.length)*100}%`;
-        await waitFor(reducedMotion ? 100 : tier === 'hof' ? 1950 : tier === 'legend' ? 1650 : 1300);
       }
       /* Riepilogo anche quando si salta: le carte sono gia state assegnate dal core. */
       root.classList.remove('tier-senatore','tier-legend','tier-hof');
@@ -1057,7 +1113,20 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
         tile.className='fx-summary-card'+(tier !== 'normal' ? ' tier-'+tier : '');
         tile.style.setProperty('--d',`${idx*.1}s`);
         const picture=document.createElement('img');
-        picture.src=imgSrc(card); picture.alt=textSafe(card.name);
+        picture.alt=textSafe(card.name);
+        const addSummaryFallback=()=>{
+          if(tile.querySelector('.fx-summary-fallback')) return;
+          picture.remove();
+          const fb=document.createElement('div');
+          fb.className='fx-summary-fallback';
+          const b=document.createElement('b'); b.textContent=textSafe(card.name||'New Player');
+          const em=document.createElement('em'); em.textContent='Grafica in arrivo';
+          fb.append(b,em);
+          tile.prepend(fb);
+        };
+        picture.onerror=addSummaryFallback;
+        const src=imgSrc(card);
+        if(src) picture.src=src; else queueMicrotask(addSummaryFallback);
         const name=document.createElement('span'); name.textContent=textSafe(card.name||'Carta');
         tile.append(picture,name);
         if(tier !== 'normal'){
@@ -1100,5 +1169,5 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
     }
   }
 
-  window.FUTTU_PACK_OPENING = { version:'3.0.0', play:playOpening };
+  window.FUTTU_PACK_OPENING = { version:'3.3.0', play:playOpening };
 })();
