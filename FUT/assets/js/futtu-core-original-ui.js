@@ -820,6 +820,38 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
 @keyframes fxName{to{opacity:1;transform:translateY(0)}}
 @keyframes fxSummaryIn{to{opacity:1;transform:translateY(0) scale(1)}}
 @media (max-width:700px){#${ROOT_ID} .fx-card-wrap{width:min(78vw,520px);max-height:70vh}#${ROOT_ID} .fx-top{top:3vh}#${ROOT_ID} .fx-summary-card{width:min(40vw,210px)}#${ROOT_ID} .fx-hint{display:none}#${ROOT_ID} .fx-meta{font-size:clamp(24px,8vw,46px);padding:0 16px}}
+
+#${ROOT_ID} .fx-top{top:3.3vh}
+#${ROOT_ID} .fx-count{font-size:clamp(11px,.8vw,14px)}
+#${ROOT_ID} .fx-meta{font-size:clamp(29px,4.25vw,76px);transition:opacity .23s,transform .23s;max-width:min(94vw,1350px)}
+#${ROOT_ID} .fx-meta.fx-pop{animation:fxV3Pop .44s cubic-bezier(.16,.85,.2,1) both}
+#${ROOT_ID} .fx-card-wrap{width:min(44vw,640px,calc(77vh * 690 / 987));max-height:77vh}
+#${ROOT_ID} .fx-card-wrap.fx-charging::before{animation:fxCharge .9s ease-in-out infinite alternate}
+#${ROOT_ID} .fx-card-wrap.fx-charging{animation:fxChargeCard .72s ease-in-out infinite alternate}
+#${ROOT_ID} .fx-scene{padding-top:7vh}
+#${ROOT_ID} .fx-skip{position:absolute;top:3vh;right:2.5vw;z-index:35;cursor:pointer;border:1px solid rgba(255,255,255,.3);border-radius:999px;background:rgba(12,14,25,.68);color:#fff;font:700 12px/1 Inter,ui-sans-serif,system-ui,sans-serif;letter-spacing:.045em;padding:13px 17px;backdrop-filter:blur(9px);transition:background .2s,border-color .2s}
+#${ROOT_ID} .fx-skip:hover,#${ROOT_ID} .fx-skip:focus-visible{background:rgba(255,255,255,.2);border-color:#fff}
+#${ROOT_ID} .fx-stage{position:absolute;left:50%;top:18vh;transform:translateX(-50%);width:min(54vw,660px);height:1px;z-index:12;background:linear-gradient(90deg,transparent,var(--fx-a),transparent);opacity:.4;transition:opacity .2s}
+#${ROOT_ID} .fx-stage.charge{opacity:1;box-shadow:0 0 28px var(--fx-a)}
+#${ROOT_ID} .fx-summary{background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--fx-a) 24%,#070711),#04050b 82%);overflow-y:auto;justify-content:center;gap:1.4vh}
+#${ROOT_ID} .fx-summary-grid{align-items:flex-start;gap:clamp(12px,2vw,28px)}
+#${ROOT_ID} .fx-summary-card{width:min(24vw,260px);aspect-ratio:auto;filter:none;position:relative;--fx-card-glow:var(--fx-a)}
+#${ROOT_ID} .fx-summary-card img{width:100%;aspect-ratio:690/987;height:auto;object-fit:contain;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--fx-card-glow) 48%,transparent))}
+#${ROOT_ID} .fx-summary-card.tier-senatore{--fx-card-glow:#f0bd67}
+#${ROOT_ID} .fx-summary-card.tier-legend{--fx-card-glow:#a45cff}
+#${ROOT_ID} .fx-summary-card.tier-hof{--fx-card-glow:#f7da73}
+#${ROOT_ID} .fx-summary-card .fx-tier{font-size:10px;font-weight:900;letter-spacing:.12em;color:var(--fx-card-glow);margin-top:5px;text-transform:uppercase}
+#${ROOT_ID} .fx-summary-card span{font-size:clamp(11px,1.05vw,15px);letter-spacing:.01em;overflow-wrap:anywhere}
+#${ROOT_ID} .fx-summary-title{margin-bottom:2vh}
+#${ROOT_ID} .fx-summary-close{margin-top:2vh}
+#${ROOT_ID} .fx-hint{pointer-events:none}
+#${ROOT_ID}.tier-hof .fx-flash.go{animation-duration:.85s}
+@keyframes fxV3Pop{0%{opacity:0;transform:translateY(14px) scale(.95);filter:blur(6px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+@keyframes fxCharge{from{transform:scale(.94);opacity:.62}to{transform:scale(1.2);opacity:1}}
+@keyframes fxChargeCard{from{transform:translateY(1px) scale(1);filter:drop-shadow(0 0 24px var(--fx-a))}to{transform:translateY(-8px) scale(1.025);filter:drop-shadow(0 0 48px var(--fx-a))}}
+@media(max-width:700px){#${ROOT_ID} .fx-card-wrap{width:min(84vw,calc(67vh * 690 / 987));max-height:67vh}#${ROOT_ID} .fx-scene{padding-top:9vh}#${ROOT_ID} .fx-top{top:7vh}#${ROOT_ID} .fx-skip{top:1.6vh;right:3vw}#${ROOT_ID} .fx-summary{justify-content:flex-start;padding:8vh 3vw 5vh}#${ROOT_ID} .fx-summary-card{width:min(42vw,205px)}#${ROOT_ID} .fx-summary-title{font-size:clamp(23px,6vw,38px)}#${ROOT_ID} .fx-stage{top:18vh}}
+@media(max-height:650px){#${ROOT_ID} .fx-card-wrap{width:min(32vw,calc(65vh * 690 / 987));max-height:65vh}#${ROOT_ID} .fx-top{top:2vh}#${ROOT_ID} .fx-meta{font-size:clamp(22px,4vh,42px)}#${ROOT_ID} .fx-summary{justify-content:flex-start;padding-top:6vh}}
+
 @media (prefers-reduced-motion:reduce){#${ROOT_ID} *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 `;
     document.head.appendChild(style);
@@ -864,11 +896,15 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
 
   function imgSrc(card){ return card && card.img ? card.img : ''; }
 
+  function textSafe(value){ return String(value == null ? '' : value); }
+  function tierLabel(tier){ return ({hof:'HALL OF FAME',legend:'LEGEND',senatore:'SENATORE'})[tier] || ''; }
+
   async function playOpening({mode, packName, cover, cards}){
     ensureStyle();
     const palette = modePalette(mode);
     const old = document.getElementById(ROOT_ID);
     if(old) old.remove();
+    if(!Array.isArray(cards) || !cards.length) return;
 
     const root = document.createElement('div');
     root.id = ROOT_ID;
@@ -878,9 +914,11 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
     root.style.setProperty('--fx-bg', palette.c);
     root.innerHTML = `
       <div class="fx-progress"></div><div class="fx-beams"></div><div class="fx-floor"></div>
-      <div class="fx-top"><div class="fx-count"></div><div class="fx-kicker">${String(packName||'PACK').toUpperCase()}</div><div class="fx-meta"></div></div>
-      <div class="fx-scene"><div class="fx-card-wrap"><div class="fx-card fx-back">${cover?`<img src="${cover}" alt="">`:'<div class="fx-mystery">?</div>'}</div><div class="fx-card fx-front"><img alt=""></div></div></div>
-      <div class="fx-name"><small>Hai trovato</small><strong></strong></div><div class="fx-hint">Clic / Spazio per continuare</div><div class="fx-flash"></div><div class="fx-vignette"></div>
+      <div class="fx-top"><div class="fx-count"></div><div class="fx-kicker"></div><div class="fx-meta"></div></div>
+      <div class="fx-stage" aria-hidden="true"></div>
+      <div class="fx-scene"><div class="fx-card-wrap"><div class="fx-card fx-back"></div><div class="fx-card fx-front"><img alt=""></div></div></div>
+      <button class="fx-skip" type="button">Salta animazione ↠</button>
+      <div class="fx-hint">Clic / Spazio per continuare</div><div class="fx-flash"></div><div class="fx-vignette"></div>
       <div class="fx-summary"><div class="fx-summary-title">Pacchetto completato</div><div class="fx-summary-grid"></div><button class="fx-summary-close" type="button">Continua</button></div>`;
     makeParticles(root);
     document.body.appendChild(root);
@@ -892,86 +930,175 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
     const back = root.querySelector('.fx-back');
     const frontImg = root.querySelector('.fx-front img');
     const flash = root.querySelector('.fx-flash');
-    const nameBox = root.querySelector('.fx-name');
-    const nameStrong = root.querySelector('.fx-name strong');
     const progress = root.querySelector('.fx-progress');
+    const stage = root.querySelector('.fx-stage');
     const summary = root.querySelector('.fx-summary');
     const summaryGrid = root.querySelector('.fx-summary-grid');
     const closeBtn = root.querySelector('.fx-summary-close');
+    const skipBtn = root.querySelector('.fx-skip');
+    const hint = root.querySelector('.fx-hint');
 
-    let advanceResolver = null;
-    const advance = () => { if(advanceResolver){ const r = advanceResolver; advanceResolver = null; r(); } };
-    const waitAdvance = (fallback=1250) => new Promise(resolve => {
-      let done=false;
-      const finish=()=>{if(done)return;done=true;advanceResolver=null;resolve();};
-      advanceResolver=finish;
-      setTimeout(finish,fallback);
+    let skipRequested = false;
+    let waiting = null;
+    let closed = false;
+    const waitFor = (ms) => new Promise(resolve => {
+      if(skipRequested){ resolve(); return; }
+      const current = {timer:null, done:false, resolve};
+      current.finish = () => {
+        if(current.done) return;
+        current.done = true;
+        clearTimeout(current.timer);
+        if(waiting === current) waiting = null;
+        resolve();
+      };
+      waiting = current;
+      current.timer = setTimeout(current.finish,ms);
     });
-    const keyHandler = e => { if([' ','Enter','ArrowRight'].includes(e.key)){ e.preventDefault(); advance(); } };
-    root.addEventListener('click', e => { if(!e.target.closest('.fx-summary')) advance(); });
-    window.addEventListener('keydown', keyHandler, true);
-
-    const steps = [
-      {key:'role', label:'RUOLO', val:c=>c.role || '—'},
-      {key:'rarity', label:'RARITÀ', val:c=>c.rarity || '—'},
-      {key:'series', label:'SERIE', val:c=>c.series || '—'}
-    ];
-
-    for(let i=0;i<cards.length;i++){
-      const card = cards[i];
-      const tier = specialTier(card);
-      root.classList.remove('tier-senatore','tier-legend','tier-hof');
-      if(tier !== 'normal') root.classList.add(`tier-${tier}`);
-      count.textContent = `CARTA ${i+1} DI ${cards.length}`;
-      progress.style.width = `${((i)/(cards.length))*100}%`;
-      wrap.classList.remove('revealed');
-      nameBox.classList.remove('show');
-      frontImg.src = imgSrc(card);
-      if(cover){ back.innerHTML = `<img src="${cover}" alt="">`; }
-      else { back.innerHTML = '<div class="fx-mystery">?</div>'; }
-      kicker.textContent = String(packName || 'PACK').toUpperCase();
-      meta.textContent = '';
-      await sleep(260);
-
-      for(const step of steps){
-        kicker.textContent = step.label;
-        meta.textContent = step.val(card);
-        softBeep('step');
-        await waitAdvance(tier === 'normal' ? 650 : 780);
+    const advance = () => { if(waiting) waiting.finish(); };
+    const requestSkip = () => {
+      skipRequested = true;
+      if(waiting) waiting.finish();
+    };
+    const onSkip = e => { e.stopPropagation(); requestSkip(); };
+    skipBtn.addEventListener('click',onSkip);
+    const onRootClick = e => {
+      if(e.target.closest('.fx-summary,.fx-skip')) return;
+      advance();
+    };
+    root.addEventListener('click',onRootClick);
+    const onKey = e => {
+      if(closed) return;
+      if(e.key === 'Escape' && !summary.classList.contains('show')){
+        e.preventDefault(); requestSkip(); return;
       }
+      if([' ','Enter','ArrowRight'].includes(e.key) && !summary.classList.contains('show')){
+        e.preventDefault(); advance();
+      }
+    };
+    window.addEventListener('keydown',onKey,true);
 
-      kicker.textContent = tier === 'hof' ? 'HALL OF FAME' : tier === 'legend' ? 'LEGEND' : tier === 'senatore' ? 'SENATORE' : 'REVEAL';
-      meta.textContent = '—';
-      if(tier !== 'normal') softBeep('special');
-      await sleep(tier === 'hof' ? 520 : tier === 'legend' ? 380 : 180);
-      flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
-      wrap.classList.add('revealed');
-      softBeep('reveal');
-      await sleep(300);
-      const foundName = card.name || 'CARTA';
-      kicker.textContent = '';
-      meta.textContent = `HAI TROVATO ${foundName}`;
-      nameStrong.textContent = foundName;
-      progress.style.width = `${((i+1)/(cards.length))*100}%`;
-      await waitAdvance(tier === 'hof' ? 1750 : tier === 'legend' ? 1500 : 1100);
+    const setHeadline = (label, value) => {
+      kicker.textContent = textSafe(label);
+      meta.textContent = textSafe(value);
+      meta.classList.remove('fx-pop');
+      void meta.offsetWidth;
+      if(value) meta.classList.add('fx-pop');
+    };
+    const steps = [
+      {label:'RUOLO', get:c=>c.role},
+      {label:'RARITÀ', get:c=>c.rarity},
+      {label:'SERIE', get:c=>c.series}
+    ];
+    const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let afterSummary = null;
+    try {
+      for(let i=0;i<cards.length && !skipRequested;i++){
+        const card = cards[i];
+        const tier = specialTier(card);
+        root.classList.remove('tier-senatore','tier-legend','tier-hof');
+        /* Il colore pre-reveal anticipa la rarita senza mostrare il nome. */
+        if(tier !== 'normal') root.classList.add('tier-'+tier);
+        count.textContent = `CARTA ${i+1} DI ${cards.length}`;
+        progress.style.width = `${(i/cards.length)*100}%`;
+        wrap.classList.remove('revealed','fx-charging');
+        stage.classList.remove('charge');
+        flash.classList.remove('go');
+        frontImg.src = imgSrc(card);
+        frontImg.alt = textSafe(card.name || 'Carta');
+        back.replaceChildren();
+        if(cover){
+          const backImg = document.createElement('img');
+          backImg.src=cover; backImg.alt='Retro del pacchetto'; back.append(backImg);
+        }else{
+          const question=document.createElement('div');
+          question.className='fx-mystery'; question.textContent='?'; back.append(question);
+        }
+        setHeadline(String(packName||'PACK').toUpperCase(),'');
+        if(!reducedMotion) await waitFor(220);
+        if(skipRequested) break;
+        for(const step of steps){
+          const value = textSafe(step.get(card)).trim();
+          if(!value) continue; // Nessun trattino per valori mancanti.
+          setHeadline(step.label,value);
+          softBeep('step');
+          await waitFor(reducedMotion ? 100 : tier === 'normal' ? 670 : 810);
+          if(skipRequested) break;
+        }
+        if(skipRequested) break;
+        setHeadline(tierLabel(tier) || 'SCOPRI LA CARTA','');
+        wrap.classList.add('fx-charging');
+        stage.classList.add('charge');
+        if(tier !== 'normal') softBeep('special');
+        await waitFor(reducedMotion ? 50 : tier === 'hof' ? 750 : tier === 'legend' ? 540 : tier === 'senatore' ? 410 : 240);
+        if(skipRequested) break;
+        wrap.classList.remove('fx-charging');
+        stage.classList.remove('charge');
+        flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+        wrap.classList.add('revealed');
+        softBeep('reveal');
+        await waitFor(reducedMotion ? 30 : 400);
+        if(skipRequested) break;
+        setHeadline('',`HAI TROVATO ${textSafe(card.name || 'CARTA')}`);
+        progress.style.width = `${((i+1)/cards.length)*100}%`;
+        await waitFor(reducedMotion ? 100 : tier === 'hof' ? 1950 : tier === 'legend' ? 1650 : 1300);
+      }
+      /* Riepilogo anche quando si salta: le carte sono gia state assegnate dal core. */
+      root.classList.remove('tier-senatore','tier-legend','tier-hof');
+      root.querySelector('.fx-scene').style.display = 'none';
+      root.querySelector('.fx-top').style.display = 'none';
+      stage.style.display = 'none';
+      skipBtn.style.display = 'none';
+      hint.style.display = 'none';
+      progress.style.width = '100%';
+      summaryGrid.replaceChildren();
+      cards.forEach((card,idx) => {
+        const tile=document.createElement('div');
+        const tier=specialTier(card);
+        tile.className='fx-summary-card'+(tier !== 'normal' ? ' tier-'+tier : '');
+        tile.style.setProperty('--d',`${idx*.1}s`);
+        const picture=document.createElement('img');
+        picture.src=imgSrc(card); picture.alt=textSafe(card.name);
+        const name=document.createElement('span'); name.textContent=textSafe(card.name||'Carta');
+        tile.append(picture,name);
+        if(tier !== 'normal'){
+          const tag=document.createElement('div');
+          tag.className='fx-tier'; tag.textContent=tierLabel(tier);
+          tile.append(tag);
+        }
+        summaryGrid.append(tile);
+      });
+      summary.classList.add('show');
+      await new Promise(resolve => {
+        let resolved = false;
+        const finish=()=>{
+          if(resolved) return;
+          resolved=true;
+          closeBtn.removeEventListener('click',finish);
+          window.removeEventListener('keydown',onSummaryKey,true);
+          resolve();
+        };
+        const onSummaryKey=e=>{
+          if(['Enter',' ','Escape'].includes(e.key)){
+            e.preventDefault(); finish();
+          }
+        };
+        closeBtn.addEventListener('click',finish);
+        window.addEventListener('keydown',onSummaryKey,true);
+      });
+    } finally {
+      closed = true;
+      if(waiting) waiting.finish();
+      window.removeEventListener('keydown',onKey,true);
+      root.removeEventListener('click',onRootClick);
+      skipBtn.removeEventListener('click',onSkip);
+      if(root.isConnected){
+        if(!reducedMotion && root.animate){
+          try {await root.animate([{opacity:1},{opacity:0}],{duration:240,easing:'ease'}).finished;}catch(e){}
+        }
+        root.remove();
+      }
     }
-
-    root.querySelector('.fx-scene').style.opacity = '0';
-    root.querySelector('.fx-top').style.opacity = '0';
-nameBox.style.opacity = '0';
-    summaryGrid.innerHTML = cards.map((c,idx)=>`<div class="fx-summary-card" style="--d:${idx*.1}s"><img src="${imgSrc(c)}" alt=""><span>${c.name||''}</span></div>`).join('');
-    summary.classList.add('show');
-
-    await new Promise(resolve => {
-      const finish = () => resolve();
-      closeBtn.addEventListener('click', finish, {once:true});
-      window.addEventListener('keydown', function done(e){ if(['Enter',' ','Escape'].includes(e.key)){ window.removeEventListener('keydown',done,true); finish(); } }, true);
-    });
-
-    window.removeEventListener('keydown', keyHandler, true);
-    root.animate([{opacity:1},{opacity:0}],{duration:260,easing:'ease'}).finished.catch(()=>{}).finally(()=>root.remove());
-    await sleep(280);
   }
 
-  window.FUTTU_PACK_OPENING = { version:'2.1.0', play:playOpening };
+  window.FUTTU_PACK_OPENING = { version:'3.0.0', play:playOpening };
 })();
