@@ -1,0 +1,2328 @@
+/* V3.2.7 · Dashboard stagione e navigazione carriera */
+.league-nav{
+  grid-template-columns:repeat(7,minmax(0,1fr))!important;
+  position:sticky;
+  top:8px;
+  z-index:500;
+  box-shadow:0 10px 30px rgba(0,0,0,.24);
+}
+.season-next-card{
+  background:linear-gradient(145deg,#261b46 0%,#17112f 72%)!important;
+}
+.season-next-actions{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)!important}
+#playMatchdayBtn{min-height:64px;font-family:'Minecraftia',monospace;font-size:15px;letter-spacing:.04em}
+#playMatchdayBtn.is-live-ready{
+  background:linear-gradient(180deg,#ff664e,#dc342f)!important;
+  border-color:#ff806c!important;
+  color:#fff!important;
+  box-shadow:0 0 0 2px rgba(255,89,69,.14),0 8px 24px rgba(220,52,47,.25);
+}
+.compact-standings-table .standings-separator td{color:#766a98;text-align:center!important;letter-spacing:.2em;padding:4px!important}
+.expert-advice-panel{padding:18px;overflow:hidden}
+.expert-advice-head small{color:#8f84b2;font-size:9px;text-align:right}
+.expert-advice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.expert-advice-card{
+  min-width:0;min-height:132px;padding:13px;border:2px solid #0d0818;background:linear-gradient(180deg,#21183f,#17112f);
+  display:grid;grid-template-columns:50px minmax(0,1fr);gap:10px;text-align:left;color:#fff;box-shadow:3px 3px 0 rgba(0,0,0,.28);
+}
+.expert-advice-button{cursor:pointer;width:100%;font:inherit;border-radius:0}
+.expert-advice-button:hover{transform:translateY(-2px);border-color:#5f4c9b}
+.expert-avatar{width:50px;height:50px;display:grid;place-items:center;background:#ffd84d;color:#281800;border:3px solid #0d0818;font-family:'Minecraftia',monospace;font-size:18px}
+.expert-advice-copy{min-width:0}.expert-advice-copy>span{display:block;color:#9f95c5;font-size:8px;font-weight:900;letter-spacing:.08em}.expert-advice-copy>strong{display:block;margin:4px 0 6px;color:#fff8d6;font-family:'Minecraftia',monospace;font-size:12px;line-height:1.4}.expert-advice-copy p{margin:0;color:#c8bae9;font-size:10px;line-height:1.55}.expert-advice-copy p b{color:#ffd84d}.expert-player-pill{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid #3b2d5d}.expert-player-pill small{display:grid;place-items:center;width:24px;height:24px;background:#3b2d5d;color:#ffd84d;font-weight:900}.expert-player-pill b{font-size:10px;color:#fff}
+.shop-coming-panel{padding:20px}.shop-coming-hero{max-width:820px;padding:6px 4px 20px}.shop-coming-hero h3{margin:7px 0 8px;font-size:24px;color:#fff8d6}.shop-coming-hero p{margin:0;color:#b9add8;line-height:1.6}.shop-preview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.shop-preview-card{min-height:240px;padding:18px;background:#21183a;border:3px solid #0d0818;box-shadow:4px 4px 0 rgba(0,0,0,.3);display:flex;flex-direction:column;align-items:flex-start}.shop-preview-icon{font-size:32px;margin-bottom:12px}.shop-preview-card strong{font-family:'Minecraftia',monospace;font-size:13px;line-height:1.5;color:#ffd84d}.shop-preview-card p{flex:1;margin:9px 0 16px;color:#c8bae9;font-size:11px;line-height:1.6}.shop-preview-card button{width:100%;border-radius:0}
+@media(max-width:900px){.expert-advice-grid,.shop-preview-grid{grid-template-columns:1fr}.league-nav{position:static}.season-next-actions{grid-template-columns:1fr!important}}
+@media(max-width:700px){.league-nav{grid-template-columns:repeat(2,1fr)!important}.league-nav button:last-child{grid-column:1/-1}.expert-advice-head{align-items:flex-start}.expert-advice-head small{display:none}}
+
+
+/* V3.2.8 · Flusso giornata: Continua → carte → Diretta Gol */
+#playMatchdayBtn.is-event-pending{
+  background:linear-gradient(180deg,#8f59ff,#6532c7)!important;
+  border-color:#aa82ff!important;
+  color:#fff!important;
+  box-shadow:0 0 0 2px rgba(143,89,255,.14),0 8px 24px rgba(101,50,199,.24);
+}
+.formation-choice-header h2{max-width:760px}
+.formation-choice-header p{max-width:820px}
+
+
+/* V3.2.9 · News dinamiche persistenti */
+.hub-news-head-actions{display:flex;align-items:center;gap:9px}.hub-news-all-btn{min-height:32px;padding:6px 9px!important;font-size:8px!important;letter-spacing:.07em}.hub-news-meta-line{display:flex;align-items:center;gap:7px;margin-bottom:5px}.hub-news-meta-line em{font-style:normal;font-size:7px;font-weight:950;letter-spacing:.08em;padding:3px 5px;border:1px solid #4d416d;background:#21183a;color:#bfb4df}.hub-news-meta-line em.confirmed{border-color:#2f7650;color:#71e49e;background:#14291f}.hub-news-meta-line em.rumor{border-color:#966d2e;color:#ffd27a;background:#30240f}.hub-news-meta-line span{font-size:7px;color:#84799f;font-weight:900}.hub-news-item.type-result{border-color:#4ecf7a}.hub-news-item.type-table{border-color:#5aa9e6}.hub-news-item.type-streak{border-color:#c875ff}.hub-news-item.type-rivalry{border-color:#ff657a}.hub-news-item.type-rumor{border-color:#d59a3a}.hub-news-item.type-record{border-color:#ffb642}.hub-news-item.type-spotlight{border-color:#ffd84d}
+.season-news-modal{position:fixed;inset:0;z-index:12500;display:none;place-items:center;padding:22px}.season-news-modal.show{display:grid}.season-news-modal-backdrop{position:absolute;inset:0;background:rgba(5,3,12,.86);backdrop-filter:blur(6px)}.season-news-modal-dialog{position:relative;width:min(920px,96vw);max-height:90vh;overflow:auto;padding:20px;border:3px solid #0d0818;background:linear-gradient(180deg,#20143e,#100b22);box-shadow:10px 10px 0 rgba(0,0,0,.45);color:#fff}.season-news-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:14px;border-bottom:2px solid #0d0818}.season-news-modal-head h2{margin:4px 0 2px;font-family:'Minecraftia',monospace;font-size:22px;line-height:1.45;color:#fff8d6}.season-news-modal-head small{color:#9f95c5;font-size:9px}.season-news-close{width:42px;height:42px;padding:0!important;font-size:18px!important}.season-news-legend{display:flex;gap:18px;flex-wrap:wrap;padding:12px 0;color:#a99fca;font-size:8px}.season-news-legend span{display:flex;align-items:center;gap:6px}.season-news-legend i{width:10px;height:10px;border:2px solid #0d0818}.season-news-legend i.confirmed{background:#4fd286}.season-news-legend i.rumor{background:#d59a3a}.season-news-archive-list{display:grid;gap:9px}.season-news-archive-item{position:relative;padding:13px 14px;border:2px solid #342650;background:#17112f;box-shadow:3px 3px 0 rgba(0,0,0,.25)}.season-news-archive-item.is-clickable{cursor:pointer}.season-news-archive-item.is-clickable:hover{border-color:#6f59ad;transform:translateY(-1px)}.season-news-archive-item>strong{display:block;margin:7px 0 5px;color:#fff8d6;font-family:'Minecraftia',monospace;font-size:11px;line-height:1.55}.season-news-archive-item p{margin:0;color:#c8bae9;font-size:10px;line-height:1.55}.season-news-archive-item>small{display:block;margin-top:7px;color:#756b98;font-size:8px}.season-news-archive-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.season-news-archive-meta>span,.season-news-archive-meta>b,.season-news-archive-meta>em{font-size:7px;font-weight:950;letter-spacing:.08em;font-style:normal;padding:3px 5px;border:1px solid #4b3b70}.season-news-archive-meta>span{color:#ffd84d}.season-news-archive-meta>b{color:#a99fca}.season-news-archive-meta>em.confirmed{color:#71e49e;border-color:#2f7650;background:#14291f}.season-news-archive-meta>em.rumor{color:#ffd27a;border-color:#966d2e;background:#30240f}.season-news-archive-item.type-injury,.season-news-archive-item.type-suspension{border-left:5px solid #ff667e}.season-news-archive-item.type-result{border-left:5px solid #4fd286}.season-news-archive-item.type-form,.season-news-archive-item.type-spotlight{border-left:5px solid #ffd84d}.season-news-archive-item.type-table{border-left:5px solid #5aa9e6}.season-news-archive-item.type-rivalry{border-left:5px solid #ff657a}.season-news-archive-item.type-rumor{border-left:5px solid #d59a3a}.season-news-archive-item.type-streak{border-left:5px solid #c875ff}
+@media(max-width:700px){.hub-news-head-actions{align-items:flex-end;flex-direction:column}.season-news-modal{padding:8px}.season-news-modal-dialog{padding:14px;max-height:94vh}.season-news-legend{gap:8px;flex-direction:column}}
+
+
+/* V3.2.10 · Pagina Rose: confronto rosa completa / Miglior XI automatico */
+.league-season-rosters .league-roster-scroll{
+  overflow-x:visible;
+  overflow-y:visible;
+  padding:14px;
+}
+.league-season-rosters .manager-list.league-roster-grid.summary-league-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  min-width:0!important;
+  gap:16px!important;
+}
+.league-season-rosters .summary-manager-card{
+  min-width:0!important;
+  border-color:#31275b!important;
+  background:linear-gradient(180deg,#100b24,#0b0b1c)!important;
+}
+.league-season-rosters .summary-manager-card.is-user{
+  border-color:#d2af42!important;
+}
+.league-season-rosters .summary-manager-card .league-manager-head{
+  min-height:132px;
+}
+.manager-roster-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+  border-top:2px solid #0d0818;
+  border-bottom:2px solid #0d0818;
+  background:#120d27;
+}
+.manager-roster-tabs button{
+  min-height:42px;
+  border:0!important;
+  border-radius:0!important;
+  background:#17112f!important;
+  color:#9388bb!important;
+  font-family:var(--ui-font,ui-monospace,monospace);
+  font-size:9px;
+  letter-spacing:.08em;
+  padding:8px 10px!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+.manager-roster-tabs button+button{border-left:2px solid #0d0818!important}
+.manager-roster-tabs button.active{
+  background:#ffd84d!important;
+  color:#251700!important;
+}
+.league-season-rosters .manager-roster-view .league-roster{
+  grid-template-columns:1fr 1fr;
+  align-items:start;
+  gap:9px;
+  padding:10px;
+}
+.league-season-rosters .manager-roster-view .league-role-block{
+  min-width:0;
+}
+.manager-bestxi-view{
+  padding:10px;
+}
+.manager-best-xi{
+  display:grid;
+  gap:9px;
+}
+.best-xi-summary{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+}
+.best-xi-summary>div{
+  min-height:52px;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:3px;
+  border:2px solid #0d0818;
+  background:#1a1335;
+  text-align:center;
+}
+.best-xi-summary span{
+  font-family:var(--ui-font,ui-monospace,monospace);
+  font-size:7px;
+  letter-spacing:.1em;
+  color:#8e83b5;
+}
+.best-xi-summary strong{
+  font-family:'Minecraftia',var(--ui-font,monospace);
+  font-size:12px;
+  line-height:1.4;
+  color:#ffd84d;
+}
+.best-xi-note{
+  padding:8px 10px;
+  border:1px solid #342950;
+  background:#130e28;
+  color:#aaa0cb;
+  font-size:9px;
+  line-height:1.4;
+  text-align:center;
+}
+.best-xi-pitch{
+  position:relative;
+  width:100%;
+  height:440px;
+  overflow:hidden;
+  border:4px solid #0d0818;
+  background:repeating-linear-gradient(90deg,#176840 0 52px,#1b7548 52px 104px);
+  box-shadow:5px 5px 0 rgba(0,0,0,.34);
+}
+.best-xi-pitch:before{
+  content:'';
+  position:absolute;
+  inset:14px;
+  border:2px solid rgba(255,255,255,.68);
+  pointer-events:none;
+}
+.best-xi-half{
+  position:absolute;
+  left:14px;right:14px;top:50%;height:2px;
+  background:rgba(255,255,255,.68);
+}
+.best-xi-circle{
+  position:absolute;
+  left:50%;top:50%;
+  width:78px;height:78px;
+  border:2px solid rgba(255,255,255,.68);
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+}
+.best-xi-box{
+  position:absolute;
+  left:50%;
+  width:190px;
+  height:72px;
+  border:2px solid rgba(255,255,255,.68);
+  transform:translateX(-50%);
+}
+.best-xi-box-top{top:14px;border-top:0}
+.best-xi-box-bottom{bottom:14px;border-bottom:0}
+.best-xi-player{
+  position:absolute!important;
+  z-index:3;
+  width:96px;
+  min-height:48px;
+  display:grid!important;
+  grid-template-columns:22px minmax(0,1fr)!important;
+  grid-template-rows:auto auto!important;
+  gap:1px 5px!important;
+  align-items:center!important;
+  padding:5px 6px!important;
+  border:2px solid #0d0818!important;
+  border-radius:2px!important;
+  box-shadow:3px 3px 0 rgba(0,0,0,.34)!important;
+  transform:translate(-50%,-50%)!important;
+  text-align:left!important;
+  color:#fff!important;
+}
+.best-xi-player:hover{
+  transform:translate(-50%,-50%)!important;
+  filter:brightness(1.18);
+}
+.best-xi-player>span{
+  grid-row:1/3;
+  width:22px;
+  height:31px;
+  display:grid;
+  place-items:center;
+  background:#0d0a18;
+  color:#ffd84d;
+  font-family:var(--ui-font,monospace);
+  font-size:7px;
+}
+.best-xi-player strong{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-family:var(--ui-font,monospace);
+  font-size:8.5px;
+  line-height:1.05;
+}
+.best-xi-player small{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#d8cfeb;
+  font-size:7px;
+  line-height:1.05;
+}
+.best-xi-player.role-P{background:#715817!important}
+.best-xi-player.role-D{background:#176748!important}
+.best-xi-player.role-C{background:#1d5688!important}
+.best-xi-player.role-A{background:#7c303b!important}
+.best-xi-player.is-unavailable{
+  border-color:#ff6078!important;
+  opacity:.72;
+  filter:saturate(.7);
+}
+.best-xi-warning{
+  padding:8px 10px;
+  border:2px solid #6d2838;
+  background:#2a111c;
+  color:#ff9cad;
+  font-size:8px;
+  line-height:1.4;
+}
+.best-xi-empty{padding:28px;text-align:center;color:#8e83b5}
+@media(max-width:1050px){
+  .league-season-rosters .manager-list.league-roster-grid.summary-league-grid{grid-template-columns:1fr!important}
+  .best-xi-pitch{height:480px}
+}
+@media(max-width:620px){
+  .league-season-rosters .league-roster-scroll{padding:8px}
+  .league-season-rosters .manager-roster-view .league-roster{grid-template-columns:1fr}
+  .best-xi-pitch{height:420px}
+  .best-xi-player{width:80px;min-height:44px;padding:4px!important}
+  .best-xi-player strong{font-size:7.5px}
+  .best-xi-player small{font-size:6.5px}
+}
+
+/* V3.2.11 · Economia carriera e Negozio */
+.career-wallet-chip{
+  min-width:86px;height:42px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:#17112f;border:3px solid #0d0818;box-shadow:3px 3px 0 rgba(0,0,0,.32);color:#fff8d6;
+  font-family:var(--ui-font,ui-monospace,Consolas,monospace);font-weight:900
+}
+.career-wallet-chip span{font-size:17px}.career-wallet-chip b{font-family:'Minecraftia',monospace;font-size:15px;color:#5cf285;line-height:1.2}.career-wallet-chip small{font-size:9px;color:#a99fca}
+.career-wallet-chip.compact{height:38px;min-width:78px}
+.shop-economy-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);gap:16px}
+.shop-wallet-panel,.shop-active-panel,.shop-catalog-panel{padding:20px}
+.shop-wallet-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px 24px;align-items:center;background:linear-gradient(135deg,#21183a,#17102f)}
+.shop-wallet-copy h3,.shop-active-panel h3{margin:6px 0 7px;color:#fff8d6;font-size:22px}.shop-wallet-copy p{margin:0;color:#b9add8;font-size:11px;line-height:1.55}
+.shop-wallet-value{min-width:180px;padding:15px 18px;display:flex;align-items:center;justify-content:center;gap:12px;background:#0f0b20;border:3px solid #ffd84d;box-shadow:5px 5px 0 rgba(0,0,0,.35)}
+.shop-wallet-value span{font-size:30px}.shop-wallet-value strong{font-family:'Minecraftia',monospace;font-size:34px;line-height:1.2;color:#5cf285}.shop-wallet-value small{font-size:13px;font-weight:900;color:#d8ccef}
+.shop-prize-rules{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap}.shop-prize-rules span{padding:7px 10px;background:#17112f;border:2px solid #0d0818;color:#c8bae9;font-size:9px}.shop-prize-rules b{color:#ffd84d}
+.shop-active-panel{display:flex;flex-direction:column;justify-content:center}.shop-active-summary{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.shop-active-summary span{padding:7px 9px;background:#173d2b;border:2px solid #0d0818;color:#6cf09f;font-size:9px;font-weight:900}.shop-active-summary small{color:#8f84b2}
+.shop-catalog-panel .season-card-head>small{font-size:9px;color:#8f84b2;text-align:right}
+.shop-items-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.shop-item-card{min-height:280px;padding:17px;display:flex;flex-direction:column;background:#21183a;border:3px solid #0d0818;box-shadow:4px 4px 0 rgba(0,0,0,.3)}
+.shop-item-card.is-active{border-color:#43d87b;box-shadow:inset 0 0 0 2px rgba(67,216,123,.16),4px 4px 0 rgba(0,0,0,.3)}
+.shop-item-top{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center}.shop-item-icon{display:grid;place-items:center;width:44px;height:44px;background:#120d25;border:2px solid #0d0818;font-size:24px}.shop-item-category{display:block;font-size:8px;letter-spacing:.1em;color:#9f95c5;font-weight:900}.shop-item-top h3{margin:4px 0 0;font-family:'Minecraftia',monospace;font-size:12px;line-height:1.45;color:#fff8d6}.shop-item-price{align-self:start;padding:5px 7px;background:#ffd84d;color:#281700;border:2px solid #0d0818;font-size:11px;white-space:nowrap}
+.shop-item-card>p{flex:1;margin:14px 0;color:#c8bae9;font-size:10px;line-height:1.6}.shop-item-effect{min-height:38px;margin-bottom:11px;padding:8px 9px;background:#17112f;border:2px solid #0d0818;color:#a99fca;font-size:9px;line-height:1.45}.shop-item-effect b{color:#5cf285}.shop-buy-btn{width:100%;min-height:43px;border-radius:0!important}.shop-buy-btn.active{background:#173d2b!important;color:#6cf09f!important;border-color:#1f7748!important;opacity:1!important}
+.season-player-starter-estimate{margin:16px 0 0;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:center;background:#17112f;border:2px solid #0d0818}.season-player-starter-estimate span{font-size:8px;font-weight:900;letter-spacing:.1em;color:#a99fca}.season-player-starter-estimate strong{grid-row:1/3;grid-column:2;font-family:'Minecraftia',monospace;font-size:22px;line-height:1.2;color:#5cf285}.season-player-starter-estimate small{font-size:8px;color:#8f84b2}.season-player-starter-estimate.is-locked strong{color:#9b91b6}
+.season-player-stat.is-premium-locked{background:#161126;opacity:.72}.season-player-stat.is-premium-locked strong{color:#9b91b6}.premium-data-lock b{color:#ffd84d}.player-form-badge.premium-locked{background:#251c3d!important;color:#a99fca!important}
+.result-career-prize{padding:16px 20px;align-items:center;justify-content:space-between;gap:16px;background:linear-gradient(90deg,#1e1832,#25361f);border-color:#6acf87}.result-career-prize span{font-size:9px;font-weight:900;letter-spacing:.1em;color:#c8bae9}.result-career-prize strong{font-family:'Minecraftia',monospace;font-size:20px;color:#5cf285}.result-career-prize small{font-size:9px;color:#ffd84d}
+.formation-card-rarity{display:inline-flex;align-items:center;justify-content:center;padding:3px 6px;border:1px solid rgba(255,255,255,.16);font-size:7px;font-weight:950;letter-spacing:.08em;white-space:nowrap}.formation-card-rarity.rarity-common{background:#293048;color:#d4d9e8}.formation-card-rarity.rarity-rare{background:#173f69;color:#75c8ff}.formation-card-rarity.rarity-epic{background:#5d2879;color:#ef9cff;box-shadow:0 0 12px rgba(205,92,255,.24)}
+.formation-card-front-footer{gap:6px;flex-wrap:wrap}.formation-card-front-footer .formation-card-flip-btn{margin-left:auto}.formation-card-back-top{gap:7px;flex-wrap:wrap}
+@media(max-width:1050px){.shop-items-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.shop-economy-layout{grid-template-columns:1fr}}
+@media(max-width:700px){.career-wallet-chip{order:-1}.shop-items-grid{grid-template-columns:1fr}.shop-wallet-panel{grid-template-columns:1fr}.shop-wallet-value{min-width:0;width:100%}.shop-prize-rules{grid-column:1}.result-career-prize{flex-direction:column;align-items:flex-start}}
+.result-header-actions{display:flex;align-items:center;gap:9px}
+@media(max-width:700px){.result-header-actions{width:100%;flex-wrap:wrap}.result-header-actions #resultContinueBtn{flex:1}}
+
+
+/* V3.2.12 · Scout Plus visibile direttamente in Schiera Formazione */
+.scout-starter-badge{
+  display:inline-flex;align-items:center;justify-content:center;width:max-content;
+  margin-top:3px;padding:3px 6px;border:2px solid #0d0818;
+  font-family:var(--ui-font,ui-monospace,monospace);font-size:8px;font-weight:900;line-height:1;
+  background:#241b3e;color:#ddd5f4;box-shadow:2px 2px 0 rgba(0,0,0,.22)
+}
+.scout-starter-badge.high{background:#173d2b;color:#68e99d;border-color:#0d281c}
+.scout-starter-badge.medium{background:#4d3d14;color:#ffd84d;border-color:#2c220b}
+.scout-starter-badge.low{background:#481825;color:#ff8fa0;border-color:#2b0d15}
+.lineup-slot .scout-starter-badge{grid-column:2;margin-top:1px;font-size:7px;padding:2px 4px;box-shadow:none}
+.bench-player{grid-template-columns:24px 28px minmax(0,1fr) 28px auto!important}
+.bench-player .scout-starter-badge{margin-top:0;white-space:nowrap}
+@media(max-width:760px){.bench-player{grid-template-columns:22px 28px minmax(0,1fr) auto!important}.bench-player>small{display:none}.scout-starter-badge{font-size:7px}}
+
+
+/* V3.2.13 · Assistente Tecnico: AUTO XI solo premium + formazione persistente */
+.lineup-toolbar-actions{flex-wrap:wrap;justify-content:flex-end}
+#carryLineupBtn.active{background:#1f6f48!important;color:#dcffe9!important;border-color:#49d98b!important;box-shadow:inset 0 0 0 1px rgba(73,217,139,.28)}
+#carryLineupBtn.hidden,#autoLineupBtn.hidden{display:none!important}
+@media(max-width:980px){.lineup-toolbar-actions{width:100%;justify-content:flex-start}}
+
+/* V3.2.14 · Formazione 2.0 */
+.assistant-coach-banner{
+  padding:14px 18px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:18px;
+  border-left:6px solid #55df8a!important;
+  background:linear-gradient(135deg,#173b2c,#15162d)!important;
+}
+.assistant-coach-banner h3{margin:4px 0 3px;font-family:'Minecraftia',monospace;font-size:14px;line-height:1.45;color:#72efa0}
+.assistant-coach-banner p{margin:0;color:#c8ddcf;font-size:10px;line-height:1.5}
+.assistant-coach-badge{padding:8px 10px;border:2px solid #0d0818;background:#55df8a;color:#092015;font-family:'Minecraftia',monospace;font-size:8px;line-height:1.4;box-shadow:3px 3px 0 rgba(0,0,0,.3)}
+#assistantFixOutBtn{background:#40231c!important;color:#ffd0a8!important;border-color:#87502f!important}
+#assistantFixOutBtn.hidden{display:none!important}
+.bench-order-hint{display:block;margin-top:3px;color:#7f74a5;font:8px/1.35 var(--ui-font,ui-monospace,monospace)}
+.bench-player-row{display:grid;grid-template-columns:minmax(0,1fr) 30px;gap:5px;align-items:stretch;margin-bottom:5px}
+.bench-player-row .bench-player{margin-bottom:0!important;height:100%}
+.bench-order-controls{display:grid;grid-template-rows:1fr 1fr;gap:3px}
+.bench-order-controls button{min-width:28px!important;padding:0!important;border-radius:0!important;background:#21183f!important;color:#ffd84d!important;font-size:9px!important;line-height:1!important}
+.bench-order-controls button:disabled{opacity:.25!important}
+.bench-player-row.is-unavailable .bench-player{box-shadow:inset 4px 0 0 #ff6279!important;border-color:#693040!important}
+@media(max-width:760px){
+  .assistant-coach-banner{grid-template-columns:1fr}.assistant-coach-badge{justify-self:start}
+  .bench-player-row{grid-template-columns:minmax(0,1fr) 28px}
+}
+
+
+/* V3.2.14.2 · AUTO XI modulare per abbonamenti */
+.lineup-toolbar-actions .auto-xi-analysis{
+  flex:1 0 100%;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:2px;
+  font-family:var(--ui-font,ui-monospace,monospace);
+  font-size:8px;
+  color:#b8add9;
+}
+.auto-xi-analysis strong{font-size:9px;color:#efeaff;margin-right:2px}
+.auto-xi-chip{padding:5px 7px;border:2px solid #0d0818;background:#21183f;color:#c8bee7;white-space:nowrap}
+.auto-xi-chip.on{background:#183b2b;color:#6af09a;border-color:#0d271c}
+.auto-xi-chip.scout.on{background:#173650;color:#7bd8ff;border-color:#0a2233}
+.auto-xi-chip.data.on{background:#493719;color:#ffd96d;border-color:#2b1f0c}
+.auto-xi-chip.locked{background:#171326;color:#756c96;color:#8e84af}
+@media(max-width:980px){.lineup-toolbar-actions .auto-xi-analysis{justify-content:flex-start}}
+
+
+/* V3.2.15 · Match Center / analisi avversario */
+.season-next-actions .match-center-open-btn{grid-column:1/-1;min-height:52px!important;display:grid;grid-template-columns:auto auto 1fr;align-items:center;justify-content:start;gap:9px;padding:10px 14px!important;border:2px solid #4d3b76!important;background:#18102f!important;color:#fff8d6!important;text-align:left!important;box-shadow:3px 3px 0 rgba(0,0,0,.28)}
+.match-center-open-btn>span{font-size:20px}.match-center-open-btn strong{font-family:'Minecraftia',monospace;font-size:10px;line-height:1.4}.match-center-open-btn small{justify-self:end;color:#a99fca;font-size:9px}
+.match-center-open-btn:hover{border-color:#ffd84d!important;background:#21163f!important}
+.match-center-modal{position:fixed;inset:0;z-index:12600;display:none;place-items:center;padding:18px}.match-center-modal.show{display:grid}.match-center-backdrop{position:absolute;inset:0;background:rgba(5,3,12,.88);backdrop-filter:blur(7px)}body.match-center-open{overflow:hidden}
+.match-center-dialog{position:relative;width:min(1040px,97vw);max-height:92vh;overflow:auto;border:3px solid #0d0818;background:linear-gradient(180deg,#211640,#100b22);box-shadow:10px 10px 0 rgba(0,0,0,.5);color:#fff;padding:20px}
+.match-center-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding-bottom:14px;border-bottom:3px solid #0d0818}.match-center-head h2{margin:5px 0 3px;font-family:'Minecraftia',monospace;font-size:24px;line-height:1.45;color:#fff8d6}.match-center-head p{margin:0;color:#a99fca;font-size:10px}.match-center-close{width:42px;height:42px;padding:0!important;font-size:18px!important}.match-center-body{display:grid;gap:12px;margin-top:14px}
+.mc-hero{display:grid;grid-template-columns:minmax(220px,.7fr) minmax(0,1.3fr);gap:12px}.mc-opponent-identity,.mc-card,.mc-premium{border:2px solid #342650;background:#17112f;box-shadow:3px 3px 0 rgba(0,0,0,.25);padding:14px}.mc-opponent-identity h3{margin:10px 0 4px;font-family:'Minecraftia',monospace;font-size:18px;line-height:1.45;color:#fff8d6}.mc-opponent-identity p{margin:0;color:#a99fca;font-size:9px}.mc-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.mc-kpis>div,.mc-data-kpis>div{display:grid;place-items:center;align-content:center;gap:5px;min-height:84px;border:2px solid #0d0818;background:#21183f;text-align:center}.mc-kpis strong,.mc-data-kpis strong{font-family:'Minecraftia',monospace;font-size:17px;line-height:1.3;color:#ffd84d}.mc-kpis span,.mc-data-kpis span{font-size:7px;font-weight:900;letter-spacing:.08em;color:#9f95c5}.mc-grid.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mc-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}.mc-card-head span{font-size:8px;font-weight:950;letter-spacing:.1em;color:#ffd84d}.mc-card-head strong{font-size:11px;color:#fff8d6}.mc-card-note{display:block;margin-top:8px;color:#756b98;font-size:8px}.mc-form-strip{display:flex;gap:7px;align-items:center;min-height:42px}.mc-form-dot{width:34px;height:34px;display:grid;place-items:center;border:2px solid #0d0818;font-family:'Minecraftia',monospace;font-size:9px;box-shadow:2px 2px 0 rgba(0,0,0,.24)}.mc-form-dot.win{background:#1c5a38;color:#7bf0a9}.mc-form-dot.draw{background:#6b5419;color:#ffe18a}.mc-form-dot.loss{background:#642438;color:#ff9aab}.mc-no-data{color:#756b98}.mc-key-player{width:100%;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:10px;border:2px solid #0d0818;background:#21183f;color:#fff;text-align:left}.mc-key-player div{display:grid;gap:3px}.mc-key-player div b{font-size:11px}.mc-key-player div small{font-size:8px;color:#a99fca}.mc-key-player em{font-style:normal;font-size:8px;color:#ffd84d}.mc-absences{display:flex;gap:8px;flex-wrap:wrap}.mc-absence{display:grid;gap:3px;min-width:180px;padding:9px 10px;border:2px solid #651f32;background:#2e1220;text-align:left}.mc-absence b{font-size:10px;color:#fff8d6}.mc-absence small{font-size:7px;color:#ff9bad}.mc-all-available{color:#70e89b;font-size:10px;font-weight:900}
+.mc-premium{position:relative}.mc-premium.active{border-color:#5b477f}.mc-premium.locked{background:#120d24;color:#8d82ae}.mc-premium.locked>*:not(.mc-premium-head){opacity:.82}.mc-premium-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}.mc-premium-head span{font-size:8px;font-weight:950;letter-spacing:.1em;color:#ffd84d}.mc-premium-head h3{margin:4px 0 0;font-family:'Minecraftia',monospace;font-size:13px;line-height:1.45;color:#fff8d6}.mc-premium-head>b{font-size:8px;color:#70e89b;border:1px solid #2d704c;background:#11291e;padding:4px 6px}.mc-premium.locked .mc-premium-head>b{color:#b0a5cd;border-color:#4e4268;background:#1b1530}.mc-premium>p,.mc-premium-copy{margin:0;color:#b8acd3;font-size:9px;line-height:1.55}.mc-data-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:9px}.mc-role-data{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.mc-role-row{display:grid;grid-template-columns:auto 1fr 1.2fr;align-items:center;gap:9px;padding:8px;border:2px solid #0d0818;background:#21183f}.mc-role-row>div{display:grid;gap:2px}.mc-role-row small{font-size:7px;color:#8e83ad}.mc-role-row strong,.mc-role-row b{font-size:10px;color:#fff8d6}.mc-probable-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:9px}.mc-probable-player{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:7px 9px;border:2px solid #0d0818;background:#21183f;text-align:left;color:#fff}.mc-probable-player strong{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mc-probable-player b{font-size:10px;color:#72e99e}.mc-assistant-advice{display:grid;gap:8px}.mc-assistant-advice>strong{font-family:'Minecraftia',monospace;font-size:13px;line-height:1.45;color:#ffd84d}.mc-assistant-advice p{margin:0;color:#c8bae9;font-size:9px;line-height:1.55}.mc-assistant-advice>span{font-size:9px;color:#74e6a0}.mc-assistant-advice>button:not(.primary){justify-self:start;padding:7px 9px;background:#21183f;border:2px solid #0d0818;color:#fff8d6;font-size:9px}.mc-assistant-advice .primary{justify-self:start;margin-top:3px}
+@media(max-width:800px){.mc-hero,.mc-grid.two{grid-template-columns:1fr}.mc-kpis{grid-template-columns:1fr 1fr}.mc-role-data,.mc-probable-grid{grid-template-columns:1fr}.match-center-modal{padding:6px}.match-center-dialog{padding:13px;max-height:96vh}.match-center-open-btn{grid-template-columns:auto 1fr!important}.match-center-open-btn small{grid-column:1/-1;justify-self:start!important}}
+
+/* V3.2.16 · Data Center della propria rosa */
+.dc-hero .dc-team-identity{border-color:#53427c;background:linear-gradient(160deg,#231844,#15102d)}
+.dc-kpis{grid-template-columns:repeat(4,1fr)!important}
+.dc-free-kpis,.dc-premium-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.dc-free-kpis>div,.dc-premium-kpis>div{min-height:72px;display:grid;place-items:center;align-content:center;gap:4px;border:2px solid #0d0818;background:#21183f;text-align:center}
+.dc-free-kpis b,.dc-premium-kpis strong{font-family:'Minecraftia',monospace;font-size:15px;line-height:1.25;color:#ffd84d}
+.dc-free-kpis small,.dc-premium-kpis span{font-size:7px;font-weight:900;letter-spacing:.08em;color:#9f95c5}
+.dc-premium-grid .mc-premium{height:100%}
+.dc-roster-card{padding:14px!important}
+.dc-column-legend{display:grid;grid-template-columns:minmax(0,2.25fr) 118px minmax(170px,1.35fr) 110px;gap:8px;margin:0 34px 7px 188px;color:#756b98;font-size:7px;font-weight:950;letter-spacing:.1em;text-align:center}
+.dc-player-list{display:grid;gap:6px}
+.dc-player-row{width:100%;display:grid;grid-template-columns:38px minmax(145px,1.4fr) 128px minmax(142px,1.15fr) 118px minmax(170px,1.35fr) 110px 20px;gap:8px;align-items:center;padding:8px;border:2px solid #30264b;background:#15102c;color:#fff;text-align:left;box-shadow:2px 2px 0 rgba(0,0,0,.2)}
+.dc-player-row:hover{transform:none;border-color:#685499;background:#1c1437}
+.dc-player-row.is-unavailable{border-color:#70283b;background:#24111e}
+.dc-player-name{min-width:0;display:grid;gap:3px}.dc-player-name strong{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dc-player-name small{font-size:7px;color:#9e94bd}
+.dc-status{display:grid;gap:2px;padding:6px 7px;border:2px solid #0d0818;background:#1a2f25}.dc-status b{font-size:8px;color:#70e89b}.dc-status small{font-size:6.5px;color:#a9bdb0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dc-status.injured,.dc-status.suspended{background:#341522}.dc-status.injured b,.dc-status.suspended b{color:#ff8da0}.dc-status.injured small,.dc-status.suspended small{color:#dc91a0}
+.dc-base-stats,.dc-scout-cell,.dc-data-cell,.dc-assistant-cell{min-height:48px;display:grid;align-content:center;gap:3px;padding:5px 7px;border:2px solid #0d0818;background:#21183f;text-align:center}.dc-base-stats b,.dc-data-cell b{font-size:8px;color:#fff8d6}.dc-base-stats small,.dc-data-cell small,.dc-scout-cell small{font-size:6.5px;color:#9f95c5}.dc-scout-cell b{font-family:'Minecraftia',monospace;font-size:11px;color:#ffd84d}.dc-scout-cell.high{background:#173522}.dc-scout-cell.high b{color:#76eda1}.dc-scout-cell.medium{background:#3a3014}.dc-scout-cell.medium b{color:#ffe17c}.dc-scout-cell.low{background:#381622}.dc-scout-cell.low b{color:#ff879a}
+.dc-scout-cell.locked,.dc-data-cell.locked{opacity:.72;background:#171129}.dc-data-cell.active{background:#201747}.dc-recent{display:flex;justify-content:center;gap:3px;font-style:normal}.dc-recent span{min-width:26px;padding:2px 3px;background:#100b21;color:#cfc4ed;font-size:6px}
+.dc-assistant-cell{background:#1b1533}.dc-auto-xi{display:inline-grid;place-items:center;min-height:28px;padding:4px 5px;border:2px solid #0d0818;font-size:7px}.dc-auto-xi.starter{background:#174228;color:#75eca0}.dc-auto-xi.bench{background:#251c41;color:#9f95c5}.dc-locked{font-size:7px;color:#81779e}
+.dc-row-arrow{color:#81779e;text-align:center;font-size:14px}.dc-player-row:hover .dc-row-arrow{color:#ffd84d}
+@media(max-width:980px){.dc-column-legend{display:none}.dc-player-row{grid-template-columns:34px minmax(130px,1fr) 105px 1fr 100px}.dc-data-cell{grid-column:2/5}.dc-assistant-cell{grid-column:5}.dc-row-arrow{display:none}.dc-base-stats{grid-column:4}.dc-scout-cell{grid-column:5}.dc-premium-kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.dc-kpis,.dc-free-kpis,.dc-premium-kpis{grid-template-columns:1fr 1fr!important}.dc-player-row{grid-template-columns:34px minmax(0,1fr) 88px}.dc-status{grid-column:1/4}.dc-base-stats,.dc-scout-cell,.dc-data-cell,.dc-assistant-cell{grid-column:auto}.dc-base-stats{grid-column:1/4}.dc-data-cell{grid-column:1/4}.dc-assistant-cell{grid-column:1/4}.dc-scout-cell{grid-column:1/4}}
+
+/* V3.2.16.1 · FIX scheda giocatore aperta dal Data Center
+   Il Data Center usa z-index 12600: la scheda giocatore deve stare sopra. */
+.season-player-modal{
+  z-index:14000!important;
+}
+
+/* V3.2.17 · Avversario Serie A e difficoltà partita */
+.lineup-seriea-fixture{
+  display:inline-flex;
+  width:max-content;
+  max-width:100%;
+  align-items:center;
+  gap:4px;
+  padding:2px 5px;
+  border:1px solid #3b3158;
+  background:#100b21;
+  color:#d8cef2;
+  font-style:normal;
+  font-family:var(--ui-font,ui-monospace,monospace);
+  font-size:7px;
+  line-height:1.2;
+  white-space:nowrap;
+}
+.seriea-matchup-badge{
+  display:inline-flex;
+  justify-self:center;
+  align-items:center;
+  justify-content:center;
+  margin-top:2px;
+  padding:2px 5px;
+  border:1px solid #0d0818;
+  font-style:normal;
+  font-size:6.5px;
+  font-weight:950;
+  letter-spacing:.03em;
+}
+.seriea-matchup-badge.favorable{background:#173522;color:#76eda1}
+.seriea-matchup-badge.balanced{background:#3a3014;color:#ffe17c}
+.seriea-matchup-badge.hard{background:#381622;color:#ff879a}
+.dc-seriea-fixture{
+  display:block;
+  margin-top:1px;
+  color:#d4c8ef;
+  font-style:normal;
+  font-size:7px;
+  line-height:1.3;
+}
+.dc-data-cell .seriea-matchup-badge{margin:1px auto 0}
+.bench-player{grid-template-columns:24px 28px minmax(0,1fr) minmax(70px,auto) auto!important}
+.bench-player>small{white-space:nowrap;text-align:right}
+@media(max-width:760px){
+  .lineup-seriea-fixture{font-size:6.5px}
+  .bench-player{grid-template-columns:22px 28px minmax(0,1fr) auto!important}
+  .bench-player>small{display:none}
+}
+
+/* ========================================================================== */
+/* V3.2.18 · REDESIGN DASHBOARD + FORMAZIONE                                */
+/* Direzione: broadcast sportivo moderno + videogame manageriale.            */
+/* Solo presentazione: nessuna logica di gameplay viene modificata.           */
+/* ========================================================================== */
+
+/* ---------- Linguaggio visivo comune alle due schermate ---------- */
+#seasonScreen,
+#lineupScreen{
+  --v318-bg:#090716;
+  --v318-panel:#141126;
+  --v318-panel-2:#1a1530;
+  --v318-panel-3:#211943;
+  --v318-line:rgba(173,154,235,.18);
+  --v318-line-strong:rgba(180,158,255,.34);
+  --v318-text:#f8f6ff;
+  --v318-muted:#9d94ba;
+  --v318-purple:#8b68ff;
+  --v318-purple-2:#6846dc;
+  --v318-gold:#ffd76a;
+  --v318-green:#55e28b;
+  --v318-red:#ff6e83;
+  --v318-blue:#5dc9ff;
+  --v318-shadow:0 20px 55px rgba(2,0,12,.34);
+  font-family:var(--ui-font)!important;
+}
+#seasonScreen button,
+#lineupScreen button,
+#seasonScreen input,
+#lineupScreen input,
+#seasonScreen select,
+#lineupScreen select{
+  font-family:var(--ui-font)!important;
+}
+#seasonScreen .panel,
+#lineupScreen .panel{
+  border:1px solid var(--v318-line)!important;
+  border-radius:20px!important;
+  background:linear-gradient(180deg,rgba(25,20,48,.97),rgba(15,12,31,.98))!important;
+  box-shadow:var(--v318-shadow)!important;
+}
+#seasonScreen button,
+#lineupScreen button{
+  border-width:1px!important;
+  border-radius:12px!important;
+  box-shadow:none!important;
+  text-transform:none!important;
+  letter-spacing:0!important;
+  transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease!important;
+}
+#seasonScreen button:hover:not(:disabled),
+#lineupScreen button:hover:not(:disabled){
+  transform:translateY(-1px)!important;
+}
+#seasonScreen .season-kicker,
+#seasonScreen .season-eyebrow,
+#lineupScreen .season-kicker,
+#lineupScreen .season-eyebrow,
+#lineupScreen .lineup-label{
+  font-family:var(--ui-font)!important;
+  font-weight:850!important;
+  letter-spacing:.115em!important;
+}
+
+/* ============================ DASHBOARD =================================== */
+#seasonScreen{
+  position:relative;
+  padding:4px 0 48px!important;
+}
+#seasonScreen:before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 18% 12%,rgba(117,78,225,.16),transparent 31%),
+    radial-gradient(circle at 85% 28%,rgba(40,165,220,.08),transparent 26%),
+    linear-gradient(180deg,#0b0819 0%,#080611 100%);
+}
+#seasonScreen .season-wrap{
+  max-width:1480px!important;
+  gap:18px!important;
+}
+
+/* Top bar: più editoriale, meno "box pixel" */
+#seasonScreen .season-topbar{
+  min-height:104px;
+  padding:20px 24px!important;
+  background:
+    linear-gradient(115deg,rgba(75,49,143,.28),rgba(19,15,39,.96) 42%,rgba(17,14,34,.98))!important;
+  border-color:rgba(164,138,236,.22)!important;
+  overflow:hidden;
+  position:relative;
+}
+#seasonScreen .season-topbar:after{
+  content:"";
+  position:absolute;
+  width:260px;
+  height:260px;
+  right:-95px;
+  top:-120px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(139,104,255,.18),transparent 68%);
+  pointer-events:none;
+}
+#seasonScreen .season-title-block{gap:3px!important;position:relative;z-index:1}
+#seasonScreen .season-title-block h2{
+  font-family:var(--mc-font,'Minecraftia',monospace)!important;
+  font-size:28px!important;
+  line-height:1.35!important;
+  color:var(--v318-text)!important;
+  text-shadow:0 4px 20px rgba(0,0,0,.28);
+}
+#seasonScreen .season-title-block p{
+  font-family:var(--ui-font)!important;
+  color:#b8b0d1!important;
+  font-size:12px!important;
+}
+#seasonScreen .season-kicker{color:#b8a3ff!important;font-size:9px!important}
+#seasonScreen .season-top-actions{align-items:center!important;gap:9px!important;position:relative;z-index:1}
+#seasonScreen .season-top-actions>button{
+  min-height:40px!important;
+  padding:9px 14px!important;
+  background:rgba(255,255,255,.045)!important;
+  border-color:rgba(255,255,255,.10)!important;
+  color:#dcd6ed!important;
+  font-size:11px!important;
+  font-weight:750!important;
+}
+#seasonScreen .season-top-actions>button:hover{background:rgba(255,255,255,.085)!important;border-color:rgba(184,163,255,.34)!important}
+#seasonScreen .career-wallet-chip{
+  border:1px solid rgba(255,215,106,.32)!important;
+  border-radius:13px!important;
+  background:linear-gradient(180deg,rgba(255,215,106,.12),rgba(255,215,106,.055))!important;
+  box-shadow:none!important;
+}
+
+/* Nav: barra segmentata, sempre leggibile */
+#seasonScreen .league-nav{
+  padding:7px!important;
+  gap:6px!important;
+  top:8px!important;
+  background:rgba(13,10,28,.92)!important;
+  border-color:rgba(169,146,235,.15)!important;
+  border-radius:17px!important;
+  box-shadow:0 14px 38px rgba(0,0,0,.28)!important;
+  backdrop-filter:blur(14px);
+}
+#seasonScreen .league-nav button{
+  min-height:42px!important;
+  border:1px solid transparent!important;
+  border-radius:11px!important;
+  background:transparent!important;
+  color:#9990b4!important;
+  box-shadow:none!important;
+  font-family:var(--ui-font)!important;
+  font-size:10px!important;
+  font-weight:800!important;
+  text-transform:uppercase!important;
+  letter-spacing:.07em!important;
+}
+#seasonScreen .league-nav button:hover{
+  background:rgba(255,255,255,.045)!important;
+  color:#eee9fb!important;
+}
+#seasonScreen .league-nav button.active{
+  background:linear-gradient(180deg,rgba(139,104,255,.25),rgba(104,70,220,.15))!important;
+  border-color:rgba(154,126,255,.34)!important;
+  color:#fff!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035)!important;
+}
+
+/* Hero della prossima partita */
+#seasonScreen .season-dashboard-grid{
+  grid-template-columns:minmax(0,1.5fr) minmax(360px,.72fr)!important;
+  gap:18px!important;
+}
+#seasonScreen .season-next-card{
+  position:relative;
+  overflow:hidden!important;
+  padding:24px!important;
+  min-height:365px;
+  background:
+    radial-gradient(circle at 17% 105%,rgba(93,201,255,.13),transparent 36%),
+    radial-gradient(circle at 92% -5%,rgba(139,104,255,.30),transparent 39%),
+    linear-gradient(135deg,#1e153d 0%,#17102f 46%,#100d21 100%)!important;
+  border-color:rgba(160,135,239,.28)!important;
+}
+#seasonScreen .season-next-card:before{
+  content:"MATCHDAY";
+  position:absolute;
+  right:22px;
+  bottom:10px;
+  font-family:var(--mc-font,'Minecraftia',monospace)!important;
+  font-size:46px;
+  color:rgba(255,255,255,.025);
+  letter-spacing:.02em;
+  pointer-events:none;
+}
+#seasonScreen .season-card-head{margin-bottom:13px!important;position:relative;z-index:1}
+#seasonScreen .season-card-head h3{
+  font-family:var(--ui-font)!important;
+  font-size:20px!important;
+  font-weight:850!important;
+  line-height:1.2!important;
+  color:#f7f3ff!important;
+}
+#seasonScreen .season-next-card .season-card-head h3{
+  font-family:var(--mc-font,'Minecraftia',monospace)!important;
+  font-size:20px!important;
+  line-height:1.45!important;
+}
+#seasonScreen .season-eyebrow{font-size:9px!important;color:#9f8cdf!important}
+#seasonScreen .home-away-badge,
+#seasonScreen .matchday-chip{
+  padding:7px 10px!important;
+  border:1px solid rgba(255,215,106,.35)!important;
+  border-radius:999px!important;
+  background:rgba(255,215,106,.11)!important;
+  color:#ffe294!important;
+  box-shadow:none!important;
+  font-family:var(--ui-font)!important;
+  font-size:9px!important;
+  letter-spacing:.08em!important;
+}
+#seasonScreen .next-fixture{
+  grid-template-columns:minmax(0,1fr) 70px minmax(0,1fr)!important;
+  gap:13px!important;
+  margin:17px 0 20px!important;
+  position:relative;
+  z-index:1;
+}
+#seasonScreen .fixture-team{
+  min-height:132px!important;
+  padding:18px!important;
+  border:1px solid rgba(255,255,255,.09)!important;
+  border-radius:18px!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.026))!important;
+  box-shadow:0 12px 28px rgba(0,0,0,.14)!important;
+}
+#seasonScreen .fixture-team strong{
+  font-family:var(--mc-font,'Minecraftia',monospace)!important;
+  font-size:17px!important;
+  line-height:1.5!important;
+  color:#fff!important;
+}
+#seasonScreen .fixture-team small{
+  font-family:var(--ui-font)!important;
+  font-size:10px!important;
+  color:#a9a0c2!important;
+}
+#seasonScreen .user-fixture-team{
+  outline:0!important;
+  border-color:rgba(255,215,106,.34)!important;
+  background:linear-gradient(180deg,rgba(255,215,106,.085),rgba(255,255,255,.025))!important;
+}
+#seasonScreen .fixture-tag{
+  padding:4px 7px!important;
+  border-radius:999px!important;
+  background:rgba(255,215,106,.14)!important;
+  color:#ffe294!important;
+  font-family:var(--ui-font)!important;
+  font-size:8px!important;
+  letter-spacing:.09em;
+}
+#seasonScreen .fixture-tag.cpu{background:rgba(93,201,255,.12)!important;color:#83dbff!important}
+#seasonScreen .fixture-vs{
+  width:48px;
+  height:48px;
+  margin:auto;
+  display:grid!important;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:50%;
+  background:rgba(7,5,17,.55);
+  font-family:var(--ui-font)!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  color:#a89cc8!important;
+  box-shadow:0 8px 18px rgba(0,0,0,.22);
+}
+#seasonScreen .season-next-actions{
+  gap:9px!important;
+  position:relative;
+  z-index:1;
+}
+#seasonScreen .season-next-actions>button{
+  min-height:56px!important;
+  border-radius:14px!important;
+  font-size:11px!important;
+  font-weight:850!important;
+}
+#seasonScreen #lineupBtn{
+  background:linear-gradient(180deg,#34285e,#281e4c)!important;
+  border-color:rgba(156,126,245,.36)!important;
+  color:#f7f2ff!important;
+}
+#seasonScreen #lineupBtn:hover{box-shadow:0 10px 24px rgba(88,58,176,.22)!important}
+#seasonScreen #playMatchdayBtn{
+  font-family:var(--ui-font)!important;
+  background:linear-gradient(180deg,#ffd86e,#eab947)!important;
+  border-color:#ffe290!important;
+  color:#251600!important;
+  text-transform:uppercase!important;
+  letter-spacing:.06em!important;
+  box-shadow:0 10px 25px rgba(244,190,73,.16)!important;
+}
+#seasonScreen #playMatchdayBtn.is-live-ready{
+  background:linear-gradient(180deg,#ff6d63,#db3d47)!important;
+  border-color:#ff8d86!important;
+  color:#fff!important;
+  box-shadow:0 12px 28px rgba(220,61,71,.24)!important;
+}
+#seasonScreen #playMatchdayBtn.is-event-pending{
+  background:linear-gradient(180deg,#9d77ff,#704adc)!important;
+  border-color:#b8a0ff!important;
+  color:#fff!important;
+}
+#seasonScreen .season-next-actions .match-center-open-btn{
+  min-height:50px!important;
+  padding:10px 13px!important;
+  border:1px solid rgba(93,201,255,.20)!important;
+  border-radius:13px!important;
+  background:rgba(93,201,255,.055)!important;
+  color:#eefaff!important;
+  box-shadow:none!important;
+}
+#seasonScreen .match-center-open-btn>span{font-size:18px!important}
+#seasonScreen .match-center-open-btn strong{
+  font-family:var(--ui-font)!important;
+  font-size:10px!important;
+  font-weight:850!important;
+  letter-spacing:.06em!important;
+}
+#seasonScreen .match-center-open-btn small{color:#91a9bc!important}
+#seasonScreen .match-center-open-btn:hover{border-color:rgba(93,201,255,.42)!important;background:rgba(93,201,255,.09)!important}
+
+/* News: look editoriale */
+#seasonScreen .season-overview-card{
+  padding:21px!important;
+  background:
+    radial-gradient(circle at 100% 0,rgba(93,201,255,.09),transparent 36%),
+    linear-gradient(180deg,#16132a,#100d20)!important;
+}
+#seasonScreen .hub-news-main-head{padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.06)}
+#seasonScreen .hub-news-main-card .ghost{
+  background:rgba(255,255,255,.04)!important;
+  border-color:rgba(255,255,255,.09)!important;
+}
+
+/* Parte bassa: più pulita e leggibile */
+#seasonScreen .season-main-grid{gap:18px!important}
+#seasonScreen .matchday-panel,
+#seasonScreen .standings-panel,
+#seasonScreen .expert-advice-panel{
+  padding:20px!important;
+  background:linear-gradient(180deg,rgba(24,20,43,.98),rgba(14,12,28,.98))!important;
+}
+#seasonScreen .season-fixture-row{
+  min-height:52px!important;
+  padding:9px 11px!important;
+  border:1px solid rgba(255,255,255,.07)!important;
+  border-radius:11px!important;
+  background:rgba(255,255,255,.026)!important;
+  box-shadow:none!important;
+}
+#seasonScreen .season-fixture-row.is-user-fixture{
+  border-color:rgba(255,215,106,.32)!important;
+  background:linear-gradient(90deg,rgba(255,215,106,.07),rgba(255,255,255,.025))!important;
+  box-shadow:inset 3px 0 0 #ffd76a!important;
+}
+#seasonScreen .fixture-home,
+#seasonScreen .fixture-away{
+  font-family:var(--ui-font)!important;
+  font-size:10px!important;
+  font-weight:700!important;
+}
+#seasonScreen .fixture-score{
+  font-family:var(--ui-font)!important;
+  font-weight:900!important;
+  color:#ffd76a!important;
+}
+#seasonScreen .standings-table{
+  font-family:var(--ui-font)!important;
+}
+#seasonScreen .standings-table th{
+  border-bottom:1px solid rgba(255,255,255,.08)!important;
+  color:#837a9f!important;
+  font-size:8px!important;
+}
+#seasonScreen .standings-table td{
+  border-bottom:1px solid rgba(255,255,255,.055)!important;
+  color:#d7d1e8!important;
+}
+#seasonScreen .standings-table tr.is-user-standing{
+  background:rgba(139,104,255,.10)!important;
+  outline:0!important;
+  box-shadow:inset 3px 0 0 #8b68ff!important;
+}
+#seasonScreen .full-view-link{
+  border:1px solid rgba(139,104,255,.20)!important;
+  background:rgba(139,104,255,.07)!important;
+  color:#cdbfff!important;
+}
+#seasonScreen .expert-advice-card{
+  border:1px solid rgba(255,255,255,.075)!important;
+  border-radius:15px!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.042),rgba(255,255,255,.018))!important;
+  box-shadow:none!important;
+}
+#seasonScreen .expert-avatar{
+  border:1px solid rgba(255,215,106,.32)!important;
+  border-radius:13px!important;
+  background:rgba(255,215,106,.12)!important;
+  color:#ffe294!important;
+}
+
+/* ============================ FORMAZIONE ================================= */
+#lineupScreen{
+  position:relative;
+  padding:4px 0 38px!important;
+}
+#lineupScreen:before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 52% 22%,rgba(44,149,104,.10),transparent 30%),
+    radial-gradient(circle at 8% 10%,rgba(123,86,228,.14),transparent 30%),
+    linear-gradient(180deg,#0b0819,#080611);
+}
+#lineupScreen .lineup-wrap{
+  max-width:1540px;
+  margin:0 auto;
+  gap:15px!important;
+}
+#lineupScreen .lineup-header{
+  min-height:100px;
+  padding:19px 22px!important;
+  background:linear-gradient(120deg,rgba(77,49,143,.23),rgba(17,14,34,.98) 46%)!important;
+}
+#lineupScreen .lineup-header h2{
+  font-family:var(--mc-font,'Minecraftia',monospace)!important;
+  font-size:24px!important;
+  line-height:1.4!important;
+  color:#fff!important;
+}
+#lineupScreen .lineup-header p{
+  font-family:var(--ui-font)!important;
+  font-size:11px!important;
+  color:#aaa1c2!important;
+}
+#lineupScreen .lineup-header-actions{align-items:center!important;gap:8px!important}
+#lineupScreen .lineup-header-actions button{
+  min-height:38px!important;
+  background:rgba(255,255,255,.045)!important;
+  border-color:rgba(255,255,255,.10)!important;
+  color:#ded8ef!important;
+  font-size:10px!important;
+  font-weight:750!important;
+}
+#lineupScreen .career-wallet-chip{
+  border:1px solid rgba(255,215,106,.30)!important;
+  border-radius:12px!important;
+  background:rgba(255,215,106,.085)!important;
+  box-shadow:none!important;
+}
+
+/* Banner di stato */
+#lineupScreen .lineup-twist-banner,
+#lineupScreen .lineup-readonly-banner,
+#lineupScreen .assistant-coach-banner{
+  border-radius:16px!important;
+  box-shadow:0 12px 30px rgba(0,0,0,.18)!important;
+}
+#lineupScreen .assistant-coach-banner{
+  border:1px solid rgba(85,226,139,.25)!important;
+  border-left:4px solid #55e28b!important;
+  background:linear-gradient(100deg,rgba(34,104,69,.26),rgba(18,15,38,.98))!important;
+}
+#lineupScreen .assistant-coach-banner h3{
+  font-family:var(--ui-font)!important;
+  font-weight:850!important;
+  color:#83efab!important;
+}
+#lineupScreen .assistant-coach-badge{
+  border:1px solid rgba(85,226,139,.34)!important;
+  border-radius:999px!important;
+  background:rgba(85,226,139,.13)!important;
+  color:#8cf2b3!important;
+  box-shadow:none!important;
+  font-family:var(--ui-font)!important;
+  font-weight:850!important;
+}
+
+/* Toolbar: una vera command bar */
+#lineupScreen .lineup-toolbar{
+  padding:13px 14px!important;
+  gap:14px!important;
+  background:rgba(17,13,34,.94)!important;
+  border-color:rgba(170,146,235,.16)!important;
+}
+#lineupScreen .lineup-module-block{gap:9px!important}
+#lineupScreen .lineup-label{font-size:8px!important;color:#8e84a9!important}
+#lineupScreen .formation-buttons{gap:6px!important}
+#lineupScreen .formation-choice{
+  min-width:70px!important;
+  padding:8px 10px!important;
+  border:1px solid rgba(255,255,255,.08)!important;
+  border-radius:10px!important;
+  background:rgba(255,255,255,.035)!important;
+  color:#b5accd!important;
+  font-size:10px!important;
+  font-weight:850!important;
+}
+#lineupScreen .formation-choice.active{
+  background:linear-gradient(180deg,rgba(139,104,255,.28),rgba(104,70,220,.16))!important;
+  border-color:rgba(166,140,255,.42)!important;
+  color:#fff!important;
+  box-shadow:0 7px 18px rgba(93,62,182,.16)!important;
+}
+#lineupScreen .lineup-toolbar-actions{gap:7px!important}
+#lineupScreen .lineup-toolbar-actions>button{
+  min-height:38px!important;
+  padding:8px 11px!important;
+  background:rgba(255,255,255,.04)!important;
+  border-color:rgba(255,255,255,.09)!important;
+  color:#d7d0e9!important;
+  font-size:9px!important;
+  font-weight:800!important;
+}
+#lineupScreen #autoLineupBtn{
+  background:rgba(139,104,255,.10)!important;
+  border-color:rgba(139,104,255,.30)!important;
+  color:#cdbfff!important;
+}
+#lineupScreen #assistantFixOutBtn{
+  background:rgba(255,145,83,.08)!important;
+  border-color:rgba(255,145,83,.25)!important;
+  color:#ffc59f!important;
+}
+#lineupScreen #carryLineupBtn.active{
+  background:rgba(85,226,139,.11)!important;
+  border-color:rgba(85,226,139,.30)!important;
+  color:#8ff0b5!important;
+}
+#lineupScreen .lineup-toolbar-actions .auto-xi-analysis{
+  font-family:var(--ui-font)!important;
+  gap:5px!important;
+  color:#9186ac!important;
+}
+#lineupScreen .auto-xi-chip{
+  border:1px solid rgba(255,255,255,.08)!important;
+  border-radius:999px!important;
+  padding:4px 7px!important;
+  background:rgba(255,255,255,.035)!important;
+  box-shadow:none!important;
+}
+#lineupScreen .auto-xi-chip.on{border-color:rgba(85,226,139,.24)!important;background:rgba(85,226,139,.08)!important}
+#lineupScreen .auto-xi-chip.scout.on{border-color:rgba(93,201,255,.25)!important;background:rgba(93,201,255,.07)!important}
+#lineupScreen .auto-xi-chip.data.on{border-color:rgba(255,215,106,.25)!important;background:rgba(255,215,106,.07)!important}
+
+/* Tre aree: rosa, campo, panchina */
+#lineupScreen .lineup-layout{
+  grid-template-columns:320px minmax(520px,1fr) 320px!important;
+  gap:15px!important;
+}
+#lineupScreen .lineup-roster-panel,
+#lineupScreen .lineup-bench-panel,
+#lineupScreen .lineup-pitch-panel{
+  min-height:720px!important;
+  overflow:hidden!important;
+  background:linear-gradient(180deg,rgba(24,20,44,.98),rgba(13,11,27,.98))!important;
+}
+#lineupScreen .lineup-panel-head{
+  min-height:66px;
+  padding:13px 14px 11px!important;
+  border-bottom:1px solid rgba(255,255,255,.065)!important;
+  background:rgba(255,255,255,.018);
+}
+#lineupScreen .lineup-panel-head h3{
+  font-family:var(--ui-font)!important;
+  font-size:16px!important;
+  font-weight:850!important;
+  color:#f6f3ff!important;
+}
+#lineupScreen .lineup-panel-head>strong{color:#b7a6ff!important;font-size:15px!important}
+#lineupScreen .bench-order-hint{
+  font-family:var(--ui-font)!important;
+  color:#756d91!important;
+}
+
+/* Lista rosa */
+#lineupScreen .lineup-roster-list{padding:8px!important}
+#lineupScreen .lineup-role-group{margin-bottom:12px!important}
+#lineupScreen .lineup-role-head{
+  padding:5px 7px!important;
+  border:0!important;
+  background:transparent!important;
+  font-family:var(--ui-font)!important;
+  font-size:8px!important;
+  font-weight:850!important;
+  letter-spacing:.08em!important;
+  color:#756d91!important;
+}
+#lineupScreen .lineup-roster-player{
+  grid-template-columns:34px minmax(0,1fr) 34px!important;
+  min-height:60px!important;
+  margin-top:6px!important;
+  padding:7px 8px!important;
+  border:1px solid rgba(255,255,255,.07)!important;
+  border-radius:12px!important;
+  background:rgba(255,255,255,.027)!important;
+  box-shadow:none!important;
+}
+#lineupScreen .lineup-roster-player:hover:not(:disabled){
+  background:rgba(255,255,255,.052)!important;
+  border-color:rgba(168,143,244,.24)!important;
+}
+#lineupScreen .lineup-roster-player.is-starter{
+  border-color:rgba(85,226,139,.30)!important;
+  box-shadow:inset 3px 0 0 #55e28b!important;
+  background:linear-gradient(90deg,rgba(85,226,139,.07),rgba(255,255,255,.02))!important;
+}
+#lineupScreen .lineup-roster-player.is-selected{
+  outline:0!important;
+  border-color:rgba(255,215,106,.55)!important;
+  box-shadow:0 0 0 2px rgba(255,215,106,.08)!important;
+}
+#lineupScreen .lineup-role-chip{
+  width:28px!important;
+  height:28px!important;
+  border:0!important;
+  border-radius:8px!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.10)!important;
+  font-family:var(--ui-font)!important;
+  font-size:9px!important;
+}
+#lineupScreen .lineup-roster-copy{gap:3px!important}
+#lineupScreen .lineup-roster-copy strong{
+  font-family:var(--ui-font)!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  color:#f6f3ff!important;
+}
+#lineupScreen .lineup-roster-copy small{
+  font-family:var(--ui-font)!important;
+  font-size:8px!important;
+  color:#8f86a9!important;
+}
+#lineupScreen .lineup-roster-state{
+  font-family:var(--ui-font)!important;
+  font-size:8px!important;
+  font-weight:900!important;
+}
+#lineupScreen .lineup-seriea-fixture{
+  margin-top:1px!important;
+  padding:2px 5px!important;
+  border:1px solid rgba(93,201,255,.12)!important;
+  border-radius:999px!important;
+  background:rgba(93,201,255,.045)!important;
+  color:#a9bfd0!important;
+  font-family:var(--ui-font)!important;
+}
+#lineupScreen .scout-starter-badge{
+  border:0!important;
+  border-radius:999px!important;
+  box-shadow:none!important;
+  font-family:var(--ui-font)!important;
+  font-size:7px!important;
+  font-weight:850!important;
+}
+
+/* Campo: più "broadcast", meno rettangolo pixel */
+#lineupScreen .lineup-pitch-panel{padding:13px!important}
+#lineupScreen .lineup-pitch-topline{
+  min-height:50px;
+  padding:2px 3px 10px!important;
+}
+#lineupScreen .lineup-pitch-topline strong{
+  font-family:var(--ui-font)!important;
+  font-size:10px!important;
+  color:#aaa1c1!important;
+}
+#lineupScreen .lineup-bench-btn{
+  border-color:rgba(255,255,255,.09)!important;
+  background:rgba(255,255,255,.035)!important;
+}
+#lineupScreen .lineup-pitch{
+  width:min(100%,650px)!important;
+  height:650px!important;
+  border:1px solid rgba(143,234,177,.34)!important;
+  border-radius:24px!important;
+  background:
+    linear-gradient(rgba(8,50,31,.04),rgba(5,37,23,.08)),
+    repeating-linear-gradient(90deg,#17643f 0 65px,#1b7046 65px 130px)!important;
+  box-shadow:0 22px 50px rgba(0,0,0,.30),inset 0 0 55px rgba(1,22,12,.20)!important;
+}
+#lineupScreen .lineup-pitch:before{
+  inset:17px!important;
+  border:1px solid rgba(255,255,255,.55)!important;
+  border-radius:10px;
+}
+#lineupScreen .pitch-half-line{background:rgba(255,255,255,.52)!important;height:1px!important}
+#lineupScreen .pitch-center-circle,
+#lineupScreen .pitch-box,
+#lineupScreen .pitch-goal{border-color:rgba(255,255,255,.52)!important;border-width:1px!important}
+#lineupScreen .lineup-slot{
+  width:116px!important;
+  min-height:62px!important;
+  padding:7px 8px!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  border-radius:12px!important;
+  background:rgba(14,11,30,.90)!important;
+  box-shadow:0 10px 22px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.03)!important;
+  backdrop-filter:blur(7px);
+}
+#lineupScreen .lineup-slot .slot-pos{
+  width:24px!important;
+  height:34px!important;
+  border-radius:7px!important;
+  background:rgba(255,255,255,.055)!important;
+  font-family:var(--ui-font)!important;
+  color:#b6aad5!important;
+}
+#lineupScreen .lineup-slot strong{
+  font-family:var(--ui-font)!important;
+  font-size:9px!important;
+  font-weight:850!important;
+  color:#fff!important;
+}
+#lineupScreen .lineup-slot small{
+  font-family:var(--ui-font)!important;
+  color:#a39ab8!important;
+}
+#lineupScreen .lineup-slot.role-P.filled{background:linear-gradient(135deg,rgba(111,86,22,.94),rgba(31,24,20,.94))!important;border-color:rgba(255,215,106,.30)!important}
+#lineupScreen .lineup-slot.role-D.filled{background:linear-gradient(135deg,rgba(23,103,72,.94),rgba(12,38,30,.94))!important;border-color:rgba(85,226,139,.25)!important}
+#lineupScreen .lineup-slot.role-C.filled{background:linear-gradient(135deg,rgba(29,86,136,.94),rgba(13,29,53,.94))!important;border-color:rgba(93,201,255,.25)!important}
+#lineupScreen .lineup-slot.role-A.filled{background:linear-gradient(135deg,rgba(124,48,59,.94),rgba(48,20,31,.94))!important;border-color:rgba(255,110,131,.28)!important}
+#lineupScreen .lineup-slot:not(.filled){opacity:.68!important;border-style:dashed!important;background:rgba(11,9,24,.64)!important}
+#lineupScreen .lineup-slot.available{
+  border-color:#ffd76a!important;
+  box-shadow:0 0 0 2px rgba(255,215,106,.12),0 10px 24px rgba(0,0,0,.28)!important;
+}
+#lineupScreen .lineup-slot.selected-slot{
+  outline:0!important;
+  border-color:#fff!important;
+  box-shadow:0 0 0 2px rgba(255,255,255,.13),0 10px 24px rgba(0,0,0,.30)!important;
+}
+#lineupScreen .lineup-pitch-help{
+  font-family:var(--ui-font)!important;
+  color:#756d91!important;
+  font-size:8px!important;
+}
+
+/* Panchina */
+#lineupScreen .lineup-bench-list{padding:8px!important}
+#lineupScreen .bench-player-row{gap:5px!important;margin-bottom:6px!important}
+#lineupScreen .bench-player{
+  min-height:50px!important;
+  padding:6px 7px!important;
+  border:1px solid rgba(255,255,255,.065)!important;
+  border-radius:11px!important;
+  background:rgba(255,255,255,.025)!important;
+  box-shadow:none!important;
+}
+#lineupScreen .bench-player:hover:not(:disabled){background:rgba(255,255,255,.05)!important;border-color:rgba(168,143,244,.22)!important}
+#lineupScreen .bench-player.is-selected{
+  outline:0!important;
+  border-color:rgba(255,215,106,.48)!important;
+  background:rgba(255,215,106,.055)!important;
+}
+#lineupScreen .bench-player>span,
+#lineupScreen .bench-player>small,
+#lineupScreen .bench-player strong{
+  font-family:var(--ui-font)!important;
+}
+#lineupScreen .bench-player strong{font-size:10px!important;font-weight:800!important;color:#f4f0ff!important}
+#lineupScreen .bench-player>span,
+#lineupScreen .bench-player>small{font-size:8px!important;color:#847b9c!important}
+#lineupScreen .bench-order-controls{gap:4px!important}
+#lineupScreen .bench-order-controls button{
+  min-width:29px!important;
+  border:1px solid rgba(255,255,255,.07)!important;
+  border-radius:8px!important;
+  background:rgba(255,255,255,.035)!important;
+  color:#9d91bd!important;
+  box-shadow:none!important;
+}
+#lineupScreen .bench-order-controls button:hover:not(:disabled){color:#ffd76a!important;border-color:rgba(255,215,106,.24)!important}
+#lineupScreen .bench-player-row.is-unavailable .bench-player{
+  border-color:rgba(255,110,131,.25)!important;
+  box-shadow:inset 3px 0 0 #ff6e83!important;
+  background:rgba(255,110,131,.045)!important;
+}
+#lineupScreen .lineup-confirm-box{
+  padding:13px!important;
+  border-top:1px solid rgba(255,255,255,.07)!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.018),rgba(0,0,0,.08));
+}
+#lineupScreen .lineup-readiness{
+  font-family:var(--ui-font)!important;
+}
+#lineupScreen .lineup-readiness span{color:#817797!important}
+#lineupScreen .lineup-readiness strong{color:#c6b6ff!important;font-size:17px!important}
+#lineupScreen .lineup-readiness small{color:#9187aa!important}
+#lineupScreen #confirmLineupBtn{
+  min-height:52px!important;
+  border-radius:13px!important;
+  background:linear-gradient(180deg,#302652,#241c41)!important;
+  border-color:rgba(164,139,237,.22)!important;
+  color:#8d85a3!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  text-transform:uppercase!important;
+  letter-spacing:.055em!important;
+}
+#lineupScreen #confirmLineupBtn.lineup-ready{
+  background:linear-gradient(180deg,#ffd84d,#e0ae25)!important;
+  border-color:#ffe58f!important;
+  color:#231600!important;
+  box-shadow:0 12px 26px rgba(224,174,37,.22)!important;
+}
+
+/* Scrollbar coerenti */
+#seasonScreen *::-webkit-scrollbar,
+#lineupScreen *::-webkit-scrollbar{width:8px;height:8px}
+#seasonScreen *::-webkit-scrollbar-track,
+#lineupScreen *::-webkit-scrollbar-track{background:transparent}
+#seasonScreen *::-webkit-scrollbar-thumb,
+#lineupScreen *::-webkit-scrollbar-thumb{background:#3b3158;border-radius:999px}
+
+/* ---------- Responsive ---------- */
+@media(max-width:1180px){
+  #seasonScreen .season-dashboard-grid{grid-template-columns:1fr!important}
+  #lineupScreen .lineup-layout{grid-template-columns:280px minmax(470px,1fr) 285px!important}
+  #lineupScreen .lineup-slot{width:106px!important}
+}
+@media(max-width:980px){
+  #seasonScreen .season-topbar,
+  #lineupScreen .lineup-header{align-items:flex-start!important;flex-direction:column!important}
+  #seasonScreen .season-top-actions,
+  #lineupScreen .lineup-header-actions{width:100%;justify-content:flex-end!important;flex-wrap:wrap}
+  #lineupScreen .lineup-layout{grid-template-columns:1fr!important}
+  #lineupScreen .lineup-roster-panel,
+  #lineupScreen .lineup-bench-panel,
+  #lineupScreen .lineup-pitch-panel{min-height:auto!important}
+}
+@media(max-width:700px){
+  #seasonScreen .season-next-card{padding:16px!important;min-height:0}
+  #seasonScreen .next-fixture{grid-template-columns:1fr!important}
+  #seasonScreen .fixture-vs{width:42px;height:42px}
+  #seasonScreen .season-next-actions{grid-template-columns:1fr!important}
+  #seasonScreen .season-main-grid{grid-template-columns:1fr!important}
+  #seasonScreen .league-nav{position:static!important}
+  #lineupScreen .lineup-header,
+  #lineupScreen .lineup-toolbar{padding:14px!important}
+  #lineupScreen .lineup-pitch{height:610px!important;border-radius:18px!important}
+  #lineupScreen .lineup-slot{width:98px!important}
+}
+
+
+/* V3.2.19 · Prossima partita hero stadium redesign */
+#lineupScreen #lineupPitch.is-formation-334 .lineup-slot.role-A{max-width:21%!important;min-width:0!important}
+#lineupScreen .lineup-slot .lineup-captain-badge{
+  position:absolute;top:3px;right:4px;z-index:3;
+  width:23px;height:23px;display:grid;place-items:center;
+  background:#ffd452;color:#211536;border:2px solid #271644;
+  box-shadow:2px 2px 0 #120d25;font-size:15px;font-weight:900;line-height:1;
+}
+#lineupScreen .lineup-captain-btn{white-space:normal;min-width:0;overflow-wrap:anywhere}
+#lineupScreen .lineup-pitch-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:7px;min-width:0}
+#lineupScreen .lineup-pitch-actions button{max-width:100%}
+#lineupScreen #lineupCaptainText{display:block;color:#ffd452;line-height:1.5;margin-top:6px}
+@media(max-width:700px){
+  #lineupScreen #lineupPitch.is-formation-334 .lineup-slot.role-A{width:19%!important;padding:5px!important}
+  #lineupScreen #lineupPitch.is-formation-334 .lineup-slot.role-A .lineup-slot-copy{min-width:0!important}
+  #lineupScreen #lineupPitch.is-formation-334 .lineup-slot.role-A strong{white-space:normal!important;overflow-wrap:anywhere!important}
+}
+#seasonScreen .season-next-card{
+  min-height:460px!important;
+  padding:26px 24px 22px!important;
+  border:2px solid rgba(92,126,255,.52)!important;
+  border-radius:24px!important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(111,132,255,.25), transparent 24%),
+    linear-gradient(180deg, rgba(6,13,66,.92) 0%, rgba(7,18,72,.86) 28%, rgba(10,18,56,.88) 64%, rgba(4,9,33,.96) 100%)!important;
+  box-shadow:0 0 0 2px rgba(255,255,255,.035) inset, 0 0 40px rgba(59,88,255,.18), 0 18px 60px rgba(0,0,0,.35)!important;
+}
+#seasonScreen .season-next-card:before{
+  content:"";
+  position:absolute; inset:0;
+  background:
+    radial-gradient(circle at 20% 8%, rgba(255,255,255,.46) 0 1.7%, transparent 2%),
+    radial-gradient(circle at 28% 7%, rgba(255,255,255,.38) 0 1.7%, transparent 2%),
+    radial-gradient(circle at 72% 7%, rgba(255,255,255,.44) 0 1.7%, transparent 2%),
+    radial-gradient(circle at 80% 8%, rgba(255,255,255,.38) 0 1.7%, transparent 2%),
+    linear-gradient(180deg, transparent 0 46%, rgba(41,166,255,.10) 47%, transparent 48%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0 2px, transparent 2px 24px),
+    linear-gradient(180deg, rgba(13,24,96,.12), rgba(10,22,84,.0) 38%, rgba(16,80,56,.15) 72%, rgba(9,59,43,.2) 100%);
+  opacity:.95;
+  pointer-events:none;
+}
+#seasonScreen .season-next-card:after{
+  content:"";
+  position:absolute;
+  left:50%; transform:translateX(-50%);
+  bottom:74px; width:72%; height:120px;
+  background:
+    radial-gradient(circle at 50% 100%, rgba(113,255,192,.24), transparent 62%),
+    linear-gradient(180deg, rgba(39,255,171,.06), rgba(16,97,73,.0) 48%),
+    linear-gradient(90deg, transparent 49.5%, rgba(255,255,255,.16) 50%, transparent 50.5%);
+  border-top:1px solid rgba(255,255,255,.08);
+  border-radius:50% 50% 0 0 / 100% 100% 0 0;
+  filter:blur(.2px);
+  pointer-events:none;
+}
+#seasonScreen .season-next-card .season-card-head,
+#seasonScreen .season-next-card .next-fixture,
+#seasonScreen .season-next-card .season-next-actions{position:relative;z-index:2}
+#seasonScreen .season-next-card .season-card-head{margin-bottom:20px!important}
+#seasonScreen .season-next-card .season-eyebrow{font-size:11px!important;color:#b7c2ff!important;letter-spacing:.14em!important}
+#seasonScreen .season-next-card .season-card-head h3{font-size:30px!important;color:#fff!important;text-shadow:0 3px 16px rgba(0,0,0,.4)}
+#seasonScreen .home-away-badge{
+  padding:10px 18px!important;
+  border-radius:14px!important;
+  background:linear-gradient(180deg, rgba(255,214,91,.95), rgba(216,165,43,.95))!important;
+  color:#261500!important;
+  border:2px solid rgba(255,234,173,.82)!important;
+  box-shadow:0 0 0 2px rgba(60,39,0,.38) inset, 0 10px 24px rgba(244,190,73,.24)!important;
+  font-family:var(--mc-font,'Minecraftia',monospace)!important;
+  font-size:11px!important;
+  letter-spacing:.08em!important;
+  clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);
+}
+#seasonScreen .next-fixture{
+  grid-template-columns:minmax(0,1fr) 104px minmax(0,1fr)!important;
+  align-items:stretch!important;
+  gap:18px!important;
+  margin:18px 0 22px!important;
+}
+#seasonScreen .fixture-team{
+  min-height:180px!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 126px;
+  gap:16px;
+  align-items:center;
+  padding:18px 18px 16px!important;
+  border-radius:18px!important;
+  clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px);
+  background:linear-gradient(180deg, var(--fixture-panel, rgba(14,22,54,.84)), rgba(8,12,27,.90))!important;
+  border:2px solid var(--fixture-line, rgba(255,255,255,.2))!important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.04) inset, 0 0 0 4px rgba(255,255,255,.02) inset, 0 14px 30px rgba(0,0,0,.26), 0 0 28px var(--fixture-glow, rgba(255,255,255,.1))!important;
+}
+#seasonScreen .fixture-team-copy{display:grid;gap:9px;align-content:center}
+#seasonScreen .fixture-team strong{font-size:22px!important;line-height:1.32!important;text-shadow:0 2px 10px rgba(0,0,0,.3)}
+#seasonScreen .fixture-team small{font-size:11px!important;color:#d0d8f4!important;opacity:.92}
+#seasonScreen .fixture-tag{
+  justify-self:start;
+  padding:8px 14px!important;
+  border-radius:12px!important;
+  background:linear-gradient(180deg, rgba(255,216,77,.26), rgba(255,216,77,.12))!important;
+  border:1px solid rgba(255,216,77,.5)!important;
+  color:#fff0b2!important;
+  font-family:var(--mc-font,'Minecraftia',monospace)!important;
+  font-size:10px!important;
+}
+#seasonScreen .fixture-tag.cpu{background:linear-gradient(180deg, rgba(114,213,255,.28), rgba(69,136,255,.11))!important;border-color:rgba(114,213,255,.58)!important;color:#ccf0ff!important}
+#seasonScreen .fixture-team-visual{position:relative;display:grid;place-items:center;min-height:138px}
+#seasonScreen .team-crest{position:relative;width:102px;height:102px;display:grid;place-items:center;filter:drop-shadow(0 8px 18px rgba(0,0,0,.34))}
+#seasonScreen .team-crest img{display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+#seasonScreen .team-crest span{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);font-family:var(--mc-font,'Minecraftia',monospace)!important;font-size:18px;line-height:1;color:#fffaf0;text-shadow:0 2px 0 rgba(0,0,0,.7)}
+#seasonScreen .fixture-coach-badge{
+  position:absolute;right:-4px;bottom:-2px;width:64px;height:64px;border-radius:16px;overflow:hidden;
+  background:linear-gradient(180deg, rgba(19,23,46,.98), rgba(7,10,27,.98));
+  border:2px solid rgba(255,255,255,.16);box-shadow:0 8px 20px rgba(0,0,0,.35);
+}
+#seasonScreen .fixture-coach-badge img{display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;image-rendering:auto}
+#seasonScreen .fixture-vs{
+  width:74px;height:74px;border-radius:22px!important;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);
+  border:2px solid rgba(178,149,255,.68)!important;background:radial-gradient(circle at 50% 30%, rgba(114,78,255,.65), rgba(27,14,69,.98))!important;
+  color:#f4ebff!important;font-family:var(--mc-font,'Minecraftia',monospace)!important;font-size:20px!important;letter-spacing:.05em!important;
+  box-shadow:0 0 30px rgba(115,78,255,.25), 0 14px 24px rgba(0,0,0,.24)!important;
+}
+#seasonScreen .season-next-actions{grid-template-columns:1fr 1fr!important;gap:14px!important}
+#seasonScreen .season-next-actions>button{min-height:72px!important;border-radius:18px!important;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px);font-family:var(--mc-font,'Minecraftia',monospace)!important;font-size:13px!important;letter-spacing:.03em!important}
+#seasonScreen #lineupBtn{background:linear-gradient(180deg, rgba(103,69,255,.98), rgba(58,35,164,.96))!important;border:2px solid rgba(170,152,255,.78)!important;box-shadow:0 0 0 2px rgba(32,19,79,.42) inset,0 12px 24px rgba(68,46,194,.24)!important}
+#seasonScreen #playMatchdayBtn{background:linear-gradient(180deg, rgba(255,216,94,.98), rgba(225,166,34,.98))!important;border:2px solid rgba(255,236,180,.82)!important;box-shadow:0 0 0 2px rgba(90,59,0,.18) inset,0 12px 24px rgba(244,190,73,.22)!important;font-size:14px!important}
+#seasonScreen .season-next-actions .match-center-open-btn{
+  grid-column:1/-1;
+  min-height:64px!important;
+  padding:14px 18px!important;
+  grid-template-columns:auto auto 1fr!important;
+  align-items:center;
+  border:2px solid rgba(103,181,255,.46)!important;
+  clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px);
+  background:linear-gradient(180deg, rgba(16,41,121,.72), rgba(8,21,71,.82))!important;
+  box-shadow:0 10px 20px rgba(0,0,0,.22), 0 0 0 1px rgba(255,255,255,.03) inset!important;
+}
+#seasonScreen .match-center-open-btn>span{font-size:28px!important}
+#seasonScreen .match-center-open-btn strong{font-family:var(--mc-font,'Minecraftia',monospace)!important;font-size:14px!important;color:#fff!important}
+#seasonScreen .match-center-open-btn small{font-size:13px!important;justify-self:end;color:#d2e7ff!important}
+#seasonScreen .match-center-open-btn:hover{transform:translateY(-1px);border-color:rgba(139,211,255,.75)!important;background:linear-gradient(180deg, rgba(21,56,153,.84), rgba(11,29,96,.88))!important}
+
+@media(max-width:980px){
+  #seasonScreen .next-fixture{grid-template-columns:1fr!important}
+  #seasonScreen .fixture-vs{margin:-2px auto 4px!important}
+}
+@media(max-width:700px){
+  #seasonScreen .season-next-card{padding:18px 16px 16px!important;min-height:0!important}
+  #seasonScreen .season-next-card .season-card-head h3{font-size:22px!important}
+  #seasonScreen .fixture-team{grid-template-columns:minmax(0,1fr) 88px;min-height:150px!important;padding:14px!important}
+  #seasonScreen .fixture-team strong{font-size:17px!important}
+  #seasonScreen .team-crest{width:76px;height:76px}
+  #seasonScreen .team-crest span{font-size:14px!important}
+  #seasonScreen .fixture-coach-badge{width:50px;height:50px;right:-2px}
+  #seasonScreen .fixture-vs{width:60px;height:60px;font-size:16px!important}
+  #seasonScreen .season-next-actions{grid-template-columns:1fr!important;gap:10px!important}
+  #seasonScreen .season-next-actions>button{min-height:62px!important;font-size:12px!important}
+  #seasonScreen .season-next-actions .match-center-open-btn{grid-template-columns:auto 1fr!important}
+  #seasonScreen .match-center-open-btn small{grid-column:1/-1;justify-self:start!important;font-size:11px!important}
+}
+
+
+/* V3.2.21 · Formazione drag & drop */
+#lineupScreen .lineup-roster-player[draggable="true"],
+#lineupScreen .bench-player[draggable="true"],
+#lineupScreen .lineup-slot[draggable="true"]{cursor:grab}
+#lineupScreen .lineup-roster-player[draggable="true"]:active,
+#lineupScreen .bench-player[draggable="true"]:active,
+#lineupScreen .lineup-slot[draggable="true"]:active{cursor:grabbing}
+#lineupScreen .is-dragging{opacity:.46!important;filter:saturate(.6)!important}
+#lineupScreen .lineup-slot.drag-valid{
+  border-color:#ffd84d!important;
+  box-shadow:0 0 0 2px rgba(255,216,77,.22),0 0 24px rgba(255,216,77,.22)!important;
+}
+#lineupScreen .lineup-slot.drag-invalid{opacity:.34!important;filter:grayscale(.65)!important}
+#lineupScreen .lineup-slot.drag-hover{
+  transform:translate(-50%,-50%) scale(1.07)!important;
+  border-color:#fff3a6!important;
+  box-shadow:0 0 0 3px rgba(255,216,77,.26),0 0 34px rgba(255,216,77,.34)!important;
+  z-index:7!important;
+}
+#lineupScreen .lineup-bench-list.bench-drop-active{
+  outline:2px dashed rgba(93,201,255,.85);
+  outline-offset:-7px;
+  background:rgba(93,201,255,.06);
+}
+#lineupScreen .lineup-pitch-help{
+  border-top:1px solid rgba(255,255,255,.06);
+  margin-top:9px;
+  padding-top:12px!important;
+  color:#c0b7dd!important;
+}
+@media (hover:hover) and (pointer:fine){
+  #lineupScreen .lineup-roster-player[draggable="true"]:hover strong,
+  #lineupScreen .bench-player[draggable="true"]:hover strong{color:#fff4bd}
+}
+
+/* V3.2.21.1 · FIX slot formazione fermi durante click/selezione
+   Il tema globale applica translate(2px,2px) ai button:active; sugli slot assoluti
+   questo sostituiva translate(-50%,-50%) e faceva saltare la posizione in basso a destra. */
+#lineupScreen .lineup-slot:hover,
+#lineupScreen .lineup-slot:focus,
+#lineupScreen .lineup-slot:focus-visible,
+#lineupScreen .lineup-slot:active{
+  transform:translate(-50%,-50%)!important;
+}
+#lineupScreen .lineup-slot.drag-hover,
+#lineupScreen .lineup-slot.drag-hover:hover,
+#lineupScreen .lineup-slot.drag-hover:focus,
+#lineupScreen .lineup-slot.drag-hover:active{
+  transform:translate(-50%,-50%) scale(1.07)!important;
+}
+
+/* V3.2.21.2 · FIX definitivo posizione slot formazione
+   Il centraggio non usa più transform, così gli stati globali dei button
+   (:hover/:active) non possono sostituire il translate di posizionamento. */
+#lineupScreen .lineup-slot,
+#lineupScreen .lineup-slot:hover,
+#lineupScreen .lineup-slot:focus,
+#lineupScreen .lineup-slot:focus-visible,
+#lineupScreen .lineup-slot:active,
+#lineupScreen .lineup-slot.selected-slot,
+#lineupScreen .lineup-slot.available{
+  translate:-50% -50%!important;
+  transform:none!important;
+  scale:1!important;
+}
+#lineupScreen .lineup-slot.drag-hover,
+#lineupScreen .lineup-slot.drag-hover:hover,
+#lineupScreen .lineup-slot.drag-hover:focus,
+#lineupScreen .lineup-slot.drag-hover:active{
+  translate:-50% -50%!important;
+  transform:none!important;
+  scale:1.07!important;
+}
+
+
+/* V3.2.22 · Font ufficiale Fantallenatore */
+@font-face{
+  font-family:'Minecraftia';
+  src:local('Minecraftia'),url('../../assets/fonts/Minecraftia-Regular.ttf') format('truetype');
+  font-style:normal;
+  font-weight:400 900;
+  font-display:swap;
+}
+
+/* Minecraftia è il font principale dell'interfaccia. Testi lunghi restano più leggibili. */
+body,button,input,select,textarea{font-family:var(--ui-font)!important}
+.setup-copy p,
+.season-title-block p,
+.hub-news-main-card p,
+.hub-news-card p,
+.news-archive-item p,
+.auction-event-description,
+.rival-info p,
+.shop-card p,
+.shop-item p,
+.expert-advice-card p,
+.fantasy-rules span,
+.match-center-dialog p,
+.mc-description,
+.lineup-pitch-help{
+  font-family:var(--text-font)!important;
+}
+
+/* Elementi chiave sempre in Minecraftia, anche se ereditano regole più vecchie. */
+.topbar h1,
+.topbar .eyebrow,
+button,
+.badge,
+.panel-head h3,
+.auction-player-main h2,
+.price-box strong,
+.manager-name,
+.manager-personality,
+.summary-hero h2,
+.season-title-block h2,
+.season-kicker,
+.season-eyebrow,
+.season-card-head h3,
+.fixture-team strong,
+.fixture-tag,
+.fixture-vs,
+.home-away-badge,
+.matchday-chip,
+.standings-table th,
+.schedule-round-head strong,
+.lineup-header h2,
+.lineup-slot .slot-pos,
+.lineup-slot strong,
+.bench-player strong,
+.result-team strong,
+.result-score strong,
+.match-center-open-btn strong{
+  font-family:var(--mc-font)!important;
+  font-weight:400!important;
+}
+
+
+/* V3.2.35.1 · Sponsor post asta a carte girabili */
+.sponsor-selection-panel{padding:18px!important}
+.sponsor-selection-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:14px}
+.sponsor-selection-head h3{margin:4px 0 6px;font-family:var(--mc-font,'Minecraftia',monospace);font-size:18px;line-height:1.5;color:#fff8d6}
+.sponsor-selection-head p{margin:0;color:#b4aacb;font-size:11px;line-height:1.5}
+.sponsor-chosen-summary{min-width:230px;display:grid;gap:3px;padding:10px 12px;background:#18112f;border:2px solid #0b0714;box-shadow:3px 3px 0 #090611}
+.sponsor-chosen-summary span{font-size:8px;letter-spacing:.1em;color:#9b8bc8}
+.sponsor-chosen-summary strong{font-family:var(--mc-font,'Minecraftia',monospace);font-size:11px;line-height:1.5;color:#ffd84d}
+.sponsor-chosen-summary small{font-size:9px;color:#b9afcf}
+.sponsor-academy-label{display:block;margin-top:10px;color:#ffd84d;font-size:10px;line-height:1.4}
+#sponsorAcademyPlayer{display:block;box-sizing:border-box;width:100%;min-width:0;max-width:300px;margin-top:5px;padding:9px 12px;border:2px solid #8772ae;background:#171228;color:#fff;font-size:13px;line-height:1.4}
+.sponsor-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch;perspective:1400px}
+.sponsor-card-stage{position:relative;min-width:0;display:flex;align-items:center;justify-content:center;padding:10px 4px}
+.sponsor-card-blur{position:absolute;inset:9% 8% 7%;z-index:0;pointer-events:none;overflow:hidden;border-radius:18px;opacity:.72;filter:saturate(1.08)}
+.sponsor-card-blur img{width:100%;height:100%;object-fit:cover;transform:scale(1.05);filter:blur(18px);opacity:.82}
+.sponsor-flip-card{position:relative;z-index:1;min-width:0;width:100%;max-width:286px;aspect-ratio:1024 / 1536;cursor:pointer;perspective:1300px;outline:none;border-radius:8px;filter:drop-shadow(7px 10px 0 rgba(0,0,0,.34));transition:transform .18s ease,filter .18s ease}
+.sponsor-flip-card:hover{transform:translateY(-4px);filter:drop-shadow(8px 13px 0 rgba(0,0,0,.4)) brightness(1.03)}
+.sponsor-flip-card:focus-visible{box-shadow:0 0 0 4px #ffd84d}
+.sponsor-flip-card.selected{filter:drop-shadow(8px 13px 0 rgba(0,0,0,.42)) drop-shadow(0 0 10px rgba(255,216,77,.26))}
+.sponsor-flip-inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .62s cubic-bezier(.2,.7,.2,1)}
+.sponsor-flip-card.is-flipped .sponsor-flip-inner{transform:rotateY(180deg)}
+.sponsor-card-face{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:3px solid #0d0818;border-radius:8px;background:#17102e}
+.sponsor-card-front{display:flex;flex-direction:column;background:#090713}
+.sponsor-card-cover{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;user-select:none;pointer-events:none;background:#090713}
+.sponsor-card-front::after{content:"";position:absolute;left:0;right:0;bottom:0;height:28%;background:linear-gradient(transparent,rgba(5,4,12,.94) 72%);pointer-events:none}
+.sponsor-card-index{position:absolute;top:10px;left:11px;z-index:3;min-width:34px;padding:5px 6px;border:2px solid #0d0818;background:rgba(16,11,28,.9);color:#fff;font-family:var(--mc-font,'Minecraftia',monospace);font-size:8px;line-height:1.4;text-align:center}
+.sponsor-card-front-footer{position:absolute;left:0;right:0;bottom:0;z-index:3;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;padding:12px 12px 11px}
+.sponsor-card-front-category,.sponsor-card-front-brand{display:block;color:#efe6d0;font-size:8px;line-height:1.5;font-family:var(--mc-font,'Minecraftia',monospace);text-shadow:1px 1px 0 rgba(0,0,0,.5)}
+.sponsor-card-front-brand{font-size:10px;color:#ffd84d}
+.sponsor-card-flip-btn,.sponsor-card-flip-back-btn,.sponsor-card-select-btn{border:2px solid #0d0818;background:#22183d;color:#fff;padding:8px 10px;font-family:var(--mc-font,'Minecraftia',monospace);font-size:8px;line-height:1.4;cursor:pointer;box-shadow:3px 3px 0 rgba(0,0,0,.28)}
+.sponsor-card-flip-btn:hover,.sponsor-card-flip-back-btn:hover{background:#302152}
+.sponsor-card-select-btn{background:#ffd84d;color:#231600}
+.sponsor-card-select-btn:hover{background:#ffe58f}
+.sponsor-card-back{display:flex;flex-direction:column;justify-content:space-between;transform:rotateY(180deg);padding:16px 15px 14px;background:linear-gradient(180deg,#261c47 0%,#1b1235 100%)}
+.sponsor-card-back::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at top right, rgba(255,216,77,.16), transparent 34%), radial-gradient(circle at bottom left, rgba(111,157,255,.18), transparent 28%);pointer-events:none}
+.sponsor-card-back-top,.sponsor-card-back-copy,.sponsor-card-back-footer{position:relative;z-index:1}
+.sponsor-card-back-top{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px}
+.sponsor-choice-icon{font-size:24px;line-height:1}
+.sponsor-choice-category{font-family:var(--mc-font,'Minecraftia',monospace);font-size:11px;line-height:1.5;color:#fff8d6}
+.sponsor-card-badge{margin-left:auto;padding:4px 6px;background:#151025;border:2px solid #0d0818;color:#9cd4ff;font-family:var(--mc-font,'Minecraftia',monospace);font-size:7px;line-height:1.4}
+.sponsor-card-back-copy{display:grid;gap:12px;margin:18px 0 14px}
+.sponsor-card-back-copy strong{font-family:var(--mc-font,'Minecraftia',monospace);font-size:14px;line-height:1.55;color:#fff8d6}
+.sponsor-card-back-copy small{font-size:10px;line-height:1.65;color:#c9c0dd}
+.sponsor-card-back-footer{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
+.sponsor-card-stage.selected .sponsor-card-blur{opacity:.92}
+.sponsor-card-stage.selected .sponsor-card-face{border-color:#ffd84d}
+.sponsor-card-stage.selected .sponsor-card-badge{background:#ffd84d;color:#231600}
+@media(max-width:900px){.sponsor-cards{grid-template-columns:1fr}.sponsor-selection-head{flex-direction:column}.sponsor-chosen-summary{width:100%;min-width:0}.sponsor-flip-card{max-width:300px}}
+
+/* V3.2.35.2 · CTA sponsor */
+#startLeagueBtn.sponsor-needed{
+  background:#ffd84d!important;
+  color:#231600!important;
+  border-color:#0b0714!important;
+  cursor:pointer!important;
+}
+
+/* V3.2.35.3 · stato contratto sponsor */
+.sponsor-card-select-btn:disabled{opacity:1!important;background:#5cf285!important;color:#102117!important;cursor:default!important;}
+.sponsor-flip-card.selected{cursor:default;}
+
+/* V3.2.35.4 · fix definitivo firma sponsor
+   Le carte non si girano più cliccando sul corpo: solo GIRA/RIGIRA.
+   FIRMA è quindi un'azione indipendente e non può attivare il flip. */
+
+/* V3.2.35.7 · interazione sponsor corretta
+   Solo la faccia visibile riceve i click: il fronte nascosto non può
+   intercettare il pulsante FIRMA sul retro. */
+.sponsor-flip-card .sponsor-card-front{pointer-events:auto;}
+.sponsor-flip-card .sponsor-card-back{pointer-events:none;}
+.sponsor-flip-card.is-flipped .sponsor-card-front{pointer-events:none;}
+.sponsor-flip-card.is-flipped .sponsor-card-back{pointer-events:auto;}
+.sponsor-card-select-btn{position:relative;z-index:10;pointer-events:auto!important;}
+.sponsor-card-select-btn:not(:disabled){cursor:pointer!important;}
+
+/* V3.2.35.9 · Esperti avanzati */
+.expert-context-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:8px;
+}
+.expert-context-row span{
+  display:inline-flex;
+  align-items:center;
+  min-height:20px;
+  padding:3px 6px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:999px;
+  background:rgba(255,255,255,.045);
+  color:#cfc5e8;
+  font-size:7px;
+  line-height:1.25;
+  letter-spacing:.045em;
+  font-weight:800;
+}
+.expert-player-pill em{
+  margin-left:auto;
+  color:#9f95c5;
+  font-size:8px;
+  font-style:normal;
+  font-weight:800;
+}
+#seasonScreen .expert-context-row span{
+  border-color:rgba(255,255,255,.085);
+  background:rgba(255,255,255,.035);
+}
+
+
+/* V3.2.35.10 · Evoluzione giocatori */
+.evolution-screen .season-wrap{gap:14px}
+.evolution-explainer{display:flex;align-items:center;gap:18px;padding:14px 16px!important;background:linear-gradient(135deg,#1d1436,#171025)!important}
+.evolution-explainer-example{display:flex;align-items:center;gap:8px;min-width:max-content;padding:9px 12px;background:#100b1d;border:2px solid #090611;box-shadow:3px 3px 0 #090611}
+.evolution-explainer-example span{font-size:8px;color:#9385ba;letter-spacing:.08em}
+.evolution-explainer-example b{font-family:var(--mc-font,'Minecraftia',monospace);font-size:17px;color:#a99dbf}
+.evolution-explainer-example i{font-style:normal;color:#73658f}
+.evolution-explainer-example strong{font-family:var(--mc-font,'Minecraftia',monospace);font-size:22px;color:#fff4b7}
+.evolution-explainer-example em{font-style:normal;font-weight:900;color:#61e39a;background:#173326;border:1px solid #2f8f60;padding:4px 6px;font-size:10px}
+.evolution-explainer>div:last-child strong{font-family:var(--mc-font,'Minecraftia',monospace);font-size:10px;color:#fff8d6}
+.evolution-explainer>div:last-child p{margin:4px 0 0;color:#bdb2d1;font-size:10px;line-height:1.5}
+.evolution-explainer>div:last-child p b{color:#fff}
+.evolution-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.evolution-summary-card{padding:14px!important;display:grid;gap:4px;min-height:102px;align-content:center}
+.evolution-summary-card span{font-size:8px;letter-spacing:.08em;color:#9789bd}
+.evolution-summary-card strong{font-family:var(--mc-font,'Minecraftia',monospace);font-size:26px;line-height:1.2;color:#fff8d6}
+.evolution-summary-card small{font-size:8px;color:#a99fbb;line-height:1.4}
+.evolution-summary-card.is-positive strong{color:#66e79d}.evolution-summary-card.is-negative strong{color:#ff777f}
+.evolution-highlights-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.evolution-highlight-panel{padding:15px!important;min-width:0}
+.evolution-arrow{font-family:var(--mc-font,'Minecraftia',monospace);font-size:20px}.evolution-arrow.positive{color:#61e39a}.evolution-arrow.negative{color:#ff6f79}
+.evolution-highlight-list{display:grid;gap:7px}
+.evolution-highlight-item{width:100%;display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:9px;align-items:center;text-align:left;padding:9px;background:#151022;border:1px solid #302642;color:#fff;cursor:pointer;transition:transform .12s ease,border-color .12s ease,background .12s ease}
+.evolution-highlight-item:hover{transform:translateX(2px);border-color:#67568e;background:#1a132b}
+.evolution-highlight-item.positive{box-shadow:inset 3px 0 0 #4fc985}.evolution-highlight-item.negative{box-shadow:inset 3px 0 0 #e45f69}
+.evolution-highlight-rank{font-size:13px;font-weight:900;text-align:center;color:#8f80ad}.evolution-highlight-item.positive .evolution-highlight-rank{color:#61e39a}.evolution-highlight-item.negative .evolution-highlight-rank{color:#ff737d}
+.evolution-highlight-copy{display:grid;min-width:0}.evolution-highlight-copy strong{font-size:10px;color:#fff8d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.evolution-highlight-copy span{font-size:8px;color:#aaa0bf;margin-top:2px}.evolution-highlight-copy small{font-size:7px;color:#7f7395;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evolution-ovr-mini{display:grid;grid-template-columns:auto auto auto;align-items:center;gap:5px;min-width:90px;text-align:center}.evolution-ovr-mini span{font-size:11px;color:#9186a6}.evolution-ovr-mini i{font-style:normal;color:#625572}.evolution-ovr-mini strong{font-family:var(--mc-font,'Minecraftia',monospace);font-size:15px;color:#fff}.evolution-ovr-mini em{grid-column:1/-1;justify-self:end;font-style:normal;font-size:9px;font-weight:900}.evolution-ovr-mini em.positive{color:#61e39a}.evolution-ovr-mini em.negative{color:#ff737d}
+.evolution-potential{display:inline-flex!important;width:max-content;margin-top:4px!important;padding:2px 5px;border:1px solid #4b4062;background:#211932;color:#bfb4d0!important;font-size:6px!important;font-weight:900;letter-spacing:.05em}.evolution-potential.elite{border-color:#d9b83e;color:#ffe875!important;background:#372f12}.evolution-potential.high{border-color:#4eae7a;color:#8af0b5!important;background:#163324}.evolution-potential.low,.evolution-potential.collapse{border-color:#9b4952;color:#ff9098!important;background:#34161a}
+.evolution-empty-mini{padding:18px 8px;text-align:center;color:#766c8a;font-size:8px;line-height:1.5}
+.evolution-market-panel{padding:16px!important}
+.evolution-market-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin-bottom:12px}.evolution-market-head h3{margin:4px 0 3px;font-family:var(--mc-font,'Minecraftia',monospace);font-size:15px;color:#fff8d6}.evolution-market-head p{margin:0;color:#8f849f;font-size:8px}
+.evolution-filters{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end}.evolution-filters button{border:1px solid #3a2f4d;background:#181125;color:#a99eba;padding:7px 8px;font-size:7px;font-weight:900;cursor:pointer}.evolution-filters button:hover{border-color:#6b5990;color:#fff}.evolution-filters button.active{background:#ffd84d;color:#241b09;border-color:#fff0a4;box-shadow:2px 2px 0 #0b0714}
+.evolution-player-list{display:grid;gap:7px}
+.evolution-player-row{width:100%;display:grid;grid-template-columns:minmax(220px,1.35fr) minmax(150px,.65fr) minmax(250px,1.25fr) 92px;gap:12px;align-items:center;padding:10px 11px;background:#14101f;border:1px solid #302642;color:#fff;text-align:left;cursor:pointer;transition:background .12s ease,border-color .12s ease,transform .12s ease}
+.evolution-player-row:hover{background:#1a1428;border-color:#665788;transform:translateY(-1px)}.evolution-player-row.positive{box-shadow:inset 3px 0 0 #4fc985}.evolution-player-row.negative{box-shadow:inset 3px 0 0 #e45f69}.evolution-player-row.is-mine{background:linear-gradient(90deg,#211a2e,#14101f 28%)}
+.evolution-player-main{display:flex;align-items:center;gap:9px;min-width:0}.evolution-player-main>div{display:grid;min-width:0}.evolution-player-main strong{font-size:10px;color:#fff8d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.evolution-player-main small{font-size:7px;color:#9388a6;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evolution-role{display:grid;place-items:center;width:28px;height:28px;flex:0 0 28px;border:2px solid #0a0710;background:#2d2340;font-family:var(--mc-font,'Minecraftia',monospace);font-size:9px}.evolution-role.role-p{background:#7b6222}.evolution-role.role-d{background:#1b4961}.evolution-role.role-c{background:#27523a}.evolution-role.role-a{background:#653046}
+.evolution-ovr-flow{display:flex;align-items:center;justify-content:center;gap:8px}.evolution-ovr-flow>span{display:grid;text-align:center}.evolution-ovr-flow small{font-size:6px;color:#756b87;letter-spacing:.06em}.evolution-ovr-flow b{font-size:13px;color:#9489a8}.evolution-ovr-flow strong{font-family:var(--mc-font,'Minecraftia',monospace);font-size:17px;color:#fff}.evolution-ovr-flow i{font-style:normal;color:#625872}.evolution-ovr-flow em{font-style:normal;font-size:10px;font-weight:900;padding:4px 5px;border:1px solid #44384f}.evolution-ovr-flow em.positive{color:#68e7a0;background:#173225;border-color:#347d58}.evolution-ovr-flow em.negative{color:#ff858d;background:#35171b;border-color:#83424a}.evolution-ovr-flow em.neutral{color:#aaa0b9;background:#25202c}
+.evolution-reasons{display:grid;gap:3px;min-width:0}.evolution-reasons span{font-size:7px;color:#aaa0bb;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.evolution-reasons span b{color:#ffd84d;margin-right:4px}.evolution-reasons .is-empty{color:#655c72;font-style:italic}
+.evolution-last-day{display:grid;text-align:right}.evolution-last-day span{font-size:6px;color:#746985}.evolution-last-day strong{font-family:var(--mc-font,'Minecraftia',monospace);font-size:11px;color:#fff5c7;margin-top:2px}.evolution-last-day small{font-size:6px;color:#80758f;margin-top:2px}
+.evolution-empty-state{padding:34px 12px;display:grid;gap:6px;text-align:center;border:1px dashed #443750;background:#100c18}.evolution-empty-state strong{font-family:var(--mc-font,'Minecraftia',monospace);font-size:10px;color:#d5cce2}.evolution-empty-state span{font-size:8px;color:#81768e}
+.season-player-evolution-panel{margin-top:12px;padding:12px;background:#130e1e;border:1px solid #382c4b}.season-player-evolution-rows{display:grid;gap:5px}.season-player-evolution-row{display:grid;grid-template-columns:30px 70px 36px minmax(0,1fr);align-items:center;gap:7px;padding:7px 8px;background:#191226;border:1px solid #2f2540}.season-player-evolution-row span{font-size:7px;color:#8d82a0}.season-player-evolution-row strong{font-size:9px;color:#fff}.season-player-evolution-row b{font-size:8px}.season-player-evolution-row b.positive{color:#62e29a}.season-player-evolution-row b.negative{color:#ff7b84}.season-player-evolution-row small{font-size:7px;color:#9a90aa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player-form-badge.positive{color:#69e6a0;border-color:#337f59;background:#173326}.player-form-badge.negative{color:#ff858d;border-color:#82424a;background:#34171b}
+@media(max-width:1050px){.evolution-summary-grid{grid-template-columns:repeat(2,1fr)}.evolution-player-row{grid-template-columns:minmax(190px,1fr) 150px 1fr}.evolution-last-day{display:none}}
+@media(max-width:760px){.evolution-highlights-grid{grid-template-columns:1fr}.evolution-summary-grid{grid-template-columns:1fr 1fr}.evolution-explainer{align-items:flex-start;flex-direction:column}.evolution-market-head{align-items:flex-start;flex-direction:column}.evolution-filters{justify-content:flex-start}.evolution-player-row{grid-template-columns:1fr auto}.evolution-reasons{grid-column:1/-1}.evolution-ovr-flow{justify-content:flex-end}.evolution-highlight-item{grid-template-columns:26px minmax(0,1fr)}.evolution-ovr-mini{grid-column:2;justify-self:start}.evolution-player-main small{white-space:normal}}
+
+
+/* V3.2.35.11 · FantaSocial / DM giocatori */
+.social-screen .season-wrap{max-width:1420px}
+.social-stories-panel{
+  padding:14px 16px!important;
+  overflow:hidden;
+  background:linear-gradient(180deg,#17131f,#111019)!important;
+  border-color:#2c2537!important;
+}
+.social-stories-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:10px}
+.social-stories-head h3{margin:3px 0 0;color:#fff;font-size:16px}
+.social-following-count{display:flex;align-items:baseline;gap:7px;color:#8d849b}
+.social-following-count strong{font-family:var(--mc-font,'Minecraftia',monospace);font-size:16px;color:#fff}
+.social-following-count span{font-size:9px}
+.social-stories{
+  display:flex;
+  gap:12px;
+  overflow-x:auto;
+  padding:3px 2px 7px;
+  scrollbar-width:thin;
+}
+.social-story{
+  flex:0 0 70px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#cfc8d7;
+  display:grid;
+  justify-items:center;
+  gap:6px;
+  cursor:pointer;
+  font:inherit;
+}
+.social-story strong{
+  width:68px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  text-align:center;
+  font-size:8px;
+  font-weight:700;
+}
+.social-story-ring{
+  width:58px;height:58px;border-radius:50%;
+  padding:3px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,#f7b24d,#e7489d 48%,#7c59ff);
+  transition:transform .18s ease;
+}
+.social-story:hover .social-story-ring,.social-story.active .social-story-ring{transform:scale(1.06)}
+.social-story.good .social-story-ring{background:linear-gradient(135deg,#5ce697,#2cc77d)}
+.social-story.bad .social-story-ring{background:linear-gradient(135deg,#ff8d68,#e6475c)}
+.social-story.blocked .social-story-ring{background:#4f4858;filter:grayscale(.65)}
+.social-story.active strong{color:#fff}
+
+.social-player-avatar{
+  display:grid;
+  place-items:end center;
+  flex:0 0 auto;
+  overflow:hidden;
+  border-radius:50%;
+  background:linear-gradient(180deg,#2d3568,#15182e 82%);
+  border:2px solid #0f0d13;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);
+}
+.social-player-avatar img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center bottom;
+  image-rendering:pixelated;
+}
+.social-player-avatar.story{width:52px;height:52px;border-color:#17131f}
+.social-player-avatar.small{width:43px;height:43px}
+.social-player-avatar.header{width:48px;height:48px}
+.social-player-avatar.tiny{width:27px;height:27px;border-width:1px}
+
+.social-app-shell{
+  min-height:620px;
+  padding:0!important;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:minmax(300px,360px) minmax(0,1fr);
+  background:#0c0b10!important;
+  border-color:#2a2530!important;
+}
+.social-inbox{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  border-right:1px solid #29242e;
+  background:#101015;
+}
+.social-app-brand{
+  min-height:74px;
+  padding:14px 15px;
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  border-bottom:1px solid #29242e;
+}
+.social-app-mark{
+  width:40px;height:40px;border-radius:12px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,#f5a33b,#e14391 50%,#6b55e9);
+  color:#fff;
+  font-family:var(--mc-font,'Minecraftia',monospace);
+  font-size:10px;
+  box-shadow:0 0 0 2px #0c0b10,0 0 0 3px rgba(255,255,255,.12);
+}
+.social-app-brand>div:nth-child(2){min-width:0;display:grid;gap:2px}
+.social-app-brand strong{font-size:13px;color:#fff}
+.social-app-brand span{font-size:9px;color:#81798b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.social-app-status{font-size:7px!important;color:#42d788!important;font-weight:900;letter-spacing:.08em}
+.social-inbox-stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  border-bottom:1px solid #29242e;
+}
+.social-inbox-stats div{padding:10px 5px;text-align:center;border-right:1px solid #26212b}
+.social-inbox-stats div:last-child{border-right:0}
+.social-inbox-stats strong{display:block;color:#fff;font-size:13px}
+.social-inbox-stats span{display:block;margin-top:2px;color:#777080;font-size:7px;text-transform:uppercase;letter-spacing:.04em}
+.social-search-box{
+  margin:12px 12px 8px;
+  min-height:38px;
+  padding:0 11px;
+  border-radius:10px;
+  background:#1a181e;
+  border:1px solid #2b2730;
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.social-search-box span{color:#7e7688;font-size:17px}
+.social-search-box input{
+  width:100%;
+  border:0!important;
+  outline:0!important;
+  padding:0!important;
+  background:transparent!important;
+  color:#eee!important;
+  font:inherit;
+  font-size:10px!important;
+  box-shadow:none!important;
+}
+.social-inbox-title{
+  padding:8px 14px 7px;
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  color:#fff;
+  font-size:9px;
+  font-weight:900;
+}
+.social-inbox-title small{color:#716a79;font-weight:500}
+.social-conversation-list{
+  min-height:0;
+  overflow:auto;
+  flex:1 1 auto;
+  padding:0 7px 10px;
+}
+.social-conversation-row{
+  width:100%;
+  min-height:63px;
+  padding:8px;
+  display:grid;
+  grid-template-columns:43px minmax(0,1fr) auto;
+  align-items:center;
+  gap:9px;
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  color:#fff;
+  text-align:left;
+  font:inherit;
+  cursor:pointer;
+}
+.social-conversation-row:hover{background:#1b181f}
+.social-conversation-row.active{background:#242029}
+.social-conversation-row.blocked{opacity:.62}
+.social-conversation-copy{min-width:0;display:grid;gap:3px}
+.social-conversation-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+.social-conversation-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#87808d;font-size:8px}
+.social-conversation-meta{display:grid;justify-items:end;gap:4px}
+.social-conversation-meta b{font-size:6px;color:#9c8bb8;letter-spacing:.04em}
+.social-conversation-row.blocked .social-conversation-meta b{color:#ea6e79}
+.social-conversation-meta small{font-size:7px;color:#706979}
+.social-no-results{padding:24px 12px;text-align:center;color:#777080;font-size:9px}
+
+.social-chat{
+  min-width:0;
+  min-height:620px;
+  display:flex;
+  flex-direction:column;
+  background:
+    radial-gradient(circle at 50% -15%,rgba(102,77,145,.15),transparent 34%),
+    #0c0b10;
+}
+.social-chat-empty{
+  flex:1;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:8px;
+  padding:30px;
+  text-align:center;
+  color:#8d8595;
+}
+.social-empty-icon{
+  width:76px;height:76px;border:2px solid #776f7d;border-radius:50%;
+  display:grid;place-items:center;
+  color:#fff;font-size:26px;
+}
+.social-chat-empty strong{color:#fff;font-size:17px}
+.social-chat-empty p{max-width:340px;margin:0;font-size:10px;line-height:1.55}
+.social-chat-active{height:620px;min-height:0;display:flex;flex-direction:column}
+.social-chat-active.hidden,.social-chat-empty.hidden{display:none!important}
+.social-chat-header{
+  min-height:75px;
+  padding:12px 16px;
+  border-bottom:1px solid #29242e;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  background:rgba(16,15,20,.94);
+}
+.social-chat-player{display:flex;align-items:center;gap:10px;min-width:0}
+.social-chat-player>div{min-width:0;display:grid;gap:2px}
+.social-chat-player strong{font-size:12px;color:#fff}
+.social-chat-player span{font-size:8px;color:#85808c}
+.social-chat-profile{display:grid;justify-items:end;gap:2px;text-align:right}
+.social-chat-profile span{color:#d67ee0;font-size:7px;font-weight:900;letter-spacing:.08em}
+.social-chat-profile b{color:#bbb2c5;font-size:7px}
+.social-chat-profile small{color:#81798b;font-size:7px}
+.social-chat-messages{
+  flex:1 1 auto;
+  min-height:0;
+  overflow:auto;
+  padding:20px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  scroll-behavior:smooth;
+}
+.social-message-row{display:flex;align-items:flex-end;gap:7px;max-width:76%}
+.social-message-row.mine{align-self:flex-end;justify-content:flex-end}
+.social-message-row.theirs{align-self:flex-start}
+.social-message-bubble{
+  position:relative;
+  max-width:100%;
+  padding:9px 11px 7px;
+  border-radius:16px;
+  background:#242129;
+  color:#f5f2f7;
+  border:1px solid #302b35;
+}
+.social-message-row.mine .social-message-bubble{
+  background:linear-gradient(135deg,#6d46d9,#a13fa5);
+  border-color:#8d59d4;
+}
+.social-message-row.reaction-good .social-message-bubble{box-shadow:0 0 0 1px rgba(71,218,139,.25)}
+.social-message-row.reaction-bad .social-message-bubble{box-shadow:0 0 0 1px rgba(237,92,111,.25)}
+.social-message-bubble p{margin:0;font-size:10px;line-height:1.5;word-break:break-word}
+.social-message-bubble small{display:block;margin-top:4px;text-align:right;font-size:6px;color:rgba(255,255,255,.55)}
+.social-system-message{
+  align-self:center;
+  max-width:70%;
+  padding:7px 10px;
+  border-radius:999px;
+  background:#1b171c;
+  border:1px solid #382b31;
+  color:#b8959d;
+  font-size:7px;
+  text-align:center;
+}
+.social-system-message span{margin-right:5px}
+.social-first-message{
+  margin:auto;
+  max-width:420px;
+  display:grid;
+  justify-items:center;
+  gap:6px;
+  text-align:center;
+  color:#8f8797;
+}
+.social-first-message strong{font-size:14px;color:#fff}
+.social-first-message span{font-size:8px;color:#c68bd0}
+.social-first-message p{margin:8px 0 0;font-size:9px;line-height:1.55}
+
+.social-quick-messages{
+  padding:8px 14px 5px;
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+  border-top:1px solid #211d25;
+}
+.social-quick-messages button{
+  flex:0 0 auto;
+  min-height:28px;
+  padding:5px 9px;
+  border:1px solid #38313f;
+  border-radius:999px;
+  background:#17151b;
+  color:#bdb5c5;
+  font:inherit;
+  font-size:7px;
+  cursor:pointer;
+}
+.social-quick-messages button:hover{border-color:#8052b4;color:#fff}
+.social-quick-messages.is-disabled{opacity:.35;pointer-events:none}
+.social-compose-wrap{padding:5px 14px 14px}
+.social-compose-info{
+  margin:0 4px 6px;
+  color:#8d8495;
+  font-size:7px;
+  line-height:1.35;
+}
+.social-compose-info.used{color:#b69bce}
+.social-compose-info.blocked{color:#e17785}
+.social-compose{
+  min-height:48px;
+  padding:5px 6px 5px 13px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;
+  gap:8px;
+  border:1px solid #38323d;
+  border-radius:24px;
+  background:#111015;
+}
+.social-compose input{
+  min-width:0;
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  color:#f3eff5!important;
+  padding:0!important;
+  font:inherit;
+  font-size:10px!important;
+  box-shadow:none!important;
+}
+.social-compose input:disabled{color:#777!important}
+.social-compose>span{color:#625c68;font-size:6px}
+.social-compose button{
+  min-width:64px;
+  height:34px;
+  border:0;
+  border-radius:18px;
+  background:transparent;
+  color:#b14cff;
+  font:inherit;
+  font-size:8px;
+  font-weight:900;
+  cursor:pointer;
+}
+.social-compose button:hover:not(:disabled){background:#201629;color:#d48aff}
+.social-compose button:disabled{color:#665d6b;cursor:not-allowed}
+.social-rules-panel{
+  margin-top:14px;
+  padding:12px!important;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.social-rules-panel>div{
+  padding:10px;
+  border:1px solid rgba(255,255,255,.06);
+  background:rgba(255,255,255,.025);
+  display:grid;
+  grid-template-columns:30px minmax(0,1fr);
+  column-gap:8px;
+  align-items:start;
+}
+.social-rules-panel>div>span{grid-row:1/3;font-size:20px}
+.social-rules-panel strong{color:#fff;font-size:9px}
+.social-rules-panel p{margin:3px 0 0;color:#8e859b;font-size:8px;line-height:1.5}
+
+@media(max-width:1050px){
+  .social-app-shell{grid-template-columns:300px minmax(0,1fr)}
+}
+@media(max-width:820px){
+  .league-nav{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .league-nav button:last-child{grid-column:auto!important}
+  .social-app-shell{grid-template-columns:1fr;min-height:0}
+  .social-inbox{border-right:0;border-bottom:1px solid #29242e;max-height:430px}
+  .social-chat-active,.social-chat{min-height:560px;height:auto}
+  .social-chat-active{height:560px}
+  .social-rules-panel{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .social-chat-header{align-items:flex-start}
+  .social-chat-profile{max-width:42%}
+  .social-message-row{max-width:88%}
+  .social-inbox-stats span{font-size:6px}
+}
+
+/* V3.2.35.46 · DataCenter unificato con Panoramica, Giocatori ed Evoluzione */
+.datacenter-screen .season-wrap{display:grid;gap:12px}
+.datacenter-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:8px!important}
+.datacenter-tabs button{min-height:44px;border:2px solid #0d0818;background:#17112f;color:#aaa0bf;font-family:'Minecraftia',monospace;font-size:9px;line-height:1.5;cursor:pointer;box-shadow:2px 2px 0 rgba(0,0,0,.28)}
+.datacenter-tabs button:hover{border-color:#67568e;color:#fff}
+.datacenter-tabs button.active{background:#ffd84d;color:#241b09;border-color:#fff0a4;box-shadow:3px 3px 0 #0b0714}
+.datacenter-tab-panel{display:none}
+.datacenter-tab-panel.active{display:block}
+.datacenter-panel-body{display:grid;gap:12px}
+.dc-overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dc-evolution-summary .dc-free-kpis b.positive{color:#68e7a0}
+.dc-evolution-summary .dc-free-kpis b.negative{color:#ff858d}
+.dc-embedded-roster{padding:16px!important}
+.dc-column-legend-evolution{grid-template-columns:minmax(0,1.1fr) 112px 118px minmax(170px,1.2fr) 110px!important;margin-left:344px!important}
+.dc-player-row-evolution{grid-template-columns:38px minmax(145px,1.35fr) 120px minmax(142px,1.05fr) 112px 116px minmax(170px,1.25fr) 106px 20px!important}
+.dc-evolution-cell{min-height:48px;display:grid;grid-template-columns:1fr auto;align-content:center;gap:2px 5px;padding:5px 7px;border:2px solid #0d0818;background:#21183f;text-align:center}
+.dc-evolution-cell small{grid-column:1/-1;font-size:6px;color:#8f84a5;letter-spacing:.06em}
+.dc-evolution-cell b{font-family:'Minecraftia',monospace;font-size:9px;color:#fff8d6}
+.dc-evolution-cell em{font-style:normal;font-size:9px;font-weight:950;color:#aaa0b9}
+.dc-evolution-cell.positive{background:#173225}.dc-evolution-cell.positive em{color:#68e7a0}
+.dc-evolution-cell.negative{background:#35171b}.dc-evolution-cell.negative em{color:#ff858d}
+#datacenterEvolutionPanel{display:none}
+#datacenterEvolutionPanel.active{display:grid;gap:12px}
+@media(max-width:1100px){
+  .dc-overview-grid{grid-template-columns:1fr}
+  .dc-column-legend-evolution{display:none!important}
+  .dc-player-row-evolution{grid-template-columns:34px minmax(130px,1fr) 105px 1fr 105px!important}
+  .dc-player-row-evolution .dc-evolution-cell{grid-column:5}
+  .dc-player-row-evolution .dc-scout-cell{grid-column:2}
+  .dc-player-row-evolution .dc-data-cell{grid-column:3/5}
+  .dc-player-row-evolution .dc-assistant-cell{grid-column:5}
+  .dc-player-row-evolution .dc-row-arrow{display:none}
+}
+@media(max-width:700px){
+  .datacenter-tabs{grid-template-columns:1fr}
+  .dc-player-row-evolution{grid-template-columns:34px minmax(0,1fr) 88px!important}
+  .dc-player-row-evolution .dc-status{grid-column:1/4}
+  .dc-player-row-evolution .dc-base-stats,
+  .dc-player-row-evolution .dc-evolution-cell,
+  .dc-player-row-evolution .dc-scout-cell,
+  .dc-player-row-evolution .dc-data-cell,
+  .dc-player-row-evolution .dc-assistant-cell{grid-column:1/4!important}
+}
+
+
+/* V3.2.35.47 · Archivio news con volto giocatore */
+.season-news-archive-item.has-player-avatar{
+  display:grid;
+  grid-template-columns:74px minmax(0,1fr);
+  gap:12px;
+  align-items:start;
+}
+.season-news-archive-item.has-player-avatar>.season-news-player-avatar{
+  width:64px;
+  height:64px;
+  margin-top:2px;
+}
+.season-news-archive-copy{min-width:0}
+@media(max-width:640px){
+  .season-news-archive-item.has-player-avatar{grid-template-columns:56px minmax(0,1fr);gap:10px}
+  .season-news-archive-item.has-player-avatar>.season-news-player-avatar{width:50px;height:50px}
+}
+
+
+/* V3.2.35.49 · Social senza lista laterale giocatori */
+.social-app-shell{
+  min-height:620px;
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:auto minmax(0,1fr)!important;
+}
+.social-app-toolbar{
+  min-width:0;
+  display:grid;
+  grid-template-columns:minmax(230px,auto) minmax(220px,420px);
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:10px 14px;
+  border-bottom:1px solid #29242e;
+  background:#101015;
+}
+.social-app-toolbar .social-app-brand{
+  min-height:54px;
+  padding:0;
+  border:0;
+  grid-template-columns:42px minmax(0,1fr) auto;
+}
+.social-app-toolbar .social-search-box{
+  width:100%;
+  margin:0;
+}
+.social-chat{
+  min-height:560px;
+}
+.social-chat-active{
+  height:560px;
+}
+.social-stories-no-results{
+  min-width:220px;
+  padding:18px 14px;
+  color:#8b8393;
+  font-size:9px;
+  text-align:center;
+  border:1px dashed #3a3340;
+  background:#121117;
+}
+@media(max-width:720px){
+  .social-app-toolbar{
+    grid-template-columns:1fr;
+    gap:9px;
+  }
+  .social-app-toolbar .social-app-brand{width:100%}
+  .social-chat,.social-chat-active{min-height:540px;height:540px}
+}
+
+
+/* V3.2.35.54 · Classifica completa ordinabile */
+.full-standings-table thead th{padding:0!important}
+.standings-sort-btn{
+  width:100%;
+  min-height:34px;
+  padding:6px 7px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  border:0;
+  background:transparent;
+  color:inherit;
+  font:inherit;
+  font-weight:950;
+  cursor:pointer;
+}
+.standings-sort-btn span{min-width:8px;color:#ffd84d;font-size:7px}
+.standings-sort-btn:hover{background:rgba(255,255,255,.06);color:#fff}
+.standings-sort-btn.active{background:rgba(255,216,77,.10);color:#ffd84d}
+.standings-sort-btn:focus-visible{outline:2px solid #ffd84d;outline-offset:-2px}
+.full-standings-table thead th:nth-child(2) .standings-sort-btn{justify-content:flex-start;text-align:left}

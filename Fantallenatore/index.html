@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<title>Fantallenatore</title>
+<link href="styles_v302.css" rel="stylesheet"/>
+<link href="css/ui-dialogs.css" rel="stylesheet"/>
+</head>
+<body class="is-main-menu">
+<a class="skip-link" href="#gameMain">Vai al contenuto principale</a>
+<div class="app-shell">
+<header class="topbar">
+<div>
+<div class="eyebrow">PROTOTIPO OFFLINE · SERIE A <span data-game-season></span> · <strong>BUILD <span data-game-build></span></strong></div>
+<h1>Fantallenatore <span data-game-build></span></h1>
+</div>
+<div class="top-actions">
+<button class="ghost" id="saveBtn">Salva</button>
+<button class="danger ghost" id="resetBtn">Reset</button>
+</div>
+</header>
+<main id="gameMain" tabindex="-1">
+<section class="screen active" id="setupScreen">
+<div class="setup-card setup-home-card">
+<img class="setup-game-logo" src="assets/menu/fantallenatore-logo.webp" alt="Fantallenatore Approved" width="1254" height="1254"/>
+<h2>La tua carriera da Fantallenatore</h2>
+<div class="setup-home-actions">
+<button class="primary big" id="startBtn">Carriera</button>
+<button class="secondary big" id="instructionsBtn">Istruzioni</button>
+</div>
+<input id="teamNameInput" type="hidden" value="Team JHZ"/>
+<input id="managerNameInput" type="hidden" value="Mister"/>
+</div>
+</section>
+<section class="screen" id="auctionScreen">
+<div aria-live="polite" class="role-autosim-banner hidden" id="roleAutoSimBanner">
+<div class="role-autosim-spinner" aria-hidden="true"><i></i><i></i><i></i></div>
+<div><span>REPARTO COMPLETATO</span><strong id="roleAutoSimTitle">Simulazione aste CPU…</strong><small id="roleAutoSimText">Hai completato il tuo reparto. Le aste rimanenti vengono simulate automaticamente.</small></div>
+</div>
+<div class="auction-layout">
+<aside class="panel roster-panel legacy-roster-panel">
+<div class="panel-head">
+<div><span class="muted">LA TUA ROSA</span><h3 id="myTeamName">Team JHZ</h3></div>
+<div class="budget"><span>Budget</span><strong id="myBudget">500</strong></div>
+</div>
+<div class="roster-list" id="myRoster"></div>
+<div class="roster-footer">
+<span id="mySlots">0 / 25</span>
+<span id="roleNeed">P 0/3 · D 0/8 · C 0/8 · A 0/6</span>
+</div>
+</aside>
+<section class="center-column">
+<div class="phase-banner panel" id="phaseBanner"></div>
+<div class="panel nomination-panel nomination-market nomination-v182" id="nominationBox">
+<div class="nomination-reference-shell">
+<aside class="auction-room-side nomination-room-side">
+<div class="auction-room-title">
+<span>FANTALLENATORI</span>
+<small>crediti residui</small>
+</div>
+<div class="auction-room-list" id="nominationRoomList"></div>
+</aside>
+<div class="nomination-main-v182">
+<div class="nomination-head nomination-head-v182">
+<div>
+<span class="nomination-kicker">FASE DI CHIAMATA</span>
+<h2 id="nominationTitle">Scegli il prossimo giocatore</h2>
+<p id="turnLabel">Tocca a te chiamare</p>
+</div>
+<div class="nomination-availability">
+<span id="availableRoleCaption">SVINCOLATI NEL REPARTO</span>
+<strong id="availableRoleCount">—</strong>
+<small id="nominationRoleLabel">Portieri</small>
+</div>
+</div>
+<div class="nomination-entry-area" id="playerSearchArea">
+<button class="nomination-open-search" id="openNominationModal" type="button">
+<span class="open-search-icon">⌕</span>
+<span class="open-search-copy">
+<small>CERCA GIOCATORE</small>
+<strong id="searchLaunchLabel">Tocca qui per aprire la lista dei giocatori</strong>
+</span>
+</button>
+<div class="nomination-callout">
+<div class="nomination-callout-copy">
+<strong id="nominationCalloutTitle">È il tuo turno di chiamata!</strong>
+<small id="nominationCalloutCopy">Scegli un giocatore del reparto e chiamalo all'asta a 1 credito.</small>
+</div>
+<button class="big-call-btn" id="openNominationModalBtn" type="button">CHIAMA</button>
+</div>
+</div>
+<div class="cpu-thinking nomination-thinking hidden" id="cpuThinking">
+<div class="spinner"></div>
+<div><strong id="cpuThinkingText">La CPU sta scegliendo chi chiamare…</strong><small>Valuta rosa, budget e giocatori ancora liberi</small></div>
+</div>
+</div>
+</div>
+<div class="visible-rivals-panel">
+<div class="rivals-section-head">
+<h2>I TUOI AVVERSARI</h2>
+<div class="rivals-section-meta"></div>
+</div>
+<div class="visible-rivals-grid" id="visibleRivals"></div>
+</div>
+<div aria-hidden="true" class="nomination-modal hidden" id="nominationModal">
+<div class="nomination-modal-backdrop" id="nominationModalBackdrop"></div>
+<div class="nomination-modal-dialog panel">
+<div class="nomination-modal-head">
+<div>
+<span class="nomination-kicker">SELEZIONE GIOCATORE</span>
+<h3 id="nominationModalTitle">Scegli il giocatore da chiamare</h3>
+</div>
+<button class="nomination-close" id="closeNominationModal" type="button">✕</button>
+</div>
+<div class="nomination-toolbar modal-nomination-toolbar">
+<label class="nomination-search">
+<span>⌕</span>
+<input autocomplete="off" id="playerSearch" placeholder="Cerca giocatore"/>
+</label>
+<select id="roleFilter" class="hidden" aria-label="Filtra giocatori per ruolo"><option value="ALL">TUTTI I RUOLI</option><option value="P">PORTIERI</option><option value="D">DIFENSORI</option><option value="C">CENTROCAMPISTI</option><option value="A">ATTACCANTI</option></select>
+<select aria-label="Filtra per club" id="clubFilter">
+<option value="">Tutti i club</option>
+</select>
+<select aria-label="Ordina giocatori" id="sortFilter">
+<option value="recommended">Consigliati</option>
+<option value="ovr">OVR più alto</option>
+<option value="quotation">Quotazione</option>
+<option value="name">A-Z</option>
+</select>
+</div>
+<section class="nomination-section free-market-section modal-market-section">
+<div class="nomination-section-head">
+<div><span>LISTA GIOCATORI</span><strong id="freeListTitle">Tutti i giocatori disponibili</strong></div>
+<small id="filteredPlayerCount">—</small>
+</div>
+<div class="player-results nomination-player-grid modal-player-results" id="playerResults"></div>
+</section>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="auction-event-modal hidden" id="auctionEventModal">
+<div class="auction-event-backdrop"></div>
+<div class="auction-event-dialog">
+<div class="auction-event-top"><div class="auction-event-portrait" id="auctionEventPortrait"></div><div><span class="auction-event-rarity" id="auctionEventRarity">EVENTO</span><h2 id="auctionEventTitle">Evento asta</h2></div><button class="auction-event-minimize" id="auctionEventMinimizeBtn" type="button" aria-label="Riduci evento e consulta la rosa" title="Riduci per consultare la rosa">−</button></div>
+<p class="auction-event-description" id="auctionEventDescription"></p>
+<div id="auctionEventBody"></div>
+<div class="auction-event-actions" id="auctionEventActions"></div>
+</div>
+</div>
+<button class="auction-event-restore hidden" id="auctionEventRestoreBtn" type="button" aria-controls="auctionEventModal">↗ Riapri evento · consulta la tua scelta</button>
+<div aria-hidden="true" class="auction-event-modal role-transition-modal hidden" id="roleTransitionModal">
+<div class="auction-event-backdrop"></div>
+<div class="auction-event-dialog role-transition-dialog">
+<div class="role-transition-top">
+<span class="auction-event-rarity" id="roleTransitionEyebrow">ASTA · REPARTO COMPLETATO</span>
+<h2 id="roleTransitionTitle">Portieri completati</h2>
+<p id="roleTransitionMessage">Tutte le squadre hanno completato i portieri.</p>
+</div>
+<div class="role-transition-stats" id="roleTransitionStats"></div>
+<div class="role-transition-separator"><i></i><span>✓</span><i></i></div>
+<button class="primary big role-transition-continue" id="roleTransitionContinue" type="button">CONTINUA · DIFENSORI</button>
+</div>
+</div>
+<div class="panel live-auction hidden" id="liveAuction">
+<div class="live-auction-kicker">
+<div class="live-indicator"><i></i><strong>ASTA LIVE</strong></div>
+<div class="live-context"><span id="auctionNominator">Chiamato da —</span><span class="live-separator">•</span><span id="auctionActiveCount">10 ancora in asta</span></div>
+</div>
+<div aria-live="polite" class="award-overlay hidden" id="awardOverlay">
+<div class="award-overlay-card">
+<div class="award-hammer" aria-hidden="true">🔨</div>
+<div class="award-transfer" aria-hidden="true"><div id="awardPlayerAvatar" class="award-player-avatar"></div><span class="award-transfer-arrow">➜</span><span id="awardTransferTeam" class="award-transfer-team"></span></div>
+<img id="awardAdminPortrait" class="award-admin-portrait" src="assets/rivals/admin.webp" alt="Admin" hidden/>
+<span class="award-kicker" id="awardBannerTitle">AGGIUDICATO!</span>
+<strong id="awardPlayerName">Giocatore</strong>
+<div class="award-destination"><span id="awardWinnerName">Squadra</span><em>•</em><b id="awardPrice">1</b><small>CR</small></div>
+</div>
+</div>
+<div class="auction-reference-shell">
+<aside class="auction-room-side">
+<div class="auction-room-title">
+<span>FANTALLENATORI</span>
+<small>crediti residui</small>
+</div>
+<div class="auction-room-list" id="auctionRoomList"></div>
+</aside>
+<div class="auction-main-side">
+<div class="auction-hero-row single-hero-row">
+<div class="auction-player-card with-inline-auction-info">
+<div class="auction-avatar" id="auctionAvatar">GV</div>
+<div class="auction-player-main ref-player-main">
+<div class="auction-mini-top"><span class="auction-club-short" id="auctionClubShort">INT</span><span class="auction-role-label" id="auctionRoleLabel">Attaccante</span></div>
+<h2 id="auctionName">Giocatore</h2>
+<div class="auction-stars" id="auctionStars">★★★★★</div>
+<div class="player-meta live-meta"><span class="auction-club" id="auctionClub">Inter</span><span id="auctionOvr">OVR 88</span><span id="auctionQuote">Quot. 25</span></div>
+<div aria-label="Analisi pre-asta del giocatore" class="auction-player-analysis">
+<div class="auction-analysis-item potential" hidden=""><span>POTENZIALE STAGIONE</span><strong id="auctionPotentialLabel">ALTO</strong><div class="auction-analysis-track"><i id="auctionPotentialBar"></i></div></div>
+<div class="auction-analysis-item starter" hidden=""><span>PROB. TITOLARE</span><strong id="auctionStarterPct">75%</strong><div class="auction-analysis-track"><i id="auctionStarterBar"></i></div></div>
+</div>
+</div>
+<div id="auctionBundlePlayers" class="auction-bundle-players" hidden></div>
+<div class="auction-inline-stats leader-only-stats">
+<div class="inline-stat leader-inline-box">
+<div class="leader-live-copy"><span>IN TESTA</span><strong id="currentLeader">—</strong></div>
+<div aria-hidden="true" class="leader-coach-avatar"><img alt="" class="hidden" id="currentLeaderImage"/><span id="currentLeaderInitials">—</span></div>
+</div>
+</div>
+</div>
+</div>
+<div class="auction-bottom-row solo-timer-layout">
+<div class="auction-bottom-center">
+<div class="countdown-box live-countdown auction-countdown-ref combined-live-box" id="countdownBox">
+<div class="live-time-price-grid">
+<div class="live-time-block">
+<div class="live-time-stack">
+<span class="timer-caption timer-caption-outside">TEMPO</span>
+<div class="timer-dial" id="timerDial">
+<div class="timer-dial-core">
+<div class="hammer-line"><span class="hammer-icon">🔨</span><div class="countdown-number"><span id="bidCountdown">5</span><small>s</small></div></div>
+</div>
+</div>
+</div>
+</div>
+<div aria-label="Prezzo attuale" class="live-price-block">
+<span class="price-caption">OFFERTA ATTUALE</span>
+<div class="price-value-row"><span aria-hidden="true" class="live-coin-icon"><i>¢</i></span><b id="currentPrice">1</b></div>
+</div>
+</div>
+<div class="countdown-track"><div class="countdown-bar" id="countdownBar"></div></div>
+</div>
+<div aria-live="assertive" class="bid-spotlight hidden" id="bidSpotlight">
+<div class="bid-spotlight-avatar"><img alt="" class="hidden" id="bidSpotlightImage"/><span id="bidSpotlightInitials">CPU</span></div>
+<div class="bid-spotlight-copy"><small id="bidSpotlightLabel">RILANCIO</small><strong id="bidSpotlightName">Allenatore</strong><p id="bidSpotlightReaction">Questo giocatore sarà mio!</p></div>
+<div class="bid-spotlight-price"><small>NUOVA OFFERTA</small><strong id="bidSpotlightPrice">1</strong><span id="bidSpotlightIncrement">+1</span></div>
+</div>
+<div class="auction-actions-col under-timer">
+<div class="bid-controls live-bid-controls hidden" id="userBidControls">
+<button class="live-bid-btn" data-inc="10"><strong>+10</strong></button>
+<button class="live-bid-btn" data-inc="5"><strong>+5</strong></button>
+<button class="primary live-bid-btn" data-inc="1"><strong>+1</strong></button>
+<button class="danger live-pass-btn" id="passBtn"><strong>PASSA</strong><small>definitivo</small></button>
+<div class="auction-powers" id="auctionPowers">
+<div class="auction-powers-head"><span>POTERI ASTA</span><small>3 slot · OSSERVATORE e ONE SHOT valgono 3</small></div>
+<div class="auction-powers-grid">
+<button class="auction-power-btn" data-power="block" id="powerBlockBtn"><span class="power-icon">🔒</span><b>BLOCCO</b><small>Escludi una CPU da questa chiamata</small><em id="powerBlockCount">5/5</em></button>
+<button class="auction-power-btn" data-power="scout" id="powerScoutBtn"><span class="power-icon">👁️</span><b>SCOUT</b><small>Limite stimato di tutte le CPU</small><em id="powerScoutCount">5/5</em></button>
+<button class="auction-power-btn" data-power="bluff" id="powerBluffBtn"><span class="power-icon">💣</span><b>BLUFF</b><small>Spingi le CPU a sopravvalutare il giocatore</small><em id="powerBluffCount">5/5</em></button>
+<button class="auction-power-btn" data-power="observer" id="powerObserverBtn" type="button"><span class="power-icon">🔭</span><b>OSSERVATORE</b><small>Rivela Potenziale e % di titolarità di tutti i giocatori</small><em id="powerObserverCount">NON SCELTO</em></button>
+<button class="auction-power-btn" data-power="oneShot" id="powerOneShotBtn" type="button"><span class="power-icon">🎯</span><b>ONE SHOT</b><small>Il giocatore in asta viene assegnato immediatamente a te per 1 credito</small><em id="powerOneShotCount">1/1</em></button>
+</div>
+</div>
+</div>
+<div class="waiting-bid live-waiting" id="waitingBid">Le CPU stanno decidendo…</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="auction-event-modal hidden" id="auctionPowerModal">
+<div class="auction-event-backdrop"></div>
+<div class="auction-event-dialog auction-power-dialog">
+<div class="auction-event-top"><div class="auction-event-portrait power-modal-icon" id="auctionPowerIcon">⚡</div><div><span class="auction-event-rarity">POTERE ASTA</span><h2 id="auctionPowerTitle">Scegli un avversario</h2></div></div>
+<p class="auction-event-description" id="auctionPowerDescription"></p>
+<div id="auctionPowerBody"></div>
+<div class="auction-event-actions"><button class="event-btn ghost" id="auctionPowerCancel">Annulla</button></div>
+</div>
+</div>
+<div class="recent-bids-wrap">
+<div class="recent-bids-head"><span>ULTIMI RILANCI</span><small>aggiornamento in tempo reale</small></div>
+<div class="recent-bids" id="recentBidStrip"></div>
+</div>
+<details class="auction-history">
+<summary>Storico completo dell'asta</summary>
+<div class="auction-log" id="auctionLog"></div>
+</details>
+</div>
+<div class="panel test-panel">
+<div>
+<strong>Strumenti test</strong>
+<span class="muted">Per non dover fare 250 acquisti a mano.</span>
+</div>
+<label class="toggle"><input id="turboToggle" type="checkbox"/><span>CPU veloce</span></label>
+<button class="secondary" id="autoCompleteBtn">Autocompleta asta</button>
+</div>
+</section>
+</div>
+<section class="league-room panel">
+<div class="league-room-head">
+<div>
+<span class="muted">SALA LEGA · DASHBOARD LIVE</span>
+<h3>Rose, crediti e spesa per reparto</h3>
+</div>
+
+</div>
+<div class="league-roster-scroll">
+<div class="manager-list league-roster-grid" id="managerList"></div>
+</div>
+</section>
+</section>
+<section class="screen" id="summaryScreen">
+<div class="summary-wrap">
+<div class="summary-hero panel">
+<span class="badge">ASTA COMPLETATA</span>
+<h2 id="summaryTitle">Le 10 rose sono pronte.</h2>
+<p>L’asta è conclusa. Puoi controllare le rose e poi iniziare il campionato da 38 giornate.</p>
+<div class="summary-stats" id="summaryStats"></div>
+</div>
+<div class="calibration-panel panel" id="calibrationPanel"></div>
+<section class="panel sponsor-selection-panel" id="sponsorSelectionPanel">
+<div class="sponsor-selection-head">
+<div>
+<span class="muted">POST ASTA · CONTRATTO STAGIONALE</span>
+<h3>Scegli il tuo sponsor</h3>
+<p>Puoi firmare un solo accordo. Lo sponsor resta attivo per tutta la stagione.</p>
+</div>
+<div class="sponsor-chosen-summary" id="sponsorChosenSummary"></div>
+</div>
+<div class="sponsor-cards" id="sponsorCards"></div>
+</section>
+<section class="league-room panel summary-league-room">
+<div class="league-room-head">
+<div>
+<span class="muted">SALA LEGA · RIEPILOGO FINALE</span>
+<h3>Tutte le rose complete</h3>
+</div>
+<div class="summary-league-hint">P · D · C · A · clicca un giocatore per le statistiche</div>
+</div>
+<div class="league-roster-scroll summary-roster-scroll">
+<div class="manager-list league-roster-grid summary-league-grid" id="summaryTeams"></div>
+</div>
+</section>
+<div class="summary-actions-row">
+<button class="primary big season-start-btn" id="startLeagueBtn">INIZIA CAMPIONATO</button>
+<button class="secondary big" id="newAuctionBtn">Nuova asta</button>
+</div>
+</div>
+</section>
+<section class="screen trade-window-screen" id="tradeWindowScreen">
+<div class="trade-window-wrap trade-window-redesign">
+<header class="panel trade-window-header trade-shell-panel">
+<div class="trade-header-copy">
+<span class="season-kicker" id="tradeWindowEyebrow">FINE ASTA · TRATTATIVE</span>
+<h2>Scambi tra fantallenatori</h2>
+<p>Un solo scambio alla volta: scegli 1 tuo giocatore, 1 avversario dello stesso ruolo e aggiungi eventualmente dei crediti.</p>
+</div>
+<div class="trade-header-meta">
+<strong id="tradeWindowProgress"></strong>
+</div>
+</header>
+
+<div class="trade-native-controls sr-only" aria-hidden="true">
+<label>Giocatore che cedi<select id="tradeOutgoing"></select></label>
+<label>Giocatore che chiedi<select id="tradeIncoming"></select></label>
+</div>
+
+<section class="trade-coaches-row">
+<article class="panel trade-coach-card is-user">
+<div class="trade-coach-avatar" id="tradeUserAvatar"></div>
+<div class="trade-coach-copy">
+<small>La tua squadra</small>
+<strong id="tradeUserTeamName">La tua squadra</strong>
+<span id="tradeUserManagerName">Il tuo fantallenatore</span>
+</div>
+</article>
+<div class="trade-swap-glyph" aria-hidden="true"><span>⇄</span></div>
+<article class="panel trade-coach-card is-rival">
+<div class="trade-coach-avatar" id="tradeRivalAvatar"></div>
+<div class="trade-coach-copy">
+<small>Squadra rivale</small>
+<label class="trade-rival-picker">
+<span class="sr-only">Squadra rivale</span>
+<select id="tradeOpponent"></select>
+</label>
+<span id="tradeRivalManagerName">Allenatore rivale</span>
+</div>
+</article>
+</section>
+
+<section class="trade-selection-grid">
+<article class="panel trade-selection-panel is-outgoing">
+<header class="trade-section-heading">
+<div><span class="trade-mini-kicker">La tua offerta</span><h3>Giocatore offerto</h3></div>
+<button class="trade-clear-btn" id="tradeClearOutgoing" type="button" aria-label="Rimuovi giocatore offerto">×</button>
+</header>
+<div class="trade-player-card-wrap" id="tradeOutgoingCard"></div>
+<div class="trade-credit-box">
+<div>
+<span class="trade-credit-label">Crediti aggiunti (opzionali)</span>
+<small id="tradeBudgetHint">0 crediti disponibili</small>
+</div>
+<div class="trade-credit-stepper">
+<button id="tradeCreditsMinus" type="button" aria-label="Riduci crediti offerti">−</button>
+<input id="tradeCredits" type="number" min="0" step="1" value="0" inputmode="numeric"/>
+<button id="tradeCreditsPlus" type="button" aria-label="Aumenta crediti offerti">+</button>
+</div>
+</div>
+</article>
+
+<article class="panel trade-selection-panel is-incoming">
+<header class="trade-section-heading">
+<div><span class="trade-mini-kicker">La tua richiesta</span><h3>Giocatore richiesto</h3></div>
+<button class="trade-clear-btn" id="tradeClearIncoming" type="button" aria-label="Rimuovi giocatore richiesto">×</button>
+</header>
+<div class="trade-player-card-wrap" id="tradeIncomingCard"></div>
+<div class="trade-selection-tip">Scambio secco 1 vs 1, con eventuale conguaglio in crediti.</div>
+</article>
+</section>
+
+<section class="trade-rosters-grid">
+<article class="panel trade-roster-panel">
+<header class="trade-roster-header">
+<div><span class="trade-mini-kicker">Selezione</span><h3 id="tradeMyRosterTitle">I tuoi giocatori</h3></div>
+<strong id="tradeMyRosterCount">0 giocatori</strong>
+</header>
+<p class="trade-roster-hint">Clicca una faccina per scegliere il giocatore che vuoi offrire.</p>
+<div class="trade-roster-tools">
+<label>Ruolo<select id="tradeMyRole"><option value="all">Tutti i ruoli</option><option value="P">Portieri</option><option value="D">Difensori</option><option value="C">Centrocampisti</option><option value="A">Attaccanti</option></select></label>
+<label>Ordina<select id="tradeMySort"><option value="ovr">OVR più alto</option><option value="price">Costo più alto</option><option value="price-low">Costo più basso</option><option value="name">Nome A–Z</option></select></label>
+</div>
+<div class="trade-roster-list" id="tradeMyRosterList"></div>
+</article>
+
+<article class="panel trade-roster-panel">
+<header class="trade-roster-header">
+<div><span class="trade-mini-kicker">Selezione</span><h3 id="tradeRivalRosterTitle">I suoi giocatori</h3></div>
+<strong id="tradeRivalRosterCount">0 giocatori</strong>
+</header>
+<p class="trade-roster-hint">Puoi scegliere solo un giocatore dello stesso ruolo della tua offerta.</p>
+<div class="trade-roster-tools">
+<label>Ruolo<select id="tradeRivalRole"><option value="compatible">Compatibili</option><option value="all">Tutti i ruoli</option><option value="P">Portieri</option><option value="D">Difensori</option><option value="C">Centrocampisti</option><option value="A">Attaccanti</option></select></label>
+<label>Ordina<select id="tradeRivalSort"><option value="ovr">OVR più alto</option><option value="price">Costo più alto</option><option value="price-low">Costo più basso</option><option value="name">Nome A–Z</option></select></label>
+</div>
+<div class="trade-roster-list" id="tradeRivalRosterList"></div>
+</article>
+</section>
+
+<section class="trade-footer-grid">
+<aside class="panel trade-window-status">
+<h3>Risposta della CPU</h3>
+<p id="tradeResponse">Scegli due giocatori per preparare lo scambio.</p>
+<div id="tradeHistory"></div>
+</aside>
+<div class="trade-action-stack">
+<button class="primary big" id="tradeOfferBtn" type="button">INVIA PROPOSTA</button>
+<button class="secondary big hidden" id="tradeCounterBtn" type="button">ACCETTA CONTROPROPOSTA</button>
+<button class="secondary big trade-window-finish" id="tradeFinishBtn" type="button">TERMINA TRATTATIVE</button>
+</div>
+</section>
+</div>
+</section>
+<div aria-hidden="true" class="weekend-arrival-loader" id="weekendArrivalLoader">
+<div aria-live="polite" class="weekend-loader-card" role="status">
+<span class="weekend-loader-kicker">FANTALLENATORE</span>
+<strong>Week end in arrivo...</strong>
+<div class="weekend-loader-track"><i></i></div>
+<small>Preparazione della giornata</small>
+</div>
+</div>
+<section class="screen season-screen" id="seasonScreen">
+<div class="season-wrap">
+<header class="season-topbar panel dashboard-game-header">
+<div class="season-title-block">
+<h2>Fantallenatore</h2>
+<p class="dashboard-season-line">STAGIONE <span data-game-season></span></p>
+<p class="dashboard-hidden-subtitle" id="seasonSubtitle">La stagione è pronta.</p>
+</div>
+<div class="season-top-actions">
+<div class="career-wallet-chip dashboard-wallet" title="Euro attuali"><span>●</span><small>EURO</small><b data-career-wallet-value="">20</b></div>
+<button class="dashboard-inventory-chip" data-open-consumable-inventory type="button" title="Apri inventario consumabili"><span>🎒</span><small>INVENTARIO</small><b data-consumable-inventory-count>0</b></button>
+<div class="dashboard-division-chip"><span>◆</span><small>DIVISIONE</small><b data-current-division></b></div>
+<button class="secondary" id="seasonSaveBtn">SALVA</button>
+<button class="ghost" id="backToAuctionSummaryBtn">MENU</button>
+</div>
+</header>
+<nav aria-label="Navigazione campionato" class="league-nav panel">
+<button data-league-nav="dashboard" type="button"><span>⌂</span>HOME</button>
+<button data-league-nav="rosters" type="button"><span>♟</span>ROSE</button>
+<button data-league-nav="standings" type="button"><span>♛</span>CLASSIFICHE</button>
+<button data-league-nav="datacenter" type="button"><span>▥</span>DATACENTER</button>
+<button data-league-nav="social" type="button"><span>♣</span>SOCIAL</button>
+<button data-league-nav="shop" type="button"><span>▰</span>NEGOZIO</button>
+</nav>
+
+<section class="season-dashboard-shell">
+<div class="season-dashboard-left">
+<article class="panel standings-panel compact-standings-panel">
+<div class="season-card-head">
+<div><span class="season-eyebrow">CLASSIFICA</span><h3 id="standingsTitle">Dopo 0 giornate</h3></div>
+</div>
+<div class="standings-table-wrap">
+<table class="standings-table compact-standings-table">
+<thead><tr><th>POS</th><th>Squadra</th><th>G</th><th id="compactStandingsMetricHeader">PT</th></tr></thead>
+<tbody id="standingsBodySimple"></tbody>
+</table>
+</div>
+<button class="secondary full-view-link" id="openFullStandingsBtn" type="button">CLASSIFICA COMPLETA →</button>
+</article>
+<article class="panel matchday-panel">
+<div class="season-card-head">
+<div><span class="season-eyebrow">GIORNATA CORRENTE</span><h3 id="matchdayFixturesTitle">Giornata 1</h3></div>
+<button class="matchday-chip" id="openCalendarDashboardBtn" type="button">CALENDARIO →</button>
+</div>
+<div class="matchday-fixtures" id="matchdayFixtures"></div>
+</article>
+</div>
+
+<article class="panel season-next-card">
+<div class="season-card-head">
+<div>
+<span class="season-eyebrow">PROSSIMA PARTITA</span>
+<h3 id="nextMatchdayLabel">GIORNATA 1 / 38</h3>
+</div>
+<span class="home-away-badge" id="homeAwayBadge">CASA</span>
+</div>
+<div class="next-fixture">
+<div class="fixture-team user-fixture-team">
+<div aria-hidden="true" class="dashboard-team-crest" id="seasonUserCrest"></div>
+<div class="fixture-team-copy">
+<strong id="seasonUserTeam">Team JHZ</strong>
+<small id="seasonUserManager">Mister</small>
+</div>
+<div aria-hidden="true" class="fixture-coach-badge dashboard-coach-hidden" id="seasonUserCoachPortrait"></div>
+</div>
+<div class="fixture-vs">VS</div>
+<div class="fixture-team">
+<div aria-hidden="true" class="dashboard-team-crest" id="seasonOpponentCrest"></div>
+<div class="fixture-team-copy">
+<strong id="nextOpponentName">—</strong>
+<small id="nextOpponentManager">—</small>
+</div>
+<div aria-hidden="true" class="fixture-coach-badge dashboard-coach-hidden" id="seasonOpponentCoachPortrait"></div>
+</div>
+</div>
+<div class="season-next-actions">
+<button class="primary big" id="lineupBtn">SCHIERA FORMAZIONE</button>
+<button class="opponent-malus-banner hidden" id="opponentMalusBanner" type="button"></button>
+<button class="secondary big" disabled="" id="playMatchdayBtn">DIRETTA GOL</button>
+<button class="secondary big hidden" disabled="" id="simulateMatchdayBtn" type="button">SIMULA GIORNATA</button>
+</div>
+</article>
+
+<article class="panel season-overview-card hub-news-main-card">
+<div class="season-card-head hub-news-main-head">
+<div>
+<span class="season-eyebrow">NEWS</span>
+<h3>Ultime dal campionato</h3>
+</div>
+<div class="hub-news-head-actions"><small id="hubNewsCounter">1 / 1</small><button class="ghost hub-news-all-btn" id="openNewsArchiveBtn" type="button">TUTTE →</button></div>
+</div>
+<div class="hub-news-carousel" id="hubNewsCarousel">
+<div class="hub-news-track" id="hubNewsTrack"></div>
+</div>
+<div aria-label="Navigazione news" class="hub-news-dots" id="hubNewsDots"></div>
+<div class="dashboard-news-mini-list" id="hubNewsMiniList"></div>
+</article>
+</section>
+
+<section class="panel pending-bigmatch-hub-card" id="pendingBigMatchHubCard" style="display:none">
+<div class="pending-bigmatch-copy">
+<span class="season-eyebrow">POSTICIPO DELLA GIORNATA</span>
+<h3 id="pendingBigMatchTitle">Big Match</h3>
+<p id="pendingBigMatchSubtitle">Le altre 9 partite sono terminate. Quando vuoi, avvia l'ultima partita.</p>
+</div>
+<div class="pending-bigmatch-actions">
+<span class="pending-bigmatch-status">9 PARTITE CONCLUSE</span>
+<button class="primary pending-bigmatch-btn" id="startPendingBigMatchBtn" type="button">INIZIA BIG MATCH</button>
+</div>
+</section>
+<section class="panel expert-advice-panel">
+<div class="season-card-head expert-advice-head">
+<div>
+<span class="season-eyebrow">CONSIGLI DEGLI ESPERTI</span>
+<h3>Le dritte per la tua giornata</h3>
+</div>
+<small id="expertAdviceStatus">Consigli generati sui dati della tua rosa</small>
+</div>
+<div class="expert-advice-grid" id="expertAdviceGrid"></div>
+</section>
+</div>
+</section>
+<section class="screen season-screen league-subscreen" id="leagueRostersScreen">
+<div class="season-wrap">
+<header class="season-topbar panel">
+<div class="season-title-block">
+<span class="season-kicker">CAMPIONATO · ROSE</span>
+<h2>Top 11 delle squadre</h2>
+<p>Confronta i Migliori XI. Clicca sul nome di una squadra per aprire la rosa completa.</p>
+</div>
+<div class="season-top-actions">
+<div class="career-wallet-chip" title="Moneta della carriera"><span>💶</span><b data-career-wallet-value="">20</b><small>€</small></div>
+<button class="ghost" data-league-nav="dashboard">← Dashboard</button>
+</div>
+</header>
+<nav aria-label="Navigazione campionato" class="league-nav panel">
+<button data-league-nav="dashboard" type="button">Dashboard</button>
+<button data-league-nav="rosters" type="button">Rose</button>
+<button data-league-nav="calendar" type="button">Calendario</button>
+<button data-league-nav="standings" type="button">Classifica</button>
+<button data-league-nav="evolution" type="button">Evoluzione</button>
+<button data-league-nav="social" type="button">Social</button>
+<button data-league-nav="shop" type="button">Negozio</button>
+</nav>
+<section class="league-room panel league-season-rosters">
+<div class="league-room-head">
+<div>
+<span class="muted">SALA LEGA</span>
+<h3>Top 11</h3>
+</div>
+<div class="summary-league-hint">CLICCA SUL NOME DELLA SQUADRA PER APRIRE LA ROSA COMPLETA</div>
+</div>
+<div class="league-roster-scroll">
+<div class="manager-list league-roster-grid summary-league-grid" id="leagueRostersGrid"></div>
+</div>
+</section>
+</div>
+</section>
+<section class="screen season-screen league-subscreen" id="leagueCalendarScreen">
+<div class="season-wrap">
+<header class="season-topbar panel">
+<div class="season-title-block">
+<span class="season-kicker">CAMPIONATO · CALENDARIO</span>
+<h2>Calendario completo</h2>
+<p>38 giornate · calendario fantasy lungo tutta la stagione di Serie A.</p>
+</div>
+<div class="season-top-actions">
+<div class="career-wallet-chip" title="Moneta della carriera"><span>💶</span><b data-career-wallet-value="">20</b><small>€</small></div>
+<button class="ghost" data-league-nav="dashboard">← Dashboard</button>
+</div>
+</header>
+<nav aria-label="Navigazione campionato" class="league-nav panel">
+<button data-league-nav="dashboard" type="button">Dashboard</button>
+<button data-league-nav="rosters" type="button">Rose</button>
+<button data-league-nav="calendar" type="button">Calendario</button>
+<button data-league-nav="standings" type="button">Classifica</button>
+<button data-league-nav="evolution" type="button">Evoluzione</button>
+<button data-league-nav="social" type="button">Social</button>
+<button data-league-nav="shop" type="button">Negozio</button>
+</nav>
+<section class="panel full-schedule-panel dedicated-schedule-panel">
+<div class="season-card-head full-schedule-head">
+<div><span class="season-eyebrow">CALENDARIO COMPLETO</span><h3>38 giornate</h3></div>
+<div class="schedule-legend"><span>38 turni</span><i></i><span>accoppiamenti variabili</span></div>
+</div>
+<div class="full-schedule-grid" id="leagueFullSchedule"></div>
+</section>
+<section class="panel calendar-results-panel" id="calendarResultsPanel" style="display:none">
+<div class="season-card-head">
+<div><span class="season-eyebrow">RISULTATI</span><h3 id="calendarResultsTitle">Giornata</h3></div>
+<span class="matchday-chip" id="calendarResultsBadge">CONCLUSA</span>
+</div>
+<div class="calendar-results-list" id="calendarResultsList"></div>
+</section>
+</div>
+</section>
+<section class="screen season-screen league-subscreen" id="leagueStandingsScreen">
+<div class="season-wrap">
+<header class="season-topbar panel">
+<div class="season-title-block">
+<span class="season-kicker">CAMPIONATO · CLASSIFICA</span>
+<h2>Classifica completa</h2>
+<p>Graduatoria, risultati e Fantapunti totali.</p>
+</div>
+<div class="season-top-actions">
+<div class="career-wallet-chip" title="Moneta della carriera"><span>💶</span><b data-career-wallet-value="">20</b><small>€</small></div>
+<button class="ghost" data-league-nav="dashboard">← Dashboard</button>
+</div>
+</header>
+<nav aria-label="Navigazione campionato" class="league-nav panel">
+<button data-league-nav="dashboard" type="button">Dashboard</button>
+<button data-league-nav="rosters" type="button">Rose</button>
+<button data-league-nav="calendar" type="button">Calendario</button>
+<button data-league-nav="standings" type="button">Classifica</button>
+<button data-league-nav="evolution" type="button">Evoluzione</button>
+<button data-league-nav="social" type="button">Social</button>
+<button data-league-nav="shop" type="button">Negozio</button>
+</nav>
+<section class="panel full-standings-panel">
+<div class="season-card-head">
+<div><span class="season-eyebrow">CLASSIFICA COMPLETA</span><h3 id="fullStandingsTitle">Dopo 0 giornate</h3></div>
+<button class="secondary" id="openCareerHonoursBtn" type="button" aria-expanded="false" aria-controls="careerHonoursPanel">🏆 ALBO D’ORO</button>
+<span class="matchday-chip" id="fullStandingsModeChip">FPT = FANTAPUNTI TOTALI</span>
+</div>
+<div class="standings-table-wrap full-standings-wrap">
+<table class="standings-table full-standings-table">
+<thead><tr>
+<th><button class="standings-sort-btn active" data-standings-sort="position" type="button"># <span>▲</span></button></th>
+<th><button class="standings-sort-btn" data-standings-sort="team" type="button">Squadra <span></span></button></th>
+<th><button class="standings-sort-btn" data-standings-sort="played" type="button">G <span></span></button></th>
+<th><button class="standings-sort-btn" data-standings-sort="points" type="button">PT <span></span></button></th>
+<th title="Fantapunti totali"><button class="standings-sort-btn" data-standings-sort="fantasyPoints" type="button">FPT <span></span></button></th>
+<th><button class="standings-sort-btn" data-standings-sort="wins" type="button">V <span></span></button></th>
+<th><button class="standings-sort-btn" data-standings-sort="draws" type="button">N <span></span></button></th>
+<th><button class="standings-sort-btn" data-standings-sort="losses" type="button">P <span></span></button></th>
+<th><button class="standings-sort-btn" data-standings-sort="gf" type="button">GF <span></span></button></th>
+<th><button class="standings-sort-btn" data-standings-sort="ga" type="button">GS <span></span></button></th>
+<th><button class="standings-sort-btn" data-standings-sort="gd" type="button">DR <span></span></button></th>
+</tr></thead>
+<tbody id="fullStandingsBody"></tbody>
+</table>
+</div>
+<p class="fantasy-promotion-note" id="fantasyPromotionNote">* 1° posto: promosso in Serie C</p>
+</section>
+<section class="panel career-honours-panel hidden" id="careerHonoursPanel" aria-label="Albo d'oro della carriera">
+<div class="season-card-head"><div><span class="season-eyebrow">LA TUA CARRIERA</span><h3>Albo d’oro</h3></div></div>
+<div class="career-honours-grid" id="careerHonoursGrid"></div>
+</section>
+<section class="panel seriea-standings-panel">
+<div class="season-card-head">
+<div><span class="season-eyebrow">SERIE A SIMULATA</span><h3 id="serieAStandingsTitle">Classifica Serie A</h3></div>
+<span class="matchday-chip">MONDO DI GIOCO</span>
+</div>
+<div class="standings-table-wrap full-standings-wrap">
+<table class="standings-table full-standings-table seriea-standings-table">
+<thead><tr><th>#</th><th>Club</th><th>G</th><th>PT</th><th>V</th><th>N</th><th>P</th><th>GF</th><th>GS</th><th>DR</th></tr></thead>
+<tbody id="serieAStandingsBody"></tbody>
+</table>
+</div>
+</section>
+<section class="season-leaders-grid">
+<article class="panel season-leader-panel">
+<div class="season-card-head">
+<div><span class="season-eyebrow">SERIE A</span><h3>Capocannonieri</h3></div>
+</div>
+<div class="season-leader-list" id="topScorersList"></div>
+</article>
+<article class="panel season-leader-panel">
+<div class="season-card-head">
+<div><span class="season-eyebrow">SERIE A</span><h3>Assistman</h3></div>
+</div>
+<div class="season-leader-list" id="topAssistsList"></div>
+</article>
+</section>
+</div>
+</section>
+<section class="screen season-screen league-subscreen datacenter-screen" id="leagueDataCenterScreen">
+<div class="season-wrap">
+<header class="season-topbar panel">
+<div class="season-title-block">
+<span class="season-kicker">CAMPIONATO · DATACENTER</span>
+<h2>DataCenter</h2>
+<p>Analisi della rosa, rendimento ed evoluzione dei giocatori in un unico hub.</p>
+</div>
+<div class="season-top-actions">
+<div class="career-wallet-chip" title="Moneta della carriera"><span>💶</span><b data-career-wallet-value="">20</b><small>€</small></div>
+<button class="ghost" data-league-nav="dashboard">← Dashboard</button>
+</div>
+</header>
+<nav aria-label="Navigazione campionato" class="league-nav panel">
+<button data-league-nav="dashboard" type="button">Dashboard</button>
+<button data-league-nav="rosters" type="button">Rose</button>
+<button data-league-nav="standings" type="button">Classifica</button>
+<button data-league-nav="datacenter" type="button">DataCenter</button>
+<button data-league-nav="social" type="button">Social</button>
+<button data-league-nav="shop" type="button">Negozio</button>
+</nav>
+<section class="panel datacenter-tabs" role="tablist" aria-label="Sezioni DataCenter">
+<button class="active" data-datacenter-tab="overview" type="button" role="tab" aria-selected="true">PANORAMICA</button>
+<button data-datacenter-tab="players" type="button" role="tab" aria-selected="false">GIOCATORI</button>
+<button data-datacenter-tab="evolution" type="button" role="tab" aria-selected="false">EVOLUZIONE</button>
+</section>
+<section class="datacenter-tab-panel active" data-datacenter-panel="overview" id="datacenterOverviewPanel">
+<div class="datacenter-panel-body" id="datacenterOverviewBody"></div>
+</section>
+<section class="datacenter-tab-panel" data-datacenter-panel="players" id="datacenterPlayersPanel">
+<div class="datacenter-panel-body" id="datacenterPlayersBody"></div>
+</section>
+<section class="datacenter-tab-panel evolution-screen" data-datacenter-panel="evolution" id="datacenterEvolutionPanel">
+<section class="evolution-explainer panel">
+<div class="evolution-explainer-example"><span>OVR</span><b>72</b><i>→</i><strong>78</strong><em>+6</em></div>
+<div><strong>Come si legge</strong><p><b>72</b> è l'OVR iniziale, <b>78</b> è l'OVR attuale e <b>+6</b> è la variazione stagionale già compresa nel 78.</p></div>
+</section>
+<section class="evolution-summary-grid">
+<article class="panel evolution-summary-card"><span>VARIAZIONI OVR</span><strong id="evolutionTotalEvents">0</strong><small>movimenti generati in stagione</small></article>
+<article class="panel evolution-summary-card is-positive"><span>IN CRESCITA</span><strong id="evolutionGrowingCount">0</strong><small>giocatori sopra l'OVR iniziale</small></article>
+<article class="panel evolution-summary-card is-negative"><span>IN CALO</span><strong id="evolutionFallingCount">0</strong><small>giocatori sotto l'OVR iniziale</small></article>
+<article class="panel evolution-summary-card"><span>TUA ROSA</span><strong id="evolutionMyMovedCount">0</strong><small>giocatori che hanno già cambiato OVR</small></article>
+</section>
+<section class="evolution-highlights-grid">
+<article class="panel evolution-highlight-panel">
+<div class="season-card-head"><div><span class="season-eyebrow">TREND POSITIVO</span><h3>Le crescite più importanti</h3></div><span class="evolution-arrow positive">▲</span></div>
+<div class="evolution-highlight-list" id="evolutionRisers"></div>
+</article>
+<article class="panel evolution-highlight-panel">
+<div class="season-card-head"><div><span class="season-eyebrow">TREND NEGATIVO</span><h3>I cali più importanti</h3></div><span class="evolution-arrow negative">▼</span></div>
+<div class="evolution-highlight-list" id="evolutionFallers"></div>
+</article>
+</section>
+<section class="panel evolution-market-panel">
+<div class="evolution-market-head">
+<div><span class="season-eyebrow">DATABASE STAGIONE</span><h3>Movimenti dei giocatori</h3><p id="evolutionListSubtitle">Ultime variazioni registrate.</p></div>
+<div aria-label="Filtra evoluzione giocatori" class="evolution-filters" role="group">
+<button data-evolution-filter="movers" type="button">MOVIMENTI</button>
+<button data-evolution-filter="mine" type="button">MIA ROSA</button>
+<button data-evolution-filter="rising" type="button">IN CRESCITA</button>
+<button data-evolution-filter="falling" type="button">IN CALO</button>
+<button data-evolution-filter="all" type="button">TUTTI</button>
+</div>
+</div>
+<div class="evolution-player-list" id="evolutionPlayersList"></div>
+</section>
+</section>
+</div>
+</section>
+<section class="screen season-screen league-subscreen social-screen" id="leagueSocialScreen">
+<div class="season-wrap">
+<header class="season-topbar panel">
+<div class="season-title-block">
+<span class="season-kicker">CAMPIONATO · FANTASOCIAL</span>
+<h2>Spogliatoio social</h2>
+<p>Segui automaticamente tutti i giocatori della tua rosa e scrivi loro in privato. Una parola giusta può motivare; insistere troppo può avere l'effetto opposto.</p>
+</div>
+<div class="season-top-actions">
+<div class="career-wallet-chip" title="Moneta della carriera"><span>💶</span><b data-career-wallet-value="">20</b><small>€</small></div>
+<button class="ghost" data-league-nav="dashboard">← Dashboard</button>
+</div>
+</header>
+<nav aria-label="Navigazione campionato" class="league-nav panel">
+<button data-league-nav="dashboard" type="button">Dashboard</button>
+<button data-league-nav="rosters" type="button">Rose</button>
+<button data-league-nav="calendar" type="button">Calendario</button>
+<button data-league-nav="standings" type="button">Classifica</button>
+<button data-league-nav="evolution" type="button">Evoluzione</button>
+<button data-league-nav="social" type="button">Social</button>
+<button data-league-nav="shop" type="button">Negozio</button>
+</nav>
+<section class="panel social-stories-panel">
+<div class="social-stories-head">
+<div>
+<span class="season-eyebrow">SEGUITI</span>
+<h3>La tua rosa</h3>
+</div>
+<div class="social-following-count"><strong id="socialFollowingCount">25</strong><span>seguiti automaticamente</span></div>
+</div>
+<div aria-label="Giocatori seguiti" class="social-stories" id="socialStories"></div>
+</section>
+<section class="panel social-app-shell">
+<header class="social-app-toolbar">
+<div class="social-app-brand">
+<div class="social-app-mark">FS</div>
+<div><strong>FantaSocial</strong><span id="socialAccountHandle">@fantallenatore</span></div>
+<div class="social-app-status">● ONLINE</div>
+</div>
+<label class="social-search-box">
+<span>⌕</span>
+<input id="socialPlayerSearch" maxlength="40" placeholder="Cerca un giocatore..." type="search"/>
+</label>
+</header>
+<main class="social-chat">
+<div class="social-chat-empty" id="socialChatEmpty">
+<div class="social-empty-icon">✉</div>
+<strong>I tuoi messaggi</strong>
+<p>Seleziona un giocatore della rosa per aprire la conversazione privata.</p>
+</div>
+<div class="social-chat-active hidden" id="socialChatActive">
+<header class="social-chat-header" id="socialChatHeader"></header>
+<div class="social-chat-messages" id="socialChatMessages"></div>
+<div class="social-quick-messages" id="socialQuickMessages">
+<button data-social-quick="Credo in te, oggi puoi fare la differenza 💪" type="button">Credo in te 💪</button>
+<button data-social-quick="Testa alta, ho fiducia in te." type="button">Testa alta</button>
+<button data-social-quick="Mi aspetto una reazione oggi." type="button">Serve una reazione</button>
+<button data-social-quick="Grande lavoro, continua così 👏" type="button">Continua così 👏</button>
+</div>
+<div class="social-compose-wrap">
+<div class="social-compose-info" id="socialComposeInfo">Il primo messaggio della giornata può influenzare la prestazione del giocatore.</div>
+<div class="social-compose">
+<input autocomplete="off" id="socialMessageInput" maxlength="180" placeholder="Scrivi un messaggio..." type="text"/>
+<span id="socialMessageCounter">0/180</span>
+<button id="socialSendBtn" type="button">INVIA</button>
+</div>
+</div>
+</div>
+</main>
+</section>
+<section class="panel social-rules-panel">
+<div><span>💬</span><strong>Motivazione</strong><p>La prima reazione del giocatore in una giornata può dare un piccolo bonus o malus alla sua prestazione.</p></div>
+<div><span>🧠</span><strong>Personalità</strong><p>I giocatori non reagiscono tutti allo stesso modo: alcuni apprezzano pressione, altri sostegno o complimenti.</p></div>
+<div><span>🚫</span><strong>Non spammare</strong><p>Più messaggi ravvicinati mandi allo stesso giocatore, più aumenta il rischio che si infastidisca o ti blocchi.</p></div>
+</section>
+</div>
+</section>
+<section class="screen season-screen league-subscreen" id="leagueShopScreen">
+<div class="season-wrap">
+<header class="season-topbar panel">
+<div class="season-title-block">
+<span class="season-kicker">CAMPIONATO · NEGOZIO</span>
+<h2>Negozio carriera</h2>
+<p>Usa Euro per i servizi stagionali e Fantapoints per acquistare consumabili da usare nei momenti chiave della carriera.</p>
+</div>
+<div class="season-top-actions">
+<div class="career-wallet-chip" title="Moneta della carriera"><span>💶</span><b data-career-wallet-value="">20</b><small>€</small></div>
+<button class="ghost" data-league-nav="dashboard">← Dashboard</button>
+</div>
+</header>
+<nav aria-label="Navigazione campionato" class="league-nav panel">
+<button data-league-nav="dashboard" type="button">Dashboard</button>
+<button data-league-nav="rosters" type="button">Rose</button>
+<button data-league-nav="calendar" type="button">Calendario</button>
+<button data-league-nav="standings" type="button">Classifica</button>
+<button data-league-nav="evolution" type="button">Evoluzione</button>
+<button data-league-nav="social" type="button">Social</button>
+<button data-league-nav="shop" type="button">Negozio</button>
+</nav>
+<section class="panel shop-game-shell">
+<div class="shop-game-masthead">
+<div class="shop-game-status">
+<span class="shop-game-status-icon">🛍️</span>
+<div><strong id="shopActiveCount">0/5</strong><small>ATTIVI</small></div>
+</div>
+<div class="shop-game-title-wrap">
+<div class="shop-game-title">NEGOZIO</div>
+<small id="shopSeasonLabel">STAGIONE 1 · GLI ACQUISTI SCADONO A FINE STAGIONE</small>
+</div>
+<div class="shop-game-wallets">
+<div class="shop-game-wallet" title="Euro carriera disponibili"><span>💶</span><strong id="shopWalletAmount">20</strong><small>€</small></div>
+<div class="shop-game-wallet fp-wallet" title="Fantapoints disponibili"><span>◆</span><strong id="shopFantapointsAmount">0</strong><small>FP</small></div>
+</div>
+</div>
+<div class="shop-category-tabs" id="shopCategoryTabs" role="tablist" aria-label="Categorie negozio">
+<button class="active" data-shop-category="all" role="tab" aria-selected="true" type="button">TUTTO</button>
+<button data-shop-category="data" role="tab" aria-selected="false" type="button">DATI &amp; SCOUTING</button>
+<button data-shop-category="staff" role="tab" aria-selected="false" type="button">STAFF</button>
+<button data-shop-category="powerup" role="tab" aria-selected="false" type="button">POWER-UP</button>
+<button data-shop-category="consumable" role="tab" aria-selected="false" type="button">CONSUMABILI</button>
+</div>
+<div class="shop-game-carousel">
+<button class="shop-page-arrow prev" id="shopPrevPage" type="button" aria-label="Prodotti precedenti">◀</button>
+<div class="shop-items-grid" id="shopItemsGrid"></div>
+<button class="shop-page-arrow next" id="shopNextPage" type="button" aria-label="Prodotti successivi">▶</button>
+</div>
+<div class="shop-page-dots" id="shopPageDots" aria-label="Pagine prodotti"></div>
+<div class="shop-game-active-row">
+<span>ATTIVI</span>
+<div class="shop-active-summary" id="shopActiveSummary"><small>Nessun abbonamento o power-up attivo.</small></div>
+</div>
+</section>
+</div>
+</section>
+<div aria-hidden="true" class="shop-product-modal" id="shopProductModal">
+<button class="shop-product-modal-backdrop" aria-label="Chiudi dettaglio prodotto" type="button"></button>
+<section aria-labelledby="shopProductModalTitle" aria-modal="true" class="shop-product-modal-dialog" role="dialog">
+<button aria-label="Chiudi" class="ghost shop-product-modal-close" id="closeShopProductModal" type="button">✕</button>
+<div class="shop-product-modal-layout">
+<div class="shop-product-modal-visual" id="shopProductModalVisual">
+<span class="shop-product-duration">STAGIONALE</span>
+<img class="shop-product-modal-image" id="shopProductModalImage" alt="" hidden>
+<span class="shop-product-modal-icon" id="shopProductModalIcon">📊</span>
+<small id="shopProductModalCategory">DATI</small>
+</div>
+<div class="shop-product-modal-content">
+<span class="season-eyebrow" id="shopProductModalStatus">VALIDO FINO A FINE STAGIONE</span>
+<h2 id="shopProductModalTitle">Prodotto</h2>
+<p id="shopProductModalDescription"></p>
+<div class="shop-product-modal-effect" id="shopProductModalEffect"></div>
+<ul class="shop-product-features" id="shopProductModalFeatures"></ul>
+<div class="shop-product-modal-purchase">
+<div><small>PREZZO</small><strong id="shopProductModalPrice">0 €</strong></div>
+<div class="shop-product-modal-buy-actions">
+<button class="shop-buy-btn primary" id="shopProductModalBuy" type="button">ACQUISTA ORA</button>
+<button class="shop-buy-btn shop-buy-fp" id="shopProductModalBuyFp" type="button" hidden>COMPRA CON FP</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<div aria-hidden="true" class="league-roster-modal" id="leagueRosterModal">
+<div class="league-roster-modal-backdrop"></div>
+<section aria-labelledby="leagueRosterModalTitle" aria-modal="true" class="league-roster-modal-dialog" role="dialog">
+<header class="league-roster-modal-head">
+<div>
+<span class="season-eyebrow">ROSA COMPLETA</span>
+<h2 id="leagueRosterModalTitle">Squadra</h2>
+<p id="leagueRosterModalSubtitle">25 giocatori</p>
+</div>
+<button aria-label="Chiudi" class="ghost league-roster-modal-close" id="closeLeagueRosterModal" type="button">✕</button>
+</header>
+<div class="league-roster-modal-body" id="leagueRosterModalBody"></div>
+</section>
+</div>
+<div aria-hidden="true" class="match-center-modal" id="matchCenterModal">
+<div class="match-center-backdrop"></div>
+<section aria-labelledby="matchCenterTitle" aria-modal="true" class="match-center-dialog" role="dialog">
+<header class="match-center-head">
+<div>
+<span class="season-eyebrow">ANALISI DELLA ROSA</span>
+<h2 id="matchCenterTitle">Data Center</h2>
+<p id="matchCenterSubtitle">Statistiche e disponibilità dei tuoi giocatori</p>
+</div>
+<button aria-label="Chiudi" class="ghost match-center-close" id="closeMatchCenterBtn" type="button">✕</button>
+</header>
+<div class="match-center-body" id="matchCenterBody"></div>
+</section>
+</div>
+<div aria-hidden="true" class="season-news-modal" id="seasonNewsModal">
+<div class="season-news-modal-backdrop"></div>
+<section aria-labelledby="seasonNewsModalTitle" aria-modal="true" class="season-news-modal-dialog" role="dialog">
+<header class="season-news-modal-head">
+<div><span class="season-eyebrow">ARCHIVIO STAGIONE</span><h2 id="seasonNewsModalTitle">Tutte le news</h2><small id="seasonNewsArchiveCount">0 notizie</small></div>
+<button aria-label="Chiudi" class="ghost season-news-close" id="closeSeasonNewsModal" type="button">✕</button>
+</header>
+<div class="season-news-legend"><span><i class="confirmed"></i> Confermata / analisi</span><span><i class="rumor"></i> Indiscrezione non confermata</span></div>
+<div class="season-news-archive-list" id="seasonNewsArchiveList"></div>
+</section>
+</div>
+<div aria-hidden="true" class="formation-choice-modal" id="formationChoiceModal">
+<div class="formation-choice-card">
+<div class="formation-choice-header">
+<button class="matchday-event-minimize" type="button" data-minimize-matchday-event="formationChoiceModal" aria-label="Riduci l'evento e consulta la rosa" title="Riduci e consulta la rosa">−</button>
+<span class="formation-choice-kicker" id="formationChoiceKicker">⚡ IMPREVISTO DI GIORNATA</span>
+<h2 id="formationChoiceTitle">Prima di andare alla partita...</h2>
+<p id="formationChoiceText">È successo qualcosa. <strong>Gira le carte</strong>, scopri gli effetti e scegli 1 delle 3 opzioni. Dopo la scelta potrai ancora modificare la formazione prima della Diretta Gol.</p>
+</div>
+<div class="formation-choice-options" id="formationChoiceOptions"></div>
+<div class="formation-choice-footer">
+<span id="formationChoiceFooterText">Clicca una carta per girarla. La scelta finale è definitiva.</span>
+<button class="secondary consumable-reroll-btn" id="formationEventRerollBtn" type="button">🎴 REROLL · ×0</button>
+<strong id="formationChoiceDay">GIORNATA 1</strong>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="formation-choice-modal" id="adminRuleModal">
+<div class="formation-choice-card admin-rule-modal-card">
+<div class="formation-choice-header">
+<button class="matchday-event-minimize" type="button" data-minimize-matchday-event="adminRuleModal" aria-label="Riduci l'evento e consulta la rosa" title="Riduci e consulta la rosa">−</button>
+<span class="formation-choice-kicker">📜 NUOVO REGOLAMENTO</span>
+<h2>L’Admin ha cambiato le regole</h2>
+<p>Come per i power up, <strong>gira la carta</strong>, scopri il nuovo regolamento e confermalo. Se necessario dovrai poi aggiornare la formazione prima della Diretta Gol.</p>
+</div>
+<div class="formation-choice-options single-card" id="adminRuleOptions"></div>
+<div class="formation-choice-footer">
+<span>Clicca la carta per girarla. La conferma è definitiva.</span>
+<button class="secondary consumable-reroll-btn" id="adminRuleRerollBtn" type="button">📜 REROLL · ×0</button>
+<strong id="adminRuleDay">GIORNATA 1</strong>
+</div>
+</div>
+</div>
+<button class="matchday-event-restore hidden" id="matchdayEventRestoreBtn" type="button">↗ Riapri l'evento</button>
+<div aria-hidden="true" class="consumable-modal" id="consumableModal">
+<div class="consumable-modal-backdrop" data-consumable-close></div>
+<section class="consumable-modal-card" role="dialog" aria-modal="true" aria-labelledby="consumableModalTitle">
+<header class="consumable-modal-head"><div><span class="season-kicker">INVENTARIO</span><h2 id="consumableModalTitle">Consumabili</h2><p id="consumableModalText">Usa un oggetto disponibile prima della Diretta Gol.</p></div><button class="ghost" id="closeConsumableModal" type="button">✕</button></header>
+<div class="consumable-inventory-grid" id="consumableInventoryGrid"></div>
+<div class="consumable-target-panel hidden" id="consumableTargetPanel"><div class="consumable-target-head"><button class="ghost" id="consumableTargetBack" type="button">← INVENTARIO</button><div><span class="season-eyebrow" id="consumableTargetKicker">SELEZIONA</span><h3 id="consumableTargetTitle">Giocatore</h3></div></div><div class="consumable-target-list" id="consumableTargetList"></div></div>
+</section>
+</div>
+<div aria-hidden="true" aria-labelledby="expertReasonTitle" aria-modal="true" class="expert-reason-modal" id="expertReasonModal" role="dialog">
+<div class="expert-reason-backdrop" data-expert-reason-close></div>
+<section class="expert-reason-card">
+<button class="expert-reason-close" data-expert-reason-close type="button" aria-label="Chiudi consiglio">×</button>
+<div class="expert-story-top"><span id="expertReasonTag">IL CONSIGLIO DELLA GIORNATA</span><span id="expertStoryCounter">1 / 3</span></div>
+<div class="expert-story-stage" id="expertStoryStage">
+<div class="expert-story-portrait"><img id="expertReasonAvatar" alt=""></div>
+<div class="expert-story-social" aria-label="Interazioni del video">
+<div><span class="expert-social-icon heart" aria-hidden="true">♥</span><span id="expertStoryLikes" aria-label="Mi piace"></span></div>
+<div><span class="expert-social-icon" aria-hidden="true">💬</span><span id="expertStoryComments" aria-label="Commenti"></span></div>
+<div><span class="expert-social-icon" aria-hidden="true">↗</span><span id="expertStoryShares" aria-label="Condivisioni"></span></div>
+</div>
+<div class="expert-story-heading"><h2 id="expertReasonTitle">La scelta dell’esperto</h2><span id="expertStoryRole">IL SUO CONSIGLIO</span></div>
+<div class="expert-story-player"><div class="expert-story-player-face" id="expertStoryPlayerFace" aria-hidden="true"></div><div><small>GIOCATORE CONSIGLIATO</small><strong id="expertReasonPlayer"></strong></div></div>
+</div>
+<div class="expert-story-script" id="expertReasonBody" aria-live="polite"></div>
+<div class="expert-story-actions"><button id="expertStoryPrev" type="button">← INDIETRO</button><button id="expertStoryNext" type="button">CONTINUA →</button></div>
+</section>
+</div>
+<div aria-hidden="true" class="season-player-modal" id="seasonPlayerModal">
+<div class="season-player-modal-card">
+<button class="season-player-modal-close" id="closeSeasonPlayerModal" type="button">×</button>
+<div class="season-player-modal-head">
+<div aria-hidden="true" class="season-player-avatar" id="seasonPlayerAvatar"></div>
+<div>
+<span class="season-eyebrow" id="seasonPlayerClub">CLUB</span>
+<h2 id="seasonPlayerName">Giocatore</h2>
+<p id="seasonPlayerMeta">Ruolo · OVR</p>
+</div>
+<div class="season-player-status available" id="seasonPlayerStatus">DISPONIBILE</div>
+</div>
+<div class="season-player-starter-estimate is-locked" id="seasonPlayerStarterEstimate"><span>PROBABILITÀ TITOLARITÀ</span><strong>🔒</strong><small>Sblocca Scout Plus nel Negozio</small></div>
+<div class="season-player-stats-grid" id="seasonPlayerStatsGrid"></div>
+<section class="season-player-evolution-panel" id="seasonPlayerEvolutionPanel">
+<div class="season-card-head">
+<div><span class="season-eyebrow">EVOLUZIONE OVR</span><h3 id="seasonPlayerEvolutionTitle">OVR stagionale</h3></div>
+<span class="player-form-badge neutral" id="seasonPlayerEvolutionBadge">0</span>
+</div>
+<div class="season-player-evolution-rows" id="seasonPlayerEvolutionRows"></div>
+</section>
+<section class="season-player-form-panel">
+<div class="season-card-head">
+<div><span class="season-eyebrow">FORMA</span><h3 id="seasonPlayerFormTitle">Ultime prestazioni</h3></div>
+<span class="player-form-badge neutral" id="seasonPlayerFormBadge">→ 6.0</span>
+</div>
+<div class="season-player-form-rows" id="seasonPlayerFormRows"></div>
+</section>
+</div>
+</div>
+<section class="screen lineup-screen" id="lineupScreen">
+<div class="lineup-wrap">
+<header class="lineup-header panel">
+<div>
+<span class="season-kicker">FORMAZIONE · GIORNATA <b id="lineupMatchdayNo">1</b></span>
+<h2 id="lineupPageTitle">Schiera la tua squadra</h2>
+<p id="lineupOpponentText">Prepara gli 11 titolari.</p>
+</div>
+<div class="lineup-header-actions">
+<div class="career-wallet-chip compact" title="Moneta della carriera"><span>💶</span><b data-career-wallet-value="">20</b><small>€</small></div>
+<button class="secondary" id="lineupSaveBtn">Salva</button>
+</div>
+</header>
+<section class="panel lineup-twist-banner" id="lineupTwistBanner" style="display:none">
+<div>
+<span class="season-eyebrow" id="lineupTwistType">SCELTA DELLA GIORNATA</span>
+<h3 id="lineupTwistTitle">Effetto attivo</h3>
+<p id="lineupTwistText">—</p>
+</div>
+<span class="lineup-twist-badge" id="lineupTwistBadge">ATTIVO</span>
+</section>
+<section class="panel lineup-readonly-banner" id="lineupReadOnlyBanner" style="display:none">
+<div>
+<span class="season-eyebrow">FORMAZIONE BLOCCATA · SOLA LETTURA</span>
+<h3 id="lineupPartialScore">Parziale giornata</h3>
+<p id="lineupPartialNote">Le prime 9 partite sono terminate. Puoi controllare rosa, voti e fantapunti, ma non modificare nulla prima del Big Match.</p>
+</div>
+<span class="lineup-partial-badge" id="lineupPartialBadge">PARZIALE</span>
+</section>
+<section class="panel assistant-coach-banner" id="assistantCoachBanner" style="display:none">
+<div>
+<span class="season-eyebrow">ASSISTENTE TECNICO</span>
+<h3>Indisponibili corretti automaticamente</h3>
+<p id="assistantCoachBannerText">—</p>
+</div>
+<span class="assistant-coach-badge">XI AGGIORNATO</span>
+</section>
+<section class="lineup-toolbar panel">
+<div class="lineup-module-block">
+<span class="lineup-label">MODULO</span>
+<div class="formation-buttons" id="formationButtons"></div>
+</div>
+<div class="lineup-toolbar-actions">
+<button class="secondary hidden" id="autoLineupBtn">AUTO XI</button>
+<button class="secondary hidden" id="assistantFixOutBtn">SISTEMA OUT</button>
+<button class="secondary hidden" id="carryLineupBtn" title="Salva titolari e ordine della panchina per le prossime giornate">MANTIENI FORMAZIONE · OFF</button>
+<button class="ghost" id="backToSeasonBtn">← CAMPIONATO</button>
+<button class="ghost" id="clearLineupBtn">SVUOTA</button>
+<div aria-live="polite" class="auto-xi-analysis hidden" id="autoXiAnalysisInfo"></div>
+</div>
+</section>
+<div class="lineup-layout">
+<aside class="panel lineup-roster-panel">
+<div class="lineup-panel-head">
+<div><span class="lineup-label">ROSA</span><h3>I tuoi 25</h3></div>
+<strong id="lineupStarterCount">0/11</strong>
+</div>
+<div class="lineup-roster-list" id="lineupRosterList"></div>
+</aside>
+<main class="panel lineup-pitch-panel">
+<div class="lineup-pitch-topline">
+<div>
+<span class="lineup-label">CAMPO</span>
+<strong id="lineupSelectedText">Seleziona un giocatore dalla rosa</strong>
+</div>
+<div class="lineup-pitch-actions">
+<button class="ghost lineup-captain-btn" disabled="" id="captainSelectedBtn">© NOMINA CAPITANO</button>
+<button class="ghost lineup-bench-btn" disabled="" id="benchSelectedBtn">METTI IN PANCHINA</button>
+<button class="primary lineup-confirm-inline" disabled="" id="confirmLineupBtn">CONFERMA FORMAZIONE</button>
+</div>
+</div>
+<div class="lineup-pitch" id="lineupPitch">
+<div class="pitch-half-line"></div>
+<div class="pitch-center-circle"></div>
+<div class="pitch-box pitch-box-top"></div>
+<div class="pitch-box pitch-box-bottom"></div>
+<div class="pitch-goal pitch-goal-top"></div>
+<div class="pitch-goal pitch-goal-bottom"></div>
+<div class="lineup-pitch-slots" id="lineupPitchSlots"></div>
+</div>
+<div class="lineup-pitch-help">Trascina un giocatore dalla rosa o dalla panchina direttamente sulla posizione. In alternativa: clicca il giocatore e poi uno slot illuminato del suo reparto.</div>
+</main>
+<aside class="panel lineup-bench-panel">
+<div class="lineup-panel-head">
+<div><span class="lineup-label">PANCHINA</span><h3>Riserve</h3><small class="bench-order-hint">Ordine sostituzioni: usa ▲ ▼</small></div>
+<strong id="benchCount">14</strong>
+</div>
+<div class="lineup-bench-list" id="lineupBenchList"></div>
+<div class="lineup-confirm-box">
+<div class="lineup-readiness">
+<span>FORMAZIONE</span>
+<strong id="lineupReadyText">0 / 11</strong>
+<small id="lineupValidationText">Completa tutti gli slot.</small>
+<small id="lineupCaptainText">Capitano: da scegliere</small>
+</div>
+</div>
+</aside>
+</div>
+</div>
+</section>
+<section class="screen seriea-live-screen" id="serieALiveScreen">
+<div class="seriea-live-wrap">
+<header class="panel seriea-live-header seriea-live-header-compact">
+<div class="seriea-live-header-copy">
+<span class="season-kicker">SERIE A · DIRETTA GOL · GIORNATA <b id="serieALiveDay">1</b></span>
+<h2 id="serieALiveTitle">Diretta Gol</h2>
+<p id="serieALiveSubtitle">9 partite in contemporanea. Il Big Match della giornata si giocherà per ultimo, da solo.</p>
+</div>
+</header>
+<div aria-hidden="true" class="seriea-tv-event" id="serieATvEvent">
+<div class="seriea-tv-event-card">
+<div class="seriea-tv-avatar" id="serieATvAvatar"></div>
+<span class="seriea-tv-kicker" id="serieATvKicker">DIRETTA GOL</span>
+<strong id="serieATvTitle">EVENTO</strong>
+<b id="serieATvPlayer">—</b>
+<small id="serieATvDetail">—</small>
+<em id="serieATvMinute">0'</em>
+<div class="goal-celebration-scene" aria-hidden="true"><div class="goal-celebration-net"></div><span class="goal-celebration-ball">⚽</span><span class="goal-celebration-bonus">+3</span></div>
+</div>
+</div>
+<section class="seriea-live-top-grid"><article class="panel seriea-userplayers-panel">
+<div class="fantasy-live-compact-bar"><div class="fantasy-live-score fantasy-live-score-compact">
+<div><span id="fantasyLiveUserTeam">Team JHZ</span><strong id="fantasyLiveUserPoints">0.0</strong><small>fantapunti</small></div>
+<b id="fantasyLiveScore">0 - 0</b>
+<div><span id="fantasyLiveOppTeam">Avversario</span><strong id="fantasyLiveOppPoints">0.0</strong><small>fantapunti</small></div>
+</div><div class="fantasy-live-controls fantasy-live-controls-compact">
+<div class="fantasy-live-minute-box">
+<span id="serieALiveClockLabel">MINUTO</span>
+<strong id="serieALiveMinute">0'</strong>
+<span class="seriea-phase-badge" id="serieAPhaseBadge">DIRETTA GOL</span>
+</div>
+<div class="fantasy-live-actions-box">
+<div aria-label="Velocità simulazione" class="seriea-speed-controls fantasy-speed-controls">
+<button data-live-speed="0.5" type="button">0.5x</button>
+<button class="active" data-live-speed="1" type="button">1x</button>
+<button data-live-speed="2" type="button">2x</button>
+<button data-live-speed="4" type="button">4x</button>
+<button class="pause" id="serieAPauseBtn" type="button">PAUSA</button>
+</div>
+<button class="primary fantasy-next-event-btn" id="nextSerieAEventBtn" type="button">PROSSIMO EVENTO</button>
+<button class="secondary fantasy-skip-btn" id="skipSerieALiveBtn">SALTA AL 90°</button>
+</div>
+</div></div><div class="season-card-head"><div><h3>Voti live</h3></div></div>
+<div class="seriea-dual-lineups">
+<section class="seriea-live-team-column is-user-side">
+<div class="seriea-live-team-head">
+<div><span>I TUOI</span><strong id="serieAUserTeamLabel">Team JHZ</strong></div>
+<span class="matchday-chip" id="serieAUserLiveCount">0/11 LIVE</span>
+</div>
+<div class="live-lineup-section-head"><span>TITOLARI</span><small>11</small></div>
+<div class="seriea-user-players compact-live-list" id="serieAUserPlayers"></div>
+<div class="live-lineup-section-head bench-head"><span>PANCHINA</span><small id="serieAUserBenchCount">0/14 CON VOTO</small></div>
+<div class="seriea-user-players compact-live-list live-bench-list" id="serieAUserBench"></div>
+</section>
+<section class="seriea-live-team-column is-opponent-side">
+<div class="seriea-live-team-head">
+<div><span>AVVERSARIO</span><strong id="serieAOppTeamLabel">Avversario</strong></div>
+<span class="matchday-chip" id="serieAOppLiveCount">0/11 LIVE</span>
+</div>
+<div class="live-lineup-section-head"><span>TITOLARI</span><small>11</small></div>
+<div class="seriea-user-players compact-live-list" id="serieAOppPlayers"></div>
+<div class="live-lineup-section-head bench-head"><span>PANCHINA</span><small id="serieAOppBenchCount">0/14 CON VOTO</small></div>
+<div class="seriea-user-players compact-live-list live-bench-list" id="serieAOppBench"></div>
+</section>
+</div>
+</article></section>
+<section class="seriea-live-main-grid"><article class="panel seriea-scoreboard-panel is-static is-expanded" id="serieAScoreboardPanel">
+<div class="season-card-head seriea-scoreboard-toggle" id="serieAMatchesToggle">
+<div>
+<span class="season-eyebrow" id="serieAMatchesEyebrow">9 PARTITE LIVE</span>
+<h3 id="serieAMatchesTitle">Campi Serie A</h3>
+</div>
+<span class="seriea-scoreboard-toggle-side">
+<span class="live-dot-chip"><i></i> LIVE</span>
+</span>
+</div>
+<div class="seriea-scoreboard-collapsible" id="serieAMatchesCollapsible">
+<div class="seriea-bigmatch-teaser" id="serieABigMatchTeaser"></div>
+<div class="seriea-matches-grid" id="serieAMatchesGrid"></div>
+</div>
+</article><article class="panel seriea-feed-panel">
+<div class="season-card-head"><div><span class="season-eyebrow">SOLO LA TUA PARTITA FANTASY</span><h3>Diretta minuto per minuto</h3></div></div>
+<div class="seriea-news-feed" id="serieANewsFeed"><div class="seriea-feed-empty">Calcio d'inizio... qui appariranno solo gli eventi dei tuoi giocatori e di quelli avversari.</div></div>
+</article></section>
+</div>
+</section>
+<section class="screen winter-market-screen" id="winterMarketIntroScreen">
+<div class="winter-flow-wrap">
+<header class="panel winter-flow-hero"><span class="season-kicker">GIRO DI BOA · DOPO LA 19ª GIORNATA</span><h2>Si apre il mercato invernale</h2><p>I club di Serie A stanno per muoversi. Trasferimenti, partenze e nuovi arrivi cambieranno gerarchie e titolarità.</p></header>
+<section class="winter-flow-grid">
+<article class="panel winter-flow-rule"><b>01</b><strong>MERCATO SERIE A</strong><span>Simulazione dei movimenti reali del mondo di gioco.</span></article>
+<article class="panel winter-flow-rule"><b>02</b><strong>SVINCOLI</strong><span>Libera tutti gli slot che vuoi e recupera la quotazione base.</span></article>
+<article class="panel winter-flow-rule"><b>03</b><strong>ASTA DI GENNAIO</strong><span>Nuovi arrivi e giocatori rimasti liberi tornano all'asta.</span></article>
+</section>
+<section class="panel winter-budget-formula"><span>BUDGET GENNAIO</span><strong>50 CREDITI + RESIDUO + RIMBORSI</strong><small>Le partenze all'estero rimborsano l'intero prezzo pagato.</small></section>
+<button class="primary big winter-flow-main-btn" id="simulateWinterMarketBtn" type="button">SIMULA MERCATO</button>
+</div>
+<div aria-hidden="true" aria-live="polite" class="winter-market-loading" id="winterMarketLoading">
+<div class="winter-market-loading-card" role="status">
+<span class="winter-loading-kicker">CALCIOMERCATO IN CORSO</span>
+<div aria-hidden="true" class="winter-loading-icon">⇄</div>
+<h3 id="winterMarketLoadingTitle">Analisi delle trattative...</h3>
+<p id="winterMarketLoadingText">I club stanno valutando acquisti e cessioni.</p>
+<div aria-hidden="true" class="winter-loading-track"><i></i></div>
+<small>Non chiudere il gioco</small>
+</div>
+</div>
+</section>
+<section class="screen winter-market-screen" id="winterMarketSummaryScreen">
+<div class="winter-flow-wrap">
+<header class="panel winter-flow-hero"><span class="season-kicker">MERCATO INVERNALE · RISULTATI</span><h2>Il mercato ha cambiato la Serie A</h2><p>Controlla i movimenti e i rimborsi prima di preparare la rosa per gennaio.</p></header>
+<div class="winter-transfer-stats winter-flow-summary-stats" id="winterFlowStats"></div>
+<section class="panel winter-user-refunds" id="winterUserRefunds"></section>
+<section class="panel winter-flow-movements"><div class="season-card-head"><div><span class="season-eyebrow">TUTTE LE OPERAZIONI</span><h3>Riepilogo trasferimenti</h3></div></div><div class="winter-transfer-list" id="winterFlowTransferList"></div></section>
+<button class="primary big winter-flow-main-btn" id="openWinterReleasesBtn" type="button">PREPARA GLI SVINCOLI</button>
+</div>
+</section>
+<section class="screen winter-market-screen" id="winterReleaseScreen">
+<div class="winter-flow-wrap">
+<header class="panel winter-flow-hero"><span class="season-kicker">MINI ASTA · PREPARAZIONE</span><h2>Svincoli di gennaio</h2><p>Puoi liberare un numero illimitato di giocatori. Ogni svincolo restituisce la quotazione base del calciatore.</p></header>
+<section class="winter-release-layout">
+<article class="panel winter-release-roster"><div class="season-card-head"><div><span class="season-eyebrow">LA TUA ROSA</span><h3>Seleziona chi svincolare</h3></div></div><div class="winter-release-list" id="winterReleaseList"></div></article>
+<aside class="panel winter-release-summary"><span>BUDGET ATTUALE</span><strong id="winterReleaseBudget">0</strong><small>crediti</small><div><span>SVINCOLI SELEZIONATI</span><b id="winterReleaseCount">0</b></div><div><span>RIMBORSO PREVISTO</span><b id="winterReleaseRefund">+0</b></div><div><span>SLOT DISPONIBILI</span><b id="winterReleaseSlots">0</b></div><button class="secondary winter-guaranteed-sale-btn" id="winterGuaranteedSaleBtn" type="button">💼 CESSIONE GARANTITA · ×0</button><small id="winterGuaranteedSaleHint">Recupera il prezzo pagato all’asta.</small></aside>
+</section>
+<button class="primary big winter-flow-main-btn" id="confirmWinterReleasesBtn" type="button">CONFERMA E VAI ALL'ASTA</button>
+</div>
+</section>
+<section class="screen matchday-result-screen" id="matchdayResultScreen">
+<div class="result-wrap">
+<header class="panel result-header">
+<div><span class="season-kicker">RISULTATO GIORNATA <b id="resultMatchdayNo">1</b></span><h2 id="resultTitle">Partita conclusa</h2><p id="resultSubtitle">Recap fantacalcio</p></div>
+<div class="result-header-actions"><div class="career-wallet-chip compact" title="Moneta della carriera"><span>💶</span><b data-career-wallet-value="">20</b><small>€</small></div><div class="career-wallet-chip fantapoints-wallet compact" title="Fantapoints disponibili"><span>◆</span><b data-fantapoints-value="">0</b><small>FP</small></div><button class="primary big" id="resultContinueBtn">CONTINUA</button></div>
+</header>
+<div class="result-career-prize panel" id="resultCareerPrize" style="display:none"></div>
+<section class="panel result-scoreboard">
+<div class="result-team"><span>TU</span><strong id="resultUserTeam">Team JHZ</strong><b id="resultUserFantasy">0.0 pt</b></div>
+<div class="result-score"><strong id="resultScore">0 - 0</strong><span id="resultOutcome">PAREGGIO</span></div>
+<div class="result-team"><span>CPU</span><strong id="resultOpponentTeam">Avversario</strong><b id="resultOpponentFantasy">0.0 pt</b></div>
+</section>
+<section class="result-grid">
+<article class="panel result-ratings-panel"><div class="season-card-head"><div><span class="season-eyebrow">FORMAZIONE EFFETTIVA</span><h3>Voti e fantavoti</h3></div></div><div class="result-substitutions" id="resultSubstitutions"></div><div class="ratings-table-wrap"><table class="ratings-table"><thead><tr><th>R</th><th>Giocatore</th><th>Voto</th><th>Bonus / Malus</th><th>FV</th></tr></thead><tbody id="resultRatingsBody"></tbody><tfoot><tr><td colspan="4">TOTALE</td><td id="resultTotalFantasy">0.0</td></tr></tfoot></table></div></article>
+<article class="panel result-other-panel"><div class="season-card-head"><div><span class="season-eyebrow">GIORNATA</span><h3>Altri risultati</h3></div></div><div class="result-other-matches" id="resultOtherMatches"></div><div class="fantasy-rules"><strong>Regole V2.4</strong><span id="resultFantasyRulesSummary">Gol +3 · Assist +1 · Amm. -0,5 · Esp. -1 · Autogol -2 · Rigore sbagliato -3 · Rigore parato +3 · Gol subito P -1 · max 3 sostituzioni</span></div></article>
+</section>
+</div>
+<div class="matchday-reward-modal" id="matchdayRewardModal" aria-hidden="true">
+<div class="matchday-reward-dialog" role="dialog" aria-modal="true" aria-labelledby="matchdayRewardTitle">
+<div class="matchday-reward-top">
+<span class="matchday-reward-kicker">RICOMPENSA GIORNATA</span>
+<h2 id="matchdayRewardTitle">Fantapoints guadagnati</h2>
+<p>Le ricompense della giornata sono state aggiunte al tuo saldo.</p>
+</div>
+<div class="matchday-reward-earned"><div class="matchday-reward-earned-main"><span>+<b id="resultFantapointsEarned">0</b></span><small>FP GUADAGNATI<br>QUESTA GIORNATA</small></div></div>
+<div class="result-fp-breakdown matchday-reward-breakdown" id="resultFantapointsBreakdown"></div>
+<div class="result-fp-total matchday-reward-total"><span>SALDO FANTAPOINTS</span><strong><b id="resultFantapointsBalance">0</b> FP</strong></div>
+<button class="primary big matchday-reward-continue" id="resultFantapointsContinueBtn" type="button">CONTINUA</button>
+</div>
+</div>
+</section>
+<section class="screen next-season-screen" id="nextSeasonScreen">
+<div class="next-season-wrap">
+<header class="panel next-season-hero">
+<span class="season-kicker" id="nextSeasonKicker">FINE STAGIONE</span>
+<h2 id="nextSeasonTitle">La stagione è conclusa</h2>
+<p id="nextSeasonSubtitle">Prima di ripartire, il mondo di gioco si aggiorna per la nuova annata.</p>
+</header>
+<section class="next-season-recap-grid" id="nextSeasonRecapGrid"></section>
+<section class="panel next-season-personal" id="nextSeasonPersonal">
+<div class="season-card-head"><div><span class="season-eyebrow">IL TUO ANNO</span><h3>Il recap della tua stagione</h3></div></div>
+<div class="next-season-personal-grid" id="nextSeasonPersonalGrid"></div>
+</section>
+<section class="panel next-season-ovr-card" id="nextSeasonOvrCard">
+<div><span class="season-eyebrow">EVOLUZIONE PERMANENTE</span><h3>I nuovi OVR diventano la base della prossima stagione</h3></div>
+<p>Gli aumenti e i cali maturati durante l'anno non vengono azzerati: il valore finale di ogni giocatore diventa il suo nuovo OVR di partenza.</p>
+</section>
+<section class="panel next-season-market-card hidden" id="nextSeasonMarketCard">
+<div class="season-card-head"><div><span class="season-eyebrow">MERCATO ESTIVO SERIE A</span><h3 id="nextSeasonMarketTitle">Riepilogo trasferimenti</h3></div></div>
+<div class="winter-transfer-stats winter-flow-summary-stats" id="nextSeasonMarketStats"></div>
+<div class="winter-transfer-list next-season-transfer-list" id="nextSeasonTransferList"></div>
+</section>
+<div class="next-season-loading hidden" id="nextSeasonLoading" aria-hidden="true">
+<div class="next-season-loading-card"><span>⚽</span><strong id="nextSeasonLoadingTitle">Mercato estivo in corso...</strong><small id="nextSeasonLoadingText">Le squadre stanno preparando la nuova stagione.</small></div>
+</div>
+<div class="next-season-actions">
+<button class="primary big" id="nextSeasonPrimaryBtn" type="button">SIMULA MERCATO ESTIVO</button>
+<button class="secondary" id="nextSeasonHonoursBtn" type="button">🏆 ALBO D’ORO</button>
+<button class="ghost hidden" id="nextSeasonBackBtn" type="button">TORNA AL RECAP</button>
+</div>
+</div>
+</section>
+</main>
+</div>
+<div id="opponentMalusNotice" class="opponent-malus-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="opponentMalusNoticeTitle" aria-hidden="true">
+  <section class="opponent-malus-dialog">
+    <div id="opponentMalusPortrait" class="opponent-malus-portrait"></div>
+    <small>MALUS AVVERSARIO · <span id="opponentMalusNoticeDay"></span></small>
+    <h2 id="opponentMalusNoticeTitle"></h2>
+    <article class="opponent-malus-card"><img src="malus.webp" alt=""/><div id="opponentMalusTarget"></div><h3 id="opponentMalusName"></h3><p id="opponentMalusText"></p></article>
+    <p>Puoi ancora modificare la formazione prima di giocare.</p>
+    <button id="opponentMalusAcknowledge" class="primary big" type="button">HO CAPITO</button>
+  </section>
+</div>
+<div id="arcadeAuctionModal" class="arcade-auction-modal hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="arcadeAuctionTitle">
+  <div class="arcade-auction-card"><header class="arcade-admin-header"><div class="arcade-admin-portrait"><img src="assets/rivals/admin.webp" alt="Admin"></div><div><small>ANNUNCIO DELL’ADMIN · EVENTO ASTA</small><h2 id="arcadeAuctionTitle"></h2></div></header><div id="arcadeAuctionBody"></div><div id="arcadeAuctionActions"></div></div>
+</div>
+<script src="data_v302.js"></script>
+<script src="js/pokemon-catalog.js"></script>
+<script src="js/serie-b-catalog.js"></script>
+<section class="career-setup-screen hidden" id="careerSetupScreen">
+<div class="career-title">
+<h1>FANTACARRIERA</h1>
+<h2>Costruisci la squadra e conquista il campionato</h2>
+<p>Stagione <span data-game-season></span> · <span data-game-league></span></p>
+</div>
+<div class="career-card career-pre-card career-step-card" id="careerTeamStep">
+<div class="career-profile career-team-profile">
+<span class="career-step-label">PASSO 1 DI 3</span>
+<h3>LA TUA SQUADRA</h3>
+
+<section class="career-team-substep" data-career-team-substep="identity">
+<div class="career-team-fields">
+<label>Nome fantasquadra<input id="careerTeamNameInput" maxlength="28" autocomplete="off" aria-describedby="careerIdentityHint" required/></label>
+<label>Nome fantallenatore<input id="coachNameInput" maxlength="24" autocomplete="off" aria-describedby="careerIdentityHint" required/></label>
+<label class="career-catalog-toggle-row" for="careerPokemonToggle">
+<span class="career-catalog-toggle-copy"><strong>CAMPIONATO POKÉMON</strong><small id="careerCatalogModeHint">OFF · Campionato classico</small></span>
+<span class="career-catalog-switch"><input id="careerPokemonToggle" type="checkbox" aria-describedby="careerCatalogModeHint"/><span class="career-catalog-switch-track" aria-hidden="true"></span></span>
+</label>
+<p class="career-identity-hint" id="careerIdentityHint" aria-live="polite">Inserisci entrambi i nomi per continuare.</p>
+</div>
+<button class="secondary big hidden career-resume-entry" id="resumeBtn" type="button">RIPRENDI SALVATAGGIO</button>
+<div class="career-team-subnav career-team-subnav-first">
+<button class="ghost career-team-exit" id="careerBackBtn" type="button">← INDIETRO</button>
+<button class="career-step-arrow" id="careerIdentityNextBtn" type="button" aria-label="Vai alla creazione del personaggio" disabled><span class="career-step-arrow-glyph" aria-hidden="true">→</span></button>
+</div>
+</section>
+
+<section class="career-team-substep hidden" data-career-team-substep="avatar">
+<fieldset class="career-avatar-editor" aria-label="Personalizza il tuo avatar">
+<legend>IL TUO PERSONAGGIO</legend>
+<div class="career-avatar-preview"><img id="careerAvatarPreview" alt="Anteprima del tuo allenatore" width="96" height="96"/></div>
+<div class="career-avatar-controls">
+<label>Capelli<select data-coach-avatar="hair"><option value="0">Corti</option><option value="1">Con ciuffo</option><option value="2">Lunghi</option><option value="3">Rasati</option></select></label>
+<label>Espressione<select data-coach-avatar="expression"><option value="smile">Sorridente</option><option value="focused">Concentrato</option><option value="serious">Serio</option><option value="surprised">Sorpreso</option></select></label>
+<label>Pelle<select data-coach-avatar="skin"><option value="0">Chiara</option><option value="1">Dorata</option><option value="2">Olivastra</option><option value="3">Scura</option><option value="4">Molto scura</option></select></label>
+<label>Maglietta<select data-coach-avatar="shirt"><option value="purple">Viola</option><option value="blue">Blu</option><option value="red">Rossa</option><option value="green">Verde</option><option value="yellow">Gialla</option><option value="black">Nera</option></select></label>
+</div>
+</fieldset>
+<div class="career-team-subnav">
+<button class="career-step-arrow career-step-arrow-back" id="careerAvatarBackBtn" type="button" aria-label="Torna ai nomi"><span class="career-step-arrow-glyph" aria-hidden="true">←</span></button>
+<button class="career-step-arrow" id="careerAvatarNextBtn" type="button" aria-label="Vai alle opzioni di avvio"><span class="career-step-arrow-glyph" aria-hidden="true">→</span></button>
+</div>
+</section>
+
+<section class="career-team-substep hidden" data-career-team-substep="launch">
+<div class="career-launch-actions">
+<button class="primary big" id="careerContinueBtn" disabled><span class="career-launch-btn-label">INIZIA ASTA</span></button>
+<button class="quick-ready-btn big" id="quickReadyBtn" disabled><strong>ROSE PRONTE</strong><small>Salta l’asta e genera le 10 squadre</small></button>
+</div>
+<div class="career-team-subnav career-team-subnav-launch">
+<button class="career-step-arrow career-step-arrow-back" id="careerLaunchBackBtn" type="button" aria-label="Torna alla creazione del personaggio"><span class="career-step-arrow-glyph" aria-hidden="true">←</span></button>
+</div>
+</section>
+</div>
+</div>
+<div class="career-card career-powers-card hidden" id="careerPowersStep">
+<div class="career-powers-head">
+<span class="career-step-label">PASSO 2 DI 3</span>
+<h3>I TUOI FANTAPOTERI</h3>
+<p>Hai 3 slot Fantapotere. BLOCCO, SCOUT e BLUFF occupano 1 slot ciascuno e hanno 5 utilizzi a testa durante l’asta. OSSERVATORE e ONE SHOT occupano tutti e 3 gli slot e non possono essere abbinati ad altri poteri.</p>
+<strong id="careerPowerCounter">0 / 3 SLOT UTILIZZATI</strong>
+</div>
+<div class="career-power-grid">
+<div aria-pressed="false" class="career-power-choice" data-career-power="block" tabindex="0" role="button" aria-label="BLOCCO. Escludi una CPU dalla chiamata in corso. Clicca per selezionare o deselezionare.">
+<strong class="career-power-title">BLOCCO</strong>
+<span class="career-power-usage">5 UTILIZZI</span>
+<span class="career-power-art" aria-hidden="true"></span>
+<small class="career-power-desc">Escludi una CPU dalla chiamata in corso.</small>
+<em class="career-power-state">CLICCA PER SELEZIONARE</em>
+</div>
+<div aria-pressed="false" class="career-power-choice" data-career-power="scout" tabindex="0" role="button" aria-label="SCOUT. Scopri il limite stimato di tutti gli avversari. Clicca per selezionare o deselezionare.">
+<strong class="career-power-title">SCOUT</strong>
+<span class="career-power-usage">5 UTILIZZI</span>
+<span class="career-power-art" aria-hidden="true"></span>
+<small class="career-power-desc">Scopri il limite stimato di tutti gli avversari.</small>
+<em class="career-power-state">CLICCA PER SELEZIONARE</em>
+</div>
+<div aria-pressed="false" class="career-power-choice" data-career-power="bluff" tabindex="0" role="button" aria-label="BLUFF. Spingi le CPU a sopravvalutare il giocatore. Clicca per selezionare o deselezionare.">
+<strong class="career-power-title">BLUFF</strong>
+<span class="career-power-usage">5 UTILIZZI</span>
+<span class="career-power-art" aria-hidden="true"></span>
+<small class="career-power-desc">Spingi le CPU a sopravvalutare il giocatore.</small>
+<em class="career-power-state">CLICCA PER SELEZIONARE</em>
+</div>
+<div aria-pressed="false" class="career-power-choice" data-career-power="observer" tabindex="0" role="button" aria-label="OSSERVATORE. Rivela Potenziale e percentuale di titolarità di tutti i giocatori. Clicca per selezionare o deselezionare.">
+<strong class="career-power-title">OSSERVATORE</strong>
+<span class="career-power-usage">POTERE ESCLUSIVO · 3 SLOT</span>
+<span class="career-power-art" aria-hidden="true"></span>
+<small class="career-power-desc">Rivela Potenziale e % di titolarità di tutti i giocatori.</small>
+<em class="career-power-state">CLICCA PER SELEZIONARE</em>
+</div>
+<div aria-pressed="false" class="career-power-choice" data-career-power="oneShot" tabindex="0" role="button" aria-label="ONE SHOT. Il giocatore in asta viene assegnato immediatamente a te per 1 credito. Clicca per selezionare o deselezionare.">
+<strong class="career-power-title">ONE SHOT</strong>
+<span class="career-power-usage">POTERE ESCLUSIVO · 3 SLOT</span>
+<span class="career-power-art" aria-hidden="true"></span>
+<small class="career-power-desc">Il giocatore in asta viene assegnato immediatamente a te per 1 credito.</small>
+<em class="career-power-state">CLICCA PER SELEZIONARE</em>
+</div>
+</div>
+<div class="career-actions career-power-actions">
+<button class="primary big" disabled="" id="careerStartAuctionBtn">VEDI REGOLAMENTO</button>
+<button class="ghost" id="careerPowersBackBtn">← MODIFICA SQUADRA</button>
+</div>
+</div>
+<div class="career-card career-rules-card hidden" id="careerRulesStep">
+<div class="career-rules-head">
+<span class="career-step-label">PASSO 3 DI 3</span>
+<h3>REGOLAMENTO DELL’ADMIN</h3>
+<p>L’Admin ha sorteggiato tre regole per la prossima stagione. Qui sotto trovi anche tutte le altre impostazioni attive.</p>
+</div>
+<div class="career-rules-grid" id="careerRulesGrid"></div>
+<div class="career-catalog-choice hidden" id="careerCatalogChoice">
+<strong>🔀 CAMBIA IL LISTONE PER LA PROSSIMA ASTA?</strong>
+<p id="careerCatalogChoiceText"></p>
+<div class="career-catalog-options">
+<button class="secondary" type="button" data-catalog-decision="accept">ACCETTA CAMBIO</button>
+<button class="secondary" type="button" data-catalog-decision="reject">RIFIUTA · RESTA COSÌ</button>
+</div>
+</div>
+<div class="career-rules-standard" id="careerRulesStandard"></div>
+<div class="career-rules-standard">
+<p>🎲 <strong>Rimescola Regole</strong>: sostituisce tutte e tre le regole con un nuovo sorteggio. Consuma un oggetto acquistato nel mercato con 25 Fantapunti. Le regole precedenti vengono perse.</p>
+<button class="secondary" type="button" id="careerRulesRerollBtn" disabled>🎲 RIMESCOLA REGOLE · 0 DISPONIBILI</button>
+</div>
+<div class="career-actions career-rules-actions">
+<button class="primary big" id="careerRulesContinueBtn">INIZIA L’ASTA</button>
+<button class="ghost" id="careerRulesBackBtn">← FANTAPOTERI</button>
+</div>
+</div>
+</section>
+<script src="js/game-rules.js"></script>
+<script src="js/core-utils.js"></script>
+<script src="js/save-codec.js"></script>
+<script src="js/save-manager.js"></script>
+<script src="js/season-engine.js"></script>
+<script src="js/transfer-engine.js"></script>
+<script src="js/career-engine.js"></script>
+<script src="js/auction-engine.js"></script>
+<script src="js/accessibility.js"></script>
+<script src="js/ui-dialogs.js"></script>
+<script src="js/game-guide.js"></script>
+<script src="js/auction-events.js"></script>
+<script src="js/live-match-state.js"></script>
+<script src="js/season-recap.js"></script>
+<script src="js/storage-snapshot.js"></script>
+<script src="js/cpu-lineup-policy.js"></script>
+<script src="app_v302.js"></script>
+<script src="js/mobile-ui.js"></script>
+<script src="js/mobile-rivals-carousel.js"></script>
+<script src="js/mobile-bottom-nav.js"></script>
+<script src="js/mobile-live-controls.js"></script>
+<div aria-atomic="true" aria-live="polite" class="sr-only" id="a11yAnnouncements"></div>
+<div aria-hidden="true" class="quick-ready-loading" id="quickReadyLoading">
+<div class="quick-ready-loading-card">
+<div aria-hidden="true" class="quick-ready-loader-icon">
+<span></span><span></span><span></span>
+</div>
+<span class="quick-ready-loading-kicker">GENERAZIONE AUTOMATICA</span>
+<h2 id="quickReadyLoadingTitle">Preparazione rose...</h2>
+<p id="quickReadyLoadingText">Sto preparando le 10 squadre.</p>
+<div class="quick-ready-progress-shell">
+<div class="quick-ready-progress-bar" id="quickReadyProgressBar"></div>
+</div>
+<div class="quick-ready-progress-meta">
+<span id="quickReadyProgressStep">Avvio</span>
+<strong id="quickReadyProgressPct">0%</strong>
+</div>
+<small>Non chiudere la pagina: il gioco sta lavorando.</small>
+</div>
+</div>
+<div aria-hidden="true" aria-labelledby="pixelDialogTitle" aria-modal="true" class="pixel-dialog hidden" id="pixelDialog" role="dialog">
+<div class="pixel-dialog-backdrop" id="pixelDialogBackdrop"></div>
+<div class="pixel-dialog-card">
+<span class="pixel-dialog-eyebrow" id="pixelDialogEyebrow">CONFERMA</span>
+<h2 id="pixelDialogTitle">Sei sicuro?</h2>
+<p id="pixelDialogMessage"></p>
+<div class="pixel-dialog-consequence hidden" id="pixelDialogConsequence"></div>
+<div class="pixel-dialog-actions">
+<button class="secondary" id="pixelDialogCancel">ANNULLA</button>
+<button class="pixel-dialog-confirm" id="pixelDialogConfirm">CONFERMA</button>
+</div>
+</div>
+</div>
+<div aria-hidden="true" aria-labelledby="winterTransferTitle" aria-modal="true" class="winter-transfer-modal hidden" id="winterTransferModal" role="dialog">
+<div class="winter-transfer-backdrop"></div>
+<section class="winter-transfer-card">
+<span class="winter-transfer-kicker">CALCIOMERCATO · FINESTRA INVERNALE</span>
+<h2 id="winterTransferTitle">Il mercato cambia la Serie A</h2>
+<p id="winterTransferIntro">I club hanno completato le operazioni tra la 19ª e la 20ª giornata.</p>
+<div class="winter-transfer-stats" id="winterTransferStats"></div>
+<div class="winter-transfer-list" id="winterTransferList"></div>
+<button class="primary big winter-transfer-continue" id="winterTransferContinue" type="button">CONTINUA ALLA GIORNATA 20</button>
+</section>
+</div>
+
+</body>
+</html>

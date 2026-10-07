@@ -1,0 +1,76 @@
+'use strict';
+const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
+const root=path.resolve(__dirname,'..');
+const read=file=>fs.readFileSync(path.join(root,file),'utf8');
+const app=read('app_v302.js');
+const b=JSON.parse(read('data/serie-b.json'));
+const a=JSON.parse(read('data/serie-a.json'));
+const originalSerieAClubs=a.clubs;
+assert.equal(originalSerieAClubs.length,20);
+assert.equal(b.clubs.length,5);assert.equal(b.players.length,115);
+assert.equal(new Set(b.players.map(p=>p.id)).size,115);
+for(const c of b.clubs){for(const r of ['P','D','C','A'])assert(b.players.some(p=>p.club===c.id&&p.role===r));}
+const window={FANTA_CLUBS:originalSerieAClubs.slice(),FANTA_PLAYERS:[]};
+let syncs=0;
+const context={window,originalSerieAClubs,serieBClubs:b.clubs,clubMap:new Map([...a.clubs,...b.clubs].map(c=>[c.id,c])),randomHash:s=>{let h=0;for(const ch of s)h=(Math.imul(h,31)+ch.charCodeAt(0))|0;return (h>>>0)/4294967296;},syncSerieATransferWorld:()=>syncs++,ensureSerieATransferMarket:s=>s.transferMarket};
+vm.createContext(context);vm.runInContext(app.slice(app.indexOf('  function ensureRealLeague('),app.indexOf('  // Snapshot immutabile')),context);
+const state={career:{seasonNumber:1},marketSeed:'test',transferMarket:{playerClubOverrides:{}}};
+const league=context.ensureRealLeague(state);
+const firstB=league.serieB.slice();
+let priorRelegated=[];let returned=false;
+for(let year=1;year<=15;year++){
+ state.career.seasonNumber=year;
+ const standings=league.serieA.map(clubId=>({clubId,played:38}));
+ if(year===1){standings[0].played=37;assert.equal(context.advanceRealLeague(state,standings),null);standings[0].played=38;}
+ const oldA=league.serieA.slice(),oldB=league.serieB.slice();
+ const changes=context.advanceRealLeague(state,standings);
+ assert.equal(changes.relegated.length,3);assert.equal(changes.promoted.length,3);
+ assert(changes.promoted.every(id=>oldB.includes(id)));
+ assert.deepEqual(Array.from(changes.relegated),oldA.slice(-3));
+ assert.equal(league.serieA.length,20);assert.equal(league.serieB.length,5);
+ assert.equal(new Set([...league.serieA,...league.serieB]).size,25);
+ returned ||= changes.promoted.some(id=>priorRelegated.includes(id));
+ priorRelegated.push(...changes.relegated);
+ const serialized=JSON.stringify(state.realLeague);
+ context.advanceRealLeague(state,standings);assert.equal(JSON.stringify(state.realLeague),serialized,'No double advancement');
+ const loaded=JSON.parse(JSON.stringify(state));context.syncRealLeagueClubs(loaded);assert.deepEqual(window.FANTA_CLUBS.map(c=>c.id),Array.from(league.serieA));
+}
+assert(returned,'Relegated clubs can return');assert.equal(syncs,15);
+const pokemon={catalogMode:'pokemon',career:{seasonNumber:1},marketSeed:'pk',transferMarket:{playerClubOverrides:{}}};
+const pkLeague=context.ensureRealLeague(pokemon);
+window.FANTA_PLAYERS=pkLeague.serieA.flatMap(club=>[{id:'pk-'+club,club}]);
+const change=context.advanceRealLeague(pokemon,pkLeague.serieA.map(clubId=>({clubId,played:38})));
+change.relegated.forEach((club,i)=>assert.equal(pokemon.transferMarket.playerClubOverrides['pk-'+club],change.promoted[i]));
+assert(app.includes("realLeague:JSON.parse(JSON.stringify(ensureRealLeague(state)))"));
+assert(app.includes("marketStatus:'serie_b',hidden:true"));
+assert(app.indexOf('advanceRealLeague(state,sortedSerieAStandings())')<app.indexOf("const plan=generateSerieATransferWindowPlan('summer')"));
+console.log('OK: 15 seasons, 20 A + 5 B, three up/down, returning clubs, reload/idempotency, Pokémon continuity and 115 supplied players.');
+// Exercise the real materializer and runtime sync, then reload the same state.
+const runtime={window:{},console,refreshMarketValueMap:()=>{},randomHash:context.randomHash,ROLE_LABELS:{P:'Portiere',D:'Difensore',C:'Centrocampista',A:'Attaccante'}};
+vm.createContext(runtime);
+for(const file of ['data_v302.js','js/serie-b-catalog.js','js/pokemon-catalog.js','js/transfer-engine.js'])vm.runInContext(read(file),runtime);
+vm.runInContext('const TransferEngine=window.FantaTransferEngine;',runtime);
+vm.runInContext(app.slice(app.indexOf('  const originalSerieAClubs='),app.indexOf('  // V2.1 · formazione')),runtime);
+vm.runInContext('function ensureSerieATransferMarket(source){return source.transferMarket ||= TransferEngine.createMarketState("test");}',runtime);
+vm.runInContext(app.slice(app.indexOf('  function syncSerieATransferWorld('),app.indexOf('  function ',app.indexOf('  function syncSerieATransferWorld(')+15)),runtime);
+vm.runInContext(`
+const career={marketSeed:'integration',career:{seasonNumber:1},managers:[],playerBaseOvr:{}};
+syncSerieATransferWorld(career);
+if(window.FANTA_PLAYERS.some(p=>p.id.startsWith('serie-b-')))throw Error('B in initial list');
+const rows=career.realLeague.serieA.map(clubId=>({clubId,played:38}));
+const moved=advanceRealLeague(career,rows);
+if(!moved.promoted.every(id=>window.FANTA_PLAYERS.some(p=>p.club===id)))throw Error('Missing promoted roster');
+if(window.FANTA_PLAYERS.some(p=>moved.relegated.includes(p.club)))throw Error('Relegated players in auction');
+const prior=JSON.stringify(window.FANTA_PLAYERS);
+const reload=JSON.parse(JSON.stringify(career));syncSerieATransferWorld(reload);
+if(JSON.stringify(window.FANTA_PLAYERS)!==prior)throw Error('Reload changes world');
+const pk={catalogMode:'pokemon',marketSeed:'pk-after-promotions',pokemonCatalogSeed:'pk',career:{seasonNumber:2},realLeague:JSON.parse(JSON.stringify(career.realLeague)),managers:[]};
+syncSerieATransferWorld(pk);
+if(!pk.realLeague.serieA.every(id=>window.FANTA_PLAYERS.some(p=>p.club===id)))throw Error('Missing Pokemon roster after mode switch');
+const pkBefore=window.FANTA_PLAYERS.length;
+advanceRealLeague(pk,pk.realLeague.serieA.map(clubId=>({clubId,played:38})));
+if(window.FANTA_PLAYERS.length!==pkBefore)throw Error('Pokemon lost at relegation');
+const pkReload=JSON.parse(JSON.stringify(pk));syncSerieATransferWorld(pkReload);
+if(window.FANTA_PLAYERS.length!==pkBefore)throw Error('Pokemon lost on reload');
+`,runtime);
+console.log('OK: actual transfer materialization, promoted rosters, B list exclusion, classic/Pokémon reload and universe switch after promotions.');
