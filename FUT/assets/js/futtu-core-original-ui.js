@@ -580,153 +580,6 @@ function choosePack(game){
   try{localStorage.setItem(STORAGE_KEYS.cursors,JSON.stringify(GAME_STATE.cursor));}catch{}return chosen;
 }
 
-
-/* ==========================================================================\n   FUTTU CINEMATIC PACK OPENING V1\n   Hook premium già previsto dal core: window.FUTTU_PACK_OPENING\n   Sequenza: back -> ruolo -> rarità -> serie -> flash -> carta -> riepilogo.\n   ========================================================================== */
-(function installFuttuCinematicPackOpening(){
-  if(window.FUTTU_PACK_OPENING && window.FUTTU_PACK_OPENING.__cinematicV1)return;
-
-  const STYLE_ID='futtu-cinematic-opening-v1-style';
-  function ensureStyle(){
-    if(document.getElementById(STYLE_ID))return;
-    const style=document.createElement('style');
-    style.id=STYLE_ID;
-    style.textContent=`
-      .futtu-cine{position:fixed;inset:0;z-index:999999;overflow:hidden;background:
-        radial-gradient(circle at 50% 45%,rgba(111,52,183,.32) 0,rgba(34,13,61,.18) 30%,rgba(4,7,16,.96) 72%),#050711;
-        color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;display:flex;align-items:center;justify-content:center;isolation:isolate}
-      .futtu-cine::before{content:"";position:absolute;inset:-20%;background:
-        radial-gradient(ellipse at center,rgba(136,85,255,.22),transparent 42%);filter:blur(30px);animation:futtuCineBreathe 2.3s ease-in-out infinite alternate;pointer-events:none}
-      .futtu-cine__spot{position:absolute;top:-8vh;width:26vw;height:84vh;background:linear-gradient(to bottom,rgba(255,255,255,.17),rgba(173,114,255,.08) 55%,transparent);filter:blur(22px);opacity:.8;transform-origin:top center;pointer-events:none}
-      .futtu-cine__spot.s1{left:17%;transform:rotate(15deg)} .futtu-cine__spot.s2{right:17%;transform:rotate(-15deg)}
-      .futtu-cine__particles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-      .futtu-cine__particle{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;box-shadow:0 0 10px #c8a5ff;opacity:0;animation:futtuFloat 3.4s linear infinite}
-      .futtu-cine__hud{position:absolute;top:4.5vh;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:.34em;text-transform:uppercase;font-weight:800;opacity:.68;white-space:nowrap}
-      .futtu-cine__prompt{position:absolute;top:12vh;left:50%;transform:translateX(-50%);text-align:center;min-height:98px;width:min(92vw,900px);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;pointer-events:none}
-      .futtu-cine__label{font-size:11px;letter-spacing:.4em;text-transform:uppercase;font-weight:800;opacity:.5;margin-bottom:8px}
-      .futtu-cine__value{font-size:clamp(28px,4.1vw,62px);line-height:1;font-weight:950;letter-spacing:-.035em;text-transform:uppercase;text-shadow:0 0 26px rgba(193,151,255,.34);animation:futtuPromptIn .42s cubic-bezier(.2,.8,.2,1)}
-      .futtu-cine__center{position:relative;display:flex;align-items:center;justify-content:center;perspective:1100px;margin-top:6vh}
-      .futtu-cine__cardWrap{position:relative;width:min(28vw,320px);aspect-ratio:0.70;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 22px 52px rgba(0,0,0,.58))}
-      .futtu-cine__cardWrap::before{content:"";position:absolute;inset:-9%;border-radius:28px;background:radial-gradient(circle,rgba(169,104,255,.55),rgba(109,42,221,.15) 44%,transparent 69%);filter:blur(18px);animation:futtuGlowPulse 1.55s ease-in-out infinite alternate}
-      .futtu-cine__back,.futtu-cine__front{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;backface-visibility:hidden;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .38s ease,filter .38s ease}
-      .futtu-cine__back{transform:rotateY(0deg) scale(.97);filter:drop-shadow(0 0 20px rgba(164,103,255,.72))}
-      .futtu-cine__front{transform:rotateY(180deg) scale(.95);opacity:0;filter:drop-shadow(0 0 23px rgba(187,131,255,.88))}
-      .futtu-cine.is-revealed .futtu-cine__back{transform:rotateY(-180deg) scale(1.03);opacity:0}
-      .futtu-cine.is-revealed .futtu-cine__front{transform:rotateY(0deg) scale(1);opacity:1}
-      .futtu-cine__mystery{position:absolute;z-index:2;font-weight:1000;font-size:70px;opacity:.8;text-shadow:0 0 30px rgba(255,255,255,.32);pointer-events:none;transition:opacity .25s ease}
-      .futtu-cine.is-revealed .futtu-cine__mystery{opacity:0}
-      .futtu-cine__name{position:absolute;bottom:7vh;left:50%;transform:translateX(-50%) translateY(18px);width:min(92vw,1000px);text-align:center;opacity:0;transition:.48s cubic-bezier(.2,.8,.2,1);pointer-events:none}
-      .futtu-cine.is-revealed .futtu-cine__name{opacity:1;transform:translateX(-50%) translateY(0)}
-      .futtu-cine__small{font-size:10px;letter-spacing:.48em;text-transform:uppercase;font-weight:850;opacity:.54;margin-bottom:4px}
-      .futtu-cine__nameText{font-size:clamp(34px,5vw,72px);font-weight:1000;letter-spacing:-.045em;text-transform:uppercase;text-shadow:0 0 32px rgba(200,162,255,.3)}
-      .futtu-cine__hint{position:absolute;right:24px;bottom:22px;border:1px solid rgba(255,255,255,.2);background:rgba(11,14,27,.66);backdrop-filter:blur(12px);padding:10px 15px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.04em;opacity:.84}
-      .futtu-cine__flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;mix-blend-mode:screen;z-index:30}
-      .futtu-cine.flash .futtu-cine__flash{animation:futtuFlash .48s ease-out}
-      .futtu-cine__summary{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;padding:5vh 4vw;background:radial-gradient(circle at 50% 45%,rgba(105,50,178,.28),transparent 54%)}
-      .futtu-cine.summary .futtu-cine__summary{display:flex}.futtu-cine.summary .futtu-cine__prompt,.futtu-cine.summary .futtu-cine__center,.futtu-cine.summary .futtu-cine__name,.futtu-cine.summary .futtu-cine__hud{display:none}
-      .futtu-cine__summaryTitle{font-size:clamp(26px,4vw,52px);font-weight:1000;text-transform:uppercase;margin-bottom:4vh;text-align:center}
-      .futtu-cine__summaryCards{display:flex;align-items:center;justify-content:center;gap:clamp(14px,2vw,30px);width:100%;flex-wrap:wrap}
-      .futtu-cine__summaryItem{width:min(21vw,240px);text-align:center;animation:futtuSummaryIn .5s cubic-bezier(.2,.8,.2,1) both}
-      .futtu-cine__summaryItem img{width:100%;max-height:52vh;object-fit:contain;filter:drop-shadow(0 14px 26px rgba(0,0,0,.45)) drop-shadow(0 0 14px rgba(155,94,255,.38))}
-      .futtu-cine__summaryItem b{display:block;margin-top:7px;font-size:clamp(13px,1.4vw,18px)}
-      .futtu-cine__continue{margin-top:4vh;border:1px solid rgba(255,255,255,.24);background:linear-gradient(135deg,#7f46ef,#4ba7ff);color:#fff;font-weight:900;padding:13px 22px;border-radius:12px;cursor:pointer;box-shadow:0 0 24px rgba(111,72,236,.32)}
-      @keyframes futtuCineBreathe{to{transform:scale(1.08);opacity:.85}}
-      @keyframes futtuGlowPulse{from{opacity:.55;transform:scale(.95)}to{opacity:1;transform:scale(1.06)}}
-      @keyframes futtuPromptIn{from{opacity:0;transform:translateY(-8px) scale(.97);filter:blur(5px)}to{opacity:1;transform:none;filter:none}}
-      @keyframes futtuFlash{0%{opacity:0}16%{opacity:.96}100%{opacity:0}}
-      @keyframes futtuSummaryIn{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:none}}
-      @keyframes futtuFloat{0%{opacity:0;transform:translateY(20vh) scale(.6)}20%{opacity:.65}100%{opacity:0;transform:translateY(-80vh) scale(1.3)}}
-      @media(max-width:700px){.futtu-cine__cardWrap{width:min(58vw,290px)}.futtu-cine__prompt{top:9vh}.futtu-cine__summaryItem{width:min(29vw,180px)}.futtu-cine__hint{right:12px;bottom:12px;font-size:10px}}
-      @media(prefers-reduced-motion:reduce){.futtu-cine *, .futtu-cine *::before{animation-duration:.01ms!important;transition-duration:.01ms!important}}
-    `;
-    document.head.appendChild(style);
-  }
-
-  function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-  function wait(ms){return new Promise(r=>setTimeout(r,ms));}
-  function nextGesture(root){
-    return new Promise(resolve=>{
-      let done=false;
-      const finish=()=>{if(done)return;done=true;cleanup();resolve();};
-      const key=e=>{if(e.key==='Enter'||e.key===' '||e.key==='ArrowRight'){e.preventDefault();finish();}};
-      const click=e=>{if(e.target.closest('.futtu-cine__continue'))return;finish();};
-      const cleanup=()=>{root.removeEventListener('click',click);document.removeEventListener('keydown',key);};
-      root.addEventListener('click',click,{once:false});document.addEventListener('keydown',key);
-    });
-  }
-  function makeParticles(){
-    let s='';for(let i=0;i<24;i++){
-      const l=(3+Math.random()*94).toFixed(1),d=(Math.random()*2.9).toFixed(2),dur=(2.6+Math.random()*2.4).toFixed(2),sz=(1+Math.random()*2.5).toFixed(1);
-      s+=`<i class="futtu-cine__particle" style="left:${l}%;bottom:-4%;animation-delay:${d}s;animation-duration:${dur}s;width:${sz}px;height:${sz}px"></i>`;
-    }return s;
-  }
-  function setPrompt(root,label,value){
-    const p=root.querySelector('.futtu-cine__prompt');
-    p.innerHTML=`<div class="futtu-cine__label">${esc(label)}</div><div class="futtu-cine__value">${esc(value||'—')}</div>`;
-  }
-  function cardImage(card){return card&&card.img?String(card.img):'';}
-  function doFlash(root){root.classList.remove('flash');void root.offsetWidth;root.classList.add('flash');setTimeout(()=>root.classList.remove('flash'),520);}
-
-  async function play({packName,cover,cards}){
-    ensureStyle();
-    const safeCards=Array.isArray(cards)?cards.filter(Boolean):[];
-    if(!safeCards.length)return;
-
-    const old=document.getElementById('futtuCinematicOpeningV1');if(old)old.remove();
-    const root=document.createElement('div');root.id='futtuCinematicOpeningV1';root.className='futtu-cine';root.tabIndex=-1;
-    root.innerHTML=`
-      <div class="futtu-cine__spot s1"></div><div class="futtu-cine__spot s2"></div>
-      <div class="futtu-cine__particles">${makeParticles()}</div>
-      <div class="futtu-cine__hud"></div>
-      <div class="futtu-cine__prompt"></div>
-      <div class="futtu-cine__center"><div class="futtu-cine__cardWrap">
-        <img class="futtu-cine__back" alt="Pack"><img class="futtu-cine__front" alt="Carta">
-        <div class="futtu-cine__mystery">?</div>
-      </div></div>
-      <div class="futtu-cine__name"><div class="futtu-cine__small">Hai trovato</div><div class="futtu-cine__nameText"></div></div>
-      <div class="futtu-cine__hint">Clicca / SPAZIO per continuare</div>
-      <div class="futtu-cine__flash"></div>
-      <div class="futtu-cine__summary"><div class="futtu-cine__summaryTitle">Il tuo pacchetto</div><div class="futtu-cine__summaryCards"></div><button class="futtu-cine__continue" type="button">Continua</button></div>`;
-    document.body.appendChild(root);root.focus({preventScroll:true});
-
-    const hud=root.querySelector('.futtu-cine__hud'),back=root.querySelector('.futtu-cine__back'),front=root.querySelector('.futtu-cine__front'),name=root.querySelector('.futtu-cine__nameText');
-    back.src=cover||'';
-    document.documentElement.style.overflow='hidden';
-
-    try{
-      for(let i=0;i<safeCards.length;i++){
-        const c=safeCards[i];
-        root.classList.remove('is-revealed');
-        hud.textContent=`CARTA ${i+1} DI ${safeCards.length} • ${packName||'PACK'}`;
-        front.src=cardImage(c);name.textContent=c.name||'';
-        setPrompt(root,'Pronto?','PACCHETTO MISTERIOSO');
-        await wait(160);await nextGesture(root);
-
-        setPrompt(root,'Ruolo',c.role||'—');
-        await wait(110);await nextGesture(root);
-
-        setPrompt(root,'Rarità',c.rarity||'—');
-        await wait(110);await nextGesture(root);
-
-        setPrompt(root,'Serie',c.series||'—');
-        await wait(110);await nextGesture(root);
-
-        doFlash(root);await wait(150);root.classList.add('is-revealed');setPrompt(root,'','');
-        await wait(500);await nextGesture(root);
-      }
-
-      root.classList.add('summary');
-      const box=root.querySelector('.futtu-cine__summaryCards');
-      box.innerHTML=safeCards.map((c,i)=>`<div class="futtu-cine__summaryItem" style="animation-delay:${i*.1}s"><img src="${esc(cardImage(c))}" alt="${esc(c.name||'Carta')}"><b>${esc(c.name||'')}</b></div>`).join('');
-      await new Promise(resolve=>root.querySelector('.futtu-cine__continue').addEventListener('click',resolve,{once:true}));
-    } finally {
-      document.documentElement.style.removeProperty('overflow');
-      root.remove();
-    }
-  }
-
-  window.FUTTU_PACK_OPENING={play,__cinematicV1:true};
-})();
-
 var flashLine=document.getElementById('flashLine'),flashScreen=document.getElementById('flashScreen'),packArea=document.getElementById('packArea'),packBox=document.getElementById('pack');
 document.addEventListener('click',()=>{try{ensureAudio();}catch{}},{once:true});
 openBtn.addEventListener('click', async () => {
@@ -870,3 +723,253 @@ window.addEventListener('DOMContentLoaded',async()=>{
 });
 
 Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COST_PER_GAME,PACK_LIKE_COST_PER_GAME,PACK_SIZE_PER_GAME,GAME_STATE,packsLeft,cardCount,isInfinitePack,renderGamePicker,renderPacksStrip,applyPackVisual,updateOpenBtnEnabled,resetPackPreviewState,buildFinitePacks,makeCardEl,showStage});
+
+/* ==========================================================
+   FUTTU CINEMATIC PACK OPENING V2
+   Full-screen reveal inspired by modern football pack openings.
+   UI only: does not alter pack odds, inventory, pools or persistence.
+   ========================================================== */
+(function(){
+  'use strict';
+
+  const STYLE_ID = 'futtu-cinematic-v2-style';
+  const ROOT_ID = 'futtu-cinematic-v2';
+
+  function normV2(v){
+    return String(v == null ? '' : v).trim().toLowerCase();
+  }
+
+  function tagsOf(card){
+    return Array.isArray(card && card.tags) ? card.tags.map(normV2) : [];
+  }
+
+  function specialTier(card){
+    const tags = tagsOf(card);
+    if (tags.includes('hall of fame')) return 'hof';
+    if (tags.includes('legend')) return 'legend';
+    if (tags.includes('senatore')) return 'senatore';
+    return 'normal';
+  }
+
+  function modePalette(mode){
+    return normV2(mode).includes('gotham')
+      ? {a:'#a45cff', b:'#1e6fff', c:'#090711'}
+      : {a:'#14ddff', b:'#ffd84a', c:'#05111a'};
+  }
+
+  function ensureStyle(){
+    if (document.getElementById(STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent = `
+#${ROOT_ID}{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--fx-a) 25%,transparent),transparent 34%),linear-gradient(180deg,#04050a 0%,var(--fx-bg) 64%,#010204 100%);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff;isolation:isolate;cursor:pointer}
+#${ROOT_ID}.is-gotham{--fx-a:#a45cff;--fx-b:#1e6fff;--fx-bg:#090711}
+#${ROOT_ID}.is-fantaballa{--fx-a:#14ddff;--fx-b:#ffd84a;--fx-bg:#05111a}
+#${ROOT_ID} *{box-sizing:border-box}
+#${ROOT_ID} .fx-vignette{position:absolute;inset:0;background:radial-gradient(circle at center,transparent 24%,rgba(0,0,0,.25) 58%,rgba(0,0,0,.85) 100%);pointer-events:none;z-index:8}
+#${ROOT_ID} .fx-beams{position:absolute;inset:-10%;opacity:.7;filter:blur(5px);background:conic-gradient(from 255deg at 50% -10%,transparent 0 11deg,rgba(255,255,255,.14) 12deg 16deg,transparent 17deg 29deg,rgba(255,255,255,.08) 30deg 36deg,transparent 37deg 360deg);transform-origin:50% 0;animation:fxBeams 8s ease-in-out infinite alternate;pointer-events:none}
+#${ROOT_ID} .fx-floor{position:absolute;left:50%;bottom:4vh;width:min(52vw,760px);height:90px;transform:translateX(-50%);background:radial-gradient(ellipse at center,color-mix(in srgb,var(--fx-a) 38%,transparent),transparent 67%);filter:blur(9px);opacity:.55}
+#${ROOT_ID} .fx-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#${ROOT_ID} .fx-particle{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;box-shadow:0 0 12px var(--fx-a);opacity:0;animation:fxParticle var(--dur) linear infinite;animation-delay:var(--delay);left:var(--x)}
+#${ROOT_ID} .fx-top{position:absolute;top:4.2vh;left:0;right:0;text-align:center;z-index:12;text-transform:uppercase;letter-spacing:.22em;font-weight:800}
+#${ROOT_ID} .fx-count{font-size:clamp(10px,.8vw,13px);opacity:.64;margin-bottom:13px}
+#${ROOT_ID} .fx-kicker{font-size:clamp(10px,.72vw,12px);opacity:.55;margin-bottom:8px}
+#${ROOT_ID} .fx-meta{min-height:clamp(38px,4.5vw,72px);font-size:clamp(28px,4vw,68px);line-height:.95;font-weight:950;letter-spacing:-.045em;text-shadow:0 0 30px color-mix(in srgb,var(--fx-a) 50%,transparent);display:flex;justify-content:center;align-items:center;padding:0 20px}
+#${ROOT_ID} .fx-scene{position:relative;z-index:10;display:flex;align-items:center;justify-content:center;width:100%;height:100%;perspective:1500px;padding-top:5vh}
+#${ROOT_ID} .fx-card-wrap{position:relative;width:min(28vw,430px);aspect-ratio:690/987;max-height:62vh;transform-style:preserve-3d;will-change:transform,filter;filter:drop-shadow(0 0 28px color-mix(in srgb,var(--fx-a) 50%,transparent));animation:fxFloat 2.8s ease-in-out infinite}
+#${ROOT_ID} .fx-card-wrap::before{content:"";position:absolute;inset:-14%;border-radius:40px;background:radial-gradient(circle,color-mix(in srgb,var(--fx-a) 50%,transparent),transparent 64%);filter:blur(28px);z-index:-2;opacity:.68;animation:fxPulse 1.8s ease-in-out infinite alternate}
+#${ROOT_ID} .fx-card{position:absolute;inset:0;border-radius:18px;overflow:hidden;transform-style:preserve-3d;backface-visibility:hidden;background:linear-gradient(145deg,#171922,#07080c);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 0 0 2px color-mix(in srgb,var(--fx-a) 30%,transparent),0 0 35px color-mix(in srgb,var(--fx-a) 35%,transparent)}
+#${ROOT_ID} .fx-card img{width:100%;height:100%;display:block;object-fit:contain;background:transparent}
+#${ROOT_ID} .fx-back{display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,color-mix(in srgb,var(--fx-a) 18%,#1a1525),#08090e 76%)}
+#${ROOT_ID} .fx-back img{object-fit:contain;filter:saturate(1.1) contrast(1.03)}
+#${ROOT_ID} .fx-mystery{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(56px,7vw,120px);font-weight:900;color:rgba(255,255,255,.82);text-shadow:0 0 38px var(--fx-a)}
+#${ROOT_ID} .fx-front{opacity:0;transform:scale(.87);filter:blur(11px) brightness(1.8)}
+#${ROOT_ID} .fx-card-wrap.revealed .fx-back{animation:fxBackOut .24s ease-in forwards}
+#${ROOT_ID} .fx-card-wrap.revealed .fx-front{animation:fxFrontIn .62s cubic-bezier(.16,.84,.24,1) .12s forwards}
+#${ROOT_ID} .fx-flash{position:absolute;inset:0;z-index:20;pointer-events:none;background:#fff;opacity:0;mix-blend-mode:screen}
+#${ROOT_ID} .fx-flash.go{animation:fxFlash .62s ease-out forwards}
+#${ROOT_ID} .fx-name{position:absolute;left:0;right:0;bottom:6vh;text-align:center;z-index:13;opacity:0;transform:translateY(22px);pointer-events:none}
+#${ROOT_ID} .fx-name small{display:block;font-size:clamp(9px,.7vw,12px);font-weight:800;letter-spacing:.32em;text-transform:uppercase;opacity:.55;margin-bottom:6px}
+#${ROOT_ID} .fx-name strong{font-size:clamp(34px,4.2vw,76px);line-height:.95;letter-spacing:-.05em;text-transform:uppercase;text-shadow:0 0 36px color-mix(in srgb,var(--fx-a) 52%,transparent)}
+#${ROOT_ID} .fx-name.show{animation:fxName .48s cubic-bezier(.16,.84,.24,1) forwards}
+#${ROOT_ID} .fx-hint{position:absolute;right:2.5vw;bottom:2.8vh;z-index:14;padding:8px 12px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(5,7,12,.45);backdrop-filter:blur(8px);font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.66}
+#${ROOT_ID} .fx-progress{position:absolute;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--fx-a),var(--fx-b));box-shadow:0 0 18px var(--fx-a);z-index:30;transition:width .35s ease}
+#${ROOT_ID}.tier-senatore .fx-card-wrap{filter:drop-shadow(0 0 34px #f0bd67)}
+#${ROOT_ID}.tier-senatore{--fx-a:#f0bd67}
+#${ROOT_ID}.tier-legend{--fx-a:#a45cff}
+#${ROOT_ID}.tier-legend .fx-card-wrap::before{opacity:.92;filter:blur(36px)}
+#${ROOT_ID}.tier-hof{--fx-a:#f7da73;--fx-b:#fff4bd}
+#${ROOT_ID}.tier-hof .fx-card-wrap::before{opacity:1;filter:blur(44px)}
+#${ROOT_ID}.tier-hof .fx-beams{opacity:1}
+#${ROOT_ID} .fx-summary{position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5vh 4vw;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--fx-a) 16%,transparent),transparent 42%);opacity:0;pointer-events:none}
+#${ROOT_ID} .fx-summary.show{opacity:1;pointer-events:auto;transition:opacity .4s ease}
+#${ROOT_ID} .fx-summary-title{font-size:clamp(28px,3vw,54px);font-weight:950;letter-spacing:-.04em;text-transform:uppercase;margin-bottom:4vh}
+#${ROOT_ID} .fx-summary-grid{display:flex;justify-content:center;align-items:flex-end;gap:clamp(12px,1.8vw,28px);width:min(92vw,1200px);flex-wrap:wrap}
+#${ROOT_ID} .fx-summary-card{width:min(22vw,270px);aspect-ratio:690/987;opacity:0;transform:translateY(38px) scale(.9);filter:drop-shadow(0 0 18px color-mix(in srgb,var(--fx-a) 35%,transparent))}
+#${ROOT_ID} .fx-summary.show .fx-summary-card{animation:fxSummaryIn .52s cubic-bezier(.16,.84,.24,1) forwards;animation-delay:var(--d)}
+#${ROOT_ID} .fx-summary-card img{width:100%;height:100%;object-fit:contain;display:block}
+#${ROOT_ID} .fx-summary-card span{display:block;text-align:center;font-size:clamp(11px,1vw,15px);font-weight:850;text-transform:uppercase;margin-top:6px}
+#${ROOT_ID} .fx-summary-close{margin-top:5vh;padding:12px 22px;border-radius:999px;border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.09);color:#fff;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+@keyframes fxFloat{0%,100%{transform:translateY(4px) rotateX(0deg)}50%{transform:translateY(-8px) rotateX(1.5deg)}}
+@keyframes fxPulse{from{transform:scale(.94);opacity:.45}to{transform:scale(1.08);opacity:.85}}
+@keyframes fxBeams{from{transform:rotate(-2deg) scale(1.02)}to{transform:rotate(3deg) scale(1.08)}}
+@keyframes fxParticle{0%{transform:translateY(105vh) scale(.3);opacity:0}10%{opacity:.45}90%{opacity:.25}100%{transform:translateY(-15vh) scale(1.2);opacity:0}}
+@keyframes fxBackOut{to{opacity:0;transform:scale(1.06);filter:blur(7px) brightness(2.2)}}
+@keyframes fxFrontIn{0%{opacity:0;transform:scale(.82);filter:blur(14px) brightness(2.2)}55%{opacity:1;transform:scale(1.045);filter:blur(1px) brightness(1.25)}100%{opacity:1;transform:scale(1);filter:none}}
+@keyframes fxFlash{0%{opacity:0}12%{opacity:.98}33%{opacity:.54}100%{opacity:0}}
+@keyframes fxName{to{opacity:1;transform:translateY(0)}}
+@keyframes fxSummaryIn{to{opacity:1;transform:translateY(0) scale(1)}}
+@media (max-width:700px){#${ROOT_ID} .fx-card-wrap{width:min(58vw,360px);max-height:58vh}#${ROOT_ID} .fx-top{top:3vh}#${ROOT_ID} .fx-name{bottom:8vh}#${ROOT_ID} .fx-summary-card{width:min(40vw,210px)}#${ROOT_ID} .fx-hint{display:none}}
+@media (prefers-reduced-motion:reduce){#${ROOT_ID} *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+`;
+    document.head.appendChild(style);
+  }
+
+  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  function makeParticles(container){
+    const wrap = document.createElement('div');
+    wrap.className = 'fx-particles';
+    for(let i=0;i<36;i++){
+      const p = document.createElement('i');
+      p.className = 'fx-particle';
+      p.style.setProperty('--x', `${Math.random()*100}%`);
+      p.style.setProperty('--dur', `${5 + Math.random()*7}s`);
+      p.style.setProperty('--delay', `${-Math.random()*10}s`);
+      wrap.appendChild(p);
+    }
+    container.appendChild(wrap);
+  }
+
+  function softBeep(kind){
+    try{
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return;
+      const ctx = new AC();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      const map = {step:[230,.05], reveal:[92,.18], special:[132,.24]};
+      const cfg = map[kind] || map.step;
+      o.type = kind === 'reveal' ? 'sine' : 'triangle';
+      o.frequency.setValueAtTime(cfg[0], ctx.currentTime);
+      if(kind === 'special') o.frequency.exponentialRampToValueAtTime(260, ctx.currentTime + cfg[1]);
+      g.gain.setValueAtTime(.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.04, ctx.currentTime+.015);
+      g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime+cfg[1]);
+      o.start(); o.stop(ctx.currentTime+cfg[1]+.02);
+      setTimeout(()=>ctx.close().catch(()=>{}), 500);
+    }catch(e){}
+  }
+
+  function imgSrc(card){ return card && card.img ? card.img : ''; }
+
+  async function playOpening({mode, packName, cover, cards}){
+    ensureStyle();
+    const palette = modePalette(mode);
+    const old = document.getElementById(ROOT_ID);
+    if(old) old.remove();
+
+    const root = document.createElement('div');
+    root.id = ROOT_ID;
+    root.className = normV2(mode).includes('gotham') ? 'is-gotham' : 'is-fantaballa';
+    root.style.setProperty('--fx-a', palette.a);
+    root.style.setProperty('--fx-b', palette.b);
+    root.style.setProperty('--fx-bg', palette.c);
+    root.innerHTML = `
+      <div class="fx-progress"></div><div class="fx-beams"></div><div class="fx-floor"></div>
+      <div class="fx-top"><div class="fx-count"></div><div class="fx-kicker">${String(packName||'PACK').toUpperCase()}</div><div class="fx-meta"></div></div>
+      <div class="fx-scene"><div class="fx-card-wrap"><div class="fx-card fx-back">${cover?`<img src="${cover}" alt="">`:'<div class="fx-mystery">?</div>'}</div><div class="fx-card fx-front"><img alt=""></div></div></div>
+      <div class="fx-name"><small>Hai trovato</small><strong></strong></div><div class="fx-hint">Clic / Spazio per continuare</div><div class="fx-flash"></div><div class="fx-vignette"></div>
+      <div class="fx-summary"><div class="fx-summary-title">Pacchetto completato</div><div class="fx-summary-grid"></div><button class="fx-summary-close" type="button">Continua</button></div>`;
+    makeParticles(root);
+    document.body.appendChild(root);
+
+    const count = root.querySelector('.fx-count');
+    const kicker = root.querySelector('.fx-kicker');
+    const meta = root.querySelector('.fx-meta');
+    const wrap = root.querySelector('.fx-card-wrap');
+    const back = root.querySelector('.fx-back');
+    const frontImg = root.querySelector('.fx-front img');
+    const flash = root.querySelector('.fx-flash');
+    const nameBox = root.querySelector('.fx-name');
+    const nameStrong = root.querySelector('.fx-name strong');
+    const progress = root.querySelector('.fx-progress');
+    const summary = root.querySelector('.fx-summary');
+    const summaryGrid = root.querySelector('.fx-summary-grid');
+    const closeBtn = root.querySelector('.fx-summary-close');
+
+    let advanceResolver = null;
+    const advance = () => { if(advanceResolver){ const r = advanceResolver; advanceResolver = null; r(); } };
+    const waitAdvance = (fallback=1250) => new Promise(resolve => {
+      let done=false;
+      const finish=()=>{if(done)return;done=true;advanceResolver=null;resolve();};
+      advanceResolver=finish;
+      setTimeout(finish,fallback);
+    });
+    const keyHandler = e => { if([' ','Enter','ArrowRight'].includes(e.key)){ e.preventDefault(); advance(); } };
+    root.addEventListener('click', e => { if(!e.target.closest('.fx-summary')) advance(); });
+    window.addEventListener('keydown', keyHandler, true);
+
+    const steps = [
+      {key:'role', label:'RUOLO', val:c=>c.role || '—'},
+      {key:'rarity', label:'RARITÀ', val:c=>c.rarity || '—'},
+      {key:'series', label:'SERIE', val:c=>c.series || '—'}
+    ];
+
+    for(let i=0;i<cards.length;i++){
+      const card = cards[i];
+      const tier = specialTier(card);
+      root.classList.remove('tier-senatore','tier-legend','tier-hof');
+      if(tier !== 'normal') root.classList.add(`tier-${tier}`);
+      count.textContent = `CARTA ${i+1} DI ${cards.length}`;
+      progress.style.width = `${((i)/(cards.length))*100}%`;
+      wrap.classList.remove('revealed');
+      nameBox.classList.remove('show');
+      frontImg.src = imgSrc(card);
+      if(cover){ back.innerHTML = `<img src="${cover}" alt="">`; }
+      else { back.innerHTML = '<div class="fx-mystery">?</div>'; }
+      kicker.textContent = String(packName || 'PACK').toUpperCase();
+      meta.textContent = '';
+      await sleep(260);
+
+      for(const step of steps){
+        kicker.textContent = step.label;
+        meta.textContent = step.val(card);
+        softBeep('step');
+        await waitAdvance(tier === 'normal' ? 650 : 780);
+      }
+
+      kicker.textContent = tier === 'hof' ? 'HALL OF FAME' : tier === 'legend' ? 'LEGEND' : tier === 'senatore' ? 'SENATORE' : 'REVEAL';
+      meta.textContent = '';
+      if(tier !== 'normal') softBeep('special');
+      await sleep(tier === 'hof' ? 520 : tier === 'legend' ? 380 : 180);
+      flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+      wrap.classList.add('revealed');
+      softBeep('reveal');
+      await sleep(300);
+      nameStrong.textContent = card.name || 'CARTA';
+      nameBox.classList.add('show');
+      progress.style.width = `${((i+1)/(cards.length))*100}%`;
+      await waitAdvance(tier === 'hof' ? 1750 : tier === 'legend' ? 1500 : 1100);
+    }
+
+    root.querySelector('.fx-scene').style.opacity = '0';
+    root.querySelector('.fx-top').style.opacity = '0';
+    nameBox.style.opacity = '0';
+    summaryGrid.innerHTML = cards.map((c,idx)=>`<div class="fx-summary-card" style="--d:${idx*.1}s"><img src="${imgSrc(c)}" alt=""><span>${c.name||''}</span></div>`).join('');
+    summary.classList.add('show');
+
+    await new Promise(resolve => {
+      const finish = () => resolve();
+      closeBtn.addEventListener('click', finish, {once:true});
+      window.addEventListener('keydown', function done(e){ if(['Enter',' ','Escape'].includes(e.key)){ window.removeEventListener('keydown',done,true); finish(); } }, true);
+    });
+
+    window.removeEventListener('keydown', keyHandler, true);
+    root.animate([{opacity:1},{opacity:0}],{duration:260,easing:'ease'}).finished.catch(()=>{}).finally(()=>root.remove());
+    await sleep(280);
+  }
+
+  window.FUTTU_PACK_OPENING = { version:'2.0.0', play:playOpening };
+})();
