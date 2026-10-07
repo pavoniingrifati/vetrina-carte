@@ -774,9 +774,9 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
 #${ROOT_ID} .fx-top{position:absolute;top:4.2vh;left:0;right:0;text-align:center;z-index:12;text-transform:uppercase;letter-spacing:.22em;font-weight:800}
 #${ROOT_ID} .fx-count{font-size:clamp(10px,.8vw,13px);opacity:.64;margin-bottom:13px}
 #${ROOT_ID} .fx-kicker{font-size:clamp(10px,.72vw,12px);opacity:.55;margin-bottom:8px}
-#${ROOT_ID} .fx-meta{min-height:clamp(38px,4.5vw,72px);font-size:clamp(28px,4vw,68px);line-height:.95;font-weight:950;letter-spacing:-.045em;text-shadow:0 0 30px color-mix(in srgb,var(--fx-a) 50%,transparent);display:flex;justify-content:center;align-items:center;padding:0 20px}
+#${ROOT_ID} .fx-meta{min-height:clamp(38px,5.2vw,92px);font-size:clamp(30px,4.8vw,82px);line-height:.95;font-weight:950;letter-spacing:-.045em;text-shadow:0 0 30px color-mix(in srgb,var(--fx-a) 50%,transparent);display:flex;justify-content:center;align-items:center;padding:0 20px;max-width:min(92vw,1400px);margin:0 auto;text-wrap:balance}
 #${ROOT_ID} .fx-scene{position:relative;z-index:10;display:flex;align-items:center;justify-content:center;width:100%;height:100%;perspective:1500px;padding-top:5vh}
-#${ROOT_ID} .fx-card-wrap{position:relative;width:min(28vw,430px);aspect-ratio:690/987;max-height:62vh;transform-style:preserve-3d;will-change:transform,filter;filter:drop-shadow(0 0 28px color-mix(in srgb,var(--fx-a) 50%,transparent));animation:fxFloat 2.8s ease-in-out infinite}
+#${ROOT_ID} .fx-card-wrap{position:relative;width:min(40vw,620px);aspect-ratio:690/987;max-height:74vh;transform-style:preserve-3d;will-change:transform,filter;filter:drop-shadow(0 0 34px color-mix(in srgb,var(--fx-a) 56%,transparent));animation:fxFloat 2.8s ease-in-out infinite}
 #${ROOT_ID} .fx-card-wrap::before{content:"";position:absolute;inset:-14%;border-radius:40px;background:radial-gradient(circle,color-mix(in srgb,var(--fx-a) 50%,transparent),transparent 64%);filter:blur(28px);z-index:-2;opacity:.68;animation:fxPulse 1.8s ease-in-out infinite alternate}
 #${ROOT_ID} .fx-card{position:absolute;inset:0;border-radius:18px;overflow:hidden;transform-style:preserve-3d;backface-visibility:hidden;background:linear-gradient(145deg,#171922,#07080c);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 0 0 2px color-mix(in srgb,var(--fx-a) 30%,transparent),0 0 35px color-mix(in srgb,var(--fx-a) 35%,transparent)}
 #${ROOT_ID} .fx-card img{width:100%;height:100%;display:block;object-fit:contain;background:transparent}
@@ -788,7 +788,7 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
 #${ROOT_ID} .fx-card-wrap.revealed .fx-front{animation:fxFrontIn .62s cubic-bezier(.16,.84,.24,1) .12s forwards}
 #${ROOT_ID} .fx-flash{position:absolute;inset:0;z-index:20;pointer-events:none;background:#fff;opacity:0;mix-blend-mode:screen}
 #${ROOT_ID} .fx-flash.go{animation:fxFlash .62s ease-out forwards}
-#${ROOT_ID} .fx-name{position:absolute;left:0;right:0;bottom:6vh;text-align:center;z-index:13;opacity:0;transform:translateY(22px);pointer-events:none}
+#${ROOT_ID} .fx-name{display:none}
 #${ROOT_ID} .fx-name small{display:block;font-size:clamp(9px,.7vw,12px);font-weight:800;letter-spacing:.32em;text-transform:uppercase;opacity:.55;margin-bottom:6px}
 #${ROOT_ID} .fx-name strong{font-size:clamp(34px,4.2vw,76px);line-height:.95;letter-spacing:-.05em;text-transform:uppercase;text-shadow:0 0 36px color-mix(in srgb,var(--fx-a) 52%,transparent)}
 #${ROOT_ID} .fx-name.show{animation:fxName .48s cubic-bezier(.16,.84,.24,1) forwards}
@@ -819,7 +819,7 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
 @keyframes fxFlash{0%{opacity:0}12%{opacity:.98}33%{opacity:.54}100%{opacity:0}}
 @keyframes fxName{to{opacity:1;transform:translateY(0)}}
 @keyframes fxSummaryIn{to{opacity:1;transform:translateY(0) scale(1)}}
-@media (max-width:700px){#${ROOT_ID} .fx-card-wrap{width:min(58vw,360px);max-height:58vh}#${ROOT_ID} .fx-top{top:3vh}#${ROOT_ID} .fx-name{bottom:8vh}#${ROOT_ID} .fx-summary-card{width:min(40vw,210px)}#${ROOT_ID} .fx-hint{display:none}}
+@media (max-width:700px){#${ROOT_ID} .fx-card-wrap{width:min(78vw,520px);max-height:70vh}#${ROOT_ID} .fx-top{top:3vh}#${ROOT_ID} .fx-summary-card{width:min(40vw,210px)}#${ROOT_ID} .fx-hint{display:none}#${ROOT_ID} .fx-meta{font-size:clamp(24px,8vw,46px);padding:0 16px}}
 @media (prefers-reduced-motion:reduce){#${ROOT_ID} *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 `;
     document.head.appendChild(style);
@@ -941,22 +941,24 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
       }
 
       kicker.textContent = tier === 'hof' ? 'HALL OF FAME' : tier === 'legend' ? 'LEGEND' : tier === 'senatore' ? 'SENATORE' : 'REVEAL';
-      meta.textContent = '';
+      meta.textContent = '—';
       if(tier !== 'normal') softBeep('special');
       await sleep(tier === 'hof' ? 520 : tier === 'legend' ? 380 : 180);
       flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
       wrap.classList.add('revealed');
       softBeep('reveal');
       await sleep(300);
-      nameStrong.textContent = card.name || 'CARTA';
-      nameBox.classList.add('show');
+      const foundName = card.name || 'CARTA';
+      kicker.textContent = '';
+      meta.textContent = `HAI TROVATO ${foundName}`;
+      nameStrong.textContent = foundName;
       progress.style.width = `${((i+1)/(cards.length))*100}%`;
       await waitAdvance(tier === 'hof' ? 1750 : tier === 'legend' ? 1500 : 1100);
     }
 
     root.querySelector('.fx-scene').style.opacity = '0';
     root.querySelector('.fx-top').style.opacity = '0';
-    nameBox.style.opacity = '0';
+nameBox.style.opacity = '0';
     summaryGrid.innerHTML = cards.map((c,idx)=>`<div class="fx-summary-card" style="--d:${idx*.1}s"><img src="${imgSrc(c)}" alt=""><span>${c.name||''}</span></div>`).join('');
     summary.classList.add('show');
 
@@ -971,5 +973,5 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
     await sleep(280);
   }
 
-  window.FUTTU_PACK_OPENING = { version:'2.0.0', play:playOpening };
+  window.FUTTU_PACK_OPENING = { version:'2.1.0', play:playOpening };
 })();
