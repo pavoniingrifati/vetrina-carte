@@ -790,6 +790,9 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
 #${ROOT_ID} .fx-default-sub{position:relative;z-index:2;margin-top:6%;font-size:clamp(11px,.9vw,15px);font-weight:850;text-transform:uppercase;letter-spacing:.12em;opacity:.9}
 #${ROOT_ID} .fx-default-series{position:relative;z-index:2;margin-top:3%;font-size:clamp(10px,.78vw,13px);font-weight:750;opacity:.75}
 #${ROOT_ID} .fx-front.fallback img{display:none}
+#${ROOT_ID} .fx-front .new-card-placeholder{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;border-radius:18px!important;display:flex!important;flex-direction:column!important;justify-content:center!important;overflow:hidden!important}
+#${ROOT_ID} .fx-summary-card .fx-summary-new-player{width:100%;aspect-ratio:690/987;position:relative;overflow:hidden;border-radius:16px}
+#${ROOT_ID} .fx-summary-card .fx-summary-new-player .new-card-placeholder{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;display:flex!important;flex-direction:column!important;justify-content:center!important;overflow:hidden!important}
 #${ROOT_ID} .fx-summary-card .fx-summary-fallback{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10%;background:linear-gradient(160deg,#10b8ee,#0976df 50%,#1731a8);border-radius:16px;text-align:center;font-weight:900}
 #${ROOT_ID} .fx-summary-card .fx-summary-fallback b{font-size:clamp(16px,1.7vw,28px);line-height:.95;text-transform:uppercase;overflow-wrap:anywhere}
 #${ROOT_ID} .fx-summary-card .fx-summary-fallback em{font-style:normal;margin-top:8px;font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:.08em}
@@ -879,6 +882,7 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
 #${ROOT_ID}.simple-classic .fx-meta{font-size:clamp(28px,3.6vw,62px)}
 #${ROOT_ID}.simple-classic .fx-kicker{display:none}
 #${ROOT_ID}.simple-classic .fx-floor{opacity:.35}
+#${ROOT_ID}.simple-classic .fx-flash{display:none!important}
 #${ROOT_ID} .fx-hint{pointer-events:none}
 #${ROOT_ID}.tier-hof .fx-flash.go{animation-duration:.85s}
 @keyframes fxV3Pop{0%{opacity:0;transform:translateY(14px) scale(.95);filter:blur(6px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
@@ -1036,14 +1040,18 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
     ];
     const showFallback = (card) => {
       frontFace.classList.add('fallback');
-      fallback.classList.add('show');
-      fallbackIcon.textContent = initialsFromName(card && card.name ? card.name : 'NP');
-      fallbackName.textContent = textSafe(card && card.name ? card.name : 'New Player');
-      fallbackSeries.textContent = textSafe((card && (card.rarity || card.series)) || '');
+      fallback.classList.remove('show');
+      const oldPlaceholder = frontFace.querySelector('.new-card-placeholder');
+      if(oldPlaceholder) oldPlaceholder.remove();
+      frontImg.style.display = 'none';
+      addSimpleFallback(frontFace, card || {name:'New Player',rarity:'',series:''});
     };
     const setCardImage = (card) => {
       frontFace.classList.remove('fallback');
       fallback.classList.remove('show');
+      const oldPlaceholder = frontFace.querySelector('.new-card-placeholder');
+      if(oldPlaceholder) oldPlaceholder.remove();
+      frontImg.style.display = '';
       const src = imgSrc(card);
       frontImg.removeAttribute('src');
       frontImg.alt = textSafe(card && card.name ? card.name : 'Carta');
@@ -1079,8 +1087,8 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
         if(skipRequested) break;
 
         if(simpleClassicPack){
-          /* Bronze / Silver / Gold: apertura rapida. Un click rivela subito la carta completa. */
-          flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+          /* Bronze / Silver / Gold: apertura rapida senza flash. */
+          flash.classList.remove('go');
           wrap.classList.add('revealed');
           softBeep('reveal');
           await sleep(reducedMotion ? 20 : 260);
@@ -1134,14 +1142,12 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
         const picture=document.createElement('img');
         picture.alt=textSafe(card.name);
         const addSummaryFallback=()=>{
-          if(tile.querySelector('.fx-summary-fallback')) return;
+          if(tile.querySelector('.fx-summary-new-player')) return;
           picture.remove();
-          const fb=document.createElement('div');
-          fb.className='fx-summary-fallback';
-          const b=document.createElement('b'); b.textContent=textSafe(card.name||'New Player');
-          const em=document.createElement('em'); em.textContent='Grafica in arrivo';
-          fb.append(b,em);
-          tile.prepend(fb);
+          const face=document.createElement('div');
+          face.className='front fx-summary-new-player';
+          addSimpleFallback(face, card || {name:'New Player',rarity:'',series:''});
+          tile.prepend(face);
         };
         picture.onerror=addSummaryFallback;
         const src=imgSrc(card);
@@ -1188,5 +1194,5 @@ Object.assign(window,{VALID_GAMES,PACK_CONFIG_BY_GAME,PACK_BACK_BY_GAME,PACK_COS
     }
   }
 
-  window.FUTTU_PACK_OPENING = { version:'3.4.0', play:playOpening };
+  window.FUTTU_PACK_OPENING = { version:'3.5.0', play:playOpening };
 })();
