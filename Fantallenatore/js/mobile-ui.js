@@ -29,7 +29,7 @@
       }
     });
     const live=document.getElementById('serieALiveScreen');
-    const liveTabs=tabs(live,live?.querySelector('.seriea-dual-lineups'),[['user','I tuoi voti'],['opponent','Avversario'],['matches','Campi'],['feed','Cronaca']],'user');
+    const liveTabs=tabs(live,live?.querySelector('.seriea-dual-lineups'),[['duel','Voti'],['matches','Campi'],['feed','Cronaca']],'duel');
     document.querySelectorAll('#auctionScreen .auction-room-side, #auctionScreen .league-room').forEach(panel=>{
       const fold=document.createElement('details');fold.className='mobile-auction-fold';
       const summary=document.createElement('summary');

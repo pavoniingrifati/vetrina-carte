@@ -17,3 +17,7 @@ node tests/css-build.js
 ```
 
 Lo script usa soltanto la libreria standard Python, è idempotente e mantiene l'ordine delle regole superstiti. Il controllo Node verifica che il CSS runtime coincida con le sorgenti e che tutti i percorsi locali esistano. `reports/css-v224.json` registra il confronto con la V223. La verifica visiva su browser non è stata eseguita: Chromium non era disponibile.
+
+## V234 — Panoramica DataCenter
+
+`22-datacenter-overview.css` è il proprietario della nuova panoramica, caricato prima del responsive. Le sorgenti sono ora 24; il CSS runtime resta un file generato. I selettori sono limitati a `leagueDataCenterScreen` e alle classi `dcv-`.

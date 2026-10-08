@@ -27,7 +27,9 @@ const lineupNav=lineup.querySelector('.mobile-section-tabs'),liveNav=live.queryS
 assert.equal(lineup.dataset.mobileView,'pitch');lineupNav.children[1].click();assert.equal(lineup.dataset.mobileView,'roster');
 const player=new Element('button');player.dataset.lineupPlayer='123';lineup.click(player);assert.equal(lineup.dataset.mobileView,'pitch');assert(lineupNav.scrolled);
 lineupNav.children[2].click();player.disabled=true;lineup.click(player);assert.equal(lineup.dataset.mobileView,'bench');
-liveNav.children[2].click();assert.equal(live.dataset.mobileView,'matches');assert.equal(liveNav.children[2].attrs['aria-pressed'],'true');
+assert.equal(live.dataset.mobileView,'duel');assert.deepEqual(liveNav.children.map(b=>b.textContent),['Voti','Campi','Cronaca']);
+liveNav.children[1].click();assert.equal(live.dataset.mobileView,'matches');assert.equal(liveNav.children[1].attrs['aria-pressed'],'true');
+liveNav.children[0].click();assert.equal(live.dataset.mobileView,'duel');
 assert.equal(bar.parent,toolbar);assert.equal(liveNav.parent,toolbar);assert.equal(side.parent.open,false);keeper.click();assert.equal(calls,1);
 media.matches=false;media.listener();assert.equal(bar.parent,article);assert.equal(liveNav.parent,article);assert.equal(side.parent.open,true);keeper.click();assert.equal(calls,2);
 media.matches=true;media.listener();assert.equal(bar.parent,toolbar);assert.equal(side.parent.open,false);assert(help.textContent.includes('Tocca'));

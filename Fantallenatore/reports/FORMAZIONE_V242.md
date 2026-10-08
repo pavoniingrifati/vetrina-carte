@@ -1,0 +1,1 @@
+V242: attacco a due posizioni36/64 invece14/86. Clic titolare seleziona; slot vuoto apre scelta. Pulsante Cambia giocatore per sostituire titolare selezionato. Nomina capitano conserva flusso precedente. Test geometria36combinazioni, selezione/capitano, edizione e suite62/62 superati; browser non verificato visivamente.

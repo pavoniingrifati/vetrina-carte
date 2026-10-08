@@ -575,12 +575,12 @@
   }
 
   function assistantCoachCarryEnabled(season=$runtime.ensureSeasonState()){
-    return !!($runtime.shopItemActive('assistant_coach',season) && $runtime.ensureAssistantCoachLineup(season)?.enabled);
+    return !!$runtime.ensureAssistantCoachLineup(season)?.enabled;
   }
 
   function saveAssistantCoachTemplateFromDraft(){
     const season=$runtime.ensureSeasonState(), manager=$runtime.managerById('user');
-    if(!season || !manager || !$runtime.lineupDraft || !$runtime.shopItemActive('assistant_coach',season)) return false;
+    if(!season || !manager || !$runtime.lineupDraft) return false;
     if($runtime.lineupDraft.formation==='5-5-5'){
       $runtime.showToast('Il modulo a farfalla vale solo oggi: la formazione persistente rimane quella delle giornate normali.',true);
       return false;
@@ -610,7 +610,7 @@
 
   function toggleAssistantCoachCarry(){
     const season=$runtime.ensureSeasonState();
-    if(!season || !$runtime.shopItemActive('assistant_coach',season)) return;
+    if(!season) return;
     const template=$runtime.ensureAssistantCoachLineup(season);
     if(template.enabled){
       template.enabled=false;
@@ -625,7 +625,7 @@
   function assistantCoachTemplateForDay(day,season=$runtime.ensureSeasonState()){
     const manager=$runtime.managerById('user');
     const template=$runtime.ensureAssistantCoachLineup(season);
-    if(!season || !manager || !$runtime.shopItemActive('assistant_coach',season) || !template?.enabled) return null;
+    if(!season || !manager || !template?.enabled) return null;
     const normalized=$runtime.normalizeSavedLineup({formation:template.formation,starters:template.starters,bench:template.bench,captainId:template.captainId,confirmed:false},manager);
     if(Object.keys(normalized.starters||{}).length!==11) return null;
     return {formation:normalized.formation,starters:{...normalized.starters},bench:normalized.bench.slice(),captainId:normalized.captainId,confirmed:true,inheritedFromAssistant:true,autoConfirmedByAssistant:true,sourceDay:Number(template.lastSourceDay||0),updatedAt:Date.now()};
@@ -1010,7 +1010,7 @@
     }
     const assistantCoachActive=$runtime.shopItemActive('assistant_coach',season);
     if($runtime.$('autoLineupBtn')) {
-      $runtime.$('autoLineupBtn').classList.toggle('hidden',!assistantCoachActive);
+      $runtime.$('autoLineupBtn').classList.toggle('hidden',false);
       $runtime.$('autoLineupBtn').disabled=$runtime.lineupReadOnly || !assistantCoachActive;
       $runtime.$('autoLineupBtn').textContent='AUTO XI';
       const caps=$runtime.assistantAutoLineupCapabilities(season);
@@ -1018,13 +1018,13 @@
     }
     const autoXiInfo=$runtime.$('autoXiAnalysisInfo');
     if(autoXiInfo){
-      autoXiInfo.classList.toggle('hidden',!assistantCoachActive);
+      autoXiInfo.classList.toggle('hidden',false);
       if(assistantCoachActive) autoXiInfo.innerHTML=$runtime.assistantAutoLineupAnalysisHtml(season);
     }
     if($runtime.$('carryLineupBtn')){
-      const carry=assistantCoachActive && $runtime.assistantCoachCarryEnabled(season);
-      $runtime.$('carryLineupBtn').classList.toggle('hidden',!assistantCoachActive);
-      $runtime.$('carryLineupBtn').disabled=$runtime.lineupReadOnly || !assistantCoachActive;
+      const carry=$runtime.assistantCoachCarryEnabled(season);
+      $runtime.$('carryLineupBtn').classList.toggle('hidden',false);
+      $runtime.$('carryLineupBtn').disabled=$runtime.lineupReadOnly;
       $runtime.$('carryLineupBtn').classList.toggle('active',carry);
       $runtime.$('carryLineupBtn').textContent=carry?'✓ MANTIENI FORMAZIONE · ON':'MANTIENI FORMAZIONE · OFF';
       $runtime.$('carryLineupBtn').title=carry?'Titolari, capitano e ordine della panchina verranno riproposti nelle prossime giornate. Clicca per disattivare.':'Salva titolari, capitano e ordine della panchina per le prossime giornate.';
@@ -1071,11 +1071,26 @@
     }).join('');
     if(!$runtime.lineupReadOnly) $runtime.$('lineupRosterList').querySelectorAll('[data-lineup-player]').forEach(btn=>btn.addEventListener('click',()=>$runtime.selectLineupPlayer(btn.dataset.lineupPlayer)));
 
+    const lineupIndicators=(player,difficulty,side)=>{
+      if($runtime.lineupReadOnly)return '';
+      const lock=(subscription,label)=>`<span class="lineup-metric-lock" role="button" tabindex="0" data-lineup-subscription="${subscription}" aria-label="${label}: serve ${subscription}">🔒</span>`;
+      if(side==='left'){
+        const st=dataProActive?$runtime.playerSeasonStat(player.id):null;
+        const mv=Number(st?.voteCount||0)>0?(Number(st.voteSum||0)/Number(st.voteCount)).toFixed(2):'—';
+        return `<span class="lineup-metric-left ${dataProActive&&mv!=='—'?(Number(mv)>=7?'mv-high':Number(mv)>=6?'mv-medium':'mv-low'):'mv-neutral'}"><small>MV</small><b>${dataProActive?mv:lock('FantaData Pro','Media voto')}</b></span>`;
+      }
+      return `<span class="lineup-metric-right"><span title="${difficulty?$runtime.escapeHtml(difficulty.label):'Difficoltà partita'}">${dataProActive?(difficulty?.icon||'—'):lock('FantaData Pro','Difficoltà partita')}</span><b title="Titolarità stimata">${starterInsightActive?`${$runtime.estimatedStarterProbability(player,day)}%`:lock('Scout Plus','Titolarità')}</b></span>`;
+    };
     const selectedPlayer=$runtime.draftPlayerById($runtime.lineupSelectedPlayerId);
     const slots=$runtime.lineupSlots($runtime.lineupDraft.formation);
+    $runtime.$('lineupPitch')?.classList.toggle('is-dense-formation',['P','D','C','A'].some(role=>slots.filter(slot=>slot.role===role).length>=5));
     $runtime.$('lineupPitch')?.classList.toggle('is-formation-334',$runtime.lineupDraft.formation==='3-3-4');
     $runtime.$('lineupPitch')?.classList.toggle('is-formation-555',$runtime.lineupDraft.formation==='5-5-5');
     $runtime.$('lineupPitchSlots').innerHTML=slots.map(slot=>{
+      const roleSlots=slots.filter(item=>item.role===slot.role);
+      const roleIndex=roleSlots.findIndex(item=>item.instanceId===slot.instanceId);
+      const portraitX=roleSlots.length===1?50:slot.role==='A'&&roleSlots.length===2?36+roleIndex*28:14+roleIndex*72/(roleSlots.length-1);
+      const portraitY=({A:15,C:40,D:65,P:87})[slot.role]??slot.y;
       const pid=$runtime.lineupDraft.starters[slot.instanceId];
       const p=pid?$runtime.draftPlayerById(pid):null;
       const available=selectedPlayer && $runtime.canPlacePlayerInLineupSlot(selectedPlayer,slot,$runtime.lineupDraft,day);
@@ -1084,21 +1099,21 @@
       const pitchFixture=p&&!$runtime.lineupReadOnly?$runtime.serieAFixtureForPlayer(p,day):null;
       const pitchDifficulty=p&&!$runtime.lineupReadOnly&&dataProActive?$runtime.serieAMatchupDifficulty(p,day):null;
       const wildcardRole=p && p.role!==slot.role;
-      return `<button class="lineup-slot ${p?'filled':''} role-${slot.role} ${available&&!$runtime.lineupReadOnly?'available':''} ${selected?'selected-slot':''} ${wildcardRole?'is-admin-wildcard':''} ${partial?.className||''}" data-lineup-slot="${slot.instanceId}" ${!$runtime.lineupReadOnly&&p?'draggable="true"':''} style="left:${slot.x}%;top:${slot.y}%" ${$runtime.lineupReadOnly?'disabled':''}><span class="slot-pos">${slot.key}</span>${p?`${$runtime.lineupPlayerFaceMarkup(p,'pitch')}${String(p.id)===captainId?'<span class="lineup-captain-badge" title="Capitano">C</span>':''}<span class="lineup-slot-copy"><strong title="${$runtime.escapeHtml(p.name)}">${$runtime.escapeHtml($runtime.compactLineupPlayerName(p.name))}</strong><small>${$runtime.escapeHtml($runtime.clubShort(p.club))} · ${partial?$runtime.escapeHtml(partial.label):$runtime.playerOvrLabel(p)}${wildcardRole?' · 🃏 JOLLY':''}${pitchFixture?` · vs ${$runtime.escapeHtml(pitchFixture.opponentShort)}${pitchDifficulty?` ${pitchDifficulty.icon}`:''}`:''}</small>${!$runtime.lineupReadOnly&&starterInsightActive?$runtime.scoutStarterBadge(p,day):''}</span>`:'<strong>+</strong><small>vuoto</small>'}</button>`;
+      return `<button class="lineup-slot ${p?'filled':''} role-${slot.role} ${available&&!$runtime.lineupReadOnly?'available':''} ${selected?'selected-slot':''} ${wildcardRole?'is-admin-wildcard':''} ${partial?.className||''}" data-lineup-slot="${slot.instanceId}" ${!$runtime.lineupReadOnly&&p?'draggable="true"':''} style="left:${portraitX}%;top:${portraitY}%" ${$runtime.lineupReadOnly?'disabled':''}><span class="slot-pos">${slot.key}</span>${p?`${lineupIndicators(p,pitchDifficulty,'left')}${$runtime.lineupPlayerFaceMarkup(p,'pitch')}${lineupIndicators(p,pitchDifficulty,'right')}${String(p.id)===captainId?'<span class="lineup-captain-badge" title="Capitano">C</span>':''}<span class="lineup-slot-copy"><strong title="${$runtime.escapeHtml(p.name)}">${$runtime.escapeHtml($runtime.compactLineupPlayerName(p.name))}</strong><small>${$runtime.escapeHtml($runtime.clubShort(p.club))} · ${partial?$runtime.escapeHtml(partial.label):$runtime.playerOvrLabel(p)}${wildcardRole?' · 🃏 JOLLY':''}${pitchFixture?` · vs ${$runtime.escapeHtml(pitchFixture.opponentShort)}${pitchDifficulty?` ${pitchDifficulty.icon}`:''}`:''}</small></span>`:'<strong>+</strong><small>vuoto</small>'}</button>`;
     }).join('');
     if(!$runtime.lineupReadOnly) $runtime.$('lineupPitchSlots').querySelectorAll('[data-lineup-slot]').forEach(btn=>btn.addEventListener('click',()=>{
       const slotId=btn.dataset.lineupSlot;
-      $runtime.openLineupSlotPicker(slotId);
+      const playerId=$runtime.lineupDraft.starters[slotId];
+      if(playerId)$runtime.selectLineupPlayer(playerId);
+      else $runtime.openLineupSlotPicker(slotId);
     }));
 
     const bench=$runtime.draftBenchPlayers();
     $runtime.$('lineupBenchList').innerHTML=bench.map((p,idx)=>{
       const partial=$runtime.lineupReadOnly?$runtime.pendingPartialPlayerInfo(p):null;
       const availability=!$runtime.lineupReadOnly?$runtime.playerStatusForDay(p.id,day):null;
-      const benchFixture=!$runtime.lineupReadOnly?$runtime.serieAFixtureForPlayer(p,day):null;
-      const benchDifficulty=!$runtime.lineupReadOnly&&dataProActive?$runtime.serieAMatchupDifficulty(p,day):null;
       return `<div class="bench-player-row ${availability?.unavailable?'is-unavailable':''}">
-        <button class="bench-player ${String(p.id)===String($runtime.lineupSelectedPlayerId)?'is-selected':''} ${partial?.className||''}" data-bench-player="${$runtime.escapeHtml(p.id)}" ${$runtime.lineupReadOnly?'disabled':'draggable="true"'}><span class="bench-order-badge">${String(idx+1).padStart(2,'0')}</span><span class="lineup-bench-leading">${$runtime.lineupPlayerFaceMarkup(p,'bench')}<i class="lineup-role-chip role-${p.role}">${p.role}</i></span><span class="lineup-bench-copy"><strong>${$runtime.escapeHtml(p.name)}</strong><small>${partial?$runtime.escapeHtml(partial.label):`${$runtime.playerOvrLabel(p)}${benchFixture?` · vs ${$runtime.escapeHtml(benchFixture.opponentShort)}${benchDifficulty?` ${benchDifficulty.icon}`:''}`:''}`}</small>${!$runtime.lineupReadOnly&&starterInsightActive?$runtime.scoutStarterBadge(p,day):''}</span></button>
+        <button class="bench-player ${String(p.id)===String($runtime.lineupSelectedPlayerId)?'is-selected':''} ${partial?.className||''}" data-bench-player="${$runtime.escapeHtml(p.id)}" title="${$runtime.escapeHtml(p.name)}" aria-label="${$runtime.escapeHtml(p.name)} · ${$runtime.escapeHtml(p.role)} · riserva ${idx+1}" ${$runtime.lineupReadOnly?'disabled':'draggable="true"'}><span class="bench-order-badge">${String(idx+1).padStart(2,'0')}</span><span class="lineup-bench-leading">${$runtime.lineupPlayerFaceMarkup(p,'bench')}<i class="lineup-role-chip role-${p.role}">${p.role}</i></span><span class="lineup-bench-name">${$runtime.escapeHtml(p.name)}</span></button>
         ${$runtime.lineupReadOnly?'':`<div class="bench-order-controls"><button type="button" data-bench-up="${$runtime.escapeHtml(p.id)}" ${idx===0?'disabled':''} title="Sposta prima">▲</button><button type="button" data-bench-down="${$runtime.escapeHtml(p.id)}" ${idx===bench.length-1?'disabled':''} title="Sposta dopo">▼</button></div>`}
       </div>`;
     }).join('');
@@ -1109,6 +1124,13 @@
       $runtime.bindLineupDragDrop();
     }
 
+    for(const root of [$runtime.$('lineupPitchSlots'),$runtime.$('lineupBenchList')]){
+      root.querySelectorAll('[data-lineup-subscription]').forEach(el=>{
+        const explain=event=>{event.preventDefault();event.stopPropagation();$runtime.showToast(`Serve ${el.dataset.lineupSubscription} per visualizzare questo dato.`,true);};
+        el.addEventListener('click',explain);
+        el.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' ')explain(event);});
+      });
+    }
     const count=starterIds.size;
     const required=slots.length;
     const adminValidation=$runtime.validateAdminRuleLineup($runtime.lineupDraft,day);
@@ -1151,6 +1173,14 @@
     $runtime.$('lineupValidationText').textContent = (!$runtime.lineupReadOnly && count===required && !adminValidation.ok)
       ? adminValidation.message
       : `${baseValidationText}${extraRuleText}`.trim();
+    const changePlayerButton=$runtime.$('changeSelectedPlayerBtn');
+    if(changePlayerButton){
+      changePlayerButton.disabled=$runtime.lineupReadOnly||!selectedPlayer||!starterIds.has(String(selectedPlayer.id));
+      changePlayerButton.onclick=()=>{
+        const slotId=$runtime.draftSlotForPlayer($runtime.lineupSelectedPlayerId);
+        if(slotId&&!$runtime.lineupReadOnly)$runtime.openLineupSlotPicker(slotId);
+      };
+    }
     if($runtime.$('captainSelectedBtn')){
       $runtime.$('captainSelectedBtn').style.display=captainActive?'':'none';
       $runtime.$('captainSelectedBtn').disabled=$runtime.lineupReadOnly || !selectedPlayer || !starterIds.has(String(selectedPlayer.id));

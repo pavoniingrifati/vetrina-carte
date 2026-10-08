@@ -6,7 +6,7 @@ function createRuntime(seed='balance-0'){
  const storage=new Map();const window={addEventListener:()=>{},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},setTimeout,clearTimeout,setInterval,clearInterval};
  const document={getElementById:()=>null,querySelector:()=>null,querySelectorAll:()=>[]};
  const ctx=vm.createContext({window,document,console,Math:math,Date,Blob,TextEncoder,TextDecoder,btoa,atob,setTimeout,clearTimeout,setInterval,clearInterval});
- for(const file of ['data_v302.js','js/pokemon-catalog.js','js/serie-b-catalog.js','js/game-rules.js','js/core-utils.js','js/save-codec.js','js/save-manager.js','js/season-engine.js','js/transfer-engine.js','js/career-engine.js','js/auction-engine.js','js/auction-events.js','js/live-match-state.js','js/season-recap.js','js/storage-snapshot.js','js/cpu-lineup-policy.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),ctx,{filename:file});
+ for(const file of ['data_v302.js','js/pokemon-catalog.js','js/serie-b-catalog.js','js/game-rules.js','js/core-utils.js','js/save-codec.js','js/save-manager.js','js/season-engine.js','js/transfer-engine.js','js/career-engine.js','js/auction-engine.js','js/auction-events.js','js/live-match-state.js','js/season-recap.js','js/storage-snapshot.js','js/cpu-lineup-policy.js','js/datacenter-overview.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),ctx,{filename:file});
  for(const file of require('./production-source').domainFiles())vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),ctx,{filename:file});
  const source=fs.readFileSync(path.join(root,'app_v302.js'),'utf8'),marker='  // Events\n',end=source.indexOf(marker);if(end<0)throw Error('Confine bootstrap UI mancante');
  vm.runInContext(source.slice(0,end)+`
@@ -44,6 +44,7 @@ function createRuntime(seed='balance-0'){
  performanceText(performance){return performanceText(performance);},
  storageSnapshot(source=state){return buildStorageSnapshot(source);},
  parseSave(payload){return parseStoredPayload(payload);},
+ overviewHtml(premium=false){const body={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};const previous=document.getElementById,oldShop=shopItemActive;document.getElementById=id=>id==='datacenterOverviewBody'?body:null;shopItemActive=id=>premium&&id==='fantadata_pro';try{renderDataCenterOverviewPanel();return body.innerHTML;}finally{document.getElementById=previous;shopItemActive=oldShop;}},
  packApply(draft){return applyPreAuctionPack(draft);},packRules(draft){return generatePreAuctionLeagueRules(draft);},
 
  getState(){return state;},players(){return window.FANTA_PLAYERS;},buildVersion:GAME_CONFIG.buildVersion

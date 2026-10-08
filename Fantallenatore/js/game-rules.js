@@ -2,7 +2,7 @@
   'use strict';
 
   const GAME_CONFIG = Object.freeze({
-    buildVersion: '3.2.35.56.227',
+    buildVersion: '3.2.35.56.250',
     seasonLabel: '2026/27',
     leagueName: 'Lega Amatori',
     startingDivision: 4

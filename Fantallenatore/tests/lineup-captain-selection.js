@@ -1,0 +1,11 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
+const source=fs.readFileSync(path.join(__dirname,'../js/domains/lineup-controller.js'),'utf8'),window={};vm.runInNewContext(source,{window});
+let opened=null,rendered=0;
+const runtime={lineupReadOnly:false,lineupDraft:{starters:{a:'p1'},captainId:null},lineupSelectedPlayerId:null,draftPlayerById:id=>id==='p1'?{id}:null,renderLineupScreen:()=>rendered++,openLineupSlotPicker:id=>opened=id};
+const api=window.FantaDomains['lineup-controller'].create(runtime);runtime.selectLineupPlayer=api.selectLineupPlayer;runtime.draftSlotForPlayer=api.draftSlotForPlayer;
+const click=source.match(/const slotId=btn.dataset.lineupSlot;([\s\S]*?)\n    \}\)\);/)[1];
+vm.runInNewContext(click,{$runtime:runtime,slotId:'a'});assert.equal(runtime.lineupSelectedPlayerId,'p1');assert.equal(opened,null);assert.equal(runtime.lineupDraft.captainId,null);
+api.nominateLineupCaptain();assert.equal(runtime.lineupDraft.captainId,'p1');assert.equal(runtime.lineupDraft.starters.a,'p1');
+vm.runInNewContext(click,{$runtime:runtime,slotId:'empty'});assert.equal(opened,'empty');assert(rendered===2);
+console.log('OK: click selects without changing lineup; captain nomination preserves starter; empty slot opens picker.');

@@ -1,0 +1,1 @@
+V236: aggiunte faccine giocatori accanto ai nomi nella lista Evoluzione e nei riquadri dei movimenti in evidenza. Avatar esistenti, 36px desktop e 30px mobile. Verifiche sintassi, CSS, edizione e DataCenter superate. Verifica visiva browser non eseguita.

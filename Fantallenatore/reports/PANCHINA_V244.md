@@ -1,0 +1,1 @@
+V244: panchina semplificata a faccina e ruolo, ordine e frecce separati. Rimossi MV, difficoltà, titolarità, OVR e avversario. Nome accessibile tramite tooltip e aria-label. Geometria esplicita per evitare chip sovrapposti. Test sintassi/CSS/edizione/capitano/mantieni superati. Verifica visiva browser non eseguita.

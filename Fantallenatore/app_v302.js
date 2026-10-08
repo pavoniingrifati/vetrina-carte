@@ -701,6 +701,7 @@
     get playerFormMetrics(){return playerFormMetrics;},
     get playerOvrLabel(){return playerOvrLabel;},
     get playerSeasonPotentialProfile(){return playerSeasonPotentialProfile;},
+    get playerAvatarMarkup(){return playerAvatarMarkup;},
     get playerSeasonStat(){return playerSeasonStat;},
     get playerStatusForDay(){return playerStatusForDay;},
     get qualitativeFormLabel(){return qualitativeFormLabel;},
@@ -1286,8 +1287,10 @@
     get tvFinalTitle(){return tvFinalTitle;},
     get updateWatchedVoteFlashes(){return updateWatchedVoteFlashes;},
     get userOpponentIdForDay(){return userOpponentIdForDay;},
-    get weekendArrivalLoading(){return weekendArrivalLoading;}
-  });
+    get weekendArrivalLoading(){return weekendArrivalLoading;},
+    get renderFixtureCoachPortrait(){return renderFixtureCoachPortrait;},
+    get seasonFixtureTheme(){return seasonFixtureTheme;},
+});
   let {updatePersistentPlayerStatuses,updatePlayerSeasonStatsFromLive,playerOvrDevelopment,currentPlayerOvr,playerOvrLabel,applyPlayerOvrChange,updatePlayerOvrEvolution,updateSerieASeasonWorld,applyLockerRoomOvrOutcome}=window.FantaDomains['player-development'].create({
     get activeFormationChoice(){return activeFormationChoice;},
     get addSeasonNews(){return addSeasonNews;},

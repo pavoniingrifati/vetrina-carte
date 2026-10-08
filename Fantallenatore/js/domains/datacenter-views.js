@@ -29,7 +29,7 @@
     const potential=item.potential?`<span class="evolution-potential ${$runtime.evolutionPotentialClass(item.potential)}">POT. ${$runtime.escapeHtml(item.potential.label)}</span>`:'';
     return `<button type="button" class="evolution-highlight-item ${direction}" data-season-player="${$runtime.escapeHtml(item.player.id)}">
       <div class="evolution-highlight-rank">${direction==='positive'?'▲':'▼'}</div>
-      <div class="evolution-highlight-copy"><strong>${$runtime.escapeHtml(item.player.name)}</strong><span>${$runtime.escapeHtml($runtime.clubName(item.player.club))} · ${$runtime.escapeHtml(item.player.role)}${mine?' · TUA ROSA':''}</span><small>${$runtime.escapeHtml(lastReason)}</small>${potential}</div>
+      <div class="evolution-highlight-copy"><div class="evolution-highlight-name"><span class="evolution-avatar">${$runtime.playerAvatarMarkup(item.player,item.player.name)}</span><strong>${$runtime.escapeHtml(item.player.name)}</strong></div><span>${$runtime.escapeHtml($runtime.clubName(item.player.club))} · ${$runtime.escapeHtml(item.player.role)}${mine?' · TUA ROSA':''}</span><small>${$runtime.escapeHtml(lastReason)}</small>${potential}</div>
       <div class="evolution-ovr-mini"><span>${item.base}</span><i>→</i><strong>${item.current}</strong><em class="${direction}">${item.delta>0?'+':''}${item.delta}</em></div>
     </button>`;
   }
@@ -45,6 +45,7 @@
     const potential=item.potential?`<span class="evolution-potential ${$runtime.evolutionPotentialClass(item.potential)}">OSSERVATORE · ${$runtime.escapeHtml(item.potential.label)}</span>`:'';
     return `<button type="button" class="evolution-player-row ${direction} ${mine?'is-mine':''}" data-season-player="${$runtime.escapeHtml(item.player.id)}">
       <div class="evolution-player-main">
+        <span class="evolution-avatar">${$runtime.playerAvatarMarkup(item.player,item.player.name)}</span>
         <span class="evolution-role role-${$runtime.escapeHtml(String(item.player.role||'').toLowerCase())}">${$runtime.escapeHtml(item.player.role||'')}</span>
         <div><strong>${$runtime.escapeHtml(item.player.name)}</strong><small>${$runtime.escapeHtml($runtime.clubName(item.player.club))} · ${$runtime.escapeHtml(ownerLabel)}</small>${potential}</div>
       </div>
@@ -112,22 +113,11 @@
   function renderDataCenterOverviewPanel(ctx=$runtime.dataCenterContext()){
     const body=$runtime.$('datacenterOverviewBody');
     if(!body || !ctx) return;
-    const {day,roster,available,unavailable,avgOvr,totals}=ctx;
-    const {scoutSummary,dataSummary,assistantSummary}=$runtime.dataCenterPremiumHtml(ctx);
-    const moved=roster.map(p=>$runtime.evolutionPlayerData(p,ctx.season)).filter(x=>x&&x.delta!==0);
-    const growing=moved.filter(x=>x.delta>0).length;
-    const falling=moved.filter(x=>x.delta<0).length;
-    body.innerHTML=`
-      <section class="mc-hero dc-hero">
-        <div class="mc-opponent-identity dc-team-identity"><span class="fixture-tag">LA TUA ROSA</span><h3>${$runtime.escapeHtml($runtime.state.teamName||ctx.me.team)}</h3><p>Dati aggiornati alla giornata ${day}</p></div>
-        <div class="mc-kpis dc-kpis"><div><strong>${roster.length}</strong><span>GIOCATORI</span></div><div><strong>${available.length}</strong><span>DISPONIBILI</span></div><div><strong>${unavailable.length}</strong><span>OUT</span></div><div><strong>${avgOvr.toFixed(1)}</strong><span>OVR MEDIO</span></div></div>
-      </section>
-      <section class="dc-overview-grid">
-        <article class="mc-card dc-free-summary"><div class="mc-card-head"><span>DATI BASE · GRATUITI</span><strong>Produzione stagionale della rosa</strong></div><div class="dc-free-kpis"><div><b>${totals.goals}</b><small>GOL ROSA</small></div><div><b>${totals.assists}</b><small>ASSIST ROSA</small></div><div><b>${totals.apps}</b><small>PRESENZE TOTALI</small></div><div><b>${totals.minutes}</b><small>MINUTI TOTALI</small></div></div></article>
-        <article class="mc-card dc-evolution-summary"><div class="mc-card-head"><span>EVOLUZIONE ROSA</span><strong>OVR rispetto all'inizio stagione</strong></div><div class="dc-free-kpis"><div><b>${moved.length}</b><small>HANNO CAMBIATO OVR</small></div><div><b class="positive">${growing}</b><small>IN CRESCITA</small></div><div><b class="negative">${falling}</b><small>IN CALO</small></div><div><b>${roster.length-moved.length}</b><small>STABILI</small></div></div></article>
-      </section>
-      <section class="mc-grid two dc-premium-grid">${scoutSummary}${dataSummary}</section>
-      ${assistantSummary}`;
+    const {scoutSummary,assistantSummary}=$runtime.dataCenterPremiumHtml(ctx);
+    body.innerHTML=window.FantaDataOverview.render({ctx,managers:$runtime.state.managers,
+      statFor:id=>$runtime.playerSeasonStat(id),avatar:(p,name)=>$runtime.playerAvatarMarkup(p,name),escape:$runtime.escapeHtml})+
+      `<section class="dcv-services">${scoutSummary}</section>${assistantSummary}`;
+    $runtime.wireSeasonPlayerButtons(body);
     body.querySelector('#dataCenterOpenLineup')?.addEventListener('click',()=>$runtime.requestOpenLineup());
   }
 
@@ -159,17 +149,44 @@
     </button>`;
   }
 
+  const playersTableState={sort:'role',direction:1,query:'',role:''};
   function renderDataCenterPlayersPanel(ctx=$runtime.dataCenterContext()){
     const body=$runtime.$('datacenterPlayersBody');
     if(!body || !ctx) return;
+    const columns=[['name','Giocatore'],['club','Squadra'],['price','Costo'],['ovr','OVR'],['appearances','Presenze'],['goals','Gol'],['assists','Assist'],['mv','MV'],['fm','Fantamedia'],['starter','Titolarità']];
     const roleOrder={P:0,D:1,C:2,A:3};
-    const rows=ctx.roster.slice().sort((a,b)=>{
-      const ar=roleOrder[a.role]??9,br=roleOrder[b.role]??9;
-      if(ar!==br) return ar-br;
-      return $runtime.currentPlayerOvr(b)-$runtime.currentPlayerOvr(a) || String(a.name).localeCompare(String(b.name),'it');
+    const rows=ctx.roster.map(p=>{
+      const st=$runtime.playerSeasonStat(p.id)||$runtime.emptyPlayerSeasonStat(p);
+      const votes=Number(st.voteCount||0);
+      return {p,name:p.name,club:p.club||'',role:roleOrder[p.role]??9,price:Number(p.price||0),ovr:$runtime.currentPlayerOvr(p),appearances:Number(st.appearances||0),goals:Number(st.goals||0),assists:Number(st.assists||0),mv:ctx.dataPro&&votes?Number(st.voteSum||0)/votes:null,fm:ctx.dataPro&&votes?Number(st.fantasySum||0)/votes:null,starter:ctx.scoutPlus?$runtime.estimatedStarterProbability(p):null};
+    }).filter(x=>(!playersTableState.role||x.p.role===playersTableState.role)&&(`${x.name} ${x.club}`.toLocaleLowerCase('it').includes(playersTableState.query.toLocaleLowerCase('it'))));
+    rows.sort((a,b)=>{
+      const key=playersTableState.sort,av=a[key],bv=b[key];
+      if(av===null&&bv!==null)return 1;if(bv===null&&av!==null)return -1;
+      const diff=typeof av==='string'?av.localeCompare(bv,'it'):Number(av)-Number(bv);
+      return diff*playersTableState.direction||a.name.localeCompare(b.name,'it');
     });
-    body.innerHTML=`<section class="mc-card dc-roster-card dc-embedded-roster"><div class="mc-card-head"><div><span>GIOCATORI</span><strong>Rendimento, disponibilità ed evoluzione in una sola vista</strong></div><small>Clicca un giocatore per la scheda completa</small></div><div class="dc-column-legend dc-column-legend-evolution"><span>BASE</span><span>EVOLUZIONE</span><span>SCOUT PLUS</span><span>FANTADATA</span><span>ASSISTENTE</span></div><div class="dc-player-list">${rows.map(p=>$runtime.dataCenterPlayerRowHtml(p,ctx)).join('')}</div></section>`;
+    const esc=$runtime.escapeHtml;
+    const locked=key=>(['mv','fm'].includes(key)&&!ctx.dataPro)||(key==='starter'&&!ctx.scoutPlus);
+    const cell=(x,key)=>{
+      if(locked(key))return `<span class="dct-lock" title="Manca ${key==='starter'?'Scout Plus':'FantaData Pro'}">🔒</span>`;
+      if(x[key]===null)return '—';
+      if(key==='mv'||key==='fm')return x[key].toFixed(2);
+      if(key==='starter')return `${x[key]}%`;
+      return esc(String(x[key]));
+    };
+    body.innerHTML=`<section class="mc-card dct-card"><div class="mc-card-head"><div><span>LA TUA ROSA</span><strong>Tutti i tuoi giocatori a confronto</strong></div><small>Tocca il nome per aprire la scheda</small></div><div class="dct-toolbar"><label>Cerca giocatore<input type="search" data-dct-search placeholder="Nome o squadra" value="${esc(playersTableState.query)}"></label><div class="dct-roles" aria-label="Filtra per ruolo">${['','P','D','C','A'].map(role=>`<button type="button" data-dct-role="${role}" aria-pressed="${playersTableState.role===role}">${role||'Tutti'}</button>`).join('')}</div></div>${!ctx.dataPro||!ctx.scoutPlus?`<p class="dct-access">${!ctx.dataPro?'🔒 MV e fantamedia: manca FantaData Pro. ':''}${!ctx.scoutPlus?'🔒 Titolarità: manca Scout Plus.':''}</p>`:''}<div class="dct-scroll" tabindex="0" role="region" aria-label="Statistiche della tua rosa, tabella scorrevole"><table class="dct-table"><thead><tr>${columns.map(([key,label])=>`<th scope="col" aria-sort="${playersTableState.sort===key?(playersTableState.direction===1?'ascending':'descending'):'none'}"><button type="button" data-dct-sort="${key}" ${locked(key)?'disabled':''}>${label} ${locked(key)?'🔒':playersTableState.sort===key?(playersTableState.direction===1?'↑':'↓'):'↕'}</button></th>`).join('')}</tr></thead><tbody>${rows.map(x=>`<tr><th scope="row"><button type="button" class="dct-player" data-season-player="${esc(x.p.id)}">${$runtime.playerAvatarMarkup(x.p,x.name)}<span><strong>${esc(x.name)}</strong><small><span class="dct-role role-${esc(x.p.role)}">${esc(x.p.role)}</span></small></span></button></th>${columns.slice(1).map(([key])=>`<td class="dct-${key}">${cell(x,key)}</td>`).join('')}</tr>`).join('')||'<tr><td colspan="10" class="dct-empty">Nessun giocatore trovato.</td></tr>'}</tbody></table></div><small class="dct-hint">Scorri orizzontalmente per vedere tutte le statistiche.</small></section>`;
     $runtime.wireSeasonPlayerButtons(body);
+    body.querySelectorAll('[data-dct-sort]').forEach(btn=>btn.addEventListener('click',()=>{
+      const key=btn.dataset.dctSort;if(locked(key))return;
+      playersTableState.direction=playersTableState.sort===key?-playersTableState.direction:(['name','club'].includes(key)?1:-1);
+      playersTableState.sort=key;renderDataCenterPlayersPanel(ctx);
+    }));
+    body.querySelectorAll('[data-dct-role]').forEach(btn=>btn.addEventListener('click',()=>{playersTableState.role=btn.dataset.dctRole;renderDataCenterPlayersPanel(ctx);}));
+    body.querySelector('[data-dct-search]')?.addEventListener('input',event=>{
+      const position=event.target.selectionStart;playersTableState.query=event.target.value;renderDataCenterPlayersPanel(ctx);
+      const input=body.querySelector('[data-dct-search]');input?.focus();if(input&&position!==null)input.setSelectionRange(position,position);
+    });
   }
 
   function renderDataCenterEvolutionPanel(){
