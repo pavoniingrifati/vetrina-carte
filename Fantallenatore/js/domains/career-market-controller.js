@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   function create($runtime){
+    const releaseTableState={sort:'role',direction:1,query:'',role:''};
     if(!$runtime) throw new TypeError('Runtime richiesto: career-market-controller');
   function ensurePlayerSeasonSystems(season){
     if(!season || $runtime.initializedSeasonSystems.has(season)) return;
@@ -230,7 +231,16 @@
 
   function completedUserSeasonRecap(season=$runtime.state?.season){
     if(!season?.completed) return null;
-    if(season.userSeasonRecap) return season.userSeasonRecap;
+    if(season.userSeasonRecap){
+      // Integra i nuovi record senza ricalcolare i premi OVR già consolidati.
+      if(!Object.prototype.hasOwnProperty.call(season.userSeasonRecap,'bestMatchday') || !Object.prototype.hasOwnProperty.call(season.userSeasonRecap,'worstMatchday')){
+        const records=window.FantaSeasonRecap.build({results:season.matchdayResults||{}});
+        season.userSeasonRecap.bestMatchday=records.bestMatchday;
+        season.userSeasonRecap.worstMatchday=records.worstMatchday;
+        $runtime.saveState();
+      }
+      return season.userSeasonRecap;
+    }
     const user=$runtime.managerById('user');
     season.userSeasonRecap=window.FantaSeasonRecap.build({
       results:season.matchdayResults||{},
@@ -361,6 +371,7 @@
     const relegated=!!flow.relegated;
     const nextNo=Number(flow.sourceSeasonNumber||1)+1;
     const title=$runtime.$('nextSeasonTitle'),subtitle=$runtime.$('nextSeasonSubtitle'),kicker=$runtime.$('nextSeasonKicker');
+    $runtime.$('nextSeasonPersonal')?.classList.toggle('hidden',flow.stage==='market_summary');
     if(flow.stage==='market_summary'){
       if(kicker) kicker.textContent=`STAGIONE ${flow.sourceSeasonNumber} CONCLUSA · MERCATO ESTIVO`;
       if(title) title.textContent='Il nuovo mondo Serie A è pronto';
@@ -394,6 +405,10 @@
       const player=item?.id?$runtime.managerById('user')?.roster?.find(p=>String(p.id)===String(item.id)):null;
       return `<article class="next-season-personal-award"><div class="next-season-personal-head"><span aria-hidden="true">${icon}</span><small>${$runtime.escapeHtml(title)}</small></div><div class="next-season-personal-player">${player?`<span class="next-season-personal-face">${$runtime.playerAvatarMarkup(player,player.name)}</span>`:''}<strong>${$runtime.escapeHtml(item?.name||'—')}</strong></div><b>${item?$runtime.escapeHtml(value):'—'}</b><span class="next-season-personal-detail">${item?$runtime.escapeHtml(detail):'Nessun giocatore idoneo'}</span></article>`;
     };
+    const matchdayAward=(icon,title,item)=>{
+      const result=item?.score!=null && item?.opponentScore!=null?` · Risultato ${item.score}-${item.opponentScore}`:'';
+      return `<article class="next-season-personal-award"><div class="next-season-personal-head"><span aria-hidden="true">${icon}</span><small>${$runtime.escapeHtml(title)}</small></div><div class="next-season-personal-player"><strong>${item?`Giornata ${Number(item.day)}`:'—'}</strong></div><b>${item?`${formatAverage(item.fantasyPoints)} FP`:'—'}</b><span class="next-season-personal-detail">${item?$runtime.escapeHtml(`vs ${item.opponentTeam} · ${item.home?'Casa':'Trasferta'}${result}`):'Nessuna partita disponibile'}</span></article>`;
+    };
     if($runtime.$('nextSeasonPersonalGrid') && personal){
       const appearances=item=>`${item.appearances} presenze nella tua fantasquadra`;
       $runtime.$('nextSeasonPersonalGrid').innerHTML=
@@ -403,7 +418,9 @@
         award('🔥','MIGLIOR FANTAMEDIA',personal.topFantasy,formatAverage(personal.topFantasy?.avgFantasy),`Minimo 5 voti · ${appearances(personal.topFantasy||{appearances:0})}`)+
         award('💎','MIGLIOR ACQUISTO',personal.bestPurchase,`${formatAverage(personal.bestPurchase?.avgFantasy)} FM`,`Costo d’asta ${personal.bestPurchase?.cost||0} crediti · ${appearances(personal.bestPurchase||{appearances:0})}`)+
         award('📈','PIÙ MIGLIORATO',personal.improved,`+${personal.improved?.delta||0} OVR`,`Da ${personal.improved?.start||0} a ${personal.improved?.end||0} OVR`)+
-        award('📉','PIÙ PEGGIORATO',personal.declined,`${personal.declined?.delta||0} OVR`,`Da ${personal.declined?.start||0} a ${personal.declined?.end||0} OVR`);
+        award('📉','PIÙ PEGGIORATO',personal.declined,`${personal.declined?.delta||0} OVR`,`Da ${personal.declined?.start||0} a ${personal.declined?.end||0} OVR`)+
+        matchdayAward('🏆','MIGLIOR FANTAPUNTEGGIO',personal.bestMatchday)+
+        matchdayAward('📊','PEGGIOR FANTAPUNTEGGIO',personal.worstMatchday);
     }
     const marketCard=$runtime.$('nextSeasonMarketCard');
     const primary=$runtime.$('nextSeasonPrimaryBtn');
@@ -527,6 +544,7 @@
       pendingKeeper:$runtime.leagueRulesFor($runtime.state).keeperConfirmation ? (()=>{const p=$runtime.managerById('user')?.roster?.find(p=>String(p.id)===String(season.keeperPlayerId||''));return p?{id:String(p.id),price:Number(p.price||1)}:null;})():null,
       auctionReputation:$runtime.buildSeasonAuctionReputation(season),
       carryoverConsumables:inventory,
+      sponsorSlots:Number(oldCareer.nextSponsorSeason)===nextCareer.seasonNumber?2:1,
       sponsorOfferIds:$runtime.shuffledCopy(Object.keys($runtime.SEASON_SPONSORS)).slice(0,3),
       career:nextCareer,
       integrity:{checks:0,repairs:0,warnings:0,lastCheck:null,recent:[]},
@@ -788,16 +806,44 @@
     $runtime.showScreen('winterReleaseScreen');
     const me=$runtime.managerById('user');
     const selected=new Set(flow.userReleaseIds||[]);
-    $runtime.$('winterReleaseList').innerHTML=(me?.roster||[]).slice().sort((a,b)=>$runtime.ROLE_ORDER.indexOf(a.role)-$runtime.ROLE_ORDER.indexOf(b.role)||Number(b.ovr||0)-Number(a.ovr||0)).map(player=>{
-      const isSelected=selected.has(String(player.id));
-      const stat=$runtime.playerSeasonStat(player.id)||{};
-      return `<button class="winter-release-player ${isSelected?'selected':''}" data-winter-release-player="${$runtime.escapeHtml(String(player.id))}" type="button" aria-pressed="${isSelected}">
-        <span class="lineup-role-chip role-${player.role}">${player.role}</span>
-        <span class="winter-release-identity"><strong>${$runtime.escapeHtml(player.name)}</strong><small>${$runtime.escapeHtml($runtime.clubShort(player.club))} · OVR ${$runtime.playerOvrLabel(player)}</small></span>
-        <span class="winter-release-value"><b>+${Math.max(0,Math.round(Number(player.quotation||0)))} cr</b><em>${isSelected?'✓ SELEZIONATO':'SVINCOLA'}</em></span>
-        <span class="winter-release-stats"><span><small>PRES</small><b>${Number(stat.appearances||0)}</b></span><span><small>TIT</small><b>${Number(stat.starts||0)}</b></span><span><small>MIN</small><b>${Number(stat.minutes||0)}</b></span><span><small>GOL</small><b>${Number(stat.goals||0)}</b></span><span><small>ASSIST</small><b>${Number(stat.assists||0)}</b></span></span>
-      </button>`
-    }).join('');
+    const body=$runtime.$('winterReleaseList'),esc=$runtime.escapeHtml;
+    const dataPro=$runtime.shopItemActive('fantadata_pro',$runtime.state?.season),scoutPlus=$runtime.shopItemActive('scout_plus',$runtime.state?.season);
+    const columns=[['name','Giocatore'],['refund','Rimborso'],['price','Costo asta'],['ovr','OVR'],['status','Disponibilità'],['appearances','Presenze'],['starts','Da titolare'],['minutes','Minuti'],['goals','Gol'],['assists','Assist'],['mv','MV'],['fm','Fantamedia'],['starter','Titolarità']];
+    const locked=key=>(['mv','fm'].includes(key)&&!dataPro)||(key==='starter'&&!scoutPlus);
+    const rows=(me?.roster||[]).map(p=>{
+      const stat=$runtime.playerSeasonStat(p.id)||{},votes=Number(stat.voteCount||0);
+      return {p,name:p.name,role:$runtime.ROLE_ORDER.indexOf(p.role),refund:Math.max(0,Math.round(Number(p.quotation||0))),price:Number(p.price||0),ovr:$runtime.currentPlayerOvr(p),status:$runtime.playerStatusForDay(p.id).label,appearances:Number(stat.appearances||0),starts:Number(stat.starts||0),minutes:Number(stat.minutes||0),goals:Number(stat.goals||0),assists:Number(stat.assists||0),mv:dataPro&&votes?Number(stat.voteSum||0)/votes:null,fm:dataPro&&votes?Number(stat.fantasySum||0)/votes:null,starter:scoutPlus?$runtime.estimatedStarterProbability(p):null};
+    }).filter(row=>(!releaseTableState.role||row.p.role===releaseTableState.role)&&(`${row.name} ${$runtime.clubName(row.p.club)}`.toLocaleLowerCase('it').includes(releaseTableState.query.toLocaleLowerCase('it'))));
+    rows.sort((a,b)=>{
+      const av=a[releaseTableState.sort],bv=b[releaseTableState.sort];
+      if(av===null&&bv!==null)return 1;if(bv===null&&av!==null)return -1;
+      const cmp=typeof av==='string'?av.localeCompare(bv,'it'):Number(av)-Number(bv);
+      return cmp*releaseTableState.direction || (releaseTableState.sort==='role'?b.ovr-a.ovr:0) || a.name.localeCompare(b.name,'it');
+    });
+    const cell=(row,key)=>{
+      if(locked(key))return `<span class="dct-lock" title="Manca ${key==='starter'?'Scout Plus':'FantaData Pro'}">🔒</span>`;
+      if(row[key]===null)return '—';
+      if(key==='mv'||key==='fm')return row[key].toFixed(2);
+      if(key==='starter')return `${row[key]}%`;
+      if(key==='refund')return `+${row[key]} cr`;
+      if(key==='price')return `${row[key]} cr`;
+      if(key==='ovr')return esc(String($runtime.playerOvrLabel(row.p)));
+      return esc(String(row[key]));
+    };
+    body.innerHTML=`<div class="dct-toolbar"><label>Cerca giocatore<input type="search" data-wrt-search placeholder="Nome o squadra" value="${esc(releaseTableState.query)}"></label><div class="dct-roles" aria-label="Filtra per ruolo">${['','P','D','C','A'].map(role=>`<button type="button" data-wrt-role="${role}" aria-pressed="${releaseTableState.role===role}">${role||'Tutti'}</button>`).join('')}</div></div><p class="dct-hint">${$runtime.winterGuaranteedSaleMode?'Cessione garantita: tocca un giocatore per cederlo subito al prezzo pagato all’asta.':'Tocca il giocatore per selezionare o annullare lo svincolo. Il rimborso è la quotazione base, non il costo d’acquisto.'}</p>${!dataPro||!scoutPlus?`<p class="dct-access">${!dataPro?'🔒 MV e fantamedia: manca FantaData Pro. ':''}${!scoutPlus?'🔒 Titolarità: manca Scout Plus.':''}</p>`:''}<div class="dct-scroll" tabindex="0" role="region" aria-label="Giocatori da svincolare, tabella scorrevole"><table class="dct-table"><thead><tr>${columns.map(([key,label])=>`<th scope="col" aria-sort="${releaseTableState.sort===key?(releaseTableState.direction===1?'ascending':'descending'):'none'}"><button type="button" data-wrt-sort="${key}" ${locked(key)?'disabled':''}>${label} ${locked(key)?'🔒':releaseTableState.sort===key?(releaseTableState.direction===1?'↑':'↓'):'↕'}</button></th>`).join('')}</tr></thead><tbody>${rows.map(row=>{
+      const isSelected=selected.has(String(row.p.id)),id=esc(String(row.p.id));
+      return `<tr class="${isSelected?'is-selected':''}"><th scope="row"><button type="button" class="dct-player" data-winter-release-player="${id}" aria-pressed="${isSelected}" aria-label="${esc(($runtime.winterGuaranteedSaleMode?'Cedi subito ':isSelected?'Annulla svincolo di ':'Seleziona per svincolo ')+row.name)}">${$runtime.playerAvatarMarkup(row.p,row.name)}<span><strong>${esc(row.name)}</strong><small><span class="dct-role role-${esc(row.p.role)}">${esc(row.p.role)}</span> ${esc($runtime.clubShort(row.p.club))}</small><em class="wrt-selection">${$runtime.winterGuaranteedSaleMode?'CEDI ORA':isSelected?'✓ SELEZIONATO':'□ SVINCOLA'}</em></span></button></th>${columns.slice(1).map(([key])=>`<td class="wrt-${key}">${cell(row,key)}</td>`).join('')}</tr>`;
+    }).join('')||`<tr><td colspan="${columns.length}" class="dct-empty">Nessun giocatore trovato.</td></tr>`}</tbody></table></div><small class="dct-hint">Scorri orizzontalmente per confrontare tutti i dati. I giocatori selezionati restano selezionati anche cambiando filtro.</small>`;
+    body.querySelectorAll('[data-wrt-sort]').forEach(btn=>btn.addEventListener('click',()=>{
+      const key=btn.dataset.wrtSort;if(locked(key))return;
+      releaseTableState.direction=releaseTableState.sort===key?-releaseTableState.direction:(['name','status'].includes(key)?1:-1);
+      releaseTableState.sort=key;$runtime.renderWinterReleaseScreen();
+    }));
+    body.querySelectorAll('[data-wrt-role]').forEach(btn=>btn.addEventListener('click',()=>{releaseTableState.role=btn.dataset.wrtRole;$runtime.renderWinterReleaseScreen();}));
+    body.querySelector('[data-wrt-search]')?.addEventListener('input',event=>{
+      const position=event.target.selectionStart;releaseTableState.query=event.target.value;$runtime.renderWinterReleaseScreen();
+      const input=$runtime.$('winterReleaseList').querySelector('[data-wrt-search]');input?.focus();if(input&&position!==null)input.setSelectionRange(position,position);
+    });
     document.querySelectorAll('[data-winter-release-player]').forEach(button=>button.addEventListener('click',()=>{
       if($runtime.winterGuaranteedSaleMode) $runtime.useGuaranteedWinterSale(button.dataset.winterReleasePlayer);
       else $runtime.toggleWinterRelease(button.dataset.winterReleasePlayer);

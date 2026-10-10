@@ -3,6 +3,177 @@
   'use strict';
   function create($runtime){
     if(!$runtime) throw new TypeError('Runtime richiesto: social-controller');
+  const socialReplies={
+  "ambitious": {
+    "good": [
+      "Voglio fare la differenza, mister. Ci puoi contare.",
+      "Messaggio ricevuto. Oggi voglio lasciare il segno.",
+      "Mi hai dato una spinta in più. Andiamo a prendercela.",
+      "Sono pronto a mettermi alla prova.",
+      "Voglio essere decisivo per questa squadra.",
+      "Darò tutto per ripagare la fiducia.",
+      "Mi piace sapere che conti su di me.",
+      "Ora ho ancora più voglia di scendere in campo."
+    ],
+    "neutral": [
+      "Ricevuto. Pensiamo alla partita.",
+      "Ho letto, mister. Ora torno al lavoro.",
+      "Il mio obiettivo resta dare il massimo.",
+      "Vediamo cosa dirà il campo.",
+      "Tengo la testa sulla prossima gara.",
+      "Ci sentiamo dopo la partita.",
+      "Va bene. Mi concentro sulla prestazione.",
+      "Il lavoro continua, mister."
+    ],
+    "bad": [
+      "Questo messaggio non mi aiuta a concentrarmi.",
+      "So cosa devo fare. Non serve ricordarmelo ogni volta.",
+      "Preferirei parlarne faccia a faccia.",
+      "Così mi passa la voglia di rispondere.",
+      "Voglio pensare al campo, non a questa chat.",
+      "Mi aspettavo un altro modo di parlarne.",
+      "Lasciami lavorare con un po’ di serenità.",
+      "Ho letto, ma questo tono non mi aiuta."
+    ],
+    "blocked": [
+      "Chiudo qui la conversazione, mister.",
+      "Non voglio altri messaggi. Ti blocco.",
+      "Per me questa chat finisce qui.",
+      "Preferisco interrompere i contatti qui.",
+      "Basta così. Non mi scrivere più qui.",
+      "Non voglio continuare. Bloccherò questo account.",
+      "Parleremo al campo. Qui ti blocco.",
+      "Ora chiudo la chat e ti blocco."
+    ]
+  },
+  "sensitive": {
+    "good": [
+      "Sapere che credi in me mi aiuta davvero.",
+      "Grazie mister. Mi sento un po’ più sereno.",
+      "Avevo bisogno di sentirmi parte della squadra.",
+      "Le tue parole mi hanno fatto bene.",
+      "Cercherò di ripagarti sul campo.",
+      "Grazie per avermi scritto, mister.",
+      "Mi hai aiutato a ritrovare la concentrazione.",
+      "Ora affronto la partita con più fiducia."
+    ],
+    "neutral": [
+      "Ho letto, mister.",
+      "Va bene. Provo a concentrarmi sulla partita.",
+      "Grazie del messaggio. Ora torno ad allenarmi.",
+      "Ne riparliamo con calma?",
+      "Mi prendo un momento per concentrarmi.",
+      "Ricevuto. Ci vediamo al campo.",
+      "Ok, mister. Una cosa alla volta.",
+      "Adesso penso alla prossima gara."
+    ],
+    "bad": [
+      "Questo messaggio mi ha messo in difficoltà.",
+      "Così mi sento ancora più sotto esame.",
+      "Avrei preferito parlarne di persona.",
+      "Non mi sento meglio dopo averlo letto.",
+      "Mi serve un po’ di tranquillità.",
+      "Mister, queste parole mi pesano.",
+      "Non è facile rispondere a un messaggio così.",
+      "Vorrei sentire più fiducia da parte tua."
+    ],
+    "blocked": [
+      "Questa chat mi fa stare male. Ti blocco.",
+      "Ho bisogno di tranquillità. Chiudo qui.",
+      "Non voglio ricevere altri messaggi qui.",
+      "Preferisco bloccare il contatto e fermarmi.",
+      "Non riesco a continuare questa conversazione. Ti blocco.",
+      "Basta, mister. Qui non ti risponderò più.",
+      "Per stare tranquillo, interrompo questa chat.",
+      "Adesso ti blocco. Ne parleremo di persona."
+    ]
+  },
+  "proud": {
+    "good": [
+      "Fa piacere quando ti accorgi del mio lavoro.",
+      "So cosa posso dare. Voglio fartelo vedere.",
+      "Grazie mister. Voglio meritarmi questo spazio.",
+      "Mi hai dato una motivazione in più.",
+      "Voglio essere all’altezza della fiducia.",
+      "Sono pronto a dimostrare quanto valgo.",
+      "Mi fa piacere sentirmi importante per la squadra.",
+      "Ora voglio rispondere con una grande prestazione."
+    ],
+    "neutral": [
+      "Ricevuto, mister.",
+      "Il campo parlerà per me.",
+      "So qual è il mio compito.",
+      "Adesso penso soltanto a giocare.",
+      "Ne terrò conto.",
+      "Ho letto. Ci vediamo alla partita.",
+      "Continuo a lavorare come sempre.",
+      "Va bene. Preferisco rispondere sul campo."
+    ],
+    "bad": [
+      "Non mi piace essere trattato così.",
+      "Mi aspettavo più rispetto in questa conversazione.",
+      "Possiamo parlarne senza questo tono?",
+      "Non penso di meritare un messaggio così.",
+      "Conosco il mio valore. Questo non mi aiuta.",
+      "Preferisco una discussione chiara, di persona.",
+      "Non ho apprezzato queste parole.",
+      "Mister, così il nostro rapporto non migliora."
+    ],
+    "blocked": [
+      "Il rispetto viene prima. Qui ti blocco.",
+      "Non accetto di continuare questa chat.",
+      "Per me il discorso è chiuso. Ti blocco.",
+      "Non voglio altri messaggi da questo account.",
+      "Basta così. Qui non mi contatti più.",
+      "Questa conversazione finisce adesso.",
+      "Preferisco bloccarti e parlarne al campo.",
+      "Non ho altro da aggiungere. Ti blocco."
+    ]
+  },
+  "reserved": {
+    "good": [
+      "Grazie. Preferisco risponderti sul campo.",
+      "Apprezzo il messaggio, mister.",
+      "Ricevuto. Darò tutto.",
+      "Grazie per la fiducia.",
+      "Mi fa piacere. Ora mi concentro.",
+      "Va bene, mister. Sono pronto.",
+      "Poche parole: ci puoi contare.",
+      "Grazie. Torno al lavoro con la testa giusta."
+    ],
+    "neutral": [
+      "Ok, mister.",
+      "Ricevuto.",
+      "Ci vediamo al campo.",
+      "Ho letto. Ora mi concentro.",
+      "Va bene.",
+      "Ne parliamo all’allenamento.",
+      "Adesso penso alla gara.",
+      "Messaggio letto, mister."
+    ],
+    "bad": [
+      "Preferirei parlarne di persona.",
+      "Questo messaggio non mi aiuta.",
+      "Adesso ho bisogno di concentrarmi.",
+      "Non mi piace questa conversazione.",
+      "Lasciamo stare la chat per un po’.",
+      "Ne parliamo domani all’allenamento?",
+      "Ho letto. Preferisco fermarmi qui.",
+      "Mi serve un po’ di spazio, mister."
+    ],
+    "blocked": [
+      "Chiudo la chat. Ti blocco.",
+      "Basta messaggi qui.",
+      "Preferisco bloccare il contatto.",
+      "Non continuerò questa conversazione. Ti blocco.",
+      "Qui non mi scrivere più.",
+      "Stop, mister. Ti blocco.",
+      "Parliamone al campo. Questa chat è chiusa.",
+      "Ho bisogno di spazio. Blocco questo account."
+    ]
+  }
+};
+
   function socialOwnedPlayers(){
     const user=$runtime.managerById('user');
     return (user?.roster||[]).slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it'));
@@ -66,10 +237,10 @@
   function socialMessageTone(text){
     const norm=String(text||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
     const has=(words)=>words.some(w=>norm.includes(w));
+    if(/\b(scarso|scarsa|vergogna|inutile|ridicolo|ridicola|disastro|idiota|incapace|stupido|stupida|cretino|cretina|fai schifo|vaffanculo)\b/.test(norm)) return 'hostile';
     if(has(['grande','bravo','complimenti','orgoglioso','continua cosi','ottimo','super','fenomeno'])) return 'praise';
     if(has(['credo in te','fiducia','testa alta','tranquillo','forza','dai','sono con te','puoi farcela'])) return 'support';
     if(has(['reazione','devi','pretendo','sveglia','voglio di piu','dimostrami','non basta','panchina'])) return 'pressure';
-    if(has(['scarso','vergogna','inutile','fai schifo','ridicolo','disastro'])) return 'hostile';
     return 'neutral';
   }
 
@@ -110,6 +281,7 @@
 
     let goodChance=$runtime.clamp(.40+toneGood+relationBias*.45-spamPenalty*.60,.10,.76);
     let badChance=$runtime.clamp(.22+toneBad-relationBias*.22+spamPenalty*.72,.10,.68);
+    if(tone==='hostile') { goodChance=0; badChance=Math.max(badChance,.80); }
     if(goodChance+badChance>.88){
       const scale=.88/(goodChance+badChance);
       goodChance*=scale; badChance*=scale;
@@ -117,39 +289,38 @@
 
     const roll=$runtime.careerHash(`social-reaction|${signature}`);
     if(roll<goodChance) return {outcome:'good',tone,profile,voteDelta:.25,relationshipDelta:6};
-    if(roll<goodChance+badChance) return {outcome:'bad',tone,profile,voteDelta:-.25,relationshipDelta:-7};
+    if(roll<goodChance+badChance){
+      // Conditional on a negative reaction: ordinary messages 12%, insults 40%.
+      const immediateBlockChance=$runtime.clamp((tone==='hostile'?.40:.12)+(profile.id==='sensitive'?.06:profile.id==='reserved'?.04:0)+(relation<28?.10:0),0,.65);
+      if($runtime.careerHash(`social-immediate-block|${signature}`)<immediateBlockChance){
+        return {outcome:'blocked',tone,profile,voteDelta:-.25,relationshipDelta:-18};
+      }
+      return {outcome:'bad',tone,profile,voteDelta:-.25,relationshipDelta:-7};
+    }
     return {outcome:'neutral',tone,profile,voteDelta:0,relationshipDelta:1};
   }
 
   function socialReplyText(player,reaction){
-    const key=Math.floor($runtime.careerHash(`social-reply|${player.id}|${$runtime.state?.season?.currentMatchday}|${$runtime.socialConversation(player.id)?.totalMessages||0}`)*4);
-    const replies={
-      good:[
-        'Grazie mister 🙏 Mi serviva sentirlo.',
-        'Messaggio ricevuto 💪 Oggi voglio ripagare la fiducia.',
-        'Grazie! Testa giusta e andiamo forte 🔥',
-        'Apprezzo davvero, mister. Darò tutto.'
-      ],
-      neutral:[
-        'Ricevuto mister 👍',
-        'Ok, ci vediamo in campo.',
-        'Va bene mister.',
-        'Capito. Pensiamo alla partita.'
-      ],
-      bad:[
-        'Mister, così mi metti solo più pressione.',
-        'Preferirei parlare di queste cose di persona.',
-        'Non penso che questi messaggi mi aiutino.',
-        'Ho capito, ma non mi è piaciuto il tono.'
-      ],
-      blocked:[
-        'Basta messaggi, mister.',
-        'Preferisco non ricevere altri messaggi.',
-        'Così è troppo. Chiudiamola qui.',
-        'Non voglio continuare questa conversazione.'
-      ]
-    };
-    return replies[reaction.outcome]?.[key]||'Ricevuto.';
+    const conv=$runtime.socialConversation(player.id);
+    const day=$runtime.state?.season?.currentMatchday||1;
+    const profile=reaction.profile||$runtime.socialPersonality(player);
+    let pool=socialReplies[profile.id]?.[reaction.outcome]||socialReplies.reserved.neutral;
+    if(reaction.tone==='hostile'){
+      if(reaction.outcome==='blocked') pool=['Puoi criticarmi, ma non insultarmi. Ti blocco.','Non accetto questi insulti. Questa chat finisce qui.','Con questo tono non continuiamo. Ti blocco.','Non voglio ricevere altri insulti. Blocco il contatto.'];
+      else if(reaction.outcome==='bad') pool=['Puoi criticare la mia partita, ma così mi manchi di rispetto.','Gli insulti non mi aiutano a giocare meglio.','Accetto una critica, non un insulto.','Mister, possiamo parlarne senza offenderci?'];
+      else pool=['Ho letto. Ne parleremo di persona.','Preferisco non rispondere a questo tono.','Adesso penso al campo.','Non voglio discutere qui.'];
+    }else if(reaction.outcome==='bad'){
+      if(reaction.tone==='praise') pool=['Grazie, ma oggi faccio fatica a prendere bene anche un complimento.','Capisco il complimento, ma in questo momento mi mette sotto pressione.','Apprezzo l’intenzione. Preferisco concentrarmi senza aspettative.','So che volevi incoraggiarmi, ma oggi mi sento teso.'];
+      else if(reaction.tone==='support') pool=['So che vuoi aiutarmi, ma adesso ho bisogno di un po’ di spazio.','Capisco l’intenzione, mister. Oggi però faccio fatica.','Grazie per la fiducia, ma sento comunque troppa pressione.','So che sei con me. Preferirei parlarne al campo.'];
+    }
+    const outgoing=(conv?.messages||[]).filter(m=>m.sender==='user'&&Number(m.day)===Number(day)).length;
+    if(outgoing>=3&&reaction.outcome==='bad') pool=['Mister, ho letto. Adesso lasciami concentrarmi.','Tutti questi messaggi mi stanno distraendo.','Possiamo fermarci qui per oggi?','Mi serve una pausa da questa chat.'];
+    const recent=(conv?.messages||[]).filter(m=>m.sender==='player').slice(-4).map(m=>m.text);
+    let candidates=pool.filter(text=>!recent.includes(text));
+    if(!candidates.length)candidates=pool.filter(text=>text!==recent[recent.length-1]);
+    if(!candidates.length)candidates=pool;
+    const key=Math.min(candidates.length-1,Math.floor($runtime.careerHash(`social-reply|${player.id}|${day}|${conv?.totalMessages||0}`)*candidates.length));
+    return candidates[key];
   }
 
   function socialRecordMotivation(player,reaction,day,messageId){
@@ -335,8 +506,8 @@
       info.textContent=conv.blocked
         ? 'Questo giocatore ti ha bloccato: non puoi più scrivergli per il resto della stagione.'
         : alreadyEffective
-          ? 'Hai già influenzato questo giocatore oggi. Altri messaggi non sommano bonus, ma possono irritarlo.'
-          : 'La prima reazione di oggi può dare un piccolo bonus, nessun effetto oppure un malus alla prestazione.';
+          ? 'Hai già influenzato questo giocatore oggi. Altri messaggi non sommano bonus, ma possono irritarlo e farti bloccare.'
+          : 'La prima reazione di oggi può dare un bonus, nessun effetto o un malus. Se reagisce male, può anche bloccarti subito.';
     }
 
     requestAnimationFrame(()=>{ if(messages) messages.scrollTop=messages.scrollHeight; });

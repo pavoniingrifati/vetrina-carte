@@ -12,8 +12,8 @@ for(const type of ['bundle','sealed','mystery']){state.auction.arcade={type};ass
 state.auction.blockedCpuIds=[admin.id];assert.equal(api.adminPowerTry(),false);delete state.auction.blockedCpuIds;
 state.winterMarketFlow={stage:'auction'};assert.equal(api.adminPowerTry(),false);delete state.winterMarketFlow;
 const budget=admin.budget,slots=admin.roster.length;
-api.adminPowerFast();assert.equal(state.adminOneShot.used,true);assert.equal(admin.budget,budget-1);assert.equal(admin.roster.length,slots+1);assert.equal(admin.roster.at(-1).price,1);
-assert.equal(state.auction.highBidderId,admin.id);assert.equal(state.auction.adminOneShotForced,true);
+const capturedAuction=state.auction;api.adminPowerFast();assert.equal(state.adminOneShot.used,true);assert.equal(admin.budget,budget-1);assert.equal(admin.roster.length,slots+1);assert.equal(admin.roster.at(-1).price,1);
+assert.equal(capturedAuction.highBidderId,admin.id);assert.equal(capturedAuction.adminOneShotForced,true);
 assert.equal(api.storageSnapshot().adminOneShot.used,true,'Uso persistente nel salvataggio');
 auction(ranked[1].player);assert.equal(api.adminPowerTry(),false,'Un solo uso per asta');
 const next=api.adminPowerSetup();assert.equal(next.adminOneShot,undefined,'Nuova stagione/asta ripristina il potere');

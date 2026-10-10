@@ -9,7 +9,7 @@
     const store=season.lineups[String(day)];
     const forced=$runtime.forcedFormationRuleForDay(day);
     const opponentId=$runtime.userOpponentIdForDay(day);
-    const blockedId=$runtime.blockedOpponentPlayerId(day);
+    const blockedIds=new Set($runtime.blockedOpponentPlayerIds(day));
     $runtime.state.managers.filter(m=>m.id!=='user').forEach(m=>{
       const mustMirrorForced=!!forced && (forced==='5-5-5' || String(m.id)===String(opponentId)) && String(store[m.id]?.formation||'')!==forced;
       const forcedStarterId=$runtime.adminForcedStarterForManager(m.id,day);
@@ -17,10 +17,10 @@
       const cpuStarterIds=Object.values(store[m.id]?.starters||{}).map(String);
       const hasForcedStarter=!forcedStarterId || cpuStarterIds.includes(String(forcedStarterId));
       const hasAdminBlockedStarter=!!adminBlockedStarterId && cpuStarterIds.includes(String(adminBlockedStarterId));
-      const hasBlockedPlayer=!!blockedId && String(m.id)===String(opponentId) && (cpuStarterIds.includes(String(blockedId)) || (store[m.id]?.bench||[]).map(String).includes(String(blockedId)));
+      const hasBlockedPlayer=String(m.id)===String(opponentId) && [...cpuStarterIds,...(store[m.id]?.bench||[]).map(String)].some(id=>blockedIds.has(id));
       if(!store[m.id]?.confirmed || !$runtime.allowedLineupFormation(store[m.id]?.formation) || mustMirrorForced || !hasForcedStarter || hasAdminBlockedStarter || hasBlockedPlayer){
         store[m.id]=$runtime.buildAutoLineup(m,$runtime.cpuFormationForDay(m,day));
-        if(forcedStarterId && String(forcedStarterId)!==String(blockedId||'')) $runtime.enforceStarterInLineup(m,store[m.id],forcedStarterId);
+        if(forcedStarterId && !(String(m.id)===String(opponentId)&&blockedIds.has(String(forcedStarterId)))) $runtime.enforceStarterInLineup(m,store[m.id],forcedStarterId);
         if(adminBlockedStarterId) $runtime.enforcePlayerBenchedInLineup(m,store[m.id],adminBlockedStarterId,day);
         $runtime.enforceOpponentConsumableBlock(m,store[m.id],day);
       }

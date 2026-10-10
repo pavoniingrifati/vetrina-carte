@@ -712,7 +712,7 @@ test('Asta di gennaio: rimborsi, svincoli e contabilità separata', () => {
   assert(/winter-transfer-role/.test(app) && /<small>RUOLO<\/small>/.test(app), 'OVR e ruolo non sono separati nel riepilogo trasferimenti');
   assert(/shopItemActive\('scout_plus'/.test(app) && /shopItemActive\('fantadata_pro'/.test(app), 'Dati premium non applicati al riepilogo trasferimenti');
   assert(/aria-pressed="\$\{isSelected\}"/.test(app) && /SELEZIONATO/.test(app), 'Stato visivo e accessibile degli svincoli assente');
-  assert(/winter-release-stats/.test(app) && /stat\.appearances/.test(app) && /stat\.starts/.test(app) && /stat\.minutes/.test(app), 'Statistiche stagionali assenti dalle scelte di svincolo');
+  assert(/data-wrt-sort/.test(app) && /class="dct-table"/.test(app) && /stat\.appearances/.test(app) && /stat\.starts/.test(app) && /stat\.minutes/.test(app), 'Statistiche stagionali assenti dalle scelte di svincolo');
   assert(/state\.winterMarketFlow\.stage='completed'/.test(app), 'Conclusione mini asta non ripristina la stagione');
 });
 
@@ -810,7 +810,7 @@ test('Consumabili: acquisto multiplo, inventario e utilizzi contestuali', () => 
   assert(/data-open-consumable-inventory/.test(html), 'Pulsante Inventario header assente');
   assert(/data-consumable-inventory-count/.test(html), 'Contatore Inventario header assente');
   ['cons_reroll_admin','cons_starter_report','cons_training','cons_reroll_event','cons_guaranteed_sale','cons_opponent_block'].forEach(id=>assert(new RegExp(`${id}:[\\s\\S]{0,360}consumable:true`).test(app),`Definizione consumabile assente: ${id}`));
-  assert(/currency:'fp'/.test(app) && /career\.fantapoints=careerFantapoints\(\)-cost/.test(app), 'I consumabili non usano i Fantapoints');
+  assert(/currency:'fp'/.test(app) && /currency==='fp'/.test(app) && /career\.fantapoints=before-cost/.test(app), 'I consumabili non usano i Fantapoints');
   assert(/function\s+ensureConsumableState\s*\(/.test(app) && /function\s+consumeConsumable\s*\(/.test(app), 'Inventario consumabili non persistente');
   assert(/function\s+rerollFormationChoiceCards\s*\(/.test(app) && /generateFormationChoiceOptions\(day,`reroll-\$\{count\}`\)/.test(app), 'Reroll carte evento non collegato');
   assert(/function\s+rerollAdminRuleCard\s*\(/.test(app) && /generateAdminRuleOption\(day,`reroll-\$\{count\}`/.test(app), 'Reroll Admin non collegato');
@@ -979,9 +979,12 @@ test('Scambi invernali: contabilità e formazione vengono aggiornate', () => {
   const context={state,managerById:id=>[me,cpu].find(m=>m.id===id),winterLedgerFor:id=>ledger[id],saveState:()=>true};
   vm.createContext(context);
   vm.runInContext(app.slice(begin,end)+'\nthis.completeTrade=completeTrade;this.currentTradeWindow=currentTradeWindow;',context);
-  const result=context.completeTrade({me,rival:cpu,outgoing:me.roster[0],incoming:cpu.roster[0],credits:4},context.currentTradeWindow('winter'));
-  assert(result===true&&me.budget===10&&cpu.budget===10,'Crediti dello scambio invernale errati');
-  assert(ledger.user.tradeCashDelta===-4&&ledger.cpu1.tradeCashDelta===4,'Ledger invernale non aggiornato');
+  const trade=context.currentTradeWindow('winter');
+  assert(context.completeTrade({me,rival:cpu,outgoing:me.roster[0],incoming:cpu.roster[0],credits:4},trade)===false,'Conguaglio invernale accettato');
+  const result=context.completeTrade({me,rival:cpu,outgoing:me.roster[0],incoming:cpu.roster[0],credits:0},trade);
+  assert(result===true&&me.budget===14&&cpu.budget===6,'Budget modificati da uno scambio secco');
+  assert(ledger.user.tradeCashDelta===0&&ledger.cpu1.tradeCashDelta===0,'Lo scambio secco altera il ledger monetario');
+  assert(state.tradeBudgetAdjustments.user===4&&state.tradeBudgetAdjustments.cpu1===-4,'Contabilita acquisti non aggiornata');
   assert(!state.season.lineups['20']&&state.season.assistantCoachLineup.enabled,'Formazione precedente non invalidata');
 });
 

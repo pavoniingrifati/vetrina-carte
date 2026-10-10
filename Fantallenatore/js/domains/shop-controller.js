@@ -11,6 +11,7 @@
 
   function sponsorVisualAsset(id){
     return ({
+      double_block:'assets/sponsors/zalandiolo.png',
       win_bonus:'assets/sponsors/lavezzi.webp',
       free_subscription:'assets/sponsors/cobocolo.webp',
       future_auction:'assets/sponsors/burgerkane.webp',
@@ -25,6 +26,7 @@
 
   function sponsorVisualBrand(id){
     return ({
+      double_block:'Zalandiolo',
       win_bonus:'LAVEZZI',
       free_subscription:'CoboColo',
       future_auction:'Burger Kane',
@@ -63,17 +65,26 @@
   function selectSeasonSponsor(id){
     if(!$runtime.state || $runtime.state.season?.started) return;
     const sponsor=$runtime.SEASON_SPONSORS[String(id)];
-    if(!sponsor) return;
-    $runtime.state.sponsorChoice={id:sponsor.id,selectedAt:Date.now()};
+    if(!sponsor || !$runtime.currentSponsorOffers().some(offer=>offer.id===sponsor.id)) return;
+    const choices=$runtime.CareerEngine.selectedSponsorChoices($runtime.state);
+    if(Number($runtime.state.sponsorSlots)===2){
+      const index=choices.findIndex(choice=>choice.id===sponsor.id);
+      if(index>=0) choices.splice(index,1);
+      else if(choices.length<2) choices.push({id:sponsor.id,selectedAt:Date.now()});
+      else { $runtime.showToast('Hai già scelto 2 sponsor. Togli una firma per cambiarli.'); return; }
+      $runtime.state.sponsorChoice=choices.length?{...choices[0],additionalChoices:choices.slice(1)}:null;
+    }else $runtime.state.sponsorChoice={id:sponsor.id,selectedAt:Date.now()};
     $runtime.saveState();
     $runtime.renderSponsorSelection();
     $runtime.showToast(`${sponsor.name}: accordo selezionato.`);
   }
 
   function selectAcademySponsorPlayer(id){
-    if($runtime.state?.season?.started || $runtime.state?.sponsorChoice?.id!=='academy') return;
+    if($runtime.state?.season?.started) return;
+    const choice=$runtime.CareerEngine.selectedSponsorChoices($runtime.state).find(choice=>choice.id==='academy');
+    if(!choice) return;
     const player=$runtime.state.managers?.[0]?.roster?.find(p=>String(p.id)===String(id) && Number(p.ovr||0)<=97);
-    $runtime.state.sponsorChoice.playerId=player?String(player.id):null;
+    choice.playerId=player?String(player.id):null;
     $runtime.saveState();
     $runtime.renderSponsorSelection();
   }
@@ -82,13 +93,20 @@
     const panel=$runtime.$('sponsorSelectionPanel'),grid=$runtime.$('sponsorCards'),summary=$runtime.$('sponsorChosenSummary'),startBtn=$runtime.$('startLeagueBtn');
     if(!panel || !grid) return;
     const selected=$runtime.currentSponsorChoice();
+    const choices=$runtime.CareerEngine.selectedSponsorChoices($runtime.state);
+    const chosenIds=new Set(choices.map(choice=>choice.id));
+    const academyChoice=choices.find(choice=>choice.id==='academy');
+    const slots=Number($runtime.state.sponsorSlots)===2?2:1;
+    const ready=choices.length===slots;
+    const description=panel.querySelector('.sponsor-selection-head p');
+    if(description) description.textContent=slots===2?'Celebrità attiva: scegli 2 dei 3 sponsor. Entrambi restano attivi per tutta la stagione. Puoi togliere una firma per cambiare scelta.':'Puoi firmare un solo accordo. Lo sponsor resta attivo per tutta la stagione.';
     const sponsorOffers=$runtime.currentSponsorOffers();
     grid.innerHTML=sponsorOffers.map((s,index)=>{
       const art=$runtime.sponsorVisualAsset(s.id);
       const brand=$runtime.sponsorVisualBrand(s.id);
-      return `<div class="sponsor-card-stage ${selected?.id===s.id?'selected':''}">
+      return `<div class="sponsor-card-stage ${chosenIds.has(s.id)?'selected':''}">
         <div class="sponsor-card-blur" aria-hidden="true"><img src="${art}" alt=""></div>
-        <article class="sponsor-flip-card ${selected?.id===s.id?'selected is-flipped':''}" data-sponsor-card="${$runtime.escapeHtml(s.id)}" tabindex="0" role="button" aria-label="Carta sponsor ${$runtime.escapeHtml(s.name)}. Clicca per girare.">
+        <article class="sponsor-flip-card ${chosenIds.has(s.id)?'selected is-flipped':''}" data-sponsor-card="${$runtime.escapeHtml(s.id)}" tabindex="0" role="button" aria-label="Carta sponsor ${$runtime.escapeHtml(s.name)}. Clicca per girare.">
           <div class="sponsor-flip-inner">
             <section class="sponsor-card-face sponsor-card-front">
               <img class="sponsor-card-cover" src="${art}" alt="Sponsor ${$runtime.escapeHtml(brand)}">
@@ -111,7 +129,7 @@
               </div>
               <div class="sponsor-card-back-footer">
                 <button type="button" class="sponsor-card-flip-back-btn" data-sponsor-flip="${$runtime.escapeHtml(s.id)}">↺ RIGIRA</button>
-                <button type="button" class="sponsor-card-select-btn" data-sponsor-id="${$runtime.escapeHtml(s.id)}" ${selected?.id===s.id?'disabled':''}>${selected?.id===s.id?'✓ FIRMATO':'FIRMA ✓'}</button>
+                <button type="button" class="sponsor-card-select-btn" data-sponsor-id="${$runtime.escapeHtml(s.id)}" ${chosenIds.has(s.id)&&slots===1?'disabled':''}>${chosenIds.has(s.id)?(slots===2?'TOGLI FIRMA':'✓ FIRMATO'):'FIRMA ✓'}</button>
               </div>
             </section>
           </div>
@@ -160,22 +178,27 @@
     };
 
     if(summary) summary.innerHTML=selected
-      ? `<span>SPONSOR SCELTO</span><strong>${selected.icon} ${$runtime.escapeHtml(selected.name)}</strong><small>${$runtime.escapeHtml(selected.title)}</small>${selected.id==='academy'?`<label class="sponsor-academy-label" for="sponsorAcademyPlayer">Giocatore da far crescere</label><select id="sponsorAcademyPlayer"><option value="">Scegli un giocatore</option>${($runtime.state.managers?.[0]?.roster||[]).filter(p=>Number(p.ovr||0)<=97).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'it')).map(p=>`<option value="${$runtime.escapeHtml(p.id)}" ${String($runtime.state.sponsorChoice?.playerId||'')===String(p.id)?'selected':''}>${$runtime.escapeHtml(p.name)} · ${p.role} · OVR ${$runtime.currentPlayerOvr(p)}</option>`).join('')}</select>`:''}`
-      : '<span>SPONSOR</span><strong>Gira una delle 3 carte disponibili e scegli il contratto stagionale.</strong>';
+      ? `<span>SPONSOR SCELTI · ${choices.length}/${slots}</span>${choices.map(choice=>$runtime.SEASON_SPONSORS[choice.id]).filter(Boolean).map(s=>`<strong>${s.icon} ${$runtime.escapeHtml(s.name)}</strong><small>${$runtime.escapeHtml(s.title)}</small>`).join('')}${academyChoice?`<label class="sponsor-academy-label" for="sponsorAcademyPlayer">Giocatore da far crescere</label><select id="sponsorAcademyPlayer"><option value="">Scegli un giocatore</option>${($runtime.state.managers?.[0]?.roster||[]).filter(p=>Number(p.ovr||0)<=97).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'it')).map(p=>`<option value="${$runtime.escapeHtml(p.id)}" ${String(academyChoice?.playerId||'')===String(p.id)?'selected':''}>${$runtime.escapeHtml(p.name)} · ${p.role} · OVR ${$runtime.currentPlayerOvr(p)}</option>`).join('')}</select>`:''}`
+      : `<span>SPONSOR · 0/${slots}</span><strong>Gira le 3 carte e scegli ${slots===2?'2 sponsor':'il contratto stagionale'}.</strong>`;
     summary?.querySelector('#sponsorAcademyPlayer')?.addEventListener('change',event=>$runtime.selectAcademySponsorPlayer(event.target.value));
     if(startBtn){
       startBtn.disabled=false;
-      startBtn.textContent=selected?'INIZIA CAMPIONATO':'SCEGLI UNO SPONSOR';
-      startBtn.classList.toggle('sponsor-needed', !selected);
+      startBtn.textContent=ready?'INIZIA CAMPIONATO':slots===2?`SCEGLI 2 SPONSOR · ${choices.length}/2`:'SCEGLI UNO SPONSOR';
+      startBtn.classList.toggle('sponsor-needed', !ready);
     }
   }
 
   function seasonSponsorFromChoice(choice=$runtime.currentSponsorChoice()){
-    return $runtime.CareerEngine.createSeasonSponsor(choice?.id==='academy'?{...choice,playerId:$runtime.state?.sponsorChoice?.playerId}:choice);
+    const choices=$runtime.CareerEngine.selectedSponsorChoices($runtime.state);
+    const sponsors=choices.map(selected=>$runtime.CareerEngine.createSeasonSponsor({...$runtime.SEASON_SPONSORS[typeof selected==='string'?selected:selected.id],playerId:selected.playerId}));
+    if(!sponsors.length) return $runtime.CareerEngine.createSeasonSponsor(choice);
+    sponsors[0].additionalSponsors=sponsors.slice(1);
+    return sponsors[0];
   }
 
   function sponsorFreeSubscriptionAvailable(season=$runtime.ensureSeasonState()){
-    return !!(season?.sponsor?.id==='free_subscription' && !season.sponsor.freeSubscriptionUsed);
+    const sponsor=$runtime.CareerEngine.findSeasonSponsor(season,'free_subscription');
+    return !!(sponsor && !sponsor.freeSubscriptionUsed);
   }
 
   function sponsorCanMakeShopItemFree(id,season=$runtime.ensureSeasonState()){
@@ -292,21 +315,25 @@
     target.animate([{filter:'brightness(1)'},{filter:'brightness(1.7)'},{filter:'brightness(1)'}],{duration:750});
   }
 
-  function buyConsumableItem(item){
+  function buyConsumableItem(item,paymentCurrency='fp'){
     const season=$runtime.ensureSeasonState(),career=$runtime.ensureCareerEconomy();
     if(!season||!career||!item?.consumable) return false;
     if(season.completed){$runtime.showToast('La stagione è terminata: il negozio è chiuso.',true);return false;}
-    const cost=Math.max(0,Math.floor(Number(item.cost||0)));
-    if($runtime.careerFantapoints()<cost){$runtime.showToast(`Fantapoints insufficienti: servono ${cost} FP per ${item.name}.`,true);return false;}
-    const origin=$runtime.shopPurchaseOrigin(item.id),before=$runtime.careerFantapoints();
-    career.fantapoints=$runtime.careerFantapoints()-cost;
-    career.totalFantapointsSpent=Number(career.totalFantapointsSpent||0)+cost;
+    const currency=item.currency==='fp' || paymentCurrency==='fp'?'fp':'eur';
+    const cost=Math.max(0,Math.floor(Number(currency==='fp'?(item.fpCost||item.cost):item.cost)));
+    const before=currency==='fp'?$runtime.careerFantapoints():$runtime.careerEuros();
+    if(before<cost){$runtime.showToast(`Saldo insufficiente: servono ${cost} ${currency==='fp'?'FP':'€'} per ${item.name}.`,true);return false;}
+    const origin=$runtime.shopPurchaseOrigin(item.id);
+    if(currency==='fp'){
+      career.fantapoints=before-cost;
+      career.totalFantapointsSpent=Number(career.totalFantapointsSpent||0)+cost;
+    }else if(!$runtime.CareerEngine.debit(career,cost)) return false;
     const quantity=$runtime.addConsumable(item.id,1,season);
-    season.consumables.purchaseHistory.push({id:item.id,cost,currency:'fp',quantityAfter:quantity,purchasedAt:Date.now()});
+    season.consumables.purchaseHistory.push({id:item.id,cost,currency,quantityAfter:quantity,purchasedAt:Date.now()});
     $runtime.saveState();
     $runtime.renderCareerWallets();
     $runtime.renderLeagueShopScreen();
-    $runtime.animateShopPurchase(item,origin,'fp',before,$runtime.careerFantapoints());
+    $runtime.animateShopPurchase(item,origin,currency,before,currency==='fp'?$runtime.careerFantapoints():$runtime.careerEuros());
     $runtime.showToast(`${item.name} aggiunto all'inventario · x${quantity}.`);
     return true;
   }
@@ -320,7 +347,7 @@
     const conceded=Math.max(0,Number(userHome?match.awayScore:match.homeScore)||0);
     const won=goals>conceded,draw=goals===conceded;
     const parts={participation:3,outcome:won?8:draw?3:0,goals:goals*2,cleanSheet:conceded===0?2:0,powers:0,
-      sponsor:season.sponsor?.id==='fantasy_bonus' && goals>=2 ? 2 : 0};
+      sponsor:$runtime.CareerEngine.findSeasonSponsor(season,'fantasy_bonus') && goals>=2 ? 2 : 0};
     const total=Object.values(parts).reduce((sum,value)=>sum+Number(value||0),0);
     const career=$runtime.ensureCareerEconomy(),balanceBefore=$runtime.careerFantapoints();
     career.fantapoints=balanceBefore+total;
@@ -378,7 +405,7 @@
   }
 
   function formationEventChance(){
-    return $runtime.shopItemActive('fortune') ? .40 : $runtime.FORMATION_EVENT_CHANCE;
+    return $runtime.shopItemActive('fortune') ? .50 : $runtime.FORMATION_EVENT_CHANCE;
   }
 
   function seasonShockChance(){
@@ -425,7 +452,7 @@
     const season=$runtime.ensureSeasonState(),career=$runtime.ensureCareerEconomy(),item=$runtime.SHOP_ITEMS[id];
     if(!season || !career || !item) return;
     if(item.id==='assistant_tactical_pro' && !$runtime.shopItemActive('assistant_coach',season)){$runtime.showToast('Serve prima l’Assistente Tecnico.',true);return;}
-    if(item.consumable){ $runtime.buyConsumableItem(item); return; }
+    if(item.consumable){ $runtime.buyConsumableItem(item,paymentCurrency); return; }
     const requestedCurrency=paymentCurrency==='fp'?'fp':'eur';
     const fpCost=Math.max(0,Math.floor(Number(item.fpCost||0)));
     const origin=$runtime.shopPurchaseOrigin(id),before=requestedCurrency==='fp'?$runtime.careerFantapoints():$runtime.careerEuros();
@@ -477,7 +504,7 @@
     const quantity=consumable?$runtime.consumableQuantity(item.id,season):0;
     const active=!consumable && $runtime.shopItemActive(item.id,season);
     const freeBySponsor=!consumable && $runtime.sponsorCanMakeShopItemFree(item.id,season);
-    const dualCurrency=!consumable && Number(item.fpCost)>0;
+    const dualCurrency=Number(item.fpCost)>0;
     const euroCanAfford=freeBySponsor || $runtime.careerEuros()>=Number(item.cost||0);
     const fpCanAfford=dualCurrency && $runtime.careerFantapoints()>=Number(item.fpCost||0);
     const balance=item.currency==='fp'?$runtime.careerFantapoints():$runtime.careerEuros();
@@ -487,7 +514,7 @@
     const priceIcon=item.currency==='fp'?'◆':'💶';
     const priceText=freeBySponsor&&!active?'GRATIS':dualCurrency?`${item.cost} €  /  ${item.fpCost} FP`:`${item.cost} ${item.currency==='fp'?'FP':'€'}`;
     let button='';
-    if(consumable){
+    if(consumable && !dualCurrency){
       button=locked
         ? '<button type="button" class="shop-buy-btn" disabled>CHIUSO</button>'
         : `<button type="button" class="shop-buy-btn ${canAfford?'primary':''}" data-shop-buy="${$runtime.escapeHtml(item.id)}" ${canAfford?'':'disabled'}>${canAfford?'ACQUISTA +1':'SALDO INSUFFICIENTE'}</button>`;
@@ -534,7 +561,7 @@
     const quantity=consumable?$runtime.consumableQuantity(item.id,season):0;
     const active=!consumable && $runtime.shopItemActive(item.id,season);
     const freeBySponsor=!consumable && $runtime.sponsorCanMakeShopItemFree(item.id,season);
-    const dualCurrency=!consumable && Number(item.fpCost)>0;
+    const dualCurrency=Number(item.fpCost)>0;
     const balance=item.currency==='fp'?$runtime.careerFantapoints():$runtime.careerEuros();
     const canAfford=freeBySponsor || balance>=item.cost;
     const euroCanAfford=freeBySponsor || $runtime.careerEuros()>=Number(item.cost||0);
@@ -574,7 +601,9 @@
       buy.hidden=dualCurrency && !freeBySponsor ? false : false;
       buy.disabled=(!consumable&&active) || locked || (dualCurrency?!euroCanAfford:!canAfford);
       buy.className=`shop-buy-btn ${((consumable||!active)&&!locked&&(dualCurrency?euroCanAfford:canAfford))?'primary':''} ${active?'active':''}`;
-      buy.textContent=consumable
+      buy.textContent=dualCurrency
+        ? locked?'STAGIONE TERMINATA':active?'✓ ATTIVO':freeBySponsor?'ATTIVA GRATIS · SPONSOR':euroCanAfford?`COMPRA CON € · ${item.cost} €`:`SERVONO ${item.cost} €`
+        : consumable
         ? locked?'STAGIONE TERMINATA':canAfford?'ACQUISTA +1':`SERVONO ${item.cost} FP`
         : active?'✓ ATTIVO':locked?'STAGIONE TERMINATA':freeBySponsor?'ATTIVA GRATIS · SPONSOR':dualCurrency?(euroCanAfford?`COMPRA CON € · ${item.cost} €`:`SERVONO ${item.cost} €`):canAfford?'ACQUISTA ORA':`SERVONO ${item.cost} €`;
     }
@@ -671,10 +700,11 @@
     const inventoryItems=items.filter(item=>item.consumable&&$runtime.consumableQuantity(item.id,season)>0);
     if($runtime.$('shopActiveCount')) $runtime.$('shopActiveCount').textContent=`${activeItems.length}/${persistentItems.length}`;
     if($runtime.$('shopActiveSummary')){
+      const celebrityNote=Number($runtime.state.career?.nextSponsorSeason)===Number($runtime.state.career?.seasonNumber||1)+1?'<span>🌟 Celebrità attiva: 2 sponsor nella prossima stagione</span>':'';
       const sponsorNote=$runtime.sponsorFreeSubscriptionAvailable(season)?'<span>🎁 Sponsor: 1 abbonamento gratuito disponibile</span>':'';
       const activeHtml=activeItems.length?activeItems.map(item=>`<span>${item.icon} ${$runtime.escapeHtml(item.name)}</span>`).join(''):'';
       const inventoryHtml=inventoryItems.length?inventoryItems.map(item=>`<span class="shop-inventory-chip">${item.icon} ${$runtime.escapeHtml(item.name)} ×${$runtime.consumableQuantity(item.id,season)}</span>`).join(''):'';
-      $runtime.$('shopActiveSummary').innerHTML=(sponsorNote+activeHtml+inventoryHtml) || '<small>Nessun servizio attivo e inventario vuoto.</small>';
+      $runtime.$('shopActiveSummary').innerHTML=(celebrityNote+sponsorNote+activeHtml+inventoryHtml) || '<small>Nessun servizio attivo e inventario vuoto.</small>';
     }
   }
     return Object.freeze({ensureCareerEconomy,sponsorVisualAsset,sponsorVisualBrand,currentSponsorChoice,currentSponsorOffers,selectSeasonSponsor,selectAcademySponsorPlayer,renderSponsorSelection,seasonSponsorFromChoice,sponsorFreeSubscriptionAvailable,sponsorCanMakeShopItemFree,sortStandingsSnapshot,grantImmediateSponsorBonus,grantBigMatchSponsorReward,grantStreakSponsorReward,grantWinSponsorReward,grantFutureAuctionSponsorBonus,ensureSeasonShop,shopItemActive,careerEuros,careerFantapoints,ensureConsumableState,consumableQuantity,consumableDayEffect,addConsumable,consumeConsumable,totalConsumablesOwned,shopPurchaseOrigin,animateShopPurchase,buyConsumableItem,grantMatchdayFantapoints,careerDivisionLabel,careerPromotionNote,careerSeasonLabel,renderCareerWallets,applyGameConfiguration,formationEventChance,seasonShockChance,formationChoiceRarity,formationChoiceRarityLabel,formationRarityWeights,formationRaritiesUnlocked,specialFormationEventsUnlocked,deterministicFormationTemplateOrder,buyShopItem,shopItemsPerPage,shopItemEffectLine,shopCardHtml,closeShopProductModal,openShopProductModal,renderShopItems});

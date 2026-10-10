@@ -382,14 +382,14 @@
     const effect=$runtime.activeAdminRuleEffect(day);
     if(effect?.ruleId==='double_wildcard_starting_slot') return 2;
     if(effect?.ruleId==='wildcard_starting_slot') return 1;
-    return $runtime.state?.season?.sponsor?.id==='fantacana' ? 1 : 0;
+    return window.FantaCareerEngine.findSeasonSponsor($runtime.state?.season,'fantacana') ? 1 : 0;
   }
 
   function wildcardSlotCompatible(playerRole,slotRole){
     const p=String(playerRole||''), s=String(slotRole||'');
     if(!p || !s || p===s) return false;
     if(p==='P' || s==='P') return false;
-    if($runtime.state?.season?.sponsor?.id==='fantacana') return ['D','C','A'].includes(p) && ['D','C','A'].includes(s);
+    if(window.FantaCareerEngine.findSeasonSponsor($runtime.state?.season,'fantacana')) return ['D','C','A'].includes(p) && ['D','C','A'].includes(s);
     return (p==='D'&&s==='C') || (p==='C'&&s==='D') || (p==='C'&&s==='A') || (p==='A'&&s==='C');
   }
 
@@ -742,8 +742,13 @@
     return $runtime.specialTrainingPlayerIds(day).includes(String(playerId||''));
   }
 
+  function blockedOpponentPlayerIds(day=$runtime.ensureSeasonState()?.currentMatchday){
+    const effect=$runtime.consumableDayEffect(day);
+    return [...new Set([...(Array.isArray(effect?.blockedOpponentPlayerIds)?effect.blockedOpponentPlayerIds:[]),effect?.blockedOpponentPlayerId].filter(Boolean).map(String))];
+  }
+
   function blockedOpponentPlayerId(day=$runtime.ensureSeasonState()?.currentMatchday){
-    return $runtime.consumableDayEffect(day)?.blockedOpponentPlayerId ? String($runtime.consumableDayEffect(day).blockedOpponentPlayerId) : null;
+    return blockedOpponentPlayerIds(day)[0]||null;
   }
 
   function worldPlayerModifier(day,playerId){
@@ -1206,7 +1211,7 @@
     // aperta e modificata liberamente fino all'avvio della Diretta Gol.
     $runtime.openLineupScreen();
   }
-    return Object.freeze({formationChoiceCategoryLabel,formationChoiceCategoryClass,formationChoiceDayState,adminRuleDayState,activeAdminRule,activeAdminRuleEffect,hasPendingMatchdayEvent,nextPendingMatchdayEvent,hashPick,sortedByChoiceHash,isDerbyFixtureForPlayer,formationChoiceContextForManagers,fantasyAppearanceRate,formationChoiceContext,specialRivalManager,opponentMalusDayState,opponentMalusChanceForManager,generateOpponentMalusOption,ensureOpponentMalusRoll,activeOpponentMalus,generateFormationChoiceOptions,sanitizeLockedFormationChoiceEntry,adminRuleRarityProfile,generateAdminRuleOption,ensureAdminRuleRoll,ensureAllPreMatchEventRolls,forcedFormationRuleForDay,adminForcedStarterForManager,adminBenchableTopPlayer,previousUnusedBenchEligibleIds,adminBlockedStarterForManager,adminFaithReserveEligibleIds,adminWildcardStartingSlotLimit,wildcardSlotCompatible,lineupOutOfRoleEntries,canPlacePlayerInLineupSlot,enforceStarterInLineup,enforceAdminLastReserve,enforcePlayerBenchedInLineup,enforceFaithReserveStarterInLineup,lineupTurnoverDeltaFromPrevious,validateAdminRuleLineup,adminRuleNeedsLineupReconfirm,syncFlowAfterPreMatchResolution,adminRuleCover,ensureForcedFormationDraft,ensureFormationChoiceRoll,activeFormationChoice,tacticForManager,riskAdjustmentForPerformance,fantasyRuleForDay,starterReportActive,specialTrainingPlayerIds,specialTrainingPlayerId,specialTrainingUsedForPlayer,blockedOpponentPlayerId,worldPlayerModifier,formationPlayerModifier,formationChoiceCover,rerollFormationChoiceCards,rerollAdminRuleCard,renderFormationChoiceModal,resolveSeasonShock,openNextSeasonEvent,hideFormationChoiceModal,renderAdminRuleModal,hideAdminRuleModal,minimizeMatchdayEvent,restoreMatchdayEvent,resolveAdminRule,resolveFormationChoice,requestOpenLineup});
+    return Object.freeze({formationChoiceCategoryLabel,formationChoiceCategoryClass,formationChoiceDayState,adminRuleDayState,activeAdminRule,activeAdminRuleEffect,hasPendingMatchdayEvent,nextPendingMatchdayEvent,hashPick,sortedByChoiceHash,isDerbyFixtureForPlayer,formationChoiceContextForManagers,fantasyAppearanceRate,formationChoiceContext,specialRivalManager,opponentMalusDayState,opponentMalusChanceForManager,generateOpponentMalusOption,ensureOpponentMalusRoll,activeOpponentMalus,generateFormationChoiceOptions,sanitizeLockedFormationChoiceEntry,adminRuleRarityProfile,generateAdminRuleOption,ensureAdminRuleRoll,ensureAllPreMatchEventRolls,forcedFormationRuleForDay,adminForcedStarterForManager,adminBenchableTopPlayer,previousUnusedBenchEligibleIds,adminBlockedStarterForManager,adminFaithReserveEligibleIds,adminWildcardStartingSlotLimit,wildcardSlotCompatible,lineupOutOfRoleEntries,canPlacePlayerInLineupSlot,enforceStarterInLineup,enforceAdminLastReserve,enforcePlayerBenchedInLineup,enforceFaithReserveStarterInLineup,lineupTurnoverDeltaFromPrevious,validateAdminRuleLineup,adminRuleNeedsLineupReconfirm,syncFlowAfterPreMatchResolution,adminRuleCover,ensureForcedFormationDraft,ensureFormationChoiceRoll,activeFormationChoice,tacticForManager,riskAdjustmentForPerformance,fantasyRuleForDay,starterReportActive,specialTrainingPlayerIds,specialTrainingPlayerId,specialTrainingUsedForPlayer,blockedOpponentPlayerIds,blockedOpponentPlayerId,worldPlayerModifier,formationPlayerModifier,formationChoiceCover,rerollFormationChoiceCards,rerollAdminRuleCard,renderFormationChoiceModal,resolveSeasonShock,openNextSeasonEvent,hideFormationChoiceModal,renderAdminRuleModal,hideAdminRuleModal,minimizeMatchdayEvent,restoreMatchdayEvent,resolveAdminRule,resolveFormationChoice,requestOpenLineup});
   }
   window.FantaDomains ||= {};
   window.FantaDomains['matchday-events-controller']=Object.freeze({create});

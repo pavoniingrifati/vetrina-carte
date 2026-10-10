@@ -206,6 +206,7 @@
       $runtime.state.auction=null;
       $runtime.state.completed=$runtime.allRostersComplete();
       $runtime.auditAndRepairState('quick-ready-rosters');
+      if ($runtime.state.completed) $runtime.currentTradeWindow('summer');
       $runtime.saveState();
 
       if ($runtime.state.completed) {

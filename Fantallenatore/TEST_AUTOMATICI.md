@@ -12,7 +12,7 @@ I risultati di questa consegna sono in `reports/REFACTOR_V224.md`, `reports/test
 
 ## Avvio rapido su Windows
 
-- `ESEGUI_TEST.bat`: esegue regressioni, 21 aste con soglie bloccanti e browser smoke. Se Chromium manca termina con codice 3: verifica incompleta.
+- `ESEGUI_TEST.bat`: esegue regressioni, 21 aste con soglie bloccanti e scenari browser. Se Chromium manca termina con codice 3: verifica incompleta.
 - `VERIFICA_ASTE.bat`: esegue 42 aste complete (due semi) e applica le soglie di attenzione come controllo bloccante.
 
 Serve Node.js LTS. Per il browser: `npm install`, poi `npx playwright install chromium`. Le aste richiedono alcuni minuti.
@@ -113,9 +113,9 @@ Il successo indica soltanto lo scope eseguito. `--core` esclude esplicitamente a
 | Calendario + classifica + salvataggio | 38 giornate, dieci squadre, contabilità punti e ripresa dopo giornata 19 | Punteggi fixture: non simula voti, infortuni, premi, mercato o promozione |
 | Aste competitive | Funzioni CPU reali, legalità e soglie su scenari deterministici | Non prova timer, pulsanti o tutte le strategie umane |
 | responsive-audit.js | Presenza dei contratti CSS | Nessuna viewport realmente renderizzata; non dichiara più viewport superate |
-| browser/run.js | Smoke previsto: avvio, identità, avatar, reload ed errori JS | Non copre asta, ripresa carriera salvata o stagione; qui NON ESEGUITO per Chromium assente |
+| browser/run.js | Scenari V256: avvio, chiamata, rilanci, ripresa asta, formazione, capitano, Diretta Gol e Big Match; sette viewport | Dati iniziali preparati; nessun confronto pixel certificato. Qui NON ESEGUITO per Chromium assente |
 
-I test isolati che estraggono funzioni o usano stub non diventano test end-to-end perché passano. Il numero di script non misura la copertura. Rimangono prioritari test browser dei rilanci con timer, ripresa durante asta/live e transizione di stagione. La suite browser aggiunta è da validare in un ambiente con Chromium; non è stata certificata da questa consegna.
+I test isolati che estraggono funzioni o usano stub non diventano test end-to-end perché passano. Il numero di script non misura la copertura. Rimangono prioritari test browser dei rilanci con timer, ripresa durante asta/live e transizione di stagione. La suite browser è stata eseguita in Chromium Linux nella V258; copre esclusivamente gli scenari dichiarati.
 
 
 ## Simulatore di bilanciamento delle partite
@@ -144,3 +144,31 @@ Registro FP: ultimi 76 accrediti; log: ultime 200 righe; piani mercato: ultime q
 ## Confini dei moduli V162
 
 `module-boundaries.js` confronta i due moduli estratti con fixture V161 e controlla input non mutati, caricamento prima dell'app e assenza di dipendenze UI/storage. I runtime diagnostici caricano gli stessi nuovi moduli usati da index.html. Vedere ARCHITETTURA.md per responsabilità e regole delle successive modifiche.
+
+
+## Test grafici V256
+
+La suite browser ora prepara stati ripetibili e aziona i pulsanti reali. Controlla rilanci +1/+5/+10, lascia, ripresa IndexedDB, due moduli, capitano, hover, conferma formazione e comandi Diretta Gol fino al Big Match. Verifica geometria, ritagli, punti di click, sovrapposizioni sul campo e permanenza dei comandi asta durante lo scorrimento mobile.
+
+I 42 scenari previsti (sei fasi per sette viewport) sono descritti in `tests/browser/README.md`. Il codice di preparazione è iniettato soltanto dal server locale dei test: non viene caricato dal gioco normale. Screenshot e report sono in `reports/browser/`. Chromium assente genera `not_run` e codice 3, mai un falso successo. Le fixture sono state verificate con Node; i test grafici sono stati poi eseguiti e corretti nella V258.
+
+
+## Modularizzazione asta V257
+
+`auction-module-boundaries.js` verifica le 89 funzioni rispetto alla V256, i sette contratti dell’asta e la lettura dello stato aggiornato. I test integrati e le fixture browser caricano tutti i nuovi moduli. Non è una verifica della resa grafica: Chromium resta necessario.
+
+Il test One Shot Admin ora esegue `awardAuction` reale con timer controllato, anziché sostituire l’aggiudicazione con una funzione semplificata. Il catalogo viene sincronizzato con la carriera prima di scegliere i giocatori. Le chiamate di presentazione restano disabilitate nel runtime Node; la verifica non certifica animazioni o durata dei timer.
+
+
+## Verifica grafica V258
+
+Chromium è stato ottenuto dalla distribuzione ufficiale Chrome for Testing, con controllo MD5 dell’archivio. La suite usa i controlli reali su sette viewport. Il report finale e gli screenshot sono in `reports/browser/`; le correzioni e i limiti sono in `reports/TEST_GRAFICI_V258.md`.
+
+Corrette tre interferenze CSS: riga rilanci desktop più bassa dei pulsanti; ordine mobile del tabellone ereditato dalla vecchia vista; riquadro evento invisibile che intercettava i tocchi. I controlli geometrici ora misurano i pulsanti dopo uno scorrimento coerente e raccolgono anche l’elemento che copre un punto di click. Il test formazione usa il selettore giocatori reale; la verifica negativa del rilevatore disabilita la transizione del solo pulsante spostato nel test.
+
+
+## Dati e composizione mobile V259
+
+`presentation-state.js` verifica snapshot immutabili, conteggi, cambio carriera con identico giocatore in asta, deduplicazione delle notifiche, disiscrizione e assenza di dipendenze DOM. `mobile-auction-app.js` e `mobile-ui.js` verificano posizioni originali, listener conservati, ripetuti cambi viewport, inizializzazione idempotente e smontaggio/rimontaggio.
+
+La suite browser esercita gli stessi passaggi sui nodi reali; modifica deliberatamente il testo desktop dei crediti e verifica che il riepilogo mobile continui a mostrare il numero dello stato. Le 42 combinazioni passano, insieme ai 64 script core. Il confronto delle funzioni asta con V256 ammette esclusivamente le tre pubblicazioni esplicite del modello di presentazione; non rigenera gli hash della logica precedente.

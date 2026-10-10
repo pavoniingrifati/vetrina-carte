@@ -7,5 +7,5 @@ assert(!source.includes("dbName:'fantallenatore_god_db'"));
 assert(!/function godRun\(/.test(source));
 const api=createRuntime('production-edition');
 assert.equal(api.getState().version,24);
-assert.equal(api.buildVersion,'3.2.35.56.250');
+assert.equal(api.buildVersion,'3.2.35.56.294');
 console.log('OK: edizione standard, namespace produzione e schema compatibile.');

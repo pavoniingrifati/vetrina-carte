@@ -10,6 +10,7 @@ function createRuntime(seed='balance-0'){
  for(const file of require('./production-source').domainFiles())vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),ctx,{filename:file});
  const source=fs.readFileSync(path.join(root,'app_v302.js'),'utf8'),marker='  // Events\n',end=source.indexOf(marker);if(end<0)throw Error('Confine bootstrap UI mancante');
  vm.runInContext(source.slice(0,end)+`
+ let adminTestTimers=[];
  // Only presentation boundaries are disabled; match generation and evolution remain verbatim.
  saveState=()=>{}; // Persistence is outside this simulation.
  captureWatchedVoteSnapshot=()=>new Map();
@@ -26,8 +27,8 @@ function createRuntime(seed='balance-0'){
  arcadePrepare(player,type){state.auction={playerId:player.id,nominatorId:'user',highBidderId:'user',price:1,activeIds:state.managers.map(m=>m.id),log:[],commentMoments:[],bidCount:1};const old=Math.random;let calls=0;Math.random=()=>[0,0,(type+.1)/5][calls++]??.5;try{prepareArcadeAuction(state.managers[0],player);}finally{Math.random=old;}return state.auction;},
  arcadeWindow(){return auctionWindowMs();},arcadeDelay(manager){return cpuReactionDelay(manager);},arcadeNoTimers(){beginBidRound=()=>true;},
  arcadeRender(){renderAuction();},arcadeShow(){showArcadeModal();},arcadeAction(action){handleArcadeAction(action);},arcadeResolve(){resolveSealedAuction();},arcadeLimit(manager,player){return cpuLimit(manager,player);},arcadeMax(manager,player){return maxLegalBid(manager,player);},arcadeEngine(){return AuctionEngine;},
- adminPowerSetup(){state=freshState('Test','Mister');state.career.division=1;state.managers=freshManagers('Test','Mister',1);renderAuction=()=>{};awardAuction=()=>{const a=state.auction;const result=AuctionEngine.awardPlayer(state,playerMap.get(String(a.playerId)),a.highBidderId,a.price,{roleLimits:ROLE_LIMITS,totalSlots:TOTAL_SLOTS});if(!result.ok)throw Error(result.reason);a.awarding=true;};return state;},
- adminPowerScore(manager,player){return adminOneShotScore(manager,player);},adminPowerTry(){return tryAdminOneShot();},adminPowerFast(){fastForwardCpuAuctionAfterUserPass();},
+ adminPowerSetup(){state=freshState('Test','Mister');state.career.division=1;state.managers=freshManagers('Test','Mister',1);syncSerieATransferWorld(state);refreshMarketValueMap(state);adminTestTimers=[];setTimeout=callback=>{adminTestTimers.push(callback);return adminTestTimers.length;};renderAuction=renderAll=renderRoster=renderManagers=renderTurn=showAwardAnimation=hideAwardAnimation=()=>{};return state;},
+ adminPowerScore(manager,player){return adminOneShotScore(manager,player);},adminPowerTry(){return tryAdminOneShot();},adminPowerFast(){fastForwardCpuAuctionAfterUserPass();const awardTimer=adminTestTimers.shift();if(awardTimer)awardTimer();},
  rulesItem(){return SHOP_ITEMS.cons_reroll_rules;},
  rulesSetup(quantity=2){state.season.completed=true;state.nextSeasonFlow={version:3,sourceSeasonNumber:state.career.seasonNumber,stage:'market_summary'};state.season.consumables.inventory.cons_reroll_rules=quantity;careerDraft={marketSeed:'reroll-test',career:state.career,leagueRules:defaultLeagueRules(),carryoverConsumables:{cons_reroll_rules:quantity},stats:{purchases:0}};nextSeasonSetupMode=true;generatePreAuctionLeagueRules(careerDraft);renderCareerLeagueRules=()=>{};return careerDraft;},
  rulesReroll(){return rerollPreAuctionRules();},rulesClose(){careerDraft=null;nextSeasonSetupMode=false;},

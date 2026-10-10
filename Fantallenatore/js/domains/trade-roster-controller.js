@@ -7,7 +7,17 @@
     const seasonNumber=Math.max(1,Number($runtime.state?.career?.seasonNumber||1));
     const key=`${kind}|S${seasonNumber}`;
     $runtime.state.tradeWindows ||= {};
-    return $runtime.state.tradeWindows[key] ||= {kind,seasonNumber,stage:'open',completed:0,attempts:0,history:[],pending:null,notice:''};
+    const trade=$runtime.state.tradeWindows[key] ||= {kind,seasonNumber,stage:'open',completed:0,attempts:0,history:[],pending:null,notice:''};
+    // Le vecchie controproposte con crediti non sono valide a gennaio.
+    if(kind==='winter' && trade.pending){
+      trade.pending=null;
+      trade.notice='A gennaio sono disponibili solo scambi secchi tra giocatori, senza crediti.';
+    }
+    // Rose pronte salta gli scambi estivi, anche riprendendo un salvataggio precedente.
+    if(kind==='summer' && $runtime.state.quickStart && $runtime.state.completed && !$runtime.state.season?.started){
+      trade.stage='completed';trade.pending=null;
+    }
+    return trade;
   }
 
   function tradeOfferSelection(){
@@ -15,7 +25,7 @@
     const outgoing=me?.roster?.find(p=>String(p.id)===$runtime.$('tradeOutgoing')?.value);
     const incoming=rival?.roster?.find(p=>String(p.id)===$runtime.$('tradeIncoming')?.value);
     const raw=String($runtime.$('tradeCredits')?.value??'0').trim();
-    const credits=/^\d+$/.test(raw)?Number(raw):NaN;
+    const credits=$runtime.state?.winterMarketFlow?.stage==='trades'?0:(/^\d+$/.test(raw)?Number(raw):NaN);
     return {me,rival,outgoing,incoming,credits};
   }
 
@@ -24,7 +34,8 @@
       offer.me.id==='user' && offer.rival.id!=='user' && offer.me.id!==offer.rival.id &&
       offer.me.roster.includes(offer.outgoing) && offer.rival.roster.includes(offer.incoming) &&
       offer.outgoing.role===offer.incoming.role && Number.isSafeInteger(offer.credits) &&
-      offer.credits>=0 && offer.credits<=Number(offer.me.budget||0));
+      offer.credits>=0 && offer.credits<=Number(offer.me.budget||0) &&
+      ($runtime.state?.winterMarketFlow?.stage!=='trades' || offer.credits===0));
   }
 
   function tradeAvailabilityFactor(player,kind){
@@ -60,6 +71,7 @@
   }
 
   function tradeCpuDecision(offer,windowState){
+    if(windowState.kind==='winter' && offer.credits!==0) return {type:'reject'};
     const ours=$runtime.tradePlayerWorth(offer.outgoing,windowState.kind);
     const theirs=$runtime.tradePlayerWorth(offer.incoming,windowState.kind);
     const role=offer.outgoing.role;
@@ -79,6 +91,8 @@
     const disposition=$runtime.careerHash(`trade|${windowState.seasonNumber}|${windowState.kind}|${offer.rival.id}|${offer.outgoing.id}|${offer.incoming.id}`);
     const willingness=Math.max(.35,(theirs>ours? .62 : bestInRole? .68 : .76)-firmness);
     if(offer.credits>=request) return disposition<willingness?{type:'accept',credits:offer.credits}:{type:'reject'};
+    // A gennaio il rivale accetta o rifiuta: niente conguagli monetari.
+    if(windowState.kind==='winter') return {type:'reject'};
     const counter=request+Math.ceil(disposition*3);
     if(counter<=Number(offer.me.budget||0) && counter-offer.credits<=Math.max(6,Math.ceil(theirs*.20)) && disposition<willingness){
       const reason=bestInRole
@@ -92,7 +106,7 @@
   }
 
   function completeTrade(offer,windowState){
-    if(!$runtime.tradeOfferValid(offer) || windowState.stage!=='open' || windowState.completed>=(windowState.kind==='winter'?3:2)) return false;
+    if((windowState.kind==='winter' && offer?.credits!==0) || !$runtime.tradeOfferValid(offer) || windowState.stage!=='open' || windowState.completed>=(windowState.kind==='winter'?3:2)) return false;
     const {me,rival,outgoing,incoming,credits}=offer;
     me.roster.splice(me.roster.indexOf(outgoing),1,incoming);
     rival.roster.splice(rival.roster.indexOf(incoming),1,outgoing);
@@ -123,6 +137,7 @@
   }
 
   function tradeCreditsValue(){
+    if($runtime.state?.winterMarketFlow?.stage==='trades') return 0;
     const raw=String($runtime.$('tradeCredits')?.value??'0').trim();
     return /^\d+$/.test(raw)?Number(raw):0;
   }
@@ -139,6 +154,7 @@
   function adjustTradeCredits(delta){
     const input=$runtime.$('tradeCredits');
     if(!input) return;
+    if($runtime.state?.winterMarketFlow?.stage==='trades'){input.value='0';return;}
     const max=Math.max(0,Number(input.max||0));
     const next=$runtime.clamp($runtime.tradeCreditsValue()+Number(delta||0),0,max);
     input.value=String(next);
@@ -204,6 +220,16 @@
     const preIncomingOffer=$runtime.tradeOfferSelection();
     $runtime.$('tradeIncoming').innerHTML=`<option value="">Seleziona il giocatore richiesto</option>`+(preIncomingOffer.rival?.roster||[]).filter(p=>!preIncomingOffer.outgoing || p.role===preIncomingOffer.outgoing.role).map(p=>`<option value="${$runtime.escapeHtml(String(p.id))}">${$runtime.escapeHtml(p.role)} · ${$runtime.escapeHtml(p.name)} · OVR ${$runtime.playerOvrLabel(p)}</option>`).join('');
     if((preIncomingOffer.rival?.roster||[]).some(p=>String(p.id)===previousIncoming && (!preIncomingOffer.outgoing || p.role===preIncomingOffer.outgoing.role))) $runtime.$('tradeIncoming').value=previousIncoming;
+    const drySwap=kind==='winter';
+    if($runtime.$('tradeWindowDescription')) $runtime.$('tradeWindowDescription').textContent=drySwap
+      ? 'Scegli 1 tuo giocatore e 1 avversario dello stesso ruolo: a gennaio gli scambi sono senza crediti.'
+      : 'Un solo scambio alla volta: scegli 1 tuo giocatore, 1 avversario dello stesso ruolo e aggiungi eventualmente dei crediti.';
+    $runtime.$('tradeCreditBox')?.classList.toggle('hidden',drySwap);
+    for(const id of ['tradeCredits','tradeCreditsMinus','tradeCreditsPlus']) $runtime.$(id).disabled=drySwap;
+    if(drySwap) $runtime.$('tradeCredits').value='0';
+    if($runtime.$('tradeSelectionTip')) $runtime.$('tradeSelectionTip').textContent=drySwap
+      ? 'A gennaio: solo scambi secchi 1 vs 1 tra giocatori dello stesso ruolo, senza crediti.'
+      : 'Scambio secco 1 vs 1, con eventuale conguaglio in crediti.';
     $runtime.$('tradeCredits').max=String(Math.max(0,Number(me?.budget||0)));
     if($runtime.tradeCreditsValue()>Number($runtime.$('tradeCredits').max||0)) $runtime.$('tradeCredits').value=$runtime.$('tradeCredits').max;
 
@@ -238,12 +264,12 @@
     const offer=$runtime.tradeOfferSelection(),limit=kind==='winter'?3:2;
     if(trade.stage!=='open'||trade.completed>=limit||trade.attempts>=limit*3||!$runtime.tradeOfferValid(offer)) return;
     const pending=trade.pending;
-    const agreed=pending && pending.rivalId===offer.rival.id && pending.outgoingId===String(offer.outgoing.id) && pending.incomingId===String(offer.incoming.id) && offer.credits>=Number(pending.credits);
+    const agreed=kind!=='winter' && pending && pending.rivalId===offer.rival.id && pending.outgoingId===String(offer.outgoing.id) && pending.incomingId===String(offer.incoming.id) && offer.credits>=Number(pending.credits);
     trade.attempts++;
     const decision=agreed?{type:'accept',credits:offer.credits}:$runtime.tradeCpuDecision(offer,trade);
     trade.pending=null;
     if(decision.type==='accept') $runtime.completeTrade(offer,trade);
-    else if(decision.type==='counter'){
+    else if(decision.type==='counter' && kind!=='winter'){
       trade.pending={rivalId:offer.rival.id,outgoingId:String(offer.outgoing.id),incomingId:String(offer.incoming.id),credits:decision.credits,reason:decision.reason};
       trade.notice=`${offer.rival.team} chiede ${decision.credits} crediti per accettare lo scambio. ${decision.reason}`;
       $runtime.saveState();
@@ -253,7 +279,7 @@
 
   function acceptTradeCounter(){
     const kind=$runtime.state?.winterMarketFlow?.stage==='trades'?'winter':'summer',trade=$runtime.currentTradeWindow(kind),pending=trade.pending;
-    if(!pending || trade.stage!=='open') return;
+    if(kind==='winter' || !pending || trade.stage!=='open') return;
     const me=$runtime.managerById('user'),rival=$runtime.managerById(pending.rivalId);
     const offer={me,rival,outgoing:me?.roster?.find(p=>String(p.id)===pending.outgoingId),incoming:rival?.roster?.find(p=>String(p.id)===pending.incomingId),credits:pending.credits};
     if(!$runtime.completeTrade(offer,trade)){trade.pending=null;trade.notice='Controproposta non più disponibile.';$runtime.saveState();}

@@ -3,6 +3,7 @@
   'use strict';
   function create($runtime){
     if(!$runtime) throw new TypeError('Runtime richiesto: career-setup-controller');
+  let rulesRevealTimer=null;
   function renderCareerAvatarEditor(){
     if(!$runtime.careerDraft) return;
     const avatar=$runtime.normalizedCoachAvatar($runtime.careerDraft.coachAvatar);
@@ -105,6 +106,8 @@
   }
 
   function showCareerSetupStep(step){
+    if(rulesRevealTimer!==null){clearTimeout(rulesRevealTimer);rulesRevealTimer=null;}
+    $runtime.$('careerRulesLoadingStep')?.classList.toggle('hidden',step!=='rules-loading');
     $runtime.$('careerTeamStep')?.classList.toggle('hidden',step!=='team');
     $runtime.$('careerPowersStep')?.classList.toggle('hidden',step!=='powers');
     $runtime.$('careerRulesStep')?.classList.toggle('hidden',step!=='rules');
@@ -274,12 +277,21 @@
   }
 
   function openCareerRulesStep(nextAction='auction'){
-    if(!$runtime.careerDraft) return;
+    if(!$runtime.careerDraft || rulesRevealTimer!==null) return;
     if(!$runtime.syncCareerIdentity()) return;
     $runtime.careerRulesNextAction=nextAction==='ready'?'ready':'auction';
-    $runtime.generatePreAuctionLeagueRules($runtime.careerDraft);
+    const draft=$runtime.careerDraft;
+    // Presentation only: preserve the existing rule draw and its saved outcome.
+    $runtime.generatePreAuctionLeagueRules(draft);
     $runtime.renderCareerLeagueRules();
-    $runtime.showCareerSetupStep('rules');
+    $runtime.showCareerSetupStep('rules-loading');
+    const bar=$runtime.$('careerRulesLoadingStep')?.querySelector('.career-rules-loading-bar span');
+    if(bar){bar.style.animation='none';void bar.offsetWidth;bar.style.animation='';}
+    rulesRevealTimer=setTimeout(()=>{
+      rulesRevealTimer=null;
+      if($runtime.careerDraft!==draft || $runtime.$('careerSetupScreen')?.classList.contains('hidden')) return;
+      $runtime.showCareerSetupStep('rules');
+    },2000);
   }
 
   function startReadyRostersFromCareer(){

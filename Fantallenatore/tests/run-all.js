@@ -28,8 +28,8 @@ if(!core){
  results.push({file:'browser/run.js',status:browser.status===3?'not_run':browser.status===0?'passed':'failed'});
 }
 fs.mkdirSync(path.join(__dirname,'../reports'),{recursive:true});
-fs.writeFileSync(path.join(__dirname,'../reports/test-latest.json'),JSON.stringify({scope:core?'core':'core+auctions+browser-smoke',status:failed?'failed':incomplete?'incomplete':'passed',auctionStatus,results,limitations:['Browser smoke non copre rilanci, salvataggio della carriera o stagione','Storage integration usa adapter, non IndexedDB del browser','save-integration usa punteggi fixture per calendario/classifica; domain-integration e balance-production eseguono il motore reale senza UI']},null,2));
+fs.writeFileSync(path.join(__dirname,'../reports/test-latest.json'),JSON.stringify({scope:core?'core':'core+auctions+browser-smoke',status:failed?'failed':incomplete?'incomplete':'passed',auctionStatus,results,limitations:['Browser esteso usa carriere preparate: non simula tutta l asta da zero; screenshot senza baseline pixel approvata','Storage integration usa adapter, non IndexedDB del browser','save-integration usa punteggi fixture per calendario/classifica; domain-integration e balance-production eseguono il motore reale senza UI']},null,2));
 console.log(`\n${files.length} script di regressione: ${failed?'verifiche fallite: '+failed:'tutti superati'}.`);
-console.log('Soglie aste bloccanti. Browser smoke limitato; flussi asta e stagione UI ancora da verificare.');
+console.log('Soglie aste bloccanti. Browser esteso separato dai test core: asta, storage reale, formazione, capitano e Diretta Gol su sette viewport.');
 if(incomplete)console.log('COPERTURA INCOMPLETA: browser non eseguito (exit 3).');
 process.exitCode=failed?1:incomplete?3:0;

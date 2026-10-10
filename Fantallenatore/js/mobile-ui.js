@@ -1,9 +1,13 @@
 /* Build 176: mobile navigation keeps the original gameplay controls and IDs. */
 (function(){
   'use strict';
+  const instances=new WeakMap();
   function initMobileUI(document,window){
+    if(instances.has(document))return instances.get(document);
+    const locations=window.FantaMobileLocations.create(document);
     const phone=window.matchMedia('(max-width:780px), (max-width:1024px) and (pointer:coarse)');
-    const folders=[];
+    const folders=Array.from(document.querySelectorAll('#auctionScreen .mobile-auction-fold'));
+    const originalOpen=folders.map(fold=>fold.open);
     function tabs(screen,anchor,choices,initial){
       if(!screen||!anchor)return null;
       const nav=document.createElement('nav');
@@ -20,43 +24,37 @@
       anchor.before(nav);select(initial);return {select,nav};
     }
     const lineup=document.getElementById('lineupScreen');
-    const lineupTabs=tabs(lineup,lineup?.querySelector('.lineup-layout'),[['pitch','Campo'],['roster','Rosa'],['bench','Panchina']],'pitch');
-    lineup?.addEventListener('click',event=>{
+    const lineupTabs=tabs(lineup,lineup?.querySelector('[data-mobile-anchor="lineup-sections"]'),[['pitch','Campo'],['roster','Rosa'],['bench','Panchina']],'pitch');
+    const onPlayerSelect=event=>{
       if(phone.matches&&event.target.closest('[data-lineup-player], [data-bench-player]')&&!event.target.closest('button:disabled')){
         lineupTabs?.select('pitch');
         // The existing click handler selects the player before this delegated handler.
         lineupTabs?.nav.scrollIntoView({block:'start',behavior:'auto'});
       }
-    });
+    };
+    lineup?.addEventListener('click',onPlayerSelect);
     const live=document.getElementById('serieALiveScreen');
-    const liveTabs=tabs(live,live?.querySelector('.seriea-dual-lineups'),[['duel','Voti'],['matches','Campi'],['feed','Cronaca']],'duel');
-    document.querySelectorAll('#auctionScreen .auction-room-side, #auctionScreen .league-room').forEach(panel=>{
-      const fold=document.createElement('details');fold.className='mobile-auction-fold';
-      const summary=document.createElement('summary');
-      summary.textContent=panel.classList.contains('league-room')?'Rose e crediti della lega':'Rivali e crediti';
-      panel.before(fold);fold.appendChild(summary);fold.appendChild(panel);
-      folders.push(fold);
-    });
-    const bar=live?.querySelector('.fantasy-live-compact-bar');
-    let toolbar,barMarker,tabsMarker;
+    const liveTabs=tabs(live,live?.querySelector('[data-mobile-anchor="live-sections"]'),[['duel','Voti'],['matches','Campi'],['feed','Cronaca']],'duel');
+    const bar=live?.querySelector('[data-mobile-anchor="live-score"]');
+    let toolbar,barLocation,tabsLocation;
     if(bar&&liveTabs){
       toolbar=document.createElement('div');toolbar.className='mobile-live-toolbar';
-      barMarker=document.createComment('score original position');bar.before(barMarker);
-      tabsMarker=document.createComment('tabs original position');liveTabs.nav.before(tabsMarker);
-      live.querySelector('.seriea-live-top-grid').before(toolbar);
+      barLocation=locations.register(bar);tabsLocation=locations.register(liveTabs.nav);
+      live.querySelector('[data-mobile-anchor="live-content"]').before(toolbar);
     }
-    const help=lineup?.querySelector('.lineup-pitch-help');
+    const help=lineup?.querySelector('[data-mobile-anchor="lineup-help"]');const originalHelp=help?.textContent;
     function adapt(){
       folders.forEach(fold=>{fold.open=!phone.matches;});
       if(toolbar){
-        if(phone.matches){toolbar.appendChild(bar);toolbar.appendChild(liveTabs.nav);}
-        else{barMarker.after(bar);tabsMarker.after(liveTabs.nav);}
+        if(phone.matches){barLocation.moveTo(toolbar);tabsLocation.moveTo(toolbar);}
+        else{barLocation.restore();tabsLocation.restore();}
       }
       if(help)help.textContent=phone.matches?'Tocca Rosa o Panchina, scegli un giocatore, poi tocca una posizione illuminata sul campo.':'Trascina un giocatore sul campo oppure selezionalo dalla rosa e clicca una posizione illuminata.';
     }
-    phone.addEventListener('change',adapt);adapt();
+    let destroyed=false;
+    const instance=Object.freeze({adapt,destroy(){if(destroyed)return;destroyed=true;phone.removeEventListener('change',adapt);lineup?.removeEventListener('click',onPlayerSelect);locations.releaseAll();if(help)help.textContent=originalHelp;if(lineup)delete lineup.dataset.mobileView;if(live)delete live.dataset.mobileView;toolbar?.remove();lineupTabs?.nav.remove();liveTabs?.nav.remove();folders.forEach((fold,i)=>fold.open=originalOpen[i]);instances.delete(document);}});
+    instances.set(document,instance);phone.addEventListener('change',adapt);adapt();return instance;
   }
   if(typeof module==='object'&&module.exports)module.exports={initMobileUI};
-  else if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>initMobileUI(document,window),{once:true});
-  else initMobileUI(document,window);
+  else{window.FantaMobileUI=Object.freeze({init:initMobileUI});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>initMobileUI(document,window),{once:true});else initMobileUI(document,window);}
 })();

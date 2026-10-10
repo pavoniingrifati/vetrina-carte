@@ -689,6 +689,8 @@
     $runtime.showScreen('seasonScreen');
     $runtime.renderLeagueNavActive('dashboard');
     $runtime.renderCareerWallets();
+    const stadiumCard=document.querySelector('#seasonScreen .season-next-card');
+    if(stadiumCard) stadiumCard.dataset.division=String($runtime.state?.career?.division||4);
     const day = season.currentMatchday;
     const round = season.schedule[day-1];
     const fixture = $runtime.currentUserFixture();
@@ -730,7 +732,8 @@
       $runtime.$('standingsBodySimple').innerHTML=compact.map(row=>{
         if(row.separator) return `<tr class="standings-separator"><td colspan="4">···</td></tr>`;
         const {s,i}=row, m=$runtime.managerById(s.managerId);
-        const rowClasses=[s.managerId==='user'?'is-user-standing':'',i===0?'is-promotion-standing':''].filter(Boolean).join(' ');
+        const relegated=Number($runtime.state?.career?.division||4)<4 && standings.length>1 && i===standings.length-1;
+        const rowClasses=[s.managerId==='user'?'is-user-standing':'',i===0?'is-promotion-standing':'',relegated?'is-relegation-standing relegation-boundary':''].filter(Boolean).join(' ');
         return `<tr class="${rowClasses}">
           <td>${i+1}</td>
           <td><strong>${$runtime.escapeHtml(m?.team||'—')}</strong></td>

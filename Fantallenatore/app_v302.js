@@ -152,154 +152,215 @@
     get stopHubNewsCarousel(){return stopHubNewsCarousel;},
     get toastTimer(){return toastTimer;}, set toastTimer(value){toastTimer=value;}
   });
-  let {renderAll,renderPhaseBanner,renderRoster,managerLiveAuctionBadges,buildLeagueManagerCards,renderManagers,averageRosterValue,renderTurn,nominationSort,openNominationModal,closeNominationModal,renderNominationClubFilter,nominationCard,auctionObserverActive,playerSeasonPotentialProfile,clubRoleStarterSlots,starterHierarchyBias,normalizedStarterProbability,auctionStarterProbability,auctionPlayerAnalysis,renderPlayerResults,renderAuctionRoomList,auctionBundlePlayerMarkup,renderAuction,addAuctionLog,auctionWindowMs,clearAuctionRuntimeTimers,renderCountdown,startCountdownTicker,resetBidClock,nextDelay,cpuNominationDelay,cpuReactionDelay,prepareArcadeAuction,renderArcadeBanner,showArcadeModal,resolveSealedAuction,handleArcadeAction,nominate,scheduleAdvance,adminOneShotScore,tryAdminOneShot,beginBidRound,currentSuddenInterestEffect,activateSuddenInterest,scheduleSuddenInterestEntry,scheduleCpuReactions,flashBidder,bidReaction,bidCommentMoment,showBidSpotlight,showAwardAnimation,hideAwardAnimation,awardLossReactionData,showAwardLossReaction,cpuReact,advanceAuction,ensureManagerTeamIdentityState,ensureAuctionPowers,auctionPowerMaxUses,auctionPowerUses,consumeAuctionPower,canUseOneShot,renderAuctionPowers,auctionPowerTargets,pauseForAuctionPower,resumeAfterAuctionPower,openAuctionPower,useScoutPower,closeAuctionPowerModal,resolveAuctionPowerTarget,useBluffPower,useOneShotPower,autoUserLimit,userBid,fastForwardCpuAuctionAfterUserPass,userPass,userCannotBeatCurrentAuction,autoSkipUserIfCannotBid,awardAuction,nominationCallCount,registerNominationCall,nextNominatorIndex,allRostersComplete,scheduleNomination,cpuNominateCurrent,freeRoleNominationWeights,chooseNomination,finishAuction}=window.FantaDomains['auction-controller'].create({
+  let {playerSeasonPotentialProfile,clubRoleStarterSlots,starterHierarchyBias,normalizedStarterProbability,auctionStarterProbability,auctionPlayerAnalysis}=window.FantaDomains['auction-analysis-policy'].create({
+    get careerHash(){return careerHash;},
+    get clamp(){return clamp;},
+    get clubMap(){return clubMap;},
+    get state(){return state;}
+  });
+  let {renderAll,renderPhaseBanner,renderRoster,managerLiveAuctionBadges,buildLeagueManagerCards,renderManagers,averageRosterValue,renderTurn,nominationSort,openNominationModal,closeNominationModal,renderNominationClubFilter,nominationCard,auctionObserverActive,renderPlayerResults,renderAuctionRoomList,auctionBundlePlayerMarkup,renderAuction}=window.FantaDomains['auction-views'].create({
     get $(){return $;},
-    get ARCADE_AUCTION_LABELS(){return ARCADE_AUCTION_LABELS;},
-    get AuctionEngine(){return AuctionEngine;},
-    get BID_WINDOW_MS(){return BID_WINDOW_MS;},
-    get FIXTURE_TEAM_COLORS(){return FIXTURE_TEAM_COLORS;},
-    get PERSONALITIES(){return PERSONALITIES;},
     get RIVAL_ART(){return RIVAL_ART;},
-    get RIVAL_BID_REACTIONS(){return RIVAL_BID_REACTIONS;},
-    get RIVAL_LOSS_REACTIONS(){return RIVAL_LOSS_REACTIONS;},
     get ROLE_LABELS(){return ROLE_LABELS;},
     get ROLE_LIMITS(){return ROLE_LIMITS;},
     get ROLE_ORDER(){return ROLE_ORDER;},
     get ROLE_PLURALS(){return ROLE_PLURALS;},
-    get TOP_VALUE_THRESHOLD(){return TOP_VALUE_THRESHOLD;},
     get TOTAL_SLOTS(){return TOTAL_SLOTS;},
-    get activateSuddenInterest(){return activateSuddenInterest;},
     get activePactForPlayer(){return activePactForPlayer;},
-    get addAuctionLog(){return addAuctionLog;},
-    get adminOneShotScore(){return adminOneShotScore;},
     get advanceRolePhaseIfNeeded(){return advanceRolePhaseIfNeeded;},
     get allRostersComplete(){return allRostersComplete;},
-    get auctionBundlePlayerMarkup(){return auctionBundlePlayerMarkup;},
-    get auctionEffects(){return auctionEffects;},
-    get auctionObserverActive(){return auctionObserverActive;},
     get auctionPlayerAnalysis(){return auctionPlayerAnalysis;},
-    get auctionPowerMaxUses(){return auctionPowerMaxUses;},
-    get auctionPowerTargets(){return auctionPowerTargets;},
-    get auctionPowerUses(){return auctionPowerUses;},
-    get auctionReputationMultiplier(){return auctionReputationMultiplier;},
-    get auctionStarterProbability(){return auctionStarterProbability;},
-    get auctionWindowMs(){return auctionWindowMs;},
-    get auditAndRepairState(){return auditAndRepairState;},
-    get autoSkipUserIfCannotBid(){return autoSkipUserIfCannotBid;},
-    get autoUserLimit(){return autoUserLimit;},
     get autocompleteMode(){return autocompleteMode;}, set autocompleteMode(value){autocompleteMode=value;},
-    get averageRosterValue(){return averageRosterValue;},
-    get awardAnimationTimer(){return awardAnimationTimer;}, set awardAnimationTimer(value){awardAnimationTimer=value;},
-    get awardAuction(){return awardAuction;},
-    get awardLossReactionData(){return awardLossReactionData;},
     get baseAuctionValue(){return baseAuctionValue;},
-    get beginBidRound(){return beginBidRound;},
-    get beginRoleRemainderAutoSim(){return beginRoleRemainderAutoSim;},
-    get beginRoleTransition(){return beginRoleTransition;},
-    get bidCommentMoment(){return bidCommentMoment;},
-    get bidFlashTimer(){return bidFlashTimer;}, set bidFlashTimer(value){bidFlashTimer=value;},
-    get bidReaction(){return bidReaction;},
-    get bidSpotlightTimer(){return bidSpotlightTimer;}, set bidSpotlightTimer(value){bidSpotlightTimer=value;},
-    get buildLeagueManagerCards(){return buildLeagueManagerCards;},
     get canOwn(){return canOwn;},
-    get canUseOneShot(){return canUseOneShot;},
-    get careerHash(){return careerHash;},
-    get changeRelationship(){return changeRelationship;},
-    get chooseNomination(){return chooseNomination;},
     get clamp(){return clamp;},
-    get clearAuctionRuntimeTimers(){return clearAuctionRuntimeTimers;},
-    get closeAuctionPowerModal(){return closeAuctionPowerModal;},
-    get closeNominationModal(){return closeNominationModal;},
     get clubColor(){return clubColor;},
     get clubMap(){return clubMap;},
     get clubName(){return clubName;},
-    get clubRoleStarterSlots(){return clubRoleStarterSlots;},
     get clubShort(){return clubShort;},
-    get consumeAuctionPower(){return consumeAuctionPower;},
+    get cpuRoleUrgencyState(){return cpuRoleUrgencyState;},
+    get currentAuctionRole(){return currentAuctionRole;},
+    get escapeHtml(){return escapeHtml;},
+    get finishAuction(){return finishAuction;},
+    get hasGoodRelations(){return hasGoodRelations;},
+    get isHotRival(){return isHotRival;},
+    get lastBidFlash(){return lastBidFlash;}, set lastBidFlash(value){lastBidFlash=value;},
+    get managerCanNominate(){return managerCanNominate;},
+    get maxBidNow(){return maxBidNow;},
+    get maxLegalBid(){return maxLegalBid;},
+    get nominate(){return nominate;},
+    get nominationUiKey(){return nominationUiKey;}, set nominationUiKey(value){nominationUiKey=value;},
+    get openRoleAuction(){return openRoleAuction;},
+    get playerAvatarMarkup(){return playerAvatarMarkup;},
+    get playerInitials(){return playerInitials;},
+    get playerMap(){return playerMap;},
+    get playerStars(){return playerStars;},
+    get profileArchetype(){return profileArchetype;},
+    get renderArcadeBanner(){return renderArcadeBanner;},
+    get renderAuctionPowers(){return renderAuctionPowers;},
+    get renderCountdown(){return renderCountdown;},
+    get renderVisibleRivals(){return renderVisibleRivals;},
+    get roleCount(){return roleCount;},
+    get roleSlotsRemaining(){return roleSlotsRemaining;},
+    get roleSpend(){return roleSpend;},
+    get roleSpendPct(){return roleSpendPct;},
+    get state(){return state;}
+  });
+  let {auctionWindowMs,clearAuctionRuntimeTimers,renderCountdown,startCountdownTicker,resetBidClock,nextDelay,cpuNominationDelay,cpuReactionDelay}=window.FantaDomains['auction-clock'].create({
+    get $(){return $;},
+    get BID_WINDOW_MS(){return BID_WINDOW_MS;},
+    get autocompleteMode(){return autocompleteMode;}, set autocompleteMode(value){autocompleteMode=value;},
+    get awardAnimationTimer(){return awardAnimationTimer;}, set awardAnimationTimer(value){awardAnimationTimer=value;},
+    get awardAuction(){return awardAuction;},
+    get bidFlashTimer(){return bidFlashTimer;}, set bidFlashTimer(value){bidFlashTimer=value;},
+    get bidSpotlightTimer(){return bidSpotlightTimer;}, set bidSpotlightTimer(value){bidSpotlightTimer=value;},
+    get clamp(){return clamp;},
     get countdownTimer(){return countdownTimer;}, set countdownTimer(value){countdownTimer=value;},
+    get cpuLimit(){return cpuLimit;},
+    get cpuReactionTimers(){return cpuReactionTimers;}, set cpuReactionTimers(value){cpuReactionTimers=value;},
+    get cpuRoleUrgencyState(){return cpuRoleUrgencyState;},
+    get hasGoodRelations(){return hasGoodRelations;},
+    get isHotRival(){return isHotRival;},
+    get playerMap(){return playerMap;},
+    get profileArchetype(){return profileArchetype;},
+    get renderAuctionRoomList(){return renderAuctionRoomList;},
+    get state(){return state;},
+    get suddenInterestTimer(){return suddenInterestTimer;}, set suddenInterestTimer(value){suddenInterestTimer=value;},
+    get uiTimer(){return uiTimer;}, set uiTimer(value){uiTimer=value;}
+  });
+  let {prepareArcadeAuction,renderArcadeBanner,showArcadeModal,resolveSealedAuction,handleArcadeAction}=window.FantaDomains['auction-arcade-controller'].create({
+    get $(){return $;},
+    get ARCADE_AUCTION_LABELS(){return ARCADE_AUCTION_LABELS;},
+    get AuctionEngine(){return AuctionEngine;},
+    get ROLE_LABELS(){return ROLE_LABELS;},
+    get ROLE_LIMITS(){return ROLE_LIMITS;},
+    get TOTAL_SLOTS(){return TOTAL_SLOTS;},
+    get auctionBundlePlayerMarkup(){return auctionBundlePlayerMarkup;},
+    get auctionObserverActive(){return auctionObserverActive;},
+    get autoUserLimit(){return autoUserLimit;},
+    get autocompleteMode(){return autocompleteMode;}, set autocompleteMode(value){autocompleteMode=value;},
+    get awardAuction(){return awardAuction;},
+    get beginBidRound(){return beginBidRound;},
+    get canOwn(){return canOwn;},
+    get clearAuctionRuntimeTimers(){return clearAuctionRuntimeTimers;},
+    get clubName(){return clubName;},
+    get cpuLimit(){return cpuLimit;},
+    get escapeHtml(){return escapeHtml;},
+    get maxLegalBid(){return maxLegalBid;},
+    get openRoleAuction(){return openRoleAuction;},
+    get playerMap(){return playerMap;},
+    get renderAuction(){return renderAuction;},
+    get saveState(){return saveState;},
+    get state(){return state;},
+    get strategicPlayerScore(){return strategicPlayerScore;}
+  });
+  let {flashBidder,bidReaction,bidCommentMoment,showBidSpotlight,showAwardAnimation,hideAwardAnimation,awardLossReactionData,showAwardLossReaction}=window.FantaDomains['auction-feedback'].create({
+    get $(){return $;},
+    get RIVAL_ART(){return RIVAL_ART;},
+    get RIVAL_BID_REACTIONS(){return RIVAL_BID_REACTIONS;},
+    get RIVAL_LOSS_REACTIONS(){return RIVAL_LOSS_REACTIONS;},
+    get TOP_VALUE_THRESHOLD(){return TOP_VALUE_THRESHOLD;},
+    get autocompleteMode(){return autocompleteMode;}, set autocompleteMode(value){autocompleteMode=value;},
+    get baseAuctionValue(){return baseAuctionValue;},
+    get bidFlashTimer(){return bidFlashTimer;}, set bidFlashTimer(value){bidFlashTimer=value;},
+    get bidSpotlightTimer(){return bidSpotlightTimer;}, set bidSpotlightTimer(value){bidSpotlightTimer=value;},
+    get careerHash(){return careerHash;},
+    get clamp(){return clamp;},
+    get hasGoodRelations(){return hasGoodRelations;},
+    get isHotRival(){return isHotRival;},
+    get lastBidFlash(){return lastBidFlash;}, set lastBidFlash(value){lastBidFlash=value;},
+    get playerAvatarMarkup(){return playerAvatarMarkup;},
+    get playerInitials(){return playerInitials;},
+    get profileArchetype(){return profileArchetype;},
+    get renderAuctionRoomList(){return renderAuctionRoomList;},
+    get state(){return state;}
+  });
+  let {ensureManagerTeamIdentityState,ensureAuctionPowers,auctionPowerMaxUses,auctionPowerUses,consumeAuctionPower,canUseOneShot,renderAuctionPowers,auctionPowerTargets,pauseForAuctionPower,resumeAfterAuctionPower,openAuctionPower,useScoutPower,closeAuctionPowerModal,resolveAuctionPowerTarget,useBluffPower,useOneShotPower}=window.FantaDomains['auction-powers-controller'].create({
+    get $(){return $;},
+    get FIXTURE_TEAM_COLORS(){return FIXTURE_TEAM_COLORS;},
+    get RIVAL_ART(){return RIVAL_ART;},
+    get addAuctionLog(){return addAuctionLog;},
+    get autocompleteMode(){return autocompleteMode;}, set autocompleteMode(value){autocompleteMode=value;},
+    get awardAuction(){return awardAuction;},
+    get beginBidRound(){return beginBidRound;},
+    get canOwn(){return canOwn;},
+    get clearAuctionRuntimeTimers(){return clearAuctionRuntimeTimers;},
+    get cpuLimit(){return cpuLimit;},
+    get escapeHtml(){return escapeHtml;},
+    get maxLegalBid(){return maxLegalBid;},
+    get playerInitials(){return playerInitials;},
+    get playerMap(){return playerMap;},
+    get profileArchetype(){return profileArchetype;},
+    get renderAuction(){return renderAuction;},
+    get renderCountdown(){return renderCountdown;},
+    get saveState(){return saveState;},
+    get showToast(){return showToast;},
+    get state(){return state;}
+  });
+  let {addAuctionLog,nominate,scheduleAdvance,adminOneShotScore,tryAdminOneShot,beginBidRound,currentSuddenInterestEffect,activateSuddenInterest,scheduleSuddenInterestEntry,scheduleCpuReactions,cpuReact,advanceAuction,autoUserLimit,userBid,fastForwardCpuAuctionAfterUserPass,userPass,userCannotBeatCurrentAuction,autoSkipUserIfCannotBid,awardAuction,nominationCallCount,registerNominationCall,nextNominatorIndex,allRostersComplete,scheduleNomination,cpuNominateCurrent,freeRoleNominationWeights,chooseNomination,finishAuction}=window.FantaDomains['auction-controller'].create({
+    get AuctionEngine(){return AuctionEngine;},
+    get BID_WINDOW_MS(){return BID_WINDOW_MS;},
+    get PERSONALITIES(){return PERSONALITIES;},
+    get ROLE_LIMITS(){return ROLE_LIMITS;},
+    get ROLE_ORDER(){return ROLE_ORDER;},
+    get TOP_VALUE_THRESHOLD(){return TOP_VALUE_THRESHOLD;},
+    get TOTAL_SLOTS(){return TOTAL_SLOTS;},
+    get activePactForPlayer(){return activePactForPlayer;},
+    get auctionEffects(){return auctionEffects;},
+    get auctionReputationMultiplier(){return auctionReputationMultiplier;},
+    get auditAndRepairState(){return auditAndRepairState;},
+    get autocompleteMode(){return autocompleteMode;}, set autocompleteMode(value){autocompleteMode=value;},
+    get awardAnimationTimer(){return awardAnimationTimer;}, set awardAnimationTimer(value){awardAnimationTimer=value;},
+    get awardLossReactionData(){return awardLossReactionData;},
+    get baseAuctionValue(){return baseAuctionValue;},
+    get beginRoleRemainderAutoSim(){return beginRoleRemainderAutoSim;},
+    get beginRoleTransition(){return beginRoleTransition;},
+    get canOwn(){return canOwn;},
+    get careerHash(){return careerHash;},
+    get changeRelationship(){return changeRelationship;},
+    get clamp(){return clamp;},
+    get clearAuctionRuntimeTimers(){return clearAuctionRuntimeTimers;},
+    get closeNominationModal(){return closeNominationModal;},
     get cpuAuctionCompetence(){return cpuAuctionCompetence;},
     get cpuAuctionStarterEstimate(){return cpuAuctionStarterEstimate;},
     get cpuFootballAuctionFactor(){return cpuFootballAuctionFactor;},
     get cpuKeepsPact(){return cpuKeepsPact;},
     get cpuLimit(){return cpuLimit;},
     get cpuMissingKeeperCover(){return cpuMissingKeeperCover;},
-    get cpuNominateCurrent(){return cpuNominateCurrent;},
     get cpuNominationDelay(){return cpuNominationDelay;},
-    get cpuReact(){return cpuReact;},
     get cpuReactionDelay(){return cpuReactionDelay;},
     get cpuReactionTimers(){return cpuReactionTimers;}, set cpuReactionTimers(value){cpuReactionTimers=value;},
-    get cpuRoleUrgencyState(){return cpuRoleUrgencyState;},
     get currentAuctionRole(){return currentAuctionRole;},
     get currentPlayerOvr(){return currentPlayerOvr;},
-    get currentSuddenInterestEffect(){return currentSuddenInterestEffect;},
     get endRoleRemainderAutoSim(){return endRoleRemainderAutoSim;},
-    get ensureAuctionPowers(){return ensureAuctionPowers;},
-    get escapeHtml(){return escapeHtml;},
-    get fastForwardCpuAuctionAfterUserPass(){return fastForwardCpuAuctionAfterUserPass;},
-    get finishAuction(){return finishAuction;},
     get flashBidder(){return flashBidder;},
-    get freeRoleNominationWeights(){return freeRoleNominationWeights;},
-    get hasGoodRelations(){return hasGoodRelations;},
     get hideAwardAnimation(){return hideAwardAnimation;},
     get hideRoleRemainderAutoSim(){return hideRoleRemainderAutoSim;},
     get hideRoleTransitionModal(){return hideRoleTransitionModal;},
     get integrityNote(){return integrityNote;},
-    get isHotRival(){return isHotRival;},
     get jumpSize(){return jumpSize;},
-    get lastBidFlash(){return lastBidFlash;}, set lastBidFlash(value){lastBidFlash=value;},
     get managerCanNominate(){return managerCanNominate;},
-    get managerLiveAuctionBadges(){return managerLiveAuctionBadges;},
-    get maxBidNow(){return maxBidNow;},
     get maxLegalBid(){return maxLegalBid;},
     get maybeTriggerAuctionEvent(){return maybeTriggerAuctionEvent;},
-    get nextNominatorIndex(){return nextNominatorIndex;},
-    get nominate(){return nominate;},
-    get nominationCallCount(){return nominationCallCount;},
-    get nominationCard(){return nominationCard;},
-    get nominationSort(){return nominationSort;},
-    get nominationUiKey(){return nominationUiKey;}, set nominationUiKey(value){nominationUiKey=value;},
-    get normalizedStarterProbability(){return normalizedStarterProbability;},
     get openRoleAuction(){return openRoleAuction;},
-    get pauseForAuctionPower(){return pauseForAuctionPower;},
-    get playerAvatarMarkup(){return playerAvatarMarkup;},
-    get playerInitials(){return playerInitials;},
     get playerMap(){return playerMap;},
-    get playerSeasonPotentialProfile(){return playerSeasonPotentialProfile;},
-    get playerStars(){return playerStars;},
     get prepareArcadeAuction(){return prepareArcadeAuction;},
     get profileArchetype(){return profileArchetype;},
     get recordUserAuctionPick(){return recordUserAuctionPick;},
     get registerDirectAuctionDuel(){return registerDirectAuctionDuel;},
-    get registerNominationCall(){return registerNominationCall;},
     get renderAll(){return renderAll;},
-    get renderArcadeBanner(){return renderArcadeBanner;},
     get renderAuction(){return renderAuction;},
-    get renderAuctionPowers(){return renderAuctionPowers;},
-    get renderAuctionRoomList(){return renderAuctionRoomList;},
-    get renderCountdown(){return renderCountdown;},
     get renderManagers(){return renderManagers;},
-    get renderNominationClubFilter(){return renderNominationClubFilter;},
-    get renderPhaseBanner(){return renderPhaseBanner;},
-    get renderPlayerResults(){return renderPlayerResults;},
     get renderRoster(){return renderRoster;},
     get renderTradeWindow(){return renderTradeWindow;},
     get renderTurn(){return renderTurn;},
-    get renderVisibleRivals(){return renderVisibleRivals;},
     get resetBidClock(){return resetBidClock;},
-    get resolveAuctionPowerTarget(){return resolveAuctionPowerTarget;},
     get resolveRespectedAuctionPact(){return resolveRespectedAuctionPact;},
-    get resolveSealedAuction(){return resolveSealedAuction;},
-    get resumeAfterAuctionPower(){return resumeAfterAuctionPower;},
-    get roleCount(){return roleCount;},
     get rolePhaseComplete(){return rolePhaseComplete;},
     get roleRemainderAutoSim(){return roleRemainderAutoSim;}, set roleRemainderAutoSim(value){roleRemainderAutoSim=value;},
     get roleSlotsRemaining(){return roleSlotsRemaining;},
     get roleSpend(){return roleSpend;},
-    get roleSpendPct(){return roleSpendPct;},
     get saveState(){return saveState;},
-    get scheduleCpuReactions(){return scheduleCpuReactions;},
-    get scheduleNomination(){return scheduleNomination;},
-    get scheduleSuddenInterestEntry(){return scheduleSuddenInterestEntry;},
     get showArcadeModal(){return showArcadeModal;},
     get showAwardAnimation(){return showAwardAnimation;},
     get showAwardLossReaction(){return showAwardLossReaction;},
@@ -307,20 +368,12 @@
     get showPactBetrayPrompt(){return showPactBetrayPrompt;},
     get showToast(){return showToast;},
     get slotsRemaining(){return slotsRemaining;},
-    get startCountdownTicker(){return startCountdownTicker;},
-    get starterHierarchyBias(){return starterHierarchyBias;},
     get state(){return state;},
-    get strategicPlayerScore(){return strategicPlayerScore;},
     get strategicSlotInterest(){return strategicSlotInterest;},
     get suddenInterestTimer(){return suddenInterestTimer;}, set suddenInterestTimer(value){suddenInterestTimer=value;},
     get targetFor(){return targetFor;},
     get tickAuctionEventEffectsOnNomination(){return tickAuctionEventEffectsOnNomination;},
-    get tryAdminOneShot(){return tryAdminOneShot;},
     get uiTimer(){return uiTimer;}, set uiTimer(value){uiTimer=value;},
-    get useBluffPower(){return useBluffPower;},
-    get useOneShotPower(){return useOneShotPower;},
-    get useScoutPower(){return useScoutPower;},
-    get userCannotBeatCurrentAuction(){return userCannotBeatCurrentAuction;},
     get userCompletedCurrentRole(){return userCompletedCurrentRole;},
     get winterLedgerFor(){return winterLedgerFor;}
   });
@@ -509,6 +562,8 @@
     get wireSeasonPlayerButtons(){return wireSeasonPlayerButtons;}
   });
   let {sortedStandings,sortedFullStandingsForView,renderFullStandingsSortState,setLeagueStandingsSort,managerById,currentUserFixture,userOpponentIdForDay,cpuFormationForDay,pendingBigMatchContext,pendingPartialPerformance,pendingPartialFantasySnapshot,pendingPartialPlayerInfo,seasonPlayerStatCards,renderSeasonPlayerModal,closeSeasonPlayerModal,wireSeasonPlayerButtons,renderLeagueNavActive,standardizeLeagueShells,fullStandingsRowsHtml,fullScheduleHtml,renderCalendarDayResults,leagueFullRosterHtml,openLeagueRosterModal,closeLeagueRosterModal,buildLeagueTopXICards,wireLeagueTopXICards,renderLeagueRostersScreen,renderLeagueCalendarScreen,renderCareerHonours,openCareerHonours,renderLeagueStandingsScreen}=window.FantaDomains['league-views'].create({
+    get PRE_AUCTION_RULE_DEFS(){return PRE_AUCTION_RULE_DEFS;},
+    get leagueRulesFor(){return leagueRulesFor;},
     get $(){return $;},
     get LEAGUE_STANDINGS_DEFAULT_DIRECTION(){return LEAGUE_STANDINGS_DEFAULT_DIRECTION;},
     get ROLE_LABELS(){return ROLE_LABELS;},
@@ -936,6 +991,7 @@
     get bestAdvancedFormation(){return bestAdvancedFormation;},
     get bestPlayersForRole(){return bestPlayersForRole;},
     get bindLineupDragDrop(){return bindLineupDragDrop;},
+    get blockedOpponentPlayerIds(){return blockedOpponentPlayerIds;},
     get blockedOpponentPlayerId(){return blockedOpponentPlayerId;},
     get buildAdvancedAutoLineup(){return buildAdvancedAutoLineup;},
     get buildAutoLineup(){return buildAutoLineup;},
@@ -1036,7 +1092,7 @@
     get visibleFormLabel(){return visibleFormLabel;},
     get wildcardSlotCompatible(){return wildcardSlotCompatible;}
   });
-  let {formationChoiceCategoryLabel,formationChoiceCategoryClass,formationChoiceDayState,adminRuleDayState,activeAdminRule,activeAdminRuleEffect,hasPendingMatchdayEvent,nextPendingMatchdayEvent,hashPick,sortedByChoiceHash,isDerbyFixtureForPlayer,formationChoiceContextForManagers,fantasyAppearanceRate,formationChoiceContext,specialRivalManager,opponentMalusDayState,opponentMalusChanceForManager,generateOpponentMalusOption,ensureOpponentMalusRoll,activeOpponentMalus,generateFormationChoiceOptions,sanitizeLockedFormationChoiceEntry,adminRuleRarityProfile,generateAdminRuleOption,ensureAdminRuleRoll,ensureAllPreMatchEventRolls,forcedFormationRuleForDay,adminForcedStarterForManager,adminBenchableTopPlayer,previousUnusedBenchEligibleIds,adminBlockedStarterForManager,adminFaithReserveEligibleIds,adminWildcardStartingSlotLimit,wildcardSlotCompatible,lineupOutOfRoleEntries,canPlacePlayerInLineupSlot,enforceStarterInLineup,enforceAdminLastReserve,enforcePlayerBenchedInLineup,enforceFaithReserveStarterInLineup,lineupTurnoverDeltaFromPrevious,validateAdminRuleLineup,adminRuleNeedsLineupReconfirm,syncFlowAfterPreMatchResolution,adminRuleCover,ensureForcedFormationDraft,ensureFormationChoiceRoll,activeFormationChoice,tacticForManager,riskAdjustmentForPerformance,fantasyRuleForDay,starterReportActive,specialTrainingPlayerIds,specialTrainingPlayerId,specialTrainingUsedForPlayer,blockedOpponentPlayerId,worldPlayerModifier,formationPlayerModifier,formationChoiceCover,rerollFormationChoiceCards,rerollAdminRuleCard,renderFormationChoiceModal,resolveSeasonShock,openNextSeasonEvent,hideFormationChoiceModal,renderAdminRuleModal,hideAdminRuleModal,minimizeMatchdayEvent,restoreMatchdayEvent,resolveAdminRule,resolveFormationChoice,requestOpenLineup}=window.FantaDomains['matchday-events-controller'].create({
+  let {formationChoiceCategoryLabel,formationChoiceCategoryClass,formationChoiceDayState,adminRuleDayState,activeAdminRule,activeAdminRuleEffect,hasPendingMatchdayEvent,nextPendingMatchdayEvent,hashPick,sortedByChoiceHash,isDerbyFixtureForPlayer,formationChoiceContextForManagers,fantasyAppearanceRate,formationChoiceContext,specialRivalManager,opponentMalusDayState,opponentMalusChanceForManager,generateOpponentMalusOption,ensureOpponentMalusRoll,activeOpponentMalus,generateFormationChoiceOptions,sanitizeLockedFormationChoiceEntry,adminRuleRarityProfile,generateAdminRuleOption,ensureAdminRuleRoll,ensureAllPreMatchEventRolls,forcedFormationRuleForDay,adminForcedStarterForManager,adminBenchableTopPlayer,previousUnusedBenchEligibleIds,adminBlockedStarterForManager,adminFaithReserveEligibleIds,adminWildcardStartingSlotLimit,wildcardSlotCompatible,lineupOutOfRoleEntries,canPlacePlayerInLineupSlot,enforceStarterInLineup,enforceAdminLastReserve,enforcePlayerBenchedInLineup,enforceFaithReserveStarterInLineup,lineupTurnoverDeltaFromPrevious,validateAdminRuleLineup,adminRuleNeedsLineupReconfirm,syncFlowAfterPreMatchResolution,adminRuleCover,ensureForcedFormationDraft,ensureFormationChoiceRoll,activeFormationChoice,tacticForManager,riskAdjustmentForPerformance,fantasyRuleForDay,starterReportActive,specialTrainingPlayerIds,specialTrainingPlayerId,specialTrainingUsedForPlayer,blockedOpponentPlayerIds,blockedOpponentPlayerId,worldPlayerModifier,formationPlayerModifier,formationChoiceCover,rerollFormationChoiceCards,rerollAdminRuleCard,renderFormationChoiceModal,resolveSeasonShock,openNextSeasonEvent,hideFormationChoiceModal,renderAdminRuleModal,hideAdminRuleModal,minimizeMatchdayEvent,restoreMatchdayEvent,resolveAdminRule,resolveFormationChoice,requestOpenLineup}=window.FantaDomains['matchday-events-controller'].create({
     get $(){return $;},
     get ADMIN_RULE_EVENT_CHANCE(){return ADMIN_RULE_EVENT_CHANCE;},
     get ADMIN_RULE_RARITY_PROFILES(){return ADMIN_RULE_RARITY_PROFILES;},
@@ -1211,6 +1267,7 @@
     get allowedLineupFormation(){return allowedLineupFormation;},
     get animateMatchParticles(){return animateMatchParticles;},
     get applySerieAEvent(){return applySerieAEvent;},
+    get blockedOpponentPlayerIds(){return blockedOpponentPlayerIds;},
     get blockedOpponentPlayerId(){return blockedOpponentPlayerId;},
     get buildAutoLineup(){return buildAutoLineup;},
     get buildSerieADay(){return buildSerieADay;},
@@ -1381,6 +1438,7 @@
     get quickReadyYield(){return quickReadyYield;},
     get recordUserAuctionPick(){return recordUserAuctionPick;},
     get registerNominationCall(){return registerNominationCall;},
+    get currentTradeWindow(){return currentTradeWindow;},
     get renderSummary(){return renderSummary;},
     get rolePhaseComplete(){return rolePhaseComplete;},
     get roleSlotsRemaining(){return roleSlotsRemaining;},
@@ -1524,6 +1582,11 @@
   // MARKET_VALUE_POOL_TARGET conserva la distribuzione FVM di base, mentre
   // MARKET_ROLE_TARGET guida la pianificazione dei 500 crediti delle CPU.
   const SEASON_SPONSORS = {
+    double_block:{
+      id:'double_block',name:'Zalandiolo',icon:'🛍️',
+      title:'Due Blocchi Avversario nella stessa giornata',
+      description:'Puoi usare Blocco Avversario su due giocatori diversi della stessa fantasquadra rivale. Ogni blocco consuma un oggetto del tuo inventario. Valido per tutta la stagione.'
+    },
     win_bonus:{
       id:'win_bonus',
       name:'Vittoria Energia',
@@ -1601,14 +1664,14 @@
       features:['Sblocca AUTO XI','Mantiene formazione e panchina','Sostituisce gli indisponibili','Usa Scout Plus e FantaData se posseduti']
     },
     assistant_tactical_pro:{
-      id:'assistant_tactical_pro',name:'Assistente Tattico Pro',icon:'📋',image:'assets/shop/assistente-tattico-pro.webp',category:'STAFF',section:'staff',cost:10,
+      id:'assistant_tactical_pro',name:'Assistente Tattico Pro',icon:'📋',image:'assets/shop/assistente-tattico-pro.webp',category:'STAFF',section:'staff',cost:10,fpCost:50,
       description:'Potenzia l’Assistente Tecnico: adatta AUTO XI e Mantieni formazione a regole Admin, eventi e giocatori fuori ruolo.',
       features:['Richiede Assistente Tecnico','Gestisce turnover e moduli obbligatori','Valuta Haaland Rover e i Jolly','Considera effetti conosciuti · fino a fine stagione']
     },
     fortune:{
       id:'fortune',name:'Fortuna',icon:'🍀',image:'assets/shop/fortuna.webp',category:'POWER-UP',section:'powerup',cost:15,fpCost:75,
       description:'Aumenta la frequenza con cui puoi scegliere una carta prima della giornata.',
-      features:['Probabilità evento carte dal 35% al 40%','Effetto automatico per tutta la stagione','Si applica quando premi CONTINUA','Compatibile con Eventi Speciali']
+      features:['Probabilità evento carte dal 35% al 50%','Effetto automatico per tutta la stagione','Si applica quando premi CONTINUA','Compatibile con Eventi Speciali']
     },
     special_events:{
       id:'special_events',name:'Eventi Speciali',icon:'🃏',image:'assets/shop/eventi-speciali.webp',category:'POWER-UP',section:'powerup',cost:22,fpCost:110,
@@ -1619,6 +1682,16 @@
       id:'expert_precision',name:'Esperti Pro',icon:'🔎',image:'assets/shop/esperti-pro.webp',category:'POWER-UP',section:'powerup',cost:18,fpCost:90,
       description:'Rende molto più affidabili i consigli dei tre esperti estratti ogni giornata.',
       features:['Gli esperti intuitivi sbagliano molto meno spesso','Gli analisti intercettano meglio i segnali nascosti della giornata','Le previsioni restano probabilistiche e non diventano infallibili','Attivo fino a fine stagione']
+    },
+    cons_training:{
+      id:'cons_training',name:'Allenamento Speciale',icon:'🏋️',image:'assets/shop/consumables/allenamento-speciale.webp',category:'CONSUMABILE',section:'consumable',cost:10,currency:'fp',consumable:true,
+      description:'Scegli un tuo giocatore e gli assegna un boost temporaneo di rendimento per la prossima partita.',
+      features:['Scegli il giocatore dalla tua rosa','+0,25 al rendimento atteso','Leggero aumento delle chance di gol e assist','Puoi usarlo più volte nella stessa giornata, ma una sola volta per giocatore']
+    },
+    cons_opponent_block:{
+      id:'cons_opponent_block',name:'Blocco Avversario',icon:'🚫',image:'assets/shop/consumables/blocco-avversario.webp',category:'CONSUMABILE',section:'consumable',cost:60,currency:'fp',consumable:true,
+      description:'Scegli un giocatore della prossima fantasquadra avversaria: non potrà essere schierato in quella giornata.',
+      features:['Usabile prima della Diretta Gol','Il giocatore resta fuori da titolari e panchina','La CPU ricostruisce automaticamente il proprio XI','1 blocco per giornata · 2 con Zalandiolo, su giocatori diversi']
     },
     cons_reroll_rules:{
       id:'cons_reroll_rules',name:'Rimescola Regole',icon:'🎲',image:'assets/shop/consumables/rimescola-regole.webp',category:'CONSUMABILE',section:'consumable',cost:25,currency:'fp',consumable:true,
@@ -1635,11 +1708,6 @@
       description:'Sblocca per una singola giornata la stima di titolarità di tutta la tua rosa.',
       features:['Valido fino alla Diretta Gol della giornata','Mostra la % accanto a titolari e panchina','Non è necessario se possiedi Scout Plus','Consuma 1 unità']
     },
-    cons_training:{
-      id:'cons_training',name:'Allenamento Speciale',icon:'🏋️',image:'assets/shop/consumables/allenamento-speciale.webp',category:'CONSUMABILE',section:'consumable',cost:14,currency:'fp',consumable:true,
-      description:'Scegli un tuo giocatore e gli assegna un boost temporaneo di rendimento per la prossima partita.',
-      features:['Scegli il giocatore dalla tua rosa','+0,25 al rendimento atteso','Leggero aumento delle chance di gol e assist','Puoi usarlo più volte nella stessa giornata, ma una sola volta per giocatore']
-    },
     cons_reroll_event:{
       id:'cons_reroll_event',name:'Reroll Evento',icon:'🎴',image:'assets/shop/consumables/reroll-evento.webp',category:'CONSUMABILE',section:'consumable',cost:15,currency:'fp',consumable:true,
       description:'Rigenera le tre carte evento prepartita prima di sceglierne una.',
@@ -1650,10 +1718,10 @@
       description:'Nel mercato invernale cedi immediatamente un tuo giocatore recuperando il prezzo pagato all’asta.',
       features:['Usabile nella fase Svincoli di gennaio','Scegli tu il giocatore','Recuperi il prezzo di acquisto invece della sola quotazione','Consuma 1 unità']
     },
-    cons_opponent_block:{
-      id:'cons_opponent_block',name:'Blocco Avversario',icon:'🚫',image:'assets/shop/consumables/blocco-avversario.webp',category:'CONSUMABILE',section:'consumable',cost:60,currency:'fp',consumable:true,
-      description:'Scegli un giocatore della prossima fantasquadra avversaria: non potrà essere schierato in quella giornata.',
-      features:['Usabile prima della Diretta Gol','Il giocatore resta fuori da titolari e panchina','La CPU ricostruisce automaticamente il proprio XI','Un solo blocco per giornata']
+    cons_celebrity:{
+      id:'cons_celebrity',name:'Celebrità',icon:'🌟',image:'assets/shop/celebrita.png',category:'PAY TO WIN',section:'paytowin',cost:20,fpCost:100,consumable:true,
+      description:'Attivala dall’inventario: nella prossima stagione potrai scegliere 2 sponsor tra i 3 disponibili.',
+      features:['Due sponsor con entrambi gli effetti attivi','Vale solo per la prossima stagione','Non modifica gli sponsor della stagione in corso','Un solo utilizzo utile per stagione · consuma 1 oggetto']
     }
   };
 
@@ -3333,83 +3401,83 @@
   }
   function roleSpendPct(manager, role) { return Math.round(roleSpend(manager,role) / INITIAL_BUDGET * 100); }
 
-  /* @domain auction-controller renderAll */
+  /* @domain auction-views renderAll */
 
-  /* @domain auction-controller renderPhaseBanner */
+  /* @domain auction-views renderPhaseBanner */
 
-  /* @domain auction-controller renderRoster */
+  /* @domain auction-views renderRoster */
 
-  /* @domain auction-controller managerLiveAuctionBadges */
+  /* @domain auction-views managerLiveAuctionBadges */
 
-  /* @domain auction-controller buildLeagueManagerCards */
+  /* @domain auction-views buildLeagueManagerCards */
 
-  /* @domain auction-controller renderManagers */
+  /* @domain auction-views renderManagers */
 
-  /* @domain auction-controller averageRosterValue */
+  /* @domain auction-views averageRosterValue */
 
-  /* @domain auction-controller renderTurn */
+  /* @domain auction-views renderTurn */
 
-  /* @domain auction-controller nominationSort */
+  /* @domain auction-views nominationSort */
 
-  /* @domain auction-controller openNominationModal */
+  /* @domain auction-views openNominationModal */
 
-  /* @domain auction-controller closeNominationModal */
+  /* @domain auction-views closeNominationModal */
 
-  /* @domain auction-controller renderNominationClubFilter */
+  /* @domain auction-views renderNominationClubFilter */
 
-  /* @domain auction-controller nominationCard */
+  /* @domain auction-views nominationCard */
 
-  /* @domain auction-controller auctionObserverActive */
+  /* @domain auction-views auctionObserverActive */
 
-  /* @domain auction-controller playerSeasonPotentialProfile */
+  /* @domain auction-analysis-policy playerSeasonPotentialProfile */
 
-  /* @domain auction-controller clubRoleStarterSlots */
+  /* @domain auction-analysis-policy clubRoleStarterSlots */
 
-  /* @domain auction-controller starterHierarchyBias */
+  /* @domain auction-analysis-policy starterHierarchyBias */
 
-  /* @domain auction-controller normalizedStarterProbability */
+  /* @domain auction-analysis-policy normalizedStarterProbability */
 
-  /* @domain auction-controller auctionStarterProbability */
+  /* @domain auction-analysis-policy auctionStarterProbability */
 
-  /* @domain auction-controller auctionPlayerAnalysis */
+  /* @domain auction-analysis-policy auctionPlayerAnalysis */
 
-  /* @domain auction-controller renderPlayerResults */
+  /* @domain auction-views renderPlayerResults */
 
-  /* @domain auction-controller renderAuctionRoomList */
+  /* @domain auction-views renderAuctionRoomList */
 
-  /* @domain auction-controller auctionBundlePlayerMarkup */
+  /* @domain auction-views auctionBundlePlayerMarkup */
 
-  /* @domain auction-controller renderAuction */
+  /* @domain auction-views renderAuction */
 
   /* @domain auction-controller addAuctionLog */
 
-  /* @domain auction-controller auctionWindowMs */
+  /* @domain auction-clock auctionWindowMs */
 
-  /* @domain auction-controller clearAuctionRuntimeTimers */
+  /* @domain auction-clock clearAuctionRuntimeTimers */
 
-  /* @domain auction-controller renderCountdown */
+  /* @domain auction-clock renderCountdown */
 
-  /* @domain auction-controller startCountdownTicker */
+  /* @domain auction-clock startCountdownTicker */
 
-  /* @domain auction-controller resetBidClock */
+  /* @domain auction-clock resetBidClock */
 
-  /* @domain auction-controller nextDelay */
+  /* @domain auction-clock nextDelay */
 
-  /* @domain auction-controller cpuNominationDelay */
+  /* @domain auction-clock cpuNominationDelay */
 
-  /* @domain auction-controller cpuReactionDelay */
+  /* @domain auction-clock cpuReactionDelay */
 
   const ARCADE_AUCTION_LABELS={sealed:'RILANCIO AL BUIO',mystery:'PACCO SORPRESA',bundle:'DUE AL PREZZO DI UNO',hammer:'MARTELLO LAMPO',switch:'CAMBIO DI PROGRAMMA'};
 
-  /* @domain auction-controller prepareArcadeAuction */
+  /* @domain auction-arcade-controller prepareArcadeAuction */
 
-  /* @domain auction-controller renderArcadeBanner */
+  /* @domain auction-arcade-controller renderArcadeBanner */
 
-  /* @domain auction-controller showArcadeModal */
+  /* @domain auction-arcade-controller showArcadeModal */
 
-  /* @domain auction-controller resolveSealedAuction */
+  /* @domain auction-arcade-controller resolveSealedAuction */
 
-  /* @domain auction-controller handleArcadeAction */
+  /* @domain auction-arcade-controller handleArcadeAction */
 
   /* @domain auction-controller nominate */
 
@@ -3429,7 +3497,7 @@
 
   /* @domain auction-controller scheduleCpuReactions */
 
-  /* @domain auction-controller flashBidder */
+  /* @domain auction-feedback flashBidder */
 
   const RIVAL_BID_REACTIONS = {
     bomber:['Per un bomber si può osare!','I gol costano, e io rilancio!'],
@@ -3446,15 +3514,15 @@
     rivale:['Non te lo lascio.','Se lo vuoi, dovrai sudartelo.']
   };
 
-  /* @domain auction-controller bidReaction */
+  /* @domain auction-feedback bidReaction */
 
-  /* @domain auction-controller bidCommentMoment */
+  /* @domain auction-feedback bidCommentMoment */
 
-  /* @domain auction-controller showBidSpotlight */
+  /* @domain auction-feedback showBidSpotlight */
 
-  /* @domain auction-controller showAwardAnimation */
+  /* @domain auction-feedback showAwardAnimation */
 
-  /* @domain auction-controller hideAwardAnimation */
+  /* @domain auction-feedback hideAwardAnimation */
 
   const RIVAL_LOSS_REACTIONS = {
     bomber:['Dannazione, quello mi serviva.','Hai vinto questo duello.'],
@@ -3472,41 +3540,41 @@
     admin:['Valutazione aggiornata.','Hai vinto la chiamata. Il campionato è lungo.']
   };
 
-  /* @domain auction-controller awardLossReactionData */
+  /* @domain auction-feedback awardLossReactionData */
 
-  /* @domain auction-controller showAwardLossReaction */
+  /* @domain auction-feedback showAwardLossReaction */
 
   /* @domain auction-controller cpuReact */
 
   /* @domain auction-controller advanceAuction */
 
-  /* @domain auction-controller ensureManagerTeamIdentityState */
+  /* @domain auction-powers-controller ensureManagerTeamIdentityState */
 
-  /* @domain auction-controller ensureAuctionPowers */
+  /* @domain auction-powers-controller ensureAuctionPowers */
 
-  /* @domain auction-controller auctionPowerMaxUses */
-  /* @domain auction-controller auctionPowerUses */
-  /* @domain auction-controller consumeAuctionPower */
-  /* @domain auction-controller canUseOneShot */
+  /* @domain auction-powers-controller auctionPowerMaxUses */
+  /* @domain auction-powers-controller auctionPowerUses */
+  /* @domain auction-powers-controller consumeAuctionPower */
+  /* @domain auction-powers-controller canUseOneShot */
 
-  /* @domain auction-controller renderAuctionPowers */
+  /* @domain auction-powers-controller renderAuctionPowers */
 
-  /* @domain auction-controller auctionPowerTargets */
+  /* @domain auction-powers-controller auctionPowerTargets */
 
-  /* @domain auction-controller pauseForAuctionPower */
-  /* @domain auction-controller resumeAfterAuctionPower */
+  /* @domain auction-powers-controller pauseForAuctionPower */
+  /* @domain auction-powers-controller resumeAfterAuctionPower */
 
-  /* @domain auction-controller openAuctionPower */
+  /* @domain auction-powers-controller openAuctionPower */
 
-  /* @domain auction-controller useScoutPower */
+  /* @domain auction-powers-controller useScoutPower */
 
-  /* @domain auction-controller closeAuctionPowerModal */
+  /* @domain auction-powers-controller closeAuctionPowerModal */
 
-  /* @domain auction-controller resolveAuctionPowerTarget */
+  /* @domain auction-powers-controller resolveAuctionPowerTarget */
 
-  /* @domain auction-controller useBluffPower */
+  /* @domain auction-powers-controller useBluffPower */
 
-  /* @domain auction-controller useOneShotPower */
+  /* @domain auction-powers-controller useOneShotPower */
 
   /* @domain auction-controller autoUserLimit */
 
@@ -3818,7 +3886,7 @@
     if (!state || !state.completed) return;
     if(currentTradeWindow('summer').stage!=='completed') return renderTradeWindow('summer');
     const sponsorChoice=currentSponsorChoice();
-    if(!state.season?.started && !sponsorChoice){
+    if(!state.season?.started && (!sponsorChoice || CareerEngine.selectedSponsorChoices(state).length<(Number(state.sponsorSlots)===2?2:1))){
       const sponsorPanel=$('sponsorSelectionPanel');
       sponsorPanel?.scrollIntoView({behavior:'smooth',block:'start'});
       window.setTimeout(()=>{
@@ -3827,8 +3895,9 @@
       },420);
       return;
     }
-    if(!state.season?.started && sponsorChoice?.id==='academy'){
-      const chosenId=String(state.sponsorChoice?.playerId||'');
+    const academyChoice=CareerEngine.selectedSponsorChoices(state).find(choice=>choice.id==='academy');
+    if(!state.season?.started && academyChoice){
+      const chosenId=String(academyChoice.playerId||'');
       const player=state.managers?.[0]?.roster?.find(p=>String(p.id)===chosenId && Number(p.ovr||0)<=97);
       if(!player){showToast('Ala Romelu: scegli un giocatore prima di iniziare il campionato.',true);return;}
     }
@@ -3868,17 +3937,19 @@
         dayPhase:'ready'
       };
       const immediateSponsorBonus=grantImmediateSponsorBonus(state.season);
-      if(state.season.sponsor?.id==='academy'){
-        const player=state.managers[0].roster.find(p=>String(p.id)===String(state.season.sponsor.playerId));
+      const academySponsor=CareerEngine.findSeasonSponsor(state.season,'academy');
+      if(academySponsor){
+        const player=state.managers[0].roster.find(p=>String(p.id)===String(academySponsor.playerId));
         if(player){
           const growth=applyPlayerOvrChange(player,2,1,'Ala Romelu: crescita garantita','sponsor_academy');
-          state.season.sponsor.academyGrowthGranted=!!growth;
-          state.season.sponsor.academyPlayerName=player.name;
+          academySponsor.academyGrowthGranted=!!growth;
+          academySponsor.academyPlayerName=player.name;
         }
       }
+      if(Number(state.career?.nextSponsorSeason)===Number(state.career?.seasonNumber)) delete state.career.nextSponsorSeason;
       delete state.carryoverConsumables;
       saveState();
-      if(immediateSponsorBonus) showToast(`Sponsor ${state.season.sponsor?.name||''}: +${immediateSponsorBonus} € immediati.`);
+      if(immediateSponsorBonus) showToast(`Sponsor: +${immediateSponsorBonus} € immediati.`);
     }
     renderSeasonDashboard();
   }
@@ -4495,6 +4566,8 @@
   /* @domain matchday-events-controller specialTrainingPlayerId */
 
   /* @domain matchday-events-controller specialTrainingUsedForPlayer */
+
+  /* @domain matchday-events-controller blockedOpponentPlayerIds */
 
   /* @domain matchday-events-controller blockedOpponentPlayerId */
 
@@ -5171,10 +5244,19 @@
   });
   $('startBtn').addEventListener('click',openCareerSetup);
   $('instructionsBtn')?.addEventListener('click',showGameInstructions);
+  $('followBtn')?.addEventListener('click',()=>window.open('https://www.instagram.com/fantaballafm','_blank','noopener,noreferrer'));
   document.querySelectorAll('#careerTeamStep [data-coach-avatar]').forEach(select=>select.addEventListener('change',updateCareerAvatarEditor));
   $('coachNameInput')?.addEventListener('input',renderCareerAvatarEditor);
   $('coachNameInput')?.addEventListener('input',updateCareerIdentityControls);
   $('careerTeamNameInput')?.addEventListener('input',updateCareerIdentityControls);
+  $('careerTeamNameInput')?.addEventListener('keydown',event=>{
+    if(event.key!=='Tab'||event.shiftKey||event.ctrlKey||event.altKey||event.metaKey)return;
+    const coachInput=$('coachNameInput');
+    if(!coachInput||coachInput.disabled)return;
+    event.preventDefault();
+    event.stopPropagation();
+    coachInput.focus();
+  });
   $('careerPokemonToggle')?.addEventListener('change',event=>setInitialCareerCatalog(!!event.target.checked));
   $('careerIdentityNextBtn')?.addEventListener('click',advanceCareerIdentityStep);
   $('careerAvatarBackBtn')?.addEventListener('click',()=>showCareerTeamSubstep('identity'));

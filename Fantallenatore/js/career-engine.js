@@ -48,6 +48,26 @@
     };
   }
 
+  // Keep the first sponsor compatible with existing saves; the second has its own reward ledger.
+  function seasonSponsors(season){
+    return [season?.sponsor,...(season?.sponsor?.additionalSponsors||[])].filter(Boolean);
+  }
+
+  function findSeasonSponsor(season,id){
+    return seasonSponsors(season).find(sponsor=>sponsor.id===id)||null;
+  }
+
+  function opponentBlockLimit(season){
+    return findSeasonSponsor(season,'double_block')?2:1;
+  }
+
+  function selectedSponsorChoices(state){
+    const first=state?.sponsorChoice;
+    return [first,...(first?.additionalChoices||[])].filter(Boolean).map(choice=>typeof choice==='string'?{id:choice}:choice);
+  }
+
+  const withSponsors=reward=>(career,season,...args)=>seasonSponsors(season).reduce((total,sponsor)=>total+reward(career,{...season,sponsor},...args),0);
+
   function userMatch(dayResult){
     const match=(dayResult?.matches||[]).find(item=>item.homeId==='user'||item.awayId==='user');
     if(!match) return null;
@@ -128,7 +148,8 @@
   }
 
   function sponsorCanMakeItemFree(id,season,freeItemIds=[]){
-    return !!(season?.sponsor?.id==='free_subscription'&&!season.sponsor.freeSubscriptionUsed&&freeItemIds.map(String).includes(String(id)));
+    const sponsor=findSeasonSponsor(season,'free_subscription');
+    return !!(sponsor&&!sponsor.freeSubscriptionUsed&&freeItemIds.map(String).includes(String(id)));
   }
 
   function buyShopItem(career,season,item,id,{freeItemIds=[],now=Date.now(),currency='eur',fpCost=null}={}){
@@ -147,8 +168,9 @@
       career.totalFantapointsSpent=Number(career.totalFantapointsSpent||0)+resolvedFpCost;
     }else if(!free&&!debit(career,item.cost)) return {ok:false,reason:'insufficient_funds'};
     if(free){
-      season.sponsor.freeSubscriptionUsed=true;
-      season.sponsor.freeSubscriptionId=id;
+      const sponsor=findSeasonSponsor(season,'free_subscription');
+      sponsor.freeSubscriptionUsed=true;
+      sponsor.freeSubscriptionId=id;
     }
     const paymentCurrency=free?'sponsor':payWithFp?'fp':'eur';
     const paidCost=free?0:payWithFp?resolvedFpCost:item.cost;
@@ -171,7 +193,13 @@
 
   window.FantaCareerEngine=Object.freeze({
     normalizeCareer,balance,credit,debit,createSeasonSponsor,
-    grantImmediateSponsorBonus,grantMidseasonSponsorBonus,grantBigMatchSponsorReward,grantStreakSponsorReward,
-    grantWinSponsorReward,grantFutureAuctionBonus,sponsorCanMakeItemFree,buyShopItem,grantSeasonPrize
+    seasonSponsors,findSeasonSponsor,opponentBlockLimit,selectedSponsorChoices,
+    grantImmediateSponsorBonus:withSponsors(grantImmediateSponsorBonus),
+    grantMidseasonSponsorBonus:withSponsors(grantMidseasonSponsorBonus),
+    grantBigMatchSponsorReward:withSponsors(grantBigMatchSponsorReward),
+    grantStreakSponsorReward:withSponsors(grantStreakSponsorReward),
+    grantWinSponsorReward:withSponsors(grantWinSponsorReward),
+    grantFutureAuctionBonus:withSponsors(grantFutureAuctionBonus),
+    sponsorCanMakeItemFree,buyShopItem,grantSeasonPrize
   });
 })();

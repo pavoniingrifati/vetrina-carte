@@ -4,7 +4,7 @@ I valori identificativi visibili nell'interfaccia sono raccolti in `GAME_CONFIG`
 
 | Chiave | Valore attuale | Utilizzo |
 | --- | --- | --- |
-| `buildVersion` | `3.2.35.56.250` | Titolo pagina, menu iniziale e numero build |
+| `buildVersion` | `3.2.35.56.294` | Titolo pagina, menu iniziale e numero build |
 | `seasonLabel` | `2026/27` | Header, creazione carriera e schermate della lega |
 | `leagueName` | `Lega Amatori` | Presentazione della carriera |
 | `startingDivision` | `3` | Divisione assegnata alle nuove carriere |

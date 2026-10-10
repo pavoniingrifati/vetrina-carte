@@ -3,6 +3,7 @@
   'use strict';
   function create($runtime){
     if(!$runtime) throw new TypeError('Runtime richiesto: league-views');
+    let serieAStandingsSort={key:'position',direction:'asc'};
   function sortedStandings() {
     const season = $runtime.ensureSeasonState();
     if (!season) return [];
@@ -279,7 +280,8 @@
     const standings=$runtime.sortedFullStandingsForView();
     return standings.map(s=>{
       const m=$runtime.managerById(s.managerId), gd=s.gf-s.ga;
-      const rowClasses=[s.managerId==='user'?'is-user-standing':'',Number(s._leaguePosition)===1?'is-promotion-standing':''].filter(Boolean).join(' ');
+      const relegated=Number($runtime.state?.career?.division||4)<4 && standings.length>1 && Number(s._leaguePosition)===standings.length;
+      const rowClasses=[s.managerId==='user'?'is-user-standing':'',Number(s._leaguePosition)===1?'is-promotion-standing':'',relegated?'is-relegation-standing relegation-boundary':''].filter(Boolean).join(' ');
       return `<tr class="${rowClasses}">
         <td>${s._leaguePosition}</td>
         <td><strong>${$runtime.escapeHtml(m?.team||'—')}</strong><small>${$runtime.escapeHtml(m?.name||'')}</small></td>
@@ -476,19 +478,82 @@
     if($runtime.$('fullStandingsModeChip')) $runtime.$('fullStandingsModeChip').textContent=$runtime.fantaclassificaIsActive(season)?'🏆 FANTACLASSIFICA ATTIVA · ORDINE PER FPT':'FPT = FANTAPUNTI TOTALI';
     if($runtime.$('fullStandingsBody')) $runtime.$('fullStandingsBody').innerHTML=$runtime.fullStandingsRowsHtml();
     if($runtime.$('fantasyPromotionNote')) $runtime.$('fantasyPromotionNote').textContent=$runtime.careerPromotionNote();
+    const relegationNote=$runtime.$('fantasyRelegationNote');
+    if(relegationNote){
+      relegationNote.hidden=Number($runtime.state?.career?.division||4)>=4;
+      relegationNote.textContent='Fascia rossa: l’ultima classificata retrocede nella categoria inferiore.';
+    }
     $runtime.renderCareerHonours();
     document.querySelectorAll('#leagueStandingsScreen [data-standings-sort]').forEach(btn=>{
       btn.onclick=()=>$runtime.setLeagueStandingsSort(btn.dataset.standingsSort);
     });
     $runtime.renderFullStandingsSortState();
 
+    const rulesBtn=$runtime.$('openSeasonRulesBtn'),rulesDialog=$runtime.$('seasonRulesDialog');
+    if(rulesBtn && rulesDialog){
+      rulesBtn.onclick=()=>{
+        const rules=$runtime.leagueRulesFor($runtime.state),esc=$runtime.escapeHtml;
+        const auctionIds=['packOpening','freeRoleAuction','alternateCatalog','keeperConfirmation'];
+        const ruleCard=(def)=>{
+          const value=rules[def.id];
+          let label=def.label(value),detail=def.detail(value);
+          if(auctionIds.includes(def.id) && def.id!=='alternateCatalog' && !value){label='OFF';detail='Questa regola non è attiva nella stagione.';}
+          if(def.id==='freeRoleAuction' && !value){label='ASTA A REPARTI';detail='Le chiamate seguono P → D → C → A, rispettando i posti disponibili.';}
+          if(def.id==='alternateCatalog'){
+            label=$runtime.state?.catalogMode==='pokemon'?'LISTONE POKÉMON':'LISTONE SERIE A';
+            detail=rules.catalogDecision==='accept'?'Il cambio listone è stato accettato.':rules.catalogDecision==='decline' || rules.catalogDecision==='reject'?'Il cambio listone è stato rifiutato.':'Il listone indicato è quello utilizzato nella stagione.';
+          }
+          const drawn=rules.selectedCategories.includes(def.id);
+          return `<article class="season-rule-item"><div><strong>${esc(def.icon)} ${esc(def.title)}</strong>${drawn?'<small>REGOLA ESTRATTA</small>':''}</div><b>${esc(label)}</b><p>${esc(detail)}</p></article>`;
+        };
+        const defs=$runtime.PRE_AUCTION_RULE_DEFS;
+        $runtime.$('seasonRulesBody').innerHTML=`<p class="season-rules-note">Regolamento della stagione in corso. Le carte dell’Admin possono aggiungere effetti validi soltanto per una giornata.</p><section><h3>Campionato</h3><div class="season-rules-grid">${defs.filter(def=>!auctionIds.includes(def.id)).map(ruleCard).join('')}</div></section><section><h3>Asta</h3><p class="season-rules-note">Rosa: 3 portieri, 8 difensori, 8 centrocampisti e 6 attaccanti.</p><div class="season-rules-grid">${defs.filter(def=>auctionIds.includes(def.id)).map(ruleCard).join('')}</div></section>`;
+        if(!rulesDialog.open) rulesDialog.showModal();
+        $runtime.$('closeSeasonRulesBtn')?.focus();
+      };
+      $runtime.$('closeSeasonRulesBtn').onclick=()=>rulesDialog.close();
+      rulesDialog.onclick=event=>{
+        if(event.target!==rulesDialog)return;
+        const rect=rulesDialog.getBoundingClientRect();
+        if(event.clientX<rect.left || event.clientX>rect.right || event.clientY<rect.top || event.clientY>rect.bottom)rulesDialog.close();
+      };
+      rulesDialog.onclose=()=>rulesBtn.focus();
+    }
+
     const serieA=$runtime.sortedSerieAStandings();
     const serieADays=serieA[0]?.played||0;
     if($runtime.$('serieAStandingsTitle')) $runtime.$('serieAStandingsTitle').textContent=`Dopo ${serieADays} giornate`;
-    if($runtime.$('serieAStandingsBody')) $runtime.$('serieAStandingsBody').innerHTML=serieA.map((s,i)=>{
-      const gd=s.gf-s.ga;
-      return `<tr><td>${i+1}</td><td><strong>${$runtime.escapeHtml($runtime.clubName(s.clubId))}</strong></td><td>${s.played}</td><td class="pts">${s.points}</td><td>${s.wins}</td><td>${s.draws}</td><td>${s.losses}</td><td>${s.gf}</td><td>${s.ga}</td><td>${gd>0?'+':''}${gd}</td></tr>`;
-    }).join('');
+    const serieAButtons=[...document.querySelectorAll('#leagueStandingsScreen [data-seriea-standings-sort]')];
+    const renderSerieA=()=>{
+      const {key,direction}=serieAStandingsSort,dir=direction==='asc'?1:-1;
+      const value=(row)=>key==='position'?row.position:key==='team'?$runtime.clubName(row.clubId):key==='gd'?Number(row.gf)-Number(row.ga):Number(row[key]||0);
+      const rows=serieA.map((row,index)=>({...row,position:index+1})).sort((a,b)=>{
+        const av=value(a),bv=value(b);
+        const cmp=key==='team'?String(av).localeCompare(String(bv),'it',{sensitivity:'base'}):av-bv;
+        return cmp*dir || a.position-b.position;
+      });
+      if($runtime.$('serieAStandingsBody')) $runtime.$('serieAStandingsBody').innerHTML=rows.map(s=>{
+        const gd=s.gf-s.ga;
+        return `<tr class="${[s.position===1?'is-promotion-standing':'',serieA.length>3 && s.position>serieA.length-3?'is-relegation-standing':'',serieA.length>3 && s.position===serieA.length-2?'relegation-boundary':''].filter(Boolean).join(' ')}"><td>${s.position}</td><td><strong>${$runtime.escapeHtml($runtime.clubName(s.clubId))}</strong></td><td>${s.played}</td><td class="pts">${s.points}</td><td>${s.wins}</td><td>${s.draws}</td><td>${s.losses}</td><td>${s.gf}</td><td>${s.ga}</td><td>${gd>0?'+':''}${gd}</td></tr>`;
+      }).join('');
+      serieAButtons.forEach(btn=>{
+        const active=btn.dataset.serieaStandingsSort===key;
+        btn.classList.toggle('active',active);
+        const arrow=btn.querySelector('span');
+        if(arrow) arrow.textContent=active?(direction==='asc'?'▲':'▼'):'';
+        btn.setAttribute('aria-pressed',String(active));
+        btn.closest('th')?.setAttribute('aria-sort',active?(direction==='asc'?'ascending':'descending'):'none');
+      });
+    };
+    serieAButtons.forEach(btn=>{
+      btn.onclick=()=>{
+        const key=btn.dataset.serieaStandingsSort;
+        if(serieAStandingsSort.key===key) serieAStandingsSort.direction=serieAStandingsSort.direction==='asc'?'desc':'asc';
+        else serieAStandingsSort={key,direction:key==='position'||key==='team'?'asc':'desc'};
+        renderSerieA();
+      };
+    });
+    renderSerieA();
 
     const playerStats=Object.values(season.playerSeasonStats||{});
     const leaderRows=(key)=>{

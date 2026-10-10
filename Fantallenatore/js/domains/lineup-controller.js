@@ -223,7 +223,7 @@
       const message=blockedId && String(player.id)===String(blockedId)
         ? `${player.name}: il Top Player deve partire dalla panchina per questa giornata.`
         : wildcardLimit>0
-          ? `${player.name}: puoi usare al massimo ${wildcardLimit} ${$runtime.state?.season?.sponsor?.id==='fantacana'?'titolari fuori ruolo tra D, C e A':'Jolly fuori ruolo e soltanto tra D↔C o C↔A'}.`
+          ? `${player.name}: puoi usare al massimo ${wildcardLimit} ${window.FantaCareerEngine.findSeasonSponsor($runtime.state?.season,'fantacana')?'titolari fuori ruolo tra D, C e A':'Jolly fuori ruolo e soltanto tra D↔C o C↔A'}.`
           : `${player.name} può essere inserito solo in uno slot ${$runtime.ROLE_LABELS[player.role]||player.role}.`;
       $runtime.showToast(message, true);
       return false;
@@ -276,7 +276,8 @@
     dialog.setAttribute('aria-labelledby','lineupSlotPickerTitle');
     dialog.innerHTML=`<header><h3 id="lineupSlotPickerTitle">Scegli ${$runtime.escapeHtml(slot.role)} · ${$runtime.escapeHtml(slot.key||slotId)}</h3><button type="button" data-picker-close aria-label="Chiudi">×</button></header><div class="lineup-slot-picker-list">${players.map(p=>{
       const status=$runtime.playerStatusForDay(p.id,day),placed=starters.has(String(p.id));
-      return `<button type="button" class="${placed?'is-already-starter':''}" data-picker-player="${$runtime.escapeHtml(p.id)}" ${status.unavailable?'disabled':''}>${$runtime.lineupPlayerFaceMarkup(p,'roster')}<strong>${$runtime.escapeHtml(p.name)}</strong><small>${$runtime.escapeHtml($runtime.clubShort(p.club))} · ${p.role} · OVR ${$runtime.currentPlayerOvr(p)}</small>${$runtime.shopItemActive('scout_plus')||$runtime.starterReportActive(day)?$runtime.scoutStarterBadge(p):''}<em>${status.unavailable?$runtime.escapeHtml(status.label):placed?'Già in formazione':'Disponibile'}</em></button>`;
+      const fixture=$runtime.serieAFixtureForPlayer(p,day);
+      return `<button type="button" class="${placed?'is-already-starter':''}" data-picker-player="${$runtime.escapeHtml(p.id)}" ${status.unavailable?'disabled':''}>${$runtime.lineupPlayerFaceMarkup(p,'roster')}<strong>${$runtime.escapeHtml(p.name)}</strong><small>${$runtime.escapeHtml($runtime.clubShort(p.club))} · ${p.role} · OVR ${$runtime.currentPlayerOvr(p)}</small>${fixture?`<small class="lineup-picker-fixture">vs ${$runtime.escapeHtml(fixture.opponentName)} · ${fixture.home?'CASA':'TRASFERTA'}</small>`:''}${$runtime.shopItemActive('scout_plus')||$runtime.starterReportActive(day)?$runtime.scoutStarterBadge(p):''}<em>${status.unavailable?$runtime.escapeHtml(status.label):placed?'Già in formazione':'Disponibile'}</em></button>`;
     }).join('')||'<p>Nessun giocatore disponibile.</p>'}</div><footer>${current?'<button type="button" data-picker-empty>Svuota posizione</button>':''}<button type="button" data-picker-close>Annulla</button></footer>`;
     document.body.appendChild(dialog);dialog.addEventListener('close',()=>dialog.remove());
     dialog.querySelectorAll('[data-picker-close]').forEach(b=>b.onclick=()=>dialog.close());
@@ -793,6 +794,10 @@
     const season=$runtime.ensureSeasonState(),effect=$runtime.consumableDayEffect(day,season);
     if(!season) return {usable:false,label:'NON DISPONIBILE'};
     if($runtime.lineupReadOnly) return {usable:false,label:'FORMAZIONE BLOCCATA'};
+    if(id==='cons_celebrity'){
+      const seasonNumber=Number($runtime.state.career?.seasonNumber||1);
+      return {usable:$runtime.consumableQuantity(id,season)>0 && Number($runtime.state.career?.nextSponsorSeason)!==seasonNumber+1,label:Number($runtime.state.career?.nextSponsorSeason)===seasonNumber+1?'GIÀ ATTIVA PER LA PROSSIMA STAGIONE':'ATTIVA PER LA PROSSIMA STAGIONE'};
+    }
     if(id==='cons_starter_report'){
       if($runtime.shopItemActive('scout_plus',season)) return {usable:false,label:'SCOUT PLUS ATTIVO'};
       if(effect.starterReport) return {usable:false,label:'GIÀ USATO OGGI'};
@@ -805,8 +810,9 @@
       return {usable:$runtime.consumableQuantity(id,season)>0,label:'SCEGLI GIOCATORE'};
     }
     if(id==='cons_opponent_block'){
-      if(effect.blockedOpponentPlayerId) return {usable:false,label:'GIÀ USATO OGGI'};
-      return {usable:$runtime.consumableQuantity(id,season)>0,label:'SCEGLI AVVERSARIO'};
+      const used=$runtime.blockedOpponentPlayerIds(day).length,limit=window.FantaCareerEngine.opponentBlockLimit(season);
+      if(used>=limit) return {usable:false,label:'BLOCCHI ESAURITI OGGI'};
+      return {usable:$runtime.consumableQuantity(id,season)>0,label:`SCEGLI AVVERSARIO · ${used}/${limit}`};
     }
     if(id==='cons_reroll_rules') return {usable:false,label:'USA PRIMA DELL’ASTA'};
     if(id==='cons_reroll_admin') return {usable:false,label:'USA SULLA CARTA ADMIN'};
@@ -819,7 +825,7 @@
     const grid=$runtime.$('consumableInventoryGrid'),season=$runtime.ensureSeasonState();
     if(!grid||!season) return;
     const day=season.currentMatchday;
-    const ids=['cons_starter_report','cons_training','cons_opponent_block','cons_reroll_event','cons_reroll_admin','cons_reroll_rules','cons_guaranteed_sale'];
+    const ids=['cons_celebrity','cons_starter_report','cons_training','cons_opponent_block','cons_reroll_event','cons_reroll_admin','cons_reroll_rules','cons_guaranteed_sale'];
     grid.innerHTML=ids.map(id=>{
       const item=$runtime.SHOP_ITEMS[id],qty=$runtime.consumableQuantity(id,season),action=$runtime.lineupConsumableActionState(id,day);
       const canUse=qty>0&&action.usable;
@@ -827,7 +833,7 @@
         <span class="consumable-inventory-icon">${item.icon}</span>
         <div><strong>${$runtime.escapeHtml(item.name)}</strong><small>${$runtime.escapeHtml(item.description)}</small></div>
         <b>×${qty}</b>
-        <button type="button" class="${canUse?'primary':'ghost'}" data-use-consumable="${$runtime.escapeHtml(id)}" ${canUse?'':'disabled'}>${qty<=0?'ESAURITO':$runtime.escapeHtml(action.label)}</button>
+        <button type="button" class="${canUse?'primary':'ghost'}" data-use-consumable="${$runtime.escapeHtml(id)}" ${canUse?'':'disabled'}>${qty<=0&&!(id==='cons_celebrity'&&Number($runtime.state.career?.nextSponsorSeason)===Number($runtime.state.career?.seasonNumber||1)+1)?'ESAURITO':$runtime.escapeHtml(action.label)}</button>
       </article>`;
     }).join('');
     if(!ids.some(id=>$runtime.consumableQuantity(id,season)>0)) grid.insertAdjacentHTML('beforeend','<p class="mobile-inventory-empty">Non hai oggetti disponibili nell’inventario.</p>');
@@ -850,6 +856,15 @@
   function beginConsumableUse(id){
     const season=$runtime.ensureSeasonState(),day=season?.currentMatchday;
     if(!season||!day||$runtime.consumableQuantity(id,season)<=0) return;
+    if(id==='cons_celebrity'){
+      if(!$runtime.lineupConsumableActionState(id,day).usable) return;
+      if(!$runtime.consumeConsumable(id,{day,note:'celebrity_next_season'})) return;
+      $runtime.state.career.nextSponsorSeason=Number($runtime.state.career.seasonNumber||1)+1;
+      $runtime.saveState();
+      $runtime.renderConsumableInventory();
+      $runtime.showToast('Celebrità attiva: la prossima stagione scegli 2 sponsor su 3.');
+      return;
+    }
     if(id==='cons_starter_report'){
       if($runtime.shopItemActive('scout_plus',season)||$runtime.starterReportActive(day)) return;
       if(!$runtime.consumeConsumable(id,{day,note:'starter_report'})) return;
@@ -873,11 +888,14 @@
     const manager=own?$runtime.managerById('user'):$runtime.managerById(opponentId);
     const roster=(manager?.roster||[]).filter(player=>!$runtime.playerStatusForDay(player.id,day).unavailable).slice().sort((a,b)=>$runtime.ROLE_ORDER.indexOf(a.role)-$runtime.ROLE_ORDER.indexOf(b.role)||$runtime.currentPlayerOvr(b)-$runtime.currentPlayerOvr(a));
     const trained=own?new Set($runtime.specialTrainingPlayerIds(day)):new Set();
+    const blocked=new Set($runtime.blockedOpponentPlayerIds(day));
     if($runtime.$('consumableTargetKicker')) $runtime.$('consumableTargetKicker').textContent=own?'ALLENAMENTO SPECIALE':'BLOCCO AVVERSARIO';
-    if($runtime.$('consumableTargetTitle')) $runtime.$('consumableTargetTitle').textContent=own?'Scegli un tuo giocatore · ogni giocatore può riceverlo una sola volta':`Scegli chi bloccare · ${manager?.team||'Avversario'}`;
+    if($runtime.$('consumableTargetTitle')) $runtime.$('consumableTargetTitle').textContent=own?'Scegli un tuo giocatore · ogni giocatore può riceverlo una sola volta':`Scegli chi bloccare · ${manager?.team||'Avversario'} · ${blocked.size}/${window.FantaCareerEngine.opponentBlockLimit(season)} blocchi usati`;
     list.innerHTML=roster.map(player=>{
       const alreadyTrained=own&&trained.has(String(player.id));
-      return `<button type="button" class="consumable-target-player ${alreadyTrained?'is-disabled':''}" data-consumable-target="${$runtime.escapeHtml(String(player.id))}" data-consumable-type="${$runtime.escapeHtml(id)}" ${alreadyTrained?'disabled':''}><span class="lineup-role-chip role-${player.role}">${player.role}</span><span><strong>${$runtime.escapeHtml(player.name)}</strong><small>${$runtime.escapeHtml($runtime.clubShort(player.club))} · OVR ${$runtime.playerOvrLabel(player)}${!own&&$runtime.shopItemActive('scout_plus',season)?` · Tit. ${$runtime.estimatedStarterProbability(player,day)}%`:''}</small></span><b>${alreadyTrained?'GIÀ ALLENATO':own?'ALLENA':'BLOCCA'}</b></button>`;
+      const alreadyBlocked=!own&&blocked.has(String(player.id));
+      const disabled=alreadyTrained||alreadyBlocked||(!own&&blocked.size>=window.FantaCareerEngine.opponentBlockLimit(season));
+      return `<button type="button" class="consumable-target-player ${disabled?'is-disabled':''}" data-consumable-target="${$runtime.escapeHtml(String(player.id))}" data-consumable-type="${$runtime.escapeHtml(id)}" ${disabled?'disabled':''}><span class="lineup-role-chip role-${player.role}">${player.role}</span><span><strong>${$runtime.escapeHtml(player.name)}</strong><small>${$runtime.escapeHtml($runtime.clubShort(player.club))} · OVR ${$runtime.playerOvrLabel(player)}${!own&&$runtime.shopItemActive('scout_plus',season)?` · Tit. ${$runtime.estimatedStarterProbability(player,day)}%`:''}</small></span><b>${alreadyTrained?'GIÀ ALLENATO':alreadyBlocked?'GIÀ BLOCCATO':own?'ALLENA':'BLOCCA'}</b></button>`;
     }).join('') || '<div class="consumable-target-empty">Nessun giocatore disponibile.</div>';
     list.querySelectorAll('[data-consumable-target]').forEach(btn=>btn.addEventListener('click',()=>$runtime.applyTargetedConsumable(btn.dataset.consumableType,btn.dataset.consumableTarget)));
     grid.classList.add('hidden');
@@ -908,41 +926,45 @@
       return;
     }
     if(id==='cons_opponent_block'){
-      if(effect.blockedOpponentPlayerId) return;
+      if($runtime.lineupReadOnly) return;
+      const ids=$runtime.blockedOpponentPlayerIds(day);
+      if(ids.length>=window.FantaCareerEngine.opponentBlockLimit(season) || ids.includes(String(playerId))) return;
       const opponentId=$runtime.userOpponentIdForDay(day),opponent=$runtime.managerById(opponentId);
       const player=(opponent?.roster||[]).find(p=>String(p.id)===String(playerId));
-      if(!player) return;
+      if(!player || $runtime.playerStatusForDay(player.id,day).unavailable) return;
       if(!$runtime.consumeConsumable(id,{day,note:'opponent_block',targetPlayerId:player.id})) return;
-      effect.blockedOpponentPlayerId=String(player.id);
+      effect.blockedOpponentPlayerIds=[...ids,String(player.id)];
+      effect.blockedOpponentPlayerId=effect.blockedOpponentPlayerIds[0];
       effect.blockedOpponentManagerId=String(opponentId||'');
       effect.blockedAt=Date.now();
       if(season.lineups?.[String(day)]?.[opponentId]) delete season.lineups[String(day)][opponentId];
       $runtime.saveState();
       $runtime.closeConsumableModal();
       $runtime.renderLineupScreen();
-      $runtime.showToast(`Blocco Avversario: ${player.name} non potrà essere schierato da ${opponent?.team||'l’avversario'}.`);
+      $runtime.showToast(`Blocco Avversario: ${player.name} non potrà essere schierato da ${opponent?.team||'l’avversario'}. Blocchi usati: ${effect.blockedOpponentPlayerIds.length}/${window.FantaCareerEngine.opponentBlockLimit(season)}.`);
     }
   }
 
   function enforceOpponentConsumableBlock(manager,lineup,day){
-    const blockedId=$runtime.blockedOpponentPlayerId(day),opponentId=$runtime.userOpponentIdForDay(day);
-    if(!blockedId||!manager||String(manager.id)!==String(opponentId)||!lineup) return lineup;
-    const blocked=(manager.roster||[]).find(p=>String(p.id)===blockedId);
-    if(!blocked) return lineup;
-    const blockedSlot=Object.entries(lineup.starters||{}).find(([,id])=>String(id)===blockedId)?.[0]||null;
-    lineup.bench=(lineup.bench||[]).map(String).filter(id=>id!==blockedId);
-    if(blockedSlot){
-      const used=new Set(Object.values(lineup.starters||{}).map(String).filter(id=>id!==blockedId));
-      const replacement=(manager.roster||[]).filter(p=>p.role===blocked.role&&String(p.id)!==blockedId&&!used.has(String(p.id))&&!$runtime.playerStatusForDay(p.id,day).unavailable).sort((a,b)=>$runtime.cpuLeagueRuleLineupValue(manager,b,day)-$runtime.cpuLeagueRuleLineupValue(manager,a,day))[0];
+    const blockedIds=new Set($runtime.blockedOpponentPlayerIds(day)),opponentId=$runtime.userOpponentIdForDay(day);
+    if(!blockedIds.size||!manager||String(manager.id)!==String(opponentId)||!lineup) return lineup;
+    lineup.bench=(lineup.bench||[]).map(String).filter(id=>!blockedIds.has(id));
+    for(const [slotId,playerId] of Object.entries(lineup.starters||{})){
+      if(!blockedIds.has(String(playerId))) continue;
+      const blocked=(manager.roster||[]).find(p=>String(p.id)===String(playerId));
+      const used=new Set(Object.values(lineup.starters||{}).map(String));
+      const replacement=(manager.roster||[]).filter(p=>p.role===blocked?.role&&!blockedIds.has(String(p.id))&&!used.has(String(p.id))&&!$runtime.playerStatusForDay(p.id,day).unavailable).sort((a,b)=>$runtime.cpuLeagueRuleLineupValue(manager,b,day)-$runtime.cpuLeagueRuleLineupValue(manager,a,day))[0];
       if(replacement){
-        lineup.starters[blockedSlot]=String(replacement.id);
+        lineup.starters[slotId]=String(replacement.id);
         lineup.bench=lineup.bench.filter(id=>id!==String(replacement.id));
-      }else delete lineup.starters[blockedSlot];
+      }else delete lineup.starters[slotId];
     }
     const used=new Set(Object.values(lineup.starters||{}).map(String));
     const ro={P:0,D:1,C:2,A:3};
-    (manager.roster||[]).filter(p=>String(p.id)!==blockedId&&!used.has(String(p.id))&&!lineup.bench.includes(String(p.id))).slice().sort((a,b)=>ro[a.role]-ro[b.role]||$runtime.cpuLeagueRuleLineupValue(manager,b,day)-$runtime.cpuLeagueRuleLineupValue(manager,a,day)).forEach(p=>lineup.bench.push(String(p.id)));
-    lineup.blockedByConsumable=blockedId;
+    (manager.roster||[]).filter(p=>!blockedIds.has(String(p.id))&&!used.has(String(p.id))&&!lineup.bench.includes(String(p.id))).slice().sort((a,b)=>ro[a.role]-ro[b.role]||$runtime.cpuLeagueRuleLineupValue(manager,b,day)-$runtime.cpuLeagueRuleLineupValue(manager,a,day)).forEach(p=>lineup.bench.push(String(p.id)));
+    if(blockedIds.has(String(lineup.captainId||''))) lineup.captainId=null;
+    lineup.blockedByConsumable=[...blockedIds][0];
+    lineup.blockedByConsumables=[...blockedIds];
     return lineup;
   }
 
@@ -1073,13 +1095,16 @@
 
     const lineupIndicators=(player,difficulty,side)=>{
       if($runtime.lineupReadOnly)return '';
-      const lock=(subscription,label)=>`<span class="lineup-metric-lock" role="button" tabindex="0" data-lineup-subscription="${subscription}" aria-label="${label}: serve ${subscription}">🔒</span>`;
       if(side==='left'){
-        const st=dataProActive?$runtime.playerSeasonStat(player.id):null;
+        if(!dataProActive)return '';
+        const st=$runtime.playerSeasonStat(player.id);
         const mv=Number(st?.voteCount||0)>0?(Number(st.voteSum||0)/Number(st.voteCount)).toFixed(2):'—';
-        return `<span class="lineup-metric-left ${dataProActive&&mv!=='—'?(Number(mv)>=7?'mv-high':Number(mv)>=6?'mv-medium':'mv-low'):'mv-neutral'}"><small>MV</small><b>${dataProActive?mv:lock('FantaData Pro','Media voto')}</b></span>`;
+        return `<span class="lineup-metric-left ${mv!=='—'?(Number(mv)>=7?'mv-high':Number(mv)>=6?'mv-medium':'mv-low'):'mv-neutral'}"><small>MV</small><b>${mv}</b></span>`;
       }
-      return `<span class="lineup-metric-right"><span title="${difficulty?$runtime.escapeHtml(difficulty.label):'Difficoltà partita'}">${dataProActive?(difficulty?.icon||'—'):lock('FantaData Pro','Difficoltà partita')}</span><b title="Titolarità stimata">${starterInsightActive?`${$runtime.estimatedStarterProbability(player,day)}%`:lock('Scout Plus','Titolarità')}</b></span>`;
+      if(!dataProActive&&!starterInsightActive)return '';
+      const starterPct=starterInsightActive?$runtime.estimatedStarterProbability(player,day):null;
+      const starterLevel=starterPct>=70?'high':starterPct>=40?'medium':'low';
+      return `<span class="lineup-metric-right">${dataProActive?`<span title="${difficulty?$runtime.escapeHtml(difficulty.label):'Difficoltà partita'}">${difficulty?.icon||'—'}</span>`:''}${starterInsightActive?`<b class="lineup-starter-probability ${starterLevel}" title="Titolarità stimata">${starterPct}%</b>`:''}</span>`;
     };
     const selectedPlayer=$runtime.draftPlayerById($runtime.lineupSelectedPlayerId);
     const slots=$runtime.lineupSlots($runtime.lineupDraft.formation);
@@ -1124,13 +1149,6 @@
       $runtime.bindLineupDragDrop();
     }
 
-    for(const root of [$runtime.$('lineupPitchSlots'),$runtime.$('lineupBenchList')]){
-      root.querySelectorAll('[data-lineup-subscription]').forEach(el=>{
-        const explain=event=>{event.preventDefault();event.stopPropagation();$runtime.showToast(`Serve ${el.dataset.lineupSubscription} per visualizzare questo dato.`,true);};
-        el.addEventListener('click',explain);
-        el.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' ')explain(event);});
-      });
-    }
     const count=starterIds.size;
     const required=slots.length;
     const adminValidation=$runtime.validateAdminRuleLineup($runtime.lineupDraft,day);
@@ -1166,7 +1184,7 @@
       const wildcardLimit=adminEffect.ruleId==='double_wildcard_starting_slot'?2:1;
       extraRuleText=` Regola Admin: ${wildcardLimit===2?'Doppio Jolly':'Wildcard'} fuori ruolo ${wildcardCount}/${wildcardLimit} usat${wildcardCount===1?'o':'i'} · compatibilità D↔C e C↔A.`;
     }
-    if(!$runtime.lineupReadOnly && $runtime.state?.season?.sponsor?.id==='fantacana' && !extraRuleText){
+    if(!$runtime.lineupReadOnly && window.FantaCareerEngine.findSeasonSponsor($runtime.state?.season,'fantacana') && !extraRuleText){
       extraRuleText=` Sponsor Haaland Rover: ${$runtime.lineupOutOfRoleEntries($runtime.lineupDraft).length}/${$runtime.adminWildcardStartingSlotLimit()} titolare fuori ruolo tra D, C e A.`;
     }
     if(!$runtime.lineupReadOnly && adminEffect?.ruleId==='no_substitutions') extraRuleText=' Regola Admin: niente sostituzioni dalla panchina in questa giornata.';

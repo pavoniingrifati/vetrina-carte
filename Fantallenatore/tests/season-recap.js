@@ -23,3 +23,20 @@ assert.strictEqual(result.bestPurchase.id,'a');assert.strictEqual(result.bestPur
 assert.strictEqual(result.improved.delta,5);assert.strictEqual(result.declined.delta,-4);
 assert.strictEqual(build({results:{},roster:[],development:{}}).scorer,null);
 console.log('OK: recap stagione, medie su presenze fantasy, acquisto/prezzo e variazioni OVR.');
+const recordResults={
+  1:{day:1,matches:[{homeId:'user',awayId:'cpu1',awayTeam:'Rivale Uno',homeFantasy:88.5,awayFantasy:70,homeScore:4,awayScore:1}]},
+  2:{day:2,matches:[{homeId:'cpu2',awayId:'user',homeTeam:'Rivale Due',homeFantasy:99,awayFantasy:65.5,homeScore:6,awayScore:0}]},
+  3:{day:3,matches:[{homeId:'user',awayId:'cpu3',homeFantasy:88.5}]},
+  4:{day:4,matches:[{homeId:'user',awayId:'cpu4',homeFantasy:null}]},
+  5:{day:5,matches:[{homeId:'cpu',awayId:'other',homeFantasy:120,awayFantasy:1}]}
+};
+const records=build({results:recordResults});
+assert.strictEqual(records.bestMatchday.day,1);assert.strictEqual(records.bestMatchday.fantasyPoints,88.5);
+assert.strictEqual(records.bestMatchday.opponentTeam,'Rivale Uno');assert.strictEqual(records.bestMatchday.home,true);
+assert.strictEqual(records.worstMatchday.day,2);assert.strictEqual(records.worstMatchday.fantasyPoints,65.5);
+assert.strictEqual(records.worstMatchday.opponentTeam,'Rivale Due');assert.strictEqual(records.worstMatchday.home,false);
+assert.strictEqual(records.worstMatchday.score,0);assert.strictEqual(records.worstMatchday.opponentScore,6);
+recordResults[6]={day:6,matches:[{homeId:'user',awayId:'cpu',homeFantasy:0}]};
+assert.strictEqual(build({results:recordResults}).worstMatchday.fantasyPoints,0);
+assert.strictEqual(build().bestMatchday,null);assert.strictEqual(build().worstMatchday,null);
+console.log('OK: best/worst fantasy totals, home/away perspective, ties use earliest day, valid zero, missing data ignored.');

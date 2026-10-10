@@ -4,9 +4,19 @@
   function build({results={},roster=[],development={},position=10}={}){
     const members=new Map((roster||[]).map(p=>[String(p.id),p]));
     const totals=new Map();
+    const matchdays=[];
     Object.values(results||{}).filter(Boolean).sort((a,b)=>Number(a.day||0)-Number(b.day||0)).forEach(day=>{
       const match=(day.matches||[]).find(m=>m.homeId==='user'||m.awayId==='user');
       if(!match) return;
+      const home=match.homeId==='user';
+      const rawPoints=home?match.homeFantasy:match.awayFantasy;
+      if(rawPoints!==null && rawPoints!==undefined && Number.isFinite(Number(rawPoints))){
+        matchdays.push({day:Number(day.day||0),fantasyPoints:Number(rawPoints),home,
+          opponentId:home?match.awayId:match.homeId,
+          opponentTeam:(home?match.awayTeam:match.homeTeam)||'Avversario',
+          score:home?match.homeScore:match.awayScore,
+          opponentScore:home?match.awayScore:match.homeScore});
+      }
       const performances=match.homeId==='user'?match.homePerformances:match.awayPerformances;
       (performances||[]).forEach(perf=>{
         if(!perf?.playerId || perf.noVote || !Number.isFinite(Number(perf.vote)) || !Number.isFinite(Number(perf.fantasy))) return;
@@ -45,7 +55,9 @@
       topVote:format(rank(played,p=>p.voteSum/p.appearances)),
       topFantasy:format(rank(played,p=>p.fantasySum/p.appearances)),
       bestPurchase:best?{...format(best),cost:Number(members.get(best.id).price)}:null,
-      improved,declined
+      improved,declined,
+      bestMatchday:matchdays.slice().sort((a,b)=>b.fantasyPoints-a.fantasyPoints||a.day-b.day)[0]||null,
+      worstMatchday:matchdays.slice().sort((a,b)=>a.fantasyPoints-b.fantasyPoints||a.day-b.day)[0]||null
     };
   }
   window.FantaSeasonRecap=Object.freeze({build});
