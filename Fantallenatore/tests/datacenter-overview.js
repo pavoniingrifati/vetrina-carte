@@ -1,0 +1,33 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
+const window={};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../js/datacenter-overview.js'),'utf8'),{window});
+const api=window.FantaDataOverview;
+const roster=Array.from({length:7},(_,i)=>({id:'p'+i,name:'Giocatore '+i,role:['P','D','C','A'][i%4],price:i===6?0:i+1}));
+const managers=[{id:'user',team:'Fantaballa',roster},{id:'cpu1',team:'Rivale',roster:[{id:'r',name:'Rivale',role:'A',price:4}]}];
+const season={matchdayResults:{2:{day:2,matches:[{homeId:'cpu1',awayId:'user',homeFantasy:75,awayFantasy:70,homeScore:2,awayScore:1}]},1:{day:1,matches:[{homeId:'user',awayId:'cpu1',homeFantasy:80,awayFantasy:65,homeScore:3,awayScore:0}]}}};
+const stats=Object.fromEntries(roster.map((p,i)=>[p.id,{voteCount:i+1,fantasySum:(i+1)*(6+i)}]));stats.r={voteCount:2,fantasySum:16};
+const before=JSON.stringify({season,managers,stats});
+const model=api.build({season,managers,premium:true,statFor:id=>stats[id]});
+assert.equal(model.user.average,75);assert.equal(model.leagueAverage,72.5);assert.equal(model.rank,1);assert.equal(model.user.wins,1);assert.equal(model.user.losses,1);assert.equal(model.user.goals,4);assert.equal(model.user.conceded,2);
+assert.deepEqual(Array.from(model.user.days,d=>d.day),[1,2]);assert.equal(model.top.length,5);assert.equal(model.value.length,5);assert(!model.value.some(x=>x.player.id==='p6'));assert.equal(model.value[0].player.id,'p0');
+assert.equal(model.roles.find(x=>x.role==='P').user,(6+5*10)/6,'weighted fantasy average');
+assert.equal(JSON.stringify({season,managers,stats}),before,'read-only overview');
+const locked=api.build({season,managers,premium:false,statFor:()=>{throw Error('premium data read while locked');}});assert.equal(locked.top.length,0);assert.equal(locked.value.length,0);
+const empty=api.build({season:{},managers,premium:true,statFor:()=>({})});assert.equal(empty.rank,null);assert.equal(empty.user.average,null);assert.equal(empty.top.length,0);
+const tied=api.build({season:{matchdayResults:{1:{matches:[{homeId:'user',awayId:'cpu1',homeFantasy:72,awayFantasy:72,homeScore:1,awayScore:1}]}}},managers});assert.equal(tied.rank,1);
+const escape=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
+const options={ctx:{season,me:managers[0],dataPro:true},managers,statFor:id=>stats[id],avatar:p=>'<span>'+escape(p.name)+'</span>',escape};
+const html=api.render(options);assert.equal((html.match(/data-season-player=/g)||[]).length,10);assert(html.includes('<svg'));assert(!html.includes('data-day'));assert(!html.includes('tabindex='));
+const lockHtml=api.render({...options,ctx:{...options.ctx,dataPro:false},statFor:()=>{throw Error('premium data leak');}});assert(lockHtml.includes('Bloccato: manca FantaData Pro.'));assert(!lockHtml.includes('data-season-player='));assert(!lockHtml.includes('FM/credito'));assert(lockHtml.includes('<svg'));
+// Real controller factory integration and player modal wiring.
+const {createRuntime}=require('./helpers/season-runtime');const runtime=createRuntime('overview-integrated');assert(runtime.getState().season);
+const actual=runtime.getState();actual.managers[0].roster=runtime.players().slice(0,7).map((p,i)=>({...p,price:i+1}));
+for(const p of actual.managers[0].roster)actual.season.playerSeasonStats[p.id]={voteCount:2,voteSum:14,fantasySum:18,appearances:2,minutes:180,goals:1,assists:0,recent:[]};
+const actualHtml=runtime.overviewHtml(true);assert(actualHtml.includes('Top 5 della tua rosa'));assert(actualHtml.includes('loading="lazy"'));assert.equal((actualHtml.match(/data-season-player=/g)||[]).length,10);
+assert(!runtime.overviewHtml(false).includes('data-season-player='));
+
+const ctx=vm.createContext({window:{FantaDataOverview:api}});vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/domains/datacenter-views.js'),'utf8'),ctx);
+const body={innerHTML:'',querySelector:()=>null};let wired=false;
+const controller=ctx.window.FantaDomains['datacenter-views'].create({$:()=>body,state:{managers},dataCenterPremiumHtml:()=>({scoutSummary:'',assistantSummary:''}),playerSeasonStat:id=>stats[id],playerAvatarMarkup:options.avatar,escapeHtml:escape,wireSeasonPlayerButtons:root=>{assert.equal(root,body);wired=true;}});
+controller.renderDataCenterOverviewPanel(options.ctx);assert(wired);assert(body.innerHTML.includes('Top 5 della tua rosa'));
+console.log('OK: risultati reali, classifiche e pareggi, medie ponderate, Top 5, costi nulli, privacy premium, vuoti, grafico statico e schede giocatore integrate.');

@@ -1,0 +1,24 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+const source=require('./helpers/production-source').readProductionSource();
+const ctx={window:{},state:{career:{division:1},season:{currentMatchday:1}},clamp:(n,a,b)=>Math.max(a,Math.min(b,n)),lineupPlayerValue:p=>p.ovr*100,leagueRulesFor:()=>({maxFantasySubs:5,firstGoalThreshold:66,captainBonus:'off',cleanSheetBonus:0}),cpuLeagueRuleSensitivity:()=>1,estimatedStarterProbability:p=>p.probability,currentPlayerOvr:p=>p.ovr,playerFormMetrics:id=>({score:id==='fit'?1:0}),playerSeasonStat:()=>null,serieAMatchupDifficulty:p=>({key:p.matchup||'normal',home:false})};
+vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/cpu-lineup-policy.js'),'utf8'),ctx);const start=source.indexOf('  function cpuLeagueRuleLineupValue('),end=source.indexOf('\n  }',start)+4;vm.runInContext(source.slice(start,end),ctx);
+const high={id:'high',role:'A',ovr:90,probability:20},reliable={id:'reliable',role:'A',ovr:84,probability:90};
+assert(ctx.cpuLeagueRuleLineupValue({id:'cpu',division:1},reliable)>ctx.cpuLeagueRuleLineupValue({id:'cpu',division:1},high),'A deve preferire il titolare affidabile');
+assert(ctx.cpuLeagueRuleLineupValue({id:'cpu',division:4},high)>ctx.cpuLeagueRuleLineupValue({id:'cpu',division:4},reliable),'Amatori mantiene priorità precedente');
+assert.equal(ctx.cpuLeagueRuleLineupValue({id:'user',division:1},high),9000,'utente invariato');
+const regular={id:'regular',role:'D',ovr:80,probability:70},fit={...regular,id:'fit'};
+assert(ctx.cpuLeagueRuleLineupValue({id:'cpu',division:1},fit)>ctx.cpuLeagueRuleLineupValue({id:'cpu',division:1},regular));
+assert(ctx.cpuLeagueRuleLineupValue({id:'cpu',division:1},{...regular,matchup:'favorable'})>ctx.cpuLeagueRuleLineupValue({id:'cpu',division:1},{...regular,matchup:'hard'}));
+ctx.playerSeasonStat=id=>id==='history'?{voteCount:16,fantasySum:128}:null;
+assert(ctx.cpuLeagueRuleLineupValue({id:'cpu',division:1},{...regular,id:'history'})>ctx.cpuLeagueRuleLineupValue({id:'cpu',division:1},regular));
+const values=[4,3,2,1].map(division=>ctx.cpuLeagueRuleLineupValue({id:'cpu',division},reliable)-ctx.cpuLeagueRuleLineupValue({id:'cpu',division},high));for(let i=1;i<values.length;i++)assert(values[i]>values[i-1]);
+let chosen;Object.assign(ctx,{availableLineupFormations:()=>['4-3-3','4-4-2'],lineupCountsForFormation:key=>({P:1,D:4,C:key==='4-3-3'?3:4,A:key==='4-3-3'?3:2}),bestPlayersForRole:(_m,r,n)=>Array.from({length:n},()=>({role:r})),cpuLeagueRuleLineupValue:(_m,p)=>p.role==='C'?8000:7000,formationCpuBias:()=>0,lineupPlayerValue:()=>{throw Error('Modulo non deve usare valore OVR separato');}});
+const a=source.indexOf('  function chooseCpuFormation('),b=source.indexOf('\n  }',a)+4;vm.runInContext(source.slice(a,b),ctx);chosen=ctx.chooseCpuFormation({id:'cpu'});assert.equal(chosen,'4-4-2');
+console.log('OK: titolarità, forma, avversario, progressione, modulo coerente e utente invariato. Fixture pre-partita; nessun risultato futuro.');
+
+const runtime=require('./helpers/season-runtime').createRuntime('cpu-lineup-integration'),state=runtime.getState();state.career.division=1;
+const cpu=state.managers[1],pool=runtime.players();cpu.roster=['P','D','C','A'].flatMap(role=>pool.filter(p=>p.role===role).slice(0,({P:3,D:8,C:8,A:6})[role]));
+const injured=cpu.roster.find(p=>p.role==='A');state.season.playerStatus[injured.id]={injuryUntil:10,suspensionUntil:0,yellowAccum:0};
+const lineup=runtime.cpuLineup(cpu),ids=Object.values(lineup.starters);assert.equal(ids.length,11);assert.equal(new Set(ids).size,11);assert(!ids.includes(String(injured.id)));assert.equal(new Set([...ids,...lineup.bench]).size,25);assert(!lineup.bench.some(id=>ids.includes(id)));
+console.log('OK: formazione reale 11 titolari unici, rosa coperta, infortunato escluso.');
