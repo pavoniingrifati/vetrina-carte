@@ -174,11 +174,6 @@
   }
 };
 
-  function socialOwnedPlayers(){
-    const user=$runtime.managerById('user');
-    return (user?.roster||[]).slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it'));
-  }
-
   function socialHandle(player){
     const clean=String(player?.name||'giocatore')
       .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -194,35 +189,10 @@
     return {id:'reserved',label:'RISERVATO',desc:'Preferisce pochi messaggi e toni tranquilli.',pressure:-.04,support:.07,praise:.05,spam:.10};
   }
 
-  function ensureSocialState(season=$runtime.state?.season){
-    if(!season || !season.started) return null;
-    if(!season.social || typeof season.social!=='object') season.social={conversations:{},motivationByDay:{},activity:[]};
-    if(!season.social.conversations || typeof season.social.conversations!=='object') season.social.conversations={};
-    if(!season.social.motivationByDay || typeof season.social.motivationByDay!=='object') season.social.motivationByDay={};
-    if(!Array.isArray(season.social.activity)) season.social.activity=[];
-
-    $runtime.socialOwnedPlayers().forEach(player=>{
-      const id=String(player.id);
-      const conv=season.social.conversations[id] ||= {
-        playerId:id,followed:true,blocked:false,relationship:50,totalMessages:0,lastMessageDay:0,lastReaction:'none',messages:[]
-      };
-      conv.followed=true;
-      if(!Array.isArray(conv.messages)) conv.messages=[];
-      if(!Number.isFinite(Number(conv.relationship))) conv.relationship=50;
-      if(!Number.isFinite(Number(conv.totalMessages))) conv.totalMessages=0;
-      if(conv.blocked===undefined) conv.blocked=false;
-    });
-    return season.social;
-  }
-
   function socialConversation(playerId,season=$runtime.state?.season){
     const social=$runtime.ensureSocialState(season);
     if(!social) return null;
     return social.conversations[String(playerId)]||null;
-  }
-
-  function socialMotivationForPlayer(playerId,day){
-    return $runtime.state?.season?.social?.motivationByDay?.[String(day)]?.[String(playerId)]||null;
   }
 
   function socialRelationLabel(value){
@@ -578,7 +548,7 @@
     $runtime.renderCareerWallets();
     $runtime.renderShopItems();
   }
-    return Object.freeze({socialOwnedPlayers,socialHandle,socialPersonality,ensureSocialState,socialConversation,socialMotivationForPlayer,socialRelationLabel,socialMessageTone,socialReactionData,socialReplyText,socialRecordMotivation,socialSendMessage,socialPlayerAvatarHtml,socialConversationPreview,socialStoryHtml,socialConversationRowHtml,socialMessageHtml,renderSocialChat,renderLeagueSocialScreen,sendCurrentSocialMessage,renderLeagueShopScreen});
+    return Object.freeze({socialHandle,socialPersonality,socialConversation,socialRelationLabel,socialMessageTone,socialReactionData,socialReplyText,socialRecordMotivation,socialSendMessage,socialPlayerAvatarHtml,socialConversationPreview,socialStoryHtml,socialConversationRowHtml,socialMessageHtml,renderSocialChat,renderLeagueSocialScreen,sendCurrentSocialMessage,renderLeagueShopScreen});
   }
   window.FantaDomains ||= {};
   window.FantaDomains['social-controller']=Object.freeze({create});

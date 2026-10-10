@@ -57,7 +57,7 @@
 
   function startCountdownTicker() {
     if ($runtime.countdownTimer) clearInterval($runtime.countdownTimer);
-    $runtime.renderAuctionRoomList();
+    $runtime.auctionClockEvents.publish('tick');
     renderCountdown();
     $runtime.countdownTimer = setInterval(() => {
       if (!$runtime.state?.auction) {
@@ -65,11 +65,11 @@
         $runtime.countdownTimer = null;
         return;
       }
-      $runtime.renderAuctionRoomList();
+      $runtime.auctionClockEvents.publish('tick');
     renderCountdown();
       if (Date.now() >= Number($runtime.state.auction.deadlineAt||0)) {
         clearAuctionRuntimeTimers();
-        $runtime.awardAuction();
+        $runtime.auctionClockEvents.publish('expired');
       }
     }, $runtime.autocompleteMode ? 25 : 50);
   }

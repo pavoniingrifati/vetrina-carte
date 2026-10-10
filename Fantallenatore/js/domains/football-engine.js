@@ -1,61 +1,9 @@
-/* Responsibility: football-engine. Runtime state and cross-domain callbacks are explicit live accessors. */
+/* Domain service: football-engine. No DOM, timers, or persistence; state accessors remain live. */
 (() => {
   'use strict';
   function create($runtime){
     if(!$runtime) throw new TypeError('Runtime richiesto: football-engine');
-  function seededSerieRand(day, key) {
-    return $runtime.careerHash(`seriea|${day}|${key}`);
-  }
-
   function halfPoint(value) { return Math.round(value * 2) / 2; }
-
-  function buildSerieASchedule() {
-    return $runtime.buildDoubleRoundRobin((window.FANTA_CLUBS||[]).map(club=>club.id),$runtime.careerHash);
-  }
-
-  function serieAFixtureForPlayer(player,day=$runtime.ensureSeasonState()?.currentMatchday||1){
-    const season=$runtime.ensureSeasonState();
-    if(!player || !season) return null;
-    const round=season.serieASchedule?.[Number(day)-1];
-    if(!round) return null;
-    const match=(round.matches||[]).find(m=>m.homeClub===player.club || m.awayClub===player.club);
-    if(!match) return null;
-    const home=match.homeClub===player.club;
-    const opponentClub=home?match.awayClub:match.homeClub;
-    return {
-      day:Number(day),
-      clubId:player.club,
-      opponentClub,
-      home,
-      venue:home?'Casa':'Trasferta',
-      opponentName:$runtime.clubName(opponentClub),
-      opponentShort:$runtime.clubShort(opponentClub)
-    };
-  }
-
-  function serieAStrengthRowsForDay(day=$runtime.ensureSeasonState()?.currentMatchday||1){
-    const season=$runtime.ensureSeasonState();
-    const cacheKey=`${Number(day)}|${Number(season?.lastCompletedMatchday||0)}|${Object.keys(season?.playerStatus||{}).length}|M${Number($runtime.state?.transferMarket?.worldRevision||0)}`;
-    if($runtime.serieAStrengthCache.key===cacheKey && Array.isArray($runtime.serieAStrengthCache.rows)) return $runtime.serieAStrengthCache.rows;
-    const rows=(window.FANTA_CLUBS||[]).map(club=>({
-      clubId:club.id,
-      strength:$runtime.serieAClubStrength(club.id,Number(day))
-    })).sort((a,b)=>b.strength-a.strength);
-    $runtime.serieAStrengthCache={key:cacheKey,rows};
-    return rows;
-  }
-
-  function serieAMatchupDifficulty(player,day=$runtime.ensureSeasonState()?.currentMatchday||1){
-    const fixture=$runtime.serieAFixtureForPlayer(player,day);
-    if(!fixture) return null;
-    const rows=$runtime.serieAStrengthRowsForDay(day);
-    const idx=rows.findIndex(x=>x.clubId===fixture.opponentClub);
-    const rank=idx>=0?idx+1:Math.ceil(rows.length/2);
-    let key='balanced',label='EQUILIBRATA',icon='🟡';
-    if(rank<=6){key='hard';label='DIFFICILE';icon='🔴';}
-    else if(rank>=Math.max(15,rows.length-5)){key='favorable';label='FAVOREVOLE';icon='🟢';}
-    return {...fixture,key,label,icon,rank,opponentStrength:idx>=0?rows[idx].strength:null};
-  }
 
   function serieAFixtureCompactText(player,day=$runtime.ensureSeasonState()?.currentMatchday||1){
     const fixture=$runtime.serieAFixtureForPlayer(player,day);
@@ -75,134 +23,6 @@
     return `<span class="seriea-matchup-badge ${info.key}" title="FantaData Pro · avversario ${$runtime.escapeHtml(info.opponentName)} · ${info.venue}">${info.icon} ${info.label}</span>`;
   }
 
-  function clubPool(clubId){
-    return (window.FANTA_PLAYERS||[]).filter(p=>p.club===clubId);
-  }
-
-  function rankedClubPlayers(clubId,day,key='rank'){
-    return $runtime.clubPool(clubId).slice().sort((a,b)=>{
-      const av=$runtime.currentPlayerOvr(a)+($runtime.seededSerieRand(day,`${clubId}|${key}|${a.id}`)-.5)*5;
-      const bv=$runtime.currentPlayerOvr(b)+($runtime.seededSerieRand(day,`${clubId}|${key}|${b.id}`)-.5)*5;
-      return bv-av || String(a.name).localeCompare(String(b.name),'it');
-    });
-  }
-
-  function serieAPlayerDayProfile(player,clubId,day){
-    const persistent=$runtime.playerStatusForDay(player.id,day);
-    const availabilityRoll=$runtime.seededSerieRand(day,`${clubId}|availability|${player.id}`);
-    const randomUnavailable=!persistent.unavailable && availabilityRoll<.012;
-    const unavailable=persistent.unavailable || randomUnavailable;
-    const doubtful=!unavailable && availabilityRoll<.075;
-    const form=$runtime.playerFormMetrics(player.id);
-    const formNoise=($runtime.seededSerieRand(day,`${clubId}|form|${player.id}`)-.5)*3.2;
-    const rotationNoise=($runtime.seededSerieRand(day,`${clubId}|rotation|${player.id}`)-.5)*3.2;
-    const persistentFormBoost=form.score*2.15;
-    const worldEffect=$runtime.worldPlayerModifier(day,player.id);
-    const eventStarterDelta=Number(worldEffect?.starterScoreDelta||0);
-    const score=$runtime.currentPlayerOvr(player)+formNoise+rotationNoise+persistentFormBoost+eventStarterDelta-(doubtful?3.1:0);
-    return {unavailable,doubtful,score,formNoise,persistentUnavailable:persistent.unavailable,status:persistent,form};
-  }
-
-  function chooseSerieATacticalShape(clubId,day,available,profiles){
-    const feasible=$runtime.SERIEA_TACTICAL_SHAPES.filter(shape=>
-      $runtime.ROLE_ORDER.every(role=>available.filter(p=>p.role===role).length>=shape.req[role])
-    );
-    const shapes=feasible.length?feasible:$runtime.SERIEA_TACTICAL_SHAPES.filter(shape=>
-      $runtime.ROLE_ORDER.every(role=>$runtime.clubPool(clubId).filter(p=>p.role===role).length>=shape.req[role])
-    );
-    const ranked=(shapes.length?shapes:[$runtime.SERIEA_TACTICAL_SHAPES[0]]).map(shape=>{
-      let score=0;
-      $runtime.ROLE_ORDER.forEach(role=>{
-        const candidates=available.filter(p=>p.role===role).slice().sort((a,b)=>(profiles.get(String(b.id))?.score||0)-(profiles.get(String(a.id))?.score||0));
-        score+=candidates.slice(0,shape.req[role]).reduce((s,p)=>s+(profiles.get(String(p.id))?.score||$runtime.currentPlayerOvr(p)),0);
-      });
-      // Identità tattica: il modulo principale riceve un vantaggio moderato,
-      // il secondo un vantaggio più piccolo. Non supera una grossa differenza di qualità.
-      const prefs=$runtime.SERIEA_TACTICAL_IDENTITY[clubId]||[];
-      if(shape.key===prefs[0]) score+=20;
-      else if(shape.key===prefs[1]) score+=8;
-      score+=($runtime.seededSerieRand(day,`${clubId}|shape|${shape.key}`)-.5)*7.5;
-      return {shape,score};
-    }).sort((a,b)=>b.score-a.score);
-    return ranked[0]?.shape||$runtime.SERIEA_TACTICAL_SHAPES[0];
-  }
-
-  function buildSerieAClubSelection(clubId,day){
-    const pool=$runtime.clubPool(clubId);
-    const profiles=new Map(pool.map(p=>[String(p.id),$runtime.serieAPlayerDayProfile(p,clubId,day)]));
-    let available=pool.filter(p=>!profiles.get(String(p.id)).unavailable);
-    let shape=$runtime.chooseSerieATacticalShape(clubId,day,available,profiles);
-
-    // Se le indisponibilità rendessero impossibile un XI, recuperiamo il minimo
-    // indispensabile dalla rosa per non rompere la simulazione.
-    if(!$runtime.ROLE_ORDER.every(role=>available.filter(p=>p.role===role).length>=shape.req[role])){
-      available=pool.filter(p=>!profiles.get(String(p.id))?.persistentUnavailable);
-      shape=$runtime.chooseSerieATacticalShape(clubId,day,available,profiles);
-    }
-    // Safety estremo: evita di rompere la simulazione se un club resta senza 11 eleggibili.
-    if(!$runtime.ROLE_ORDER.every(role=>available.filter(p=>p.role===role).length>=shape.req[role])){
-      available=pool.slice();
-      shape=$runtime.chooseSerieATacticalShape(clubId,day,available,profiles);
-    }
-
-    const starters=[], used=new Set();
-    $runtime.ROLE_ORDER.forEach(role=>{
-      const candidates=available.filter(p=>p.role===role).slice().sort((a,b)=>{
-        const av=profiles.get(String(a.id))?.score||$runtime.currentPlayerOvr(a);
-        const bv=profiles.get(String(b.id))?.score||$runtime.currentPlayerOvr(b);
-        return bv-av || $runtime.currentPlayerOvr(b)-$runtime.currentPlayerOvr(a);
-      });
-      candidates.slice(0,shape.req[role]).forEach(p=>{starters.push(p);used.add(String(p.id));});
-    });
-
-    const bench=available.filter(p=>!used.has(String(p.id))).slice().sort((a,b)=>{
-      const av=profiles.get(String(a.id))?.score||$runtime.currentPlayerOvr(a);
-      const bv=profiles.get(String(b.id))?.score||$runtime.currentPlayerOvr(b);
-      return bv-av;
-    }).slice(0,12);
-
-    const participants=[];
-    starters.forEach(p=>participants.push({
-      player:p,starter:true,entryMinute:1,plannedExitMinute:90,
-      dayScore:profiles.get(String(p.id))?.score||$runtime.currentPlayerOvr(p)
-    }));
-    bench.forEach(p=>participants.push({
-      player:p,starter:false,entryMinute:999,plannedExitMinute:90,
-      dayScore:profiles.get(String(p.id))?.score||$runtime.currentPlayerOvr(p)
-    }));
-
-    // 3-4 cambi tattici programmati; il quinto slot resta spesso disponibile
-    // per un eventuale infortunio.
-    const substitutions=[];
-    const plannedCount=3+($runtime.seededSerieRand(day,`${clubId}|planned-subs`)<.58?1:0);
-    const starterItems=participants.filter(x=>x.starter && x.player.role!=='P').slice().sort((a,b)=>
-      a.dayScore-b.dayScore || $runtime.seededSerieRand(day,`${clubId}|subout|${a.player.id}`)-$runtime.seededSerieRand(day,`${clubId}|subout|${b.player.id}`)
-    );
-    const benchItems=participants.filter(x=>!x.starter && x.player.role!=='P').slice().sort((a,b)=>b.dayScore-a.dayScore);
-    const usedIn=new Set(), usedOut=new Set();
-
-    for(let i=0;i<plannedCount;i++){
-      const out=starterItems.find(x=>!usedOut.has(String(x.player.id)) && benchItems.some(y=>!usedIn.has(String(y.player.id))&&y.player.role===x.player.role));
-      if(!out) break;
-      const incoming=benchItems.find(y=>!usedIn.has(String(y.player.id))&&y.player.role===out.player.role);
-      if(!incoming) break;
-      const minute=56+Math.floor($runtime.seededSerieRand(day,`${clubId}|subminute|${i}|${out.player.id}`)*27);
-      out.plannedExitMinute=minute-1;
-      incoming.entryMinute=minute;
-      usedOut.add(String(out.player.id)); usedIn.add(String(incoming.player.id));
-      substitutions.push({
-        outPlayerId:String(out.player.id),outPlayerName:out.player.name,
-        inPlayerId:String(incoming.player.id),inPlayerName:incoming.player.name,
-        role:out.player.role,minute,reason:'tactical',cancelled:false
-      });
-    }
-
-    return {
-      clubId,formation:shape.key,requirements:shape.req,starters,bench,participants,
-      substitutions,unavailable:pool.filter(p=>profiles.get(String(p.id))?.unavailable).map(p=>String(p.id))
-    };
-  }
-
   function baseLivePerformance(item,day,clubId){
     const p=item.player, ovr=$runtime.currentPlayerOvr(p);
     const quality=$runtime.clamp((ovr-75)/20,-1,1);
@@ -212,7 +32,7 @@
     const worldEffect=$runtime.worldPlayerModifier(day,p.id);
     const socialMotivation=$runtime.socialMotivationForPlayer(p.id,day);
     const socialMotivationDelta=Number(socialMotivation?.voteDelta||0);
-    const lockerDelta=$runtime.lockerVoteModifier(day,p.id);
+    const lockerDelta=lockerVoteModifier(day,p.id);
     const injuryRisk=$runtime.formationPlayerModifier(day,p.id,'risk_injury');
     const base=Number(injuryRisk?.voteDelta||0)+$runtime.clamp($runtime.clamp(6 + quality*.16 + noise + matchFeel + Number(voteEffect?.delta||0) + Number(worldEffect?.voteDelta||0) + socialMotivationDelta,4.75,7.25) + lockerDelta,4,8);
     return {
@@ -270,7 +90,7 @@
 
   function weightedPerformancePick(list,day,key,kind='goal'){
     if(!list.length) return null;
-    const weights=list.map(p=>Math.max(.01,$runtime.participantWeight(p,kind)));
+    const weights=list.map(p=>Math.max(.01,participantWeight(p,kind)));
     const total=weights.reduce((a,b)=>a+b,0);
     let target=$runtime.seededSerieRand(day,key)*total;
     for(let i=0;i<list.length;i++){target-=weights[i];if(target<=0)return list[i];}
@@ -279,37 +99,6 @@
 
   function activePerformances(perfs,minute){
     return perfs.filter(p=>p.entryMinute<=minute && (!p.plannedExitMinute || minute<=p.plannedExitMinute));
-  }
-
-  function serieAUnitWeightedAverage(items,weights,fallback=72){
-    let total=0,weight=0;
-    (items||[]).forEach(item=>{
-      const player=item?.playerId ? $runtime.playerMap.get(String(item.playerId)) : item;
-      if(!player) return;
-      const w=Number(weights?.[item.role||player.role]||0);
-      if(w<=0) return;
-      total+=$runtime.currentPlayerOvr(player)*w;
-      weight+=w;
-    });
-    return weight>0?total/weight:Number(fallback||72);
-  }
-
-  function serieATeamUnitProfile(items){
-    const active=(items||[]).filter(Boolean);
-    const activeCount=active.length;
-    const missing=Math.max(0,11-activeCount);
-    const rawAttack=$runtime.serieAUnitWeightedAverage(active,$runtime.SERIEA_UNIT_WEIGHTS.attack);
-    const rawDefense=$runtime.serieAUnitWeightedAverage(active,$runtime.SERIEA_UNIT_WEIGHTS.defense);
-    const rawControl=$runtime.serieAUnitWeightedAverage(active,$runtime.SERIEA_UNIT_WEIGHTS.control);
-    // Un'espulsione deve cambiare davvero la partita. L'attacco perde opzioni,
-    // ma la fase difensiva soffre ancora di più quando la squadra resta in 10.
-    return {
-      activeCount,
-      attack:$runtime.clamp(rawAttack-missing*2.8,55,95),
-      defense:$runtime.clamp(rawDefense-missing*4.2,55,95),
-      control:$runtime.clamp(rawControl-missing*2.6,55,95),
-      overall:$runtime.clamp(rawAttack*.34+rawDefense*.36+rawControl*.30-missing*3.2,55,95)
-    };
   }
 
   function serieAGoalProbability(ownProfile,oppProfile,isHome=false){
@@ -325,15 +114,11 @@
     return $runtime.clamp(.0132+qualityEffect+numericalEdge+homeEffect,.0032,.033);
   }
 
-  function matchStrength(starters){
-    return $runtime.serieATeamUnitProfile(starters).overall;
-  }
-
   function buildSerieAMatch(day,idx,spec){
     const homeSel=$runtime.buildSerieAClubSelection(spec.homeClub,day);
     const awaySel=$runtime.buildSerieAClubSelection(spec.awayClub,day);
-    const homePerfs=homeSel.participants.map(x=>$runtime.baseLivePerformance(x,day,spec.homeClub));
-    const awayPerfs=awaySel.participants.map(x=>$runtime.baseLivePerformance(x,day,spec.awayClub));
+    const homePerfs=homeSel.participants.map(x=>baseLivePerformance(x,day,spec.homeClub));
+    const awayPerfs=awaySel.participants.map(x=>baseLivePerformance(x,day,spec.awayClub));
     const perfMap=new Map([...homePerfs,...awayPerfs].map(p=>[p.playerId,p]));
     const events=[], redSeen=new Set(), injurySeen=new Set(), yellowCount=new Map();
     const subPlans={home:homeSel.substitutions.map(x=>({...x})),away:awaySel.substitutions.map(x=>({...x}))};
@@ -375,14 +160,14 @@
     const addGoal=(minute,team,penalty=false)=>{
       const own=team==='home'?homePerfs:awayPerfs;
       const opp=team==='home'?awayPerfs:homePerfs;
-      const active=$runtime.activePerformances(own,minute);
-      const scorer=$runtime.weightedPerformancePick(active,day,`${idx}|${minute}|${team}|scorer|${events.length}`,'goal');
+      const active=activePerformances(own,minute);
+      const scorer=weightedPerformancePick(active,day,`${idx}|${minute}|${team}|scorer|${events.length}`,'goal');
       if(!scorer) return;
       let assist=null;
       if(!penalty && $runtime.seededSerieRand(day,`${idx}|${minute}|${team}|assistchance|${events.length}`)<.72){
-        assist=$runtime.weightedPerformancePick(active.filter(p=>p.playerId!==scorer.playerId),day,`${idx}|${minute}|${team}|assist|${events.length}`,'assist');
+        assist=weightedPerformancePick(active.filter(p=>p.playerId!==scorer.playerId),day,`${idx}|${minute}|${team}|assist|${events.length}`,'assist');
       }
-      const keeper=$runtime.activePerformances(opp,minute).find(p=>p.role==='P') || opp.find(p=>p.role==='P'&&p.entryMinute<=minute);
+      const keeper=activePerformances(opp,minute).find(p=>p.role==='P') || opp.find(p=>p.role==='P'&&p.entryMinute<=minute);
       events.push({minute,type:penalty?'penalty_goal':'goal',side:team,playerId:scorer.playerId,playerName:scorer.name,assistId:assist?.playerId||null,assistName:assist?.name||null,keeperId:keeper?.playerId||null});
     };
 
@@ -398,16 +183,16 @@
         const opp=team==='home'?awayPerfs:homePerfs;
         // Ricalcolo minuto per minuto: sostituzioni, espulsioni e infortuni
         // modificano immediatamente la forza dei due reparti e quindi la chance gol.
-        const ownProfile=$runtime.serieATeamUnitProfile($runtime.activePerformances(own,minute));
-        const oppProfile=$runtime.serieATeamUnitProfile($runtime.activePerformances(opp,minute));
-        const goalP=$runtime.serieAGoalProbability(ownProfile,oppProfile,team==='home');
+        const ownProfile=$runtime.serieATeamUnitProfile(activePerformances(own,minute));
+        const oppProfile=$runtime.serieATeamUnitProfile(activePerformances(opp,minute));
+        const goalP=serieAGoalProbability(ownProfile,oppProfile,team==='home');
         const prefix=`${idx}|${minute}|${team}`;
 
         if($runtime.seededSerieRand(day,`${prefix}|penalty`)<.00145){
-          const active=$runtime.activePerformances(own,minute);
-          const taker=$runtime.weightedPerformancePick(active.filter(p=>p.role==='A'||p.role==='C'),day,`${prefix}|pentaker`,'goal') || $runtime.weightedPerformancePick(active,day,`${prefix}|pentaker2`,'goal');
+          const active=activePerformances(own,minute);
+          const taker=weightedPerformancePick(active.filter(p=>p.role==='A'||p.role==='C'),day,`${prefix}|pentaker`,'goal') || weightedPerformancePick(active,day,`${prefix}|pentaker2`,'goal');
           if(taker){
-            const keeper=$runtime.activePerformances(opp,minute).find(p=>p.role==='P') || opp.find(p=>p.role==='P'&&p.entryMinute<=minute);
+            const keeper=activePerformances(opp,minute).find(p=>p.role==='P') || opp.find(p=>p.role==='P'&&p.entryMinute<=minute);
             const takerOvr=$runtime.currentPlayerOvr($runtime.playerMap.get(String(taker.playerId)));
             const keeperOvr=keeper?$runtime.currentPlayerOvr($runtime.playerMap.get(String(keeper.playerId))):72;
             const penaltyConversion=$runtime.clamp(.76+(takerOvr-keeperOvr)*.003,.64,.86);
@@ -421,8 +206,8 @@
         } else if($runtime.seededSerieRand(day,`${prefix}|goal`)<goalP) addGoal(minute,team,false);
 
         if($runtime.seededSerieRand(day,`${prefix}|yellow`)<.021){
-          const active=$runtime.activePerformances(own,minute);
-          const booked=$runtime.weightedPerformancePick(active,day,`${prefix}|yellowwho`,'card');
+          const active=activePerformances(own,minute);
+          const booked=weightedPerformancePick(active,day,`${prefix}|yellowwho`,'card');
           if(booked){
             const yc=(yellowCount.get(booked.playerId)||0)+1; yellowCount.set(booked.playerId,yc);
             if(yc>=2 && !redSeen.has(booked.playerId)){
@@ -434,8 +219,8 @@
           }
         }
         if($runtime.seededSerieRand(day,`${prefix}|red`)<.00048){
-          const active=$runtime.activePerformances(own,minute).filter(p=>!redSeen.has(p.playerId));
-          const sent=$runtime.weightedPerformancePick(active,day,`${prefix}|redwho`,'card');
+          const active=activePerformances(own,minute).filter(p=>!redSeen.has(p.playerId));
+          const sent=weightedPerformancePick(active,day,`${prefix}|redwho`,'card');
           if(sent){
             redSeen.add(sent.playerId);
             sent.plannedExitMinute=Math.min(sent.plannedExitMinute||90,minute);
@@ -443,10 +228,10 @@
             events.push({minute,type:'red',side:team,playerId:sent.playerId,playerName:sent.name,secondYellow:false});
           }
         }
-        const forcedRisk=minute===riskMinute?$runtime.activePerformances(own,minute).find(p=>p.playerId===riskTarget?.playerId):null;
+        const forcedRisk=minute===riskMinute?activePerformances(own,minute).find(p=>p.playerId===riskTarget?.playerId):null;
         if(forcedRisk || $runtime.seededSerieRand(day,`${prefix}|injury`)<.00135){
-          const active=$runtime.activePerformances(own,minute).filter(p=>!injurySeen.has(p.playerId) && p.playerId!==riskTarget?.playerId);
-          const hurt=forcedRisk || $runtime.weightedPerformancePick(active,day,`${prefix}|injurywho`,'card');
+          const active=activePerformances(own,minute).filter(p=>!injurySeen.has(p.playerId) && p.playerId!==riskTarget?.playerId);
+          const hurt=forcedRisk || weightedPerformancePick(active,day,`${prefix}|injurywho`,'card');
           if(hurt){
             injurySeen.add(hurt.playerId);
             hurt.plannedExitMinute=Math.min(hurt.plannedExitMinute||90,minute);
@@ -468,7 +253,7 @@
           const minute=first+Math.floor($runtime.seededSerieRand(day,`birthday-minute|${celebrant.playerId}`)*(last-first+1));
           const ownGoal=$runtime.seededSerieRand(day,`birthday-outcome|${celebrant.playerId}`)<.5;
           const opposition=side==='home'?awayPerfs:homePerfs;
-          const keeper=$runtime.activePerformances(opposition,minute).find(p=>p.role==='P');
+          const keeper=activePerformances(opposition,minute).find(p=>p.role==='P');
           events.push({minute,type:ownGoal?'own_goal':'goal',side,playerId:celebrant.playerId,
             playerName:celebrant.name,keeperId:ownGoal?null:keeper?.playerId||null,birthday:true});
         }
@@ -506,13 +291,6 @@
     };
   }
 
-  function serieAClubStrength(clubId,day){
-    const selection=$runtime.buildSerieAClubSelection(clubId,day);
-    const starters=selection?.starters||[];
-    if(!starters.length) return 0;
-    return $runtime.matchStrength(starters);
-  }
-
   function selectSerieABigMatch(matches,day){
     let bestIndex=0, bestScore=-Infinity;
     matches.forEach((m,index)=>{
@@ -531,8 +309,8 @@
     const season=$runtime.ensureSeasonState();
     const round=season?.serieASchedule?.[day-1];
     if(!round) return null;
-    const matches=round.matches.map((m,i)=>$runtime.buildSerieAMatch(day,i,m));
-    const bigMatchIndex=$runtime.selectSerieABigMatch(matches,day);
+    const matches=round.matches.map((m,i)=>buildSerieAMatch(day,i,m));
+    const bigMatchIndex=selectSerieABigMatch(matches,day);
     const perfMap=new Map();
     const events=[];
     matches.forEach(match=>{
@@ -560,13 +338,13 @@
     const applySide=(perfs,goalsFor,goalsAgainst)=>{
       const resultMod=goalsFor>goalsAgainst?.12:goalsFor<goalsAgainst?-.12:.02;
       perfs.forEach(perf=>{
-        const mins=$runtime.playedMinutes(perf,90);
+        const mins=playedMinutes(perf,90);
         if(!mins) return;
         let mod=resultMod*(mins/90);
         if((perf.role==='P'||perf.role==='D') && goalsAgainst===0 && mins>=60) mod+=perf.role==='P'?.28:.16;
         if((perf.role==='P'||perf.role==='D') && goalsAgainst>=3 && mins>=45) mod-=.16;
         if((perf.role==='C'||perf.role==='A') && goalsFor>=3 && mins>=45) mod+=.07;
-        if(perf.injury && Number(perf.injuryMinute||90)<30 && !$runtime.decisivePerformance(perf)) mod-=.10;
+        if(perf.injury && Number(perf.injuryMinute||90)<30 && !decisivePerformance(perf)) mod-=.10;
         perf.liveVote=$runtime.clamp(perf.liveVote+mod,4,9);
         perf.ratingsFinalized=true;
       });
@@ -584,26 +362,26 @@
   function finalizeSerieAPhaseRatings(){
     if(!$runtime.serieALive) return;
     if($runtime.serieALive.phase==='multilive'){
-      $runtime.serieALive.matches.forEach((m,i)=>{if(i!==$runtime.serieALive.bigMatchIndex) $runtime.finalizeSerieAMatchRatings(m);});
+      $runtime.serieALive.matches.forEach((m,i)=>{if(i!==$runtime.serieALive.bigMatchIndex) finalizeSerieAMatchRatings(m);});
     }else if($runtime.serieALive.phase==='bigmatch'){
-      $runtime.finalizeSerieAMatchRatings($runtime.serieABigMatch());
+      finalizeSerieAMatchRatings($runtime.serieABigMatch());
     }
   }
 
   function liveFantasyValue(perf,minute=90){
     if(!perf || perf.entryMinute>minute) return 0;
     const rules=$runtime.fantasyRuleForDay(perf.day||$runtime.state?.season?.currentMatchday||1);
-    const mins=$runtime.playedMinutes(perf,minute);
+    const mins=playedMinutes(perf,minute);
     // V3.2.35.56.56: qualsiasi calciatore che chiude SV è sostituibile nel fantacalcio,
     // anche se era titolare reale. Gli eventi decisivi continuano a garantire il voto.
-    if(minute>=90 && mins<rules.minVoteMinutes && !$runtime.decisivePerformance(perf)) return 0;
+    if(minute>=90 && mins<rules.minVoteMinutes && !decisivePerformance(perf)) return 0;
     const choice=$runtime.activeFormationChoice(perf.day||$runtime.state?.season?.currentMatchday||1);
     const doubleEvents=choice?.effect?.kind==='risk_double_events' &&
       String(choice.effect.targetPlayerId||'')===String(perf.playerId);
 
     const eventFactor=doubleEvents?2:1;
 
-    return $runtime.halfPoint(
+    return halfPoint(
       perf.liveVote +
       perf.goals*rules.goalBonus*eventFactor +
       (rules.cesarini?Number(perf.lateGoals||0)*eventFactor:0) +
@@ -727,16 +505,16 @@
     if(!perf || perf.entryMinute>minute){
       return {day:$runtime.state?.season?.currentMatchday||1,playerId:String(player.id),name:player.name,role:player.role,club:player.club,vote:null,fantasy:0,noVote:true,minutes:0,goals:0,assists:0,yellow:0,red:0,ownGoal:0,missedPenalty:0,savedPenalty:0,goalsConceded:0,injury:false};
     }
-    const minutes=$runtime.playedMinutes(perf,minute);
+    const minutes=playedMinutes(perf,minute);
     const rules=$runtime.fantasyRuleForDay(perf.day||$runtime.state?.season?.currentMatchday||1);
-    const noVote=minute>=90 && minutes<rules.minVoteMinutes && !$runtime.decisivePerformance(perf);
+    const noVote=minute>=90 && minutes<rules.minVoteMinutes && !decisivePerformance(perf);
     const cleanSheetBonus=(!noVote && minute>=90 && perf.role==='P' && Number(perf.goalsConceded||0)===0)
       ? Number(rules.cleanSheetBonus||0)
       : 0;
     return {
       ...perf,
-      vote:noVote?null:$runtime.halfPoint(perf.liveVote),
-      fantasy:noVote?0:$runtime.liveFantasyValue(perf,minute),
+      vote:noVote?null:halfPoint(perf.liveVote),
+      fantasy:noVote?0:liveFantasyValue(perf,minute),
       cleanSheetBonus,
       cesariniBonus:!noVote && rules.cesarini?Number(perf.lateGoals||0):0,
       decisiveGoalBonus:!noVote && rules.decisiveGoalBonus?Number(perf.decisiveGoals||0):0,
@@ -784,11 +562,11 @@
     const rule=$runtime.activeAdminRuleEffect(day)?.ruleId;
     if(rule==='golden_bench'){
       const first=performances.find(p=>p.lineupSource==='substitute' && String(p.playerId)===String(substitutions[0]?.inPlayerId||''));
-      if(first && !first.noVote && Number(first.goals)>0){first.goldenBenchBonus=1;first.fantasy=$runtime.halfPoint(Number(first.fantasy||0)+1);if(substitutions[0])substitutions[0].fantasy=first.fantasy;}
+      if(first && !first.noVote && Number(first.goals)>0){first.goldenBenchBonus=1;first.fantasy=halfPoint(Number(first.fantasy||0)+1);if(substitutions[0])substitutions[0].fantasy=first.fantasy;}
     }
     if(rule==='underdog')for(const perf of performances){
       const player=(manager.roster||[]).find(p=>String(p.id)===String(perf.playerId));
-      if(player && perf.lineupSource==='starter' && !perf.noVote && perf.vote!=null && $runtime.currentPlayerOvr(player)<75){perf.underdogBonus=.5;perf.fantasy=$runtime.halfPoint(Number(perf.fantasy||0)+.5);}
+      if(player && perf.lineupSource==='starter' && !perf.noVote && perf.vote!=null && $runtime.currentPlayerOvr(player)<75){perf.underdogBonus=.5;perf.fantasy=halfPoint(Number(perf.fantasy||0)+.5);}
     }
   }
 
@@ -796,7 +574,7 @@
     const formation=savedLineup?.formation||'4-3-3';
     const slotDefs=$runtime.lineupSlots(formation);
     const roster=manager.roster||[];
-    const bench=$runtime.lineupBenchPlayers(manager,savedLineup);
+    const bench=lineupBenchPlayers(manager,savedLineup);
     const usedBench=new Set();
     const substitutions=[];
     let subsUsed=0;
@@ -808,7 +586,7 @@
       const starterId=String(savedLineup?.starters?.[slot.instanceId]||'');
       const starter=roster.find(p=>String(p.id)===starterId);
       if(!starter) return null;
-      const original=$runtime.currentFantasyPerformance(starter,perfMap,minute);
+      const original=currentFantasyPerformance(starter,perfMap,minute);
       if(!original.noVote || minute<90) return {...original,slotId:slot.instanceId,lineupSource:'starter'};
 
       let maxSubs=$runtime.fantasyRuleForDay(original.day||day).maxFantasySubs;
@@ -818,7 +596,7 @@
       const validBench=bench.filter(p=>{
         const id=String(p.id);
         if(usedBench.has(id)) return false;
-        const perf=$runtime.currentFantasyPerformance(p,perfMap,minute);
+        const perf=currentFantasyPerformance(p,perfMap,minute);
         return !perf.noVote;
       });
 
@@ -826,8 +604,8 @@
 
       if(tactic==='best_bench'){
         compatible=compatible.slice().sort((a,b)=>{
-          const af=$runtime.currentFantasyPerformance(a,perfMap,minute).fantasy||0;
-          const bf=$runtime.currentFantasyPerformance(b,perfMap,minute).fantasy||0;
+          const af=currentFantasyPerformance(a,perfMap,minute).fantasy||0;
+          const bf=currentFantasyPerformance(b,perfMap,minute).fantasy||0;
           return bf-af;
         });
       }
@@ -836,8 +614,8 @@
 
       if(!replacement && tactic==='wildcard_sub' && !wildcardUsed){
         replacement=validBench.slice().sort((a,b)=>{
-          const af=$runtime.currentFantasyPerformance(a,perfMap,minute).fantasy||0;
-          const bf=$runtime.currentFantasyPerformance(b,perfMap,minute).fantasy||0;
+          const af=currentFantasyPerformance(a,perfMap,minute).fantasy||0;
+          const bf=currentFantasyPerformance(b,perfMap,minute).fantasy||0;
           return bf-af;
         })[0]||null;
         if(replacement) wildcardUsed=true;
@@ -845,7 +623,7 @@
 
       if(!replacement) return {...original,slotId:slot.instanceId,lineupSource:'starter'};
 
-      const replacementPerf=$runtime.currentFantasyPerformance(replacement,perfMap,minute);
+      const replacementPerf=currentFantasyPerformance(replacement,perfMap,minute);
       usedBench.add(String(replacement.id));
       subsUsed++;
       substitutions.push({
@@ -860,10 +638,10 @@
       };
     }).filter(Boolean);
 
-    $runtime.applyAdminTeamScoring(performances,substitutions,manager,day);
+    applyAdminTeamScoring(performances,substitutions,manager,day);
 
     const captainId=String(savedLineup?.captainId || (manager.id!=='user' && $runtime.leagueRulesFor($runtime.state).captainBonus!=='off'
-      ? $runtime.lineupPlayersForManager(manager,savedLineup).sort((a,b)=>$runtime.cpuLeagueRuleLineupValue(manager,b,day)-$runtime.cpuLeagueRuleLineupValue(manager,a,day))[0]?.id
+      ? lineupPlayersForManager(manager,savedLineup).sort((a,b)=>$runtime.cpuLeagueRuleLineupValue(manager,b,day)-$runtime.cpuLeagueRuleLineupValue(manager,a,day))[0]?.id
       : '') || '');
     const captainRule=$runtime.leagueRulesFor($runtime.state).captainBonus;
     if(captainRule!=='off' && captainId){
@@ -871,7 +649,7 @@
       const threshold=captainRule==='eight'?8:7;
       if(captain && Number(captain.vote)>=threshold){
         captain.captainBonus=captainRule==='eight'?2:1;
-        captain.fantasy=$runtime.halfPoint(captain.fantasy+captain.captainBonus);
+        captain.fantasy=halfPoint(captain.fantasy+captain.captainBonus);
       }
     }
 
@@ -884,17 +662,17 @@
         if(target){
           const riskDelta=$runtime.riskAdjustmentForPerformance(target,day);
           target.riskDelta=riskDelta;
-          target.fantasy=$runtime.halfPoint(Number(target.fantasy||0)+Number(riskDelta||0));
+          target.fantasy=halfPoint(Number(target.fantasy||0)+Number(riskDelta||0));
         }
       }
     }
 
-    let fantasyPoints=$runtime.halfPoint(performances.reduce((s,p)=>s+Number(p.fantasy||0),0));
-    const defenseModifier=$runtime.classicDefenseModifierResult(performances,formation,day,minute);
-    if(defenseModifier.bonus>0) fantasyPoints=$runtime.halfPoint(fantasyPoints+defenseModifier.bonus);
+    let fantasyPoints=halfPoint(performances.reduce((s,p)=>s+Number(p.fantasy||0),0));
+    const defenseModifier=classicDefenseModifierResult(performances,formation,day,minute);
+    if(defenseModifier.bonus>0) fantasyPoints=halfPoint(fantasyPoints+defenseModifier.bonus);
 
     return {
-      managerId:manager.id,team:manager.team,fantasyPoints,fantasyGoals:$runtime.fantasyGoals(fantasyPoints,day),
+      managerId:manager.id,team:manager.team,fantasyPoints,fantasyGoals:fantasyGoals(fantasyPoints,day),
       performances,substitutions,subsUsed,unresolvedSV:performances.filter(p=>p.noVote).length,
       defenseModifierBonus:defenseModifier.bonus,defenseModifierAverage:defenseModifier.average
     };
@@ -904,7 +682,7 @@
     const season=$runtime.ensureSeasonState(); if(!season) return;
     $runtime.applyFantasyMatch(season.standings,match);
   }
-    return Object.freeze({seededSerieRand,halfPoint,buildSerieASchedule,serieAFixtureForPlayer,serieAStrengthRowsForDay,serieAMatchupDifficulty,serieAFixtureCompactText,serieAFixtureFullText,serieAMatchupBadgeHtml,clubPool,rankedClubPlayers,serieAPlayerDayProfile,chooseSerieATacticalShape,buildSerieAClubSelection,baseLivePerformance,lockerVoteModifier,participantWeight,weightedPerformancePick,activePerformances,serieAUnitWeightedAverage,serieATeamUnitProfile,serieAGoalProbability,matchStrength,buildSerieAMatch,serieAClubStrength,selectSerieABigMatch,buildSerieADay,playedMinutes,decisivePerformance,finalizeSerieAMatchRatings,finalizeSerieAPhaseRatings,liveFantasyValue,perfEventText,liveEventBadgesMarkup,performanceText,fantasyGoals,lineupPlayersForManager,currentFantasyPerformance,lineupBenchPlayers,classicDefenseModifierResult,applyAdminTeamScoring,simulateFantasyTeamFromSerieA,updateStandingsFromMatch});
+    return Object.freeze({halfPoint,serieAFixtureCompactText,serieAFixtureFullText,serieAMatchupBadgeHtml,baseLivePerformance,lockerVoteModifier,participantWeight,weightedPerformancePick,activePerformances,serieAGoalProbability,buildSerieAMatch,selectSerieABigMatch,buildSerieADay,playedMinutes,decisivePerformance,finalizeSerieAMatchRatings,finalizeSerieAPhaseRatings,liveFantasyValue,perfEventText,liveEventBadgesMarkup,performanceText,fantasyGoals,lineupPlayersForManager,currentFantasyPerformance,lineupBenchPlayers,classicDefenseModifierResult,applyAdminTeamScoring,simulateFantasyTeamFromSerieA,updateStandingsFromMatch});
   }
   window.FantaDomains ||= {};
   window.FantaDomains['football-engine']=Object.freeze({create});

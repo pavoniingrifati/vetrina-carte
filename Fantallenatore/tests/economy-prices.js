@@ -1,10 +1,10 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const window={};for(const file of ['js/game-rules.js','js/career-engine.js','js/domains/shop-controller.js'])vm.runInNewContext(fs.readFileSync(file,'utf8'),{window,Date,setTimeout:()=>{},document:{querySelectorAll:()=>[]}});
+const window={};for(const file of ['js/game-rules.js','js/career-engine.js','js/domains/career-state.js','js/domains/economy-state.js','js/domains/shop-controller.js'])vm.runInNewContext(fs.readFileSync(file,'utf8'),{window,Date,setTimeout:()=>{},document:{querySelectorAll:()=>[]}});
 const app=fs.readFileSync('app_v302.js','utf8');const items=vm.runInNewContext(app.slice(app.indexOf('  const SHOP_ITEMS = {'),app.indexOf('  const LEAGUE_RULE_DEFAULTS'))+'SHOP_ITEMS');
 const nodes={shopProductModal:{classList:{add:()=>{}},setAttribute:()=>{},querySelector:()=>null},shopProductModalBuy:{dataset:{}},shopProductModalBuyFp:{dataset:{}},shopProductModalPrice:{},shopProductModalImage:{removeAttribute:()=>{}}};
 const rt={state:{career:window.FantaCareerEngine.normalizeCareer({euros:40,fantapoints:200}),season:{shopPurchases:{},consumables:{inventory:{},effects:{},purchaseHistory:[],usageHistory:[]}}},CareerEngine:window.FantaCareerEngine,GAME_CONFIG:window.FantaGameRules.GAME_CONFIG,CAREER_STARTING_EUROS:20,FORMATION_EVENT_CHANCE:.35,SHOP_ITEMS:items,SPONSOR_FREE_SHOP_IDS:['fantadata_pro','scout_plus','assistant_coach'],$:id=>nodes[id],escapeHtml:String,saveState:()=>{},showToast:()=>{},renderLeagueShopScreen:()=>{}};
-rt.ensureSeasonState=()=>rt.state.season;Object.assign(rt,window.FantaDomains['shop-controller'].create(rt));Object.assign(rt,{renderCareerWallets:()=>{},animateShopPurchase:()=>{},shopPurchaseOrigin:()=>null});
+rt.ensureSeasonState=()=>rt.state.season;Object.assign(rt,window.FantaDomains['career-state'].create(rt),window.FantaDomains['economy-state'].create(rt),window.FantaDomains['shop-controller'].create(rt));Object.assign(rt,{renderCareerWallets:()=>{},animateShopPurchase:()=>{},shopPurchaseOrigin:()=>null});
 assert.equal(items.fortune.cost,15);assert.equal(items.fortune.fpCost,75);assert.equal(rt.formationEventChance(),.35);rt.state.season.shopPurchases.fortune={};assert.equal(rt.formationEventChance(),.50);
 assert.equal(items.cons_training.cost,10);assert.equal(items.assistant_tactical_pro.fpCost,50);
 const celebrity=items.cons_celebrity;assert.equal(celebrity.cost,20);assert.equal(celebrity.fpCost,100);assert.equal(celebrity.section,'paytowin');

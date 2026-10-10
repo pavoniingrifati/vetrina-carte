@@ -54,24 +54,6 @@
     $runtime.renderFullStandingsSortState();
   }
 
-  function managerById(id) { return $runtime.state?.managers?.find(m=>m.id===id) || null; }
-
-  function currentUserFixture() {
-    const season = $runtime.ensureSeasonState();
-    if (!season) return null;
-    const round = season.schedule[season.currentMatchday-1];
-    return round?.matches?.find(m=>m.homeId==='user' || m.awayId==='user') || null;
-  }
-
-  function userOpponentIdForDay(day=$runtime.ensureSeasonState()?.currentMatchday){
-    const season=$runtime.ensureSeasonState();
-    if(!season || !Number(day)) return null;
-    const round=season.schedule?.[Number(day)-1];
-    const fixture=round?.matches?.find(m=>m.homeId==='user' || m.awayId==='user');
-    if(!fixture) return null;
-    return fixture.homeId==='user' ? fixture.awayId : fixture.homeId;
-  }
-
   function cpuFormationForDay(manager,day=$runtime.ensureSeasonState()?.currentMatchday){
     const forced=$runtime.forcedFormationRuleForDay(day);
     if(forced && (forced==='5-5-5' || String(manager?.id||'')===String($runtime.userOpponentIdForDay(day)||''))) return forced;
@@ -567,7 +549,7 @@
     if($runtime.$('topAssistsList')) $runtime.$('topAssistsList').innerHTML=leaderRows('assists');
     $runtime.wireSeasonPlayerButtons($runtime.$('leagueStandingsScreen'));
   }
-    return Object.freeze({sortedStandings,sortedFullStandingsForView,renderFullStandingsSortState,setLeagueStandingsSort,managerById,currentUserFixture,userOpponentIdForDay,cpuFormationForDay,pendingBigMatchContext,pendingPartialPerformance,pendingPartialFantasySnapshot,pendingPartialPlayerInfo,seasonPlayerStatCards,renderSeasonPlayerModal,closeSeasonPlayerModal,wireSeasonPlayerButtons,renderLeagueNavActive,standardizeLeagueShells,fullStandingsRowsHtml,fullScheduleHtml,renderCalendarDayResults,leagueFullRosterHtml,openLeagueRosterModal,closeLeagueRosterModal,buildLeagueTopXICards,wireLeagueTopXICards,renderLeagueRostersScreen,renderLeagueCalendarScreen,renderCareerHonours,openCareerHonours,renderLeagueStandingsScreen});
+    return Object.freeze({sortedStandings,sortedFullStandingsForView,renderFullStandingsSortState,setLeagueStandingsSort,cpuFormationForDay,pendingBigMatchContext,pendingPartialPerformance,pendingPartialFantasySnapshot,pendingPartialPlayerInfo,seasonPlayerStatCards,renderSeasonPlayerModal,closeSeasonPlayerModal,wireSeasonPlayerButtons,renderLeagueNavActive,standardizeLeagueShells,fullStandingsRowsHtml,fullScheduleHtml,renderCalendarDayResults,leagueFullRosterHtml,openLeagueRosterModal,closeLeagueRosterModal,buildLeagueTopXICards,wireLeagueTopXICards,renderLeagueRostersScreen,renderLeagueCalendarScreen,renderCareerHonours,openCareerHonours,renderLeagueStandingsScreen});
   }
   window.FantaDomains ||= {};
   window.FantaDomains['league-views']=Object.freeze({create});

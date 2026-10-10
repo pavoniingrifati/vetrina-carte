@@ -88,21 +88,6 @@
     return season.playerOvrDevelopment[id] ||= {delta:0,progress:0,lastDay:0,history:[]};
   }
 
-  function currentPlayerOvr(player){
-    if(!player)return 0;
-    const base=Number(player.ovr||player.overall||0);
-    const season=$runtime.state?.season?.started?$runtime.state.season:null;
-    const delta=Number(season?.playerOvrDevelopment?.[String(player.id)]?.delta||0);
-    return $runtime.clamp(base+delta,50,99);
-  }
-
-  function playerOvrLabel(player){
-    const current=$runtime.currentPlayerOvr(player);
-    const base=Number(player?.ovr||player?.overall||current);
-    const delta=current-base;
-    return `${current}${delta?` (${delta>0?'+':''}${delta})`:''}`;
-  }
-
   function applyPlayerOvrChange(player,amount,day,reason,type='form'){
     const season=$runtime.ensureSeasonState();
     if(!season||!player||!amount)return null;
@@ -364,7 +349,7 @@
     const change=vote>=7?1:effect.kind==='locker_turnaround' && vote<6?-1:0;
     if(change && $runtime.applyPlayerOvrChange(player,change,day,`${$runtime.activeFormationChoice(day).title}: voto ${vote}`,'locker_event')) season.lockerOvrAwarded[id]=true;
   }
-    return Object.freeze({updatePersistentPlayerStatuses,updatePlayerSeasonStatsFromLive,playerOvrDevelopment,currentPlayerOvr,playerOvrLabel,applyPlayerOvrChange,updatePlayerOvrEvolution,updateSerieASeasonWorld,applyLockerRoomOvrOutcome});
+    return Object.freeze({updatePersistentPlayerStatuses,updatePlayerSeasonStatsFromLive,playerOvrDevelopment,applyPlayerOvrChange,updatePlayerOvrEvolution,updateSerieASeasonWorld,applyLockerRoomOvrOutcome});
   }
   window.FantaDomains ||= {};
   window.FantaDomains['player-development']=Object.freeze({create});

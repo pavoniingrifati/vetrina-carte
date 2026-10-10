@@ -4,34 +4,6 @@
   function create($runtime){
     const releaseTableState={sort:'role',direction:1,query:'',role:''};
     if(!$runtime) throw new TypeError('Runtime richiesto: career-market-controller');
-  function ensurePlayerSeasonSystems(season){
-    if(!season || $runtime.initializedSeasonSystems.has(season)) return;
-    if(!season.playerSeasonStats || typeof season.playerSeasonStats!=='object') season.playerSeasonStats={};
-    if(!season.playerStatus || typeof season.playerStatus!=='object') season.playerStatus={};
-    if(!season.simDataUpdatedDays || typeof season.simDataUpdatedDays!=='object') season.simDataUpdatedDays={};
-
-    (window.FANTA_PLAYERS||[]).forEach(player=>{
-      const id=String(player.id);
-      if(!season.playerSeasonStats[id]) season.playerSeasonStats[id]=$runtime.emptyPlayerSeasonStat(player);
-      if(!season.playerStatus[id]) season.playerStatus[id]={injuryUntil:0,suspensionUntil:0,yellowAccum:0,lastReason:''};
-    });
-
-    if(!Array.isArray(season.serieAStandings) || season.serieAStandings.length!==(window.FANTA_CLUBS||[]).length){
-      season.serieAStandings=$runtime.freshSerieAStandings();
-      Object.values(season.serieAResults||{}).sort((a,b)=>Number(a.day||0)-Number(b.day||0)).forEach(result=>{
-        $runtime.updateSerieAStandingsFromStoredMatches(season,result.matches||[]);
-      });
-    }
-    $runtime.initializedSeasonSystems.add(season);
-  }
-
-  function playerSeasonStat(playerId){
-    const season=$runtime.state?.season;
-    if(!season) return null;
-    $runtime.ensurePlayerSeasonSystems(season);
-    return season.playerSeasonStats[String(playerId)]||null;
-  }
-
   function ensureSerieATransferMarket(source=$runtime.state){
     if(!source) return $runtime.TransferEngine.createMarketState('career');
     if(!source.transferMarket || typeof source.transferMarket!=='object'){
@@ -932,42 +904,6 @@
 
   function closeWinterTransferSummary(){ $runtime.$('winterTransferModal')?.classList.add('hidden'); }
 
-  function playerSeasonStatus(playerId){
-    const season=$runtime.state?.season;
-    if(!season) return {injuryUntil:0,suspensionUntil:0,yellowAccum:0,lastReason:''};
-    $runtime.ensurePlayerSeasonSystems(season);
-    return season.playerStatus[String(playerId)]||{injuryUntil:0,suspensionUntil:0,yellowAccum:0,lastReason:''};
-  }
-
-  function playerStatusForDay(playerId,day){
-    const canonical=$runtime.playerMap.get(String(playerId));
-    if(canonical?.marketStatus==='abroad' || canonical?.club==='estero'){
-      return {unavailable:true,type:'abroad',label:'FUORI SERIE A',className:'abroad'};
-    }
-    const status=$runtime.playerSeasonStatus(playerId);
-    const d=Number(day||$runtime.state?.season?.currentMatchday||1);
-    if(Number(status.injuryUntil||0)>=d){
-      return {unavailable:true,type:'injury',label:`INFORTUNATO · rientro G${Number(status.injuryUntil)+1}`,className:'injured'};
-    }
-    if(Number(status.suspensionUntil||0)>=d){
-      return {unavailable:true,type:'suspension',label:`SQUALIFICATO · rientro G${Number(status.suspensionUntil)+1}`,className:'suspended'};
-    }
-    return {unavailable:false,type:'available',label:'DISPONIBILE',className:'available'};
-  }
-
-  function playerFormMetrics(playerId){
-    const stat=$runtime.playerSeasonStat(playerId);
-    const recent=(stat?.recent||[]).filter(x=>Number.isFinite(Number(x.vote))).slice(-5);
-    if(!recent.length) return {count:0,avg:6,trend:0,arrow:'→',className:'neutral',score:0,recent:[]};
-    const avg=recent.reduce((s,x)=>s+Number(x.vote),0)/recent.length;
-    const previous=recent.length>1?recent.slice(0,-1).reduce((s,x)=>s+Number(x.vote),0)/(recent.length-1):avg;
-    const trend=Number(recent[recent.length-1].vote)-previous;
-    const arrow=trend>.22?'↑':trend<-.22?'↓':'→';
-    const className=trend>.22?'up':trend<-.22?'down':'neutral';
-    const score=$runtime.clamp((avg-6)*1.45 + trend*.42,-1.6,1.6);
-    return {count:recent.length,avg,trend,arrow,className,score,recent};
-  }
-
   function qualitativeFormLabel(form){
     if(!form?.count) return 'FORMA N/D';
     if(Number(form.avg)>=6.5 || Number(form.score)>=.45) return '🔥 IN FORMA';
@@ -1005,19 +941,7 @@
     return $runtime.sortStandings(season.serieAStandings);
   }
 
-  function updateSerieAStandingsFromStoredMatches(season,matches){
-    if(!season?.serieAStandings) return;
-    $runtime.applyClubMatches(season.serieAStandings,matches);
-  }
-
-  function seasonPlayerOwner(playerId){
-    for(const manager of $runtime.state?.managers||[]){
-      const item=(manager.roster||[]).find(p=>String(p.id)===String(playerId));
-      if(item) return {manager,item};
-    }
-    return null;
-  }
-    return Object.freeze({ensurePlayerSeasonSystems,playerSeasonStat,ensureSerieATransferMarket,syncSerieATransferWorld,serieATransferStatsSnapshot,ensureMisterJunior,addMisterJuniorToWinterPlan,generateSerieATransferWindowPlan,registerSerieATransferWindowPlan,completedSeasonUserPosition,careerSeasonOutcome,completedUserSeasonRecap,recordUserAuctionPick,finalizeCompletedSeasonOvrBases,ensureNextSeasonFlow,nextSeasonSummerPlan,archiveCompletedSeasonIfNeeded,renderNextSeasonFlow,simulateNextSeasonSummerMarket,renderSeasonKeeperChoice,applySeasonKeeper,buildNextSeasonCareerDraft,openNextSeasonAuctionSetup,handleNextSeasonPrimaryAction,winterExpectedWindowId,winterMarketPlan,createWinterBudgetLedger,winterLedgerFor,expectedWinterBudget,ensureWinterMarketFlow,activateWinterTransferWindowIfNeeded,winterTransferOperationMarkup,settleWinterMarketFinances,simulateWinterMarket,renderWinterMarketIntro,renderWinterMarketSummary,cpuWinterReleaseScore,releaseWinterPlayer,processCpuWinterReleases,openWinterReleases,useGuaranteedWinterSale,toggleGuaranteedWinterSaleMode,renderWinterReleaseScreen,toggleWinterRelease,confirmWinterReleases,startWinterRepairAuction,routeWinterMarketFlow,showPendingWinterTransferSummary,closeWinterTransferSummary,playerSeasonStatus,playerStatusForDay,playerFormMetrics,qualitativeFormLabel,visibleFormLabel,visibleNewsDetail,playerAvailabilityText,sortedSerieAStandings,updateSerieAStandingsFromStoredMatches,seasonPlayerOwner});
+    return Object.freeze({ensureSerieATransferMarket,syncSerieATransferWorld,serieATransferStatsSnapshot,ensureMisterJunior,addMisterJuniorToWinterPlan,generateSerieATransferWindowPlan,registerSerieATransferWindowPlan,completedSeasonUserPosition,careerSeasonOutcome,completedUserSeasonRecap,recordUserAuctionPick,finalizeCompletedSeasonOvrBases,ensureNextSeasonFlow,nextSeasonSummerPlan,archiveCompletedSeasonIfNeeded,renderNextSeasonFlow,simulateNextSeasonSummerMarket,renderSeasonKeeperChoice,applySeasonKeeper,buildNextSeasonCareerDraft,openNextSeasonAuctionSetup,handleNextSeasonPrimaryAction,winterExpectedWindowId,winterMarketPlan,createWinterBudgetLedger,winterLedgerFor,expectedWinterBudget,ensureWinterMarketFlow,activateWinterTransferWindowIfNeeded,winterTransferOperationMarkup,settleWinterMarketFinances,simulateWinterMarket,renderWinterMarketIntro,renderWinterMarketSummary,cpuWinterReleaseScore,releaseWinterPlayer,processCpuWinterReleases,openWinterReleases,useGuaranteedWinterSale,toggleGuaranteedWinterSaleMode,renderWinterReleaseScreen,toggleWinterRelease,confirmWinterReleases,startWinterRepairAuction,routeWinterMarketFlow,showPendingWinterTransferSummary,closeWinterTransferSummary,qualitativeFormLabel,visibleFormLabel,visibleNewsDetail,playerAvailabilityText,sortedSerieAStandings});
   }
   window.FantaDomains ||= {};
   window.FantaDomains['career-market-controller']=Object.freeze({create});

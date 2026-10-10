@@ -20,6 +20,7 @@ const userOpponentIdForDay=day=>state?.season?.schedule?.[day-1]?.matches?.find(
  :state?.season?.schedule?.[day-1]?.matches?.find(m=>m.awayId==='user')?.homeId;
 const careerHash=value=>{let h=2166136261;for(const c of String(value))h=Math.imul(h^c.charCodeAt(0),16777619);return(h>>>0)/4294967296};
 const saveState=()=>{saveCalls++;return true};
+${app.match(/  function onMatchdayEventsChanged\([^\n]+/)[0]}
 const generateOpponentMalusOption=(day,opponent)=>({id:'malus-'+day,effect:{kind:'malus_vote',targetPlayerId:'target'},text:'Malus del tuo prossimo avversario'});
 ${section('const PERSONALITIES = [','let state = null;')}
 ${section('function freshRivalIdentityPool(','function freshState(')}

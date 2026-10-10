@@ -1,3 +1,54 @@
+# Confini tra dominio e applicazione
+
+Il manifest `js/domains/manifest.json` dichiara per ciascun modulo `layer: domain` oppure `layer: application`. Il livello di dominio contiene 17 servizi e 151 funzioni: il suo grafo di dipendenze è aciclico e non dipende dai controller dell'applicazione. Il test `tests/domain-layer-boundaries.js` blocca cicli, proprietà duplicate, dipendenze verso l'applicazione, accessi al DOM, timer e persistenza nei servizi di dominio.
+
+| Responsabilità | Servizi di dominio |
+|---|---|
+| Carriera, allenatori e normalizzazione della stagione | `career-state`, `season-state`, `league-state` |
+| Statistiche, disponibilità e OVR | `player-season-state` |
+| Relazioni e valutazioni dell'asta | `auction-state`, `auction-policy`, `auction-analysis-policy` |
+| Acquisti, consumabili e stato social | `economy-state`, `social-state` |
+| Effetti giornalieri e previsioni | `matchday-policy`, `expert-policy` |
+| Geometria, valori e assistente della formazione | `lineup-evaluation`, `assistant-evaluation`, `cpu-lineup-evaluation` |
+| Selezione delle squadre reali e simulazione | `football-selection`, `football-engine` |
+| Snapshot e lettura dello stato della diretta | `live-state` |
+
+I controller dell'applicazione gestiscono schermate, interazioni, timer e persistenza. Le regole non devono essere aggiunte ai controller o al file principale. I controller possono usare i servizi di dominio; il percorso inverso è vietato. Rimangono richiami incrociati tra i controller per coordinare i flussi dell'interfaccia: il grafo dell'intera applicazione non è aciclico e questa modifica non rende ogni schermata autonoma.
+
+`app_v302.js` è il punto di composizione: collega le API pubbliche e lo stato mediante accessori vivi. Non si cattura una copia dello stato durante la costruzione delle factory, così caricamento e cambio carriera continuano a funzionare. I collaboratori interni ai servizi vengono chiamati direttamente; non passano più dai getter del file principale. Le dipendenze esterne effettivamente utilizzate devono coincidere con il contratto nel manifest.
+
+La generazione di un malus conserva il comportamento precedente e pubblica `onMatchdayEventsChanged`. Il servizio non conosce il save manager: il punto di composizione gestisce questa notifica chiamando `saveState`. Un altro ambiente può collegare un adattatore diverso senza caricare UI o persistenza. La notifica avviene solo quando viene creato un nuovo evento, mantenendo l'idempotenza delle letture successive.
+
+Il timer dell’asta pubblica gli eventi sincroni `tick` ed `expired` attraverso `js/auction-clock-events.js`. Non importa né richiama la vista della stanza o il controller di aggiudicazione. I subscriber sono registrati nel punto di composizione: aggiornano la vista e aggiudicano dopo che il timer ha fermato gli intervalli. Le callback leggono i binding correnti, anche nelle simulazioni che sostituiscono i renderer. `tests/auction-clock-events.js` verifica isolamento dei canali, cancellazione della sottoscrizione, ordine degli effetti e scadenza senza controller o DOM. Il timer esce dal componente ciclico dei controller, che rimane composto da 23 moduli.
+
+La separazione conserva schema e namespace dei salvataggi, algoritmi e ordine di inizializzazione. `auction-policy` passa da 73 a 38 dipendenze esterne; `football-engine` da 63 a 28. Il calendario reale viene inizializzato da `season-state`, mentre la selezione dei giocatori appartiene a `football-selection`: stimare una formazione non richiede il controller della formazione né un motore che dipenda a sua volta dall'assistente.
+
+## Verifiche
+
+Dalla directory `Fantallenatore`:
+
+```sh
+node tests/domain-layer-boundaries.js
+node tests/domain-integration.js
+```
+
+Il primo controllo verifica i confini e prova che il guardiano rifiuti nuovi cicli e dipendenze verso i controller. Verifica anche costruzione delle factory senza letture anticipate e sostituzione dello stato senza DOM. Il secondo carica i moduli reali e confronta nove giornate con la baseline V223.
+
+I test che compongono direttamente i controller di negozio e social caricano anche i servizi di stato necessari, senza aggiungere copie delle regole. I test legacy che ricostruiscono funzioni isolate restano diagnostici; non sostituiscono i test delle factory reali o del browser.
+
+## Esito della verifica sul refactoring
+
+- 78 script core passati su 78, compresi i controlli dei confini e delle notifiche del timer.
+
+- I due difetti preesistenti del test sono corretti: `sponsors-update.js` riceve il vero motore carriera nel contesto; il controllo dei corpi dell’asta usa una nuova baseline delle 89 funzioni acquisita dalla copia originale del commit `c0189f73`, conservando la fixture V256. Le sole normalizzazioni consentite sono i prefissi degli accessori, le pubblicazioni di presentazione e le tre notifiche del timer, verificate anche dal test comportamentale dedicato.
+- 42 scenari Chromium passati su sette viewport: avvio, chiamata, asta, analisi, formazione e diretta. Il runner è stato eseguito su una copia temporanea degli stessi sorgenti per conservare i report e gli screenshot già tracciati; è stata verificata l'identità dei sorgenti dell'applicazione.
+- Integrità verificata sulle 701 funzioni originali, normalizzando i prefissi degli accessori: le modifiche ai corpi sono la sostituzione di `saveState` con la notifica dell’evento e le tre notifiche sincrone del timer. Il controllo di integrazione mantiene i nove risultati della baseline V223.
+- Le simulazioni competitive complete delle aste non sono state rieseguite; la suite core include i controlli del runtime e delle politiche dell'asta.
+
+## Documentazione degli interventi precedenti
+
+Le sezioni seguenti descrivono le versioni precedenti; le quantità storiche non rappresentano la distribuzione attuale delle funzioni.
+
 # Architettura V257
 
 Il file principale è passato da 16.233 a 5.385 righe e da 774 a 74 funzioni dichiarate. Le 700 funzioni estratte hanno un proprietario esplicito in 30 moduli. I file sono script locali: funzionano senza fetch e senza build JavaScript.

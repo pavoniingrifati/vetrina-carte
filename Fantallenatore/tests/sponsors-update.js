@@ -29,7 +29,7 @@ const app=require('./helpers/production-source').readProductionSource();
 const between=(a,b)=>{const from=app.indexOf(`  function ${a}(`),to=app.indexOf(`  function ${b}(`,from);assert(from>=0&&to>from);return app.slice(from,to)};
 const player={id:'a',role:'A',name:'Attaccante'},other={id:'b',role:'D',name:'Difensore'};
 const user={id:'user',roster:[player,other]};
-const dayContext={state:{season:{sponsor:{id:'fantacana'},currentMatchday:1}},
+const dayContext={window:context.window,state:{season:{sponsor:{id:'fantacana'},currentMatchday:1}},
   ensureSeasonState:()=>dayContext.state.season,activeAdminRuleEffect:()=>null,managerById:()=>user,
   lineupSlots:()=>[{instanceId:'d1',role:'D'},{instanceId:'a1',role:'A'}],
   allowedLineupFormation:()=>true,adminBlockedStarterForManager:()=>null,
@@ -46,7 +46,7 @@ dayContext.state.season.sponsor.id='win_bonus';
 assert.strictEqual(dayContext.adminWildcardStartingSlotLimit(),0);
 assert.strictEqual(dayContext.normalizeSavedLineup({formation:'4-3-3',starters:{d1:'a'}},user).starters.d1,undefined);
 
-const fpContext={state:{career:{seasonNumber:1,fantapoints:0,totalFantapointsEarned:0,fantapointsHistory:[]}},
+const fpContext={window:context.window,CareerEngine:E,state:{career:{seasonNumber:1,fantapoints:0,totalFantapointsEarned:0,fantapointsHistory:[]}},
   ensureCareerEconomy:()=>fpContext.state.career,careerFantapoints:()=>fpContext.state.career.fantapoints};
 vm.runInNewContext(between('grantMatchdayFantapoints','careerDivisionLabel'),fpContext);
 const bonusDay={matches:[{homeId:'user',awayId:'cpu',homeScore:2,awayScore:0}]};
