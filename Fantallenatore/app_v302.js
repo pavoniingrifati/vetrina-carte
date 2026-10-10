@@ -29,8 +29,12 @@
   const CareerEngine=window.FantaCareerEngine;
   const AuctionEngine=window.FantaAuctionEngine;
 
+  // Domain change notification is handled at the application boundary.
+  function onMatchdayEventsChanged(){ return saveState(); }
+
+  const auctionClockEvents = window.FantaAuctionClockEvents.create();
   // DOMAIN_BINDINGS_BEGIN
-  // The shell owns shared state; domain modules own behavior. Accessors stay live after reload or test overrides.
+  // Application composition root: only external collaborators and live state cross service boundaries.
   let {comparableAuctionFvm,careerMarketProfiles,buildMarketValueMap,refreshMarketValueMap,baseAuctionValue,roleSpend,targetFor,cpuLeagueRuleSensitivity,cpuLeagueRuleAuctionFactor,scarcityFactor,freePerSlot,wealthFactor,urgencyFactor,cpuRoleUrgencyState,hasGoodRelations,isHotRival,needFactor,auctionReputationMultiplier,buildSeasonAuctionReputation,cpuAuctionCompetence,cpuAuctionRoleQuality,cpuAuctionStarterEstimate,cpuFootballAuctionFactor,cpuCoverageEnabled,cpuClubRoleHierarchy,cpuMainKeeper,cpuCoverInfo,cpuMissingKeeperCover,cpuKeeperReserve,cpuOpenRoleSpendingCap,cpuAuctionSpendingCap,strategicPlayerScore,strategicSlotInterest,cpuBundleLimit,cpuLimit,jumpSize,cpuPersonalityPool,pickCpuPersonalities,freshManagers}=window.FantaDomains['auction-policy'].create({
     get AuctionEngine(){return AuctionEngine;},
     get GAME_CONFIG(){return GAME_CONFIG;},
@@ -47,64 +51,29 @@
     get TOTAL_SLOTS(){return TOTAL_SLOTS;},
     get auctionEffects(){return auctionEffects;},
     get auctionPlayerAnalysis(){return auctionPlayerAnalysis;},
-    get auctionReputationMultiplier(){return auctionReputationMultiplier;},
     get auctionStarterProbability(){return auctionStarterProbability;},
-    get baseAuctionValue(){return baseAuctionValue;},
     get basePlayerValueReference(){return basePlayerValueReference;},
     get baseSerieAPlayers(){return baseSerieAPlayers;},
-    get buildMarketValueMap(){return buildMarketValueMap;},
     get canOwn(){return canOwn;},
     get careerHash(){return careerHash;},
-    get careerMarketProfiles(){return careerMarketProfiles;},
     get clamp(){return clamp;},
     get clubRoleStarterSlots(){return clubRoleStarterSlots;},
-    get comparableAuctionFvm(){return comparableAuctionFvm;},
-    get cpuAuctionCompetence(){return cpuAuctionCompetence;},
-    get cpuAuctionRoleQuality(){return cpuAuctionRoleQuality;},
-    get cpuAuctionSpendingCap(){return cpuAuctionSpendingCap;},
-    get cpuAuctionStarterEstimate(){return cpuAuctionStarterEstimate;},
-    get cpuBundleLimit(){return cpuBundleLimit;},
-    get cpuClubRoleHierarchy(){return cpuClubRoleHierarchy;},
-    get cpuCoverInfo(){return cpuCoverInfo;},
-    get cpuCoverageEnabled(){return cpuCoverageEnabled;},
-    get cpuFootballAuctionFactor(){return cpuFootballAuctionFactor;},
-    get cpuKeeperReserve(){return cpuKeeperReserve;},
-    get cpuLeagueRuleAuctionFactor(){return cpuLeagueRuleAuctionFactor;},
-    get cpuLeagueRuleSensitivity(){return cpuLeagueRuleSensitivity;},
-    get cpuLimit(){return cpuLimit;},
-    get cpuMainKeeper(){return cpuMainKeeper;},
-    get cpuMissingKeeperCover(){return cpuMissingKeeperCover;},
-    get cpuOpenRoleSpendingCap(){return cpuOpenRoleSpendingCap;},
-    get cpuPersonalityPool(){return cpuPersonalityPool;},
-    get cpuRoleUrgencyState(){return cpuRoleUrgencyState;},
     get currentAuctionRole(){return currentAuctionRole;},
     get currentPlayerOvr(){return currentPlayerOvr;},
-    get freePerSlot(){return freePerSlot;},
     get freshRivalIdentityPool(){return freshRivalIdentityPool;},
-    get hasGoodRelations(){return hasGoodRelations;},
-    get isHotRival(){return isHotRival;},
     get leagueRulesFor(){return leagueRulesFor;},
     get marketValueMap(){return marketValueMap;}, set marketValueMap(value){marketValueMap=value;},
     get maxLegalBid(){return maxLegalBid;},
-    get needFactor(){return needFactor;},
     get normalizedStarterProbability(){return normalizedStarterProbability;},
     get openRoleAuction(){return openRoleAuction;},
-    get pickCpuPersonalities(){return pickCpuPersonalities;},
     get playerMap(){return playerMap;},
     get profileArchetype(){return profileArchetype;},
     get relationship(){return relationship;},
     get roleSlotsRemaining(){return roleSlotsRemaining;},
-    get roleSpend(){return roleSpend;},
-    get scarcityFactor(){return scarcityFactor;},
     get slotRankingCache(){return slotRankingCache;},
     get slotsRemaining(){return slotsRemaining;},
     get starterHierarchyBias(){return starterHierarchyBias;},
     get state(){return state;},
-    get strategicPlayerScore(){return strategicPlayerScore;},
-    get strategicSlotInterest(){return strategicSlotInterest;},
-    get targetFor(){return targetFor;},
-    get urgencyFactor(){return urgencyFactor;},
-    get wealthFactor(){return wealthFactor;}
   });
   let {freshState,showPersistenceError,saveState,showToast,saveWithFeedback,stopGameRuntime,migrateRarityHunterPurchase,migrateCareerDivisionScale,normalizeSavedState,parseStoredPayload,loadSaved,clearSaved,initializeSaveSystem}=window.FantaDomains['persistence-controller'].create({
     get $(){return $;},
@@ -150,13 +119,13 @@
     get snapshotSerieALive(){return snapshotSerieALive;},
     get state(){return state;},
     get stopHubNewsCarousel(){return stopHubNewsCarousel;},
-    get toastTimer(){return toastTimer;}, set toastTimer(value){toastTimer=value;}
+    get toastTimer(){return toastTimer;}, set toastTimer(value){toastTimer=value;},
   });
   let {playerSeasonPotentialProfile,clubRoleStarterSlots,starterHierarchyBias,normalizedStarterProbability,auctionStarterProbability,auctionPlayerAnalysis}=window.FantaDomains['auction-analysis-policy'].create({
     get careerHash(){return careerHash;},
     get clamp(){return clamp;},
     get clubMap(){return clubMap;},
-    get state(){return state;}
+    get state(){return state;},
   });
   let {renderAll,renderPhaseBanner,renderRoster,managerLiveAuctionBadges,buildLeagueManagerCards,renderManagers,averageRosterValue,renderTurn,nominationSort,openNominationModal,closeNominationModal,renderNominationClubFilter,nominationCard,auctionObserverActive,renderPlayerResults,renderAuctionRoomList,auctionBundlePlayerMarkup,renderAuction}=window.FantaDomains['auction-views'].create({
     get $(){return $;},
@@ -204,14 +173,14 @@
     get roleSlotsRemaining(){return roleSlotsRemaining;},
     get roleSpend(){return roleSpend;},
     get roleSpendPct(){return roleSpendPct;},
-    get state(){return state;}
+    get state(){return state;},
   });
   let {auctionWindowMs,clearAuctionRuntimeTimers,renderCountdown,startCountdownTicker,resetBidClock,nextDelay,cpuNominationDelay,cpuReactionDelay}=window.FantaDomains['auction-clock'].create({
+    get auctionClockEvents(){return auctionClockEvents;},
     get $(){return $;},
     get BID_WINDOW_MS(){return BID_WINDOW_MS;},
     get autocompleteMode(){return autocompleteMode;}, set autocompleteMode(value){autocompleteMode=value;},
     get awardAnimationTimer(){return awardAnimationTimer;}, set awardAnimationTimer(value){awardAnimationTimer=value;},
-    get awardAuction(){return awardAuction;},
     get bidFlashTimer(){return bidFlashTimer;}, set bidFlashTimer(value){bidFlashTimer=value;},
     get bidSpotlightTimer(){return bidSpotlightTimer;}, set bidSpotlightTimer(value){bidSpotlightTimer=value;},
     get clamp(){return clamp;},
@@ -223,10 +192,9 @@
     get isHotRival(){return isHotRival;},
     get playerMap(){return playerMap;},
     get profileArchetype(){return profileArchetype;},
-    get renderAuctionRoomList(){return renderAuctionRoomList;},
     get state(){return state;},
     get suddenInterestTimer(){return suddenInterestTimer;}, set suddenInterestTimer(value){suddenInterestTimer=value;},
-    get uiTimer(){return uiTimer;}, set uiTimer(value){uiTimer=value;}
+    get uiTimer(){return uiTimer;}, set uiTimer(value){uiTimer=value;},
   });
   let {prepareArcadeAuction,renderArcadeBanner,showArcadeModal,resolveSealedAuction,handleArcadeAction}=window.FantaDomains['auction-arcade-controller'].create({
     get $(){return $;},
@@ -252,7 +220,7 @@
     get renderAuction(){return renderAuction;},
     get saveState(){return saveState;},
     get state(){return state;},
-    get strategicPlayerScore(){return strategicPlayerScore;}
+    get strategicPlayerScore(){return strategicPlayerScore;},
   });
   let {flashBidder,bidReaction,bidCommentMoment,showBidSpotlight,showAwardAnimation,hideAwardAnimation,awardLossReactionData,showAwardLossReaction}=window.FantaDomains['auction-feedback'].create({
     get $(){return $;},
@@ -273,7 +241,7 @@
     get playerInitials(){return playerInitials;},
     get profileArchetype(){return profileArchetype;},
     get renderAuctionRoomList(){return renderAuctionRoomList;},
-    get state(){return state;}
+    get state(){return state;},
   });
   let {ensureManagerTeamIdentityState,ensureAuctionPowers,auctionPowerMaxUses,auctionPowerUses,consumeAuctionPower,canUseOneShot,renderAuctionPowers,auctionPowerTargets,pauseForAuctionPower,resumeAfterAuctionPower,openAuctionPower,useScoutPower,closeAuctionPowerModal,resolveAuctionPowerTarget,useBluffPower,useOneShotPower}=window.FantaDomains['auction-powers-controller'].create({
     get $(){return $;},
@@ -295,7 +263,7 @@
     get renderCountdown(){return renderCountdown;},
     get saveState(){return saveState;},
     get showToast(){return showToast;},
-    get state(){return state;}
+    get state(){return state;},
   });
   let {addAuctionLog,nominate,scheduleAdvance,adminOneShotScore,tryAdminOneShot,beginBidRound,currentSuddenInterestEffect,activateSuddenInterest,scheduleSuddenInterestEntry,scheduleCpuReactions,cpuReact,advanceAuction,autoUserLimit,userBid,fastForwardCpuAuctionAfterUserPass,userPass,userCannotBeatCurrentAuction,autoSkipUserIfCannotBid,awardAuction,nominationCallCount,registerNominationCall,nextNominatorIndex,allRostersComplete,scheduleNomination,cpuNominateCurrent,freeRoleNominationWeights,chooseNomination,finishAuction}=window.FantaDomains['auction-controller'].create({
     get AuctionEngine(){return AuctionEngine;},
@@ -375,7 +343,7 @@
     get tickAuctionEventEffectsOnNomination(){return tickAuctionEventEffectsOnNomination;},
     get uiTimer(){return uiTimer;}, set uiTimer(value){uiTimer=value;},
     get userCompletedCurrentRole(){return userCompletedCurrentRole;},
-    get winterLedgerFor(){return winterLedgerFor;}
+    get winterLedgerFor(){return winterLedgerFor;},
   });
   let {currentTradeWindow,tradeOfferSelection,tradeOfferValid,tradeAvailabilityFactor,tradeLineupStrength,tradePlayerWorth,tradeCpuDecision,completeTrade,tradeActiveKind,tradeCreditsValue,tradeSetSelection,adjustTradeCredits,tradeRosterPlayerMarkup,tradePlayerCardMarkup,tradeFilteredRoster,renderTradeRosterChoices,renderTradeWindow,submitTradeOffer,acceptTradeCounter,finishTradeWindow,leagueRoleAverage,calibrationStatus,compactLineupPlayerName,bestTheoreticalLineup,bestXIHtml,wireLeagueRosterViewToggles,buildFinalLeagueRosterCards,renderSummary,teamPreviewScore}=window.FantaDomains['trade-roster-controller'].create({
     get $(){return $;},
@@ -433,9 +401,9 @@
     get tradePlayerWorth(){return tradePlayerWorth;},
     get tradeRosterPlayerMarkup(){return tradeRosterPlayerMarkup;},
     get visibleFormLabel(){return visibleFormLabel;},
-    get winterLedgerFor(){return winterLedgerFor;}
+    get winterLedgerFor(){return winterLedgerFor;},
   });
-  let {ensurePlayerSeasonSystems,playerSeasonStat,ensureSerieATransferMarket,syncSerieATransferWorld,serieATransferStatsSnapshot,ensureMisterJunior,addMisterJuniorToWinterPlan,generateSerieATransferWindowPlan,registerSerieATransferWindowPlan,completedSeasonUserPosition,careerSeasonOutcome,completedUserSeasonRecap,recordUserAuctionPick,finalizeCompletedSeasonOvrBases,ensureNextSeasonFlow,nextSeasonSummerPlan,archiveCompletedSeasonIfNeeded,renderNextSeasonFlow,simulateNextSeasonSummerMarket,renderSeasonKeeperChoice,applySeasonKeeper,buildNextSeasonCareerDraft,openNextSeasonAuctionSetup,handleNextSeasonPrimaryAction,winterExpectedWindowId,winterMarketPlan,createWinterBudgetLedger,winterLedgerFor,expectedWinterBudget,ensureWinterMarketFlow,activateWinterTransferWindowIfNeeded,winterTransferOperationMarkup,settleWinterMarketFinances,simulateWinterMarket,renderWinterMarketIntro,renderWinterMarketSummary,cpuWinterReleaseScore,releaseWinterPlayer,processCpuWinterReleases,openWinterReleases,useGuaranteedWinterSale,toggleGuaranteedWinterSaleMode,renderWinterReleaseScreen,toggleWinterRelease,confirmWinterReleases,startWinterRepairAuction,routeWinterMarketFlow,showPendingWinterTransferSummary,closeWinterTransferSummary,playerSeasonStatus,playerStatusForDay,playerFormMetrics,qualitativeFormLabel,visibleFormLabel,visibleNewsDetail,playerAvailabilityText,sortedSerieAStandings,updateSerieAStandingsFromStoredMatches,seasonPlayerOwner}=window.FantaDomains['career-market-controller'].create({
+  let {ensureSerieATransferMarket,syncSerieATransferWorld,serieATransferStatsSnapshot,ensureMisterJunior,addMisterJuniorToWinterPlan,generateSerieATransferWindowPlan,registerSerieATransferWindowPlan,completedSeasonUserPosition,careerSeasonOutcome,completedUserSeasonRecap,recordUserAuctionPick,finalizeCompletedSeasonOvrBases,ensureNextSeasonFlow,nextSeasonSummerPlan,archiveCompletedSeasonIfNeeded,renderNextSeasonFlow,simulateNextSeasonSummerMarket,renderSeasonKeeperChoice,applySeasonKeeper,buildNextSeasonCareerDraft,openNextSeasonAuctionSetup,handleNextSeasonPrimaryAction,winterExpectedWindowId,winterMarketPlan,createWinterBudgetLedger,winterLedgerFor,expectedWinterBudget,ensureWinterMarketFlow,activateWinterTransferWindowIfNeeded,winterTransferOperationMarkup,settleWinterMarketFinances,simulateWinterMarket,renderWinterMarketIntro,renderWinterMarketSummary,cpuWinterReleaseScore,releaseWinterPlayer,processCpuWinterReleases,openWinterReleases,useGuaranteedWinterSale,toggleGuaranteedWinterSaleMode,renderWinterReleaseScreen,toggleWinterRelease,confirmWinterReleases,startWinterRepairAuction,routeWinterMarketFlow,showPendingWinterTransferSummary,closeWinterTransferSummary,qualitativeFormLabel,visibleFormLabel,visibleNewsDetail,playerAvailabilityText,sortedSerieAStandings}=window.FantaDomains['career-market-controller'].create({
     get $(){return $;},
     get GAME_CONFIG(){return GAME_CONFIG;},
     get INITIAL_BUDGET(){return INITIAL_BUDGET;},
@@ -451,9 +419,8 @@
     get addMisterJuniorToWinterPlan(){return addMisterJuniorToWinterPlan;},
     get advanceRealLeague(){return advanceRealLeague;},
     get advanceRolePhaseIfNeeded(){return advanceRolePhaseIfNeeded;},
-    get applyClubMatches(){return applyClubMatches;},
     get archiveCompletedSeasonIfNeeded(){return archiveCompletedSeasonIfNeeded;},
-    get autocompleteMode(){return autocompleteMode;},
+    get autocompleteMode(){return autocompleteMode;}, set autocompleteMode(value){autocompleteMode=value;},
     get baseSerieAPlayers(){return baseSerieAPlayers;},
     get beginRoleRemainderAutoSim(){return beginRoleRemainderAutoSim;},
     get buildNextSeasonCareerDraft(){return buildNextSeasonCareerDraft;},
@@ -467,7 +434,6 @@
     get careerRulesNextAction(){return careerRulesNextAction;}, set careerRulesNextAction(value){careerRulesNextAction=value;},
     get careerSeasonLabel(){return careerSeasonLabel;},
     get careerSeasonOutcome(){return careerSeasonOutcome;},
-    get clamp(){return clamp;},
     get clubName(){return clubName;},
     get clubShort(){return clubShort;},
     get compactLongCareerState(){return compactLongCareerState;},
@@ -495,9 +461,7 @@
     get finalizeCompletedSeasonOvrBases(){return finalizeCompletedSeasonOvrBases;},
     get finishAuction(){return finishAuction;},
     get freshManagers(){return freshManagers;},
-    get freshSerieAStandings(){return freshSerieAStandings;},
     get generateSerieATransferWindowPlan(){return generateSerieATransferWindowPlan;},
-    get initializedSeasonSystems(){return initializedSeasonSystems;},
     get leagueRulesFor(){return leagueRulesFor;},
     get managerById(){return managerById;},
     get nextNominatorIndex(){return nextNominatorIndex;},
@@ -512,7 +476,6 @@
     get playerMap(){return playerMap;},
     get playerOvrLabel(){return playerOvrLabel;},
     get playerSeasonStat(){return playerSeasonStat;},
-    get playerSeasonStatus(){return playerSeasonStatus;},
     get playerStatusForDay(){return playerStatusForDay;},
     get processCpuWinterReleases(){return processCpuWinterReleases;},
     get qualitativeFormLabel(){return qualitativeFormLabel;},
@@ -550,7 +513,6 @@
     get syncSerieATransferWorld(){return syncSerieATransferWorld;},
     get toggleWinterRelease(){return toggleWinterRelease;},
     get updateCareerIdentityControls(){return updateCareerIdentityControls;},
-    get updateSerieAStandingsFromStoredMatches(){return updateSerieAStandingsFromStoredMatches;},
     get useGuaranteedWinterSale(){return useGuaranteedWinterSale;},
     get userCompletedCurrentRole(){return userCompletedCurrentRole;},
     get winterExpectedWindowId(){return winterExpectedWindowId;},
@@ -559,13 +521,12 @@
     get winterMarketPlan(){return winterMarketPlan;},
     get winterMarketSimulationRunning(){return winterMarketSimulationRunning;}, set winterMarketSimulationRunning(value){winterMarketSimulationRunning=value;},
     get winterTransferOperationMarkup(){return winterTransferOperationMarkup;},
-    get wireSeasonPlayerButtons(){return wireSeasonPlayerButtons;}
+    get wireSeasonPlayerButtons(){return wireSeasonPlayerButtons;},
   });
-  let {sortedStandings,sortedFullStandingsForView,renderFullStandingsSortState,setLeagueStandingsSort,managerById,currentUserFixture,userOpponentIdForDay,cpuFormationForDay,pendingBigMatchContext,pendingPartialPerformance,pendingPartialFantasySnapshot,pendingPartialPlayerInfo,seasonPlayerStatCards,renderSeasonPlayerModal,closeSeasonPlayerModal,wireSeasonPlayerButtons,renderLeagueNavActive,standardizeLeagueShells,fullStandingsRowsHtml,fullScheduleHtml,renderCalendarDayResults,leagueFullRosterHtml,openLeagueRosterModal,closeLeagueRosterModal,buildLeagueTopXICards,wireLeagueTopXICards,renderLeagueRostersScreen,renderLeagueCalendarScreen,renderCareerHonours,openCareerHonours,renderLeagueStandingsScreen}=window.FantaDomains['league-views'].create({
-    get PRE_AUCTION_RULE_DEFS(){return PRE_AUCTION_RULE_DEFS;},
-    get leagueRulesFor(){return leagueRulesFor;},
+  let {sortedStandings,sortedFullStandingsForView,renderFullStandingsSortState,setLeagueStandingsSort,cpuFormationForDay,pendingBigMatchContext,pendingPartialPerformance,pendingPartialFantasySnapshot,pendingPartialPlayerInfo,seasonPlayerStatCards,renderSeasonPlayerModal,closeSeasonPlayerModal,wireSeasonPlayerButtons,renderLeagueNavActive,standardizeLeagueShells,fullStandingsRowsHtml,fullScheduleHtml,renderCalendarDayResults,leagueFullRosterHtml,openLeagueRosterModal,closeLeagueRosterModal,buildLeagueTopXICards,wireLeagueTopXICards,renderLeagueRostersScreen,renderLeagueCalendarScreen,renderCareerHonours,openCareerHonours,renderLeagueStandingsScreen}=window.FantaDomains['league-views'].create({
     get $(){return $;},
     get LEAGUE_STANDINGS_DEFAULT_DIRECTION(){return LEAGUE_STANDINGS_DEFAULT_DIRECTION;},
+    get PRE_AUCTION_RULE_DEFS(){return PRE_AUCTION_RULE_DEFS;},
     get ROLE_LABELS(){return ROLE_LABELS;},
     get ROLE_LIMITS(){return ROLE_LIMITS;},
     get ROLE_ORDER(){return ROLE_ORDER;},
@@ -594,8 +555,9 @@
     get fullStandingsRowsHtml(){return fullStandingsRowsHtml;},
     get halfPoint(){return halfPoint;},
     get leagueFullRosterHtml(){return leagueFullRosterHtml;},
+    get leagueRulesFor(){return leagueRulesFor;},
     get leagueStandingsSort(){return leagueStandingsSort;}, set leagueStandingsSort(value){leagueStandingsSort=value;},
-    get lineupPartialContext(){return lineupPartialContext;},
+    get lineupPartialContext(){return lineupPartialContext;}, set lineupPartialContext(value){lineupPartialContext=value;},
     get lineupPlayersForManager(){return lineupPlayersForManager;},
     get managerById(){return managerById;},
     get openLeagueRosterModal(){return openLeagueRosterModal;},
@@ -632,13 +594,11 @@
     get userOpponentIdForDay(){return userOpponentIdForDay;},
     get visibleFormLabel(){return visibleFormLabel;},
     get wireLeagueTopXICards(){return wireLeagueTopXICards;},
-    get wireSeasonPlayerButtons(){return wireSeasonPlayerButtons;}
+    get wireSeasonPlayerButtons(){return wireSeasonPlayerButtons;},
   });
-  let {ensureCareerEconomy,sponsorVisualAsset,sponsorVisualBrand,currentSponsorChoice,currentSponsorOffers,selectSeasonSponsor,selectAcademySponsorPlayer,renderSponsorSelection,seasonSponsorFromChoice,sponsorFreeSubscriptionAvailable,sponsorCanMakeShopItemFree,sortStandingsSnapshot,grantImmediateSponsorBonus,grantBigMatchSponsorReward,grantStreakSponsorReward,grantWinSponsorReward,grantFutureAuctionSponsorBonus,ensureSeasonShop,shopItemActive,careerEuros,careerFantapoints,ensureConsumableState,consumableQuantity,consumableDayEffect,addConsumable,consumeConsumable,totalConsumablesOwned,shopPurchaseOrigin,animateShopPurchase,buyConsumableItem,grantMatchdayFantapoints,careerDivisionLabel,careerPromotionNote,careerSeasonLabel,renderCareerWallets,applyGameConfiguration,formationEventChance,seasonShockChance,formationChoiceRarity,formationChoiceRarityLabel,formationRarityWeights,formationRaritiesUnlocked,specialFormationEventsUnlocked,deterministicFormationTemplateOrder,buyShopItem,shopItemsPerPage,shopItemEffectLine,shopCardHtml,closeShopProductModal,openShopProductModal,renderShopItems}=window.FantaDomains['shop-controller'].create({
+  let {sponsorVisualAsset,sponsorVisualBrand,currentSponsorChoice,currentSponsorOffers,selectSeasonSponsor,selectAcademySponsorPlayer,renderSponsorSelection,seasonSponsorFromChoice,sponsorFreeSubscriptionAvailable,sponsorCanMakeShopItemFree,sortStandingsSnapshot,grantImmediateSponsorBonus,grantBigMatchSponsorReward,grantStreakSponsorReward,grantWinSponsorReward,grantFutureAuctionSponsorBonus,ensureSeasonShop,careerEuros,careerFantapoints,addConsumable,consumeConsumable,totalConsumablesOwned,shopPurchaseOrigin,animateShopPurchase,buyConsumableItem,grantMatchdayFantapoints,careerDivisionLabel,careerPromotionNote,careerSeasonLabel,renderCareerWallets,applyGameConfiguration,formationEventChance,seasonShockChance,formationChoiceRarityLabel,formationRarityWeights,formationRaritiesUnlocked,specialFormationEventsUnlocked,deterministicFormationTemplateOrder,buyShopItem,shopItemsPerPage,shopItemEffectLine,shopCardHtml,closeShopProductModal,openShopProductModal,renderShopItems}=window.FantaDomains['shop-controller'].create({
     get $(){return $;},
-    get CAREER_STARTING_EUROS(){return CAREER_STARTING_EUROS;},
     get CareerEngine(){return CareerEngine;},
-    get FORMATION_CHOICE_RARITY_BY_TEMPLATE(){return FORMATION_CHOICE_RARITY_BY_TEMPLATE;},
     get FORMATION_CHOICE_TEMPLATES(){return FORMATION_CHOICE_TEMPLATES;},
     get FORMATION_EVENT_CHANCE(){return FORMATION_EVENT_CHANCE;},
     get GAME_CONFIG(){return GAME_CONFIG;},
@@ -695,41 +655,28 @@
     get sponsorVisualAsset(){return sponsorVisualAsset;},
     get sponsorVisualBrand(){return sponsorVisualBrand;},
     get state(){return state;},
-    get totalConsumablesOwned(){return totalConsumablesOwned;}
+    get totalConsumablesOwned(){return totalConsumablesOwned;},
   });
-  let {estimatedStarterProbability,scoutStarterBadge,assistantAutoLineupCapabilities,assistantBasePlayerValue,advancedAutoLineupValue,assistantAutoLineupAnalysisHtml,buildAdvancedAutoLineup,bestAdvancedFormation}=window.FantaDomains['assistant-policy'].create({
-    get activeFormationChoice(){return activeFormationChoice;},
+  let {scoutStarterBadge,assistantAutoLineupAnalysisHtml,buildAdvancedAutoLineup,bestAdvancedFormation}=window.FantaDomains['assistant-policy'].create({
     get adaptTacticalProLineup(){return adaptTacticalProLineup;},
     get adminBlockedStarterForManager(){return adminBlockedStarterForManager;},
     get advancedAutoLineupValue(){return advancedAutoLineupValue;},
     get allowedLineupFormation(){return allowedLineupFormation;},
     get assistantAutoLineupCapabilities(){return assistantAutoLineupCapabilities;},
-    get assistantBasePlayerValue(){return assistantBasePlayerValue;},
     get availableLineupFormations(){return availableLineupFormations;},
     get buildAdvancedAutoLineup(){return buildAdvancedAutoLineup;},
-    get careerHash(){return careerHash;},
-    get clamp(){return clamp;},
-    get clubRoleStarterSlots(){return clubRoleStarterSlots;},
-    get currentPlayerOvr(){return currentPlayerOvr;},
     get enforceFaithReserveStarterInLineup(){return enforceFaithReserveStarterInLineup;},
     get enforcePlayerBenchedInLineup(){return enforcePlayerBenchedInLineup;},
     get ensureSeasonState(){return ensureSeasonState;},
     get estimatedStarterProbability(){return estimatedStarterProbability;},
     get lineupCountsForFormation(){return lineupCountsForFormation;},
-    get lineupPlayerValue(){return lineupPlayerValue;},
     get lineupSlots(){return lineupSlots;},
-    get normalizedStarterProbability(){return normalizedStarterProbability;},
-    get playerFormMetrics(){return playerFormMetrics;},
     get playerMap(){return playerMap;},
-    get playerSeasonStat(){return playerSeasonStat;},
     get playerStatusForDay(){return playerStatusForDay;},
-    get serieAMatchupDifficulty(){return serieAMatchupDifficulty;},
     get shopItemActive(){return shopItemActive;},
-    get starterHierarchyBias(){return starterHierarchyBias;},
     get starterReportActive(){return starterReportActive;},
     get state(){return state;},
     get tacticalExpectedLineupPoints(){return tacticalExpectedLineupPoints;},
-    get worldPlayerModifier(){return worldPlayerModifier;}
   });
   let {evolutionPlayerData,evolutionPotentialClass,evolutionHighlightHtml,evolutionPlayerRowHtml,dataCenterContext,dataCenterPremiumHtml,renderDataCenterOverviewPanel,dataCenterPlayerRowHtml,renderDataCenterPlayersPanel,renderDataCenterEvolutionPanel,setDataCenterTab,renderLeagueDataCenterScreen,renderLeagueEvolutionScreen}=window.FantaDomains['datacenter-views'].create({
     get $(){return $;},
@@ -740,7 +687,6 @@
     get clubName(){return clubName;},
     get currentPlayerOvr(){return currentPlayerOvr;},
     get dataCenterContext(){return dataCenterContext;},
-    get dataCenterPlayerRowHtml(){return dataCenterPlayerRowHtml;},
     get dataCenterPremiumHtml(){return dataCenterPremiumHtml;},
     get dataCenterTab(){return dataCenterTab;}, set dataCenterTab(value){dataCenterTab=value;},
     get emptyPlayerSeasonStat(){return emptyPlayerSeasonStat;},
@@ -753,10 +699,10 @@
     get evolutionPlayerRowHtml(){return evolutionPlayerRowHtml;},
     get evolutionPotentialClass(){return evolutionPotentialClass;},
     get managerById(){return managerById;},
+    get playerAvatarMarkup(){return playerAvatarMarkup;},
     get playerFormMetrics(){return playerFormMetrics;},
     get playerOvrLabel(){return playerOvrLabel;},
     get playerSeasonPotentialProfile(){return playerSeasonPotentialProfile;},
-    get playerAvatarMarkup(){return playerAvatarMarkup;},
     get playerSeasonStat(){return playerSeasonStat;},
     get playerStatusForDay(){return playerStatusForDay;},
     get qualitativeFormLabel(){return qualitativeFormLabel;},
@@ -777,9 +723,9 @@
     get showScreen(){return showScreen;},
     get state(){return state;},
     get stopHubNewsCarousel(){return stopHubNewsCarousel;},
-    get wireSeasonPlayerButtons(){return wireSeasonPlayerButtons;}
+    get wireSeasonPlayerButtons(){return wireSeasonPlayerButtons;},
   });
-  let {socialOwnedPlayers,socialHandle,socialPersonality,ensureSocialState,socialConversation,socialMotivationForPlayer,socialRelationLabel,socialMessageTone,socialReactionData,socialReplyText,socialRecordMotivation,socialSendMessage,socialPlayerAvatarHtml,socialConversationPreview,socialStoryHtml,socialConversationRowHtml,socialMessageHtml,renderSocialChat,renderLeagueSocialScreen,sendCurrentSocialMessage,renderLeagueShopScreen}=window.FantaDomains['social-controller'].create({
+  let {socialHandle,socialPersonality,socialConversation,socialRelationLabel,socialMessageTone,socialReactionData,socialReplyText,socialRecordMotivation,socialSendMessage,socialPlayerAvatarHtml,socialConversationPreview,socialStoryHtml,socialConversationRowHtml,socialMessageHtml,renderSocialChat,renderLeagueSocialScreen,sendCurrentSocialMessage,renderLeagueShopScreen}=window.FantaDomains['social-controller'].create({
     get $(){return $;},
     get careerHash(){return careerHash;},
     get clamp(){return clamp;},
@@ -788,7 +734,6 @@
     get ensureSeasonState(){return ensureSeasonState;},
     get ensureSocialState(){return ensureSocialState;},
     get escapeHtml(){return escapeHtml;},
-    get managerById(){return managerById;},
     get playerAvatarMarkup(){return playerAvatarMarkup;},
     get playerFormMetrics(){return playerFormMetrics;},
     get playerOvrLabel(){return playerOvrLabel;},
@@ -819,11 +764,10 @@
     get socialSendMessage(){return socialSendMessage;},
     get socialStoryHtml(){return socialStoryHtml;},
     get state(){return state;},
-    get stopHubNewsCarousel(){return stopHubNewsCarousel;}
+    get stopHubNewsCarousel(){return stopHubNewsCarousel;},
   });
-  let {expertStarterLabel,expertAdviceAnalysis,expertAdviceScore,expertAdviceSentence,expertPrecisionActive,expertPrecisionScoreBonus,expertDayState,intuitionExpertSentence,expertReasonParagraphs,renderExpertStory,changeExpertStoryStep,closeExpertReason,openExpertReason,renderExpertAdvice}=window.FantaDomains['expert-controller'].create({
+  let {expertStarterLabel,expertAdviceAnalysis,expertAdviceScore,expertAdviceSentence,expertPrecisionScoreBonus,intuitionExpertSentence,expertReasonParagraphs,renderExpertStory,changeExpertStoryStep,closeExpertReason,openExpertReason,renderExpertAdvice}=window.FantaDomains['expert-controller'].create({
     get $(){return $;},
-    get EXPERT_IDS(){return EXPERT_IDS;},
     get INTUITION_EXPERTS(){return INTUITION_EXPERTS;},
     get INTUITION_KIND_LABEL(){return INTUITION_KIND_LABEL;},
     get careerHash(){return careerHash;},
@@ -845,7 +789,6 @@
     get openExpertReason(){return openExpertReason;},
     get playerAvatarMarkup(){return playerAvatarMarkup;},
     get playerFormMetrics(){return playerFormMetrics;},
-    get playerMap(){return playerMap;},
     get playerOvrLabel(){return playerOvrLabel;},
     get playerSeasonStat(){return playerSeasonStat;},
     get playerStatusForDay(){return playerStatusForDay;},
@@ -853,8 +796,7 @@
     get renderExpertStory(){return renderExpertStory;},
     get serieAFixtureForPlayer(){return serieAFixtureForPlayer;},
     get serieAMatchupDifficulty(){return serieAMatchupDifficulty;},
-    get shopItemActive(){return shopItemActive;},
-    get state(){return state;}
+    get state(){return state;},
   });
   let {hubNewsTypeLabel,hubNewsTheme,ensureSeasonNewsState,addSeasonNews,fantasyResultForManager,recentManagerRun,managerStreak,newsFixtureForDay,generatePreMatchNews,generatePostMatchNews,ensureSeasonNewsForCurrentState,buildHubNews,newsReliabilityLabel,seasonNewsPlayerAvatarHtml,renderSeasonNewsArchive,openSeasonNewsArchive,closeSeasonNewsArchive,stopHubNewsCarousel,setHubNewsSlide,startHubNewsCarousel,renderHubNews,managerRecentLeagueResults,deterministicCpuFormation,managerMostUsedFormation,matchCenterProbablePlayers,managerRoleData,matchCenterKeyPlayer,matchCenterRecommendedFormation,renderMatchCenter,openMatchCenter,closeMatchCenter,renderSeasonDashboard,renderOpponentMalusBanner,showOpponentMalusNotice,closeOpponentMalusNotice,showWeekendArrivalLoading}=window.FantaDomains['dashboard-controller'].create({
     get $(){return $;},
@@ -942,7 +884,7 @@
     get stopHubNewsCarousel(){return stopHubNewsCarousel;},
     get visibleNewsDetail(){return visibleNewsDetail;},
     get weekendArrivalLoading(){return weekendArrivalLoading;}, set weekendArrivalLoading(value){weekendArrivalLoading=value;},
-    get wireSeasonPlayerButtons(){return wireSeasonPlayerButtons;}
+    get wireSeasonPlayerButtons(){return wireSeasonPlayerButtons;},
   });
   let {continueMatchdayFromLineup,handleDashboardPrimaryAction}=window.FantaDomains['matchday-controller'].create({
     get continueMatchdayFromLineup(){return continueMatchdayFromLineup;},
@@ -960,11 +902,10 @@
     get showToast(){return showToast;},
     get showWeekendArrivalLoading(){return showWeekendArrivalLoading;},
     get startSerieALiveMatchday(){return startSerieALiveMatchday;},
-    get weekendArrivalLoading(){return weekendArrivalLoading;}
+    get weekendArrivalLoading(){return weekendArrivalLoading;}, set weekendArrivalLoading(value){weekendArrivalLoading=value;},
   });
-  let {lineupDayKey,ensureLineupDayStore,lineupSlots,lineupRequiredStarters,lineupPlayerValue,cpuLeagueRuleLineupValue,cpuLeagueFormationBias,lineupCountsForFormation,normalizeSavedLineup,syncDraftBenchOrder,draftBenchPlayers,moveBenchPlayer,openLineupScreen,draftStarterIds,draftSlotForPlayer,draftPlayerById,setDraftFormation,selectLineupPlayer,nominateLineupCaptain,placePlayerInSlot,openLineupSlotPicker,placeSelectedInSlot,benchSelectedPlayer,clearLineupDragVisuals,beginLineupDrag,endLineupDrag,bindLineupDragDrop,clearDraftLineup,bestPlayersForRole,buildAutoLineup,formationCpuBias,chooseCpuFormation,tacticalExpectedPlayerPoints,tacticalExpectedLineupPoints,adaptTacticalProLineup,autoFillUserLineup,ensureAssistantCoachLineup,assistantCoachCarryEnabled,saveAssistantCoachTemplateFromDraft,toggleAssistantCoachCarry,assistantCoachTemplateForDay,repairAssistantInheritedLineup,seedAssistantCoachLineupForDay,unavailableDraftStarters,repairUnavailableStartersInDraft,saveLineupDraft,confirmUserLineup,closeConsumableModal,lineupConsumableActionState,renderConsumableInventory,openConsumableInventory,beginConsumableUse,showConsumableTargets,applyTargetedConsumable,enforceOpponentConsumableBlock,renderLineupScreen}=window.FantaDomains['lineup-controller'].create({
+  let {lineupDayKey,ensureLineupDayStore,cpuLeagueFormationBias,normalizeSavedLineup,syncDraftBenchOrder,draftBenchPlayers,moveBenchPlayer,openLineupScreen,draftStarterIds,draftSlotForPlayer,draftPlayerById,setDraftFormation,selectLineupPlayer,nominateLineupCaptain,placePlayerInSlot,openLineupSlotPicker,placeSelectedInSlot,benchSelectedPlayer,clearLineupDragVisuals,beginLineupDrag,endLineupDrag,bindLineupDragDrop,clearDraftLineup,bestPlayersForRole,buildAutoLineup,formationCpuBias,chooseCpuFormation,tacticalExpectedPlayerPoints,tacticalExpectedLineupPoints,adaptTacticalProLineup,autoFillUserLineup,ensureAssistantCoachLineup,assistantCoachCarryEnabled,saveAssistantCoachTemplateFromDraft,toggleAssistantCoachCarry,assistantCoachTemplateForDay,repairAssistantInheritedLineup,seedAssistantCoachLineupForDay,unavailableDraftStarters,repairUnavailableStartersInDraft,saveLineupDraft,confirmUserLineup,closeConsumableModal,lineupConsumableActionState,renderConsumableInventory,openConsumableInventory,beginConsumableUse,showConsumableTargets,applyTargetedConsumable,enforceOpponentConsumableBlock,renderLineupScreen}=window.FantaDomains['lineup-controller'].create({
     get $(){return $;},
-    get LINEUP_FORMATIONS(){return LINEUP_FORMATIONS;},
     get ROLE_LABELS(){return ROLE_LABELS;},
     get ROLE_ORDER(){return ROLE_ORDER;},
     get ROLE_PLURALS(){return ROLE_PLURALS;},
@@ -992,7 +933,6 @@
     get bestPlayersForRole(){return bestPlayersForRole;},
     get bindLineupDragDrop(){return bindLineupDragDrop;},
     get blockedOpponentPlayerIds(){return blockedOpponentPlayerIds;},
-    get blockedOpponentPlayerId(){return blockedOpponentPlayerId;},
     get buildAdvancedAutoLineup(){return buildAdvancedAutoLineup;},
     get buildAutoLineup(){return buildAutoLineup;},
     get canPlacePlayerInLineupSlot(){return canPlacePlayerInLineupSlot;},
@@ -1090,25 +1030,18 @@
     get userOpponentIdForDay(){return userOpponentIdForDay;},
     get validateAdminRuleLineup(){return validateAdminRuleLineup;},
     get visibleFormLabel(){return visibleFormLabel;},
-    get wildcardSlotCompatible(){return wildcardSlotCompatible;}
+    get wildcardSlotCompatible(){return wildcardSlotCompatible;},
   });
-  let {formationChoiceCategoryLabel,formationChoiceCategoryClass,formationChoiceDayState,adminRuleDayState,activeAdminRule,activeAdminRuleEffect,hasPendingMatchdayEvent,nextPendingMatchdayEvent,hashPick,sortedByChoiceHash,isDerbyFixtureForPlayer,formationChoiceContextForManagers,fantasyAppearanceRate,formationChoiceContext,specialRivalManager,opponentMalusDayState,opponentMalusChanceForManager,generateOpponentMalusOption,ensureOpponentMalusRoll,activeOpponentMalus,generateFormationChoiceOptions,sanitizeLockedFormationChoiceEntry,adminRuleRarityProfile,generateAdminRuleOption,ensureAdminRuleRoll,ensureAllPreMatchEventRolls,forcedFormationRuleForDay,adminForcedStarterForManager,adminBenchableTopPlayer,previousUnusedBenchEligibleIds,adminBlockedStarterForManager,adminFaithReserveEligibleIds,adminWildcardStartingSlotLimit,wildcardSlotCompatible,lineupOutOfRoleEntries,canPlacePlayerInLineupSlot,enforceStarterInLineup,enforceAdminLastReserve,enforcePlayerBenchedInLineup,enforceFaithReserveStarterInLineup,lineupTurnoverDeltaFromPrevious,validateAdminRuleLineup,adminRuleNeedsLineupReconfirm,syncFlowAfterPreMatchResolution,adminRuleCover,ensureForcedFormationDraft,ensureFormationChoiceRoll,activeFormationChoice,tacticForManager,riskAdjustmentForPerformance,fantasyRuleForDay,starterReportActive,specialTrainingPlayerIds,specialTrainingPlayerId,specialTrainingUsedForPlayer,blockedOpponentPlayerIds,blockedOpponentPlayerId,worldPlayerModifier,formationPlayerModifier,formationChoiceCover,rerollFormationChoiceCards,rerollAdminRuleCard,renderFormationChoiceModal,resolveSeasonShock,openNextSeasonEvent,hideFormationChoiceModal,renderAdminRuleModal,hideAdminRuleModal,minimizeMatchdayEvent,restoreMatchdayEvent,resolveAdminRule,resolveFormationChoice,requestOpenLineup}=window.FantaDomains['matchday-events-controller'].create({
+  let {formationChoiceCategoryLabel,formationChoiceCategoryClass,hasPendingMatchdayEvent,nextPendingMatchdayEvent,isDerbyFixtureForPlayer,fantasyAppearanceRate,formationChoiceContext,generateFormationChoiceOptions,sanitizeLockedFormationChoiceEntry,adminRuleRarityProfile,generateAdminRuleOption,ensureAdminRuleRoll,ensureAllPreMatchEventRolls,forcedFormationRuleForDay,adminForcedStarterForManager,adminBenchableTopPlayer,previousUnusedBenchEligibleIds,adminFaithReserveEligibleIds,adminWildcardStartingSlotLimit,wildcardSlotCompatible,lineupOutOfRoleEntries,canPlacePlayerInLineupSlot,enforceStarterInLineup,enforceAdminLastReserve,enforcePlayerBenchedInLineup,enforceFaithReserveStarterInLineup,lineupTurnoverDeltaFromPrevious,validateAdminRuleLineup,adminRuleNeedsLineupReconfirm,syncFlowAfterPreMatchResolution,adminRuleCover,ensureForcedFormationDraft,ensureFormationChoiceRoll,specialTrainingPlayerId,blockedOpponentPlayerIds,blockedOpponentPlayerId,formationChoiceCover,rerollFormationChoiceCards,rerollAdminRuleCard,renderFormationChoiceModal,resolveSeasonShock,openNextSeasonEvent,hideFormationChoiceModal,renderAdminRuleModal,hideAdminRuleModal,minimizeMatchdayEvent,restoreMatchdayEvent,resolveAdminRule,resolveFormationChoice,requestOpenLineup}=window.FantaDomains['matchday-events-controller'].create({
     get $(){return $;},
     get ADMIN_RULE_EVENT_CHANCE(){return ADMIN_RULE_EVENT_CHANCE;},
     get ADMIN_RULE_RARITY_PROFILES(){return ADMIN_RULE_RARITY_PROFILES;},
     get ADMIN_RULE_TEMPLATES(){return ADMIN_RULE_TEMPLATES;},
-    get FANTASY_MAX_SUBS(){return FANTASY_MAX_SUBS;},
     get FANTASY_SEASON_MATCHDAYS(){return FANTASY_SEASON_MATCHDAYS;},
-    get FORMATION_CHOICE_TEMPLATES(){return FORMATION_CHOICE_TEMPLATES;},
     get GAME_CONFIG(){return GAME_CONFIG;},
     get LINEUP_FORMATIONS(){return LINEUP_FORMATIONS;},
     get SERIEA_DERBY_PAIRS(){return SERIEA_DERBY_PAIRS;},
-    get SERIEA_MIN_VOTE_MINUTES(){return SERIEA_MIN_VOTE_MINUTES;},
-    get SPECIAL_RIVAL_IDS(){return SPECIAL_RIVAL_IDS;},
-    get activeAdminRule(){return activeAdminRule;},
     get activeAdminRuleEffect(){return activeAdminRuleEffect;},
-    get activeFormationChoice(){return activeFormationChoice;},
-    get activeOpponentMalus(){return activeOpponentMalus;},
     get adminBlockedStarterForManager(){return adminBlockedStarterForManager;},
     get adminFaithReserveEligibleIds(){return adminFaithReserveEligibleIds;},
     get adminRuleCover(){return adminRuleCover;},
@@ -1117,13 +1050,11 @@
     get adminRuleRarityProfile(){return adminRuleRarityProfile;},
     get adminWildcardStartingSlotLimit(){return adminWildcardStartingSlotLimit;},
     get careerHash(){return careerHash;},
-    get clamp(){return clamp;},
     get consumableDayEffect(){return consumableDayEffect;},
     get consumableQuantity(){return consumableQuantity;},
     get consumeConsumable(){return consumeConsumable;},
     get cpuLeagueRuleLineupValue(){return cpuLeagueRuleLineupValue;},
     get currentPlayerOvr(){return currentPlayerOvr;},
-    get currentUserFixture(){return currentUserFixture;},
     get deterministicFormationTemplateOrder(){return deterministicFormationTemplateOrder;},
     get draftPlayerById(){return draftPlayerById;},
     get enforceAdminLastReserve(){return enforceAdminLastReserve;},
@@ -1133,7 +1064,6 @@
     get ensurePlayerSeasonSystems(){return ensurePlayerSeasonSystems;},
     get ensureSeasonState(){return ensureSeasonState;},
     get escapeHtml(){return escapeHtml;},
-    get expertDayState(){return expertDayState;},
     get forcedFormationRuleForDay(){return forcedFormationRuleForDay;},
     get formationChoiceCategoryClass(){return formationChoiceCategoryClass;},
     get formationChoiceCategoryLabel(){return formationChoiceCategoryLabel;},
@@ -1141,19 +1071,16 @@
     get formationChoiceContextForManagers(){return formationChoiceContextForManagers;},
     get formationChoiceCover(){return formationChoiceCover;},
     get formationChoiceDayState(){return formationChoiceDayState;},
-    get formationChoiceRarity(){return formationChoiceRarity;},
     get formationChoiceRarityLabel(){return formationChoiceRarityLabel;},
     get formationEventChance(){return formationEventChance;},
     get formationRaritiesUnlocked(){return formationRaritiesUnlocked;},
     get generateAdminRuleOption(){return generateAdminRuleOption;},
     get generateFormationChoiceOptions(){return generateFormationChoiceOptions;},
-    get generateOpponentMalusOption(){return generateOpponentMalusOption;},
     get hashPick(){return hashPick;},
     get hideAdminRuleModal(){return hideAdminRuleModal;},
     get hideFormationChoiceModal(){return hideFormationChoiceModal;},
-    get leagueRulesFor(){return leagueRulesFor;},
     get leagueStandingsSort(){return leagueStandingsSort;}, set leagueStandingsSort(value){leagueStandingsSort=value;},
-    get lineupDraft(){return lineupDraft;},
+    get lineupDraft(){return lineupDraft;}, set lineupDraft(value){lineupDraft=value;},
     get lineupOutOfRoleEntries(){return lineupOutOfRoleEntries;},
     get lineupPlayerValue(){return lineupPlayerValue;},
     get lineupSelectedPlayerId(){return lineupSelectedPlayerId;}, set lineupSelectedPlayerId(value){lineupSelectedPlayerId=value;},
@@ -1163,9 +1090,6 @@
     get nextPendingMatchdayEvent(){return nextPendingMatchdayEvent;},
     get openLineupScreen(){return openLineupScreen;},
     get openNextSeasonEvent(){return openNextSeasonEvent;},
-    get opponentMalusChanceForManager(){return opponentMalusChanceForManager;},
-    get opponentMalusDayState(){return opponentMalusDayState;},
-    get opponentMalusRollsInProgress(){return opponentMalusRollsInProgress;},
     get playerStatusForDay(){return playerStatusForDay;},
     get renderAdminRuleModal(){return renderAdminRuleModal;},
     get renderFormationChoiceModal(){return renderFormationChoiceModal;},
@@ -1182,82 +1106,45 @@
     get setMatchdayFlowPhase(){return setMatchdayFlowPhase;},
     get showToast(){return showToast;},
     get sortedByChoiceHash(){return sortedByChoiceHash;},
-    get specialRivalManager(){return specialRivalManager;},
     get specialTrainingPlayerIds(){return specialTrainingPlayerIds;},
-    get specialTrainingUsedForPlayer(){return specialTrainingUsedForPlayer;},
     get state(){return state;},
     get syncDraftBenchOrder(){return syncDraftBenchOrder;},
     get syncFlowAfterPreMatchResolution(){return syncFlowAfterPreMatchResolution;},
     get userOpponentIdForDay(){return userOpponentIdForDay;},
     get validateAdminRuleLineup(){return validateAdminRuleLineup;},
-    get wildcardSlotCompatible(){return wildcardSlotCompatible;}
+    get wildcardSlotCompatible(){return wildcardSlotCompatible;},
   });
-  let {seededSerieRand,halfPoint,buildSerieASchedule,serieAFixtureForPlayer,serieAStrengthRowsForDay,serieAMatchupDifficulty,serieAFixtureCompactText,serieAFixtureFullText,serieAMatchupBadgeHtml,clubPool,rankedClubPlayers,serieAPlayerDayProfile,chooseSerieATacticalShape,buildSerieAClubSelection,baseLivePerformance,lockerVoteModifier,participantWeight,weightedPerformancePick,activePerformances,serieAUnitWeightedAverage,serieATeamUnitProfile,serieAGoalProbability,matchStrength,buildSerieAMatch,serieAClubStrength,selectSerieABigMatch,buildSerieADay,playedMinutes,decisivePerformance,finalizeSerieAMatchRatings,finalizeSerieAPhaseRatings,liveFantasyValue,perfEventText,liveEventBadgesMarkup,performanceText,fantasyGoals,lineupPlayersForManager,currentFantasyPerformance,lineupBenchPlayers,classicDefenseModifierResult,applyAdminTeamScoring,simulateFantasyTeamFromSerieA,updateStandingsFromMatch}=window.FantaDomains['football-engine'].create({
-    get ROLE_ORDER(){return ROLE_ORDER;},
-    get SERIEA_TACTICAL_IDENTITY(){return SERIEA_TACTICAL_IDENTITY;},
-    get SERIEA_TACTICAL_SHAPES(){return SERIEA_TACTICAL_SHAPES;},
-    get SERIEA_UNIT_WEIGHTS(){return SERIEA_UNIT_WEIGHTS;},
+  let {halfPoint,serieAFixtureCompactText,serieAFixtureFullText,serieAMatchupBadgeHtml,baseLivePerformance,lockerVoteModifier,participantWeight,weightedPerformancePick,activePerformances,serieAGoalProbability,buildSerieAMatch,selectSerieABigMatch,buildSerieADay,playedMinutes,decisivePerformance,finalizeSerieAMatchRatings,finalizeSerieAPhaseRatings,liveFantasyValue,perfEventText,liveEventBadgesMarkup,performanceText,fantasyGoals,lineupPlayersForManager,currentFantasyPerformance,lineupBenchPlayers,classicDefenseModifierResult,applyAdminTeamScoring,simulateFantasyTeamFromSerieA,updateStandingsFromMatch}=window.FantaDomains['football-engine'].create({
     get activeAdminRuleEffect(){return activeAdminRuleEffect;},
     get activeFormationChoice(){return activeFormationChoice;},
-    get activePerformances(){return activePerformances;},
     get adminBlockedStarterForManager(){return adminBlockedStarterForManager;},
-    get applyAdminTeamScoring(){return applyAdminTeamScoring;},
     get applyFantasyMatch(){return applyFantasyMatch;},
-    get baseLivePerformance(){return baseLivePerformance;},
-    get buildDoubleRoundRobin(){return buildDoubleRoundRobin;},
     get buildSerieAClubSelection(){return buildSerieAClubSelection;},
-    get buildSerieAMatch(){return buildSerieAMatch;},
     get careerHash(){return careerHash;},
-    get chooseSerieATacticalShape(){return chooseSerieATacticalShape;},
     get clamp(){return clamp;},
-    get classicDefenseModifierResult(){return classicDefenseModifierResult;},
-    get clubName(){return clubName;},
-    get clubPool(){return clubPool;},
-    get clubShort(){return clubShort;},
     get cpuLeagueRuleLineupValue(){return cpuLeagueRuleLineupValue;},
-    get currentFantasyPerformance(){return currentFantasyPerformance;},
     get currentPlayerOvr(){return currentPlayerOvr;},
-    get decisivePerformance(){return decisivePerformance;},
     get ensureSeasonState(){return ensureSeasonState;},
     get escapeHtml(){return escapeHtml;},
-    get fantasyGoals(){return fantasyGoals;},
     get fantasyRuleForDay(){return fantasyRuleForDay;},
-    get finalizeSerieAMatchRatings(){return finalizeSerieAMatchRatings;},
     get formationPlayerModifier(){return formationPlayerModifier;},
-    get halfPoint(){return halfPoint;},
     get leagueRulesFor(){return leagueRulesFor;},
-    get lineupBenchPlayers(){return lineupBenchPlayers;},
-    get lineupPlayersForManager(){return lineupPlayersForManager;},
     get lineupSlots(){return lineupSlots;},
-    get liveFantasyValue(){return liveFantasyValue;},
-    get lockerVoteModifier(){return lockerVoteModifier;},
-    get matchStrength(){return matchStrength;},
-    get participantWeight(){return participantWeight;},
-    get playedMinutes(){return playedMinutes;},
-    get playerFormMetrics(){return playerFormMetrics;},
     get playerMap(){return playerMap;},
-    get playerStatusForDay(){return playerStatusForDay;},
     get riskAdjustmentForPerformance(){return riskAdjustmentForPerformance;},
     get seededSerieRand(){return seededSerieRand;},
-    get selectSerieABigMatch(){return selectSerieABigMatch;},
     get serieABigMatch(){return serieABigMatch;},
     get serieAClubStrength(){return serieAClubStrength;},
     get serieAFixtureForPlayer(){return serieAFixtureForPlayer;},
-    get serieAGoalProbability(){return serieAGoalProbability;},
-    get serieALive(){return serieALive;},
+    get serieALive(){return serieALive;}, set serieALive(value){serieALive=value;},
     get serieAMatchupDifficulty(){return serieAMatchupDifficulty;},
-    get serieAPlayerDayProfile(){return serieAPlayerDayProfile;},
-    get serieAStrengthCache(){return serieAStrengthCache;}, set serieAStrengthCache(value){serieAStrengthCache=value;},
-    get serieAStrengthRowsForDay(){return serieAStrengthRowsForDay;},
     get serieATeamUnitProfile(){return serieATeamUnitProfile;},
-    get serieAUnitWeightedAverage(){return serieAUnitWeightedAverage;},
     get socialMotivationForPlayer(){return socialMotivationForPlayer;},
     get state(){return state;},
     get tacticForManager(){return tacticForManager;},
-    get weightedPerformancePick(){return weightedPerformancePick;},
-    get worldPlayerModifier(){return worldPlayerModifier;}
+    get worldPlayerModifier(){return worldPlayerModifier;},
   });
-  let {ensureCpuLineupsForDay,serieALiveTickBase,serieALiveTickDelay,restartSerieALiveTimer,setSerieALiveSpeed,toggleSerieALivePause,jumpToNextSerieAEvent,renderSerieALiveSpeedControls,serieAEventFantasySide,captureWatchedVoteSnapshot,updateWatchedVoteFlashes,tvEventClass,tvFinalTitle,tvEventDetail,tvFantasyFocus,animateMatchParticles,setSerieATvBanner,hideSerieATvBanner,triggerSerieATvPresentation,eventHeadline,serieALiveFantasyContext,serieAEventTouchesFantasyMatch,fantasyFocusedEventHeadline,applySerieAEvent,serieABigMatch,isBigMatchClub,serieAMinuteForPlayer,serieALiveSnapshotForManager,startSerieABigMatchPhase,snapshotSerieALive,hydrateSerieALive,finishSerieAMultiLivePhase,fantasyLiveSnapshot,setSerieAMatchesExpanded,renderSerieALive,tickSerieALive,simulateFullMatchdayDirectly,startSerieALiveMatchday,skipSerieALive,startPendingBigMatchFromHub}=window.FantaDomains['live-controller'].create({
+  let {ensureCpuLineupsForDay,serieALiveTickBase,serieALiveTickDelay,restartSerieALiveTimer,setSerieALiveSpeed,toggleSerieALivePause,jumpToNextSerieAEvent,renderSerieALiveSpeedControls,serieAEventFantasySide,captureWatchedVoteSnapshot,updateWatchedVoteFlashes,tvEventClass,tvFinalTitle,tvEventDetail,tvFantasyFocus,animateMatchParticles,setSerieATvBanner,hideSerieATvBanner,triggerSerieATvPresentation,eventHeadline,serieALiveFantasyContext,serieAEventTouchesFantasyMatch,fantasyFocusedEventHeadline,applySerieAEvent,isBigMatchClub,serieAMinuteForPlayer,serieALiveSnapshotForManager,startSerieABigMatchPhase,finishSerieAMultiLivePhase,fantasyLiveSnapshot,setSerieAMatchesExpanded,renderSerieALive,tickSerieALive,simulateFullMatchdayDirectly,startSerieALiveMatchday,skipSerieALive,startPendingBigMatchFromHub}=window.FantaDomains['live-controller'].create({
     get $(){return $;},
     get COACH_SHIRTS(){return COACH_SHIRTS;},
     get SERIEA_LIVE_SPEEDS(){return SERIEA_LIVE_SPEEDS;},
@@ -1268,7 +1155,6 @@
     get animateMatchParticles(){return animateMatchParticles;},
     get applySerieAEvent(){return applySerieAEvent;},
     get blockedOpponentPlayerIds(){return blockedOpponentPlayerIds;},
-    get blockedOpponentPlayerId(){return blockedOpponentPlayerId;},
     get buildAutoLineup(){return buildAutoLineup;},
     get buildSerieADay(){return buildSerieADay;},
     get captureWatchedVoteSnapshot(){return captureWatchedVoteSnapshot;},
@@ -1307,6 +1193,7 @@
     get normalizedCoachAvatar(){return normalizedCoachAvatar;},
     get playerAvatarMarkup(){return playerAvatarMarkup;},
     get playerMap(){return playerMap;},
+    get renderFixtureCoachPortrait(){return renderFixtureCoachPortrait;},
     get renderMatchdayResult(){return renderMatchdayResult;},
     get renderSeasonDashboard(){return renderSeasonDashboard;},
     get renderSerieALive(){return renderSerieALive;},
@@ -1315,6 +1202,7 @@
     get restartSerieALiveTimer(){return restartSerieALiveTimer;},
     get riskAdjustmentForPerformance(){return riskAdjustmentForPerformance;},
     get saveState(){return saveState;},
+    get seasonFixtureTheme(){return seasonFixtureTheme;},
     get seededSerieRand(){return seededSerieRand;},
     get serieABigMatch(){return serieABigMatch;},
     get serieAEventFantasySide(){return serieAEventFantasySide;},
@@ -1344,11 +1232,9 @@
     get tvFinalTitle(){return tvFinalTitle;},
     get updateWatchedVoteFlashes(){return updateWatchedVoteFlashes;},
     get userOpponentIdForDay(){return userOpponentIdForDay;},
-    get weekendArrivalLoading(){return weekendArrivalLoading;},
-    get renderFixtureCoachPortrait(){return renderFixtureCoachPortrait;},
-    get seasonFixtureTheme(){return seasonFixtureTheme;},
-});
-  let {updatePersistentPlayerStatuses,updatePlayerSeasonStatsFromLive,playerOvrDevelopment,currentPlayerOvr,playerOvrLabel,applyPlayerOvrChange,updatePlayerOvrEvolution,updateSerieASeasonWorld,applyLockerRoomOvrOutcome}=window.FantaDomains['player-development'].create({
+    get weekendArrivalLoading(){return weekendArrivalLoading;}, set weekendArrivalLoading(value){weekendArrivalLoading=value;},
+  });
+  let {updatePersistentPlayerStatuses,updatePlayerSeasonStatsFromLive,playerOvrDevelopment,applyPlayerOvrChange,updatePlayerOvrEvolution,updateSerieASeasonWorld,applyLockerRoomOvrOutcome}=window.FantaDomains['player-development'].create({
     get activeFormationChoice(){return activeFormationChoice;},
     get addSeasonNews(){return addSeasonNews;},
     get applyLockerRoomOvrOutcome(){return applyLockerRoomOvrOutcome;},
@@ -1368,7 +1254,7 @@
     get updatePersistentPlayerStatuses(){return updatePersistentPlayerStatuses;},
     get updatePlayerOvrEvolution(){return updatePlayerOvrEvolution;},
     get updatePlayerSeasonStatsFromLive(){return updatePlayerSeasonStatsFromLive;},
-    get updateSerieAStandingsFromStoredMatches(){return updateSerieAStandingsFromStoredMatches;}
+    get updateSerieAStandingsFromStoredMatches(){return updateSerieAStandingsFromStoredMatches;},
   });
   let {finalizeSerieALiveMatchday,renderMatchdayResult,closeMatchdayFantapointsReward,animateMatchdayRewardNumber,renderMatchdayFantapointsReward}=window.FantaDomains['result-controller'].create({
     get $(){return $;},
@@ -1414,7 +1300,7 @@
     get sortedStandings(){return sortedStandings;},
     get state(){return state;},
     get updateSerieASeasonWorld(){return updateSerieASeasonWorld;},
-    get updateStandingsFromMatch(){return updateStandingsFromMatch;}
+    get updateStandingsFromMatch(){return updateStandingsFromMatch;},
   });
   let {quickReadyYield,setQuickReadyLoading,updateQuickReadyProgress,quickAwardGeneratedPlayer,generateReadyRosters}=window.FantaDomains['ready-rosters-controller'].create({
     get $(){return $;},
@@ -1429,6 +1315,7 @@
     get canOwn(){return canOwn;},
     get chooseNomination(){return chooseNomination;},
     get cpuLimit(){return cpuLimit;},
+    get currentTradeWindow(){return currentTradeWindow;},
     get maxLegalBid(){return maxLegalBid;},
     get nextNominatorIndex(){return nextNominatorIndex;},
     get openRoleAuction(){return openRoleAuction;},
@@ -1438,7 +1325,6 @@
     get quickReadyYield(){return quickReadyYield;},
     get recordUserAuctionPick(){return recordUserAuctionPick;},
     get registerNominationCall(){return registerNominationCall;},
-    get currentTradeWindow(){return currentTradeWindow;},
     get renderSummary(){return renderSummary;},
     get rolePhaseComplete(){return rolePhaseComplete;},
     get roleSlotsRemaining(){return roleSlotsRemaining;},
@@ -1447,16 +1333,16 @@
     get setQuickReadyLoading(){return setQuickReadyLoading;},
     get showScreen(){return showScreen;},
     get state(){return state;},
-    get updateQuickReadyProgress(){return updateQuickReadyProgress;}
+    get updateQuickReadyProgress(){return updateQuickReadyProgress;},
   });
-  let {ensureAuctionEvents,auctionEffects,relationship,changeRelationship,registerDirectAuctionDuel,resolveRespectedAuctionPact,lateInRole,eventEligibleBase,cpuEventCandidates,sharedInterestingPlayers,auctionEventAlreadyShown,eventRolePlayers,tablePressureEligible,availableEventTypes,weightedPick,maybeTriggerAuctionEvent,pickCpu,buildAuctionEvent,eventPortrait,auctionEventGenericPortrait,showAuctionEventModal,resolveAuctionEvent,minimizeAuctionEventModal,restoreAuctionEventModal,closeAuctionEventModal,activePactForPlayer,cpuKeepsPact,showPactBetrayPrompt,tickAuctionEventEffectsOnNomination}=window.FantaDomains['auction-events-controller'].create({
+  let {registerDirectAuctionDuel,resolveRespectedAuctionPact,lateInRole,eventEligibleBase,cpuEventCandidates,sharedInterestingPlayers,auctionEventAlreadyShown,eventRolePlayers,tablePressureEligible,availableEventTypes,weightedPick,maybeTriggerAuctionEvent,pickCpu,buildAuctionEvent,eventPortrait,auctionEventGenericPortrait,showAuctionEventModal,resolveAuctionEvent,minimizeAuctionEventModal,restoreAuctionEventModal,closeAuctionEventModal,activePactForPlayer,cpuKeepsPact,showPactBetrayPrompt,tickAuctionEventEffectsOnNomination}=window.FantaDomains['auction-events-controller'].create({
     get $(){return $;},
     get AUCTION_EVENT_CHANCE(){return AUCTION_EVENT_CHANCE;},
     get RIVAL_ART(){return RIVAL_ART;},
     get TOTAL_SLOTS(){return TOTAL_SLOTS;},
     get auctionEffects(){return auctionEffects;},
     get auctionEventGenericPortrait(){return auctionEventGenericPortrait;},
-    get autocompleteMode(){return autocompleteMode;},
+    get autocompleteMode(){return autocompleteMode;}, set autocompleteMode(value){autocompleteMode=value;},
     get availableEventTypes(){return availableEventTypes;},
     get baseAuctionValue(){return baseAuctionValue;},
     get beginBidRound(){return beginBidRound;},
@@ -1494,7 +1380,7 @@
     get state(){return state;},
     get tablePressureEligible(){return tablePressureEligible;},
     get userBid(){return userBid;},
-    get weightedPick(){return weightedPick;}
+    get weightedPick(){return weightedPick;},
   });
   let {applyPreAuctionPack,showPreAuctionPack}=window.FantaDomains['pack-controller'].create({
     get ROLE_LIMITS(){return ROLE_LIMITS;},
@@ -1510,7 +1396,7 @@
     get renderAll(){return renderAll;},
     get saveState(){return saveState;},
     get scheduleNomination(){return scheduleNomination;},
-    get state(){return state;}
+    get state(){return state;},
   });
   let {fixtureTeamColors,applyFixtureTeamColors,seasonFixtureTheme,teamBadgeInitials,simpleHash,buildPixelCrestData,buildCoachSilhouette,renderFixtureCrest,renderFixtureCoachPortrait,applySeasonFixtureHeroVisuals,rivalCards,renderVisibleRivals}=window.FantaDomains['visual-identity'].create({
     get $(){return $;},
@@ -1532,7 +1418,7 @@
     get seasonFixtureTheme(){return seasonFixtureTheme;},
     get simpleHash(){return simpleHash;},
     get state(){return state;},
-    get teamBadgeInitials(){return teamBadgeInitials;}
+    get teamBadgeInitials(){return teamBadgeInitials;},
   });
   let {renderCareerAvatarEditor,updateCareerAvatarEditor,careerIdentity,updateCareerIdentityControls,setInitialCareerCatalog,showCareerTeamSubstep,advanceCareerIdentityStep,openCareerSetup,showCareerSetupStep,continueCareerSetup,syncCareerIdentity,rerollPreAuctionRules,renderCareerLeagueRules,openCareerRulesStep,startReadyRostersFromCareer,proceedFromCareerRules,backFromCareerRules,showGameInstructions,careerPowerSlotCost,renderCareerPowerSelection,toggleCareerPower,startCareerAuction}=window.FantaDomains['career-setup-controller'].create({
     get $(){return $;},
@@ -1572,9 +1458,142 @@
     get syncCareerIdentity(){return syncCareerIdentity;},
     get syncSerieATransferWorld(){return syncSerieATransferWorld;},
     get updateCareerIdentityControls(){return updateCareerIdentityControls;},
-    get updateResumeButton(){return updateResumeButton;}
+    get updateResumeButton(){return updateResumeButton;},
+  });
+  let {ensureAuctionEvents,auctionEffects,relationship,changeRelationship}=window.FantaDomains['auction-state'].create({
+    get clamp(){return clamp;},
+    get state(){return state;},
+  });
+  let {ensurePlayerSeasonSystems,playerSeasonStat,playerSeasonStatus,playerStatusForDay,playerFormMetrics,updateSerieAStandingsFromStoredMatches,currentPlayerOvr,playerOvrLabel}=window.FantaDomains['player-season-state'].create({
+    get applyClubMatches(){return applyClubMatches;},
+    get clamp(){return clamp;},
+    get emptyPlayerSeasonStat(){return emptyPlayerSeasonStat;},
+    get freshSerieAStandings(){return freshSerieAStandings;},
+    get initializedSeasonSystems(){return initializedSeasonSystems;},
+    get playerMap(){return playerMap;},
+    get state(){return state;},
+  });
+  let {currentUserFixture,userOpponentIdForDay}=window.FantaDomains['league-state'].create({
+    get ensureSeasonState(){return ensureSeasonState;},
+  });
+  let {shopItemActive,ensureConsumableState,consumableQuantity,consumableDayEffect,formationChoiceRarity}=window.FantaDomains['economy-state'].create({
+    get FORMATION_CHOICE_RARITY_BY_TEMPLATE(){return FORMATION_CHOICE_RARITY_BY_TEMPLATE;},
+    get ensureSeasonState(){return ensureSeasonState;},
+  });
+  let {socialOwnedPlayers,ensureSocialState,socialMotivationForPlayer}=window.FantaDomains['social-state'].create({
+    get managerById(){return managerById;},
+    get state(){return state;},
+  });
+  let {expertPrecisionActive,expertDayState}=window.FantaDomains['expert-policy'].create({
+    get EXPERT_IDS(){return EXPERT_IDS;},
+    get INTUITION_EXPERTS(){return INTUITION_EXPERTS;},
+    get careerHash(){return careerHash;},
+    get managerById(){return managerById;},
+    get playerMap(){return playerMap;},
+    get playerStatusForDay(){return playerStatusForDay;},
+    get shopItemActive(){return shopItemActive;},
+    get state(){return state;},
+  });
+  let {lineupSlots,lineupRequiredStarters,lineupCountsForFormation,lineupPlayerValue}=window.FantaDomains['lineup-evaluation'].create({
+    get LINEUP_FORMATIONS(){return LINEUP_FORMATIONS;},
+    get currentPlayerOvr(){return currentPlayerOvr;},
+    get playerFormMetrics(){return playerFormMetrics;},
+    get playerStatusForDay(){return playerStatusForDay;},
+    get state(){return state;},
+  });
+  let {estimatedStarterProbability,assistantAutoLineupCapabilities,assistantBasePlayerValue,advancedAutoLineupValue}=window.FantaDomains['assistant-evaluation'].create({
+    get activeFormationChoice(){return activeFormationChoice;},
+    get careerHash(){return careerHash;},
+    get clamp(){return clamp;},
+    get clubRoleStarterSlots(){return clubRoleStarterSlots;},
+    get currentPlayerOvr(){return currentPlayerOvr;},
+    get ensureSeasonState(){return ensureSeasonState;},
+    get lineupPlayerValue(){return lineupPlayerValue;},
+    get normalizedStarterProbability(){return normalizedStarterProbability;},
+    get playerFormMetrics(){return playerFormMetrics;},
+    get playerSeasonStat(){return playerSeasonStat;},
+    get playerStatusForDay(){return playerStatusForDay;},
+    get serieAMatchupDifficulty(){return serieAMatchupDifficulty;},
+    get shopItemActive(){return shopItemActive;},
+    get starterHierarchyBias(){return starterHierarchyBias;},
+    get worldPlayerModifier(){return worldPlayerModifier;},
+  });
+  let {formationChoiceDayState,adminRuleDayState,activeAdminRule,activeAdminRuleEffect,hashPick,sortedByChoiceHash,formationChoiceContextForManagers,specialRivalManager,opponentMalusDayState,opponentMalusChanceForManager,generateOpponentMalusOption,ensureOpponentMalusRoll,activeOpponentMalus,adminBlockedStarterForManager,activeFormationChoice,tacticForManager,riskAdjustmentForPerformance,fantasyRuleForDay,starterReportActive,specialTrainingPlayerIds,specialTrainingUsedForPlayer,worldPlayerModifier,formationPlayerModifier}=window.FantaDomains['matchday-policy'].create({
+    get FANTASY_MAX_SUBS(){return FANTASY_MAX_SUBS;},
+    get FORMATION_CHOICE_TEMPLATES(){return FORMATION_CHOICE_TEMPLATES;},
+    get GAME_CONFIG(){return GAME_CONFIG;},
+    get SERIEA_MIN_VOTE_MINUTES(){return SERIEA_MIN_VOTE_MINUTES;},
+    get SPECIAL_RIVAL_IDS(){return SPECIAL_RIVAL_IDS;},
+    get careerHash(){return careerHash;},
+    get clamp(){return clamp;},
+    get consumableDayEffect(){return consumableDayEffect;},
+    get currentUserFixture(){return currentUserFixture;},
+    get ensureSeasonState(){return ensureSeasonState;},
+    get expertDayState(){return expertDayState;},
+    get formationChoiceRarity(){return formationChoiceRarity;},
+    get leagueRulesFor(){return leagueRulesFor;},
+    get managerById(){return managerById;},
+    get onMatchdayEventsChanged(){return onMatchdayEventsChanged;},
+    get opponentMalusRollsInProgress(){return opponentMalusRollsInProgress;},
+    get playerStatusForDay(){return playerStatusForDay;},
+    get state(){return state;},
+    get userOpponentIdForDay(){return userOpponentIdForDay;},
+  });
+  let {serieABigMatch,snapshotSerieALive,hydrateSerieALive}=window.FantaDomains['live-state'].create({
+    get serieALive(){return serieALive;}, set serieALive(value){serieALive=value;},
+  });
+  let {ensureSeasonState,buildSerieASchedule}=window.FantaDomains['season-state'].create({
+    get FANTASY_SEASON_MATCHDAYS(){return FANTASY_SEASON_MATCHDAYS;},
+    get buildDoubleRoundRobin(){return buildDoubleRoundRobin;},
+    get buildFantasySeasonSchedule(){return buildFantasySeasonSchedule;},
+    get careerHash(){return careerHash;},
+    get clamp(){return clamp;},
+    get ensureCareerEconomy(){return ensureCareerEconomy;},
+    get ensurePlayerSeasonSystems(){return ensurePlayerSeasonSystems;},
+    get ensureSocialState(){return ensureSocialState;},
+    get freshStandings(){return freshStandings;},
+    get state(){return state;},
+  });
+  let {managerById,ensureCareerEconomy,seasonPlayerOwner}=window.FantaDomains['career-state'].create({
+    get CAREER_STARTING_EUROS(){return CAREER_STARTING_EUROS;},
+    get CareerEngine(){return CareerEngine;},
+    get GAME_CONFIG(){return GAME_CONFIG;},
+    get state(){return state;},
+  });
+  let {seededSerieRand,serieAFixtureForPlayer,serieAStrengthRowsForDay,serieAMatchupDifficulty,clubPool,rankedClubPlayers,serieAPlayerDayProfile,chooseSerieATacticalShape,buildSerieAClubSelection,serieAClubStrength,matchStrength,serieAUnitWeightedAverage,serieATeamUnitProfile}=window.FantaDomains['football-selection'].create({
+    get ROLE_ORDER(){return ROLE_ORDER;},
+    get SERIEA_TACTICAL_IDENTITY(){return SERIEA_TACTICAL_IDENTITY;},
+    get SERIEA_TACTICAL_SHAPES(){return SERIEA_TACTICAL_SHAPES;},
+    get SERIEA_UNIT_WEIGHTS(){return SERIEA_UNIT_WEIGHTS;},
+    get careerHash(){return careerHash;},
+    get clamp(){return clamp;},
+    get clubName(){return clubName;},
+    get clubShort(){return clubShort;},
+    get currentPlayerOvr(){return currentPlayerOvr;},
+    get ensureSeasonState(){return ensureSeasonState;},
+    get playerFormMetrics(){return playerFormMetrics;},
+    get playerMap(){return playerMap;},
+    get playerStatusForDay(){return playerStatusForDay;},
+    get serieAStrengthCache(){return serieAStrengthCache;}, set serieAStrengthCache(value){serieAStrengthCache=value;},
+    get state(){return state;},
+    get worldPlayerModifier(){return worldPlayerModifier;},
+  });
+  let {cpuLeagueRuleLineupValue}=window.FantaDomains['cpu-lineup-evaluation'].create({
+    get clamp(){return clamp;},
+    get cpuLeagueRuleSensitivity(){return cpuLeagueRuleSensitivity;},
+    get currentPlayerOvr(){return currentPlayerOvr;},
+    get estimatedStarterProbability(){return estimatedStarterProbability;},
+    get leagueRulesFor(){return leagueRulesFor;},
+    get lineupPlayerValue(){return lineupPlayerValue;},
+    get playerFormMetrics(){return playerFormMetrics;},
+    get playerSeasonStat(){return playerSeasonStat;},
+    get serieAMatchupDifficulty(){return serieAMatchupDifficulty;},
+    get state(){return state;},
   });
   // DOMAIN_BINDINGS_END
+  // The clock reports lifecycle events; application wiring owns their consequences.
+  auctionClockEvents.subscribe('tick', () => renderAuctionRoomList());
+  auctionClockEvents.subscribe('expired', () => awardAuction());
 
   const SAVE_KEY = 'fantallenatore_v330_save'; // legacy localStorage key, usata solo per migrazione/fallback
   // V3.2.35.56 · Evoluzione OVR normalizzata per ruolo: P/D valorizzati, bonus offensivi ridimensionati per A.
@@ -3690,9 +3709,9 @@
     };
   }
 
-  /* @domain career-market-controller ensurePlayerSeasonSystems */
+  /* @domain player-season-state ensurePlayerSeasonSystems */
 
-  /* @domain career-market-controller playerSeasonStat */
+  /* @domain player-season-state playerSeasonStat */
 
 
   // V3.2.35.56.37 · Motore calciomercato Serie A.
@@ -3796,11 +3815,11 @@
   /* @domain career-market-controller showPendingWinterTransferSummary */
   /* @domain career-market-controller closeWinterTransferSummary */
 
-  /* @domain career-market-controller playerSeasonStatus */
+  /* @domain player-season-state playerSeasonStatus */
 
-  /* @domain career-market-controller playerStatusForDay */
+  /* @domain player-season-state playerStatusForDay */
 
-  /* @domain career-market-controller playerFormMetrics */
+  /* @domain player-season-state playerFormMetrics */
 
   /* @domain career-market-controller qualitativeFormLabel */
 
@@ -3812,75 +3831,11 @@
 
   /* @domain career-market-controller sortedSerieAStandings */
 
-  /* @domain career-market-controller updateSerieAStandingsFromStoredMatches */
+  /* @domain player-season-state updateSerieAStandingsFromStoredMatches */
 
-  /* @domain career-market-controller seasonPlayerOwner */
+  /* @domain career-state seasonPlayerOwner */
 
-  function ensureSeasonState() {
-    if (!state) return null;
-    if (!state.season || !state.season.started) return null;
-    if (!Array.isArray(state.season.schedule) || state.season.schedule.length===0) {
-      state.season.schedule = buildFantasySeasonSchedule(state.managers);
-    } else if (state.season.schedule.length!==FANTASY_SEASON_MATCHDAYS) {
-      // Migrazione: conserva tutte le giornate già presenti/giocate e completa il calendario fino a 38.
-      state.season.schedule = buildFantasySeasonSchedule(state.managers,FANTASY_SEASON_MATCHDAYS,state.season.schedule);
-    }
-    if (!Array.isArray(state.season.standings) || state.season.standings.length!==state.managers.length) {
-      state.season.standings = freshStandings(state.managers);
-    }
-    state.season.currentMatchday = clamp(Number(state.season.currentMatchday||1),1,FANTASY_SEASON_MATCHDAYS);
-    if (!state.season.matchdayResults || typeof state.season.matchdayResults !== 'object') state.season.matchdayResults = {};
-
-    // V2.7.2 migration: ricostruisce i Fantapunti totali dai risultati già giocati
-    // per rendere compatibili anche i salvataggi delle versioni precedenti.
-    const missingFantasyTotals = state.season.standings.some(s=>!Number.isFinite(Number(s.fantasyPoints)));
-    if (missingFantasyTotals) {
-      state.season.standings.forEach(s=>{ s.fantasyPoints=0; });
-      Object.values(state.season.matchdayResults).forEach(dayResult=>{
-        (dayResult?.matches||[]).forEach(m=>{
-          const h=state.season.standings.find(s=>s.managerId===m.homeId);
-          const a=state.season.standings.find(s=>s.managerId===m.awayId);
-          if(h) h.fantasyPoints+=Number(m.homeFantasy||0);
-          if(a) a.fantasyPoints+=Number(m.awayFantasy||0);
-        });
-      });
-    }
-
-    if (!state.season.lineups || typeof state.season.lineups !== 'object') state.season.lineups = {};
-    if (!state.season.dashboardReadyDays || typeof state.season.dashboardReadyDays !== 'object') state.season.dashboardReadyDays = {};
-    if (!state.season.matchdayFlow || typeof state.season.matchdayFlow !== 'object') state.season.matchdayFlow = {};
-    if (!Array.isArray(state.season.newsFeed)) state.season.newsFeed = [];
-    if (!state.season.newsGeneratedDays || typeof state.season.newsGeneratedDays !== 'object') state.season.newsGeneratedDays = {};
-    if (!state.season.newsMeta || typeof state.season.newsMeta !== 'object') state.season.newsMeta = {};
-    if (!Array.isArray(state.season.serieASchedule) || state.season.serieASchedule.length !== 38) state.season.serieASchedule = buildSerieASchedule();
-    if (!state.season.serieAResults || typeof state.season.serieAResults !== 'object') state.season.serieAResults = {};
-    if (state.season.pendingBigMatch === undefined) state.season.pendingBigMatch = null;
-    if (!state.season.dayPhase) state.season.dayPhase = 'ready';
-    if (!state.season.formationChoices || typeof state.season.formationChoices !== 'object') state.season.formationChoices = {};
-    if (!state.season.adminRules || typeof state.season.adminRules !== 'object') state.season.adminRules = {};
-    if (!state.season.opponentMalusEvents || typeof state.season.opponentMalusEvents !== 'object') state.season.opponentMalusEvents = {};
-    if(!state.season.fantaclassificaActive){
-      const activatedEntry=Object.values(state.season.adminRules).find(entry=>entry?.resolved && entry?.selectedOption?.effect?.ruleId==='fantaclassifica');
-      if(activatedEntry){
-        state.season.fantaclassificaActive=true;
-        state.season.fantaclassificaActivatedDay=Number(activatedEntry.day||activatedEntry.selectedOption?.effect?.activatedDay||1);
-      }
-    }
-    if (!state.season.shopPurchases || typeof state.season.shopPurchases !== 'object') state.season.shopPurchases = {};
-    if (!state.season.consumables || typeof state.season.consumables !== 'object') state.season.consumables = {inventory:{},effects:{},usageHistory:[],purchaseHistory:[]};
-    if (!state.season.consumables.inventory || typeof state.season.consumables.inventory !== 'object') state.season.consumables.inventory={};
-    if (!state.season.consumables.effects || typeof state.season.consumables.effects !== 'object') state.season.consumables.effects={};
-    if (!Array.isArray(state.season.consumables.usageHistory)) state.season.consumables.usageHistory=[];
-    if (!Array.isArray(state.season.consumables.purchaseHistory)) state.season.consumables.purchaseHistory=[];
-    if(state.season.sponsor && !state.season.sponsor.winRewards) state.season.sponsor.winRewards={};
-    if (!state.season.playerOvrDevelopment || typeof state.season.playerOvrDevelopment !== 'object') state.season.playerOvrDevelopment = {};
-    if (!Array.isArray(state.season.playerDevelopmentEvents)) state.season.playerDevelopmentEvents = [];
-    ensureSocialState(state.season);
-    if (!state.season.assistantCoachLineup || typeof state.season.assistantCoachLineup !== 'object') state.season.assistantCoachLineup = {enabled:false,formation:null,starters:{},bench:[],updatedAt:0,lastSourceDay:0};
-    ensureCareerEconomy();
-    ensurePlayerSeasonSystems(state.season);
-    return state.season;
-  }
+  /* @domain season-state ensureSeasonState */
 
   function startLeague() {
     if (!state || !state.completed) return;
@@ -4026,12 +3981,12 @@
 
   /* @domain league-views setLeagueStandingsSort */
 
-  /* @domain league-views managerById */
+  /* @domain career-state managerById */
 
-  /* @domain league-views currentUserFixture */
+  /* @domain league-state currentUserFixture */
 
 
-  /* @domain league-views userOpponentIdForDay */
+  /* @domain league-state userOpponentIdForDay */
 
   /* @domain league-views cpuFormationForDay */
 
@@ -4081,7 +4036,7 @@
 
   /* @domain league-views renderLeagueStandingsScreen */
 
-  /* @domain shop-controller ensureCareerEconomy */
+  /* @domain career-state ensureCareerEconomy */
 
   /* @domain shop-controller sponsorVisualAsset */
 
@@ -4118,17 +4073,17 @@
 
   /* @domain shop-controller ensureSeasonShop */
 
-  /* @domain shop-controller shopItemActive */
+  /* @domain economy-state shopItemActive */
 
   /* @domain shop-controller careerEuros */
 
   /* @domain shop-controller careerFantapoints */
 
-  /* @domain shop-controller ensureConsumableState */
+  /* @domain economy-state ensureConsumableState */
 
-  /* @domain shop-controller consumableQuantity */
+  /* @domain economy-state consumableQuantity */
 
-  /* @domain shop-controller consumableDayEffect */
+  /* @domain economy-state consumableDayEffect */
 
   /* @domain shop-controller addConsumable */
 
@@ -4158,7 +4113,7 @@
 
   /* @domain shop-controller seasonShockChance */
 
-  /* @domain shop-controller formationChoiceRarity */
+  /* @domain economy-state formationChoiceRarity */
 
   /* @domain shop-controller formationChoiceRarityLabel */
 
@@ -4187,15 +4142,15 @@
 
   /* @domain shop-controller renderShopItems */
 
-  /* @domain assistant-policy estimatedStarterProbability */
+  /* @domain assistant-evaluation estimatedStarterProbability */
 
   /* @domain assistant-policy scoutStarterBadge */
 
-  /* @domain assistant-policy assistantAutoLineupCapabilities */
+  /* @domain assistant-evaluation assistantAutoLineupCapabilities */
 
-  /* @domain assistant-policy assistantBasePlayerValue */
+  /* @domain assistant-evaluation assistantBasePlayerValue */
 
-  /* @domain assistant-policy advancedAutoLineupValue */
+  /* @domain assistant-evaluation advancedAutoLineupValue */
 
   /* @domain assistant-policy assistantAutoLineupAnalysisHtml */
 
@@ -4239,17 +4194,17 @@
   /* @domain datacenter-views renderLeagueEvolutionScreen */
 
 
-  /* @domain social-controller socialOwnedPlayers */
+  /* @domain social-state socialOwnedPlayers */
 
   /* @domain social-controller socialHandle */
 
   /* @domain social-controller socialPersonality */
 
-  /* @domain social-controller ensureSocialState */
+  /* @domain social-state ensureSocialState */
 
   /* @domain social-controller socialConversation */
 
-  /* @domain social-controller socialMotivationForPlayer */
+  /* @domain social-state socialMotivationForPlayer */
 
   /* @domain social-controller socialRelationLabel */
 
@@ -4314,11 +4269,11 @@
   };
   const INTUITION_KIND_LABEL={starter:'TITOLARITÀ',vote:'VOTO',goal:'GOL',assist:'ASSIST'};
 
-  /* @domain expert-controller expertPrecisionActive */
+  /* @domain expert-policy expertPrecisionActive */
 
   /* @domain expert-controller expertPrecisionScoreBonus */
 
-  /* @domain expert-controller expertDayState */
+  /* @domain expert-policy expertDayState */
 
   /* @domain expert-controller intuitionExpertSentence */
 
@@ -4424,17 +4379,17 @@
 
   /* @domain lineup-controller ensureLineupDayStore */
 
-  /* @domain lineup-controller lineupSlots */
+  /* @domain lineup-evaluation lineupSlots */
 
-  /* @domain lineup-controller lineupRequiredStarters */
+  /* @domain lineup-evaluation lineupRequiredStarters */
 
-  /* @domain lineup-controller lineupPlayerValue */
+  /* @domain lineup-evaluation lineupPlayerValue */
 
-  /* @domain lineup-controller cpuLeagueRuleLineupValue */
+  /* @domain cpu-lineup-evaluation cpuLeagueRuleLineupValue */
 
   /* @domain lineup-controller cpuLeagueFormationBias */
 
-  /* @domain lineup-controller lineupCountsForFormation */
+  /* @domain lineup-evaluation lineupCountsForFormation */
 
   /* @domain lineup-controller normalizeSavedLineup */
 
@@ -4448,21 +4403,21 @@
 
   /* @domain matchday-events-controller formationChoiceCategoryClass */
 
-  /* @domain matchday-events-controller formationChoiceDayState */
+  /* @domain matchday-policy formationChoiceDayState */
 
-  /* @domain matchday-events-controller adminRuleDayState */
+  /* @domain matchday-policy adminRuleDayState */
 
-  /* @domain matchday-events-controller activeAdminRule */
+  /* @domain matchday-policy activeAdminRule */
 
-  /* @domain matchday-events-controller activeAdminRuleEffect */
+  /* @domain matchday-policy activeAdminRuleEffect */
 
   /* @domain matchday-events-controller hasPendingMatchdayEvent */
 
   /* @domain matchday-events-controller nextPendingMatchdayEvent */
 
-  /* @domain matchday-events-controller hashPick */
+  /* @domain matchday-policy hashPick */
 
-  /* @domain matchday-events-controller sortedByChoiceHash */
+  /* @domain matchday-policy sortedByChoiceHash */
 
   const SERIEA_DERBY_PAIRS = new Set([
     'inter|milan','lazio|roma','juventus|torino'
@@ -4470,25 +4425,25 @@
 
   /* @domain matchday-events-controller isDerbyFixtureForPlayer */
 
-  /* @domain matchday-events-controller formationChoiceContextForManagers */
+  /* @domain matchday-policy formationChoiceContextForManagers */
 
   /* @domain matchday-events-controller fantasyAppearanceRate */
 
   /* @domain matchday-events-controller formationChoiceContext */
 
-  /* @domain matchday-events-controller specialRivalManager */
+  /* @domain matchday-policy specialRivalManager */
 
-  /* @domain matchday-events-controller opponentMalusDayState */
+  /* @domain matchday-policy opponentMalusDayState */
 
-  /* @domain matchday-events-controller opponentMalusChanceForManager */
+  /* @domain matchday-policy opponentMalusChanceForManager */
 
-  /* @domain matchday-events-controller generateOpponentMalusOption */
+  /* @domain matchday-policy generateOpponentMalusOption */
 
   const opponentMalusRollsInProgress=new Set();
 
-  /* @domain matchday-events-controller ensureOpponentMalusRoll */
+  /* @domain matchday-policy ensureOpponentMalusRoll */
 
-  /* @domain matchday-events-controller activeOpponentMalus */
+  /* @domain matchday-policy activeOpponentMalus */
 
   /* @domain matchday-events-controller generateFormationChoiceOptions */
 
@@ -4517,7 +4472,7 @@
 
   /* @domain matchday-events-controller previousUnusedBenchEligibleIds */
 
-  /* @domain matchday-events-controller adminBlockedStarterForManager */
+  /* @domain matchday-policy adminBlockedStarterForManager */
 
   /* @domain matchday-events-controller adminFaithReserveEligibleIds */
 
@@ -4551,29 +4506,29 @@
 
   /* @domain matchday-events-controller ensureFormationChoiceRoll */
 
-  /* @domain matchday-events-controller activeFormationChoice */
+  /* @domain matchday-policy activeFormationChoice */
 
-  /* @domain matchday-events-controller tacticForManager */
+  /* @domain matchday-policy tacticForManager */
 
-  /* @domain matchday-events-controller riskAdjustmentForPerformance */
+  /* @domain matchday-policy riskAdjustmentForPerformance */
 
-  /* @domain matchday-events-controller fantasyRuleForDay */
+  /* @domain matchday-policy fantasyRuleForDay */
 
-  /* @domain matchday-events-controller starterReportActive */
+  /* @domain matchday-policy starterReportActive */
 
-  /* @domain matchday-events-controller specialTrainingPlayerIds */
+  /* @domain matchday-policy specialTrainingPlayerIds */
 
   /* @domain matchday-events-controller specialTrainingPlayerId */
 
-  /* @domain matchday-events-controller specialTrainingUsedForPlayer */
+  /* @domain matchday-policy specialTrainingUsedForPlayer */
 
   /* @domain matchday-events-controller blockedOpponentPlayerIds */
 
   /* @domain matchday-events-controller blockedOpponentPlayerId */
 
-  /* @domain matchday-events-controller worldPlayerModifier */
+  /* @domain matchday-policy worldPlayerModifier */
 
-  /* @domain matchday-events-controller formationPlayerModifier */
+  /* @domain matchday-policy formationPlayerModifier */
 
   /* @domain matchday-events-controller formationChoiceCover */
 
@@ -4695,19 +4650,19 @@
   // V2.3 · La giornata fantasy nasce da una simulazione unica della Serie A.
   // Lo stesso calciatore ha quindi lo stesso voto/eventi ovunque: prima si gioca
   // la Serie A, poi quei voti vengono usati per tutte le fantasquadre.
-  /* @domain football-engine seededSerieRand */
+  /* @domain football-selection seededSerieRand */
 
   /* @domain football-engine halfPoint */
 
-  /* @domain football-engine buildSerieASchedule */
+  /* @domain season-state buildSerieASchedule */
 
   let serieAStrengthCache={key:null,rows:null};
 
-  /* @domain football-engine serieAFixtureForPlayer */
+  /* @domain football-selection serieAFixtureForPlayer */
 
-  /* @domain football-engine serieAStrengthRowsForDay */
+  /* @domain football-selection serieAStrengthRowsForDay */
 
-  /* @domain football-engine serieAMatchupDifficulty */
+  /* @domain football-selection serieAMatchupDifficulty */
 
   /* @domain football-engine serieAFixtureCompactText */
 
@@ -4715,15 +4670,15 @@
 
   /* @domain football-engine serieAMatchupBadgeHtml */
 
-  /* @domain football-engine clubPool */
+  /* @domain football-selection clubPool */
 
-  /* @domain football-engine rankedClubPlayers */
+  /* @domain football-selection rankedClubPlayers */
 
-  /* @domain football-engine serieAPlayerDayProfile */
+  /* @domain football-selection serieAPlayerDayProfile */
 
-  /* @domain football-engine chooseSerieATacticalShape */
+  /* @domain football-selection chooseSerieATacticalShape */
 
-  /* @domain football-engine buildSerieAClubSelection */
+  /* @domain football-selection buildSerieAClubSelection */
 
   /* @domain football-engine baseLivePerformance */
 
@@ -4745,18 +4700,18 @@
     control:{P:.05,D:.38,C:1.15,A:.62}
   };
 
-  /* @domain football-engine serieAUnitWeightedAverage */
+  /* @domain football-selection serieAUnitWeightedAverage */
 
-  /* @domain football-engine serieATeamUnitProfile */
+  /* @domain football-selection serieATeamUnitProfile */
 
   /* @domain football-engine serieAGoalProbability */
 
-  /* @domain football-engine matchStrength */
+  /* @domain football-selection matchStrength */
 
   /* @domain football-engine buildSerieAMatch */
 
 
-  /* @domain football-engine serieAClubStrength */
+  /* @domain football-selection serieAClubStrength */
 
   /* @domain football-engine selectSerieABigMatch */
 
@@ -4847,7 +4802,7 @@
   /* @domain live-controller applySerieAEvent */
 
 
-  /* @domain live-controller serieABigMatch */
+  /* @domain live-state serieABigMatch */
 
   /* @domain live-controller isBigMatchClub */
 
@@ -4857,9 +4812,9 @@
 
   /* @domain live-controller startSerieABigMatchPhase */
 
-  /* @domain live-controller snapshotSerieALive */
+  /* @domain live-state snapshotSerieALive */
 
-  /* @domain live-controller hydrateSerieALive */
+  /* @domain live-state hydrateSerieALive */
 
   /* @domain live-controller finishSerieAMultiLivePhase */
 
@@ -4885,9 +4840,9 @@
 
   /* @domain player-development playerOvrDevelopment */
 
-  /* @domain player-development currentPlayerOvr */
+  /* @domain player-season-state currentPlayerOvr */
 
-  /* @domain player-development playerOvrLabel */
+  /* @domain player-season-state playerOvrLabel */
 
   /* @domain player-development applyPlayerOvrChange */
 
@@ -4922,10 +4877,10 @@
 
   // ========================= V3.2.5 — EVENTI ASTA =========================
   const AUCTION_EVENT_CHANCE=window.FantaAuctionEvents.settings.chance;
-  /* @domain auction-events-controller ensureAuctionEvents */
-  /* @domain auction-events-controller auctionEffects */
-  /* @domain auction-events-controller relationship */
-  /* @domain auction-events-controller changeRelationship */
+  /* @domain auction-state ensureAuctionEvents */
+  /* @domain auction-state auctionEffects */
+  /* @domain auction-state relationship */
+  /* @domain auction-state changeRelationship */
   /* @domain auction-events-controller registerDirectAuctionDuel */
 
   /* @domain auction-events-controller resolveRespectedAuctionPact */

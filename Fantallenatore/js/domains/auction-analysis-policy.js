@@ -1,4 +1,4 @@
-/* Responsibility: auction-analysis-policy. Only external collaborators use live runtime accessors. */
+/* Domain service: auction-analysis-policy. No DOM, timers, or persistence; state accessors remain live. */
 (() => {
   'use strict';
   function create($runtime){

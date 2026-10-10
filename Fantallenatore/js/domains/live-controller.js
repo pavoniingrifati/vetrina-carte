@@ -456,10 +456,6 @@
     $runtime.updateWatchedVoteFlashes(watchedVoteBefore);
   }
 
-  function serieABigMatch(){
-    return $runtime.serieALive?.matches?.[$runtime.serieALive.bigMatchIndex]||null;
-  }
-
   function isBigMatchClub(clubId){
     const big=$runtime.serieABigMatch();
     return !!big && (clubId===big.homeClub || clubId===big.awayClub);
@@ -500,14 +496,6 @@
 
   function startSerieABigMatchPhase(){
     $runtime.startPendingBigMatchFromHub();
-  }
-
-  function snapshotSerieALive(live) {
-    return window.FantaLiveState.snapshot(live);
-  }
-
-  function hydrateSerieALive(snapshot, phase=null) {
-    return window.FantaLiveState.hydrate(snapshot,phase);
   }
 
   function finishSerieAMultiLivePhase(){
@@ -1015,7 +1003,7 @@
     $runtime.renderSerieALive();
     $runtime.restartSerieALiveTimer();
   }
-    return Object.freeze({ensureCpuLineupsForDay,serieALiveTickBase,serieALiveTickDelay,restartSerieALiveTimer,setSerieALiveSpeed,toggleSerieALivePause,jumpToNextSerieAEvent,renderSerieALiveSpeedControls,serieAEventFantasySide,captureWatchedVoteSnapshot,updateWatchedVoteFlashes,tvEventClass,tvFinalTitle,tvEventDetail,tvFantasyFocus,animateMatchParticles,setSerieATvBanner,hideSerieATvBanner,triggerSerieATvPresentation,eventHeadline,serieALiveFantasyContext,serieAEventTouchesFantasyMatch,fantasyFocusedEventHeadline,applySerieAEvent,serieABigMatch,isBigMatchClub,serieAMinuteForPlayer,serieALiveSnapshotForManager,startSerieABigMatchPhase,snapshotSerieALive,hydrateSerieALive,finishSerieAMultiLivePhase,fantasyLiveSnapshot,setSerieAMatchesExpanded,renderSerieALive,tickSerieALive,simulateFullMatchdayDirectly,startSerieALiveMatchday,skipSerieALive,startPendingBigMatchFromHub});
+    return Object.freeze({ensureCpuLineupsForDay,serieALiveTickBase,serieALiveTickDelay,restartSerieALiveTimer,setSerieALiveSpeed,toggleSerieALivePause,jumpToNextSerieAEvent,renderSerieALiveSpeedControls,serieAEventFantasySide,captureWatchedVoteSnapshot,updateWatchedVoteFlashes,tvEventClass,tvFinalTitle,tvEventDetail,tvFantasyFocus,animateMatchParticles,setSerieATvBanner,hideSerieATvBanner,triggerSerieATvPresentation,eventHeadline,serieALiveFantasyContext,serieAEventTouchesFantasyMatch,fantasyFocusedEventHeadline,applySerieAEvent,isBigMatchClub,serieAMinuteForPlayer,serieALiveSnapshotForManager,startSerieABigMatchPhase,finishSerieAMultiLivePhase,fantasyLiveSnapshot,setSerieAMatchesExpanded,renderSerieALive,tickSerieALive,simulateFullMatchdayDirectly,startSerieALiveMatchday,skipSerieALive,startPendingBigMatchFromHub});
   }
   window.FantaDomains ||= {};
   window.FantaDomains['live-controller']=Object.freeze({create});

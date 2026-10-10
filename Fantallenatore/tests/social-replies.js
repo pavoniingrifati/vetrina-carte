@@ -2,11 +2,13 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../js/domains/social-controller.js'),'utf8'),window={};
 vm.runInNewContext(source,{window});
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../js/domains/social-state.js'),'utf8'),{window});
 const player={id:'p1',name:'Mario'},season={started:true,currentMatchday:1},runtime={state:{season},managerById:()=>({roster:[player]}),ensureSeasonState:()=>season,playerFormMetrics:()=>({score:0}),clamp:(n,a,b)=>Math.max(a,Math.min(b,n)),saveState:()=>{},renderLeagueSocialScreen:()=>{},showToast:()=>{}};
 let reactionRoll=.6,blockRoll=.1,spamRoll=.99,replyRoll=0,profileRoll=0;
 runtime.careerHash=key=>key.startsWith('social-personality')?profileRoll:key.startsWith('social-immediate-block')?blockRoll:key.startsWith('social-block')?spamRoll:key.startsWith('social-reaction')?reactionRoll:replyRoll;
+Object.assign(runtime,window.FantaDomains['social-state'].create(runtime));
 const api=window.FantaDomains['social-controller'].create(runtime);Object.assign(runtime,api);runtime.renderLeagueSocialScreen=()=>{};
-const bank=JSON.parse(source.match(/const socialReplies=([\s\S]*?);\n\n  function socialOwnedPlayers/)[1]);
+const bank=JSON.parse(source.match(/const socialReplies=([\s\S]*?);\s*\n\s*function/)[1]);
 assert.equal(Object.values(bank).flatMap(profile=>Object.values(profile).flat()).length,128);
 for(const profile of Object.values(bank))for(const pool of Object.values(profile)){assert.equal(pool.length,8);assert.equal(new Set(pool).size,8);}
 assert.equal(api.socialMessageTone('Bravo, ma sei un idiota'),'hostile');
@@ -28,12 +30,12 @@ reactionRoll=.99;r=api.socialReactionData(player,'Ricevuto',conv,1);assert.equal
 delete season.social;reactionRoll=.6;blockRoll=0;
 api.socialSendMessage(player.id,'Sei scarso');conv=api.socialConversation(player.id);
 assert.equal(conv.blocked,true);assert.equal(conv.messages.length,3);assert.equal(conv.messages[2].sender,'system');
-assert.equal(api.socialMotivationForPlayer(player.id,1).voteDelta,-.25);
+assert.equal(runtime.socialMotivationForPlayer(player.id,1).voteDelta,-.25);
 api.socialSendMessage(player.id,'Scusa');assert.equal(conv.messages.length,3);
 // Later blocks cannot overwrite or stack the first daily effect.
 delete season.social;reactionRoll=0;blockRoll=.99;api.socialSendMessage(player.id,'Bravo');
 reactionRoll=.6;blockRoll=0;api.socialSendMessage(player.id,'Sei inutile');
-assert.equal(api.socialConversation(player.id).blocked,true);assert.equal(api.socialMotivationForPlayer(player.id,1).voteDelta,.25);
+assert.equal(api.socialConversation(player.id).blocked,true);assert.equal(runtime.socialMotivationForPlayer(player.id,1).voteDelta,.25);
 // Spam still blocks, independently of the immediate negative-reaction check.
 conv={messages:[1,2,3].map(()=>({sender:'user',day:1})),relationship:50,totalMessages:3};spamRoll=0;reactionRoll=0;
 assert.equal(api.socialReactionData(player,'Bravo',conv,1).outcome,'blocked');spamRoll=.99;
