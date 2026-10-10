@@ -13,10 +13,10 @@ const VIEWPORTS = Object.freeze([
 ]);
 
 function auditResponsive(root) {
-  const manifest = fs.readFileSync(path.join(root, 'styles_v302.css'), 'utf8');
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'css/manifest.json'), 'utf8'));
   const css = fs.readFileSync(path.join(root, 'css/modules/12-responsive-qa.css'), 'utf8');
   const requirements = [
-    ['modulo responsive caricato per ultimo', manifest.trim().endsWith("@import url('css/modules/12-responsive-qa.css');")],
+    ['modulo responsive caricato per ultimo', manifest.sections.at(-1).file === 'css/modules/12-responsive-qa.css'],
     ['dashboard a colonna singola entro 1100 px', /@media\(max-width:1100px\)[\s\S]*?#seasonScreen \.season-dashboard-shell[\s\S]*?grid-template-columns:minmax\(0,1fr\)!important/.test(css)],
     ['dashboard laterale a colonna singola su telefono', /@media\(max-width:620px\)[\s\S]*?#seasonScreen \.season-dashboard-left[\s\S]*?grid-template-columns:minmax\(0,1fr\)!important/.test(css)],
     ['navigazione compatta sotto 420 px', /@media\(max-width:420px\)[\s\S]*?\.league-nav button[\s\S]*?min-height:68px!important/.test(css)],

@@ -566,7 +566,12 @@
       const room=Math.max(left,Math.min($runtime.targetFor(manager,role)-$runtime.roleSpend(manager,role),Number(manager.budget||0)-Math.max(0,$runtime.slotsRemaining(manager)-left)));
       const affordability=$runtime.clamp(room/Math.max(left,(values[0]||1)),.4,1.25);
       // Every unfinished role keeps a positive chance; strategy biases the draw.
-      const weight=left*(.55+quality*.25+scarcity*.25)*(.65+affordability*.35);
+      let weight=left*(.55+quality*.25+scarcity*.25)*(.65+affordability*.35);
+      if($runtime.profileArchetype(manager)==='admin' && pool.length){
+        const best=pool.slice().sort((a,b)=>$runtime.currentPlayerOvr(b)-$runtime.currentPlayerOvr(a))[0];
+        const plan=$runtime.cpuAdminPlayerPlan(manager,best);
+        weight*=$runtime.clamp(.25+Number(plan?.gain||0)/15,.25,2.5);
+      }
       return {role,weight};
     });
   }
@@ -613,8 +618,19 @@
     if (archetype==='esperto')       { topChance=.34; valueChance=.36; targetChance=.27; chaosChance=.03; }
     if (archetype==='pazzo')         { topChance=.30; valueChance=.18; targetChance=.18; chaosChance=.34; }
     if (archetype==='tifoso')        { topChance=.30; valueChance=.23; targetChance=.39; chaosChance=.08; }
-    if (archetype==='admin')         { topChance=.52; valueChance=.22; targetChance=.23; chaosChance=.03; }
+    if (archetype==='rivale')        { topChance=.52; valueChance=.22; targetChance=.23; chaosChance=.03; }
 
+    if (archetype==='admin')     { topChance=.42; valueChance=.28; targetChance=.30; chaosChance=0; }
+    if (archetype==='squalo')     { topChance=.68; valueChance=.12; targetChance=.18; chaosChance=.02; }
+    if (archetype==='fantadata')  { topChance=.18; valueChance=.58; targetChance=.23; chaosChance=.01; }
+    if (archetype==='predatore')  { topChance=.26; valueChance=.43; targetChance=.29; chaosChance=.02; }
+    if (archetype==='broker')     { topChance=.57; valueChance=.16; targetChance=.25; chaosChance=.02; }
+    if (archetype==='camaleonte') {
+      const ratio=$runtime.cpuSpecialRivalMarket(role).priceRatio;
+      topChance=ratio>1.10?.23:ratio<.90?.55:.36;
+      valueChance=ratio>1.10?.52:ratio<.90?.23:.37;
+      targetChance=1-topChance-valueChance-.02; chaosChance=.02;
+    }
     const competence=$runtime.cpuAuctionCompetence(manager);
     const competitiveDivision=competence>0;
     chaosChance*=1-competence*.70;
@@ -646,6 +662,8 @@
       const favorite = profile.favoriteClub===p.club ? 1 : 0;
       const personalTaste = .82 + $runtime.careerHash(`nom|${manager.id}|${p.id}`)*.36;
       const slotInterest = $runtime.strategicSlotInterest(manager,p);
+      const tactics=$runtime.cpuSpecialRivalPlan(manager,p);
+      const rivalPlan=$runtime.cpuAdminPlayerPlan(manager,p);
       const rankIndex = rankMap.get(p.id)||0;
       const outstanding = $runtime.state.managers.reduce((sum,m)=>sum+$runtime.roleSlotsRemaining(m,role),0);
       const viableCut = Math.min(candidates.length, Math.max(12, outstanding + 8));
@@ -662,6 +680,14 @@
         score = 15 + Math.random()*58 + rankNorm*12 + favorite*10;
       }
 
+      if(rivalPlan) score=20+rivalPlan.gain*(Number($runtime.state.career?.division)===1?3:5)+rivalPlan.efficiency*(Number($runtime.state.career?.division)===1?25:12)+
+        (limit>=rivalPlan.reference*.85?18:-25)+(rivalPlan.humanNeed && rivalPlan.gain>=6?8:0);
+      if(tactics?.archetype==='squalo') score+=tactics.strong?22+Math.min(16,tactics.rivals*3):0;
+      if(tactics?.archetype==='camaleonte') score*=tactics.valueFactor*(market<avgRoom?1.08:1);
+      if(tactics?.archetype==='fantadata') score=score*.60+tactics.improvement*34+tactics.efficiency*32;
+      if(tactics?.archetype==='predatore') score+=tactics.improvement*18+(tactics.strong?Math.max(0,5-tactics.rivals)*5:0);
+      if(tactics?.pressureCall) score+=22+Math.min(18,tactics.rivals*3);
+
       // User-pressure calls exist, but are rare and contextual rather than a permanent cheat.
       if (manager.id!=='user' && $runtime.roleSlotsRemaining(me,role)<=2 && me.budget > manager.budget*.72 && rankNorm>.65) {
         if (Math.random()<.08) score += 12;
@@ -676,22 +702,23 @@
         const strongStillAvailable=bestMarket>=$runtime.TOP_VALUE_THRESHOLD[role]*.75;
         if (strongStillAvailable && market<strongCutoff) score*=.32;
       }
-      if (!slotInterest.willing) score *= mode==='chaos' ? .34 : .08;
+      const rivalWilling=rivalPlan?.gain>=6 && limit>1;
+      if (!slotInterest.willing && !rivalWilling) score *= tactics?.pressureCall ? .80 : mode==='chaos' ? .34 : .08;
       else score *= .90 + slotInterest.factor*.10;
       if(manager.id!=='user') score *= $runtime.auctionReputationMultiplier(p);
       score *= personalTaste;
       score *= $runtime.cpuFootballAuctionFactor(manager,p);
       score *= .90 + Math.random()*.20;
-      return {p,score,mode,willing:slotInterest.willing};
+      return {p,score,mode,willing:slotInterest.willing || rivalWilling || tactics?.pressureCall};
     }).sort((a,b)=>b.score-a.score);
 
     // Broader shortlist than before: the best candidate is favoured, never guaranteed.
     const willingCandidates=scored.filter(item=>item.willing);
     const selection=competence>=.75 && willingCandidates.length ? willingCandidates : scored;
-    const shortlist=Math.max(5,Math.round(14-competence*9));
+    const shortlist=archetype==='admin'?2:Math.max(5,Math.round(14-competence*9));
     const poolSize=mode==='chaos' ? Math.min(Math.round(22-competence*12),selection.length) : Math.min(shortlist,selection.length);
     const pool = selection.slice(0,poolSize);
-    const exponent = mode==='top' ? 1.20 : mode==='value' ? .92 : mode==='target' ? 1.02 : .60;
+    const exponent = archetype==='admin'?3:mode==='top' ? 1.20 : mode==='value' ? .92 : mode==='target' ? 1.02 : .60;
     const weights = pool.map((_,i)=>1/Math.pow(i+1,exponent));
     let weightedRoll = Math.random()*weights.reduce((a,b)=>a+b,0);
     for (let i=0;i<pool.length;i++) {

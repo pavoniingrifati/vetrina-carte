@@ -17,25 +17,6 @@
     return season.lineups[key];
   }
 
-  function lineupSlots(key) {
-    return $runtime.LINEUP_FORMATIONS[key] || $runtime.LINEUP_FORMATIONS['4-3-3'];
-  }
-
-  function lineupRequiredStarters(formation){
-    return $runtime.lineupSlots(formation).length;
-  }
-
-  function lineupPlayerValue(player) {
-    const form=$runtime.playerFormMetrics(player?.id);
-    const status=$runtime.playerStatusForDay(player?.id,$runtime.state?.season?.currentMatchday||1);
-    const statusPenalty=status.unavailable?-4500:0;
-    return $runtime.currentPlayerOvr(player) * 100 + Number(player?.fvm || 0) * .2 + Number(player?.quotation || 0) * .1 + form.score*160 + statusPenalty;
-  }
-
-  function cpuLeagueRuleLineupValue(manager,player,day=$runtime.state?.season?.currentMatchday||1){
-    return window.FantaCpuLineupPolicy.playerValue({manager,player,day,state:$runtime.state,lineupPlayerValue:$runtime.lineupPlayerValue,leagueRulesFor:$runtime.leagueRulesFor,cpuLeagueRuleSensitivity:$runtime.cpuLeagueRuleSensitivity,estimatedStarterProbability:$runtime.estimatedStarterProbability,currentPlayerOvr:$runtime.currentPlayerOvr,playerFormMetrics:$runtime.playerFormMetrics,playerSeasonStat:$runtime.playerSeasonStat,serieAMatchupDifficulty:$runtime.serieAMatchupDifficulty,clamp:$runtime.clamp});
-  }
-
   function cpuLeagueFormationBias(manager,key,day=$runtime.state?.season?.currentMatchday||1){
     if(!manager || manager.id==='user') return 0;
     const rules=$runtime.leagueRulesFor($runtime.state);
@@ -49,10 +30,6 @@
     if(Number(rules.firstGoalThreshold)===65 && counts.A>=3) bonus+=70*sensitivity;
     if(Number(rules.firstGoalThreshold)===67 && counts.D>=4) bonus+=35*sensitivity;
     return bonus;
-  }
-
-  function lineupCountsForFormation(key) {
-    return $runtime.lineupSlots(key).reduce((acc,s)=>(acc[s.role]=(acc[s.role]||0)+1,acc),{P:0,D:0,C:0,A:0});
   }
 
   function normalizeSavedLineup(saved, manager) {
@@ -1217,7 +1194,7 @@
       : (selectedPlayer?`${selectedPlayer.name} · ${$runtime.ROLE_LABELS[selectedPlayer.role]} · scegli uno slot`:'Seleziona un giocatore dalla rosa');
     $runtime.$('benchSelectedBtn').disabled=$runtime.lineupReadOnly || !selectedPlayer || !starterIds.has(String(selectedPlayer.id));
   }
-    return Object.freeze({lineupDayKey,ensureLineupDayStore,lineupSlots,lineupRequiredStarters,lineupPlayerValue,cpuLeagueRuleLineupValue,cpuLeagueFormationBias,lineupCountsForFormation,normalizeSavedLineup,syncDraftBenchOrder,draftBenchPlayers,moveBenchPlayer,openLineupScreen,draftStarterIds,draftSlotForPlayer,draftPlayerById,setDraftFormation,selectLineupPlayer,nominateLineupCaptain,placePlayerInSlot,openLineupSlotPicker,placeSelectedInSlot,benchSelectedPlayer,clearLineupDragVisuals,beginLineupDrag,endLineupDrag,bindLineupDragDrop,clearDraftLineup,bestPlayersForRole,buildAutoLineup,formationCpuBias,chooseCpuFormation,tacticalExpectedPlayerPoints,tacticalExpectedLineupPoints,adaptTacticalProLineup,autoFillUserLineup,ensureAssistantCoachLineup,assistantCoachCarryEnabled,saveAssistantCoachTemplateFromDraft,toggleAssistantCoachCarry,assistantCoachTemplateForDay,repairAssistantInheritedLineup,seedAssistantCoachLineupForDay,unavailableDraftStarters,repairUnavailableStartersInDraft,saveLineupDraft,confirmUserLineup,closeConsumableModal,lineupConsumableActionState,renderConsumableInventory,openConsumableInventory,beginConsumableUse,showConsumableTargets,applyTargetedConsumable,enforceOpponentConsumableBlock,renderLineupScreen});
+    return Object.freeze({lineupDayKey,ensureLineupDayStore,cpuLeagueFormationBias,normalizeSavedLineup,syncDraftBenchOrder,draftBenchPlayers,moveBenchPlayer,openLineupScreen,draftStarterIds,draftSlotForPlayer,draftPlayerById,setDraftFormation,selectLineupPlayer,nominateLineupCaptain,placePlayerInSlot,openLineupSlotPicker,placeSelectedInSlot,benchSelectedPlayer,clearLineupDragVisuals,beginLineupDrag,endLineupDrag,bindLineupDragDrop,clearDraftLineup,bestPlayersForRole,buildAutoLineup,formationCpuBias,chooseCpuFormation,tacticalExpectedPlayerPoints,tacticalExpectedLineupPoints,adaptTacticalProLineup,autoFillUserLineup,ensureAssistantCoachLineup,assistantCoachCarryEnabled,saveAssistantCoachTemplateFromDraft,toggleAssistantCoachCarry,assistantCoachTemplateForDay,repairAssistantInheritedLineup,seedAssistantCoachLineupForDay,unavailableDraftStarters,repairUnavailableStartersInDraft,saveLineupDraft,confirmUserLineup,closeConsumableModal,lineupConsumableActionState,renderConsumableInventory,openConsumableInventory,beginConsumableUse,showConsumableTargets,applyTargetedConsumable,enforceOpponentConsumableBlock,renderLineupScreen});
   }
   window.FantaDomains ||= {};
   window.FantaDomains['lineup-controller']=Object.freeze({create});

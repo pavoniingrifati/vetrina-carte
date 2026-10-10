@@ -35,16 +35,16 @@ function createRuntime(seed,{cache=true}={}){
     const basePlayerValueReference=new Map(baseSerieAPlayers.map(p=>[String(p.id),{...p}]));
     const playerMap=new Map(baseSerieAPlayers.map(p=>[String(p.id),p]));
     const clubMap=new Map(window.FANTA_CLUBS.map(c=>[c.id,c]));
-    let state=null,marketValueMap;
+    let state=null,marketValueMap,autocompleteMode=false;
     const slotRankingCache=new Map();
     const RIVAL_TEAM_NAMES=Array.from({length:24},(_,i)=>'Rivale '+i);
     const RIVAL_COLOR_BASES=Array.from({length:24},()=>['#abcdef','#111111']);
     ${source.slice(source.indexOf('  const PERSONALITIES = ['),source.indexOf('  let state = null;'))}
     // Controlled baseline: league defaults, no power/event/sponsor advantage.
-    function leagueRulesFor(){return {freeRoleAuction:state?.freeRoleAuction===true,defenseModifier:'off',cleanSheetBonus:0,maxFantasySubs:3,firstGoalThreshold:66};}
+    function leagueRulesFor(){return {formation334Allowed:state?.leagueRules?.formation334Allowed===true,freeRoleAuction:state?.freeRoleAuction===true,defenseModifier:'off',cleanSheetBonus:0,maxFantasySubs:3,firstGoalThreshold:66};}
   `,context);
   const names=['careerHash','profileArchetype','roleCount','openRoleAuction','managerCanNominate','slotsRemaining','roleSlotsRemaining','currentAuctionRole','canOwn','maxLegalBid','currentPlayerOvr',
-    'comparableAuctionFvm','careerMarketProfiles','buildMarketValueMap','refreshMarketValueMap','baseAuctionValue','roleSpend','targetFor','cpuLeagueRuleSensitivity','cpuLeagueRuleAuctionFactor','scarcityFactor','freePerSlot','wealthFactor','urgencyFactor','cpuRoleUrgencyState','hasGoodRelations','isHotRival','needFactor','auctionReputationMultiplier','cpuAuctionCompetence','cpuAuctionRoleQuality','cpuAuctionStarterEstimate','cpuFootballAuctionFactor','cpuCoverageEnabled','cpuClubRoleHierarchy','cpuMainKeeper','cpuCoverInfo','cpuMissingKeeperCover','cpuKeeperReserve','cpuOpenRoleSpendingCap','cpuAuctionSpendingCap','strategicPlayerScore','strategicSlotInterest','cpuBundleLimit','cpuLimit','jumpSize',
+    'comparableAuctionFvm','careerMarketProfiles','buildMarketValueMap','refreshMarketValueMap','baseAuctionValue','roleSpend','targetFor','cpuLeagueRuleSensitivity','cpuLeagueRuleAuctionFactor','scarcityFactor','freePerSlot','wealthFactor','urgencyFactor','cpuRoleUrgencyState','hasGoodRelations','isHotRival','needFactor','auctionReputationMultiplier','cpuAuctionCompetence','cpuAuctionRoleQuality','cpuAuctionStarterEstimate','cpuFootballAuctionFactor','cpuAdminPlayerPlan','cpuSpecialRivalMarket','cpuSpecialRivalPlan','cpuNominationDelay','cpuReactionDelay','cpuCoverageEnabled','cpuClubRoleHierarchy','cpuMainKeeper','cpuCoverInfo','cpuMissingKeeperCover','cpuKeeperReserve','cpuOpenRoleSpendingCap','cpuAuctionSpendingCap','strategicPlayerScore','strategicSlotInterest','cpuBundleLimit','cpuLimit','jumpSize',
     'freshRivalIdentityPool','cpuPersonalityPool','pickCpuPersonalities','freshManagers',
     'playerSeasonPotentialProfile','clubRoleStarterSlots','starterHierarchyBias','normalizedStarterProbability','auctionStarterProbability','auctionPlayerAnalysis',
     'nominationCallCount','registerNominationCall','nextNominatorIndex','freeRoleNominationWeights','chooseNomination','ensureAuctionEvents','auctionEffects','relationship'];
@@ -67,7 +67,7 @@ function createRuntime(seed,{cache=true}={}){
     globalThis.api={
       initialize(division,freeRoleAuction,seed){state={marketSeed:seed,career:{division,seasonNumber:1},freeRoleAuction,currentRoleIndex:0,nominationIndex:0,nominationCalls:{},managers:freshManagers('Utente','Tester',division),availableIds:window.FANTA_PLAYERS.map(p=>p.id),stats:{purchases:0,totalSpent:0,highest:null}};slotRankingCache.clear();return state;},
       get state(){return state;},players:baseSerieAPlayers,playerMap,starterEstimates,
-      ...window.FantaGameRules,canOwn,maxLegalBid,roleSlotsRemaining,slotsRemaining,baseAuctionValue,cpuCoverInfo,cpuMissingKeeperCover,cpuKeeperReserve,cpuClubRoleHierarchy,cpuAuctionCompetence,cpuFootballAuctionFactor,cpuAuctionSpendingCap,cpuLimit,jumpSize,chooseNomination,registerNominationCall,nextNominatorIndex,strategicSlotInterest,
+      ...window.FantaGameRules,canOwn,maxLegalBid,roleSlotsRemaining,slotsRemaining,baseAuctionValue,cpuAdminPlayerPlan,cpuSpecialRivalMarket,cpuSpecialRivalPlan,cpuNominationDelay,cpuReactionDelay,cpuCoverInfo,cpuMissingKeeperCover,cpuKeeperReserve,cpuClubRoleHierarchy,cpuAuctionCompetence,cpuFootballAuctionFactor,cpuAuctionSpendingCap,cpuLimit,jumpSize,freeRoleNominationWeights,chooseNomination,registerNominationCall,nextNominatorIndex,strategicSlotInterest,
       awardBundle(players,id,price){const result=AuctionEngine.awardBundle(state,players,id,price,{roleLimits:ROLE_LIMITS,totalSlots:TOTAL_SLOTS});state.auction=null;return result;},
       award(p,id,price){const result=AuctionEngine.awardPlayer(state,p,id,price,{roleLimits:ROLE_LIMITS,totalSlots:TOTAL_SLOTS});state.auction=null;return result;},
       random:()=>Math.random()

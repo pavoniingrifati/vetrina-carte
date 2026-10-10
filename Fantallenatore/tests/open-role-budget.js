@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 const {createRuntime}=require('./helpers/auction-runtime');
 for(const division of [3,2,1]){
  const api=createRuntime('open-role-budget'),s=api.initialize(division,true,'open-role-budget');
- const cpu=s.managers[1];
+ const cpu=s.managers[1];cpu.profile.archetype='rivale'; // Test ordinary reserves; Admin has a dedicated flexible plan.
  const tops=Object.fromEntries(api.ROLE_ORDER.map(role=>[role,api.players.filter(p=>p.role===role).sort((a,b)=>api.baseAuctionValue(b)-api.baseAuctionValue(a))]));
  assert(api.cpuAuctionSpendingCap(cpu,tops.P[0])<100,'Portiere non deve consumare 200 crediti');
  assert(api.cpuAuctionSpendingCap(cpu,tops.C[0])<90,'Primo centrocampista lascia fondi agli altri titolari');

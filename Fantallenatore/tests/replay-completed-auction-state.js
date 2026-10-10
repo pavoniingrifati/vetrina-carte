@@ -1,0 +1,12 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const app=fs.readFileSync(path.join(__dirname,'../app_v302.js'),'utf8');
+const ready=fs.readFileSync(path.join(__dirname,'../js/domains/ready-rosters-controller.js'),'utf8');
+const block=app.match(/let \{quickReadyYield,setQuickReadyLoading,[\s\S]*?\}=window\.FantaDomains\['ready-rosters-controller'\]\.create\(\{([\s\S]*?)\n  \}\);/);
+assert.ok(block,'Configurazione controller rose rapide presente');
+assert.match(block[1],/get state\(\)\{return state;\},\s*set state\(value\)\{state=value;\}/,'Il modulo deve poter sostituire lo stato');
+assert.match(ready,/if \(preparedState\) \$runtime\.state=preparedState;/,'La nuova simulazione usa lo stato ricreato');
+assert.match(app,/await generateReadyRosters\(false,next\);/,'Il replay avvia la simulazione completa');
+console.log('OK: il replay può impostare lo stato preparato prima della simulazione.');

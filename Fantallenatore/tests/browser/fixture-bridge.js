@@ -1,6 +1,7 @@
 /* Injected ONLY by the localhost test server into the shell's closure.
    This file is never referenced by index.html or shipped as a gameplay script. */
 window.__fantaBrowserTest=Object.freeze({
+ storageBackend(){return saveManager.backend;},
  reset(){stopGameRuntime();state=freshState('Squadra Browser Nome Molto Lungo','Mister Browser');state.marketSeed='browser-fixture-v1';syncSerieATransferWorld(state);refreshMarketValueMap(state);},
  nomination(){this.reset();renderAll();showScreen('auctionScreen');},
  auction({analysis=true,bundle=false}={}){
@@ -10,6 +11,18 @@ window.__fantaBrowserTest=Object.freeze({
    activeIds:state.managers.map(m=>m.id),log:[],commentMoments:[],bidCount:1,deadlineAt:Date.now()+60000,windowMs:60000};
   if(bundle)state.auction.arcade={type:'bundle',secondPlayerId:pool[1].id,awaitingAck:false};
   renderAll();showScreen('auctionScreen');
+ },
+ specialRival({archetype,division=1}){
+  this.reset();state.career.division=division;state.currentRoleIndex=1;
+  const cpu=state.managers[1],profile=PERSONALITIES.find(p=>p.id===archetype);
+  if(!['rivale','admin'].includes(archetype) && !SPECIAL_RIVAL_IDS.includes(archetype))throw Error('Unknown special rival');
+  cpu.profile={...profile,id:cpu.id,archetype};
+  if(archetype==='admin')state.adminOneShot={used:true}; // Exercise ordinary bids; the power has separate coverage.
+  const player=state.availableIds.map(id=>playerMap.get(id)).filter(p=>p.role==='D').sort((a,b)=>b.ovr-a.ovr)[0];
+  state.auction={playerId:player.id,nominatorId:'user',highBidderId:'user',price:1,
+   activeIds:['user',cpu.id],log:[],commentMoments:[],bidCount:0};
+  renderAll();showScreen('auctionScreen');beginBidRound();
+  return {playerId:player.id,managerId:cpu.id,budget:cpu.budget};
  },
  season({premium=true}={}){
   this.reset();state.leagueRules.captainBonus='seven';
@@ -27,7 +40,7 @@ window.__fantaBrowserTest=Object.freeze({
  stopTimers(){clearAuctionRuntimeTimers();if(state?.auction)state.auction.deadlineAt=Date.now()+60000;if(serieALive?.timer){clearInterval(serieALive.timer);serieALive.timer=null;}},
  async flush(){if(!saveState())throw Error('Fixture save rejected');if(!await saveManager.flush())throw Error('Fixture storage failed');},
  inspect(){return JSON.parse(JSON.stringify({auction:state?.auction,budget:state?.managers?.[0]?.budget,
-  roster:state?.managers?.[0]?.roster,managers:state?.managers?.map(m=>({id:m.id,roster:m.roster})),
+  roster:state?.managers?.[0]?.roster,managers:state?.managers?.map(m=>({id:m.id,budget:m.budget,roster:m.roster})),
   lineupDraft,slots:lineupDraft?lineupSlots(lineupDraft.formation):[],lineups:state?.season?.lineups,live:serieALive?{phase:serieALive.phase,minute:serieALive.minute,eventIndex:serieALive.eventIndex,speed:serieALive.speed,manualPaused:serieALive.manualPaused}:null,
   phase:state?.season?.matchdayFlow?.['1']?.phase,captainRule:state?.leagueRules?.captainBonus}));}
 });

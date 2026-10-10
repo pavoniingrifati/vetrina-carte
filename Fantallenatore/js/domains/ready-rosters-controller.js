@@ -84,7 +84,7 @@
     return true;
   }
 
-  async function generateReadyRosters(fromCareer=false) {
+  async function generateReadyRosters(fromCareer=false, preparedState=null) {
 
     $runtime.setQuickReadyLoading(true,{
       title:'Preparazione rose...',
@@ -98,7 +98,8 @@
     await $runtime.quickReadyYield(40);
 
     try {
-      $runtime.prepareNewGame(fromCareer);
+      if (preparedState) $runtime.state=preparedState;
+      else $runtime.prepareNewGame(fromCareer);
       $runtime.state.quickStart=true;
       $runtime.state.turbo=true;
       $runtime.selectedPlayerId=null;

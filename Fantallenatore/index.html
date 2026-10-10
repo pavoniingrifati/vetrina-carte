@@ -24,12 +24,20 @@
 <main id="gameMain" tabindex="-1">
 <section class="screen active" id="setupScreen">
 <div class="setup-card setup-home-card">
-<img class="setup-game-logo" src="assets/menu/fantallenatore-logo.webp" alt="Fantallenatore Approved" width="1254" height="1254"/>
-<h2>La tua carriera da Fantallenatore</h2>
+<div class="setup-home-brand">
+<img class="setup-game-logo" src="assets/menu/fantallenatore-logo.webp" alt="Fantallenatore Approved" width="1254" height="1254" fetchpriority="high"/>
+<span class="setup-brand-caption">IL CAMPO TI ASPETTA</span>
+</div>
+<div class="setup-home-content">
+<p class="setup-home-eyebrow"><span aria-hidden="true"></span> IL VIDEOGIOCO SUL FANTACALCIO</p>
+<h2>Asta, stagioni<br/><span>e l’admin...</span></h2>
+<p class="setup-home-copy">Costruisci la rosa. Sfida i rivali.<br/>Conquista la Serie A del Fantacalcio e batti l’admin!</p>
 <div class="setup-home-actions">
-<button class="primary big" id="startBtn">Carriera</button>
-<button class="secondary big" id="instructionsBtn">Istruzioni</button>
+<button class="primary big" id="startBtn" type="button"><span>Carriera</span><span class="setup-action-arrow" aria-hidden="true">→</span></button>
+<button class="secondary big" id="instructionsBtn" type="button">Istruzioni</button>
 <button class="secondary big setup-follow-link" id="followBtn" type="button">Seguimi</button>
+</div>
+<div class="setup-home-path" aria-label="Il percorso della carriera: Amatori, Serie C, Serie B, Serie A"><span>AMATORI</span><i aria-hidden="true">→</i><span>SERIE C</span><i aria-hidden="true">→</i><span>SERIE B</span><i aria-hidden="true">→</i><strong>SERIE A</strong></div>
 </div>
 <input id="teamNameInput" type="hidden" value="Team JHZ"/>
 <input id="managerNameInput" type="hidden" value="Mister"/>
@@ -1436,12 +1444,17 @@
 <div class="career-card career-pre-card career-step-card" id="careerTeamStep">
 <div class="career-profile career-team-profile">
 <span class="career-step-label">PASSO 1 DI 3</span>
-<h3>LA TUA SQUADRA</h3>
-
+<ol class="career-creation-progress" aria-label="Creazione del profilo">
+<li data-career-progress="identity" aria-current="step"><b>01</b><span>Identità</span></li>
+<li data-career-progress="avatar"><b>02</b><span>Avatar</span></li>
+<li data-career-progress="launch"><b>03</b><span>Avvio</span></li>
+</ol>
+<div class="career-creation-heading"><h3 id="careerCreationTitle">Lascia il tuo segno.</h3><p id="careerCreationDescription">Ogni grande squadra comincia da un nome.</p></div>
+<div class="career-creation-layout"><div class="career-creation-form">
 <section class="career-team-substep" data-career-team-substep="identity">
 <div class="career-team-fields">
-<label>Nome fantasquadra<input id="careerTeamNameInput" maxlength="28" autocomplete="off" aria-describedby="careerIdentityHint" required/></label>
-<label>Nome fantallenatore<input id="coachNameInput" maxlength="24" autocomplete="off" aria-describedby="careerIdentityHint" required/></label>
+<label>Nome fantasquadra<input id="careerTeamNameInput" placeholder="Es. Atletico Fantasia" maxlength="28" autocomplete="off" aria-describedby="careerIdentityHint" required/></label>
+<label>Nome fantallenatore<input id="coachNameInput" placeholder="Come ti chiameranno i rivali?" maxlength="24" autocomplete="off" aria-describedby="careerIdentityHint" required/></label>
 <label class="career-catalog-toggle-row" for="careerPokemonToggle">
 <span class="career-catalog-toggle-copy"><strong>CAMPIONATO POKÉMON</strong><small id="careerCatalogModeHint">OFF · Campionato classico</small></span>
 <span class="career-catalog-switch"><input id="careerPokemonToggle" type="checkbox" aria-describedby="careerCatalogModeHint"/><span class="career-catalog-switch-track" aria-hidden="true"></span></span>
@@ -1451,7 +1464,7 @@
 <button class="secondary big hidden career-resume-entry" id="resumeBtn" type="button">RIPRENDI SALVATAGGIO</button>
 <div class="career-team-subnav career-team-subnav-first">
 <button class="ghost career-team-exit" id="careerBackBtn" type="button">← INDIETRO</button>
-<button class="career-step-arrow" id="careerIdentityNextBtn" type="button" aria-label="Vai alla creazione del personaggio" disabled><span class="career-step-arrow-glyph" aria-hidden="true">→</span></button>
+<button class="career-step-arrow" id="careerIdentityNextBtn" type="button" aria-label="Vai alla creazione del personaggio" disabled><span class="career-navigation-label">SCEGLI AVATAR</span><span class="career-step-arrow-glyph" aria-hidden="true">→</span></button>
 </div>
 </section>
 
@@ -1467,8 +1480,8 @@
 </div>
 </fieldset>
 <div class="career-team-subnav">
-<button class="career-step-arrow career-step-arrow-back" id="careerAvatarBackBtn" type="button" aria-label="Torna ai nomi"><span class="career-step-arrow-glyph" aria-hidden="true">←</span></button>
-<button class="career-step-arrow" id="careerAvatarNextBtn" type="button" aria-label="Vai alle opzioni di avvio"><span class="career-step-arrow-glyph" aria-hidden="true">→</span></button>
+<button class="career-step-arrow career-step-arrow-back" id="careerAvatarBackBtn" type="button" aria-label="Torna ai nomi"><span class="career-navigation-label">INDIETRO</span><span class="career-step-arrow-glyph" aria-hidden="true">←</span></button>
+<button class="career-step-arrow" id="careerAvatarNextBtn" type="button" aria-label="Vai alle opzioni di avvio"><span class="career-navigation-label">CONTINUA</span><span class="career-step-arrow-glyph" aria-hidden="true">→</span></button>
 </div>
 </section>
 
@@ -1478,9 +1491,20 @@
 <button class="quick-ready-btn big" id="quickReadyBtn" disabled><strong>ROSE PRONTE</strong><small>Salta l’asta e genera le 10 squadre</small></button>
 </div>
 <div class="career-team-subnav career-team-subnav-launch">
-<button class="career-step-arrow career-step-arrow-back" id="careerLaunchBackBtn" type="button" aria-label="Torna alla creazione del personaggio"><span class="career-step-arrow-glyph" aria-hidden="true">←</span></button>
+<button class="career-step-arrow career-step-arrow-back" id="careerLaunchBackBtn" type="button" aria-label="Torna alla creazione del personaggio"><span class="career-navigation-label">INDIETRO</span><span class="career-step-arrow-glyph" aria-hidden="true">←</span></button>
 </div>
 </section>
+</div>
+<aside class="career-profile-preview" aria-label="Anteprima del profilo">
+<span class="career-preview-kicker">IL TUO CLUB</span>
+<div class="career-preview-portrait"><img id="careerProfileAvatarPreview" width="96" height="96" alt="Anteprima allenatore"/></div>
+<strong id="careerPreviewTeam">La tua squadra</strong>
+<span class="career-preview-coach-label">FANTALLENATORE</span>
+<span id="careerPreviewCoach">Il tuo nome</span>
+<div class="career-preview-division"><span>SI PARTE DA</span><b>AMATORI</b></div>
+<p>Una rosa da costruire.<br/>Una storia da scrivere.</p>
+</aside>
+</div>
 </div>
 </div>
 <div class="career-card career-powers-card hidden" id="careerPowersStep">
@@ -1585,6 +1609,7 @@
 <script src="js/domains/persistence-controller.js"></script>
 <script src="js/domains/auction-analysis-policy.js"></script>
 <script src="js/domains/auction-views.js"></script>
+<script src="js/auction-clock-events.js"></script>
 <script src="js/domains/auction-clock.js"></script>
 <script src="js/domains/auction-arcade-controller.js"></script>
 <script src="js/domains/auction-feedback.js"></script>
@@ -1614,6 +1639,20 @@
 <script src="js/domains/career-setup-controller.js"></script>
 <script src="js/presentation-state.js"></script>
 <script src="js/mobile-locations.js"></script>
+<script src="js/domains/auction-state.js"></script>
+<script src="js/domains/player-season-state.js"></script>
+<script src="js/domains/league-state.js"></script>
+<script src="js/domains/economy-state.js"></script>
+<script src="js/domains/social-state.js"></script>
+<script src="js/domains/expert-policy.js"></script>
+<script src="js/domains/lineup-evaluation.js"></script>
+<script src="js/domains/assistant-evaluation.js"></script>
+<script src="js/domains/matchday-policy.js"></script>
+<script src="js/domains/live-state.js"></script>
+<script src="js/domains/season-state.js"></script>
+<script src="js/domains/career-state.js"></script>
+<script src="js/domains/football-selection.js"></script>
+<script src="js/domains/cpu-lineup-evaluation.js"></script>
 <script src="app_v302.js"></script>
 <script src="js/mobile-ui.js"></script>
 <script src="js/mobile-auction-app.js"></script>

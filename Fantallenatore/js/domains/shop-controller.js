@@ -3,12 +3,6 @@
   'use strict';
   function create($runtime){
     if(!$runtime) throw new TypeError('Runtime richiesto: shop-controller');
-  function ensureCareerEconomy(){
-    if(!$runtime.state) return null;
-    $runtime.state.career=$runtime.CareerEngine.normalizeCareer($runtime.state.career,$runtime.CAREER_STARTING_EUROS,$runtime.GAME_CONFIG.startingDivision);
-    return $runtime.state.career;
-  }
-
   function sponsorVisualAsset(id){
     return ({
       double_block:'assets/sponsors/zalandiolo.png',
@@ -236,39 +230,12 @@
     return season.shopPurchases;
   }
 
-  function shopItemActive(id,season=$runtime.ensureSeasonState()){
-    const purchases=season?.shopPurchases;
-    return !!purchases?.[id];
-  }
-
   function careerEuros(){
     return $runtime.CareerEngine.balance($runtime.ensureCareerEconomy());
   }
 
   function careerFantapoints(){
     return Math.max(0,Math.floor(Number($runtime.ensureCareerEconomy()?.fantapoints||0)));
-  }
-
-  function ensureConsumableState(season=$runtime.ensureSeasonState()){
-    if(!season) return null;
-    season.consumables ||= {inventory:{},effects:{},usageHistory:[],purchaseHistory:[]};
-    season.consumables.inventory ||= {};
-    season.consumables.effects ||= {};
-    if(!Array.isArray(season.consumables.usageHistory)) season.consumables.usageHistory=[];
-    if(!Array.isArray(season.consumables.purchaseHistory)) season.consumables.purchaseHistory=[];
-    return season.consumables;
-  }
-
-  function consumableQuantity(id,season=$runtime.ensureSeasonState()){
-    const data=$runtime.ensureConsumableState(season);
-    return Math.max(0,Math.floor(Number(data?.inventory?.[id]||0)));
-  }
-
-  function consumableDayEffect(day=$runtime.ensureSeasonState()?.currentMatchday,season=$runtime.ensureSeasonState()){
-    const data=$runtime.ensureConsumableState(season);
-    const key=String(day||1);
-    data.effects[key] ||= {};
-    return data.effects[key];
   }
 
   function addConsumable(id,amount=1,season=$runtime.ensureSeasonState()){
@@ -411,10 +378,6 @@
   function seasonShockChance(){
     const division=Math.max(1,Math.floor(Number($runtime.state?.career?.division||$runtime.GAME_CONFIG.startingDivision)));
     return division>=4 ? 0 : division===3 ? .05 : division===2 ? .07 : .09;
-  }
-
-  function formationChoiceRarity(templateId){
-    return $runtime.FORMATION_CHOICE_RARITY_BY_TEMPLATE[String(templateId)] || 'common';
   }
 
   function formationChoiceRarityLabel(rarity){
@@ -707,7 +670,7 @@
       $runtime.$('shopActiveSummary').innerHTML=(celebrityNote+sponsorNote+activeHtml+inventoryHtml) || '<small>Nessun servizio attivo e inventario vuoto.</small>';
     }
   }
-    return Object.freeze({ensureCareerEconomy,sponsorVisualAsset,sponsorVisualBrand,currentSponsorChoice,currentSponsorOffers,selectSeasonSponsor,selectAcademySponsorPlayer,renderSponsorSelection,seasonSponsorFromChoice,sponsorFreeSubscriptionAvailable,sponsorCanMakeShopItemFree,sortStandingsSnapshot,grantImmediateSponsorBonus,grantBigMatchSponsorReward,grantStreakSponsorReward,grantWinSponsorReward,grantFutureAuctionSponsorBonus,ensureSeasonShop,shopItemActive,careerEuros,careerFantapoints,ensureConsumableState,consumableQuantity,consumableDayEffect,addConsumable,consumeConsumable,totalConsumablesOwned,shopPurchaseOrigin,animateShopPurchase,buyConsumableItem,grantMatchdayFantapoints,careerDivisionLabel,careerPromotionNote,careerSeasonLabel,renderCareerWallets,applyGameConfiguration,formationEventChance,seasonShockChance,formationChoiceRarity,formationChoiceRarityLabel,formationRarityWeights,formationRaritiesUnlocked,specialFormationEventsUnlocked,deterministicFormationTemplateOrder,buyShopItem,shopItemsPerPage,shopItemEffectLine,shopCardHtml,closeShopProductModal,openShopProductModal,renderShopItems});
+    return Object.freeze({sponsorVisualAsset,sponsorVisualBrand,currentSponsorChoice,currentSponsorOffers,selectSeasonSponsor,selectAcademySponsorPlayer,renderSponsorSelection,seasonSponsorFromChoice,sponsorFreeSubscriptionAvailable,sponsorCanMakeShopItemFree,sortStandingsSnapshot,grantImmediateSponsorBonus,grantBigMatchSponsorReward,grantStreakSponsorReward,grantWinSponsorReward,grantFutureAuctionSponsorBonus,ensureSeasonShop,careerEuros,careerFantapoints,addConsumable,consumeConsumable,totalConsumablesOwned,shopPurchaseOrigin,animateShopPurchase,buyConsumableItem,grantMatchdayFantapoints,careerDivisionLabel,careerPromotionNote,careerSeasonLabel,renderCareerWallets,applyGameConfiguration,formationEventChance,seasonShockChance,formationChoiceRarityLabel,formationRarityWeights,formationRaritiesUnlocked,specialFormationEventsUnlocked,deterministicFormationTemplateOrder,buyShopItem,shopItemsPerPage,shopItemEffectLine,shopCardHtml,closeShopProductModal,openShopProductModal,renderShopItems});
   }
   window.FantaDomains ||= {};
   window.FantaDomains['shop-controller']=Object.freeze({create});

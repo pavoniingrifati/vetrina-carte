@@ -1,4 +1,4 @@
-/* Responsibility: auction-policy. Runtime state and cross-domain callbacks are explicit live accessors. */
+/* Domain service: auction-policy. No DOM, timers, or persistence; state accessors remain live. */
 (() => {
   'use strict';
   function create($runtime){
@@ -77,18 +77,18 @@
     const valuationPlayers=(window.FANTA_PLAYERS||[]).map(player=>({
       ...player,
       ovr:$runtime.currentPlayerOvr(player),
-      fvm:profiles.get(String(player.id))?.fvm ?? $runtime.comparableAuctionFvm(player)
+      fvm:profiles.get(String(player.id))?.fvm ?? comparableAuctionFvm(player)
     }));
     return $runtime.AuctionEngine.buildMarketValueMap(valuationPlayers,$runtime.ROLE_LIMITS,$runtime.MARKET_ALPHA,$runtime.MARKET_VALUE_POOL_TARGET,10);
   }
 
   function refreshMarketValueMap(source=$runtime.state){
-    const profiles=$runtime.careerMarketProfiles(source);
+    const profiles=careerMarketProfiles(source);
     for(const player of window.FANTA_PLAYERS||[]){
       const profile=profiles.get(String(player.id));
       if(profile) player.quotation=profile.quotation;
     }
-    $runtime.marketValueMap=$runtime.buildMarketValueMap(profiles);
+    $runtime.marketValueMap=buildMarketValueMap(profiles);
     if(typeof $runtime.slotRankingCache!=='undefined') $runtime.slotRankingCache.clear();
     return $runtime.marketValueMap;
   }
@@ -99,7 +99,7 @@
     if(Number.isFinite(Number(mapped)) && Number(mapped)>0) return Math.max(1,Number(mapped));
     // Fallback di sicurezza per record non ancora sincronizzati: mai più 1 fisso
     // per un giocatore forte soltanto perché il suo ID non era nel listone iniziale.
-    const comparable=$runtime.comparableAuctionFvm(player);
+    const comparable=comparableAuctionFvm(player);
     return Math.max(1,Number(player.quotation||1)*.9,comparable*.12);
   }
 
@@ -115,8 +115,9 @@
     if(!manager || manager.id==='user') return 0;
     const arch=$runtime.profileArchetype(manager);
     const map={
-      admin:1.25,stratega:1.22,esperto:1.18,moneyball:1.15,ragioniere:1.10,tirchio:1.05,
-      rivale:.95,tifoso:.82,bomber:.78,spendaccione:.72,collezionista:.72,gambler:.72,pazzo:.55
+      admin:1.30,stratega:1.22,esperto:1.18,moneyball:1.15,ragioniere:1.10,tirchio:1.05,
+      rivale:1.25,tifoso:.82,bomber:.78,spendaccione:.72,collezionista:.72,gambler:.72,pazzo:.55,
+      squalo:.92,camaleonte:1.15,fantadata:1.25,predatore:1.08,broker:1.10
     };
     return Number(map[arch] ?? 1);
   }
@@ -124,11 +125,11 @@
   function cpuLeagueRuleAuctionFactor(manager,player){
     if(!manager || manager.id==='user' || !player) return 1;
     const rules=$runtime.leagueRulesFor($runtime.state);
-    const sensitivity=$runtime.cpuLeagueRuleSensitivity(manager);
+    const sensitivity=cpuLeagueRuleSensitivity(manager);
     const role=String(player.role||'');
     const analysis=$runtime.auctionPlayerAnalysis(player);
     const starterPct=Number(analysis?.starterPct||55);
-    const market=Math.max(1,$runtime.baseAuctionValue(player));
+    const market=Math.max(1,baseAuctionValue(player));
     let factor=1;
 
     // Modificatore classico: P e soprattutto D affidabili acquistano più valore.
@@ -177,12 +178,12 @@
   function wealthFactor(manager, player) {
     if (!$runtime.state) return 1;
     const peers = $runtime.state.managers.filter(m => $runtime.roleSlotsRemaining(m, player.role) > 0 && $runtime.slotsRemaining(m) > 0);
-    const values = peers.map($runtime.freePerSlot).filter(v => v > 0).sort((a,b)=>a-b);
+    const values = peers.map(freePerSlot).filter(v => v > 0).sort((a,b)=>a-b);
     if (!values.length) return 1;
     const mid = Math.floor(values.length/2);
     const median = values.length%2 ? values[mid] : (values[mid-1]+values[mid])/2;
     if (median <= 0) return 1;
-    const ratio = $runtime.freePerSlot(manager) / median;
+    const ratio = freePerSlot(manager) / median;
     const phase = manager.roster.length / $runtime.TOTAL_SLOTS;
     const exponent = .10 + .22 * phase;
     return $runtime.clamp(Math.pow(Math.max(.1,ratio), exponent), .85, 1.40);
@@ -194,7 +195,7 @@
     let remainingPlan = 0;
     Object.keys($runtime.ROLE_LIMITS).forEach(role => {
       const roleLeft = $runtime.roleSlotsRemaining(manager, role);
-      if (roleLeft > 0) remainingPlan += Math.max(roleLeft, $runtime.targetFor(manager,role)-$runtime.roleSpend(manager,role));
+      if (roleLeft > 0) remainingPlan += Math.max(roleLeft, targetFor(manager,role)-roleSpend(manager,role));
     });
     const ratio = manager.budget / Math.max(left, remainingPlan);
     const phase = manager.roster.length / $runtime.TOTAL_SLOTS;
@@ -210,7 +211,7 @@
     if(roleLeft<2) return {active:false,severity:0,roleLeft,validLeft:0};
     const cutoff=Math.max(3,$runtime.TOP_VALUE_THRESHOLD[role]*.52);
     const available=$runtime.state.availableIds.map(id=>$runtime.playerMap.get(id)).filter(p=>p&&p.role===role&&$runtime.canOwn(manager,p)&&$runtime.maxLegalBid(manager,p)>=1);
-    const validLeft=available.filter(p=>$runtime.baseAuctionValue(p)>=cutoff).length;
+    const validLeft=available.filter(p=>baseAuctionValue(p)>=cutoff).length;
     const pressure=roleLeft/Math.max(1,validLeft);
     const supplyTight=available.length<=roleLeft*4;
     const active=supplyTight && validLeft<=roleLeft+2;
@@ -229,7 +230,7 @@
     const r=$runtime.relationship(manager.id);
     // V3.2.35.44: RIVALE CALDO è uno stato raro. Servono almeno cinque
     // veri duelli prolungati, non semplici incroci di un singolo rilancio.
-    return Number(r.duels||0)>=5 && Number(r.rivalry||0)>=10 && !$runtime.hasGoodRelations(manager);
+    return Number(r.duels||0)>=5 && Number(r.rivalry||0)>=10 && !hasGoodRelations(manager);
   }
 
   function needFactor(manager, player) {
@@ -262,6 +263,7 @@
 
   function cpuAuctionCompetence(manager,division=$runtime.state?.career?.division||$runtime.GAME_CONFIG.startingDivision){
     if(!manager || manager.id==='user') return 0;
+    if($runtime.profileArchetype(manager)==='admin')return ({4:.25,3:.85,2:.95,1:1})[Math.max(1,Math.min(4,Number(division)))]||0;
     return ({4:0,3:.40,2:.75,1:1})[Math.max(1,Math.min(4,Number(division)))]||0;
   }
 
@@ -281,23 +283,137 @@
 
   function cpuAuctionStarterEstimate(player){
     if(!player) return 0;
-    const quality=$runtime.cpuAuctionRoleQuality(player.role);
+    const quality=cpuAuctionRoleQuality(player.role);
     if(!quality.starterEstimates.has(player.id)) quality.starterEstimates.set(player.id,$runtime.auctionStarterProbability(player));
     return quality.starterEstimates.get(player.id);
   }
 
   function cpuFootballAuctionFactor(manager,player){
-    const skill=$runtime.cpuAuctionCompetence(manager);
+    const skill=cpuAuctionCompetence(manager);
     if(!skill || !player) return 1;
-    const quality=$runtime.cpuAuctionRoleQuality(player.role);
+    const quality=cpuAuctionRoleQuality(player.role);
     if(quality.footballFactors.has(player.id)) return 1+(quality.footballFactors.get(player.id)-1)*skill;
     const median=quality.median;
-    const starter=$runtime.cpuAuctionStarterEstimate(player);
+    const starter=cpuAuctionStarterEstimate(player);
     // Prezzo, qualità e probabilità di giocare sono segnali distinti. Nessun
     // accesso all'esito futuro delle partite o al potenziale nascosto stagionale.
     const footballFactor=$runtime.clamp(1+($runtime.currentPlayerOvr(player)-median)*.035+(starter-55)*.0018,.68,1.65);
     quality.footballFactors.set(player.id,footballFactor);
     return 1+(footballFactor-1)*skill;
+  }
+
+  function cpuAdminPlayerPlan(manager,player) {
+    if($runtime.profileArchetype(manager)!=='admin' || !player ||
+       ($runtime.state?.auction?.arcade?.type==='mystery' && $runtime.state.auction.playerId===player.id))return null;
+    const shapes=[{P:1,D:4,C:3,A:3},{P:1,D:3,C:4,A:3},{P:1,D:3,C:5,A:2},{P:1,D:4,C:4,A:2},{P:1,D:5,C:3,A:2},{P:1,D:4,C:5,A:1},{P:1,D:5,C:4,A:1}];
+    const formation334=$runtime.leagueRulesFor($runtime.state).formation334Allowed===true;
+    if(formation334)shapes.push({P:1,D:3,C:3,A:4});
+    const quality=p=>$runtime.currentPlayerOvr(p)-Math.max(0,70-cpuAuctionStarterEstimate(p))*.08;
+    const key=`admin-eleven|${manager.id}`;
+    let context=$runtime.slotRankingCache.get(key);
+    if(!context || context.source!==$runtime.state || context.availableIds!==$runtime.state.availableIds || context.budget!==manager.budget || context.formation334!==formation334){
+      const owned={},floors={},available={};
+      for(const role of $runtime.ROLE_ORDER){
+        floors[role]=Math.max(50,cpuAuctionRoleQuality(role).median-4);
+        owned[role]=manager.roster.filter(p=>p.role===role).map(quality).sort((a,b)=>b-a);
+        available[role]=$runtime.state.availableIds.map(id=>$runtime.playerMap.get(id)).filter(p=>p?.role===role);
+      }
+      const scores=shapes.map(shape=>Object.entries(shape).reduce((sum,[role,count])=>sum+
+        Array.from({length:count},(_,i)=>Math.max(floors[role],owned[role][i]||0)).reduce((a,b)=>a+b,0),0));
+      const best=Math.max(...scores),shape=shapes[scores.indexOf(best)];
+      context={source:$runtime.state,availableIds:$runtime.state.availableIds,budget:manager.budget,owned,floors,available,scores,best,shape,formation334,plans:new Map()};
+      $runtime.slotRankingCache.set(key,context);
+    }
+    if(context.plans.has(player.id))return context.plans.get(player.id);
+    const role=player.role,playerQuality=quality(player);
+    const roleValues=[...context.owned[role],playerQuality].sort((a,b)=>b-a);
+    const after=Math.max(...shapes.map((shape,i)=>context.scores[i]-
+      Array.from({length:shape[role]},(_,n)=>Math.max(context.floors[role],context.owned[role][n]||0)).reduce((a,b)=>a+b,0)+
+      Array.from({length:shape[role]},(_,n)=>Math.max(context.floors[role],roleValues[n]||0)).reduce((a,b)=>a+b,0)));
+    const gain=Math.max(0,after-context.best),reference=Math.max(1,baseAuctionValue(player)*$runtime.ROLE_BID_CORRECTION[role]);
+    const ownNeed=Math.max(0,context.shape[role]-context.owned[role].filter(value=>value>=context.floors[role]+7).length);
+    const alternatives=context.available[role].filter(p=>quality(p)>=playerQuality-3).length;
+    const human=$runtime.state.managers.find(m=>m.id==='user');
+    const humanNeed=human && $runtime.roleSlotsRemaining(human,role)>0 && $runtime.maxLegalBid(human,player)>=reference*.85;
+    let protectedCredits=0;
+    for(const other of $runtime.ROLE_ORDER){
+      if(other===role)continue;
+      const left=$runtime.roleSlotsRemaining(manager,other);
+      const missing=Math.max(0,context.shape[other]-context.owned[other].filter(value=>value>=context.floors[other]+7).length);
+      const planned=Math.max(left,targetFor(manager,other)-roleSpend(manager,other));
+      protectedCredits+=Math.max(left,Math.floor(planned*.75*missing/context.shape[other]));
+    }
+    const room=Math.max(1,manager.budget-protectedCredits-Math.max(0,$runtime.roleSlotsRemaining(manager,role)-1));
+    const spendingCap=Math.min($runtime.maxLegalBid(manager,player),Math.floor(room*(ownNeed>=3?(Number($runtime.state.career?.division)===1?.56:.68):ownNeed>=2?.82:1)));
+    const efficiency=gain/Math.sqrt(reference);
+    const valueFactor=gain>=6 ? 1.05+$runtime.clamp(gain/30,0,1)*.05 : gain>0?.96:.78;
+    const result={gain,reference,ownNeed,alternatives,humanNeed:!!humanNeed,efficiency,valueFactor,
+      spendingCap:Math.max(1,spendingCap),shape:context.shape};
+    context.plans.set(player.id,result);
+    return result;
+  }
+
+  function cpuSpecialRivalMarket(role) {
+    const source=$runtime.state;
+    const key=`special-market|${role}`;
+    const sales=source?.stats?.auctionSales;
+    const winter=source?.winterMarketFlow?.stage==='auction';
+    const season=Number(source?.career?.seasonNumber||1);
+    let cached=$runtime.slotRankingCache.get(key);
+    if(cached && cached.source===source && cached.sales===sales && cached.winter===winter && cached.season===season) return cached;
+    // Completed public sales only. No private CPU ceilings or future match results.
+    const ratios=(Array.isArray(sales)?sales:[]).filter(sale=>sale.role===role && sale.winter===winter && sale.season===season)
+      .map(sale=>{
+        const player=$runtime.playerMap.get(sale.playerId);
+        const reference=player?baseAuctionValue(player)*$runtime.ROLE_BID_CORRECTION[role]:0;
+        return reference>=($runtime.TOP_VALUE_THRESHOLD[role]||30)*.45 && Number.isFinite(sale.price)
+          ? $runtime.clamp(sale.price/reference,.55,1.65) : null;
+      }).filter(ratio=>ratio!==null).slice(-12).sort((a,b)=>a-b);
+    const middle=Math.floor(ratios.length/2);
+    const median=ratios.length ? (ratios.length%2?ratios[middle]:(ratios[middle-1]+ratios[middle])/2) : 1;
+    const confidence=ratios.length<3?0:Math.min(1,ratios.length/8);
+    cached={source,sales,winter,season,samples:ratios.length,priceRatio:1+(median-1)*confidence};
+    $runtime.slotRankingCache.set(key,cached);
+    return cached;
+  }
+
+  function cpuSpecialRivalPlan(manager,player) {
+    const archetype=$runtime.profileArchetype(manager);
+    if(manager?.id==='user' || !player || !['squalo','camaleonte','fantadata','predatore','broker'].includes(archetype)) return null;
+    if($runtime.state?.auction?.arcade?.type==='mystery' && $runtime.state.auction.playerId===player.id) return null;
+    const role=player.role;
+    const quality=p=>Math.max(1,$runtime.currentPlayerOvr(p)-55)*(.40+.60*cpuAuctionStarterEstimate(p)/100);
+    const starters={P:1,D:4,C:4,A:3}[role]||1;
+    const key=`special-plan|${manager.id}|${role}`;
+    let context=$runtime.slotRankingCache.get(key);
+    if(!context || context.source!==$runtime.state || context.availableIds!==$runtime.state.availableIds || context.budget!==manager.budget){
+      const owned=manager.roster.filter(p=>p.role===role).map(quality).sort((a,b)=>b-a);
+      const floor=owned.length>=starters?owned[starters-1]:Math.max(1,(cpuAuctionRoleQuality(role).median-55)*.60);
+      const remaining=$runtime.state.availableIds.map(id=>$runtime.playerMap.get(id)).filter(p=>p?.role===role);
+      const totalOpen=$runtime.state.managers.reduce((sum,m)=>sum+$runtime.roleSlotsRemaining(m,role),0);
+      context={source:$runtime.state,availableIds:$runtime.state.availableIds,budget:manager.budget,floor,
+        phase:$runtime.clamp(1-totalOpen/($runtime.ROLE_LIMITS[role]*$runtime.state.managers.length),0,1),
+        strongAvailable:remaining.filter(p=>quality(p)>floor+6 && baseAuctionValue(p)>=($runtime.TOP_VALUE_THRESHOLD[role]||30)*.75).length,
+        ownNeed:Math.max(0,starters-owned.filter(value=>value>=Math.max(1,(cpuAuctionRoleQuality(role).median-55)*.85)).length)};
+      $runtime.slotRankingCache.set(key,context);
+    }
+    const reference=Math.max(1,baseAuctionValue(player)*$runtime.ROLE_BID_CORRECTION[role]);
+    const gain=Math.max(0,quality(player)-context.floor);
+    const improvement=$runtime.clamp(gain/18,0,1);
+    const efficiency=$runtime.clamp(gain/reference/.35,0,1);
+    const strong=gain>6 && baseAuctionValue(player)>=($runtime.TOP_VALUE_THRESHOLD[role]||30)*.75;
+    const rivals=$runtime.state.managers.filter(m=>m.id!==manager.id && $runtime.canOwn(m,player) && $runtime.maxLegalBid(m,player)>=reference*.85).length;
+    const market=cpuSpecialRivalMarket(role);
+    const scarce=context.strongAvailable<=Math.max(2,context.ownNeed*2);
+    const pressureCall=archetype==='broker' && baseAuctionValue(player)>=($runtime.TOP_VALUE_THRESHOLD[role]||30)*.75 && rivals>=2;
+    let valueFactor=1;
+    if(archetype==='squalo') valueFactor=strong && rivals>=2 ? 1.06 : gain<3?.92:1;
+    if(archetype==='camaleonte') valueFactor=$runtime.clamp(1+(market.priceRatio-1)*.35,.90,1.10)*(.96+improvement*.06);
+    if(archetype==='fantadata') valueFactor=.90+improvement*.12+efficiency*.08;
+    if(archetype==='predatore') valueFactor=gain<3?.90:strong && (scarce || context.phase>.55 || rivals<=2)?1.06:1;
+    if(archetype==='broker') valueFactor=.91+improvement*.14;
+    return {archetype,reference,gain,improvement,efficiency,strong,rivals,marketRatio:market.priceRatio,
+      phase:context.phase,scarce,ownNeed:context.ownNeed,pressureCall,valueFactor};
   }
 
   function cpuCoverageEnabled(manager){
@@ -317,48 +433,48 @@
 
   function cpuMainKeeper(manager){
     return manager.roster.filter(p=>p.role==='P').map(p=>$runtime.playerMap.get(p.id)||p)
-      .filter(p=>$runtime.cpuClubRoleHierarchy(p.club,'P')[0]?.id===p.id && $runtime.cpuAuctionStarterEstimate(p)>=55)
+      .filter(p=>cpuClubRoleHierarchy(p.club,'P')[0]?.id===p.id && cpuAuctionStarterEstimate(p)>=55)
       .sort((a,b)=>$runtime.currentPlayerOvr(b)-$runtime.currentPlayerOvr(a) || String(a.id).localeCompare(String(b.id)))[0] || null;
   }
 
   function cpuCoverInfo(manager,player){
-    if(!$runtime.cpuCoverageEnabled(manager) || !player || !$runtime.canOwn(manager,player))return null;
+    if(!cpuCoverageEnabled(manager) || !player || !$runtime.canOwn(manager,player))return null;
     // No hidden identity may be used to recognise a mystery backup.
     if($runtime.state?.auction?.arcade?.type==='mystery' && $runtime.state.auction.playerId===player.id)return null;
     const owned=manager.roster.filter(p=>p.role===player.role && p.club===player.club && p.id!==player.id);
     if(!owned.length)return null;
-    const peers=$runtime.cpuClubRoleHierarchy(player.club,player.role),rank=peers.findIndex(p=>p.id===player.id);
+    const peers=cpuClubRoleHierarchy(player.club,player.role),rank=peers.findIndex(p=>p.id===player.id);
     const slots=$runtime.clubRoleStarterSlots(player.club,player.role);
     if(player.role==='P'){
       const starter=peers[0];
-      if(rank!==1 || !starter || $runtime.cpuMainKeeper(manager)?.id!==starter.id || !owned.some(p=>p.id===starter.id) || $runtime.cpuAuctionStarterEstimate(starter)<55)return null;
+      if(rank!==1 || !starter || cpuMainKeeper(manager)?.id!==starter.id || !owned.some(p=>p.id===starter.id) || cpuAuctionStarterEstimate(starter)<55)return null;
       const ceiling=$runtime.profileArchetype(manager)==='admin'?7:Number($runtime.state.career.division)===1?6:4;
       return {kind:'keeper',starterId:starter.id,ceiling,factor:1.8};
     }
     // Outfield coverage is only a weak preference for the first rotation option
     // behind a probable owned starter, not a guaranteed positional replacement.
-    if(rank!==slots || $runtime.cpuAuctionStarterEstimate(player)>45 || $runtime.cpuAuctionStarterEstimate(player)<5)return null;
-    const starter=owned.map(p=>$runtime.playerMap.get(p.id)||p).find(p=>peers.findIndex(x=>x.id===p.id)>=0 && peers.findIndex(x=>x.id===p.id)<slots && $runtime.cpuAuctionStarterEstimate(p)>=55 && $runtime.currentPlayerOvr(p)-$runtime.currentPlayerOvr(player)<=10);
+    if(rank!==slots || cpuAuctionStarterEstimate(player)>45 || cpuAuctionStarterEstimate(player)<5)return null;
+    const starter=owned.map(p=>$runtime.playerMap.get(p.id)||p).find(p=>peers.findIndex(x=>x.id===p.id)>=0 && peers.findIndex(x=>x.id===p.id)<slots && cpuAuctionStarterEstimate(p)>=55 && $runtime.currentPlayerOvr(p)-$runtime.currentPlayerOvr(player)<=10);
     if(!starter || owned.some(p=>peers.findIndex(x=>x.id===p.id)>=slots))return null;
     return {kind:'rotation',starterId:starter.id,ceiling:12,factor:$runtime.profileArchetype(manager)==='admin'?1.16:1.10};
   }
 
   function cpuMissingKeeperCover(manager){
-    if(!$runtime.cpuCoverageEnabled(manager) || $runtime.roleSlotsRemaining(manager,'P')<1)return null;
+    if(!cpuCoverageEnabled(manager) || $runtime.roleSlotsRemaining(manager,'P')<1)return null;
     for(const owned of manager.roster.filter(p=>p.role==='P')){
-      const second=$runtime.cpuClubRoleHierarchy(owned.club,'P')[1];
-      if(second && $runtime.state.availableIds.includes(second.id) && $runtime.cpuCoverInfo(manager,second))return second;
+      const second=cpuClubRoleHierarchy(owned.club,'P')[1];
+      if(second && $runtime.state.availableIds.includes(second.id) && cpuCoverInfo(manager,second))return second;
     }
     return null;
   }
 
   function cpuKeeperReserve(manager,player){
-    if(!$runtime.cpuCoverageEnabled(manager))return 0;
-    const missing=$runtime.cpuMissingKeeperCover(manager);
-    if(missing && missing.id!==player.id)return Math.min($runtime.cpuCoverInfo(manager,missing).ceiling,Math.max(0,manager.budget-$runtime.slotsRemaining(manager)));
+    if(!cpuCoverageEnabled(manager))return 0;
+    const missing=cpuMissingKeeperCover(manager);
+    if(missing && missing.id!==player.id)return Math.min(cpuCoverInfo(manager,missing).ceiling,Math.max(0,manager.budget-$runtime.slotsRemaining(manager)));
     // Protect a small backup fund when buying a new first-choice goalkeeper.
     if(player.role==='P' && $runtime.roleSlotsRemaining(manager,'P')>=2){
-      const peers=$runtime.cpuClubRoleHierarchy(player.club,'P');
+      const peers=cpuClubRoleHierarchy(player.club,'P');
       if(peers[0]?.id===player.id && peers[1] && $runtime.state.availableIds.includes(peers[1].id))return Number($runtime.state.career.division)===1?5:3;
     }
     return 0;
@@ -371,7 +487,7 @@
     const plans={};let total=0;
     for(const role of $runtime.ROLE_ORDER){
       const missing=$runtime.roleSlotsRemaining(manager,role);
-      plans[role]=missing?Math.max(0,$runtime.targetFor(manager,role)-$runtime.roleSpend(manager,role)-missing):0;
+      plans[role]=missing?Math.max(0,targetFor(manager,role)-roleSpend(manager,role)-missing):0;
       total+=plans[role];
     }
     // Fund every unfinished department before bidding, even in lower divisions.
@@ -381,8 +497,8 @@
     const roleFund=left+(total>0?extra*plans[player.role]/total:extra*left/Math.max(1,$runtime.slotsRemaining(manager)));
     let room=Math.max(members.length,Math.floor(roleFund)-Math.max(0,left-members.length));
     const desired={P:1,D:4,C:4,A:3}[player.role]||1;
-    const median=$runtime.cpuAuctionRoleQuality(player.role).median;
-    const credible=p=>$runtime.currentPlayerOvr(p)>=median+3 && $runtime.cpuAuctionStarterEstimate(p)>=45;
+    const median=cpuAuctionRoleQuality(player.role).median;
+    const credible=p=>$runtime.currentPlayerOvr(p)>=median+3 && cpuAuctionStarterEstimate(p)>=45;
     const owned=manager.roster.filter(p=>p.role===player.role && credible(p)).length;
     const need=Math.max(0,Math.min(desired-owned,left));
     if(need>=2){
@@ -397,8 +513,10 @@
   }
 
   function cpuAuctionSpendingCap(manager,player,bundlePlayers=null){
-    const legal=bundlePlayers?$runtime.AuctionEngine.maxBundleBid(manager,bundlePlayers,$runtime.ROLE_LIMITS,$runtime.TOTAL_SLOTS):$runtime.maxLegalBid(manager,player),skill=$runtime.cpuAuctionCompetence(manager);
-    const openCap=$runtime.openRoleAuction()?$runtime.cpuOpenRoleSpendingCap(manager,player,bundlePlayers):legal;
+    const legal=bundlePlayers?$runtime.AuctionEngine.maxBundleBid(manager,bundlePlayers,$runtime.ROLE_LIMITS,$runtime.TOTAL_SLOTS):$runtime.maxLegalBid(manager,player),skill=cpuAuctionCompetence(manager);
+    const rivalPlan=!bundlePlayers?cpuAdminPlayerPlan(manager,player):null;
+    if(rivalPlan)return Math.min(legal,rivalPlan.spendingCap);
+    const openCap=$runtime.openRoleAuction()?cpuOpenRoleSpendingCap(manager,player,bundlePlayers):legal;
     if(!skill || legal<1) return openCap;
     const key=`football-budget|${manager.id}|${player.role}`;
     let plan=$runtime.slotRankingCache.get(key);
@@ -409,10 +527,10 @@
       for(const role of $runtime.ROLE_ORDER){
         const left=$runtime.roleSlotsRemaining(manager,role);
         if(!left){weights[role]=0;continue;}
-        const median=$runtime.cpuAuctionRoleQuality(role).median;
-        const reliable=manager.roster.filter(p=>p.role===role && $runtime.currentPlayerOvr(p)>=median+3 && $runtime.cpuAuctionStarterEstimate(p)>=45).length;
+        const median=cpuAuctionRoleQuality(role).median;
+        const reliable=manager.roster.filter(p=>p.role===role && $runtime.currentPlayerOvr(p)>=median+3 && cpuAuctionStarterEstimate(p)>=45).length;
         const gap=Math.max(0,starters[role]-reliable)/starters[role];
-        weights[role]=Math.max(left,$runtime.targetFor(manager,role)-$runtime.roleSpend(manager,role))*(.75+gap*.5);
+        weights[role]=Math.max(left,targetFor(manager,role)-roleSpend(manager,role))*(.75+gap*.5);
         total+=weights[role];
         if(role!==player.role) otherMinimum+=left;
       }
@@ -425,7 +543,7 @@
         if(role===player.role) continue;
         const left=$runtime.roleSlotsRemaining(manager,role);
         if(!left) continue;
-        const remainingTarget=Math.max(left,$runtime.targetFor(manager,role)-$runtime.roleSpend(manager,role));
+        const remainingTarget=Math.max(left,targetFor(manager,role)-roleSpend(manager,role));
         const protection=role==='A' ? .97 : .90;
         plannedOtherReserve+=Math.max(left,Math.floor(remainingTarget*protection*skill));
       }
@@ -440,8 +558,8 @@
     // Build three credible attackers before committing nearly the whole
     // department budget to one name. Once alternatives disappear, release it.
     if(player.role==='A' && skill>=.75){
-      const median=$runtime.cpuAuctionRoleQuality('A').median;
-      const credible=p=>$runtime.currentPlayerOvr(p)>=median+3 && $runtime.cpuAuctionStarterEstimate(p)>=45;
+      const median=cpuAuctionRoleQuality('A').median;
+      const credible=p=>$runtime.currentPlayerOvr(p)>=median+3 && cpuAuctionStarterEstimate(p)>=45;
       const owned=manager.roster.filter(p=>p.role==='A' && credible(p)).length;
       const need=Math.max(0,Math.min(3-owned,$runtime.roleSlotsRemaining(manager,'A')));
       if(need>=2){
@@ -455,8 +573,8 @@
         }
       }
     }
-    const coversKeeper=bundlePlayers?.some(first=>first.role==='P' && $runtime.cpuClubRoleHierarchy(first.club,'P')[0]?.id===first.id && bundlePlayers.some(second=>$runtime.cpuClubRoleHierarchy(first.club,'P')[1]?.id===second.id));
-    if(!coversKeeper)cap-=$runtime.cpuKeeperReserve(manager,player);
+    const coversKeeper=bundlePlayers?.some(first=>first.role==='P' && cpuClubRoleHierarchy(first.club,'P')[0]?.id===first.id && bundlePlayers.some(second=>cpuClubRoleHierarchy(first.club,'P')[1]?.id===second.id));
+    if(!coversKeeper)cap-=cpuKeeperReserve(manager,player);
     return Math.max(1,Math.min(legal,openCap,cap));
   }
 
@@ -465,8 +583,8 @@
     // open roster slot is worth spending on this player. It is intentionally
     // independent from the current auction price.
     const profile = manager?.profile || {};
-    const market = Math.max(1, $runtime.baseAuctionValue(player));
-    let score = market*$runtime.cpuFootballAuctionFactor(manager,player);
+    const market = Math.max(1, baseAuctionValue(player));
+    let score = market*cpuFootballAuctionFactor(manager,player);
 
     if (profile.favoriteClub && profile.favoriteClub === player.club) score *= 1.10;
     if (profile.valueHunter) {
@@ -475,29 +593,29 @@
       score *= $runtime.clamp(.94 + efficiency * .018, .96, 1.09);
     }
     if (market >= $runtime.TOP_VALUE_THRESHOLD[player.role]) score *= Number(profile.topBias||1);
-    const rulesFactor=$runtime.cpuLeagueRuleAuctionFactor(manager,player);
+    const rulesFactor=cpuLeagueRuleAuctionFactor(manager,player);
     score *= 1 + (rulesFactor-1)*.55;
 
     // Personal taste changes from career to career but remains stable inside
     // the same career, so CPUs do not suddenly change opinion mid-auction.
     score *= .94 + $runtime.careerHash(`slot-taste|${manager.id}|${player.id}`) * .12;
-    return score*$runtime.auctionReputationMultiplier(player)*($runtime.cpuCoverInfo(manager,player)?.factor||1);
+    return score*auctionReputationMultiplier(player)*(cpuCoverInfo(manager,player)?.factor||1);
   }
 
   function strategicSlotInterest(manager, player) {
     if (!$runtime.state || manager.id === 'user') return { willing:true, factor:1, passChance:0 };
     if (!$runtime.canOwn(manager,player)) return { willing:false, factor:0, passChance:1 };
 
-    const cover=$runtime.cpuCoverInfo(manager,player);
+    const cover=cpuCoverInfo(manager,player);
     if(cover?.kind==='keeper')return {willing:true,factor:1,passChance:0};
-    const pendingKeeper=player.role==='P'?$runtime.cpuMissingKeeperCover(manager):null;
+    const pendingKeeper=player.role==='P'?cpuMissingKeeperCover(manager):null;
     if(pendingKeeper && pendingKeeper.id!==player.id && $runtime.roleSlotsRemaining(manager,'P')===1 && $runtime.maxLegalBid(manager,pendingKeeper)>=1)
       return {willing:false,factor:0,passChance:1};
     const role = player.role;
     const ownLeft = $runtime.roleSlotsRemaining(manager,role);
     const totalOpen = $runtime.state.managers.reduce((sum,m)=>sum + Math.max(0,$runtime.roleSlotsRemaining(m,role)),0);
     const otherOpen = Math.max(0,totalOpen-ownLeft);
-    const competence=$runtime.cpuAuctionCompetence(manager);
+    const competence=cpuAuctionCompetence(manager);
 
     // Ranks stay valid until an award replaces availableIds. Gate decisions below
     // still use current budgets, ownership and the current nominator.
@@ -506,7 +624,7 @@
     if (!ranking || ranking.availableIds !== $runtime.state.availableIds || ranking.seed !== $runtime.state.marketSeed) {
       const available = $runtime.state.availableIds.map(id=>$runtime.playerMap.get(id))
         .filter(p=>p && p.role===role)
-        .map(p=>({p,score:$runtime.strategicPlayerScore(manager,p)}))
+        .map(p=>({p,score:strategicPlayerScore(manager,p)}))
         .sort((a,b)=>b.score-a.score).map(x=>x.p);
       ranking = {availableIds:$runtime.state.availableIds,seed:$runtime.state.marketSeed,available,
         ranks:new Map(available.map((p,i)=>[p.id,i]))};
@@ -529,9 +647,9 @@
     // but works generically for all roles.
     const anchorCutoff = $runtime.TOP_VALUE_THRESHOLD[role] * .70;
     const ownedRole = manager.roster.filter(x=>x.role===role);
-    const hasAnchor = ownedRole.some(x => $runtime.baseAuctionValue(x) >= anchorCutoff);
-    const anchorsAvailable = available.filter(p=>$runtime.baseAuctionValue(p)>=anchorCutoff).length;
-    const candidateIsAnchor = $runtime.baseAuctionValue(player)>=anchorCutoff;
+    const hasAnchor = ownedRole.some(x => baseAuctionValue(x) >= anchorCutoff);
+    const anchorsAvailable = available.filter(p=>baseAuctionValue(p)>=anchorCutoff).length;
+    const candidateIsAnchor = baseAuctionValue(player)>=anchorCutoff;
 
     let passChance = 0;
 
@@ -565,10 +683,10 @@
     if (archetype === 'pazzo') passChance -= .11; // sometimes makes a genuinely bad buy
     if (archetype === 'tifoso' && manager.profile?.favoriteClub === player.club) passChance -= .09;
 
-    const liveUrgency=$runtime.cpuRoleUrgencyState(manager,role);
+    const liveUrgency=cpuRoleUrgencyState(manager,role);
     if(liveUrgency.active) passChance -= .08 + liveUrgency.severity*.07;
-    if($runtime.isHotRival(manager) && $runtime.state?.auction?.activeIds?.includes('user')) passChance -= .07;
-    if($runtime.hasGoodRelations(manager) && $runtime.state?.auction?.activeIds?.includes('user')) passChance += .04;
+    if(isHotRival(manager) && $runtime.state?.auction?.activeIds?.includes('user')) passChance -= .07;
+    if(hasGoodRelations(manager) && $runtime.state?.auction?.activeIds?.includes('user')) passChance += .04;
 
     // Dalla Serie C in su un buon giocatore rimasto tardi nel reparto non va
     // ignorato solo perché la CPU spera in un nome ancora migliore. Lo slot e
@@ -576,7 +694,7 @@
     const division=Number($runtime.state?.career?.division||$runtime.GAME_CONFIG.startingDivision);
     const roleDemand=$runtime.ROLE_LIMITS[role]*$runtime.state.managers.length;
     const phaseCompletion=1-totalOpen/Math.max(1,roleDemand);
-    const strongValue=$runtime.baseAuctionValue(player);
+    const strongValue=baseAuctionValue(player);
     const strongLatePlayer=(Number(player.ovr||0)>=80 && strongValue>=$runtime.TOP_VALUE_THRESHOLD[role]*.75) ||
       strongValue>=$runtime.TOP_VALUE_THRESHOLD[role];
     if(division<=3 && phaseCompletion>=.60 && strongLatePlayer &&
@@ -590,12 +708,12 @@
     // migliori realmente acquistabili. La prudenza cresce con la categoria.
     if(competence>0 && ownLeft<=2 && rank>=ownLeft){
       const strongerAffordable=available.slice(0,rank).filter(p=>
-        $runtime.cpuFootballAuctionFactor(manager,p)>$runtime.cpuFootballAuctionFactor(manager,player)+.08 &&
-        $runtime.baseAuctionValue(p)*$runtime.ROLE_BID_CORRECTION[role]<=$runtime.cpuAuctionSpendingCap(manager,p)).length;
+        cpuFootballAuctionFactor(manager,p)>cpuFootballAuctionFactor(manager,player)+.08 &&
+        baseAuctionValue(p)*$runtime.ROLE_BID_CORRECTION[role]<=cpuAuctionSpendingCap(manager,p)).length;
       if(strongerAffordable>=ownLeft) passChance=Math.max(passChance,.75+competence*.23);
     }
     // I migliori profili restano contendibili già all'inizio del reparto.
-    if(competence>0 && rank<Math.max(2,ownLeft) && $runtime.cpuFootballAuctionFactor(manager,player)>1.08)
+    if(competence>0 && rank<Math.max(2,ownLeft) && cpuFootballAuctionFactor(manager,player)>1.08)
       passChance*=1-competence*.85;
 
     if(cover?.kind==='rotation')passChance=Math.min(passChance,.30);
@@ -623,42 +741,46 @@
   function cpuBundleLimit(manager,players){
     const legal=$runtime.AuctionEngine.maxBundleBid(manager,players,$runtime.ROLE_LIMITS,$runtime.TOTAL_SLOTS);
     if(legal<players.length)return 0;
-    const values=players.map(player=>$runtime.cpuLimit(manager,player,{bundleMember:true}));
-    const anchor=players.slice().sort((a,b)=>$runtime.baseAuctionValue(b)-$runtime.baseAuctionValue(a) || String(a.id).localeCompare(String(b.id)))[0];
+    const values=players.map(player=>cpuLimit(manager,player,{bundleMember:true}));
+    const anchor=players.slice().sort((a,b)=>baseAuctionValue(b)-baseAuctionValue(a) || String(a.id).localeCompare(String(b.id)))[0];
     let value=values.reduce((sum,v)=>sum+Math.max(1,v),0);
-    if($runtime.cpuCoverageEnabled(manager)){
-      const keeperPair=players.some(p=>p.role==='P' && $runtime.cpuClubRoleHierarchy(p.club,'P')[0]?.id===p.id && players.some(q=>$runtime.cpuClubRoleHierarchy(p.club,'P')[1]?.id===q.id));
+    if(cpuCoverageEnabled(manager)){
+      const keeperPair=players.some(p=>p.role==='P' && cpuClubRoleHierarchy(p.club,'P')[0]?.id===p.id && players.some(q=>cpuClubRoleHierarchy(p.club,'P')[1]?.id===q.id));
       if(keeperPair)value+=Math.min(4,value*.08);
     }
-    const cap=$runtime.cpuAuctionSpendingCap(manager,anchor,players);
+    const cap=cpuAuctionSpendingCap(manager,anchor,players);
     return cap<2?0:Math.max(2,Math.min(legal,cap,Math.round(value)));
   }
 
   function cpuLimit(manager, player,options={}) {
     const second=!options.bundleMember && $runtime.state?.auction?.arcade?.type==='bundle' && $runtime.state.auction.playerId===player.id ? $runtime.playerMap.get($runtime.state.auction.arcade.secondPlayerId):null;
-    if(second)return $runtime.cpuBundleLimit(manager,[player,second]);
+    if(second)return cpuBundleLimit(manager,[player,second]);
     // Hidden identity must not influence CPU offers: only public role/club.
     if($runtime.state?.auction?.arcade?.type==='mystery' && $runtime.state.auction.playerId===player.id){
       const pool=window.FANTA_PLAYERS.filter(p=>p.role===player.role && p.club===player.club);
-      const publicValues=pool.map(p=>$runtime.baseAuctionValue(p)).sort((a,b)=>a-b);
+      const publicValues=pool.map(p=>baseAuctionValue(p)).sort((a,b)=>a-b);
       const publicValue=publicValues[Math.floor(publicValues.length/2)]||1;
-      const cap=Math.min($runtime.maxLegalBid(manager,player),Math.max(1,Math.floor(($runtime.targetFor(manager,player.role)-$runtime.roleSpend(manager,player.role))/Math.max(1,$runtime.roleSlotsRemaining(manager,player.role)))));
+      const cap=Math.min($runtime.maxLegalBid(manager,player),Math.max(1,Math.floor((targetFor(manager,player.role)-roleSpend(manager,player.role))/Math.max(1,$runtime.roleSlotsRemaining(manager,player.role)))));
       return Math.max(0,Math.min(cap,Math.round(publicValue*Number(manager.profile?.aggression||1)*($runtime.state.auction.bluffActive?1.1:1))));
     }
-    const cover=$runtime.cpuCoverInfo(manager,player);
-    if(cover?.kind==='keeper')return Math.max(0,Math.min(cover.ceiling,$runtime.maxLegalBid(manager,player),options.bundleMember?Infinity:$runtime.cpuAuctionSpendingCap(manager,player)));
+    const cover=cpuCoverInfo(manager,player);
+    if(cover?.kind==='keeper')return Math.max(0,Math.min(cover.ceiling,$runtime.maxLegalBid(manager,player),options.bundleMember?Infinity:cpuAuctionSpendingCap(manager,player)));
     const profile = manager.profile || $runtime.PERSONALITIES[0];
     const role = player.role;
-    const market = $runtime.baseAuctionValue(player);
+    const market = baseAuctionValue(player);
     const legal = options.bundleMember?$runtime.AuctionEngine.maxLegalBid(manager,player,$runtime.ROLE_LIMITS,$runtime.TOTAL_SLOTS):$runtime.maxLegalBid(manager, player);
     if (legal < 1) return 0;
 
-    const slotInterest = $runtime.strategicSlotInterest(manager,player);
+    let slotInterest = strategicSlotInterest(manager,player);
+    const rivalPlan=cpuAdminPlayerPlan(manager,player);
+    // A genuinely useful, affordable starter is not rejected by a random gate.
+    if(rivalPlan?.gain>=6 && rivalPlan.spendingCap>=rivalPlan.reference*.75)
+      slotInterest={...slotInterest,willing:true,factor:1};
     if (!slotInterest.willing && !options.bundleMember) return 0;
 
-    const personalTarget = $runtime.targetFor(manager, role);
+    const personalTarget = targetFor(manager, role);
     const rolePreference = Math.pow(personalTarget / $runtime.MARKET_ROLE_TARGET[role], .26);
-    const spent = $runtime.roleSpend(manager, role);
+    const spent = roleSpend(manager, role);
     const roleLeft = $runtime.roleSlotsRemaining(manager, role);
     const remainingTarget = Math.max(roleLeft, personalTarget-spent);
     const averageRoom = remainingTarget / Math.max(1, roleLeft);
@@ -668,27 +790,29 @@
 
     // Career-to-career perception is deliberately broader than V1.9.0, while
     // remaining mean-neutral so the calibrated league economy does not drift.
-    const baseVolatility = Number(profile.volatility||0);
+    const baseVolatility = $runtime.profileArchetype(manager)==='admin'?.015:Number(profile.volatility||0);
     const personalAmp = Math.min(.18, baseVolatility * 1.22 + .012);
     const stableNoise = ($runtime.careerHash(`value|${manager.id}|${player.id}`) - .5) * 2 * personalAmp;
     const marketPulse = ($runtime.careerHash(`market-pulse|${player.id}`) - .5) * .08; // shared ±4% perception this career
     const roleMood = ($runtime.careerHash(`role-mood|${manager.id}|${role}`) - .5) * .05; // manager/role ±2.5%
-    const footballFactor=$runtime.cpuFootballAuctionFactor(manager,player);
+    const footballFactor=cpuFootballAuctionFactor(manager,player);
     let value = market * footballFactor * $runtime.ROLE_BID_CORRECTION[role] * 1.01;
     value *= rolePreference;
+    value *= cpuSpecialRivalPlan(manager,player)?.valueFactor || 1;
+    value *= rivalPlan?.valueFactor || 1;
     value *= Number(profile.aggression||1);
     value *= targetFactor;
-    value *= $runtime.needFactor(manager, player);
-    value *= $runtime.scarcityFactor(player);
+    value *= needFactor(manager, player);
+    value *= scarcityFactor(player);
     value *= Math.max(.70, 1 + stableNoise + marketPulse + roleMood);
-    value *= $runtime.urgencyFactor(manager);
-    const liveUrgency=$runtime.cpuRoleUrgencyState(manager,role);
+    value *= urgencyFactor(manager);
+    const liveUrgency=cpuRoleUrgencyState(manager,role);
     if(liveUrgency.active) value *= 1.12 + liveUrgency.severity*.10;
-    if($runtime.isHotRival(manager) && $runtime.state?.auction?.activeIds?.includes('user')) value *= 1.08;
-    if($runtime.hasGoodRelations(manager) && $runtime.state?.auction?.activeIds?.includes('user')) value *= .97;
-    value *= $runtime.wealthFactor(manager, player);
+    if(isHotRival(manager) && $runtime.state?.auction?.activeIds?.includes('user')) value *= 1.08;
+    if(hasGoodRelations(manager) && $runtime.state?.auction?.activeIds?.includes('user')) value *= .97;
+    value *= wealthFactor(manager, player);
     value *= slotInterest.factor;
-    value *= $runtime.cpuLeagueRuleAuctionFactor(manager,player);
+    value *= cpuLeagueRuleAuctionFactor(manager,player);
 
     if (profile.favoriteClub && profile.favoriteClub === player.club) value *= 1.12;
     if (profile.valueHunter) {
@@ -729,12 +853,13 @@
     // BLUFF: some personalities are much easier to drag into an inflated bidding war.
     if ($runtime.state?.auction?.bluffActive && manager.id !== 'user') {
       const arch=$runtime.profileArchetype(manager);
-      const vuln={pazzo:1.18,tifoso:1.16,spendaccione:1.15,gambler:1.14,bomber:1.10,collezionista:1.10,rivale:1.09,stratega:1.07,esperto:1.05,moneyball:1.04,ragioniere:1.035,tirchio:1.025}[arch] || 1.07;
+      const vuln={pazzo:1.18,tifoso:1.16,spendaccione:1.15,gambler:1.14,bomber:1.10,collezionista:1.10,admin:1.015,rivale:1.07,stratega:1.07,esperto:1.05,moneyball:1.04,ragioniere:1.035,tirchio:1.025,squalo:1.09,camaleonte:1.035,fantadata:1.015,predatore:1.025,broker:1.04}[arch] || 1.07;
       value *= vuln;
     }
-    if(manager.id!=='user') value*=$runtime.auctionReputationMultiplier(player);
+    if(manager.id!=='user') value*=auctionReputationMultiplier(player);
     if(cover?.kind==='rotation')value+=Math.min(3,value*(cover.factor-1));
-    return Math.max(1, Math.min(legal,options.bundleMember?Infinity:$runtime.cpuAuctionSpendingCap(manager,player),Math.round(value)));
+    if(rivalPlan && rivalPlan.gain===0)value=Math.min(value,player.role==='P'?2:4);
+    return Math.max(1, Math.min(legal,options.bundleMember?Infinity:cpuAuctionSpendingCap(manager,player),Math.round(value)));
   }
 
   function jumpSize(manager, current, limit, player=null) {
@@ -745,7 +870,7 @@
     const archetype = $runtime.profileArchetype(manager);
     const roomRatio = $runtime.clamp(headroom / Math.max(8, limit), 0, 1);
     const limitProgress = $runtime.clamp(current / Math.max(1, limit), 0, 1);
-    const topPlayer = player ? $runtime.baseAuctionValue(player) >= $runtime.TOP_VALUE_THRESHOLD[player.role] : false;
+    const topPlayer = player ? baseAuctionValue(player) >= $runtime.TOP_VALUE_THRESHOLD[player.role] : false;
 
     // Base personality: conservative managers tend to climb one credit at a time;
     // aggressive / chaotic managers are more likely to make statement raises.
@@ -758,6 +883,20 @@
     if (archetype === 'esperto') { p10 -= .02; p5 += .03; }
     if (archetype === 'tifoso' && player && profile.favoriteClub === player.club) { p10 += .10; p5 += .09; }
     if (topPlayer && ['bomber','collezionista','spendaccione'].includes(archetype)) { p10 += .05; p5 += .05; }
+
+    const tactics=player?cpuSpecialRivalPlan(manager,player):null;
+    if(archetype==='squalo' && tactics?.strong && tactics.rivals>=2) { p10+=.16; p5+=.10; }
+    if(archetype==='camaleonte') {
+      const bargain=tactics && current<tactics.reference*tactics.marketRatio*.75;
+      p10+=bargain?.04:-.06; p5+=bargain?.06:-.04;
+    }
+    if(archetype==='fantadata') { p10-=.08; p5-=.10; }
+    if(archetype==='predatore') {
+      p10-=.10; p5-=.08;
+      if(tactics?.strong && (tactics.scarce || tactics.phase>.55)) { p10+=.05; p5+=.12; }
+    }
+    if(archetype==='broker') { p10+=roomRatio>.55?.08:-.06; p5+=roomRatio>.55?.12:-.06; }
+    if(archetype==='admin') { p10-=.04; p5+=roomRatio>.55?.05:-.08; }
 
     // As the CPU approaches its own valuation, it becomes visibly more cautious.
     if (limitProgress >= .82 || headroom <= 6) { p10 *= .12; p5 *= .48; }
@@ -789,7 +928,7 @@
 
   function pickCpuPersonalities(count=9, division=$runtime.state?.career?.division||$runtime.GAME_CONFIG.startingDivision) {
     const level=Math.max(1,Math.floor(Number(division||$runtime.GAME_CONFIG.startingDivision)));
-    const pool = $runtime.cpuPersonalityPool(level).slice();
+    const pool = cpuPersonalityPool(level).slice();
     for (let i=pool.length-1;i>0;i--) {
       const j=Math.floor(Math.random()*(i+1));
       [pool[i],pool[j]]=[pool[j],pool[i]];
@@ -821,7 +960,7 @@
   }
 
   function freshManagers(teamName, managerName, division=$runtime.state?.career?.division||$runtime.GAME_CONFIG.startingDivision) {
-    const selected = $runtime.pickCpuPersonalities(9, division);
+    const selected = pickCpuPersonalities(9, division);
     const rivalIdentities = $runtime.freshRivalIdentityPool(9);
     const all = [$runtime.PERSONALITIES.find(p=>p.id==='user'), ...selected];
     return all.map((p, idx) => {
@@ -837,7 +976,7 @@
       };
     });
   }
-    return Object.freeze({comparableAuctionFvm,careerMarketProfiles,buildMarketValueMap,refreshMarketValueMap,baseAuctionValue,roleSpend,targetFor,cpuLeagueRuleSensitivity,cpuLeagueRuleAuctionFactor,scarcityFactor,freePerSlot,wealthFactor,urgencyFactor,cpuRoleUrgencyState,hasGoodRelations,isHotRival,needFactor,auctionReputationMultiplier,buildSeasonAuctionReputation,cpuAuctionCompetence,cpuAuctionRoleQuality,cpuAuctionStarterEstimate,cpuFootballAuctionFactor,cpuCoverageEnabled,cpuClubRoleHierarchy,cpuMainKeeper,cpuCoverInfo,cpuMissingKeeperCover,cpuKeeperReserve,cpuOpenRoleSpendingCap,cpuAuctionSpendingCap,strategicPlayerScore,strategicSlotInterest,cpuBundleLimit,cpuLimit,jumpSize,cpuPersonalityPool,pickCpuPersonalities,freshManagers});
+    return Object.freeze({comparableAuctionFvm,careerMarketProfiles,buildMarketValueMap,refreshMarketValueMap,baseAuctionValue,roleSpend,targetFor,cpuLeagueRuleSensitivity,cpuLeagueRuleAuctionFactor,scarcityFactor,freePerSlot,wealthFactor,urgencyFactor,cpuRoleUrgencyState,hasGoodRelations,isHotRival,needFactor,auctionReputationMultiplier,buildSeasonAuctionReputation,cpuAuctionCompetence,cpuAuctionRoleQuality,cpuAuctionStarterEstimate,cpuFootballAuctionFactor,cpuAdminPlayerPlan,cpuSpecialRivalMarket,cpuSpecialRivalPlan,cpuCoverageEnabled,cpuClubRoleHierarchy,cpuMainKeeper,cpuCoverInfo,cpuMissingKeeperCover,cpuKeeperReserve,cpuOpenRoleSpendingCap,cpuAuctionSpendingCap,strategicPlayerScore,strategicSlotInterest,cpuBundleLimit,cpuLimit,jumpSize,cpuPersonalityPool,pickCpuPersonalities,freshManagers});
   }
   window.FantaDomains ||= {};
   window.FantaDomains['auction-policy']=Object.freeze({create});

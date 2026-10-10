@@ -1,13 +1,13 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const window={};
-for(const file of ['js/career-engine.js','js/storage-snapshot.js','js/domains/shop-controller.js','js/domains/lineup-controller.js','js/domains/career-market-controller.js'])vm.runInNewContext(fs.readFileSync(file,'utf8'),{window,Date,console,document:{querySelectorAll:()=>[]}});
+for(const file of ['js/career-engine.js','js/domains/career-state.js','js/domains/economy-state.js','js/storage-snapshot.js','js/domains/shop-controller.js','js/domains/lineup-controller.js','js/domains/career-market-controller.js'])vm.runInNewContext(fs.readFileSync(file,'utf8'),{window,Date,console,document:{querySelectorAll:()=>[]}});
 const engine=window.FantaCareerEngine;
 const defs=Object.fromEntries(['win_bonus','bonus_firma','academy','free_subscription','future_auction','big_match','streak_bonus','fantasy_bonus','fantacana'].map(id=>[id,{id,name:id}]));
 const state={career:engine.normalizeCareer({seasonNumber:3,fantapoints:100}),season:{started:true,currentMatchday:4,consumables:{inventory:{cons_celebrity:2}}},managers:[{roster:[{id:'p',ovr:80}]}]};
 let saves=0;
 const rt={state,CareerEngine:engine,SEASON_SPONSORS:defs,shuffledCopy:x=>x,saveState:()=>saves++,showToast:()=>{},renderSponsorSelection:()=>{},ensureSeasonState:()=>state.season,lineupReadOnly:false,$:()=>null};
-Object.assign(rt,window.FantaDomains['shop-controller'].create(rt));
+Object.assign(rt,window.FantaDomains['career-state'].create(rt),window.FantaDomains['economy-state'].create(rt),window.FantaDomains['shop-controller'].create(rt));
 const lineup=window.FantaDomains['lineup-controller'].create(rt);rt.lineupConsumableActionState=lineup.lineupConsumableActionState;rt.renderConsumableInventory=()=>{};
 lineup.beginConsumableUse('cons_celebrity');assert.equal(state.career.nextSponsorSeason,4);assert.equal(state.season.consumables.inventory.cons_celebrity,1);assert.ok(saves>0);
 lineup.beginConsumableUse('cons_celebrity');assert.equal(state.season.consumables.inventory.cons_celebrity,1,'repeat activation must not consume');

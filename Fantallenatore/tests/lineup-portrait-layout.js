@@ -13,5 +13,5 @@ for(const [key,slots] of Object.entries(formations))for(let width of [320,375,45
  for(let a=0;a<boxes.length;a++)for(let b=a+1;b<boxes.length;b++){const x=boxes[a],y=boxes[b];assert(x.right<=y.left||y.right<=x.left||x.bottom<=y.top||y.bottom<=x.top,key+' no overlapping portraits');}
  checked++;
 }
-const css=fs.readFileSync(path.join(root,'css/modules/24-lineup-portraits.css'),'utf8');assert(css.includes('transform:none!important'));assert(!css.includes('transform:translate'));assert(css.includes(':hover,:focus,:focus-visible,:active,.filled'));assert(css.includes('translate:-50% -50%!important'));
+const css=fs.readFileSync(path.join(root,'css/modules/lineup.css'),'utf8');const portraitStart=css.indexOf('/* Owns formation pitch portraits.');assert(portraitStart>=0);const next=css.indexOf('/* @section',portraitStart);const portraits=css.slice(portraitStart,next<0?undefined:next);assert(!portraits.includes('transform:translate'));assert(portraits.includes('transform:none!important'));assert(css.includes(':hover,:focus,:focus-visible,:active,.filled'));assert(css.includes('translate:-50% -50%!important'));
 console.log('OK: '+checked+' combinations of formations and widths, boundaries, no overlaps and shared interactive centering.');

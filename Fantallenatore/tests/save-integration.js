@@ -11,7 +11,7 @@ function database(){
  return {records,failNext(){fail=true;},open(){const request={};setImmediate(()=>{request.result=db;request.onsuccess?.();});return request;}};
 }
 (async()=>{
- const ctx=vm.createContext({window:{},console,Blob,TextEncoder,TextDecoder,btoa,atob});
+ const ctx=vm.createContext({window:{},console,setTimeout,clearTimeout,Blob,TextEncoder,TextDecoder,btoa,atob});
  for(const name of ['save-codec','save-manager','season-engine'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../js',name+'.js'),'utf8'),ctx);
  const codec=ctx.window.FantaSaveCodec,store=new Map(),storage={getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)};
  const errors=[],db=database();const create=()=>ctx.window.FantaSaveManager.createSaveManager({env:{},indexedDB:db,storage,encode:codec.encode,onError:e=>errors.push(e),onWarning:()=>{}});

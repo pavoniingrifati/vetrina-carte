@@ -57,7 +57,7 @@
 
   function startCountdownTicker() {
     if ($runtime.countdownTimer) clearInterval($runtime.countdownTimer);
-    $runtime.renderAuctionRoomList();
+    $runtime.auctionClockEvents.publish('tick');
     renderCountdown();
     $runtime.countdownTimer = setInterval(() => {
       if (!$runtime.state?.auction) {
@@ -65,11 +65,11 @@
         $runtime.countdownTimer = null;
         return;
       }
-      $runtime.renderAuctionRoomList();
+      $runtime.auctionClockEvents.publish('tick');
     renderCountdown();
       if (Date.now() >= Number($runtime.state.auction.deadlineAt||0)) {
         clearAuctionRuntimeTimers();
-        $runtime.awardAuction();
+        $runtime.auctionClockEvents.publish('expired');
       }
     }, $runtime.autocompleteMode ? 25 : 50);
   }
@@ -96,6 +96,12 @@
     if (['ragioniere','moneyball','esperto'].includes(archetype)) { min=700; max=1550; }
     if (archetype==='tirchio') { min=900; max=1800; }
     if (archetype==='pazzo') { min=280; max=1650; }
+    if (archetype==='admin') { min=500; max=950; }
+    if (archetype==='squalo') { min=300; max=800; }
+    if (archetype==='camaleonte') { min=650; max=1250; }
+    if (archetype==='fantadata') { min=850; max=1450; }
+    if (archetype==='predatore') { min=1000; max=1700; }
+    if (archetype==='broker') { min=450; max=1050; }
     return Math.round(min + Math.random()*(max-min));
   }
 
@@ -125,6 +131,20 @@
       const fav = p && profile.favoriteClub === p.club;
       min = fav ? 280 : 850; max = fav ? 1350 : 2750; sniperChance = fav ? .03 : .10;
     }
+
+    const tactics=p?$runtime.cpuSpecialRivalPlan(manager,p):null;
+    if(archetype==='squalo') { min=350; max=1300; sniperChance=.02; }
+    if(archetype==='camaleonte') {
+      const bargain=tactics && a.price<tactics.reference*tactics.marketRatio*.80;
+      min=bargain?450:1000; max=bargain?1550:2700; sniperChance=bargain?.04:.12;
+    }
+    if(archetype==='fantadata') { min=850; max=1900; sniperChance=.04; }
+    if(archetype==='predatore') {
+      const urgent=tactics && (tactics.scarce || tactics.phase>.55);
+      min=urgent?750:1600; max=urgent?2100:3300; sniperChance=urgent?.12:.36;
+    }
+    if(archetype==='broker') { min=550; max=1700; sniperChance=.05; }
+    if(archetype==='admin') { min=550; max=1400; sniperChance=.03; }
 
     if($runtime.isHotRival(manager) && a?.activeIds?.includes('user')) { min*=.88; max*=.90; sniperChance+=.03; }
     if($runtime.hasGoodRelations(manager) && a?.activeIds?.includes('user')) { min*=1.06; max*=1.08; sniperChance=Math.max(0,sniperChance-.02); }

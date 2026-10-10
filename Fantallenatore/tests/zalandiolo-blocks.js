@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const window={};
-for(const file of ['js/career-engine.js','js/storage-snapshot.js',...['shop-controller','lineup-controller','matchday-events-controller','live-controller'].map(name=>'js/domains/'+name+'.js')])vm.runInNewContext(fs.readFileSync(file,'utf8'),{window,Date,console,document:{querySelectorAll:()=>[]}});
+for(const file of ['js/career-engine.js','js/domains/career-state.js','js/domains/economy-state.js','js/storage-snapshot.js',...['shop-controller','lineup-controller','matchday-events-controller','live-controller'].map(name=>'js/domains/'+name+'.js')])vm.runInNewContext(fs.readFileSync(file,'utf8'),{window,Date,console,document:{querySelectorAll:()=>[]}});
 const engine=window.FantaCareerEngine;
 const roster=Array.from({length:6},(_,i)=>({id:'p'+i,role:'D',name:'Player '+i,ovr:90-i}));
 const rival={id:'cpu',team:'Rival',roster};const other={id:'other',roster:[{id:'x',role:'D'}]};
@@ -9,7 +9,7 @@ let saves=0,builds=0;
 const rt={state:{career:engine.normalizeCareer({seasonNumber:1}),managers:[{id:'user',roster:[]},rival,other]},CareerEngine:engine,
  ensureSeasonState:()=>rt.state.season,managerById:id=>rt.state.managers.find(m=>m.id===id),userOpponentIdForDay:()=>rival.id,saveState:()=>saves++,showToast:()=>{},$:()=>null,
  closeConsumableModal:()=>{},renderLineupScreen:()=>{},playerStatusForDay:()=>({unavailable:false}),lineupReadOnly:false,cpuLeagueRuleLineupValue:(m,p)=>p.ovr};
-Object.assign(rt,window.FantaDomains['shop-controller'].create(rt),window.FantaDomains['matchday-events-controller'].create(rt),window.FantaDomains['lineup-controller'].create(rt));
+Object.assign(rt,window.FantaDomains['economy-state'].create(rt),window.FantaDomains['shop-controller'].create(rt),window.FantaDomains['matchday-events-controller'].create(rt),window.FantaDomains['lineup-controller'].create(rt));
 Object.assign(rt,{renderLineupScreen:()=>{},closeConsumableModal:()=>{},cpuLeagueRuleLineupValue:(m,p)=>p.ovr});
 const reset=(sponsor=null)=>{rt.state.season={currentMatchday:1,started:true,sponsor,consumables:{inventory:{cons_opponent_block:4}},lineups:{'1':{}}};};
 reset();rt.applyTargetedConsumable('cons_opponent_block','p0');rt.applyTargetedConsumable('cons_opponent_block','p1');assert.equal(rt.consumableQuantity('cons_opponent_block'),3);assert.deepEqual([...rt.blockedOpponentPlayerIds()],['p0']);

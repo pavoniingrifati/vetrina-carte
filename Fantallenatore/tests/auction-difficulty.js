@@ -3,6 +3,8 @@ const assert=require('node:assert/strict');
 const {createRuntime}=require('./helpers/auction-runtime');
 const api=createRuntime('difficulty-contract');api.initialize(4,false,'difficulty-contract');
 const cpu=api.state.managers[1];
+// Standard personality progression; Rivale now has a separately tested expert policy.
+cpu.profile={...cpu.profile,archetype:'ragioniere'};
 const top=api.players.filter(p=>p.role==='A').sort((a,b)=>b.ovr-a.ovr)[0];
 const factors=[],caps=[],limits=[];
 for(const division of [4,3,2,1]){

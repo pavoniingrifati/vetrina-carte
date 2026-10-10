@@ -246,7 +246,7 @@ test('Save manager: fallback, coda, lettura e pulizia isolati', async () => {
     getItem:key=>values.has(key)?values.get(key):null,
     removeItem:key=>values.delete(key)
   };
-  const context={window:{localStorage:storage,navigator:{}},console,setTimeout,Blob};
+  const context={window:{localStorage:storage,navigator:{}},console,setTimeout,clearTimeout,Blob};
   context.window.window=context.window;
   vm.createContext(context);
   vm.runInContext(read('js/save-manager.js'),context,{filename:'js/save-manager.js'});
@@ -438,22 +438,17 @@ test('Moduli JS: regole e utilita pure rispettano il contratto', () => {
 });
 
 test('CSS: design system e proprietari caricati nell ordine corretto', () => {
-  const manifest=read('styles_v302.css');
-  const tokens=manifest.indexOf("00-design-tokens.css");
-  const legacy=manifest.indexOf("01-auction-core.css");
-  const shell=manifest.indexOf("10-career-shell.css");
-  assert(tokens>=0 && legacy>tokens && shell>legacy, 'Ordine del manifest CSS non valido');
+  const manifest=JSON.parse(read('css/manifest.json'));
+  assert(manifest.version===2, 'Manifest CSS per componenti assente');
+  assert(manifest.sections[0].file==='css/modules/00-design-tokens.css', 'Token caricati troppo tardi');
+  assert(manifest.sections.at(-1).file==='css/modules/12-responsive-qa.css', 'Responsive non caricato per ultimo');
   const tokenSource=read('css/modules/00-design-tokens.css');
-  const shellSource=read('css/modules/10-career-shell.css');
-  const dashboardSource=read('css/modules/09-dashboard-overhaul.css');
-  const alignmentSource=read('css/modules/14-visual-alignment.css');
+  const css=read('css/game.css');
   assert(/--color-gold:#ffd84d/.test(tokenSource), 'Token colore principale assente');
   assert(/--career-nav-height:76px/.test(tokenSource), 'Token dimensione navigazione assente');
-  assert(/assets\/navigation\/nav-home\.webp/.test(shellSource), 'Asset navigazione non gestiti dal componente shell');
-  assert(!/assets\/navigation\/nav-[a-z-]+\.webp/.test(dashboardSource), 'Asset navigazione duplicati fuori dal componente shell');
-  assert(manifest.indexOf('14-visual-alignment.css')>shell && manifest.indexOf('14-visual-alignment.css')<manifest.indexOf('12-responsive-qa.css'), 'Modulo allineamento caricato nella posizione errata');
-  assert(/\.result-grid \.result-ratings-panel>\.season-card-head/.test(alignmentSource), 'Padding intestazione risultati non protetto');
-  assert(/\.evolution-summary-card[\s\S]*grid-template-rows:auto auto 1fr/.test(alignmentSource), 'Allineamento card evoluzione non protetto');
+  assert(/assets\/navigation\/nav-home\.webp/.test(read('css/modules/shared.css')), 'Asset navigazione condivisa mancanti');
+  assert(/\.result-grid \.result-ratings-panel>\.season-card-head/.test(css), 'Padding intestazione risultati non protetto');
+  assert(/\.evolution-summary-card[\s\S]*grid-template-rows:auto auto 1fr/.test(css), 'Allineamento card evoluzione non protetto');
 });
 
 test('Responsive: sei viewport principali protette', () => {

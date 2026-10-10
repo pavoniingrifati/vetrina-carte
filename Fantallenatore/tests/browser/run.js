@@ -26,7 +26,11 @@ function unavailable(reason){report.status='not_run';report.reason=reason;report
  try{
   await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
   const url='http://127.0.0.1:'+server.address().port;
-  for(const profile of profiles){
+  report.storageResults=await require('./storage-startup').run({browser,url});
+  failed+=report.storageResults.filter(result=>result.status==='failed').length;
+  report.specialRivalResults=process.argv.includes('--storage-only')?[]:await require('./special-rivals').run({browser,url});
+  failed+=report.specialRivalResults.filter(result=>result.status==='failed').length;
+  for(const profile of process.argv.includes('--storage-only')||process.argv.includes('--special-only')?[]:profiles){
    const dir=path.join(output,profile.name);fs.mkdirSync(dir,{recursive:true});
    const context=await browser.newContext({viewport:{width:profile.width,height:profile.height},isMobile:profile.mobile,hasTouch:profile.mobile,locale:'it-IT'});
    // Seed randomness, never replace gameplay functions or event handlers.

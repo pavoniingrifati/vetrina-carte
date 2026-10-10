@@ -11,10 +11,12 @@
     document.querySelectorAll('#careerTeamStep [data-coach-avatar]').forEach(select=>{
       select.value=avatar[select.dataset.coachAvatar];
     });
-    const preview=$runtime.$('careerAvatarPreview');
-    if(preview){
-      preview.src=$runtime.pixelPlayerAvatarData({id:'coach-user',name:$runtime.$('coachNameInput')?.value||'Mister',avatarCustomization:avatar});
-      preview.alt=`Anteprima di ${$runtime.$('coachNameInput')?.value.trim()||'Mister'}`;
+    for(const id of ['careerAvatarPreview','careerProfileAvatarPreview']){
+      const preview=$runtime.$(id);
+      if(preview){
+        preview.src=$runtime.pixelPlayerAvatarData({id:'coach-user',name:$runtime.$('coachNameInput')?.value||'Mister',avatarCustomization:avatar});
+        preview.alt=`Anteprima di ${$runtime.$('coachNameInput')?.value.trim()||'Mister'}`;
+      }
     }
   }
 
@@ -45,8 +47,10 @@
     if($runtime.$('careerContinueBtn')) $runtime.$('careerContinueBtn').disabled=!valid;
     if($runtime.$('quickReadyBtn')) $runtime.$('quickReadyBtn').disabled=!valid;
     if($runtime.$('careerIdentityHint')) $runtime.$('careerIdentityHint').textContent=valid
-      ? 'Nomi inseriti. Premi → per creare il tuo personaggio.'
+      ? 'Tutto pronto. Scegli il volto del tuo allenatore.'
       : 'Inserisci entrambi i nomi per continuare.';
+    if($runtime.$('careerPreviewTeam')) $runtime.$('careerPreviewTeam').textContent=$runtime.$('careerTeamNameInput')?.value.trim()||'La tua squadra';
+    if($runtime.$('careerPreviewCoach')) $runtime.$('careerPreviewCoach').textContent=$runtime.$('coachNameInput')?.value.trim()||'Il tuo nome';
   }
 
   function setInitialCareerCatalog(pokemon){
@@ -67,6 +71,14 @@
     document.querySelectorAll('#careerTeamStep [data-career-team-substep]').forEach(section=>{
       section.classList.toggle('hidden',section.dataset.careerTeamSubstep!==$runtime.careerTeamSubstep);
     });
+    document.querySelectorAll('#careerTeamStep [data-career-progress]').forEach(item=>{
+      const current=item.dataset.careerProgress===$runtime.careerTeamSubstep;
+      if(current)item.setAttribute('aria-current','step');else item.removeAttribute('aria-current');
+      item.classList.toggle('is-complete',allowed.indexOf(item.dataset.careerProgress)<allowed.indexOf($runtime.careerTeamSubstep));
+    });
+    const copy={identity:['Lascia il tuo segno.','Ogni grande squadra comincia da un nome.'],avatar:['Dai un volto al mister.','Scegli il personaggio che guiderà la tua squadra.'],launch:['Il campo ti aspetta.','Vivi l’asta o comincia con le rose già pronte.']}[$runtime.careerTeamSubstep];
+    if($runtime.$('careerCreationTitle'))$runtime.$('careerCreationTitle').textContent=copy[0];
+    if($runtime.$('careerCreationDescription'))$runtime.$('careerCreationDescription').textContent=copy[1];
     if($runtime.careerTeamSubstep==='avatar') $runtime.renderCareerAvatarEditor();
     if($runtime.careerTeamSubstep==='launch') $runtime.updateResumeButton();
   }

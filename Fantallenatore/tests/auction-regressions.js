@@ -9,6 +9,9 @@ const app=require('./helpers/production-source').readProductionSource();
 function functionsBetween(start,end,context){
   const source=app.slice(app.indexOf(`  function ${start}(`),app.indexOf(`  function ${end}(`));
   assert(source.startsWith(`  function ${start}(`));
+  context.cpuAdminPlayerPlan ||= ()=>null;
+  context.cpuSpecialRivalPlan ||= ()=>null;
+  context.cpuSpecialRivalMarket ||= ()=>({priceRatio:1});
   context.cpuCoverInfo ||= ()=>null;
   context.cpuMissingKeeperCover ||= ()=>null;
   vm.runInNewContext(source,context);

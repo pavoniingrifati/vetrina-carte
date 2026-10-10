@@ -79,6 +79,13 @@
     if(!state.stats.highest||finalPrice>Number(state.stats.highest.price||0)){
       state.stats.highest={playerId:player.id,playerName:player.name,managerId:winner.id,team:winner.team,price:finalPrice};
     }
+    // Bounded public tape survives save/resume and starts fresh with auction stats.
+    // Bundle price splits and forced one-shot awards are not market price signals.
+    if(options.recordMarketSale!==false && !state.auction?.adminOneShotForced && !state.auction?.oneShotForced){
+      const sales=Array.isArray(state.stats.auctionSales)?state.stats.auctionSales:[];
+      state.stats.auctionSales=[...sales,{playerId:player.id,role:player.role,price:finalPrice,
+        season:Number(state.career?.seasonNumber||1),winter:state.winterMarketFlow?.stage==='auction'}].slice(-80);
+    }
     return {ok:true,winner,player,finalPrice};
   }
 
@@ -99,7 +106,7 @@
     const prices=players.map((p,i)=>i===0?total-players.length+1:1);
     const snapshot={budget:winner.budget,roster:[...winner.roster],available:[...state.availableIds],stats:JSON.parse(JSON.stringify(state.stats||{}))};
     for(let i=0;i<players.length;i++){
-      const result=awardPlayer(state,players[i],winnerId,prices[i],options);
+      const result=awardPlayer(state,players[i],winnerId,prices[i],{...options,recordMarketSale:false});
       if(!result.ok){winner.budget=snapshot.budget;winner.roster=snapshot.roster;state.availableIds=snapshot.available;state.stats=snapshot.stats;return result;}
     }
     return {ok:true,winner,players,finalPrice:total};
