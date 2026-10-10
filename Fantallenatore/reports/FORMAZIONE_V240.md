@@ -1,1 +1,0 @@
-V240: corretto doppio centraggio translate+transform che spostava i giocatori. Un solo translate, anche negli stati interattivi. Campo 2:3 max560px; sfumature compatte per ruolo (portiere oro, difesa verde, centrocampo blu, attacco rosa). Nomi centrati, disposizione dei reparti conservata. CSS edizione superati. Browser non verificato visivamente.

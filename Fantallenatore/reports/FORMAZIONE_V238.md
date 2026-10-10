@@ -1,1 +1,0 @@
-V238: ritratto sul campo senza riquadro, faccine 76px desktop e 58px mobile, MV sovrapposta in basso a sinistra con colore secondo valore, difficoltà e titolarità a destra, nome sotto linea dorata. Font del gioco, campo verde. Conservate selezione, drag/drop e regole. Test sintassi, CSS edizione superati; verifica visiva browser non eseguita.

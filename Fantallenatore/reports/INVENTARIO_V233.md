@@ -1,1 +1,0 @@
-Inventario a riquadri: titolo e descrizione in alto, simbolo centrale, quantità in fascia inferiore e azione. Tre colonne desktop, due mobile, una sotto 380 px. Logica quantità e uso invariata; oggetti esauriti nascosti su mobile come prima. CSS e produzione verificati; controllo visivo browser non eseguito.

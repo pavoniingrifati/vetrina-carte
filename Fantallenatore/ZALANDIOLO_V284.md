@@ -1,7 +1,0 @@
-# Zalandiolo · V284
-
-Nuovo sponsor sorteggiabile, con la grafica originale fornita, che consente due Blocchi Avversario per giornata su due giocatori diversi della stessa squadra rivale. Ogni utilizzo consuma una unità dell’inventario. Non crea oggetti gratuiti. Senza sponsor resta il limite di un blocco. Funziona anche come secondo sponsor con Celebrità.
-
-Entrambi i giocatori sono esclusi da titolari e panchina, anche quando una formazione CPU viene rigenerata dalla Diretta Gol. I giocatori già bloccati non sono selezionabili una seconda volta. Il contatore mostra gli utilizzi della giornata. Si conserva il campo del primo blocco per compatibilità con i vecchi salvataggi, aggiungendo l’elenco di tutti i bloccati. La nuova giornata riparte senza blocchi.
-
-Test dedicato: sponsor primario e secondario, consumo esatto, duplicate/terzo utilizzo, squadra sbagliata, formazione bloccata, esclusione dei due titolari e dalla panchina, cache live con solo il secondo bloccato, salvataggio reale e ripristino, compatibilità con campo legacy e nuova giornata. Passati anche Celebrità, shop-economy, production-edition, domain-integration, css-build e winter-release-table. Suite generale: 62/62. Il controllo degli svincoli cercava ancora la vecchia classe delle schede; aggiornato alla tabella effettivamente presente e verificato con il test comportamentale dedicato. Nessun nuovo test grafico browser eseguito.

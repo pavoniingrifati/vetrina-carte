@@ -1,1 +1,0 @@
-Minuto e fase sopra il risultato; comandi raccolti sotto. Inizia Big Match visibile al centro fra le due fasi. Avanzamento normale visibile con comandi aperti; Vedi risultato disponibile a giornata conclusa. Controlli statici e regressioni apertura/chiusura superati; browser non verificato visivamente.

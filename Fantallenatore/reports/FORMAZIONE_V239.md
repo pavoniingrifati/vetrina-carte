@@ -1,1 +1,0 @@
-V239: eliminati sfondi, bordi e ombre delle vecchie cornici per ruolo con selettori correttamente prioritari. Ingombro ridotto a 98x92 desktop e 76x83 mobile; faccine 62/52px. Posizioni visive equidistanti per reparto e righe A15 C40 D65 P87; slot e logica invariati. Test sintassi/CSS/edizione superati; nessuna verifica visiva browser.

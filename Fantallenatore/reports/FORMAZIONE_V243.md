@@ -1,1 +1,0 @@
-V243: Mantieni formazione disponibile senza abbonamento. Rimossi gate per pulsante, attivazione, salvataggio e caricamento giornate successive. Salvataggi esistenti compatibili. Conservati gate Assistente per AUTO XI e sostituzioni automatiche indisponibili. Conservati vincoli modulo temporaneo e wildcard. Test gratuità, edizione, capitano e sintassi superati.

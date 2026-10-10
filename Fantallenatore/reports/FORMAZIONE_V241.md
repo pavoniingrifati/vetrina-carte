@@ -1,3 +1,0 @@
-V241: sostituiti i blocchi aggiunti V237–V240 con un singolo modulo proprietario 24-lineup-portraits.css. Corretto conflitto di specificità: vecchia regola filled conservava transform translate anche dopo nuova regola normale; hover cambiava transform. Nuovo gruppo include filled e stati con identica geometria, un solo translate. Dimensioni proporzionali al campo tramite container units, faccine fino86px, riquadri fino120px. Sfumature ruolo conservate. Moduli con reparto da5: campo minimo450px scorrevole e riquadri più stretti.
-
-Verifiche: 36 combinazioni modulo/larghezza con espressioni di posizionamento reali, nessuna intersezione dei rettangoli e tutti dentro campo; controlli CSS/edizione; suite62/62. Browser non disponibile: nessuna verifica visiva eseguita.
