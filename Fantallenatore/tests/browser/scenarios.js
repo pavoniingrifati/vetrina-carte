@@ -84,14 +84,14 @@ async function lineup(page,{mobile,dir}){
  await seed(page,'season',{premium:true});await active(page,'seasonScreen');await page.locator('#lineupBtn').click();await active(page,'lineupScreen');
  await page.locator('#autoLineupBtn').click();assert.equal(await page.locator('#lineupPitchSlots .filled').count(),11);
  const geometry=[];
- for(const formation of ['4-3-3','4-4-2']){
-  await page.locator('[data-lineup-formation="'+formation+'"]').click();await fillMissing(page,mobile);
+ for(const formation of ['4-3-3','4-4-2','3-5-2','4-5-1']){
+  if(await page.locator('#lineupFormationSelect').isVisible())await page.locator('#lineupFormationSelect').selectOption(formation);else await page.locator('[data-lineup-formation="'+formation+'"]').click();await fillMissing(page,mobile);
   geometry.push({formation,...await pitch(page)});await screenshot(page,dir,'lineup-'+formation);
  }
  const slot=page.locator('#lineupPitchSlots .filled').first();const before=await inspect(page);await slot.click();
  assert.deepEqual((await inspect(page)).lineupDraft.starters,before.lineupDraft.starters,'Selecting a captain replaced a player');
  await box(page,'#captainSelectedBtn');await page.locator('#captainSelectedBtn').click();assert((await inspect(page)).lineupDraft.captainId);
- const rectBefore=await slot.boundingBox();await slot.hover();const rectAfter=await slot.boundingBox();
+ await slot.evaluate(e=>e.scrollIntoView({block:'center',behavior:'instant'}));const rectBefore=await slot.boundingBox();await slot.hover();const rectAfter=await slot.boundingBox();
  assert(Math.abs(rectBefore.x-rectAfter.x)<2&&Math.abs(rectBefore.y-rectAfter.y)<2,'Player moves on hover');
  await box(page,'#confirmLineupBtn');await page.locator('#confirmLineupBtn').click();await active(page,'seasonScreen');
  const saved=await inspect(page);assert(saved.lineups['1'].user.confirmed);assert(saved.lineups['1'].user.captainId);return geometry;

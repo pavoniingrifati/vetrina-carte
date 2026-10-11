@@ -19,8 +19,10 @@ function noOverlap(rects,label,tolerance=2){
 }
 async function pitch(page){
  const result=await page.locator('.lineup-pitch').evaluate(el=>{
-  const bounds=el.getBoundingClientRect();return {bounds:{left:bounds.left,top:bounds.top,right:bounds.right,bottom:bounds.bottom},players:Array.from(el.querySelectorAll('.lineup-slot.filled')).map(p=>{const r=p.getBoundingClientRect();return {slot:p.dataset.lineupSlot,left:r.left,top:r.top,right:r.right,bottom:r.bottom};})};
+  const bounds=el.getBoundingClientRect();return {viewportWidth:innerWidth,panelWidth:el.parentElement.clientWidth,panelScrollWidth:el.parentElement.scrollWidth,bounds:{left:bounds.left,top:bounds.top,right:bounds.right,bottom:bounds.bottom},players:Array.from(el.querySelectorAll('.lineup-slot.filled')).map(p=>{const r=p.getBoundingClientRect();return {slot:p.dataset.lineupSlot,left:r.left,top:r.top,right:r.right,bottom:r.bottom};})};
  });
+ assert(result.bounds.left>=-2&&result.bounds.right<=result.viewportWidth+2,'Pitch outside viewport: '+JSON.stringify(result.bounds));
+ assert(result.panelScrollWidth<=result.panelWidth+2,'Pitch requires horizontal scrolling');
  assert.equal(result.players.length,11);for(const r of result.players)assert(r.left>=result.bounds.left-2&&r.right<=result.bounds.right+2&&r.top>=result.bounds.top-2&&r.bottom<=result.bounds.bottom+2,'Player outside pitch: '+JSON.stringify(r));noOverlap(result.players,'Pitch players');return result;
 }
 module.exports={box,noOverlap,pitch};

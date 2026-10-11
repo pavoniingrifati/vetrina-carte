@@ -1047,6 +1047,13 @@
     $runtime.$('formationButtons').innerHTML=$runtime.availableLineupFormations().map(key=>`<button class="formation-choice ${key===$runtime.lineupDraft.formation?'active':''} ${forcedFormation&&key===forcedFormation?'is-forced':''}" data-lineup-formation="${key}" ${($runtime.lineupReadOnly || (forcedFormation && key!==forcedFormation)) ? 'disabled' : ''}>${key}</button>`).join('');
     if(!$runtime.lineupReadOnly) $runtime.$('formationButtons').querySelectorAll('[data-lineup-formation]').forEach(btn=>btn.addEventListener('click',()=>$runtime.setDraftFormation(btn.dataset.lineupFormation)));
 
+    const formationSelect=$runtime.$('lineupFormationSelect');
+    if(formationSelect){
+      formationSelect.innerHTML=$runtime.availableLineupFormations().map(key=>`<option value="${key}" ${key===$runtime.lineupDraft.formation?'selected':''} ${forcedFormation&&key!==forcedFormation?'disabled':''}>${key}${forcedFormation&&key===forcedFormation?' · obbligatorio':''}</option>`).join('');
+      formationSelect.disabled=!!($runtime.lineupReadOnly||forcedFormation);
+      formationSelect.onchange=()=>$runtime.setDraftFormation(formationSelect.value);
+    }
+
     const starterIds=$runtime.draftStarterIds();
     const lineupAdminEffect=$runtime.activeAdminRuleEffect(day);
     const adminBlockedUserId=!$runtime.lineupReadOnly?$runtime.adminBlockedStarterForManager('user',day):null;

@@ -231,6 +231,7 @@
       <div class="season-title-block">
         <h2>Fantallenatore</h2>
         <p class="dashboard-season-line">STAGIONE <span data-game-season></span></p>
+        <p class="dashboard-mobile-league"><span data-current-division></span></p>
       </div>
       <div class="season-top-actions">
         <div class="career-wallet-chip dashboard-wallet" title="Euro attuali"><span>●</span><small>EURO</small><b data-career-wallet-value>20</b></div>
@@ -470,6 +471,12 @@
       btn.onclick=()=>$runtime.setLeagueStandingsSort(btn.dataset.standingsSort);
     });
     $runtime.renderFullStandingsSortState();
+    const expandBtn=$runtime.$('toggleFullStandingsBtn');
+    if(expandBtn){
+      const panel=expandBtn.closest('.full-standings-panel');
+      const update=()=>{const expanded=panel.classList.contains('standings-expanded');expandBtn.setAttribute('aria-expanded',String(expanded));expandBtn.textContent=expanded?'Riduci classifica':'Mostra tutti i dati';};
+      expandBtn.onclick=()=>{panel.classList.toggle('standings-expanded');update();};update();
+    }
 
     const rulesBtn=$runtime.$('openSeasonRulesBtn'),rulesDialog=$runtime.$('seasonRulesDialog');
     if(rulesBtn && rulesDialog){

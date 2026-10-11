@@ -31,12 +31,12 @@ const doc={createElement:tag=>new Element(tag),createComment:()=>new Element('co
 const window={matchMedia:()=>media,FantaMobileLocations:locations};const instance=initMobileUI(doc,window);assert.equal(initMobileUI(doc,window),instance);
 const lineupNav=lineup.querySelector('.mobile-section-tabs'),liveNav=live.querySelector('.mobile-section-tabs'),toolbar=live.querySelector('.mobile-live-toolbar');
 assert.equal(lineup.dataset.mobileView,'pitch');lineupNav.children[1].click();assert.equal(lineup.dataset.mobileView,'roster');
-const player=new Element('button');player.dataset.lineupPlayer='123';lineup.click(player);assert.equal(lineup.dataset.mobileView,'pitch');assert(lineupNav.scrolled);
+const player=new Element('button');player.dataset.lineupPlayer='123';lineup.click(player);assert.equal(lineup.dataset.mobileView,'pitch');assert(layout.scrolled);
 lineupNav.children[2].click();player.disabled=true;lineup.click(player);assert.equal(lineup.dataset.mobileView,'bench');
 assert.equal(live.dataset.mobileView,'duel');assert.deepEqual(liveNav.children.map(b=>b.textContent),['Voti','Campi','Cronaca']);
 liveNav.children[1].click();assert.equal(live.dataset.mobileView,'matches');assert.equal(liveNav.children[1].attrs['aria-pressed'],'true');
 liveNav.children[0].click();assert.equal(live.dataset.mobileView,'duel');
-assert.equal(bar.parent,toolbar);assert.equal(liveNav.parent,toolbar);assert.equal(side.parent.open,false);keeper.click();assert.equal(calls,1);
+assert.equal(bar.parent,toolbar);assert.equal(liveNav.parent,live);assert.equal(side.parent.open,false);keeper.click();assert.equal(calls,1);
 media.matches=false;media.listener();assert.equal(bar.parent,article);assert.equal(liveNav.parent,article);assert.equal(side.parent.open,true);keeper.click();assert.equal(calls,2);
 media.matches=true;media.listener();assert.equal(bar.parent,toolbar);assert.equal(side.parent.open,false);assert(help.textContent.includes('Tocca'));
 instance.destroy();instance.destroy();assert.equal(bar.parent,article);assert.equal(side.parent.open,true);assert.equal(lineup.querySelector('.mobile-section-tabs'),null);

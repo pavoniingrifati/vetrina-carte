@@ -3453,6 +3453,7 @@
   /* @domain persistence-controller initializeSaveSystem */
 
   function showScreen(id) {
+    const enteringDashboard=id==='seasonScreen' && !document.querySelector('#seasonScreen.active');
     document.querySelectorAll('.screen').forEach(el => {
       const active=el.id===id;
       el.classList.toggle('active',active);
@@ -3461,7 +3462,12 @@
     const activeScreen=$(id);
     if(activeScreen){
       activeScreen.setAttribute('tabindex','-1');
-      requestAnimationFrame(()=>activeScreen.focus({preventScroll:true}));
+      requestAnimationFrame(()=>{
+        activeScreen.focus({preventScroll:true});
+        if(enteringDashboard && window.matchMedia?.('(max-width:780px), (max-width:1024px) and (pointer:coarse)').matches){
+          window.scrollTo({top:0,left:0,behavior:'instant'});
+        }
+      });
     }
     document.body.classList.toggle('is-main-menu',id==='setupScreen');
   }

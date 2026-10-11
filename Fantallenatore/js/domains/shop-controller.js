@@ -364,7 +364,6 @@
   }
 
   function applyGameConfiguration(){
-    document.title=`Fantallenatore — V${$runtime.GAME_CONFIG.buildVersion}`;
     document.querySelectorAll('[data-game-build]').forEach(el=>el.textContent=`V${$runtime.GAME_CONFIG.buildVersion}`);
     document.querySelectorAll('[data-game-season]').forEach(el=>el.textContent=$runtime.careerSeasonLabel());
     document.querySelectorAll('[data-game-league]').forEach(el=>el.textContent=$runtime.careerDivisionLabel());
