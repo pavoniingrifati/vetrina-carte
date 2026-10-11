@@ -416,6 +416,7 @@
     if(!season || !career || !item) return;
     if(item.id==='assistant_tactical_pro' && !$runtime.shopItemActive('assistant_coach',season)){$runtime.showToast('Serve prima l’Assistente Tecnico.',true);return;}
     if(item.consumable){ $runtime.buyConsumableItem(item,paymentCurrency); return; }
+    if($runtime.shopItemActive(id,season) && !season.shopPurchases?.[id]){$runtime.showToast(`Gratis oggi! ${item.name} è già sbloccato per la giornata ${season.currentMatchday}.`);return;}
     const requestedCurrency=paymentCurrency==='fp'?'fp':'eur';
     const fpCost=Math.max(0,Math.floor(Number(item.fpCost||0)));
     const origin=$runtime.shopPurchaseOrigin(id),before=requestedCurrency==='fp'?$runtime.careerFantapoints():$runtime.careerEuros();
@@ -466,6 +467,7 @@
     const consumable=!!item.consumable;
     const quantity=consumable?$runtime.consumableQuantity(item.id,season):0;
     const active=!consumable && $runtime.shopItemActive(item.id,season);
+    const temporary=active && !season.shopPurchases?.[item.id];
     const freeBySponsor=!consumable && $runtime.sponsorCanMakeShopItemFree(item.id,season);
     const dualCurrency=Number(item.fpCost)>0;
     const euroCanAfford=freeBySponsor || $runtime.careerEuros()>=Number(item.cost||0);
@@ -473,7 +475,7 @@
     const balance=item.currency==='fp'?$runtime.careerFantapoints():$runtime.careerEuros();
     const canAfford=freeBySponsor || balance>=item.cost;
     const locked=!!season?.completed;
-    const effectLine=$runtime.shopItemEffectLine(item,active);
+    const effectLine=temporary?`<b>Gratis oggi!</b> Sbloccato solo per la giornata ${Number(season.currentMatchday)}.`:$runtime.shopItemEffectLine(item,active);
     const priceIcon=item.currency==='fp'?'◆':'💶';
     const priceText=freeBySponsor&&!active?'GRATIS':dualCurrency?`${item.cost} €  /  ${item.fpCost} FP`:`${item.cost} ${item.currency==='fp'?'FP':'€'}`;
     let button='';
@@ -482,7 +484,7 @@
         ? '<button type="button" class="shop-buy-btn" disabled>CHIUSO</button>'
         : `<button type="button" class="shop-buy-btn ${canAfford?'primary':''}" data-shop-buy="${$runtime.escapeHtml(item.id)}" ${canAfford?'':'disabled'}>${canAfford?'ACQUISTA +1':'SALDO INSUFFICIENTE'}</button>`;
     }else if(active){
-      button='<button type="button" class="shop-buy-btn active" disabled>✓ ATTIVO</button>';
+      button=`<button type="button" class="shop-buy-btn active" disabled>${temporary?'✓ GRATIS OGGI':'✓ ATTIVO'}</button>`;
     }else if(locked){
       button='<button type="button" class="shop-buy-btn" disabled>CHIUSO</button>';
     }else if(freeBySponsor){
@@ -499,7 +501,7 @@
       <div class="shop-game-card" data-shop-detail="${$runtime.escapeHtml(item.id)}" tabindex="0" role="button" aria-label="Apri dettagli di ${$runtime.escapeHtml(item.name)}">
         <div class="shop-game-card-title">${$runtime.escapeHtml(item.name)}</div>
         <div class="shop-product-visual shop-art-${$runtime.escapeHtml(item.id)}">
-          ${active?'<span class="shop-product-owned">✓ ATTIVO</span>':''}
+          ${active?`<span class="shop-product-owned">${temporary?'✓ GRATIS OGGI':'✓ ATTIVO'}</span>`:''}
           ${consumable&&quantity?`<span class="shop-product-owned consumable-owned">×${quantity}</span>`:''}
           ${item.image?`<img class="shop-product-hero-image" src="${$runtime.escapeHtml(item.image)}" alt="">`:`<span class="shop-product-hero-icon" aria-hidden="true">${item.icon}</span>`}
         </div>
@@ -523,6 +525,7 @@
     const consumable=!!item.consumable;
     const quantity=consumable?$runtime.consumableQuantity(item.id,season):0;
     const active=!consumable && $runtime.shopItemActive(item.id,season);
+    const temporary=active && !season.shopPurchases?.[item.id];
     const freeBySponsor=!consumable && $runtime.sponsorCanMakeShopItemFree(item.id,season);
     const dualCurrency=Number(item.fpCost)>0;
     const balance=item.currency==='fp'?$runtime.careerFantapoints():$runtime.careerEuros();
@@ -547,7 +550,7 @@
     if(modalIcon) modalIcon.hidden=!!item.image;
     if($runtime.$('shopProductModalCategory')) $runtime.$('shopProductModalCategory').textContent=item.category;
     if($runtime.$('shopProductModalTitle')) $runtime.$('shopProductModalTitle').textContent=item.name;
-    if($runtime.$('shopProductModalDescription')) $runtime.$('shopProductModalDescription').textContent=item.description;
+    if($runtime.$('shopProductModalDescription')) $runtime.$('shopProductModalDescription').textContent=temporary?`Gratis oggi! Servizio sbloccato senza costi solo per la giornata ${season.currentMatchday}. Dalla prossima giornata servirà un abbonamento acquistato.`:item.description;
     if($runtime.$('shopProductModalEffect')) $runtime.$('shopProductModalEffect').innerHTML=$runtime.shopItemEffectLine(item,active);
     if($runtime.$('shopProductModalFeatures')) $runtime.$('shopProductModalFeatures').innerHTML=(item.features||[]).map(x=>`<li><span>✓</span>${$runtime.escapeHtml(x)}</li>`).join('');
     const visual=$runtime.$('shopProductModalVisual');
@@ -565,10 +568,10 @@
       buy.disabled=(!consumable&&active) || locked || (dualCurrency?!euroCanAfford:!canAfford);
       buy.className=`shop-buy-btn ${((consumable||!active)&&!locked&&(dualCurrency?euroCanAfford:canAfford))?'primary':''} ${active?'active':''}`;
       buy.textContent=dualCurrency
-        ? locked?'STAGIONE TERMINATA':active?'✓ ATTIVO':freeBySponsor?'ATTIVA GRATIS · SPONSOR':euroCanAfford?`COMPRA CON € · ${item.cost} €`:`SERVONO ${item.cost} €`
+        ? locked?'STAGIONE TERMINATA':active?(temporary?'✓ GRATIS OGGI':'✓ ATTIVO'):freeBySponsor?'ATTIVA GRATIS · SPONSOR':euroCanAfford?`COMPRA CON € · ${item.cost} €`:`SERVONO ${item.cost} €`
         : consumable
         ? locked?'STAGIONE TERMINATA':canAfford?'ACQUISTA +1':`SERVONO ${item.cost} FP`
-        : active?'✓ ATTIVO':locked?'STAGIONE TERMINATA':freeBySponsor?'ATTIVA GRATIS · SPONSOR':dualCurrency?(euroCanAfford?`COMPRA CON € · ${item.cost} €`:`SERVONO ${item.cost} €`):canAfford?'ACQUISTA ORA':`SERVONO ${item.cost} €`;
+        : active?(temporary?'✓ GRATIS OGGI':'✓ ATTIVO'):locked?'STAGIONE TERMINATA':freeBySponsor?'ATTIVA GRATIS · SPONSOR':dualCurrency?(euroCanAfford?`COMPRA CON € · ${item.cost} €`:`SERVONO ${item.cost} €`):canAfford?'ACQUISTA ORA':`SERVONO ${item.cost} €`;
     }
     if(buyFp){
       const showFp=dualCurrency && !freeBySponsor && !active;
@@ -665,7 +668,7 @@
     if($runtime.$('shopActiveSummary')){
       const celebrityNote=Number($runtime.state.career?.nextSponsorSeason)===Number($runtime.state.career?.seasonNumber||1)+1?'<span>🌟 Celebrità attiva: 2 sponsor nella prossima stagione</span>':'';
       const sponsorNote=$runtime.sponsorFreeSubscriptionAvailable(season)?'<span>🎁 Sponsor: 1 abbonamento gratuito disponibile</span>':'';
-      const activeHtml=activeItems.length?activeItems.map(item=>`<span>${item.icon} ${$runtime.escapeHtml(item.name)}</span>`).join(''):'';
+      const activeHtml=activeItems.length?activeItems.map(item=>`<span>${item.icon} ${$runtime.escapeHtml(item.name)}${season.shopPurchases?.[item.id]?'':' · gratis oggi'}</span>`).join(''):'';
       const inventoryHtml=inventoryItems.length?inventoryItems.map(item=>`<span class="shop-inventory-chip">${item.icon} ${$runtime.escapeHtml(item.name)} ×${$runtime.consumableQuantity(item.id,season)}</span>`).join(''):'';
       $runtime.$('shopActiveSummary').innerHTML=(celebrityNote+sponsorNote+activeHtml+inventoryHtml) || '<small>Nessun servizio attivo e inventario vuoto.</small>';
     }

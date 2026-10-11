@@ -479,7 +479,7 @@
       if(perf.noVote) return;
       const riskDelta=$runtime.riskAdjustmentForPerformance(perf,$runtime.serieALive.day);
       perf.riskDelta=riskDelta;
-      perf.fantasy=$runtime.halfPoint(perf.fantasy+riskDelta);
+      perf.fantasy=Math.round((perf.fantasy+riskDelta)*4)/4;
     });
     const captainId=String(lineup?.captainId || (manager.id!=='user' && $runtime.leagueRulesFor($runtime.state).captainBonus!=='off'
       ? players.slice().sort((a,b)=>$runtime.cpuLeagueRuleLineupValue(manager,b,$runtime.serieALive.day)-$runtime.cpuLeagueRuleLineupValue(manager,a,$runtime.serieALive.day))[0]?.id
@@ -488,9 +488,9 @@
     const captain=performances.find(p=>String(p.playerId)===captainId && !p.noVote);
     if(rule!=='off' && captain && Number(captain.vote)>=(rule==='eight'?8:7)){
       captain.captainBonus=rule==='eight'?2:1;
-      captain.fantasy=$runtime.halfPoint(captain.fantasy+captain.captainBonus);
+      captain.fantasy=Math.round((captain.fantasy+captain.captainBonus)*4)/4;
     }
-    const fantasyPoints=$runtime.halfPoint(performances.reduce((s,p)=>s+Number(p.fantasy||0),0));
+    const fantasyPoints=Math.round(performances.reduce((s,p)=>s+Number(p.fantasy||0),0)*4)/4;
     return {managerId:manager.id,team:manager.team,fantasyPoints,fantasyGoals:$runtime.fantasyGoals(fantasyPoints,$runtime.serieALive?.day||$runtime.state?.season?.currentMatchday||1),performances};
   }
 
@@ -652,8 +652,8 @@
       liveOpponentName=$runtime.managerById(oppId)?.team||'Avversario';
       $runtime.$('fantasyLiveUserTeam').textContent=$runtime.state.teamName;
       $runtime.$('fantasyLiveOppTeam').textContent=liveOpponentName;
-      $runtime.$('fantasyLiveUserPoints').textContent=us.fantasyPoints.toFixed(1);
-      $runtime.$('fantasyLiveOppPoints').textContent=them.fantasyPoints.toFixed(1);
+      $runtime.$('fantasyLiveUserPoints').textContent=us.fantasyPoints.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2});
+      $runtime.$('fantasyLiveOppPoints').textContent=them.fantasyPoints.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2});
       $runtime.$('fantasyLiveScore').textContent=`${us.fantasyGoals} - ${them.fantasyGoals}`;
     }
 
@@ -667,7 +667,7 @@
         const delta = $runtime.halfPoint(Number(us.fantasyPoints||0) - Number(them.fantasyPoints||0));
         const scoreText = `${$runtime.state.teamName} ${us.fantasyGoals} - ${them.fantasyGoals} ${liveOpponentName}`;
         let duelTitle = 'Partita in equilibrio';
-        let duelDetail = `${scoreText} · Fantapunti ${us.fantasyPoints.toFixed(1)} - ${them.fantasyPoints.toFixed(1)}`;
+        let duelDetail = `${scoreText} · Fantapunti ${us.fantasyPoints.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})} - ${them.fantasyPoints.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})}`;
         if(delta > 0) duelTitle = `${$runtime.state.teamName} avanti di ${delta.toFixed(1)} pt`;
         else if(delta < 0) duelTitle = `${liveOpponentName} avanti di ${Math.abs(delta).toFixed(1)} pt`;
         $runtime.$('serieALiveDuelTitle').textContent = duelTitle;
@@ -717,7 +717,7 @@
         const substituted=finalPerformance.lineupSource==='substitute';
         const status=finalPerformance.lineupSource==='replaced'?`SOSTITUITO DA ${finalPerformance.replacementName||'PANCHINARO'}`:noVote?'SV':substituted?`ENTRATO PER ${finalPerformance.replacedPlayerName||'TITOLARE'}`:'FT';
         const vote=noVote?'—':Number(finalPerformance.vote||0).toFixed(1);
-        const fv=noVote?'—':Number(finalPerformance.fantasy||0).toFixed(1);
+        const fv=noVote?'—':Number(finalPerformance.fantasy||0).toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2});
         return {
           hasPlayed:!noVote,active:false,vote,fv,status,
           html:`<div class="seriea-user-player ${isFantasyBench?'is-fantasy-bench':''} ${substituted?'is-fantasy-substitute':''} ${noVote?'is-sv':''}"><i class="seriea-player-face">${$runtime.playerAvatarMarkup(player,player.name||'Giocatore')}</i><span class="lineup-role-chip role-${player.role}">${player.role}</span><div><strong title="${$runtime.escapeHtml(fullName)}">${captainIcon}${nameMarkup}</strong><small>${$runtime.escapeHtml($runtime.clubShort(player.club))} · ${$runtime.escapeHtml(status)}</small></div><span class="seriea-live-events">${noVote?'<span class="live-event-empty">SV</span>':$runtime.liveEventBadgesMarkup(finalPerformance)}</span><b class="live-base-vote" title="Voto base"><small>V</small>${vote}</b><em class="live-total-vote" title="Fantavoto totale"><small>FV</small>${fv}</em></div>`

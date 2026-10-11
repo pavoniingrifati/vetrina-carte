@@ -477,10 +477,11 @@
     if(Number(p.cesariniBonus||0)>0) bits.push(`⏱ CESARINI +${fmt(p.cesariniBonus)}`);
     if(Number(p.goldenBenchBonus||0)>0) bits.push(`🪑 PANCHINA D’ORO +${fmt(p.goldenBenchBonus)}`);
     if(Number(p.underdogBonus||0)>0) bits.push(`⭐ UNDERDOG +${fmt(p.underdogBonus)}`);
+    if(Number(p.formationBonus||0)>0) bits.push('🪑 PANCHINA MOTIVATA +0,25');
     if(Number(p.cleanSheetBonus||0)>0) bits.push(`🧱 +${fmt(p.cleanSheetBonus)}`);
     if(p.goalsConceded) bits.push(`🥅 ${p.goalsConceded} -${fmt(p.goalsConceded*rules.goalConcededMalus)}`);
     if(p.injury) bits.push('🤕');
-    if(Number(p.riskDelta||0)!==0) bits.push(`🎲 ${Number(p.riskDelta)>0?'+':''}${Number(p.riskDelta).toLocaleString('it-IT',{maximumFractionDigits:1})}`);
+    if(Number(p.riskDelta||0)!==0) bits.push(`🎲 ${Number(p.riskDelta)>0?'+':''}${Number(p.riskDelta).toLocaleString('it-IT',{maximumFractionDigits:2})}`);
     if(Number(p.socialMotivationDelta||0)>0) bits.push('💬 MOTIVATO');
     if(Number(p.socialMotivationDelta||0)<0) bits.push('💬 PRESSIONE');
     return bits.length ? bits.join(' · ') : '—';
@@ -662,19 +663,37 @@
         if(target){
           const riskDelta=$runtime.riskAdjustmentForPerformance(target,day);
           target.riskDelta=riskDelta;
-          target.fantasy=halfPoint(Number(target.fantasy||0)+Number(riskDelta||0));
+          target.fantasy=Math.round((Number(target.fantasy||0)+Number(riskDelta||0))*4)/4;
         }
       }
     }
 
-    let fantasyPoints=halfPoint(performances.reduce((s,p)=>s+Number(p.fantasy||0),0));
+    let formationTeamBonus=0;
+    let formationTeamBonusLabel='';
+    if(manager.id==='user' && minute>=90){
+      const choice=$runtime.activeFormationChoice(day);
+      const effect=choice?.effect;
+      if(effect?.kind==='motivated_bench' && substitutions.length){
+        const first=performances.find(p=>String(p.playerId)===String(substitutions[0].inPlayerId));
+        if(first && !first.noVote && first.vote!=null){
+          first.formationBonus=.25;
+          first.fantasy+=.25;
+          substitutions[0].fantasy=first.fantasy;
+        }
+      }
+      if(effect?.kind==='team_spirit' && performances.filter(p=>p.lineupSource==='starter' && !p.noVote && p.vote!=null).length>=9) formationTeamBonus=.5;
+      if(effect?.kind==='rewarded_discipline' && performances.some(p=>!p.noVote && p.vote!=null) && performances.every(p=>Number(p.yellow||0)===0 && Number(p.red||0)===0)) formationTeamBonus=1;
+      if(effect?.kind==='midfield_bomber' && performances.some(p=>p.role==='C' && !p.noVote && p.vote!=null && Number(p.goals||0)>0)) formationTeamBonus=1;
+      if(formationTeamBonus>0) formationTeamBonusLabel=choice.title;
+    }
+    let fantasyPoints=Math.round((performances.reduce((s,p)=>s+Number(p.fantasy||0),0)+formationTeamBonus)*4)/4;
     const defenseModifier=classicDefenseModifierResult(performances,formation,day,minute);
-    if(defenseModifier.bonus>0) fantasyPoints=halfPoint(fantasyPoints+defenseModifier.bonus);
+    if(defenseModifier.bonus>0) fantasyPoints=Math.round((fantasyPoints+defenseModifier.bonus)*4)/4;
 
     return {
       managerId:manager.id,team:manager.team,fantasyPoints,fantasyGoals:fantasyGoals(fantasyPoints,day),
       performances,substitutions,subsUsed,unresolvedSV:performances.filter(p=>p.noVote).length,
-      defenseModifierBonus:defenseModifier.bonus,defenseModifierAverage:defenseModifier.average
+      formationTeamBonus,formationTeamBonusLabel,defenseModifierBonus:defenseModifier.bonus,defenseModifierAverage:defenseModifier.average
     };
   }
 

@@ -1,0 +1,23 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const app=fs.readFileSync('app_v302.js','utf8'),window={};
+for(const file of ['js/game-rules.js','js/career-engine.js','js/domains/career-state.js','js/domains/economy-state.js','js/domains/shop-controller.js'])vm.runInNewContext(fs.readFileSync(file,'utf8'),{window,Date,setTimeout:()=>{},document:{querySelectorAll:()=>[]}});
+const definitions=vm.runInNewContext(app.slice(app.indexOf('  const FORMATION_CHOICE_RARITY_BY_TEMPLATE'),app.indexOf('  const ADMIN_RULE_TEMPLATES'))+'({templates:FORMATION_CHOICE_TEMPLATES,rarities:FORMATION_CHOICE_RARITY_BY_TEMPLATE})');
+const template=definitions.templates.find(t=>t.id==='boost-all-free'),option=template.build({day:7});
+assert.equal(template.category,'boost');assert.equal(option.title,'Tutto gratis!');assert.equal(definitions.rarities[template.id],'rare');
+const items=vm.runInNewContext(app.slice(app.indexOf('  const SHOP_ITEMS = {'),app.indexOf('  const LEAGUE_RULE_DEFAULTS'))+'SHOP_ITEMS');
+const season={currentMatchday:7,shopPurchases:{},formationChoices:{7:{triggered:true,resolved:false,selectedOption:option}}};
+const rt={state:{season,career:window.FantaCareerEngine.normalizeCareer({euros:40,fantapoints:200})},CareerEngine:window.FantaCareerEngine,GAME_CONFIG:window.FantaGameRules.GAME_CONFIG,CAREER_STARTING_EUROS:20,SHOP_ITEMS:items,SPONSOR_FREE_SHOP_IDS:['fantadata_pro','scout_plus','assistant_coach'],ensureSeasonState:()=>rt.state.season,$:()=>null,showToast:()=>{},escapeHtml:String};
+Object.assign(rt,window.FantaDomains['career-state'].create(rt),window.FantaDomains['economy-state'].create(rt),window.FantaDomains['shop-controller'].create(rt),{shopPurchaseOrigin:()=>null});
+const services=['fantadata_pro','scout_plus','assistant_coach','assistant_tactical_pro'];
+for(const id of services)assert.equal(rt.shopItemActive(id),false,'An unselected event must not unlock anything');
+season.formationChoices[7].resolved=true;
+const before=JSON.stringify(rt.state.career);
+for(const id of services){assert(rt.shopItemActive(id));assert(rt.shopCardHtml(items[id]).includes('GRATIS OGGI'));rt.buyShopItem(id,'eur');rt.buyShopItem(id,'fp');}
+assert.equal(JSON.stringify(rt.state.career),before);assert.equal(Object.keys(season.shopPurchases).length,0);
+for(const id of ['fortune','special_events','expert_precision','cons_training','unknown'])assert.equal(rt.shopItemActive(id),false);
+rt.state.season=JSON.parse(JSON.stringify(season));for(const id of services)assert(rt.shopItemActive(id),'Selected effect survives save/reload');
+rt.state.season.currentMatchday=8;for(const id of services)assert.equal(rt.shopItemActive(id),false,'Unlock expires next day');
+rt.state.season.shopPurchases.scout_plus={purchasedAt:1};assert(rt.shopItemActive('scout_plus'));assert.equal(rt.shopItemActive('assistant_coach'),false);
+rt.state.season.currentMatchday=7;rt.state.season.completed=true;assert.equal(rt.shopItemActive('assistant_coach'),false);assert(rt.shopItemActive('scout_plus'));
+console.log('OK: rare Boost template, selected-day-only access to all four subscriptions, no currency or purchases changed, shop duration labels, save/reload, expiry and existing purchases preserved.');

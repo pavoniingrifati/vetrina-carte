@@ -48,6 +48,11 @@ function createRuntime(seed='balance-0'){
  overviewHtml(premium=false){const body={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};const previous=document.getElementById,oldShop=shopItemActive;document.getElementById=id=>id==='datacenterOverviewBody'?body:null;shopItemActive=id=>premium&&id==='fantadata_pro';try{renderDataCenterOverviewPanel();return body.innerHTML;}finally{document.getElementById=previous;shopItemActive=oldShop;}},
  packApply(draft){return applyPreAuctionPack(draft);},packRules(draft){return generatePreAuctionLeagueRules(draft);},
 
+ eventTemplate(id,day,player){const t=FORMATION_CHOICE_TEMPLATES.find(t=>t.id===id);const option=t.build({day,pickOwnStrict:(key,filter)=>player&&filter(player)?player:null},0);return option?{...option,rarity:formationChoiceRarity(t.id)}:null;},
+ score(manager,lineup,map,minute=90){return simulateFantasyTeamFromSerieA(manager,lineup,map,minute);},
+ slots(){return lineupSlots('4-3-3');},
+ service(id){return shopItemActive(id);},
+ risk(perf,day){return riskAdjustmentForPerformance(perf,day);},
  getState(){return state;},players(){return window.FANTA_PLAYERS;},buildVersion:GAME_CONFIG.buildVersion
  };
 })();`,ctx,{filename:'app_v302.js:headless'});

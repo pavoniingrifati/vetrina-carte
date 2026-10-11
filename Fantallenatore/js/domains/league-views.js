@@ -114,7 +114,7 @@
     if(p.pending) return {label:'POSTICIPO',className:'is-pending',fantasy:null,vote:null};
     if(p.noVote) return {label:'SV',className:'is-sv',fantasy:0,vote:null};
     return {
-      label:`V ${Number(p.vote).toFixed(1)} · FV ${Number(p.fantasy).toFixed(1)}`,
+      label:`V ${Number(p.vote).toFixed(1)} · FV ${Number(p.fantasy).toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})}`,
       className:'has-partial-vote',
       fantasy:Number(p.fantasy),vote:Number(p.vote)
     };
@@ -169,7 +169,7 @@
       $runtime.$('seasonPlayerFormBadge').className=`player-form-badge ${form.className}`;
       $runtime.$('seasonPlayerFormTitle').textContent=form.count?`Ultime ${form.count} prestazioni`:'Nessun voto ancora';
       $runtime.$('seasonPlayerFormRows').innerHTML=form.recent.length
-        ? form.recent.slice().reverse().map(x=>`<div class="season-player-form-row"><span>G${x.day}</span><strong>V ${Number(x.vote).toFixed(1)}</strong><b>FV ${Number(x.fantasy).toFixed(1)}</b></div>`).join('')
+        ? form.recent.slice().reverse().map(x=>`<div class="season-player-form-row"><span>G${x.day}</span><strong>V ${Number(x.vote).toFixed(1)}</strong><b>FV ${Number(x.fantasy).toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})}</b></div>`).join('')
         : '<div class="season-player-form-empty">Le statistiche inizieranno dopo la prima presenza con voto.</div>';
     } else {
       $runtime.$('seasonPlayerFormBadge').textContent='🔒 PRO';
@@ -269,7 +269,7 @@
         <td><strong>${$runtime.escapeHtml(m?.team||'—')}</strong><small>${$runtime.escapeHtml(m?.name||'')}</small></td>
         <td>${s.played}</td>
         <td class="pts">${s.points}</td>
-        <td class="fantasy-total">${Number(s.fantasyPoints||0).toFixed(1)}</td>
+        <td class="fantasy-total">${Number(s.fantasyPoints||0).toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})}</td>
         <td>${s.wins}</td><td>${s.draws}</td><td>${s.losses}</td>
         <td>${s.gf}</td><td>${s.ga}</td><td>${gd>0?'+':''}${gd}</td>
       </tr>`;
@@ -311,9 +311,9 @@
     $runtime.$('calendarResultsBadge').textContent='CONCLUSA';
     $runtime.$('calendarResultsList').innerHTML=(result.matches||[]).map(m=>`
       <div class="calendar-result-row ${m.homeId==='user'||m.awayId==='user'?'is-user-result':''}">
-        <div><strong>${$runtime.escapeHtml(m.homeTeam)}</strong><small>${Number(m.homeFantasy||0).toFixed(1)} FP</small></div>
+        <div><strong>${$runtime.escapeHtml(m.homeTeam)}</strong><small>${Number(m.homeFantasy||0).toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})} FP</small></div>
         <b>${m.homeScore} - ${m.awayScore}</b>
-        <div><strong>${$runtime.escapeHtml(m.awayTeam)}</strong><small>${Number(m.awayFantasy||0).toFixed(1)} FP</small></div>
+        <div><strong>${$runtime.escapeHtml(m.awayTeam)}</strong><small>${Number(m.awayFantasy||0).toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})} FP</small></div>
       </div>
     `).join('');
     panel.scrollIntoView({behavior:'smooth',block:'nearest'});

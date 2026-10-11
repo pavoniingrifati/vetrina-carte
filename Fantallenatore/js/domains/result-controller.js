@@ -38,6 +38,8 @@
         homePerformances:hs.performances,awayPerformances:as.performances,
         homeSubstitutions:hs.substitutions||[],awaySubstitutions:as.substitutions||[],
         homeSubsUsed:hs.subsUsed||0,awaySubsUsed:as.subsUsed||0,
+        homeFormationTeamBonus:Number(hs.formationTeamBonus||0),awayFormationTeamBonus:Number(as.formationTeamBonus||0),
+        homeFormationTeamBonusLabel:hs.formationTeamBonusLabel||'',awayFormationTeamBonusLabel:as.formationTeamBonusLabel||'',
         homeDefenseModifierBonus:Number(hs.defenseModifierBonus||0),awayDefenseModifierBonus:Number(as.defenseModifierBonus||0),
         homeDefenseModifierAverage:hs.defenseModifierAverage??null,awayDefenseModifierAverage:as.defenseModifierAverage??null
       };
@@ -114,14 +116,16 @@
     const userPerf=userHome?match.homePerformances:match.awayPerformances;
     const userSubs=userHome?(match.homeSubstitutions||[]):(match.awaySubstitutions||[]);
     const userDefenseModifier=Number(userHome?match.homeDefenseModifierBonus:match.awayDefenseModifierBonus)||0;
+    const userFormationTeamBonus=Number(userHome?match.homeFormationTeamBonus:match.awayFormationTeamBonus)||0;
+    const userFormationTeamBonusLabel=(userHome?match.homeFormationTeamBonusLabel:match.awayFormationTeamBonusLabel)||'Spirito di squadra';
     const opponentTeam=userHome?match.awayTeam:match.homeTeam;
     $runtime.showScreen('matchdayResultScreen');
     $runtime.$('resultMatchdayNo').textContent=day;
     $runtime.$('resultTitle').textContent=`${$runtime.state.teamName} ${userScore} - ${oppScore} ${opponentTeam}`;
-    $runtime.$('resultSubtitle').textContent=`${userFantasy.toFixed(1)} fantapunti contro ${oppFantasy.toFixed(1)} · voti generati dalla giornata Serie A${userDefenseModifier>0?` · Mod. difesa +${userDefenseModifier}`:''}`;
+    $runtime.$('resultSubtitle').textContent=`${userFantasy.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})} fantapunti contro ${oppFantasy.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})} · voti generati dalla giornata Serie A${userFormationTeamBonus>0?` · ${userFormationTeamBonusLabel} +${userFormationTeamBonus.toLocaleString('it-IT')}`:''}${userDefenseModifier>0?` · Mod. difesa +${userDefenseModifier}`:''}`;
     if($runtime.$('resultFantasyRulesSummary')) $runtime.$('resultFantasyRulesSummary').textContent=`Gol +3 · Assist +1 · Amm. -0,5 (doppio giallo -1) · Esp. diretta -1 · Autogol -2 · Rigore sbagliato -3 · Rigore parato +3 · Gol subito P -1 · ${$runtime.leagueRulesSummary($runtime.state)}`;
     $runtime.$('resultUserTeam').textContent=$runtime.state.teamName; $runtime.$('resultOpponentTeam').textContent=opponentTeam;
-    $runtime.$('resultUserFantasy').textContent=`${userFantasy.toFixed(1)} pt`; $runtime.$('resultOpponentFantasy').textContent=`${oppFantasy.toFixed(1)} pt`;
+    $runtime.$('resultUserFantasy').textContent=`${userFantasy.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})} pt`; $runtime.$('resultOpponentFantasy').textContent=`${oppFantasy.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})} pt`;
     $runtime.$('resultScore').textContent=`${userScore} - ${oppScore}`;
     $runtime.$('resultOutcome').textContent=userScore>oppScore?'VITTORIA':userScore<oppScore?'SCONFITTA':'PAREGGIO';
     $runtime.$('resultOutcome').className=userScore>oppScore?'win':userScore<oppScore?'loss':'draw';
@@ -145,9 +149,9 @@
         ? `<strong>${userSubs.length} sostituzion${userSubs.length===1?'e':'i'}</strong>${userSubs.map(s=>`<span><i class="lineup-role-chip role-${s.role}">${s.role}</i>${$runtime.escapeHtml(s.outPlayerName)} <b>→</b> ${$runtime.escapeHtml(s.inPlayerName)}</span>`).join('')}`
         : `<strong>0 sostituzioni</strong><span>${userPerf.some(p=>p.noVote)?'Restano giocatori senza voto: nessun sostituto utilizzabile.':'Tutti gli 11 titolari hanno portato voto.'}</span>`;
     }
-    $runtime.$('resultRatingsBody').innerHTML=userPerf.slice().sort((a,b)=>ro[a.role]-ro[b.role]).map(p=>`<tr class="${p.noVote?'no-vote-row':''} ${p.lineupSource==='substitute'?'substitute-row':''}"><td><span class="lineup-role-chip role-${p.role}">${p.role}</span></td><td><strong>${$runtime.escapeHtml(p.name)}</strong><small>${$runtime.escapeHtml($runtime.clubShort(p.club))}${p.lineupSource==='substitute'&&p.replacedPlayerName?` · ↳ per ${$runtime.escapeHtml(p.replacedPlayerName)}`:''}</small></td><td>${p.noVote?'SV':p.vote.toFixed(1)}</td><td>${$runtime.escapeHtml($runtime.performanceText(p))}</td><td><b>${p.noVote?'—':p.fantasy.toFixed(1)}</b></td></tr>`).join('');
-    $runtime.$('resultTotalFantasy').textContent=userFantasy.toFixed(1);
-    $runtime.$('resultOtherMatches').innerHTML=result.matches.filter(m=>m!==match).map(m=>`<div class="result-other-row"><span>${$runtime.escapeHtml(m.homeTeam)}</span><b>${m.homeScore} - ${m.awayScore}</b><span>${$runtime.escapeHtml(m.awayTeam)}</span><small>${m.homeFantasy.toFixed(1)} - ${m.awayFantasy.toFixed(1)} pt</small></div>`).join('');
+    $runtime.$('resultRatingsBody').innerHTML=userPerf.slice().sort((a,b)=>ro[a.role]-ro[b.role]).map(p=>`<tr class="${p.noVote?'no-vote-row':''} ${p.lineupSource==='substitute'?'substitute-row':''}"><td><span class="lineup-role-chip role-${p.role}">${p.role}</span></td><td><strong>${$runtime.escapeHtml(p.name)}</strong><small>${$runtime.escapeHtml($runtime.clubShort(p.club))}${p.lineupSource==='substitute'&&p.replacedPlayerName?` · ↳ per ${$runtime.escapeHtml(p.replacedPlayerName)}`:''}</small></td><td>${p.noVote?'SV':p.vote.toFixed(1)}</td><td>${$runtime.escapeHtml($runtime.performanceText(p))}</td><td><b>${p.noVote?'—':p.fantasy.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})}</b></td></tr>`).join('');
+    $runtime.$('resultTotalFantasy').textContent=userFantasy.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2});
+    $runtime.$('resultOtherMatches').innerHTML=result.matches.filter(m=>m!==match).map(m=>`<div class="result-other-row"><span>${$runtime.escapeHtml(m.homeTeam)}</span><b>${m.homeScore} - ${m.awayScore}</b><span>${$runtime.escapeHtml(m.awayTeam)}</span><small>${m.homeFantasy.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})} - ${m.awayFantasy.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})} pt</small></div>`).join('');
   }
 
   function closeMatchdayFantapointsReward(){

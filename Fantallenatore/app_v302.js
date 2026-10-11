@@ -1928,7 +1928,9 @@
   }
 
   const FORMATION_CHOICE_RARITY_BY_TEMPLATE = {
-    'boost-vote':'common','boost-goal':'rare','boost-assist':'rare',
+    'locker-rewarded-discipline':'common','boost-midfield-bomber':'common',
+    'boost-scout-eye':'common','locker-motivated-bench':'common','locker-team-spirit':'common','risk-young-bet':'common',
+    'boost-all-free':'rare','boost-vote':'common','boost-goal':'rare','boost-assist':'rare',
     'boost-training':'common','boost-derby':'rare','boost-offensive-freedom':'rare',
     'boost-penalty-specialist':'rare','boost-grace-moment':'epic','boost-life-chance':'epic',
     'malus-vote':'common','malus-goal':'rare','malus-assist':'rare',
@@ -1948,6 +1950,51 @@
   ]);
 
   const FORMATION_CHOICE_TEMPLATES = [
+    {
+      id:'locker-rewarded-discipline',category:'locker',icon:'🕊️',title:'Disciplina premiata',
+      build:ctx=>({id:`locker-rewarded-discipline-${ctx.day}`,category:'locker',icon:'🕊️',title:'Disciplina premiata',
+        text:'Se la tua formazione fantasy finale non riceve ammonizioni o espulsioni, ottieni +1 fantapunto di squadra. Contano anche i panchinari subentrati.',
+        effect:{kind:'rewarded_discipline'}})
+    },
+    {
+      id:'boost-midfield-bomber',category:'boost',icon:'⚽',title:'Bomber di reparto',
+      build:ctx=>({id:`boost-midfield-bomber-${ctx.day}`,category:'boost',icon:'⚽',title:'Bomber di reparto',
+        text:'Il primo gol segnato da un centrocampista nella tua formazione fantasy finale dà +1 fantapunto extra. Massimo una volta per squadra; contano anche i panchinari subentrati.',
+        effect:{kind:'midfield_bomber'}})
+    },
+    {
+      id:'boost-scout-eye',category:'boost',icon:'🔎',title:'Occhio del mister',
+      build:ctx=>({id:`boost-scout-eye-${ctx.day}`,category:'boost',icon:'🔎',title:'Occhio del mister',
+        text:'Sblocca Scout Plus gratuitamente solo per questa giornata.',effect:{kind:'free_scout'}})
+    },
+    {
+      id:'locker-motivated-bench',category:'locker',icon:'🪑',title:'Panchina motivata',
+      build:ctx=>({id:`locker-motivated-bench-${ctx.day}`,category:'locker',icon:'🪑',title:'Panchina motivata',
+        text:'Il primo panchinaro che entra nella tua formazione fantasy riceve +0,25 fantapunti, se prende voto.',effect:{kind:'motivated_bench'}})
+    },
+    {
+      id:'locker-team-spirit',category:'locker',icon:'🤝',title:'Spirito di squadra',
+      build:ctx=>({id:`locker-team-spirit-${ctx.day}`,category:'locker',icon:'🤝',title:'Spirito di squadra',
+        text:'Se almeno 9 dei tuoi titolari iniziali prendono voto, ottieni +0,5 fantapunti di squadra.',effect:{kind:'team_spirit'}})
+    },
+    {
+      id:'risk-young-bet',category:'risk',icon:'🌱',title:'Scommessa sul giovane',
+      build:(ctx,index)=>{
+        const p=ctx.pickOwnStrict(`risk-young-bet|${index}`,p=>currentPlayerOvr(p)<75);
+        if(!p) return null;
+        return {id:`risk-young-bet-${p.id}`,category:'risk',icon:'🌱',title:'Scommessa sul giovane',
+          text:`Scommetti su ${p.name} (OVR ${currentPlayerOvr(p)}): +0,5 fantapunti se il voto base è almeno 6, altrimenti −0,25. Nessun effetto senza voto.`,
+          effect:{kind:'risk_young',targetPlayerId:String(p.id),threshold:6,reward:.5,penalty:-.25}};
+      }
+    },
+    {
+      id:'boost-all-free',category:'boost',icon:'🎁',title:'Tutto gratis!',
+      build:ctx=>({
+        id:`boost-all-free-${ctx.day}`,category:'boost',icon:'🎁',title:'Tutto gratis!',
+        text:'Solo per questa giornata tutti gli abbonamenti di Data & Scouting e Staff sono sbloccati: FantaData Pro, Scout Plus, Assistente Tecnico e Assistente Tattico Pro. Nessun costo; dalla prossima giornata restano attivi solo gli abbonamenti acquistati.',
+        effect:{kind:'free_subscriptions'}
+      })
+    },
     {
       id:'boost-vote',category:'boost',icon:'⬆',title:'Fiducia totale',
       build:(ctx,index)=>{
@@ -5249,6 +5296,7 @@
   $('startBtn').addEventListener('click',openCareerSetup);
   $('instructionsBtn')?.addEventListener('click',showGameInstructions);
   $('followBtn')?.addEventListener('click',()=>window.open('https://www.instagram.com/fantaballafm','_blank','noopener,noreferrer'));
+  $('reportsBtn')?.addEventListener('click',()=>window.open('https://forms.gle/t8ArCgoHv5vPvNg79','_blank','noopener,noreferrer'));
   document.querySelectorAll('#careerTeamStep [data-coach-avatar]').forEach(select=>select.addEventListener('change',updateCareerAvatarEditor));
   $('coachNameInput')?.addEventListener('input',renderCareerAvatarEditor);
   $('coachNameInput')?.addEventListener('input',updateCareerIdentityControls);

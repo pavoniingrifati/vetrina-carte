@@ -194,6 +194,11 @@
     const effect=choice?.effect;
     if(!effect || String(effect.targetPlayerId||'')!==String(perf?.playerId||'')) return 0;
 
+    if(effect.kind==='risk_young'){
+      if(perf?.noVote || perf?.vote==null) return 0;
+      return Number(perf.vote)>=Number(effect.threshold||6) ? Number(effect.reward||0) : Number(effect.penalty||0);
+    }
+
     if(effect.kind==='risk_vote'){
       if(perf?.noVote || perf?.vote===null || perf?.vote===undefined) return Number(effect.penalty||0);
       return Number(perf.vote)>=Number(effect.threshold||6.5)

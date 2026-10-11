@@ -995,8 +995,8 @@
       if($runtime.lineupReadOnly && $runtime.lineupPartialContext?.user){
         const u=$runtime.lineupPartialContext.user, o=$runtime.lineupPartialContext.opponent;
         if($runtime.$('lineupPartialScore')) $runtime.$('lineupPartialScore').textContent=o
-          ? `${manager.team} ${u.fantasyPoints.toFixed(1)} - ${o.fantasyPoints.toFixed(1)} ${opponent?.team||'Avversario'}`
-          : `${u.fantasyPoints.toFixed(1)} fantapunti parziali`;
+          ? `${manager.team} ${u.fantasyPoints.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})} - ${o.fantasyPoints.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})} ${opponent?.team||'Avversario'}`
+          : `${u.fantasyPoints.toLocaleString('en-US',{useGrouping:false,minimumFractionDigits:1,maximumFractionDigits:2})} fantapunti parziali`;
         if($runtime.$('lineupPartialBadge')) $runtime.$('lineupPartialBadge').textContent=`${u.votedCount}/11 CON VOTO`;
         if($runtime.$('lineupPartialNote')) $runtime.$('lineupPartialNote').textContent=
           `${u.pendingCount} titolar${u.pendingCount===1?'e deve':'i devono'} ancora giocare il Big Match. La rosa è consultabile ma completamente bloccata.`;

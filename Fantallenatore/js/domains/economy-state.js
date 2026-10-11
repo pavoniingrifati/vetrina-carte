@@ -5,7 +5,10 @@
     if(!$runtime) throw new TypeError('Runtime richiesto: economy-state');
   function shopItemActive(id,season=$runtime.ensureSeasonState()){
     const purchases=season?.shopPurchases;
-    return !!purchases?.[id];
+    if(purchases?.[id]) return true;
+    if(!season || season.completed || !['fantadata_pro','scout_plus','assistant_coach','assistant_tactical_pro'].includes(id)) return false;
+    const choice=season.formationChoices?.[String(season.currentMatchday)];
+    return !!(choice?.triggered && choice.resolved && choice.selectedOption?.category==='boost' && (choice.selectedOption.effect?.kind==='free_subscriptions' || (id==='scout_plus' && choice.selectedOption.effect?.kind==='free_scout')));
   }
 
   function ensureConsumableState(season=$runtime.ensureSeasonState()){
