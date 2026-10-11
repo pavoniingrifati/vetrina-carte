@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fantaballa • !fanta / !fantacalcio • TikTok Live Overlay</title>
+<style>
+  :root { --gold:#54b9ff; --lime:#a7e7ff; --cream:#f0f8ff; --ink:#071529; }
+  * { box-sizing:border-box; }
+  html,body { width:100%; height:100%; margin:0; overflow:hidden; background:transparent; font-family:Impact,'Arial Black',Arial,sans-serif; }
+  body { pointer-events:none; }
+  #popupWrap { position:fixed; bottom:46px; left:50%; transform:translateX(-50%); width:min(1330px,97vw); display:flex; justify-content:center; }
+  #fantaPopup { position:relative; width:100%; max-width:1280px; color:var(--cream); background:linear-gradient(113deg,rgba(6,19,48,.98),rgba(15,63,126,.98)); border:3px solid var(--gold); border-radius:16px; box-shadow:0 12px 0 #05142e,0 23px 50px rgba(0,0,0,.55),inset 0 0 0 4px rgba(255,255,255,.055); overflow:hidden; opacity:0; transform:translateY(60px) scale(.93); transition:opacity .3s ease,transform .43s cubic-bezier(.2,1.4,.35,1); }
+  #fantaPopup.show {opacity:1;transform:translateY(0) scale(1);}
+  #fantaPopup::before { content:""; position:absolute;inset:0;opacity:.10; background:repeating-linear-gradient(90deg,transparent 0 48px,#70c8ff 49px 50px),repeating-linear-gradient(0deg,transparent 0 48px,#70c8ff 49px 50px);pointer-events:none;}
+  .stripe {height:10px;background:repeating-linear-gradient(115deg,var(--gold) 0 26px,#174884 26px 52px);border-bottom:2px solid rgba(0,0,0,.45);}
+  .inner { position:relative; padding:23px 30px 29px; display:flex; gap:20px; align-items:center; }
+  .badgeBall {width:84px;height:84px;flex:0 0 84px;border:3px solid var(--gold);border-radius:16px;background:radial-gradient(circle at 40% 35%,#2374be,#09244e 70%);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 5px #091c40,0 8px 0 rgba(0,0,0,.3);font-size:49px;transform:rotate(-5deg);}
+  .copy {min-width:0; flex:1; }
+
+  .title {font-size:clamp(20px,2.6vw,30px);font-weight:900;line-height:1.12;letter-spacing:.3px;text-shadow:2px 3px 0 rgba(0,0,0,.45);font-family:Impact,'Arial Black',Arial,sans-serif;}
+  .username {color:var(--lime);overflow-wrap:anywhere;}
+  .url {display:block;margin-top:14px;color:#07162f;background:#faff36;border:3px solid #ffffff;border-radius:11px;padding:19px 22px;font:900 clamp(32px,5.3vw,69px)/1.08 Impact,'Arial Black',Arial,sans-serif;letter-spacing:-1.2px;overflow-wrap:anywhere;text-shadow:0 1px 0 rgba(255,255,255,.4);box-shadow:0 7px 0 #9ca300,0 0 35px rgba(250,255,54,.4);}
+
+  #status {position:fixed;top:16px;right:16px;border:1px solid rgba(239,68,68,.5);border-radius:20px;padding:7px 11px;background:rgba(7,25,55,.85);color:#fca5a5;font:700 13px Arial,sans-serif;}
+  #status.online {color:#a7e7ff;border-color:#a7e7ff;}
+  @media(max-width:600px) {#popupWrap{bottom:25px}.inner{padding:18px;gap:13px}.badgeBall{width:65px;height:65px;flex-basis:65px;font-size:37px}.url{font-size:clamp(24px,5.3vw,44px);padding:14px 10px;letter-spacing:-.5px}}
+  @media(prefers-reduced-motion:reduce){#fantaPopup{transition:none}}
+</style>
+</head>
+<body>
+<div id="status">TikTok WS: OFFLINE</div>
+<div id="popupWrap">
+  <div id="fantaPopup" role="status" aria-live="polite">
+    <div class="stripe"></div>
+    <div class="inner">
+      <div class="badgeBall" aria-hidden="true">⚽</div>
+      <div class="copy">
+        <div class="title">Ecco a te <span id="userName" class="username"></span>:</div>
+        <div class="url">fantaballa.it/fantallenatore</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const query = new URLSearchParams(window.location.search);
+const CONFIG = {
+  ws: query.get('ws') || 'ws://localhost:21213/',
+  commands: (query.get('commands') || '!fanta,!fantacalcio').split(',').map(c => c.trim().toLowerCase()).filter(Boolean),
+  popupMs: Math.max(1000, Number(query.get('popupMs') || 6000)),
+  allowRepeat: query.get('allowRepeat') === '1'
+};
+let ws=null, reconnectTimer=null, hideTimer=null, busy=false;
+const usedUsers=new Set(), queue=[];
+function pickFirstString(...values){for(const v of values){if(typeof v==='string'&&v.trim())return v.trim()}return ''}
+function setStatus(online){const e=document.getElementById('status');e.textContent=online?'TikTok WS: ONLINE':'TikTok WS: OFFLINE';e.classList.toggle('online',online)}
+function normalizeTikTokMessage(payload){
+  const root=payload?.data||payload||{};
+  const text=pickFirstString(root?.comment,root?.text,root?.message,root?.content,root?.data?.comment,payload?.comment,payload?.text);
+  const user=pickFirstString(root?.uniqueId,root?.user?.uniqueId,root?.username,root?.user?.username,root?.nickname,root?.user?.nickname,payload?.uniqueId)||'utente';
+  const displayName=pickFirstString(root?.nickname,root?.user?.nickname,root?.uniqueId,root?.user?.uniqueId,root?.username,user)||user;
+  const eventType=pickFirstString(payload?.event,payload?.type,root?.event,root?.type).toLowerCase();
+  return {text,user,displayName,eventType};
+}
+function showNext(){
+  if(busy||!queue.length)return;
+  busy=true;
+  const {displayName}=queue.shift();
+  document.getElementById('userName').textContent=displayName;
+  const popup=document.getElementById('fantaPopup');
+  popup.classList.add('show');
+  clearTimeout(hideTimer);
+  hideTimer=setTimeout(()=>{
+    popup.classList.remove('show');
+    setTimeout(()=>{busy=false;showNext()},450);
+  },CONFIG.popupMs);
+}
+function processTikTokPayload(payload){
+  const n=normalizeTikTokMessage(payload);
+  if(!n.text|| (n.eventType&&!['comment','chat','message'].some(t=>n.eventType.includes(t))))return;
+  if(!CONFIG.commands.includes(n.text.trim().toLowerCase()))return;
+  const key=n.user.toLowerCase();
+  if(!CONFIG.allowRepeat&&usedUsers.has(key))return;
+  usedUsers.add(key);
+  queue.push({displayName:n.displayName});
+  showNext();
+}
+function connectTikTokWS(){
+  try{
+    ws=new WebSocket(CONFIG.ws);
+    ws.addEventListener('open',()=>{clearTimeout(reconnectTimer);setStatus(true)});
+    ws.addEventListener('message',event=>{try{processTikTokPayload(JSON.parse(event.data))}catch(e){/* ignora messaggi non JSON */}});
+    ws.addEventListener('close',()=>{setStatus(false);clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connectTikTokWS,2500)});
+    ws.addEventListener('error',()=>setStatus(false));
+  }catch(e){setStatus(false);clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connectTikTokWS,3000)}
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  setStatus(false);
+  connectTikTokWS();
+  // Anteprima locale: aggiungi ?demo=1 all'indirizzo del file per vedere il popup.
+  if(query.get('demo')==='1'){queue.push({displayName:'NomeUtente'});showNext()}
+});
+</script>
+</body>
+</html>

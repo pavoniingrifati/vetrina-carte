@@ -3,47 +3,57 @@
   'use strict';
   function create($runtime){
     if(!$runtime) throw new TypeError('Runtime richiesto: assistant-evaluation');
+  // La stima usa le stesse formazioni del campionato, senza leggere quella
+  // effettiva del giorno richiesto. La finestra di 24 giornate misura moduli,
+  // rotazioni e concorrenza nel ruolo; non garantisce la prossima titolarità.
+  const starterForecastCache=new Map();
   function estimatedStarterProbability(player,day=$runtime.ensureSeasonState()?.currentMatchday||1){
     const season=$runtime.ensureSeasonState();
     if(!player || !season) return 0;
-    const targetDay=Number(day||season.currentMatchday||1);
-    const status=$runtime.playerStatusForDay(player.id,targetDay);
-    if(status.unavailable) return 0;
-
-    const slots=$runtime.clubRoleStarterSlots(player.club,player.role);
-    const peers=(window.FANTA_PLAYERS||[])
-      .filter(p=>p.club===player.club&&p.role===player.role&&p.marketStatus!=='abroad')
-      .slice()
-      .sort((a,b)=>{
-        const aUnavailable=$runtime.playerStatusForDay(a.id,targetDay).unavailable?1:0;
-        const bUnavailable=$runtime.playerStatusForDay(b.id,targetDay).unavailable?1:0;
-        return aUnavailable-bUnavailable || $runtime.lineupPlayerValue(b)-$runtime.lineupPlayerValue(a) || $runtime.currentPlayerOvr(b)-$runtime.currentPlayerOvr(a);
-      });
-    const available=peers.filter(candidate=>!$runtime.playerStatusForDay(candidate.id,targetDay).unavailable);
-    const rankById=new Map(available.map((candidate,index)=>[String(candidate.id),index]));
-    const entries=peers.map(candidate=>{
-      const unavailable=$runtime.playerStatusForDay(candidate.id,targetDay).unavailable;
-      const rank=rankById.get(String(candidate.id))??peers.length;
-      const stat=$runtime.playerSeasonStat(candidate.id);
-      const startRate=stat?.appearances?Number(stat.starts||0)/Math.max(1,Number(stat.appearances||0)):null;
-      const historyAdj=startRate==null?0:$runtime.clamp((startRate-.5)*12,-6,6);
-      const form=$runtime.playerFormMetrics(candidate.id);
-      const formAdj=form.count?$runtime.clamp((form.avg-6)*2.2,-2.8,3.2):0;
-      const noise=($runtime.careerHash(`starter-prob|${targetDay}|${candidate.id}`)-.5)*3;
-      const worldEffect=$runtime.worldPlayerModifier(targetDay,candidate.id);
-      const eventScoreDelta=Number(worldEffect?.starterScoreDelta||0);
-      const eventProbabilityDelta=Number(worldEffect?.starterProbabilityDelta||0);
-      return {
-        id:candidate.id,
-        unavailable,
-        score:$runtime.currentPlayerOvr(candidate)+$runtime.starterHierarchyBias(candidate.role,rank,slots)+historyAdj+formAdj+noise+eventScoreDelta+eventProbabilityDelta*.28
-      };
-    });
-
-    // Le probabilità competono per i posti realmente disponibili nel ruolo.
-    // Esempio P: la somma dei portieri disponibili resta circa 100%, invece di
-    // consentire contemporaneamente valori come 94% al primo e 74% al secondo.
-    return $runtime.normalizedStarterProbability(entries,player.id,slots,player.role==='P'?2.4:4.2);
+    const targetDay=Math.max(1,Number(day||season.currentMatchday||1));
+    if($runtime.playerStatusForDay(player.id,targetDay).unavailable) return 0;
+    const clubId=player.club;
+    const pool=(window.FANTA_PLAYERS||[]).filter(p=>p.club===clubId&&p.marketStatus!=='abroad');
+    if(!pool.some(p=>String(p.id)===String(player.id))) return 0;
+    // Invalidazione dopo le giornate, i trasferimenti e i cambi di rosa/OVR.
+    const revision=Number($runtime.state?.transferMarket?.worldRevision||0);
+    const completed=Number(season.lastCompletedMatchday||0);
+    const rosterSignature=pool.map(p=>`${p.id}:${$runtime.currentPlayerOvr(p)}`).join('|');
+    const key=`${clubId}|${targetDay}|${completed}|${revision}|${rosterSignature}`;
+    let forecast=starterForecastCache.get(key);
+    if(!forecast){
+      forecast=new Map(pool.map(p=>[String(p.id),0]));
+      // Alcuni ambienti (es. simulazioni delle CPU e test headless) non
+      // espongono il selettore Serie A. Evitiamo di bloccare la formazione.
+      if(typeof $runtime.buildSerieAClubSelection!=='function'){
+        const roleCounts={P:1,D:4,C:4,A:2};
+        for(const role of ['P','D','C','A']){
+          const ranked=pool.filter(p=>p.role===role).sort((a,b)=>$runtime.currentPlayerOvr(b)-$runtime.currentPlayerOvr(a));
+          ranked.forEach((p,index)=>forecast.set(String(p.id),index<roleCounts[role]?90:Math.max(1,Math.round(35/(index-roleCounts[role]+1)))));
+        }
+        if(starterForecastCache.size>120) starterForecastCache.clear();
+        starterForecastCache.set(key,forecast);
+        return forecast.get(String(player.id))||0;
+      }
+      const sampleCount=24;
+      let valid=0;
+      for(let i=1;i<=sampleCount;i++){
+        // Campioniamo altre giornate (mai quella richiesta) usando il vero
+        // selettore: la previsione non mostra gli 11 già estratti per oggi.
+        const sampleDay=1+((targetDay+i-1)%38);
+        const selection=$runtime.buildSerieAClubSelection(clubId,sampleDay);
+        if(!selection?.starters?.length) continue;
+        valid++;
+        for(const starter of selection.starters){
+          const id=String(starter.id);
+          forecast.set(id,(forecast.get(id)||0)+1);
+        }
+      }
+      for(const [id,starts] of forecast) forecast.set(id,valid?Math.min(96,Math.max(1,Math.round(starts*100/valid))):0);
+      if(starterForecastCache.size>120) starterForecastCache.clear();
+      starterForecastCache.set(key,forecast);
+    }
+    return forecast.get(String(player.id))||0;
   }
 
   function assistantAutoLineupCapabilities(season=$runtime.ensureSeasonState()){
