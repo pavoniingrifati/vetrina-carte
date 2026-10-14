@@ -1,249 +1,62 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overlay Ruoli Popup - TikTok Live</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Matchday · Overlay ruoli</title>
 <style>
-    html, body{
-        margin:0;
-        padding:0;
-        width:100%;
-        height:100%;
-        overflow:hidden;
-        background:transparent;
-        font-family:Arial, Helvetica, sans-serif;
-    }
-
-    body{
-        pointer-events:none;
-    }
-
-    #popupWrap{
-        position:fixed;
-        left:50%;
-        bottom:40px;
-        transform:translateX(-50%);
-        width:min(1000px, 92vw);
-        display:flex;
-        justify-content:center;
-        align-items:flex-end;
-    }
-
-    #rolePopup{
-        opacity:0;
-        transform:translateY(30px) scale(0.92);
-        transition:opacity .35s ease, transform .35s ease;
-        background:rgba(10,13,26,.94);
-        color:#ffffff;
-        border:2px solid rgba(56,84,255,.95);
-        border-radius:22px;
-        padding:18px 28px;
-        text-align:center;
-        font-weight:900;
-        font-size:34px;
-        line-height:1.2;
-        box-shadow:0 14px 36px rgba(0,0,0,.45);
-        max-width:100%;
-        word-break:break-word;
-    }
-
-    #rolePopup.show{
-        opacity:1;
-        transform:translateY(0) scale(1);
-    }
-
-    .name{
-        color:#7dd3fc;
-    }
-
-    .role{
-        color:#86efac;
-    }
-
-    #status{
-        position:fixed;
-        top:18px;
-        right:18px;
-        padding:8px 12px;
-        border-radius:999px;
-        font-size:14px;
-        font-weight:700;
-        background:rgba(10,13,26,.78);
-        color:#fca5a5;
-        border:1px solid rgba(239,68,68,.5);
-        letter-spacing:.3px;
-    }
-
-    #status.online{
-        color:#86efac;
-        border-color:rgba(34,197,94,.55);
-    }
+:root{--mint:#ffffff;--cyan:#479dff;--ink:#0b1517;--duration:4500ms}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;color:#fff;font-family:Arial,Helvetica,sans-serif}body{pointer-events:none}
+#status{position:fixed;right:22px;top:22px;display:flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid #ffffff1c;border-radius:30px;background:#0b1517e8;color:#aab7ba;font-size:11px;letter-spacing:1.4px;font-weight:700}#status i{height:6px;width:6px;border-radius:50%;background:#ffb56b}#status.online i{background:var(--mint);box-shadow:0 0 12px #b7ff5b80}
+#wrap{position:fixed;bottom:44px;left:50%;transform:translateX(-50%);width:min(850px,92vw);perspective:1000px}
+#card{position:relative;overflow:hidden;border-radius:24px;background:linear-gradient(115deg,#101f22fa,#091315fc);border:1px solid #caffc52b;box-shadow:0 24px 65px #0007,0 0 45px #b7ff5b0a;opacity:0;transform:translateY(35px) scale(.96);transition:opacity .35s,transform .55s cubic-bezier(.16,1,.3,1)}
+#card.show{opacity:1;transform:translateY(0) scale(1)}#card:before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 90% 0%,#b7ff5b18,transparent 60%);pointer-events:none}
+.top{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 25px;border-bottom:1px solid #ffffff10}.brand{display:flex;align-items:center;gap:9px;font-size:11px;letter-spacing:3px;font-weight:800}.brand b{width:21px;height:21px;display:grid;place-items:center;border-radius:5px;background:var(--mint);color:var(--ink);font-size:15px;letter-spacing:0}.live{font-size:10px;color:var(--mint);letter-spacing:2px;display:flex;gap:7px;align-items:center}.live:before{content:"";width:5px;height:5px;background:var(--mint);border-radius:50%}
+.main{position:relative;display:flex;align-items:center;gap:25px;padding:27px 28px 30px}.crest{position:relative;flex:0 0 92px;width:92px;height:108px;display:grid;place-items:center;background:linear-gradient(145deg,#d0ff7e,#93da35);color:#14210b;clip-path:polygon(0 0,100% 0,100% 73%,88% 85%,50% 100%,12% 85%,0 73%)}.crest:before{content:"";position:absolute;inset:6px;border:1px solid #20320c55;clip-path:polygon(0 0,100% 0,100% 73%,50% 100%,0 73%)}.crest svg{width:47px;height:47px;filter:drop-shadow(0 3px 0 #ffffff30)}.copy{min-width:0;flex:1}.eyebrow{color:#a1b3b6;font-size:10px;letter-spacing:2.5px;font-weight:700;margin-bottom:8px}.name{font-size:clamp(16px,2.7vw,24px);line-height:1.2;font-weight:700;overflow-wrap:anywhere}.role{color:var(--mint);font-weight:900;font-size:clamp(27px,4.5vw,48px);letter-spacing:-1.5px;line-height:1.08;margin-top:7px;overflow-wrap:anywhere;text-transform:uppercase}.bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative;padding:12px 25px;background:#ffffff04;border-top:1px solid #ffffff0c;color:#91a4a7;font-size:11px}.bottom strong{color:#d4e4e6;font-weight:600}.number{font-family:monospace;color:#819693;letter-spacing:2px}.pitch{position:absolute;right:-28px;top:58px;width:235px;height:155px;border:1px solid #c9ffbe0b;border-radius:10px;transform:rotate(-16deg);pointer-events:none}.pitch:before{content:"";position:absolute;top:0;bottom:0;left:50%;border-left:1px solid #c9ffbe0b}.pitch:after{content:"";position:absolute;width:60px;height:60px;left:calc(50% - 30px);top:calc(50% - 30px);border:1px solid #c9ffbe0b;border-radius:50%}.timer{height:3px;background:#ffffff09;position:relative}.timer span{display:block;width:100%;height:100%;background:linear-gradient(90deg,var(--cyan),var(--mint));transform-origin:left}.show .timer span{animation:countdown var(--duration) linear forwards}@keyframes countdown{to{transform:scaleX(0)}}
+#demo{display:none;position:fixed;top:80px;left:50%;transform:translateX(-50%);text-align:center;pointer-events:auto;width:min(500px,90vw)}body.demo{background:radial-gradient(ellipse at 50% 80%,#263c35,#101a20 65%)}body.demo #demo{display:block}.demo-label{color:var(--mint);letter-spacing:4px;font-size:11px;font-weight:700}h1{font-size:36px;letter-spacing:-1.5px;margin:12px 0}#demo p{color:#9faeaf;font-size:14px;line-height:1.6}form{display:flex;gap:8px;margin-top:22px}input{min-width:0;flex:1;background:#ffffff08;border:1px solid #ffffff26;border-radius:10px;padding:13px;color:white;font:inherit}button{cursor:pointer;border:0;border-radius:10px;background:var(--mint);padding:13px 18px;font-weight:800;color:var(--ink)}.hint{font-size:11px!important}
+@media(max-width:500px){#wrap{bottom:24px}.main{gap:16px;padding:22px 18px}.crest{flex-basis:64px;width:64px;height:78px}.crest svg{width:35px;height:35px}.top,.bottom{padding-left:18px;padding-right:18px}.brand{letter-spacing:2px}.live{letter-spacing:1px;font-size:9px}.role{letter-spacing:-.8px}form{flex-wrap:wrap}button{width:100%}}
+@media(prefers-reduced-motion:reduce){#card{transition:opacity .2s;transform:none}.show .timer span{animation:none}}
+/* Tema blu e bianco */
+:root{--ink:#07162f}
+#card{background:linear-gradient(115deg,#102e64fa,#06142ffc);border-color:#75b3ff66;box-shadow:0 24px 65px #0007,0 0 45px #2578ff20}
+#card:before{background:radial-gradient(ellipse at 90% 0%,#438fff30,transparent 60%)}
+.crest{background:linear-gradient(145deg,#fff,#b7d9ff);color:#123c7b}.crest:before{border-color:#25579b55}
+.brand b{background:#fff;color:#123c7b}
+.eyebrow{color:#82b8ff;font-size:12px;letter-spacing:3px}
+.name{color:#fff;font-size:clamp(30px,5.5vw,56px);font-weight:900;letter-spacing:-1.4px;line-height:1.08}
+.role{color:#9fcaff;font-size:clamp(19px,2.8vw,28px);font-weight:700;letter-spacing:.3px;margin-top:10px}
+.live{color:#d3e6ff}.live:before{background:#63a7ff}
+#status.online i{background:#78b7ff;box-shadow:0 0 12px #479dff80}
+.pitch,.pitch:before,.pitch:after{border-color:#a0c8ff12}
+body.demo{background:radial-gradient(ellipse at 50% 80%,#163e77,#080f22 65%)}
+.demo-label{color:#9fcaff}button{background:#fff;color:#123c7b}
+@media(max-width:500px){.name{font-size:clamp(27px,7.5vw,38px);letter-spacing:-.8px}.role{font-size:20px;letter-spacing:0}}
 </style>
 </head>
 <body>
-    <div id="status">TikTok WS: OFFLINE</div>
-
-    <div id="popupWrap">
-        <div id="rolePopup"></div>
-    </div>
-
+<div id="status" role="status"><i></i><span>COLLEGAMENTO…</span></div>
+<section id="demo"><div class="demo-label">MATCHDAY / LIVE OVERLAY</div><h1>La tua chat scende in campo.</h1><p>Prova il nuovo annuncio: scrivi un nome e un ruolo,<br>poi guarda l'ingresso in squadra.</p><form id="demoForm"><input id="demoName" aria-label="Nome spettatore" placeholder="Nome" value="Alessandro" maxlength="80"><input id="demoRole" aria-label="Ruolo" placeholder="Ruolo" value="Attaccante" maxlength="100"><button>Mostra</button></form><p class="hint">ANTEPRIMA · Nessun collegamento alla live</p></section>
+<div id="wrap"><article id="card" aria-live="polite" aria-hidden="true"><div class="pitch"></div><div class="top"><div class="brand"><b>↗</b> MATCHDAY</div><div class="live">NUOVO IN SQUADRA</div></div><div class="main"><div class="crest"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.3" aria-hidden="true"><circle cx="32" cy="32" r="25"/><path d="m32 21 11 8-4 13H25l-4-13 11-8Zm0 0V7m11 22 13-5M39 42l9 10M25 42 16 52m5-23L8 24"/></svg></div><div class="copy"><div class="eyebrow">HERE WE GO!</div><div class="name" id="name"></div><div class="role" id="role"></div></div></div><div class="bottom"><span id="instruction"></span><span class="number" id="number">/ 001</span></div><div class="timer"><span></span></div></article></div>
 <script>
-const query = new URLSearchParams(window.location.search);
-const CONFIG = {
-    ws: query.get('ws') || 'ws://localhost:21213/',
-    command: (query.get('command') || '!ruolo').trim().toLowerCase(),
-    popupMs: Math.max(1000, Number(query.get('popupMs') || 3500)),
-    allowRepeat: query.get('allowRepeat') === '1'
-};
-
-let ws = null;
-let reconnectTimer = null;
-const usedUsers = new Set();
-
-function pickFirstString(...values) {
-    for (const v of values) {
-        if (typeof v === 'string' && v.trim()) return v.trim();
-    }
-    return '';
-}
-
-function escapeHtml(value) {
-    return String(value)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
-}
-
-function setStatus(isOnline) {
-    const status = document.getElementById('status');
-    if (!status) return;
-    status.textContent = isOnline ? 'TikTok WS: ONLINE' : 'TikTok WS: OFFLINE';
-    status.classList.toggle('online', isOnline);
-}
-
-function normalizeTikTokMessage(payload) {
-    const root = payload?.data || payload || {};
-    const text = pickFirstString(
-        root?.comment,
-        root?.text,
-        root?.message,
-        root?.content,
-        root?.data?.comment,
-        payload?.comment,
-        payload?.text
-    );
-
-    const user = pickFirstString(
-        root?.uniqueId,
-        root?.user?.uniqueId,
-        root?.username,
-        root?.user?.username,
-        root?.nickname,
-        root?.user?.nickname,
-        payload?.uniqueId
-    ) || 'utente';
-
-    const displayName = pickFirstString(
-        root?.nickname,
-        root?.user?.nickname,
-        root?.uniqueId,
-        root?.user?.uniqueId,
-        root?.username,
-        user
-    ) || user;
-
-    const eventType = pickFirstString(
-        payload?.event,
-        payload?.type,
-        root?.event,
-        root?.type
-    ).toLowerCase();
-
-    return { text, user, displayName, eventType };
-}
-
-function isCommentEvent(normalized) {
-    if (!normalized.text) return false;
-    if (!normalized.eventType) return true;
-    return ['comment', 'chat', 'message'].some(type => normalized.eventType.includes(type));
-}
-
-function showRolePopup(user, role) {
-    const popup = document.getElementById('rolePopup');
-    if (!popup) return;
-
-    popup.innerHTML = `⚽ <span class="name">${escapeHtml(user)}</span> è il nuovo: <span class="role">${escapeHtml(role)}</span>`;
-    popup.classList.add('show');
-
-    clearTimeout(showRolePopup._timer);
-    showRolePopup._timer = setTimeout(() => {
-        popup.classList.remove('show');
-    }, CONFIG.popupMs);
-}
-
-function handleRoleMessage({ text, user, displayName }) {
-    const trimmed = text.trim();
-    const lower = trimmed.toLowerCase();
-    if (!lower.startsWith(CONFIG.command)) return;
-
-    const role = trimmed.slice(CONFIG.command.length).trim();
-    if (role.length < 2) return;
-
-    const normalizedUser = user.toLowerCase();
-    if (!CONFIG.allowRepeat && usedUsers.has(normalizedUser)) return;
-
-    usedUsers.add(normalizedUser);
-    showRolePopup(displayName, role);
-}
-
-function processTikTokPayload(payload) {
-    const normalized = normalizeTikTokMessage(payload);
-    if (!isCommentEvent(normalized)) return;
-    handleRoleMessage(normalized);
-}
-
-function connectTikTokWS() {
-    try {
-        ws = new WebSocket(CONFIG.ws);
-
-        ws.addEventListener('open', () => {
-            clearTimeout(reconnectTimer);
-            setStatus(true);
-        });
-
-        ws.addEventListener('message', (event) => {
-            let payload;
-            try {
-                payload = JSON.parse(event.data);
-            } catch {
-                return;
-            }
-            processTikTokPayload(payload);
-        });
-
-        ws.addEventListener('close', () => {
-            setStatus(false);
-            clearTimeout(reconnectTimer);
-            reconnectTimer = setTimeout(connectTikTokWS, 2500);
-        });
-
-        ws.addEventListener('error', () => {
-            setStatus(false);
-        });
-    } catch {
-        setStatus(false);
-        clearTimeout(reconnectTimer);
-        reconnectTimer = setTimeout(connectTikTokWS, 3000);
-    }
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-    setStatus(false);
-    connectTikTokWS();
-});
+'use strict';
+const query=new URLSearchParams(location.search);
+const duration=Number(query.get('popupMs')||4500);
+const CONFIG={ws:query.get('ws')||'ws://localhost:21213/',command:(query.get('command')||'!ruolo').trim().toLowerCase()||'!ruolo',popupMs:Number.isFinite(duration)?Math.min(60000,Math.max(1000,duration)):4500,allowRepeat:query.get('allowRepeat')==='1',demo:query.get('demo')==='1'};
+document.documentElement.style.setProperty('--duration',CONFIG.popupMs+'ms');
+document.getElementById('instruction').append('Scrivi ',Object.assign(document.createElement('strong'),{textContent:CONFIG.command+' + il tuo ruolo'}),' in chat');
+document.getElementById('status').hidden=query.get('status')==='0';
+if(query.get('status')==='0')document.getElementById('status').style.display='none';
+let ws,reconnectTimer,busy=false,counter=0,stopped=false;
+const usedUsers=new Set(),queue=[];
+function pickFirstString(...values){return values.find(v=>typeof v==='string'&&v.trim())?.trim()||''}
+function normalizeTikTokMessage(payload){const root=payload?.data||payload||{};const user=pickFirstString(root.uniqueId,root.user?.uniqueId,root.username,root.user?.username,root.nickname,root.user?.nickname,payload?.uniqueId)||'utente';return{text:pickFirstString(root.comment,root.text,root.message,root.content,root.data?.comment,payload?.comment,payload?.text),user,displayName:pickFirstString(root.nickname,root.user?.nickname,root.uniqueId,root.user?.uniqueId,root.username,user),eventType:pickFirstString(payload?.event,payload?.type,root.event,root.type).toLowerCase()}}
+function showNext(){if(busy||!queue.length)return;busy=true;const item=queue.shift(),card=document.getElementById('card');document.getElementById('name').textContent=item.name;document.getElementById('role').textContent=item.role;document.getElementById('number').textContent='/ '+String(++counter).padStart(3,'0');card.setAttribute('aria-hidden','false');card.classList.add('show');setTimeout(()=>{card.classList.remove('show');card.setAttribute('aria-hidden','true');setTimeout(()=>{busy=false;showNext()},550)},CONFIG.popupMs)}
+function enqueue(name,role){if(queue.length>=100)return false;queue.push({name:name.slice(0,80),role:role.slice(0,100)});showNext();return true}
+function processTikTokPayload(payload){if(!payload||typeof payload!=='object')return;const m=normalizeTikTokMessage(payload);if(!m.text||(m.eventType&&!['comment','chat','message'].some(t=>m.eventType.includes(t))))return;const text=m.text.trim();if(!text.toLowerCase().startsWith(CONFIG.command))return;const tail=text.slice(CONFIG.command.length);if(!/^\s/.test(tail))return;const role=tail.trim();if(role.length<2)return;const key=m.user.toLowerCase();if(!CONFIG.allowRepeat&&usedUsers.has(key))return;if(enqueue(m.displayName,role))usedUsers.add(key)}
+function setStatus(online){const el=document.getElementById('status');el.classList.toggle('online',online);el.querySelector('span').textContent=online?'TIKFINITY · CONNESSO':'TIKFINITY · IN ATTESA'}
+function reconnect(){if(!stopped){clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connectTikTokWS,2500)}}
+function connectTikTokWS(){if(stopped)return;try{ws=new WebSocket(CONFIG.ws);ws.addEventListener('open',()=>{clearTimeout(reconnectTimer);setStatus(true)});ws.addEventListener('message',event=>{try{processTikTokPayload(JSON.parse(event.data))}catch{}});ws.addEventListener('close',()=>{setStatus(false);reconnect()});ws.addEventListener('error',()=>{setStatus(false);ws.close()})}catch{setStatus(false);reconnect()}}
+window.addEventListener('beforeunload',()=>{stopped=true;clearTimeout(reconnectTimer);ws?.close()});
+if(CONFIG.demo){document.body.classList.add('demo');document.querySelector('#status span').textContent='MODALITÀ DEMO';document.getElementById('demoForm').addEventListener('submit',e=>{e.preventDefault();enqueue(document.getElementById('demoName').value.trim()||'Spettatore',document.getElementById('demoRole').value.trim()||'Attaccante')});setTimeout(()=>enqueue('Alessandro','Attaccante'),400)}else{setStatus(false);connectTikTokWS()}
 </script>
 </body>
 </html>
