@@ -20,6 +20,7 @@ import {
   limit,
   doc,
   getDoc,
+  getDocFromServer,
   updateDoc,
   serverTimestamp,
   setDoc,
@@ -35,6 +36,96 @@ const btnLogin = qs("#btnLogin");
 const btnLogout = qs("#btnLogout");
 const btnReload = qs("#btnReload");
 const userInfo = qs("#userInfo");
+
+
+// Dashboard UI: navigation and statistics only; all moderator operations stay unchanged.
+const adminWorkspace = qs("#adminWorkspace");
+const ADMIN_VIEWS = {
+  overview: ["Panoramica", "Tutto quello che ti serve per gestire il Game Pass."],
+  requests: ["Richieste", "Verifica le prove dei giocatori e gestisci le approvazioni."],
+  achievements: ["Achievement", "Crea obiettivi e controlla le missioni disponibili."],
+  tiers: ["Premi e livelli", "Configura ricompense e soglie di progressione."],
+  categories: ["Categorie", "Organizza le tipologie di achievement e la loro identità visiva."],
+  xp: ["Gestione XP", "Trova un giocatore e modifica gli XP della stagione corrente."],
+  season: ["Stagioni", "Avvia una nuova stagione conservando lo storico dei giocatori."]
+};
+let ACTIVE_ADMIN_VIEW = "overview";
+function setDashboardText(id, value) {
+  const target = document.getElementById(id);
+  if (target) target.textContent = String(value);
+}
+function setAdminView(view) {
+  if (!Object.hasOwn(ADMIN_VIEWS, view)) return;
+  ACTIVE_ADMIN_VIEW = view;
+  document.body.dataset.view = view;
+  for (const panel of document.querySelectorAll("[data-admin-view]")) {
+    panel.hidden = panel.dataset.adminView !== view;
+  }
+  for (const btn of document.querySelectorAll("[data-nav-view]")) {
+    const active = btn.dataset.navView === view;
+    btn.classList.toggle("is-active", active);
+    if (active) btn.setAttribute("aria-current", "page");
+    else btn.removeAttribute("aria-current");
+  }
+  setDashboardText("activePageTitle", ADMIN_VIEWS[view][0]);
+  setDashboardText("activePageSubtitle", ADMIN_VIEWS[view][1]);
+  window.scrollTo({top: 0, behavior: "auto"});
+}
+for (const btn of document.querySelectorAll("[data-nav-view], [data-go-view]")) {
+  btn.addEventListener("click", () => setAdminView(btn.dataset.navView || btn.dataset.goView));
+}
+function filterQueueCards() {
+  const term = (qs("#queueSearch")?.value || "").trim().toLocaleLowerCase("it");
+  let shown = 0;
+  for (const card of queue.querySelectorAll(".request-card")) {
+    const matched = !term || (card.dataset.searchContent || "").includes(term);
+    card.hidden = !matched;
+    if (matched) shown++;
+  }
+  const label = qs("#queueFilterCount");
+  if (label) label.textContent = term ? `${shown} richieste corrispondenti` : "Ultime 100 richieste al massimo";
+}
+qs("#queueSearch")?.addEventListener("input", filterQueueCards);
+qs("#btnQueueReload")?.addEventListener("click", () => {
+  if (auth.currentUser) loadQueue();
+});
+function updateQueueMetrics(total) {
+  const value = Number.isInteger(total) ? total : "—";
+  for (const id of ["overviewPendingCount", "sidebarPendingCount", "requestsCount", "overviewQueueSummary"]) {
+    setDashboardText(id, value);
+  }
+}
+function updateCatalogMetrics(achievements, tiers, categories) {
+  setDashboardText("overviewAchCount", achievements);
+  setDashboardText("overviewTierCount", tiers);
+  setDashboardText("overviewTypeCount", categories);
+}
+function updateSeasonMetrics(season) {
+  for (const id of ["overviewSeasonCount", "overviewSeasonLabel", "headerSeasonNumber"]) {
+    setDashboardText(id, season);
+  }
+}
+function setDashboardAuthorized(value) {
+  if (adminWorkspace) adminWorkspace.hidden = !value;
+  document.body.classList.toggle("admin-ready", value);
+  if (value) setAdminView(ACTIVE_ADMIN_VIEW);
+}
+
+// Gestione stagione
+const seasonManager = qs("#seasonManager");
+const btnSeasonReload = qs("#btnSeasonReload");
+const adminCurrentSeason = qs("#adminCurrentSeason");
+const adminNextSeason = qs("#adminNextSeason");
+const btnStartSeason = qs("#btnStartSeason");
+const seasonConfirmation = qs("#seasonConfirmation");
+const seasonConfirmationTitle = qs("#seasonConfirmationTitle");
+const seasonConfirmPhrase = qs("#seasonConfirmPhrase");
+const seasonConfirmText = qs("#seasonConfirmText");
+const btnConfirmSeason = qs("#btnConfirmSeason");
+const btnCancelSeason = qs("#btnCancelSeason");
+const seasonManagerStatus = qs("#seasonManagerStatus");
+let DISPLAYED_SEASON = null;
+let SEASON_WRITE_BUSY = false;
 
 // Gestione XP
 const xpManager = qs("#xpManager");
@@ -177,6 +268,191 @@ async function checkModerator(uid) {
   return modSnap.exists();
 }
 
+// Legge la stagione dal SERVER, mai dalla cache locale: un dato vecchio
+// non deve consentire di avviare la stagione sbagliata.
+function exactSeason(value) {
+  const n = Number(value);
+  if (!Number.isSafeInteger(n) || n < 1) {
+    throw new Error("Valore season non valido in config/gamepass. Correggilo da Firebase prima di procedere.");
+  }
+  return n;
+}
+
+function seasonStatus(msg, cls = "") {
+  if (!seasonManagerStatus) return;
+  seasonManagerStatus.className = `season-manager-status ${cls}`.trim();
+  seasonManagerStatus.textContent = msg || "";
+}
+
+function hideSeasonConfirmation() {
+  if (seasonConfirmation) seasonConfirmation.hidden = true;
+  if (seasonConfirmText) seasonConfirmText.value = "";
+  if (btnConfirmSeason) btnConfirmSeason.disabled = true;
+}
+
+function currentConfirmationPhrase() {
+  return DISPLAYED_SEASON == null ? "" : `STAGIONE ${DISPLAYED_SEASON + 1}`;
+}
+
+function setSeasonControlsDisabled(value) {
+  if (btnStartSeason) btnStartSeason.disabled = value;
+  if (btnSeasonReload) btnSeasonReload.disabled = value;
+  if (btnCancelSeason) btnCancelSeason.disabled = value;
+  if (seasonConfirmText) seasonConfirmText.disabled = value;
+  if (btnConfirmSeason) btnConfirmSeason.disabled = value;
+}
+
+async function loadSeasonManager() {
+  if (!seasonManager || SEASON_WRITE_BUSY) return;
+  DISPLAYED_SEASON = null;
+  hideSeasonConfirmation();
+  setSeasonControlsDisabled(true);
+  adminCurrentSeason.textContent = "—";
+  adminNextSeason.textContent = "—";
+  seasonStatus("Verifica della stagione attiva in corso…");
+
+  try {
+    const cfg = await getDocFromServer(doc(db, "config", "gamepass"));
+    const data = cfg.exists() ? (cfg.data() || {}) : {};
+    const season = exactSeason(data.season ?? 1);
+    const highest = exactSeason(data.highestSeason ?? season);
+    if (highest > season) {
+      throw new Error(`Stagione ${season} inferiore alla più alta già avviata (${highest}). Verifica config/gamepass: non riutilizzare vecchie stagioni.`);
+    }
+    if (season === Number.MAX_SAFE_INTEGER) {
+      throw new Error("Numero massimo di stagione raggiunto.");
+    }
+    DISPLAYED_SEASON = season;
+    adminCurrentSeason.textContent = String(season);
+    adminNextSeason.textContent = String(season + 1);
+    updateSeasonMetrics(season);
+    btnStartSeason.textContent = `Avvia stagione ${season + 1}`;
+    btnStartSeason.disabled = false;
+    btnSeasonReload.disabled = false;
+    seasonStatus("Stagione attiva verificata. Nessun dato storico verrà cancellato.");
+  } catch (err) {
+    btnSeasonReload.disabled = false;
+    updateSeasonMetrics("—");
+    seasonStatus(err?.message || "Impossibile verificare la stagione attiva.", "warning");
+    console.error("loadSeasonManager", err);
+  }
+}
+
+btnSeasonReload?.addEventListener("click", () => {
+  if (auth.currentUser) loadSeasonManager();
+});
+
+btnStartSeason?.addEventListener("click", () => {
+  if (SEASON_WRITE_BUSY || DISPLAYED_SEASON == null) return;
+  const phrase = currentConfirmationPhrase();
+  seasonConfirmPhrase.textContent = phrase;
+  seasonConfirmationTitle.textContent = `Conferma avvio stagione ${DISPLAYED_SEASON + 1}`;
+  seasonConfirmation.hidden = false;
+  seasonConfirmText.value = "";
+  btnConfirmSeason.disabled = true;
+  seasonStatus("Conferma necessaria prima di cambiare stagione.", "warning");
+  seasonConfirmText.focus();
+});
+
+seasonConfirmText?.addEventListener("input", () => {
+  btnConfirmSeason.disabled = SEASON_WRITE_BUSY ||
+    seasonConfirmText.value.trim().toUpperCase() !== currentConfirmationPhrase();
+});
+
+btnCancelSeason?.addEventListener("click", () => {
+  if (SEASON_WRITE_BUSY) return;
+  hideSeasonConfirmation();
+  seasonStatus("Cambio stagione annullato. Nessuna modifica effettuata.");
+});
+
+btnConfirmSeason?.addEventListener("click", async () => {
+  if (SEASON_WRITE_BUSY || DISPLAYED_SEASON == null) return;
+  if (seasonConfirmText.value.trim().toUpperCase() !== currentConfirmationPhrase()) return;
+  const moderatorUid = auth.currentUser?.uid;
+  if (!moderatorUid) {
+    seasonStatus("Accedi con un account moderatore.", "warning");
+    return;
+  }
+
+  const expectedSeason = DISPLAYED_SEASON;
+  const nextSeason = expectedSeason + 1;
+  SEASON_WRITE_BUSY = true;
+  setSeasonControlsDisabled(true);
+  seasonStatus(`Attivazione stagione ${nextSeason}…`);
+
+  let activated = false;
+  let activationError = "";
+  try {
+    const configRef = doc(db, "config", "gamepass");
+    // La transazione impedisce un doppio avanzamento quando due moderatori
+    // provano a confermare la stessa stagione (o cliccano due volte).
+    await runTransaction(db, async (tx) => {
+      const cfg = await tx.get(configRef);
+      const data = cfg.exists() ? (cfg.data() || {}) : {};
+      const actualSeason = exactSeason(data.season ?? 1);
+      const highest = exactSeason(data.highestSeason ?? actualSeason);
+      if (actualSeason !== expectedSeason) {
+        throw new Error(`La stagione è cambiata nel frattempo (adesso è la ${actualSeason}). Ricarica e verifica prima di procedere.`);
+      }
+      if (highest > actualSeason) {
+        throw new Error(`Esiste già una stagione più alta (${highest}). Operazione bloccata per proteggere lo storico.`);
+      }
+      if (auth.currentUser?.uid !== moderatorUid) {
+        throw new Error("Sessione cambiata: effettua nuovamente l'accesso.");
+      }
+      tx.set(configRef, {
+        season: nextSeason,
+        highestSeason: nextSeason,
+        previousSeason: expectedSeason,
+        seasonStartedAt: serverTimestamp(),
+        seasonStartedBy: moderatorUid
+      }, { merge: true });
+    });
+
+    activated = true;
+    // La scrittura è terminata: ora il pannello può rileggere la nuova stagione.
+    SEASON_WRITE_BUSY = false;
+    hideSeasonConfirmation();
+    // Non si modifica né si elimina alcun progress o achievement esistente.
+    SELECTED_XP_USER = null;
+    if (xpSelectedContent) xpSelectedContent.style.display = "none";
+    if (xpSelectedEmpty) xpSelectedEmpty.style.display = "grid";
+    if (xpSearch) xpSearch.value = "";
+    try {
+      await reloadModeratorData();
+      seasonStatus(`✓ Stagione ${nextSeason} attivata. I progressi delle stagioni passate sono conservati.`, "ok");
+    } catch (reloadErr) {
+      console.warn("La nuova stagione è attiva, ma il pannello non si è ricaricato", reloadErr);
+      seasonStatus(`✓ Stagione ${nextSeason} attivata. Ricarica il pannello per aggiornare le altre sezioni.`, "ok");
+    }
+  } catch (err) {
+    console.error("Avvio stagione fallito", err);
+    activationError = err?.message || "Non è stato possibile avviare la stagione.";
+    seasonStatus(activationError, "warning");
+    // Lo stato non è stato modificato: mostriamo la situazione effettiva.
+    DISPLAYED_SEASON = null;
+    adminCurrentSeason.textContent = "—";
+    adminNextSeason.textContent = "—";
+    updateSeasonMetrics("—");
+    btnStartSeason.disabled = true;
+    hideSeasonConfirmation();
+  } finally {
+    SEASON_WRITE_BUSY = false;
+    if (activated) {
+      if (DISPLAYED_SEASON != null) btnStartSeason.disabled = false;
+      btnSeasonReload.disabled = false;
+    } else {
+      // Una transazione annullata non deve lasciare dati di stagione obsoleti.
+      try {
+        await loadSeasonManager();
+        if (activationError) seasonStatus(activationError, "warning");
+      } catch (refreshErr) {
+        console.error("Refresh dopo errore stagione", refreshErr);
+      }
+    }
+  }
+});
+
 async function addPointsToSeasonProgress(uid, season, pts) {
   const seasonNum = normalizeSeason(season);
   const scopedRef = doc(db, seasonProgressPath(uid, seasonNum));
@@ -295,10 +571,11 @@ async function loadCatalogSummary() {
     ACHIEVEMENT_CATALOG.sort((a,b)=>{const ta=(a.type||"").toString(),tb=(b.type||"").toString();if(ta!==tb)return ta.localeCompare(tb,"it");return (a.title||a.name||a.id).toString().localeCompare((b.title||b.name||b.id).toString(),"it")});
     TIER_CATALOG.sort((a,b)=>(Number(a.requiredPoints||0)-Number(b.requiredPoints||0))||String(a.id).localeCompare(String(b.id),"it"));
     catalogAchCount.textContent=String(ACHIEVEMENT_CATALOG.length); catalogTierCount.textContent=String(TIER_CATALOG.length); if(catalogTypeCount) catalogTypeCount.textContent=String(ACHIEVEMENT_TYPE_CATALOG.length);
+    updateCatalogMetrics(ACHIEVEMENT_CATALOG.length, TIER_CATALOG.length, ACHIEVEMENT_TYPE_CATALOG.length);
     populateAchievementTypeSelect(EDITING_ACHIEVEMENT_ID ? (ACHIEVEMENT_CATALOG.find(a=>a.id===EDITING_ACHIEVEMENT_ID)?.type||"") : "");
     renderAchievementCatalog(); renderTierCatalog(); renderTypeCatalog();
   } catch(e) {
-    console.warn("loadCatalogSummary",e); catalogAchCount.textContent="?"; catalogTierCount.textContent="?"; if(catalogTypeCount)catalogTypeCount.textContent="?";
+    console.warn("loadCatalogSummary",e); updateCatalogMetrics("—", "—", "—"); catalogAchCount.textContent="?"; catalogTierCount.textContent="?"; if(catalogTypeCount)catalogTypeCount.textContent="?";
     if(achCatalogList)achCatalogList.textContent="Errore nel caricamento Achievement."; if(tierCatalogList)tierCatalogList.textContent="Errore nel caricamento Tier."; if(typeCatalogList)typeCatalogList.textContent="Errore nel caricamento categorie.";
   }
 }
@@ -1328,7 +1605,8 @@ async function reloadModeratorData() {
   await Promise.all([
     loadQueue(),
     loadXpManager(),
-    loadCatalogSummary()
+    loadCatalogSummary(),
+    loadSeasonManager()
   ]);
 }
 
@@ -1367,14 +1645,17 @@ async function loadQueue() {
   } catch (e) {
     console.error(e);
     setStatus("Errore nel caricare la queue. Se vedi un errore index, crea l'indice richiesto in Firestore.");
+    updateQueueMetrics(null);
     return;
   }
 
   const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   setStatus(`Pending: ${items.length}`);
+  updateQueueMetrics(items.length);
 
   if (!items.length) {
     queue.append(el("div", { class: "card small" }, [document.createTextNode("Nessuna richiesta in attesa.")]));
+    filterQueueCards();
     return;
   }
 
@@ -1486,7 +1767,7 @@ async function loadQueue() {
         ? String(r.requesterEmail).trim()
         : "Senza email";
 
-    const card = el("div", { class: "card" }, [
+    const card = el("div", { class: "card request-card" }, [
       el("div", { class: "row" }, [
         el("strong", {}, [document.createTextNode(r.achievementTitle || r.achievementId)]),
         el("span", { class: "badge" }, [document.createTextNode(`STAGIONE ${recordSeason(r)}`)]),
@@ -1505,11 +1786,14 @@ async function loadQueue() {
       el("div", { class: "row" }, [approveBtn, rejectBtn])
     ]);
 
+    card.dataset.searchContent = [shownName, shownEmail, r.uid, r.achievementTitle, r.achievementId].filter(Boolean).join(" ").toLocaleLowerCase("it");
     queue.append(card);
   }
+  filterQueueCards();
 }
 
 onUser(async (user) => {
+  setDashboardAuthorized(false);
   if (!user) {
     userInfo.textContent = "";
     btnLogin.style.display = "";
@@ -1517,6 +1801,9 @@ onUser(async (user) => {
     btnReload.style.display = "none";
     if (xpManager) xpManager.style.display = "none";
     if (catalogManager) catalogManager.style.display = "none";
+    if (seasonManager) seasonManager.style.display = "none";
+    DISPLAYED_SEASON = null;
+    hideSeasonConfirmation();
     queue.innerHTML = "";
     SELECTED_XP_USER = null;
     setStatus("Fai login. Serve essere presente in /moderators/{uid}.");
@@ -1528,10 +1815,14 @@ onUser(async (user) => {
   userInfo.textContent = user.email || user.uid;
 
   const ok = await checkModerator(user.uid);
+  if (auth.currentUser?.uid !== user.uid) return;
   if (!ok) {
     btnReload.style.display = "none";
     if (xpManager) xpManager.style.display = "none";
     if (catalogManager) catalogManager.style.display = "none";
+    if (seasonManager) seasonManager.style.display = "none";
+    DISPLAYED_SEASON = null;
+    hideSeasonConfirmation();
     queue.innerHTML = "";
     setStatus("Non autorizzato: non sei in /moderators/{tuoUID}.");
     return;
@@ -1540,5 +1831,7 @@ onUser(async (user) => {
   btnReload.style.display = "";
   if (xpManager) xpManager.style.display = "";
   if (catalogManager) catalogManager.style.display = "";
+  if (seasonManager) seasonManager.style.display = "";
+  setDashboardAuthorized(true);
   await reloadModeratorData();
 });

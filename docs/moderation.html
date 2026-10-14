@@ -1,11 +1,10 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Moderazione • Fantaballa Game Pass</title>
-  <link rel="stylesheet" href="./styles.css" />
-
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Moderazione • Fantaballa Game Pass</title>
+<link href="./styles.css" rel="stylesheet"/>
 <style>
   .mod-section{
     margin-bottom:18px;
@@ -154,8 +153,6 @@
     }
   }
 </style>
-
-
 <style>
   .catalog-admin{
     margin-top:18px;
@@ -262,8 +259,6 @@
     }
   }
 </style>
-
-
 <style>
   .catalog-existing-list{
     display:flex;
@@ -340,8 +335,6 @@
     }
   }
 </style>
-
-
 <style>
   .category-manager-grid{
     display:grid;
@@ -385,399 +378,412 @@
     }
   }
 </style>
-
+<style>
+  /* Gestione stagione: comandi visibili solo ai moderatori autenticati. */
+  .season-manager{
+    margin:0 0 18px;
+    border-color:rgba(255,148,44,.25);
+    background:linear-gradient(135deg,rgba(255,128,25,.085),rgba(255,255,255,.025) 60%);
+  }
+  .season-manager-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+    margin:14px 0;
+  }
+  .season-manager-stat{
+    padding:14px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.09);
+    background:rgba(0,0,0,.2);
+  }
+  .season-manager-stat .small{display:block; margin-bottom:4px;}
+  .season-manager-number{font-size:34px;font-weight:950;line-height:1.15;}
+  .season-manager-next{color:#ffb25b;}
+  .season-manager-info{font-size:12px;line-height:1.55;opacity:.85;margin:0 0 12px;}
+  .season-manager-status{font-size:12px;min-height:16px;margin-top:10px;line-height:1.45;}
+  .season-manager-status.ok{color:#a8efc8;}
+  .season-manager-status.warning{color:#ffd48d;}
+  .season-start-btn{border-color:rgba(255,161,55,.55);background:rgba(255,136,29,.17);font-weight:850;}
+  .season-start-btn:hover{background:rgba(255,136,29,.25);}
+  .season-start-btn:disabled,.season-manager .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .season-confirm{
+    border:1px solid rgba(255,161,55,.3);
+    border-radius:12px;
+    background:rgba(0,0,0,.22);
+    padding:14px;
+    margin-top:14px;
+  }
+  .season-confirm[hidden]{display:none!important;}
+  .season-confirm label{display:block;font-size:12px;margin:12px 0 8px;}
+  .season-confirm input{max-width:340px;margin-bottom:12px;}
+  .season-confirm strong{font-size:14px;}
+  .season-confirm p{font-size:12px;line-height:1.5;opacity:.83;}
+  @media(max-width:540px){
+    .season-manager-grid{grid-template-columns:1fr;}
+  }
+</style>
+<link rel="stylesheet" href="./moderation-dashboard.css" />
 </head>
 <body>
-<header>
-  <div class="row">
-    <a href="./index.html" class="badge">← Home</a>
-    <strong>Moderazione</strong>
-    <span class="small">Moderatori</span>
+<header class="app-header">
+  <div class="header-brand"><a href="./index.html" class="brand-monogram" aria-label="Fantaballa - Torna alla home">F<span>.</span></a>
+    <div class="brand-text"><strong>FANTABALLA<span class="brand-accent">.</span></strong><small>GAME PASS / MODERATION</small></div>
+    <span class="header-divider"></span><span class="header-label">Control Center</span>
   </div>
-  <div class="row">
-    <span id="userInfo" class="small"></span>
-    <button id="btnLogin" class="btn primary">Login Google</button>
-    <button id="btnLogout" class="btn" style="display:none;">Logout</button>
-    <button id="btnReload" class="btn" style="display:none;">Ricarica</button>
-  <a class="btnx" href="./season_report.html" style="text-decoration:none;">
-  Season Report
-</a>
-
+  <div class="header-actions">
+    <a class="header-link" href="./gamepass.html">Vai al Game Pass <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 5h6v6M19 5l-9 9"/><path d="M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+    <a class="header-link" href="./season_report.html">Season Report <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 5h6v6M19 5l-9 9"/><path d="M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg></a>
+    <span id="userInfo" class="header-user"></span>
+    <button id="btnReload" type="button" class="btn btn-header" style="display:none"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9a7 7 0 0 1 12-2L20 12M4 12l2.5 5a7 7 0 0 0 12-2"/></svg> <span>Ricarica</span></button>
+    <button id="btnLogin" type="button" class="btn primary">Login Google</button>
+    <button id="btnLogout" type="button" class="btn" style="display:none">Esci</button>
   </div>
 </header>
-
-<div class="container">
-  <div id="status" class="card small">Caricamento…</div>
-
-
-  <section id="catalogManager" class="catalog-admin" style="display:none;">
-    <div class="mod-section-head">
-      <div>
-        <div class="mod-title">Gestione contenuti Game Pass</div>
-        <div class="mod-sub">
-          Crea Achievement e Tier direttamente dal pannello moderazione.
-          I documenti vengono salvati nelle collection <span class="mono">achievements</span>
-          e <span class="mono">gp_tiers</span>.
+<div id="authGate" class="auth-gate"><div class="auth-gate-inner"><div class="auth-gate-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg></div><div><h2>Accesso alla moderazione</h2><p id="status" class="small" role="status" aria-live="polite">Caricamento…</p></div></div></div>
+<div id="adminWorkspace" class="workspace" hidden>
+<aside class="admin-sidebar" aria-label="Menu moderazione">
+ <div class="sidebar-inside"><div class="side-eyebrow">WORKSPACE</div>
+ <nav id="adminNav" class="sidebar-nav" aria-label="Sezioni pannello"><button type="button" class="side-link" data-nav-view="overview" aria-current="false"><span class="nav-glyph"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="side-link-name">Panoramica</span></button><button type="button" class="side-link" data-nav-view="requests" aria-current="false"><span class="nav-glyph"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span class="side-link-name">Richieste</span><span class="nav-count" id="sidebarPendingCount">—</span></button><button type="button" class="side-link" data-nav-view="achievements" aria-current="false"><span class="nav-glyph"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="m8 13-2 8 6-3 6 3-2-8"/></svg></span><span class="side-link-name">Achievement</span></button><button type="button" class="side-link" data-nav-view="tiers" aria-current="false"><span class="nav-glyph"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.6 8.7 8 10 4.4-1.3 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg></span><span class="side-link-name">Premi e livelli</span></button><button type="button" class="side-link" data-nav-view="categories" aria-current="false"><span class="nav-glyph"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 12 9-9h8a1 1 0 0 1 1 1v8l-9 9a2 2 0 0 1-3 0l-6-6a2 2 0 0 1 0-3z"/><circle cx="17" cy="7" r="1"/></svg></span><span class="side-link-name">Categorie</span></button><button type="button" class="side-link" data-nav-view="xp" aria-current="false"><span class="nav-glyph"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-13h-7l0-7z"/></svg></span><span class="side-link-name">Gestione XP</span></button><button type="button" class="side-link" data-nav-view="season" aria-current="false"><span class="nav-glyph"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="m10 16 2 2 4-4"/></svg></span><span class="side-link-name">Stagioni</span></button></nav>
+ <div class="sidebar-bottom"><div class="secure-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg></div><div><strong>Area riservata</strong><span>Accesso moderatori verificato tramite Firebase</span></div></div>
+ </div></aside>
+<main class="admin-main" id="mainContent">
+<div class="page-heading"><div class="page-heading-left"><span class="eyebrow">FANTABALLA / ADMIN CENTER <span class="eyebrow-mark">✳ HALLOWEEN EDITION</span></span><h1 id="activePageTitle">Panoramica</h1><p id="activePageSubtitle">Tutto quello che ti serve per gestire il Game Pass.</p></div><div class="page-heading-meta"><span class="online-signal"><span></span> MODERATION PANEL</span><span class="season-mini">SEASON <b id="headerSeasonNumber">—</b></span></div></div>
+<section class="admin-view" data-admin-view="overview" id="overviewPanel">
+ <div class="welcome-banner"><div class="welcome-copy"><span class="eyebrow pumpkin-eyebrow">/ OPERATIONS DASHBOARD</span><h2>Il tuo Game Pass,<br><em>sotto controllo.</em></h2><p>Gestisci richieste, contenuti e progressione stagionale da un unico spazio.</p><button type="button" class="btn primary welcome-action" data-go-view="requests">Gestisci richieste <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+ <div class="welcome-ornament" aria-hidden="true"><span class="orbit-ring orbit-outer"></span><span class="orbit-ring orbit-inner"></span><span class="ornament-star">✦</span><span class="ornament-monogram">F</span></div></div>
+ <div class="metrics-grid">
+ <article class="metric-card metric-pending"><div class="metric-top"><span>RICHIESTE IN ATTESA</span><span class="metric-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span></div><div class="metric-value" id="overviewPendingCount">—</div><div class="metric-bottom">Da esaminare e approvare</div></article>
+ <article class="metric-card metric-achievements"><div class="metric-top"><span>ACHIEVEMENT</span><span class="metric-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="m8 13-2 8 6-3 6 3-2-8"/></svg></span></div><div class="metric-value" id="overviewAchCount">—</div><div class="metric-bottom">Obiettivi nel catalogo</div></article>
+ <article class="metric-card metric-tiers"><div class="metric-top"><span>LIVELLI PREMIO</span><span class="metric-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.6 8.7 8 10 4.4-1.3 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg></span></div><div class="metric-value" id="overviewTierCount">—</div><div class="metric-bottom">Tier configurati</div></article>
+ <article class="metric-card metric-season"><div class="metric-top"><span>STAGIONE ATTIVA</span><span class="metric-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="m10 16 2 2 4-4"/></svg></span></div><div class="metric-value" id="overviewSeasonCount">—</div><div class="metric-bottom">Progressi separati per stagione</div></article>
+ </div>
+ <div class="overview-bottom">
+  <section class="panel-card quick-access"><div class="section-caption">SCORCIATOIE</div><h3>Azioni rapide</h3><p>Accedi direttamente agli strumenti che usi di più.</p>
+  <button type="button" class="quick-row" data-go-view="requests"><span class="quick-square"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span><strong>Moderare le richieste</strong><small>Approva o rifiuta i completamenti</small></span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  <button type="button" class="quick-row" data-go-view="achievements"><span class="quick-square"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="m8 13-2 8 6-3 6 3-2-8"/></svg></span><span><strong>Gestire gli achievement</strong><small>Crea, modifica e organizza le missioni</small></span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  <button type="button" class="quick-row" data-go-view="xp"><span class="quick-square"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-13h-7l0-7z"/></svg></span><span><strong>Modificare gli XP</strong><small>Interventi sui punti della stagione attiva</small></span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  </section>
+  <section class="panel-card system-status"><div class="section-caption">STATO WORKSPACE</div><h3>Panoramica stagionale</h3>
+  <div class="season-feature"><div class="season-feature-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="m10 16 2 2 4-4"/></svg></div><div><span>STAGIONE CORRENTE</span><strong>Season <span id="overviewSeasonLabel">—</span></strong></div><span class="status-dot">ATTIVA</span></div>
+  <div class="system-row"><span>Richieste da gestire</span><strong id="overviewQueueSummary">—</strong></div>
+  <div class="system-row"><span>Categorie configurate</span><strong id="overviewTypeCount">—</strong></div>
+  <button type="button" class="text-action" data-go-view="season">Apri gestione stagioni <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  </section>
+ </div>
+ </section>
+<section class="admin-view" data-admin-view="requests" id="requestsPanel" hidden>
+  <div class="panel-card requests-panel"><div class="section-heading"><div><div class="section-caption">MODERATION QUEUE</div><h2>Richieste achievement <span class="count-chip" id="requestsCount">—</span></h2><p>Esamina le prove e decidi se assegnare i punti agli utenti.</p></div><button type="button" class="btn" id="btnQueueReload"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9a7 7 0 0 1 12-2L20 12M4 12l2.5 5a7 7 0 0 0 12-2"/></svg> Aggiorna</button></div>
+  <div class="filter-bar"><div class="search-holder"><span class="search-icon">⌕</span><input id="queueSearch" type="search" placeholder="Cerca giocatore, achievement o UID…" autocomplete="off" aria-label="Filtra richieste"/></div><span class="filter-note" id="queueFilterCount">Fino a 100 richieste recenti</span></div>
+  <div id="queue" class="request-grid"></div></div>
+ </section>
+<section id="catalogManager" class="catalog-admin" style="display:none"><div class="catalog-toolbar"><div class="catalog-summary"><span class="catalog-pill">Achievement: <b id="catalogAchCount">—</b></span><span class="catalog-pill">Tier: <b id="catalogTierCount">—</b></span><span class="catalog-pill">Categorie: <b id="catalogTypeCount">—</b></span></div><button id="btnCatalogReload" type="button" class="btn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9a7 7 0 0 1 12-2L20 12M4 12l2.5 5a7 7 0 0 0 12-2"/></svg> Aggiorna catalogo</button></div><section class="admin-view" data-admin-view="achievements" id="achievementsPanel" hidden><div class="module-header"><span class="section-caption">CONTENT MANAGEMENT</span><h2>Achievement</h2><p>Crea e modifica obiettivi, prerequisiti e ricompense in XP.</p></div><div class="edit-list-layout"><div class="card catalog-box">
+<div class="mod-title" id="achFormTitle" style="font-size:16px;">Crea Achievement</div>
+<div class="mod-sub">L'ID è quello usato anche nei prerequisiti e nelle richieste.</div>
+<div class="catalog-form">
+<div class="catalog-field">
+<label for="achCreateId">ID documento *</label>
+<input id="achCreateId" maxlength="150" placeholder="es. fut_vinci_10" type="text"/>
+</div>
+<div class="catalog-field">
+<label for="achCreateType">Categoria *</label>
+<select id="achCreateType">
+<option value="">Caricamento categorie…</option>
+</select>
+</div>
+<div class="catalog-field full">
+<label for="achCreateTitle">Titolo *</label>
+<input id="achCreateTitle" maxlength="120" placeholder="es. Vinci 10 partite FUT" type="text"/>
+</div>
+<div class="catalog-field full">
+<label for="achCreateDesc">Descrizione</label>
+<textarea id="achCreateDesc" maxlength="600" placeholder="Descrivi cosa deve fare l'utente per completarlo."></textarea>
+</div>
+<div class="catalog-field">
+<label for="achCreatePoints">XP assegnati *</label>
+<input id="achCreatePoints" min="0" placeholder="es. 500" step="1" type="number"/>
+</div>
+<div class="catalog-field">
+<label for="achCreatePrereq">Prerequisiti</label>
+<input id="achCreatePrereq" placeholder="id_1, id_2, id_3" type="text"/>
+</div>
+<div class="catalog-field">
+<label class="catalog-check">
+<input checked="" id="achCreateActive" type="checkbox"/>
+              Attivo e visibile nel Game Pass
+            </label>
+</div>
+<div class="catalog-field">
+<label class="catalog-check">
+<input id="achCreateLinkRequest" type="checkbox"/>
+              Achievement con link
+            </label>
+</div>
+<div class="catalog-field full" id="achLinkField" style="display:none;">
+<label for="achCreateLinkUrl">Link da aprire/allegare</label>
+<input id="achCreateLinkUrl" placeholder="https://..." type="url"/>
+</div>
+<div class="catalog-actions">
+<button class="btn primary" id="btnCreateAchievement">Crea Achievement</button>
+<button class="btn" id="btnCancelAchievementEdit" style="display:none;" type="button">Annulla modifica</button>
+<span class="catalog-status" id="achCreateStatus"></span>
+</div>
+</div>
+<div class="catalog-help">
+          I prerequisiti vanno inseriti usando gli ID esatti degli altri achievement,
+          separati da virgola. Esempio: <span class="mono">fut_1, fut_2</span>.
         </div>
-        <div class="catalog-summary">
-          <span class="catalog-pill">Achievement: <b id="catalogAchCount">—</b></span>
-          <span class="catalog-pill">Tier: <b id="catalogTierCount">—</b></span>
-          <span class="catalog-pill">Categorie: <b id="catalogTypeCount">—</b></span>
+</div><div class="card catalog-box">
+<div class="mod-section-head" style="margin-bottom:8px;">
+<div>
+<div class="mod-title" style="font-size:16px;">Achievement esistenti</div>
+<div class="mod-sub">Modifica o elimina gli Achievement già presenti in Firestore.</div>
+</div>
+<input id="achCatalogSearch" placeholder="Cerca achievement…" style="max-width:230px;" type="search"/>
+</div>
+<div class="catalog-existing-list" id="achCatalogList"></div>
+</div></div></section><section class="admin-view" data-admin-view="tiers" id="tiersPanel" hidden><div class="module-header"><span class="section-caption">CONTENT MANAGEMENT</span><h2>Premi e livelli</h2><p>Configura soglie di avanzamento e premi sbloccabili.</p></div><div class="edit-list-layout"><div class="card catalog-box">
+<div class="mod-title" id="tierFormTitle" style="font-size:16px;">Crea Tier</div>
+<div class="mod-sub">Il Game Pass ordina i Tier automaticamente in base agli XP richiesti.</div>
+<div class="catalog-form">
+<div class="catalog-field">
+<label for="tierCreateId">ID documento *</label>
+<input id="tierCreateId" maxlength="150" placeholder="es. p15 oppure 36000" type="text"/>
+</div>
+<div class="catalog-field">
+<label for="tierCreateRequired">XP richiesti *</label>
+<input id="tierCreateRequired" min="1" placeholder="es. 36000" step="1" type="number"/>
+</div>
+<div class="catalog-field">
+<label for="tierRewardType">Tipo premio *</label>
+<select id="tierRewardType">
+<option value="card">Carta</option>
+<option value="skin">Skin</option>
+<option value="color">Colore</option>
+<option value="item">Altro premio</option>
+</select>
+</div>
+<div class="catalog-field">
+<label for="tierRewardRarity">Rarità *</label>
+<select id="tierRewardRarity">
+<option value="common">Common</option>
+<option value="rare">Rare</option>
+<option value="epic">Epic</option>
+<option value="legendary">Legendary</option>
+</select>
+</div>
+<div class="catalog-field full">
+<label for="tierRewardLabel">Label premio *</label>
+<input id="tierRewardLabel" maxlength="180" placeholder="es. [SOLO ABBONATI] Scelta ruolo mondiale" type="text"/>
+</div>
+<div class="catalog-field full">
+<label for="tierRewardTitle">Titolo premio</label>
+<input id="tierRewardTitle" maxlength="180" placeholder="Se vuoto usa la stessa Label" type="text"/>
+</div>
+<div class="catalog-field full">
+<label for="tierRewardImg">URL immagine</label>
+<input id="tierRewardImg" placeholder="https://..." type="url"/>
+</div>
+<div class="catalog-field">
+<label for="tierRewardOverall">Overall carta</label>
+<input id="tierRewardOverall" max="999" min="0" placeholder="opzionale" step="1" type="number"/>
+</div>
+<div class="catalog-field">
+<label class="catalog-check">
+<input checked="" id="tierCreateActive" type="checkbox"/>
+              Tier attivo
+            </label>
+</div>
+<div class="catalog-actions">
+<button class="btn primary" id="btnCreateTier">Crea Tier</button>
+<button class="btn" id="btnCancelTierEdit" style="display:none;" type="button">Annulla modifica</button>
+<span class="catalog-status" id="tierCreateStatus"></span>
+</div>
+</div>
+<div class="catalog-help">
+          L'ID può essere come quelli che usi già: <span class="mono">p14</span>,
+          <span class="mono">8.1</span>, <span class="mono">31000</span>, ecc.
+          Non deve coincidere per forza con gli XP richiesti.
         </div>
-      </div>
-      <button id="btnCatalogReload" class="btn">Aggiorna catalogo</button>
-    </div>
-
-    <div class="card catalog-box category-manager-card" style="margin-bottom:14px;">
-      <div class="mod-section-head" style="margin-bottom:8px;">
-        <div>
-          <div id="typeFormTitle" class="mod-title" style="font-size:16px;">Gestione categorie Achievement</div>
-          <div class="mod-sub">
+</div><div class="card catalog-box">
+<div class="mod-section-head" style="margin-bottom:8px;">
+<div>
+<div class="mod-title" style="font-size:16px;">Tier esistenti</div>
+<div class="mod-sub">Modifica o elimina i Tier già presenti in Firestore.</div>
+</div>
+<input id="tierCatalogSearch" placeholder="Cerca tier…" style="max-width:230px;" type="search"/>
+</div>
+<div class="catalog-existing-list" id="tierCatalogList"></div>
+</div></div></section><section class="admin-view" data-admin-view="categories" id="categoriesPanel" hidden><div class="module-header"><span class="section-caption">CONTENT MANAGEMENT</span><h2>Categorie achievement</h2><p>Organizza le categorie, le etichette e i colori degli obiettivi.</p></div><div class="card catalog-box category-manager-card" style="margin-bottom:14px;">
+<div class="mod-section-head" style="margin-bottom:8px;">
+<div>
+<div class="mod-title" id="typeFormTitle" style="font-size:16px;">Gestione categorie Achievement</div>
+<div class="mod-sub">
             Crea categorie come FUT, LIVE, TWITCH, FM, CHAMPIONS… Verranno usate automaticamente nel Game Pass.
           </div>
-        </div>
-        <input id="typeCatalogSearch" type="search" placeholder="Cerca categoria…" style="max-width:230px;" />
-      </div>
-
-      <div class="category-manager-grid">
-        <div>
-          <div class="catalog-form">
-            <div class="catalog-field">
-              <label for="typeCreateId">Codice categoria *</label>
-              <input id="typeCreateId" type="text" maxlength="32"
-                     placeholder="es. TWITCH" />
-            </div>
-
-            <div class="catalog-field">
-              <label for="typeCreateLabel">Nome visualizzato *</label>
-              <input id="typeCreateLabel" type="text" maxlength="50"
-                     placeholder="es. Twitch" />
-            </div>
-
-            <div class="catalog-field">
-              <label for="typeCreateIcon">Icona</label>
-              <input id="typeCreateIcon" type="text" maxlength="12"
-                     placeholder="es. 🎥" />
-            </div>
-
-            <div class="catalog-field">
-              <label for="typeCreateColor">Colore targhetta</label>
-              <div class="catalog-color-row">
-                <input id="typeCreateColor" type="color" value="#10d7ff"
-                       aria-label="Colore categoria" />
-                <input id="typeCreateColorHex" type="text" maxlength="7"
-                       value="#10D7FF" placeholder="#10D7FF" />
-              </div>
-            </div>
-
-            <div class="catalog-field">
-              <label for="typeCreateOrder">Ordine</label>
-              <input id="typeCreateOrder" type="number" min="0" max="9999" step="1"
-                     value="100" />
-            </div>
-
-            <div class="catalog-field">
-              <label class="catalog-check">
-                <input id="typeCreateActive" type="checkbox" checked />
+</div>
+<input id="typeCatalogSearch" placeholder="Cerca categoria…" style="max-width:230px;" type="search"/>
+</div>
+<div class="category-manager-grid">
+<div>
+<div class="catalog-form">
+<div class="catalog-field">
+<label for="typeCreateId">Codice categoria *</label>
+<input id="typeCreateId" maxlength="32" placeholder="es. TWITCH" type="text"/>
+</div>
+<div class="catalog-field">
+<label for="typeCreateLabel">Nome visualizzato *</label>
+<input id="typeCreateLabel" maxlength="50" placeholder="es. Twitch" type="text"/>
+</div>
+<div class="catalog-field">
+<label for="typeCreateIcon">Icona</label>
+<input id="typeCreateIcon" maxlength="12" placeholder="es. 🎥" type="text"/>
+</div>
+<div class="catalog-field">
+<label for="typeCreateColor">Colore targhetta</label>
+<div class="catalog-color-row">
+<input aria-label="Colore categoria" id="typeCreateColor" type="color" value="#10d7ff"/>
+<input id="typeCreateColorHex" maxlength="7" placeholder="#10D7FF" type="text" value="#10D7FF"/>
+</div>
+</div>
+<div class="catalog-field">
+<label for="typeCreateOrder">Ordine</label>
+<input id="typeCreateOrder" max="9999" min="0" step="1" type="number" value="100"/>
+</div>
+<div class="catalog-field">
+<label class="catalog-check">
+<input checked="" id="typeCreateActive" type="checkbox"/>
                 Categoria attiva
               </label>
-            </div>
-
-            <div class="catalog-actions">
-              <button id="btnCreateType" class="btn primary">Crea categoria</button>
-              <button id="btnCancelTypeEdit" class="btn" type="button" style="display:none;">Annulla modifica</button>
-              <span id="typeCreateStatus" class="catalog-status"></span>
-            </div>
-          </div>
-
-          <div class="catalog-help">
+</div>
+<div class="catalog-actions">
+<button class="btn primary" id="btnCreateType">Crea categoria</button>
+<button class="btn" id="btnCancelTypeEdit" style="display:none;" type="button">Annulla modifica</button>
+<span class="catalog-status" id="typeCreateStatus"></span>
+</div>
+</div>
+<div class="catalog-help">
             Il codice viene salvato in maiuscolo. Sono ammessi lettere, numeri, trattino e underscore:
             <span class="mono">TWITCH</span>, <span class="mono">FM_26</span>, <span class="mono">CHAMPIONS</span>.
             Il colore controlla la targhetta e la barra laterale degli Achievement.
             Disattivando una categoria, i suoi Achievement restano nel database ma vengono nascosti nel Game Pass.
           </div>
-        </div>
-
-        <div>
-          <div id="typeCatalogList" class="catalog-existing-list"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="catalog-admin-grid">
-      <div class="card catalog-box">
-        <div id="achFormTitle" class="mod-title" style="font-size:16px;">Crea Achievement</div>
-        <div class="mod-sub">L'ID è quello usato anche nei prerequisiti e nelle richieste.</div>
-
-        <div class="catalog-form">
-          <div class="catalog-field">
-            <label for="achCreateId">ID documento *</label>
-            <input id="achCreateId" type="text" maxlength="150"
-                   placeholder="es. fut_vinci_10" />
-          </div>
-
-          <div class="catalog-field">
-            <label for="achCreateType">Categoria *</label>
-            <select id="achCreateType">
-              <option value="">Caricamento categorie…</option>
-            </select>
-          </div>
-
-          <div class="catalog-field full">
-            <label for="achCreateTitle">Titolo *</label>
-            <input id="achCreateTitle" type="text" maxlength="120"
-                   placeholder="es. Vinci 10 partite FUT" />
-          </div>
-
-          <div class="catalog-field full">
-            <label for="achCreateDesc">Descrizione</label>
-            <textarea id="achCreateDesc" maxlength="600"
-                      placeholder="Descrivi cosa deve fare l'utente per completarlo."></textarea>
-          </div>
-
-          <div class="catalog-field">
-            <label for="achCreatePoints">XP assegnati *</label>
-            <input id="achCreatePoints" type="number" min="0" step="1"
-                   placeholder="es. 500" />
-          </div>
-
-          <div class="catalog-field">
-            <label for="achCreatePrereq">Prerequisiti</label>
-            <input id="achCreatePrereq" type="text"
-                   placeholder="id_1, id_2, id_3" />
-          </div>
-
-          <div class="catalog-field">
-            <label class="catalog-check">
-              <input id="achCreateActive" type="checkbox" checked />
-              Attivo e visibile nel Game Pass
-            </label>
-          </div>
-
-          <div class="catalog-field">
-            <label class="catalog-check">
-              <input id="achCreateLinkRequest" type="checkbox" />
-              Achievement con link
-            </label>
-          </div>
-
-          <div id="achLinkField" class="catalog-field full" style="display:none;">
-            <label for="achCreateLinkUrl">Link da aprire/allegare</label>
-            <input id="achCreateLinkUrl" type="url"
-                   placeholder="https://..." />
-          </div>
-
-          <div class="catalog-actions">
-            <button id="btnCreateAchievement" class="btn primary">Crea Achievement</button>
-            <button id="btnCancelAchievementEdit" class="btn" type="button" style="display:none;">Annulla modifica</button>
-            <span id="achCreateStatus" class="catalog-status"></span>
-          </div>
-        </div>
-
-        <div class="catalog-help">
-          I prerequisiti vanno inseriti usando gli ID esatti degli altri achievement,
-          separati da virgola. Esempio: <span class="mono">fut_1, fut_2</span>.
-        </div>
-      </div>
-
-      <div class="card catalog-box">
-        <div id="tierFormTitle" class="mod-title" style="font-size:16px;">Crea Tier</div>
-        <div class="mod-sub">Il Game Pass ordina i Tier automaticamente in base agli XP richiesti.</div>
-
-        <div class="catalog-form">
-          <div class="catalog-field">
-            <label for="tierCreateId">ID documento *</label>
-            <input id="tierCreateId" type="text" maxlength="150"
-                   placeholder="es. p15 oppure 36000" />
-          </div>
-
-          <div class="catalog-field">
-            <label for="tierCreateRequired">XP richiesti *</label>
-            <input id="tierCreateRequired" type="number" min="1" step="1"
-                   placeholder="es. 36000" />
-          </div>
-
-          <div class="catalog-field">
-            <label for="tierRewardType">Tipo premio *</label>
-            <select id="tierRewardType">
-              <option value="card">Carta</option>
-              <option value="skin">Skin</option>
-              <option value="color">Colore</option>
-              <option value="item">Altro premio</option>
-            </select>
-          </div>
-
-          <div class="catalog-field">
-            <label for="tierRewardRarity">Rarità *</label>
-            <select id="tierRewardRarity">
-              <option value="common">Common</option>
-              <option value="rare">Rare</option>
-              <option value="epic">Epic</option>
-              <option value="legendary">Legendary</option>
-            </select>
-          </div>
-
-          <div class="catalog-field full">
-            <label for="tierRewardLabel">Label premio *</label>
-            <input id="tierRewardLabel" type="text" maxlength="180"
-                   placeholder="es. [SOLO ABBONATI] Scelta ruolo mondiale" />
-          </div>
-
-          <div class="catalog-field full">
-            <label for="tierRewardTitle">Titolo premio</label>
-            <input id="tierRewardTitle" type="text" maxlength="180"
-                   placeholder="Se vuoto usa la stessa Label" />
-          </div>
-
-          <div class="catalog-field full">
-            <label for="tierRewardImg">URL immagine</label>
-            <input id="tierRewardImg" type="url"
-                   placeholder="https://..." />
-          </div>
-
-          <div class="catalog-field">
-            <label for="tierRewardOverall">Overall carta</label>
-            <input id="tierRewardOverall" type="number" min="0" max="999" step="1"
-                   placeholder="opzionale" />
-          </div>
-
-          <div class="catalog-field">
-            <label class="catalog-check">
-              <input id="tierCreateActive" type="checkbox" checked />
-              Tier attivo
-            </label>
-          </div>
-
-          <div class="catalog-actions">
-            <button id="btnCreateTier" class="btn primary">Crea Tier</button>
-            <button id="btnCancelTierEdit" class="btn" type="button" style="display:none;">Annulla modifica</button>
-            <span id="tierCreateStatus" class="catalog-status"></span>
-          </div>
-        </div>
-
-        <div class="catalog-help">
-          L'ID può essere come quelli che usi già: <span class="mono">p14</span>,
-          <span class="mono">8.1</span>, <span class="mono">31000</span>, ecc.
-          Non deve coincidere per forza con gli XP richiesti.
-        </div>
-      </div>
-    </div>
-
-    <div class="catalog-admin-grid catalog-existing-grid" style="margin-top:14px;">
-      <div class="card catalog-box">
-        <div class="mod-section-head" style="margin-bottom:8px;">
-          <div>
-            <div class="mod-title" style="font-size:16px;">Achievement esistenti</div>
-            <div class="mod-sub">Modifica o elimina gli Achievement già presenti in Firestore.</div>
-          </div>
-          <input id="achCatalogSearch" type="search" placeholder="Cerca achievement…" style="max-width:230px;" />
-        </div>
-        <div id="achCatalogList" class="catalog-existing-list"></div>
-      </div>
-
-      <div class="card catalog-box">
-        <div class="mod-section-head" style="margin-bottom:8px;">
-          <div>
-            <div class="mod-title" style="font-size:16px;">Tier esistenti</div>
-            <div class="mod-sub">Modifica o elimina i Tier già presenti in Firestore.</div>
-          </div>
-          <input id="tierCatalogSearch" type="search" placeholder="Cerca tier…" style="max-width:230px;" />
-        </div>
-        <div id="tierCatalogList" class="catalog-existing-list"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="xpManager" class="mod-section" style="display:none; margin-top:18px;">
-    <div class="card">
-      <div class="mod-section-head">
-        <div>
-          <div class="mod-title">Modifica XP utente</div>
-          <div class="mod-sub">
+</div>
+<div>
+<div class="catalog-existing-list" id="typeCatalogList"></div>
+</div>
+</div>
+</div></section></section>
+<section class="admin-view" data-admin-view="xp" id="xpPanel" hidden><section class="mod-section" id="xpManager">
+<div class="card">
+<div class="mod-section-head">
+<div>
+<div class="mod-title">Modifica XP utente</div>
+<div class="mod-sub">
             Modifica esclusivamente gli XP della stagione corrente.
             Stagione attiva: <strong id="xpSeason">—</strong>
-          </div>
-        </div>
-        <button id="btnXpReload" class="btn">Aggiorna utenti</button>
-      </div>
-
-      <div class="xp-tools">
-        <div>
-          <div class="xp-search-row">
-            <input id="xpSearch" type="search" autocomplete="off"
-                   placeholder="Cerca nickname, email o UID…" />
-            <button id="btnXpUid" class="btn">Carica UID</button>
-          </div>
-          <div id="xpDirectoryHint" class="small" style="margin-top:7px;">
+</div>
+</div>
+<button class="btn" id="btnXpReload">Aggiorna utenti</button>
+</div>
+<div class="xp-tools">
+<div>
+<div class="xp-search-row">
+<input autocomplete="off" id="xpSearch" placeholder="Cerca nickname, email o UID…" type="search"/>
+<button class="btn" id="btnXpUid">Carica UID</button>
+</div>
+<div class="small" id="xpDirectoryHint" style="margin-top:7px;">
             Caricamento utenti…
           </div>
-          <div id="xpResults" class="xp-results"></div>
-        </div>
-
-        <div id="xpSelected" class="card" style="padding:14px;">
-          <div id="xpSelectedEmpty" class="xp-selected-empty">
+<div class="xp-results" id="xpResults"></div>
+</div>
+<div class="card" id="xpSelected" style="padding:14px;">
+<div class="xp-selected-empty" id="xpSelectedEmpty">
             Seleziona un utente per vedere e modificare gli XP della stagione corrente.
           </div>
-
-          <div id="xpSelectedContent" style="display:none;">
-            <div class="xp-selected-head">
-              <div>
-                <strong id="xpSelectedName">—</strong>
-                <div id="xpSelectedEmail" class="small">—</div>
-                <div id="xpSelectedUid" class="mono" style="margin-top:4px;">—</div>
-              </div>
-              <span id="xpSelectedSeason" class="badge">STAGIONE —</span>
-            </div>
-
-            <div class="xp-current">
-              <span id="xpCurrentPoints">0</span>
-              <small> XP attuali</small>
-            </div>
-            <div id="xpProgressHint" class="small" style="margin-top:5px;">—</div>
-
-            <div class="sep"></div>
-
-            <div class="xp-editor-grid">
-              <div class="xp-field">
-                <label for="xpSetValue">Imposta XP esatti</label>
-                <input id="xpSetValue" type="number" min="0" step="1" placeholder="es. 2500" />
-              </div>
-
-              <div class="xp-field">
-                <label for="xpDeltaValue">Aggiungi / sottrai</label>
-                <input id="xpDeltaValue" type="number" step="1" placeholder="es. 500 oppure -200" />
-              </div>
-
-              <div class="xp-field full">
-                <label for="xpReason">Motivo della modifica</label>
-                <input id="xpReason" type="text" maxlength="180"
-                       placeholder="es. Correzione XP assegnati per errore" />
-              </div>
-            </div>
-
-            <div class="xp-action">
-              <button id="btnXpSet" class="btn primary">Imposta XP</button>
-              <button id="btnXpDelta" class="btn">Applica variazione</button>
-            </div>
-
-            <div id="xpEditStatus" class="small" style="margin-top:10px;"></div>
-
-            <div class="xp-note">
+<div id="xpSelectedContent" style="display:none;">
+<div class="xp-selected-head">
+<div>
+<strong id="xpSelectedName">—</strong>
+<div class="small" id="xpSelectedEmail">—</div>
+<div class="mono" id="xpSelectedUid" style="margin-top:4px;">—</div>
+</div>
+<span class="badge" id="xpSelectedSeason">STAGIONE —</span>
+</div>
+<div class="xp-current">
+<span id="xpCurrentPoints">0</span>
+<small> XP attuali</small>
+</div>
+<div class="small" id="xpProgressHint" style="margin-top:5px;">—</div>
+<div class="sep"></div>
+<div class="xp-editor-grid">
+<div class="xp-field">
+<label for="xpSetValue">Imposta XP esatti</label>
+<input id="xpSetValue" min="0" placeholder="es. 2500" step="1" type="number"/>
+</div>
+<div class="xp-field">
+<label for="xpDeltaValue">Aggiungi / sottrai</label>
+<input id="xpDeltaValue" placeholder="es. 500 oppure -200" step="1" type="number"/>
+</div>
+<div class="xp-field full">
+<label for="xpReason">Motivo della modifica</label>
+<input id="xpReason" maxlength="180" placeholder="es. Correzione XP assegnati per errore" type="text"/>
+</div>
+</div>
+<div class="xp-action">
+<button class="btn primary" id="btnXpSet">Imposta XP</button>
+<button class="btn" id="btnXpDelta">Applica variazione</button>
+</div>
+<div class="small" id="xpEditStatus" style="margin-top:10px;"></div>
+<div class="xp-note">
               La modifica riguarda solo il progress della stagione corrente.
               Abbassare gli XP non cancella automaticamente eventuali premi già registrati;
               aumentando gli XP, i tier si riallineano quando l'utente apre il Game Pass.
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <div class="sep"></div>
-  <div class="queue-title">Richieste achievement in attesa</div>
-  <div id="queue" class="grid"></div>
 </div>
-
+</div>
+</div>
+</div>
+</section></section>
+<section class="admin-view" data-admin-view="season" id="seasonPanel" hidden><div class="module-header"><span class="section-caption">SEASON CONTROL</span><h2>Gestione stagioni</h2><p>Apri una nuova stagione mantenendo intatto lo storico di ogni giocatore.</p></div><section aria-labelledby="seasonManagerTitle" class="card season-manager" id="seasonManager">
+<div class="mod-section-head">
+<div>
+<div class="mod-title" id="seasonManagerTitle">Gestione stagione Game Pass</div>
+<div class="mod-sub">Attiva la stagione successiva senza cancellare XP, achievement o premi delle stagioni passate.</div>
+</div>
+<button class="btn" id="btnSeasonReload" type="button">Aggiorna stato</button>
+</div>
+<div class="season-manager-grid">
+<div class="season-manager-stat">
+<span class="small">STAGIONE ATTIVA</span>
+<div class="season-manager-number" id="adminCurrentSeason">—</div>
+</div>
+<div class="season-manager-stat">
+<span class="small">PROSSIMA STAGIONE</span>
+<div class="season-manager-number season-manager-next" id="adminNextSeason">—</div>
+</div>
+</div>
+<p class="season-manager-info">
+      Nella nuova stagione tutti i giocatori ripartiranno con 0 XP e nuovi sblocchi. Lo storico resta
+      nei documenti <span class="mono">users/{uid}/seasons/season_N</span>. I cataloghi di achievement
+      e premi, invece, sono condivisi tra le stagioni: <strong>eventuali modifiche ai cataloghi possono cambiare come appare lo storico</strong>.
+    </p>
+<button class="btn season-start-btn" disabled="" id="btnStartSeason" type="button">Avvia nuova stagione</button>
+<div class="season-confirm" hidden="" id="seasonConfirmation">
+<strong id="seasonConfirmationTitle">Conferma avvio stagione</strong>
+<p>L'operazione cambia la stagione attiva per tutti. I progressi precedenti non vengono eliminati.
+      Le richieste delle stagioni passate ancora in attesa rimarranno nella coda di moderazione.</p>
+<label for="seasonConfirmText">Per confermare, digita <strong id="seasonConfirmPhrase">STAGIONE 2</strong></label>
+<input autocomplete="off" id="seasonConfirmText" placeholder="Scrivi qui la conferma" spellcheck="false" type="text"/>
+<div class="row">
+<button class="btn primary" disabled="" id="btnConfirmSeason" type="button">Conferma e avvia</button>
+<button class="btn" id="btnCancelSeason" type="button">Annulla</button>
+</div>
+</div>
+<div aria-live="polite" class="season-manager-status" id="seasonManagerStatus" role="status"></div>
+</section></section>
+<div class="admin-footer"><span>FANTABALLA <i>✳</i> CONTROL CENTER</span><span>Area riservata ai moderatori</span></div>
+</main></div>
 <script type="module" src="./moderation.js"></script>
 </body>
 </html>
