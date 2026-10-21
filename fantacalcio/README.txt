@@ -28,3 +28,5 @@ MAGLIE: colori tradizionali dei club applicati a builder, scouting e immagini ro
 MEDIE SUL SITO
 MV = media voto Champions attribuibile alla prima giornata. FM* = stima parziale: autogol e rigori parati non disponibili; alcuni altri malus non confermati. — = dato non recuperato o nessun voto. Copertura: 27 club; i totali degli altri 9 non sono separabili.
 Il CA è nascosto nelle interfacce, conservato nei file dati per il calcolo dei crediti. Non è un segreto protetto lato server. Le stime restano separate dai punteggi ufficiali e dai totali dell’admin. Bastoni: stima sospesa per l’autogol noto dallo screenshot, non estratto dal save.
+
+REGOLAMENTO CARTELLINI CORRETTO (prevale sui riferimenti precedenti): giallo -1; rosso diretto -2; doppio giallo con espulsione -2 complessivi. Il campo gol subiti è stato riscontrato con Ciccarelli: Champions 3, Serie A 6, totale club 9. Bastoni: autogol visto nello screenshot, non ancora decodificato automaticamente.
