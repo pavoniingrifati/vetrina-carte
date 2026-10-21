@@ -611,7 +611,7 @@
   <div class="app">
     <section class="left">
       <div class="topbar simplified-topbar">
-        <h1 class="app-title">Fanta Champions Fantaballa</h1><p style="font-size:12px;max-width:680px">36 club · 1086 giocatori · Save 20/09/2025. Riserve e giovanili incluse; iscrizione UEFA non verificata. Crediti calcolati dal CA con la formula per ruolo del sito. Statistiche fantacalcio da inserire.</p>
+        <h1 class="app-title">Fanta Champions Fantaballa</h1><p style="font-size:12px;max-width:680px">36 club · 1086 giocatori · Save 20/09/2025. Riserve e giovanili incluse; iscrizione UEFA non verificata. MV = media voto Champions attribuibile alla prima giornata. FM* = stima parziale: autogol e rigori parati non disponibili; alcuni altri malus non confermati. — = dato non recuperato o nessun voto. Copertura: 27 club; i totali degli altri 9 non sono separabili.</p>
       </div>
 
       <div class="credits credits-large"><span>Crediti rimanenti</span><strong id="creditsText">350/350</strong></div>
@@ -867,6 +867,11 @@ function populateNations(reset = false) {
   });
 }
 
+
+function statNumber(value) { return value === null || value === undefined || !Number.isFinite(Number(value)) ? '—' : Number(value).toFixed(2).replace('.', ','); }
+function playerMV(p) { return statNumber(p.championsStats?.averageRating); }
+function playerFM(p) { return statNumber(p.championsStats?.fantasyAverage ?? p.championsStats?.fantasyAveragePartial); }
+
 function slotHTML(slot) {
   const p = slot.playerId ? player(slot.playerId) : null;
   const active = activeSlot === slot.key ? ' active' : '';
@@ -876,7 +881,7 @@ function slotHTML(slot) {
     <div class="pitch-player">
       <div class="pitch-shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, true)}</div>
       <div class="slot-name" title="${p.name}">${p.name}</div>
-      <div class="slot-info"><span>${String(p.cost).replace('.', ',')} crediti</span></div>
+      <div class="slot-info"><span title="Media voto Champions">MV ${playerMV(p)}</span> · <span title="Fantamedia parziale, eventi incompleti">FM* ${playerFM(p)}</span></div>
       <div class="slot-nation">${ROLE_LABEL[p.role]} · ${p.nation}</div>
     </div>
   </button>`;
@@ -923,7 +928,7 @@ function renderPlayers() {
 
   els.playersList.innerHTML = shownList.map(p => {
     const canAfford = remaining() >= p.cost;
-    return `<button class="player-card ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'} onclick="pickPlayer(${p.id})"><div class="shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, false)}</div><div><div class="pname"><span class="role-mini">${p.role}</span>${p.name}</div><div class="pmeta"><span>${p.nation}</span><span>RUOLO ${p.role}</span><span>COSTO ${p.cost}</span><span>CA ${p.overall}</span><span>${p.squadGroup || ''}</span></div></div><div class="price">${p.cost}</div></button>`;
+    return `<button class="player-card ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'} onclick="pickPlayer(${p.id})"><div class="shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, false)}</div><div><div class="pname"><span class="role-mini">${p.role}</span>${p.name}</div><div class="pmeta"><span>${p.nation}</span><span>RUOLO ${p.role}</span><span>COSTO ${p.cost}</span><span>MV ${playerMV(p)} · FM* ${playerFM(p)}</span><span>${p.squadGroup || ''}</span></div></div><div class="price">${p.cost}</div></button>`;
   }).join('') || '<div style="color:#555;font-weight:900;text-align:center;padding:30px">Nessun giocatore disponibile</div>';
 }
 
@@ -1232,7 +1237,7 @@ function drawBenchSlot(ctx, cx, cy, slot) {
   ctx.fillStyle = '#111111';
   ctx.textAlign = 'center';
   ctx.font = '900 10px Inter, Arial';
-  ctx.fillText(`${p.cost} crediti`, x + 122, y + 94);
+  ctx.fillText(`MV ${playerMV(p)} · FM* ${playerFM(p)}`, x + 122, y + 94);
 }
 
 function drawPitch(ctx, x, y, w, h) {
@@ -1495,6 +1500,7 @@ function mergeOfficialStats(importedPlayers) {
     return {
       ...p,
       key,
+      championsStats: stats.championsStats ?? p.championsStats ?? null,
       games: Number(stats.games || 0),
       totalPoints: Number(stats.totalPoints || 0),
       avgPoints: Number(stats.avgPoints || 0),

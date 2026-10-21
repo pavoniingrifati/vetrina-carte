@@ -697,7 +697,7 @@
       <div>
         <div class="kicker">Fantaballa scouting room</div>
         <h1>Caratteristiche giocatori</h1>
-        <p>Champions League · 36 club · Save 20/09/2025. Consulta CA, crediti e attributi dei giocatori, incluse riserve e giovanili. Iscrizione UEFA non verificata. Statistiche fantacalcio da inserire.</p>
+        <p>Champions League · 36 club · Save 20/09/2025. Consulta crediti, medie e attributi dei giocatori, incluse riserve e giovanili. Iscrizione UEFA non verificata. MV = media voto Champions attribuibile alla prima giornata. FM* = stima parziale: autogol e rigori parati non disponibili; alcuni altri malus non confermati. — = dato non recuperato o nessun voto. Copertura: 27 club; i totali degli altri 9 non sono separabili.</p>
       </div>
       <a class="back-btn" href="index.html">← Torna al builder rosa</a>
     </section>
@@ -942,9 +942,9 @@
       const orderedClubs = [...clubs].sort((a,b) => a.name.localeCompare(b.name));
       els.clubGrid.innerHTML = orderedClubs.map(c => `
         <article class="club-card"><div class="club-head">${shirt(c.name)}<div class="club-name"><strong>${esc(c.name)}</strong><span>${esc(c.playersCount)} giocatori nel save</span></div></div>
-        <div class="club-body"><div class="mini-row"><div class="mini-stat"><span>Prima squadra</span><strong>${esc(c.firstTeamCount)}</strong></div><div class="mini-stat"><span>CA medio del club</span><strong>${esc(c.avgCA)}</strong></div></div>
+        <div class="club-body"><div class="mini-row"><div class="mini-stat"><span>Prima squadra</span><strong>${esc(c.firstTeamCount)}</strong></div><div class="mini-stat"><span>Riserve / giovanili</span><strong>${esc(c.playersCount-c.firstTeamCount)}</strong></div></div>
         <div class="mini-row"><div class="mini-stat"><span>Crediti medi</span><strong>${esc(c.avgCost)}</strong></div><div class="mini-stat"><span>Età media</span><strong>${esc(c.averageAge)}</strong></div></div>
-        <div class="mini-stat wide"><span>CA più alti del club</span>${renderXI((c.topCA || []).map(p => `${p.name} · CA ${p.ca} · ${p.cost} cr`))}</div></div></article>`).join('');
+        <div class="mini-stat wide"><span>Giocatori in evidenza</span>${renderXI((c.topCA || []).map(p => `${p.name} · ${p.cost} cr`))}</div></div></article>`).join('');
     }
 
     function populateFilters() {
@@ -1014,7 +1014,7 @@
             </div>
             <div class="badge-row">
               <span class="badge green">${esc(ROLE_LABEL[p.role] || p.role)}</span>
-              <span class="badge gold">${esc(p.cost)} crediti</span><span class="badge">CA ${esc(p.ca)}</span><span class="badge">${esc(p.squadGroup)}</span>
+              <span class="badge gold">${esc(p.cost)} crediti</span><span class="badge">MV ${playerMV(p)}</span><span class="badge" title="Stima parziale">FM* ${playerFM(p)}</span><span class="badge">${esc(p.squadGroup)}</span>
               <span class="badge dark">${esc(p.bestProfile)}</span>
             </div>
             <div class="score-grid">
@@ -1040,6 +1040,11 @@
         </div>
       `;
     }
+
+
+function statNumber(value) { return value === null || value === undefined || !Number.isFinite(Number(value)) ? '—' : Number(value).toFixed(2).replace('.', ','); }
+function playerMV(p) { return statNumber(p.championsStats?.averageRating); }
+function playerFM(p) { return statNumber(p.championsStats?.fantasyAverage ?? p.championsStats?.fantasyAveragePartial); }
 
     function openPlayer(key) {
       const p = players.find(x => x.key === key);
@@ -1069,7 +1074,7 @@
       `).join('');
 
       els.modalBody.innerHTML = `
-        <section class="profile-grid">${profiles}</section>
+        <section class="profile-grid"><div class="profile-card"><span>Media voto Champions</span><strong>${playerMV(p)}</strong></div><div class="profile-card"><span>Fantamedia parziale*</span><strong>${playerFM(p)}</strong></div><div class="profile-card"><span>Presenze</span><strong>${p.championsStats?.appearances ?? '—'}</strong></div><div class="profile-card"><span>Gol / assist</span><strong>${p.championsStats ? p.championsStats.goals + ' / ' + p.championsStats.assists : '—'}</strong></div></section><p>${esc(p.championsStats?.fantasyStatus || 'Statistiche della sola Champions non recuperate per questo giocatore.')}</p><section class="profile-grid">${profiles}</section>
         <section class="attr-groups">${groups}</section>
       `;
 

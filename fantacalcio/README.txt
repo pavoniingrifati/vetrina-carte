@@ -24,3 +24,7 @@ Il pannello admin accetta gol_subiti, rigori_parati e rigori_sbagliati (oppure g
 medie_voto_fantamedie_parziali.csv/json: export dei totali CONTINENTALI, non statistiche certificate della sola Champions. Autogol e rigori parati non disponibili (celle vuote). La stima li omette, usa i gialli e rossi cumulati senza poter eliminare le sovrapposizioni e include i rigori sbagliati letti (campo non confermato). Il voto medio usa le presenze con voto; gli eventi delle eventuali partite senza voto non sono separabili. Anche gol subiti e rossi del lettore sono non confermati. Non è una fantamedia ufficiale: le stime non sono importate nei punteggi del sito. Per ottenere medie ufficiali inserire i dati partita per partita nel pannello admin.
 
 MAGLIE: colori tradizionali dei club applicati a builder, scouting e immagini rosa esportate. Disegni stilizzati, non divise stagionali esatte; colori non estratti dal salvataggio.
+
+MEDIE SUL SITO
+MV = media voto Champions attribuibile alla prima giornata. FM* = stima parziale: autogol e rigori parati non disponibili; alcuni altri malus non confermati. — = dato non recuperato o nessun voto. Copertura: 27 club; i totali degli altri 9 non sono separabili.
+Il CA è nascosto nelle interfacce, conservato nei file dati per il calcolo dei crediti. Non è un segreto protetto lato server. Le stime restano separate dai punteggi ufficiali e dai totali dell’admin. Bastoni: stima sospesa per l’autogol noto dallo screenshot, non estratto dal save.
