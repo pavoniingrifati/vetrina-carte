@@ -675,6 +675,23 @@
       background: var(--gold);
     }
 
+
+    /* Nuove maglie vettoriali: ombra morbida, sagoma sartoriale e dettagli leggibili. */
+    .shirt, .pitch-shirt {
+      clip-path: none !important;
+      border: none !important;
+      background: transparent !important;
+      padding: 0;
+      overflow: visible;
+      filter: drop-shadow(0 3px 2px rgba(0,0,0,.27));
+      flex-shrink: 0;
+    }
+    .kit-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    .player-card .shirt { transition: transform .18s ease, filter .18s ease; }
+    .player-card:hover .shirt { transform: scale(1.07) rotate(-2deg); filter: drop-shadow(0 5px 4px rgba(0,0,0,.24)); }
+    .slot .pitch-shirt { transition: transform .18s ease; }
+    .slot:hover .pitch-shirt { transform: translateY(-2px) scale(1.04); }
+
   </style>
 </head>
 <body>
@@ -901,7 +918,23 @@ function saveLocal() { state.manager = els.managerInput.value.trim(); localStora
 function isValid() { return state.starters.every(s => s.playerId) && remaining() >= 0; }
 function showToast(text) { els.toast.textContent = text; els.toast.classList.add('show'); setTimeout(() => els.toast.classList.remove('show'), 1600); }
 const CHAMPIONS_KITS = {"A.S. Roma": {"type": "band", "colors": ["#8e1f2f", "#f6b62b"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(180deg,#8e1f2f 0 36%,#f6b62b 36% 64%,#8e1f2f 64% 100%);color:#ffffff;border:2px solid #243247;"}, "AEK Atene": {"type": "vstripes2", "colors": ["#f8ce22", "#151515"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#f8ce22 0 20%,#151515 20% 40%,#f8ce22 40% 60%,#151515 60% 80%,#f8ce22 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Arsenal": {"type": "split", "colors": ["#ef233c", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#ef233c 0 50%,#ffffff 50% 100%);color:#ffffff;border:2px solid #243247;"}, "Aston Villa": {"type": "split", "colors": ["#7b263a", "#95bfe5"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#7b263a 0 50%,#95bfe5 50% 100%);color:#ffffff;border:2px solid #243247;"}, "Borussia Dortmund": {"type": "vstripes2", "colors": ["#fde100", "#171717"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#fde100 0 20%,#171717 20% 40%,#fde100 40% 60%,#171717 60% 80%,#fde100 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Club Atlético de Madrid": {"type": "vstripes2", "colors": ["#d82030", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#d82030 0 20%,#ffffff 20% 40%,#d82030 40% 60%,#ffffff 60% 80%,#d82030 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Club Brugge KV": {"type": "vstripes2", "colors": ["#1671c5", "#111111"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#1671c5 0 20%,#111111 20% 40%,#1671c5 40% 60%,#111111 60% 80%,#1671c5 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Como 1907": {"type": "band", "colors": ["#124eab", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(180deg,#124eab 0 36%,#ffffff 36% 64%,#124eab 64% 100%);color:#ffffff;border:2px solid #243247;"}, "F.C. Barcelona": {"type": "vstripes2", "colors": ["#a50044", "#004d98"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#a50044 0 20%,#004d98 20% 40%,#a50044 40% 60%,#004d98 60% 80%,#a50044 80% 100%);color:#ffffff;border:2px solid #243247;"}, "F.C. Internazionale Milano": {"type": "vstripes2", "colors": ["#0068a8", "#101010"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#0068a8 0 20%,#101010 20% 40%,#0068a8 40% 60%,#101010 60% 80%,#0068a8 80% 100%);color:#ffffff;border:2px solid #243247;"}, "FC Bayern München": {"type": "band", "colors": ["#dc052d", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(180deg,#dc052d 0 36%,#ffffff 36% 64%,#dc052d 64% 100%);color:#ffffff;border:2px solid #243247;"}, "FC Thun Berner Oberland": {"type": "split", "colors": ["#e3212b", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#e3212b 0 50%,#ffffff 50% 100%);color:#ffffff;border:2px solid #243247;"}, "FK Bodø/Glimt": {"type": "band", "colors": ["#ffdf00", "#171717"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(180deg,#ffdf00 0 36%,#171717 36% 64%,#ffdf00 64% 100%);color:#ffffff;border:2px solid #243247;"}, "FK Crvena zvezda Beograd": {"type": "vstripes2", "colors": ["#df1f2d", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#df1f2d 0 20%,#ffffff 20% 40%,#df1f2d 40% 60%,#ffffff 60% 80%,#df1f2d 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Fenerbahçe A.Ş.": {"type": "vstripes2", "colors": ["#ffed00", "#10234c"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#ffed00 0 20%,#10234c 20% 40%,#ffed00 40% 60%,#10234c 60% 80%,#ffed00 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Feyenoord Rotterdam": {"type": "split", "colors": ["#e51f2a", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#e51f2a 0 50%,#ffffff 50% 100%);color:#ffffff;border:2px solid #243247;"}, "Futebol Clube do Porto": {"type": "vstripes2", "colors": ["#0054a6", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#0054a6 0 20%,#ffffff 20% 40%,#0054a6 40% 60%,#ffffff 60% 80%,#0054a6 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Galatasaray A.Ş.": {"type": "split", "colors": ["#a90432", "#f4a900"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#a90432 0 50%,#f4a900 50% 100%);color:#ffffff;border:2px solid #243247;"}, "Górnik Zabrze": {"type": "vstripes3", "colors": ["#ffffff", "#d4212c", "#174b99"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#ffffff 0.0000% 16.6667%,#d4212c 16.6667% 33.3333%,#174b99 33.3333% 50.0000%,#ffffff 50.0000% 66.6667%,#d4212c 66.6667% 83.3333%,#174b99 83.3333% 100.0000%);color:#ffffff;border:2px solid #243247;"}, "LOSC Lille": {"type": "band", "colors": ["#e51b2b", "#142b54"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(180deg,#e51b2b 0 36%,#142b54 36% 64%,#e51b2b 64% 100%);color:#ffffff;border:2px solid #243247;"}, "Liverpool": {"type": "solid", "colors": ["#c8102e"], "text": "#ffffff", "border": "#243247", "css": "background:#c8102e;color:#ffffff;border:2px solid #243247;"}, "Manchester City": {"type": "solid", "colors": ["#6cabdd"], "text": "#111827", "border": "#243247", "css": "background:#6cabdd;color:#111827;border:2px solid #243247;"}, "Manchester United": {"type": "band", "colors": ["#da291c", "#151515"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(180deg,#da291c 0 36%,#151515 36% 64%,#da291c 64% 100%);color:#ffffff;border:2px solid #243247;"}, "Olympique Lyonnais": {"type": "vstripes3", "colors": ["#ffffff", "#e21b3c", "#164194"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#ffffff 0.0000% 16.6667%,#e21b3c 16.6667% 33.3333%,#164194 33.3333% 50.0000%,#ffffff 50.0000% 66.6667%,#e21b3c 66.6667% 83.3333%,#164194 83.3333% 100.0000%);color:#ffffff;border:2px solid #243247;"}, "PSV": {"type": "vstripes2", "colors": ["#ed1c24", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#ed1c24 0 20%,#ffffff 20% 40%,#ed1c24 40% 60%,#ffffff 60% 80%,#ed1c24 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Paris Saint-Germain": {"type": "band", "colors": ["#10234c", "#e30613"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(180deg,#10234c 0 36%,#e30613 36% 64%,#10234c 64% 100%);color:#ffffff;border:2px solid #243247;"}, "RC Lens": {"type": "vstripes2", "colors": ["#f4d30b", "#c71b2f"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#f4d30b 0 20%,#c71b2f 20% 40%,#f4d30b 40% 60%,#c71b2f 60% 80%,#f4d30b 80% 100%);color:#ffffff;border:2px solid #243247;"}, "RasenBallsport Leipzig": {"type": "band", "colors": ["#ffffff", "#dd0741"], "text": "#111827", "border": "#243247", "css": "background:linear-gradient(180deg,#ffffff 0 36%,#dd0741 36% 64%,#ffffff 64% 100%);color:#111827;border:2px solid #243247;"}, "Real Betis Balompié": {"type": "vstripes2", "colors": ["#15934b", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#15934b 0 20%,#ffffff 20% 40%,#15934b 40% 60%,#ffffff 60% 80%,#15934b 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Real Madrid C.F.": {"type": "solid", "colors": ["#ffffff"], "text": "#111827", "border": "#243247", "css": "background:#ffffff;color:#111827;border:2px solid #243247;"}, "S.S.C. Napoli": {"type": "solid", "colors": ["#12a0d7"], "text": "#ffffff", "border": "#243247", "css": "background:#12a0d7;color:#ffffff;border:2px solid #243247;"}, "SK Slavia Praha": {"type": "split", "colors": ["#ffffff", "#d71920"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#ffffff 0 50%,#d71920 50% 100%);color:#ffffff;border:2px solid #243247;"}, "Shakhtar Donetsk": {"type": "vstripes2", "colors": ["#f58220", "#111111"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#f58220 0 20%,#111111 20% 40%,#f58220 40% 60%,#111111 60% 80%,#f58220 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Sporting Clube de Portugal": {"type": "hstripes", "colors": ["#008d45", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:repeating-linear-gradient(180deg,#008d45 0 8px,#ffffff 8px 16px);color:#ffffff;border:2px solid #243247;"}, "VfB Stuttgart": {"type": "band", "colors": ["#ffffff", "#e32221"], "text": "#111827", "border": "#243247", "css": "background:linear-gradient(180deg,#ffffff 0 36%,#e32221 36% 64%,#ffffff 64% 100%);color:#111827;border:2px solid #243247;"}, "Villarreal C.F.": {"type": "solid", "colors": ["#ffe600"], "text": "#111827", "border": "#243247", "css": "background:#ffe600;color:#111827;border:2px solid #243247;"}};
-function getNationKit(nation) { return CHAMPIONS_KITS[nation] || {type:"solid",colors:["#1c4fb8"],text:"#ffffff",border:"#163d8d",css:"background:#1c4fb8;color:#ffffff;border:2px solid #163d8d;"}; }
+// Design stilizzati: colori storici riconoscibili, non riproduzioni ufficiali delle divise stagionali.
+const KIT_OVERRIDES = {
+  'A.S. Roma': {type:'solid',colors:['#86172e','#efa92f'],trim:'#e8a83c'},
+  'Arsenal': {type:'solid',colors:['#e41d3e','#f8f8f8'],sleeve:'#f6f6f6',trim:'#fbfbfb'},
+  'Aston Villa': {type:'solid',colors:['#712640','#88c5e8'],sleeve:'#88c5e8',trim:'#94d0ec'},
+  'Borussia Dortmund': {type:'pinstripe',colors:['#ffe100','#171717'],trim:'#121212'},
+  'FC Bayern München': {type:'solid',colors:['#d30d32','#f7f8fb'],trim:'#f5f5f5'},
+  'Liverpool': {type:'solid',colors:['#c8102e','#f0d7a1'],trim:'#f0d7a1'},
+  'Manchester City': {type:'solid',colors:['#7ac1e5','#ffffff'],trim:'#ffffff'},
+  'Manchester United': {type:'solid',colors:['#d91c2c','#ffffff'],trim:'#ffffff'},
+  'Paris Saint-Germain': {type:'centerstripe',colors:['#12214f','#e11937','#ffffff'],trim:'#ffffff'},
+  'Real Madrid C.F.': {type:'solid',colors:['#fcfcff','#c4a164'],trim:'#c4a164'},
+  'S.S.C. Napoli': {type:'solid',colors:['#129fda','#ffffff'],trim:'#ffffff'},
+  'Villarreal C.F.': {type:'solid',colors:['#ffda00','#263b69'],trim:'#263b69'},
+};
+
+function getNationKit(nation) { return {...(CHAMPIONS_KITS[nation] || {type:"solid",colors:["#1c4fb8"],text:"#fff"}), ...(KIT_OVERRIDES[nation] || {})}; }
 function shirtColor(nation) { return getNationKit(nation).colors[0] || '#1c4fb8'; }
 function nationCode(nation) {
   const map = {
@@ -914,14 +947,69 @@ function nationCode(nation) {
   };
   return map[nation] || String(nation || '').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase();
 }
-function shirtStyle(nation) {
-  const kit = getNationKit(nation);
-  return `${kit.css}text-shadow:0 1px 2px #111,0 0 3px #111;`;
+// La stessa grafica SVG viene usata per tutte le miniature. Nessun file esterno o logo ufficiale.
+let kitGraphicSerial = 0;
+function kitGraphicSvg(kit, code) {
+  const colors = kit.colors || ['#1c4fb8'];
+  const a = colors[0];
+  const b = colors[1] || a;
+  const c = colors[2] || b;
+  const trim = kit.trim || (colors.length > 1 ? b : '#f6f6f6');
+  const sleeve = kit.sleeve || a;
+  const shape = 'M30 8 L39 4 Q50 10 61 4 L70 8 L88 15 L98 30 L83 44 L76 38 L76 91 Q50 96 24 91 L24 38 L17 44 L2 30 L12 15 Z';
+  const uid = `fantakit-${++kitGraphicSerial}`;
+  const type = kit.type || 'solid';
+  let pattern = '';
+  if (type === 'vstripes2' || type === 'vstripes3') {
+    const palette = type === 'vstripes3' ? [a,b,c] : [a,b];
+    // Bande sul busto: le maniche vengono dipinte a parte, come sulle maglie vere.
+    for (let i = 0; i < 7; i++) pattern += `<rect x="${24 + i * 8}" y="7" width="8.25" height="90" fill="${palette[i % palette.length]}"/>`;
+  } else if (type === 'hstripes') {
+    for (let i = 0; i < 7; i++) pattern += `<rect x="23" y="${10 + i * 13}" width="54" height="13.25" fill="${i % 2 ? b : a}"/>`;
+  } else if (type === 'split') {
+    pattern = `<rect x="49" y="6" width="29" height="90" fill="${b}"/>`;
+  } else if (type === 'band') {
+    pattern = `<rect x="23" y="36" width="54" height="23" fill="${b}"/>`;
+  } else if (type === 'centerstripe') {
+    pattern = `<rect x="42" y="5" width="16" height="93" fill="${b}"/><rect x="39" y="5" width="3" height="93" fill="${c}"/><rect x="58" y="5" width="3" height="93" fill="${c}"/>`;
+  } else if (type === 'pinstripe') {
+    pattern = `<path d="M38 19V92 M50 20V93 M62 19V92" stroke="${b}" stroke-width="1.8" opacity=".38"/>`;
+  } else if (type === 'check') {
+    for (let row = 0; row < 4; row++) for (let col = 0; col < 4; col++) if ((row+col)%2) pattern += `<rect x="${24 + 13*col}" y="${10+21*row}" width="13" height="21" fill="${b}"/>`;
+  }
+  const safeCode = String(code || 'FC').replace(/[^A-Z0-9]/g,'').slice(0,4);
+  return `<svg class="kit-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <defs>
+      <clipPath id="${uid}-clip"><path d="${shape}"/></clipPath>
+      <linearGradient id="${uid}-light" x1="0" x2="1" y1="0" y2=".2"><stop stop-color="#fff" stop-opacity=".17"/><stop offset=".34" stop-color="#fff" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".24"/></linearGradient>
+      <linearGradient id="${uid}-bottom" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".15"/></linearGradient>
+    </defs>
+    <g clip-path="url(#${uid}-clip)">
+      <path d="${shape}" fill="${a}"/>
+      ${pattern}
+      <path d="M29 9L39 4L42 16L26 41L17 45L2 30L12 15Z" fill="${sleeve}"/>
+      <path d="M61 4L71 9L88 15L98 30L83 45L74 41L58 16Z" fill="${sleeve}"/>
+      <path d="M2 30L17 44L23 36 L14 25Z M98 30L83 44L77 36L86 25Z" fill="#000" opacity=".09"/>
+      <path d="M12 15L2 30L17 44L21 37 M88 15L98 30L83 44L79 37" stroke="${trim}" stroke-width="3" fill="none" opacity=".92"/>
+      <path d="M27 12 Q25 25 24 39 M73 12 Q75 25 76 39" stroke="#fff" stroke-width=".9" stroke-dasharray="2 2.5" opacity=".3" fill="none"/>
+      <path d="M24 86 Q50 91 76 86 L76 96L24 96Z" fill="#000" opacity=".065"/>
+      <path d="${shape}" fill="url(#${uid}-light)"/>
+      <rect x="23" y="46" width="54" height="50" fill="url(#${uid}-bottom)"/>
+    </g>
+    <path d="${shape}" fill="none" stroke="#0e1321" stroke-opacity=".52" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M39 4Q50 17 61 4L58 15Q50 25 42 15Z" fill="#151c29"/>
+    <path d="M39 4Q50 17 61 4" stroke="${trim}" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+    <path d="M41 13Q50 24 59 13" stroke="#fff" stroke-opacity=".3" stroke-width="1.3" fill="none"/>
+    <path d="M31 30 L39 30 L39 40 Q35 44 31 40Z" fill="#f7f7f7" stroke="#101b2b" stroke-width=".75"/>
+    <path d="M33 33H37V38H33Z" fill="${a}"/>
+    <path d="M60 32L65 35L61 35L66 39" fill="none" stroke="#fff" stroke-opacity=".93" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="37" y="51" width="26" height="16" rx="3.5" fill="#10141c" fill-opacity=".78" stroke="#fff" stroke-opacity=".13" stroke-width=".8"/>
+    <text x="50" y="62.4" text-anchor="middle" font-size="10.5" font-family="Arial, sans-serif" font-weight="900" fill="#fff" letter-spacing=".35">${safeCode}</text>
+    <path d="M27 87 Q50 92 73 87" fill="none" stroke="#fff" stroke-opacity=".29" stroke-width="1.15"/>
+  </svg>`;
 }
-function shirtMarkup(p, pitch = false) {
-  const codeClass = pitch ? 'pitch-shirt-code' : 'shirt-code';
-  return `<span class="${codeClass}">${nationCode(p.nation)}</span>`;
-}
+
+function shirtMarkup(p) { return kitGraphicSvg(getNationKit(p.nation), nationCode(p.nation)); }
 
 function populateNations(reset = false) {
   if (reset) {
@@ -955,7 +1043,7 @@ function slotHTML(slot) {
   return `<button class="slot${active}" onclick="setActiveSlot('${slot.key}')">
     <span class="remove-mini" onclick="event.stopPropagation(); removeFromSlot('${slot.key}')">×</span>
     <div class="pitch-player">
-      <div class="pitch-shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, true)}</div>
+      <div class="pitch-shirt">${shirtMarkup(p)}</div>
       <div class="slot-name" title="${p.name}">${p.name}</div>
       <div class="slot-info" aria-label="MV ${playerMV(p)} e FM ${playerFM(p)}"><span title="Media voto Champions"><small>MV</small><strong>${playerMV(p)}</strong></span><span title="Fantamedia parziale, eventi incompleti"><small>FM*</small><strong>${playerFM(p)}</strong></span></div>
       <div class="slot-nation">${ROLE_LABEL[p.role]} · ${p.nation}</div>
@@ -1007,7 +1095,7 @@ function renderPlayers() {
     const squadGroup = p.squadGroup ? `<span>${p.squadGroup}</span>` : '';
     return `<button class="player-card ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'} onclick="pickPlayer(${p.id})">
       <div class="player-card-main">
-        <div class="shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, false)}</div>
+        <div class="shirt">${shirtMarkup(p)}</div>
         <div class="player-identity">
           <div class="pname"><span class="role-mini">${p.role}</span>${p.name}</div>
           <div class="pmeta"><span>${p.nation}</span>${squadGroup}</div>
@@ -1149,109 +1237,69 @@ function drawRoundedRect(ctx, x, y, w, h, r, fill, stroke = null, lineWidth = 1)
 }
 
 
-function buildShirtPath(ctx, x, y, w, h) {
+function kitCanvasShape(ctx) {
   ctx.beginPath();
-  ctx.moveTo(x + w * .18, y);
-  ctx.lineTo(x + w * .36, y);
-  ctx.lineTo(x + w * .42, y + h * .10);
-  ctx.lineTo(x + w * .58, y + h * .10);
-  ctx.lineTo(x + w * .64, y);
-  ctx.lineTo(x + w * .82, y);
-  ctx.lineTo(x + w, y + h * .18);
-  ctx.lineTo(x + w * .86, y + h * .42);
-  ctx.lineTo(x + w * .86, y + h);
-  ctx.lineTo(x + w * .14, y + h);
-  ctx.lineTo(x + w * .14, y + h * .42);
-  ctx.lineTo(x, y + h * .18);
+  ctx.moveTo(30,8);ctx.lineTo(39,4);ctx.quadraticCurveTo(50,10,61,4);
+  ctx.lineTo(70,8);ctx.lineTo(88,15);ctx.lineTo(98,30);ctx.lineTo(83,44);
+  ctx.lineTo(76,38);ctx.lineTo(76,91);ctx.quadraticCurveTo(50,96,24,91);
+  ctx.lineTo(24,38);ctx.lineTo(17,44);ctx.lineTo(2,30);ctx.lineTo(12,15);
   ctx.closePath();
 }
-
-function paintShirtFill(ctx, x, y, w, h, kit) {
-  const type = kit.type || 'solid';
+function kitCanvasPattern(ctx, kit) {
   const colors = kit.colors || ['#1c4fb8'];
-
-  if (type === 'solid') {
-    ctx.fillStyle = colors[0];
-    ctx.fillRect(x, y, w, h);
-    return;
+  const a=colors[0], b=colors[1]||a, c=colors[2]||b;
+  const t=kit.type || 'solid';
+  if (t === 'vstripes2' || t === 'vstripes3') {
+    const palette=t==='vstripes3'?[a,b,c]:[a,b];
+    for(let i=0;i<7;i++){ctx.fillStyle=palette[i%palette.length];ctx.fillRect(24+i*8,7,8.3,90);}
+  } else if (t === 'hstripes') {
+    for(let i=0;i<7;i++){ctx.fillStyle=i%2?b:a;ctx.fillRect(23,10+i*13,54,13.3);}
+  } else if (t === 'split') {
+    ctx.fillStyle=b;ctx.fillRect(49,6,29,90);
+  } else if (t === 'band') {
+    ctx.fillStyle=b;ctx.fillRect(23,36,54,23);
+  } else if (t === 'centerstripe') {
+    ctx.fillStyle=b;ctx.fillRect(42,5,16,93);ctx.fillStyle=c;ctx.fillRect(39,5,3,93);ctx.fillRect(58,5,3,93);
+  } else if (t === 'pinstripe') {
+    ctx.strokeStyle=b;ctx.globalAlpha=.38;ctx.lineWidth=1.8;
+    [38,50,62].forEach(x=>{ctx.beginPath();ctx.moveTo(x,19);ctx.lineTo(x,92);ctx.stroke();});ctx.globalAlpha=1;
   }
-
-  if (type === 'hstripes') {
-    for (let i=0;i<6;i++) { ctx.fillStyle=colors[i%2]; ctx.fillRect(x,y+i*h/6,w,h/6+1); }
-    return;
-  }
-
-  if (type === 'split') {
-    ctx.fillStyle = colors[0];
-    ctx.fillRect(x, y, w * 0.45, h);
-    ctx.fillStyle = colors[1] || colors[0];
-    ctx.fillRect(x + w * 0.45, y, w * 0.55, h);
-    return;
-  }
-
-  if (type === 'band') {
-    ctx.fillStyle = colors[0];
-    ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = colors[1] || '#f1c40f';
-    ctx.fillRect(x, y + h * 0.36, w, h * 0.28);
-    return;
-  }
-
-  if (type === 'vstripes2') {
-    const stripe = w / 5;
-    for (let i = 0; i < 5; i++) {
-      ctx.fillStyle = colors[i % 2];
-      ctx.fillRect(x + i * stripe, y, stripe + 1, h);
-    }
-    return;
-  }
-
-  if (type === 'vstripes3') {
-    const stripe = w / 6;
-    for (let i = 0; i < 6; i++) {
-      ctx.fillStyle = colors[i % colors.length];
-      ctx.fillRect(x + i * stripe, y, stripe + 1, h);
-    }
-    return;
-  }
-
-  if (type === 'check') {
-    const cols = 4;
-    const rows = 4;
-    const tileW = w / cols;
-    const tileH = h / rows;
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        ctx.fillStyle = colors[(r + c) % 2];
-        ctx.fillRect(x + c * tileW, y + r * tileH, tileW + 1, tileH + 1);
-      }
-    }
-    return;
-  }
-
-  ctx.fillStyle = colors[0];
-  ctx.fillRect(x, y, w, h);
 }
-
 function drawShirt(ctx, x, y, w, h, p) {
-  const kit = getNationKit(p.nation);
-  ctx.save();
-  buildShirtPath(ctx, x, y, w, h);
-  ctx.save();
-  ctx.clip();
-  paintShirtFill(ctx, x, y, w, h, kit);
+  const kit=getNationKit(p.nation), colors=kit.colors||['#1c4fb8'];
+  const primary=colors[0], trim=kit.trim||colors[1]||'#f6f6f6', sleeve=kit.sleeve||primary;
+  ctx.save();ctx.translate(x,y);ctx.scale(w/100,h/100);
+  ctx.shadowColor='rgba(0,0,0,.24)';ctx.shadowBlur=4;ctx.shadowOffsetY=3;
+  kitCanvasShape(ctx);ctx.fillStyle=primary;ctx.fill();
+  ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  ctx.save();kitCanvasShape(ctx);ctx.clip();
+  kitCanvasPattern(ctx,kit);
+  ctx.fillStyle=sleeve;
+  ctx.beginPath();ctx.moveTo(29,9);ctx.lineTo(39,4);ctx.lineTo(42,16);ctx.lineTo(26,41);ctx.lineTo(17,45);ctx.lineTo(2,30);ctx.lineTo(12,15);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(61,4);ctx.lineTo(71,9);ctx.lineTo(88,15);ctx.lineTo(98,30);ctx.lineTo(83,45);ctx.lineTo(74,41);ctx.lineTo(58,16);ctx.closePath();ctx.fill();
+  ctx.strokeStyle=trim;ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(12,15);ctx.lineTo(2,30);ctx.lineTo(17,44);ctx.moveTo(88,15);ctx.lineTo(98,30);ctx.lineTo(83,44);ctx.stroke();
+  const shine=ctx.createLinearGradient(0,0,100,34);
+  shine.addColorStop(0,'rgba(255,255,255,.20)');shine.addColorStop(.40,'rgba(255,255,255,0)');shine.addColorStop(1,'rgba(0,0,0,.18)');
+  ctx.fillStyle=shine;ctx.fillRect(0,0,100,100);
+  const fade=ctx.createLinearGradient(0,25,0,98);
+  fade.addColorStop(0,'rgba(0,0,0,0)');fade.addColorStop(1,'rgba(0,0,0,.16)');
+  ctx.fillStyle=fade;ctx.fillRect(0,25,100,75);
+  ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1;ctx.setLineDash([2,2.5]);
+  ctx.beginPath();ctx.moveTo(27,12);ctx.quadraticCurveTo(25,25,24,39);ctx.moveTo(73,12);ctx.quadraticCurveTo(75,25,76,39);ctx.stroke();ctx.setLineDash([]);
   ctx.restore();
-
-  buildShirtPath(ctx, x, y, w, h);
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = kit.border || 'rgba(255,255,255,.35)';
-  ctx.stroke();
-
-  ctx.fillStyle = kit.text || '#ffffff';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = '900 13px Inter, Arial';
-  ctx.fillText(nationCode(p.nation), x + w / 2, y + h * .28);
+  kitCanvasShape(ctx);ctx.lineWidth=2.2;ctx.strokeStyle='rgba(14,19,33,.52)';ctx.stroke();
+  ctx.beginPath();ctx.moveTo(39,4);ctx.quadraticCurveTo(50,17,61,4);ctx.lineTo(58,15);ctx.quadraticCurveTo(50,25,42,15);ctx.closePath();ctx.fillStyle='#151c29';ctx.fill();
+  ctx.beginPath();ctx.moveTo(39,4);ctx.quadraticCurveTo(50,17,61,4);ctx.strokeStyle=trim;ctx.lineWidth=3.6;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(31,30);ctx.lineTo(39,30);ctx.lineTo(39,40);ctx.quadraticCurveTo(35,44,31,40);ctx.closePath();ctx.fillStyle='#f7f7f7';ctx.fill();ctx.strokeStyle='#101b2b';ctx.lineWidth=.75;ctx.stroke();
+  ctx.fillStyle=primary;ctx.fillRect(33,33,4,5);
+  ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(60,32);ctx.lineTo(65,35);ctx.lineTo(61,35);ctx.lineTo(66,39);ctx.stroke();
+  // Pettorina con sigla: sempre ad alto contrasto, anche sulle maglie bianche.
+  ctx.beginPath();ctx.roundRect(37,51,26,16,3.5);ctx.fillStyle='rgba(16,20,28,.82)';ctx.fill();
+  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 10.5px Arial';
+  ctx.fillText(nationCode(p.nation),50,59.3,25);
+  ctx.strokeStyle='rgba(255,255,255,.26)';ctx.lineWidth=1.15;
+  ctx.beginPath();ctx.moveTo(27,87);ctx.quadraticCurveTo(50,92,73,87);ctx.stroke();
   ctx.restore();
 }
 
