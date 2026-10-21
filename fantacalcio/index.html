@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FantaMondiale FM - Squadra</title>
+  <title>FantaChampions FM - Squadra</title>
   <style>
     :root {
       --bg: #111111;
@@ -611,7 +611,7 @@
   <div class="app">
     <section class="left">
       <div class="topbar simplified-topbar">
-        <h1 class="app-title">Fanta mondiale Fantaballa</h1>
+        <h1 class="app-title">Fanta Champions Fantaballa</h1><p style="font-size:12px;max-width:680px">36 club · 1086 giocatori · Save 20/09/2025. Riserve e giovanili incluse; iscrizione UEFA non verificata. Crediti calcolati dal CA con la formula per ruolo del sito. Statistiche fantacalcio da inserire.</p>
       </div>
 
       <div class="credits credits-large"><span>Crediti rimanenti</span><strong id="creditsText">350/350</strong></div>
@@ -718,7 +718,7 @@ function buildPlayers() {
     const role = item.role;
     const overall = Number(item.overall || item.ca || 0);
     const position = item.position || item.fmRole || role;
-    const rating = Number(item.rating || overall || 1);
+    const rating = Number(item.rating || Math.round(overall / 2) || 1);
     const cost = Number(item.cost || calculateImportedPlayerCost(rating, role));
     const popularity = ((h % 500) / 10).toFixed(1);
     const fpm = (9 + ((h % 1150) / 100)).toFixed(2).replace('.', ',');
@@ -785,7 +785,7 @@ async function loadPlayersDatabase() {
 }
 
 let players = [];
-let state = JSON.parse(localStorage.getItem('fm_club_state') || 'null') || newState('442');
+let state = JSON.parse(localStorage.getItem('fm_champions2_state_v1') || 'null') || newState('442');
 let activeSlot = null;
 let roleFilter = 'all';
 
@@ -825,7 +825,7 @@ function rosterProjection() {
 function formatOneDecimal(value) {
   return Number(value || 0).toFixed(1);
 }
-function saveLocal() { state.manager = els.managerInput.value.trim(); localStorage.setItem('fm_club_state', JSON.stringify(state)); }
+function saveLocal() { state.manager = els.managerInput.value.trim(); localStorage.setItem('fm_champions2_state_v1', JSON.stringify(state)); }
 function isValid() { return state.starters.every(s => s.playerId) && remaining() >= 0; }
 function showToast(text) { els.toast.textContent = text; els.toast.classList.add('show'); setTimeout(() => els.toast.classList.remove('show'), 1600); }
 function getNationKit(nation) {
@@ -932,7 +932,7 @@ function renderPlayers() {
 
   els.playersList.innerHTML = shownList.map(p => {
     const canAfford = remaining() >= p.cost;
-    return `<button class="player-card ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'} onclick="pickPlayer(${p.id})"><div class="shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, false)}</div><div><div class="pname"><span class="role-mini">${p.role}</span>${p.name}</div><div class="pmeta"><span>${p.nation}</span><span>RUOLO ${p.role}</span><span>COSTO ${p.cost}</span></div></div><div class="price">${p.cost}</div></button>`;
+    return `<button class="player-card ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'} onclick="pickPlayer(${p.id})"><div class="shirt" style="${shirtStyle(p.nation)}">${shirtMarkup(p, false)}</div><div><div class="pname"><span class="role-mini">${p.role}</span>${p.name}</div><div class="pmeta"><span>${p.nation}</span><span>RUOLO ${p.role}</span><span>COSTO ${p.cost}</span><span>CA ${p.overall}</span><span>${p.squadGroup || ''}</span></div></div><div class="price">${p.cost}</div></button>`;
   }).join('') || '<div style="color:#555;font-weight:900;text-align:center;padding:30px">Nessun giocatore disponibile</div>';
 }
 
@@ -1020,7 +1020,7 @@ function buildShareCard() {
   card.innerHTML = `
     <div class="share-head">
       <div>
-        <div class="share-title">Fanta mondiale Fantaballa</div>
+        <div class="share-title">Fanta Champions Fantaballa</div>
         <div class="share-subtitle">${teamName}</div>
       </div>
       <div class="share-meta">
@@ -1030,7 +1030,7 @@ function buildShareCard() {
       </div>
     </div>
     <div class="pitch-wrap"></div>
-    <div class="share-footer">Gli 11 titolari · Generato con Fanta mondiale Fantaballa</div>
+    <div class="share-footer">Gli 11 titolari · Generato con Fanta Champions Fantaballa</div>
   `;
   card.querySelector('.pitch-wrap').appendChild(pitchClone);
   return card;
@@ -1386,7 +1386,7 @@ async function createRosterCanvas() {
   ctx.fillStyle = '#bdbdbd';
   ctx.font = '800 20px Inter, Arial';
   ctx.textAlign = 'center';
-  ctx.fillText('Titolari e panchina · Generato con Fanta mondiale Fantaballa', 540, 1790);
+  ctx.fillText('Titolari e panchina · Generato con Fanta Champions Fantaballa', 540, 1790);
 
   return canvas;
 }
@@ -1414,7 +1414,7 @@ async function shareRoster() {
 
     if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
       await navigator.share({
-        title: 'Fanta mondiale Fantaballa',
+        title: 'Fanta Champions Fantaballa',
         text: 'La mia formazione titolare',
         files: [file]
       });
@@ -1618,7 +1618,7 @@ async function submitFormationToGoogleSheet() {
       body: JSON.stringify(payload)
     });
 
-    localStorage.setItem('fm_club_last_submit', JSON.stringify({
+    localStorage.setItem('fm_champions2_last_submit_v1', JSON.stringify({
       at: new Date().toISOString(),
       squadra: payload.squadra,
       modulo: payload.modulo,
@@ -1739,7 +1739,7 @@ function selectSendText() {
 
 function exportRoster() {
   const data = {
-    competizione: 'FantaMondiale FM',
+    competizione: 'FantaChampions FM',
     squadra: els.managerInput.value.trim() || 'Senza nome',
     modulo: state.module,
     budget: BUDGET,
@@ -1785,3 +1785,4 @@ document.addEventListener('keydown', (event) => { if (event.key === 'Escape') cl
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </body>
 </html>
+

@@ -697,7 +697,7 @@
       <div>
         <div class="kicker">Fantaballa scouting room</div>
         <h1>Caratteristiche giocatori</h1>
-        <p>Consulta costo, club, ruolo, caratteristiche complete, classifica prevista e probabili formazioni prima di costruire la rosa.</p>
+        <p>Champions League · 36 club · Save 20/09/2025. Consulta CA, crediti e attributi dei giocatori, incluse riserve e giovanili. Iscrizione UEFA non verificata. Statistiche fantacalcio da inserire.</p>
       </div>
       <a class="back-btn" href="index.html">← Torna al builder rosa</a>
     </section>
@@ -705,7 +705,7 @@
     <section class="dashboard" id="dashboard"></section>
 
     <section class="section-title">
-      <h2>Club, classifica prevista e probabili formazioni</h2>
+      <h2>Le 36 squadre della fase campionato</h2>
     </section>
     <section class="club-grid" id="clubGrid"></section>
 
@@ -731,7 +731,7 @@
         <option value="Fisico">Fisico</option>
         <option value="Mentale">Mentale</option>
         <option value="Fascia">Fascia</option>
-        <option value="Piazzati">Piazzati</option>
+        <option value="Piazzati">Piazzati</option><option value="Portiere">Portiere</option>
       </select>
       <select id="sortBy">
         <option value="cost_desc">Costo ↓</option>
@@ -813,9 +813,11 @@
       Strength: 'Forza'
     };
 
+    Object.assign(ATTR_LABELS, {'Handling':'Presa','Aerial Reach':'Estensione aerea','Command of Area':'Comando area','Communication':'Comunicazione','Kicking':'Rinvii','Throwing':'Rimesse','One on Ones':'Uno contro uno','Reflexes':'Riflessi','Rushing Out':'Uscite','Punching':'Respinta di pugno','Eccentricity':'Eccentricità'});
     const GROUPS = {
       'Tecniche': ['Corners','Dribbling','Crossing','Finishing','First Touch','Freekicks','Heading','Longshots','Longthrows','Marking','Passing','Penalty Taking','Tackling','Technique'],
       'Psicologia': ['Aggression','Anticipation','Bravery','Composure','Decisions','Concentration','Determination','Flair','Leadership','Positioning','Off The Ball','Teamwork','Vision','Workrate'],
+      'Portiere': ['Handling','Aerial Reach','Command of Area','Communication','Kicking','Throwing','One on Ones','Reflexes','Rushing Out','Punching','Eccentricity'],
       'Fisiche': ['Acceleration','Agility','Balance (E)','Jumping','Natural Fitness','Pace','Stamina','Strength']
     };
 
@@ -937,33 +939,12 @@
     }
 
     function renderClubs() {
-      const orderedClubs = [...clubs].sort((a,b) => Number(a.predictedRank || 999) - Number(b.predictedRank || 999));
+      const orderedClubs = [...clubs].sort((a,b) => a.name.localeCompare(b.name));
       els.clubGrid.innerHTML = orderedClubs.map(c => `
-        <article class="club-card">
-          <div class="club-head">
-            ${shirt(c.name)}
-            <div class="club-name">
-              <strong>${esc(c.name)}</strong>
-              <span>${c.playersCount || 0} giocatori</span>
-            </div>
-          </div>
-          <div class="club-body">
-            <div class="mini-row">
-              <div class="mini-stat"><span>Classifica prevista</span><strong><span class="rank-badge">${esc(ordinalRank(c.predictedRank))}</span></strong></div>
-              <div class="mini-stat"><span>Modulo stampa</span><strong>${c.predictedFormation ? esc(c.predictedFormation) : 'Da inserire'}</strong></div>
-            </div>
-            <div class="mini-row">
-              <div class="mini-stat"><span>Stile di gioco</span><strong>${esc(c.tactics?.playingStyle || 'Da inserire')}</strong></div>
-              <div class="mini-stat"><span>Pressing</span><strong>${esc(c.tactics?.pressing || 'Da inserire')}</strong></div>
-            </div>
-            <div class="mini-row">
-              <div class="mini-stat"><span>Marcatura</span><strong>${esc(c.tactics?.marking || 'Da inserire')}</strong></div>
-              <div class="mini-stat"><span>Età media</span><strong>${esc(c.tactics?.averageAge ?? 'Da inserire')}</strong></div>
-            </div>
-            <div class="mini-stat wide"><span>Probabile XI</span>${renderXI(c.predictedXI)}</div>
-          </div>
-        </article>
-      `).join('');
+        <article class="club-card"><div class="club-head">${shirt(c.name)}<div class="club-name"><strong>${esc(c.name)}</strong><span>${esc(c.playersCount)} giocatori nel save</span></div></div>
+        <div class="club-body"><div class="mini-row"><div class="mini-stat"><span>Prima squadra</span><strong>${esc(c.firstTeamCount)}</strong></div><div class="mini-stat"><span>CA medio del club</span><strong>${esc(c.avgCA)}</strong></div></div>
+        <div class="mini-row"><div class="mini-stat"><span>Crediti medi</span><strong>${esc(c.avgCost)}</strong></div><div class="mini-stat"><span>Età media</span><strong>${esc(c.averageAge)}</strong></div></div>
+        <div class="mini-stat wide"><span>CA più alti del club</span>${renderXI((c.topCA || []).map(p => `${p.name} · CA ${p.ca} · ${p.cost} cr`))}</div></div></article>`).join('');
     }
 
     function populateFilters() {
@@ -1033,7 +1014,7 @@
             </div>
             <div class="badge-row">
               <span class="badge green">${esc(ROLE_LABEL[p.role] || p.role)}</span>
-              <span class="badge gold">${esc(p.cost)} crediti</span>
+              <span class="badge gold">${esc(p.cost)} crediti</span><span class="badge">CA ${esc(p.ca)}</span><span class="badge">${esc(p.squadGroup)}</span>
               <span class="badge dark">${esc(p.bestProfile)}</span>
             </div>
             <div class="score-grid">
@@ -1080,7 +1061,7 @@
         </div>
       `).join('');
 
-      const groups = Object.entries(GROUPS).map(([group, attrs]) => `
+      const groups = Object.entries(GROUPS).filter(([group]) => group !== 'Portiere' || p.role === 'P').map(([group, attrs]) => `
         <section class="attr-group">
           <h3>${esc(group)}</h3>
           ${attrs.map(a => attrRow(p, a)).join('')}
