@@ -331,6 +331,31 @@
       gap: 12px;
     }
 
+    /* Caricamento progressivo: poche schede nel DOM, senza limitare ricerca e filtri. */
+    .load-more-wrap {
+      margin: 22px auto 8px;
+      width: min(460px, 100%);
+      display: grid;
+      justify-items: stretch;
+      gap: 9px;
+      text-align: center;
+    }
+    .load-more-btn {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(115deg, var(--green), #71e6a6);
+      color: #081911;
+      font-size: 14px;
+      font-weight: 1000;
+      box-shadow: 0 10px 28px rgba(0,200,117,.16);
+      transition: transform .15s ease, filter .15s ease;
+    }
+    .load-more-btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+    .load-more-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+    .load-more-info { color: var(--muted); font-size: 12px; font-weight: 750; }
+    [hidden] { display: none !important; }
+
     .player-card {
       background: #181818;
       border: 1px solid var(--line);
@@ -750,6 +775,10 @@
     </div>
 
     <section class="players-grid" id="playersGrid"></section>
+    <div class="load-more-wrap" id="loadMoreWrap" hidden>
+      <button class="load-more-btn" id="loadMoreBtn" type="button">Mostra altri giocatori</button>
+      <div class="load-more-info" id="loadMoreInfo"></div>
+    </div>
   </main>
 
   <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
@@ -820,11 +849,17 @@
     let players = [];
     let clubs = [];
     let clubByName = {};
+    const PLAYERS_PER_PAGE = 48;
+    let visiblePlayerCount = 0;
+    let searchDebounceTimer;
 
     const els = {
       dashboard: document.getElementById('dashboard'),
       playersGrid: document.getElementById('playersGrid'),
       resultCount: document.getElementById('resultCount'),
+      loadMoreWrap: document.getElementById('loadMoreWrap'),
+      loadMoreBtn: document.getElementById('loadMoreBtn'),
+      loadMoreInfo: document.getElementById('loadMoreInfo'),
       search: document.getElementById('search'),
       clubFilter: document.getElementById('clubFilter'),
       roleFilter: document.getElementById('roleFilter'),
@@ -975,16 +1010,21 @@
       return list;
     }
 
-    function renderPlayers() {
+    function renderPlayers(append = false) {
       const list = filteredPlayers();
-      els.resultCount.textContent = `${list.length} giocatori mostrati su ${players.length}`;
+      const previousCount = append ? visiblePlayerCount : 0;
+      visiblePlayerCount = Math.min(list.length, previousCount + PLAYERS_PER_PAGE);
+      const shownPlayers = list.slice(previousCount, visiblePlayerCount);
+
+      els.resultCount.textContent = `${visiblePlayerCount} di ${list.length} risultati visibili · ${players.length} giocatori nel database`;
 
       if (!list.length) {
         els.playersGrid.innerHTML = '<div class="empty">Nessun giocatore trovato con questi filtri.</div>';
+        els.loadMoreWrap.hidden = true;
         return;
       }
 
-      els.playersGrid.innerHTML = list.map(p => {
+      const markup = shownPlayers.map(p => {
         const topSkills = (p.topSkills || []).slice(0, 4).map(s => `
           <div class="skill-row ${valueClass(s.value)}"><span>${esc(attrLabel(s.key || s.name))}</span><b>${esc(s.value)}</b></div>
         `).join('');
@@ -1013,6 +1053,20 @@
           </article>
         `;
       }).join('');
+
+      if (append) {
+        els.playersGrid.insertAdjacentHTML('beforeend', markup);
+      } else {
+        els.playersGrid.innerHTML = markup;
+      }
+
+      const remaining = list.length - visiblePlayerCount;
+      els.loadMoreWrap.hidden = remaining === 0;
+      if (remaining) {
+        const nextCount = Math.min(PLAYERS_PER_PAGE, remaining);
+        els.loadMoreBtn.textContent = `Mostra altri ${nextCount} giocatori`;
+        els.loadMoreInfo.textContent = `${remaining} ancora disponibili con questi filtri`;
+      }
     }
 
     function attrRow(player, key) {
@@ -1100,13 +1154,18 @@ function playerFM(p) { return statNumber(p.championsStats?.fantasyAverage ?? p.c
       if (event.key === 'Escape') closeModal();
     });
 
-    ['input','change'].forEach(eventName => {
-      els.search.addEventListener(eventName, renderPlayers);
-      els.clubFilter.addEventListener(eventName, renderPlayers);
-      els.roleFilter.addEventListener(eventName, renderPlayers);
-      els.profileFilter.addEventListener(eventName, renderPlayers);
-      els.sortBy.addEventListener(eventName, renderPlayers);
+    // Ricerca sul database completo, aggiornamento con breve debounce durante la digitazione.
+    els.search.addEventListener('input', () => {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => renderPlayers(), 180);
     });
+    [els.clubFilter, els.roleFilter, els.profileFilter, els.sortBy].forEach(control => {
+      control.addEventListener('change', () => {
+        clearTimeout(searchDebounceTimer);
+        renderPlayers();
+      });
+    });
+    els.loadMoreBtn.addEventListener('click', () => renderPlayers(true));
 
     async function loadData() {
       try {
@@ -1128,6 +1187,7 @@ function playerFM(p) { return statNumber(p.championsStats?.fantasyAverage ?? p.c
         renderPlayers();
       } catch (err) {
         els.resultCount.textContent = 'Errore caricamento dati';
+        els.loadMoreWrap.hidden = true;
         els.playersGrid.innerHTML = `<div class="empty">Non riesco a caricare i JSON. Controlla che scouting.html, players_skills.json e clubs_data.json siano nella stessa cartella online.<br><br>${esc(err.message)}</div>`;
       }
     }
