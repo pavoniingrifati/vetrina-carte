@@ -689,6 +689,7 @@
       .modal-header { grid-template-columns: auto 1fr auto; }
       .attr { grid-template-columns: 98px 1fr 28px; }
     }
+    .season-table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; } .season-table th,.season-table td { padding:9px; text-align:left; border-bottom:1px solid #d8dee8; white-space:nowrap; }
   </style>
 </head>
 <body>
@@ -941,11 +942,13 @@
     function renderClubs() {
       const orderedClubs = [...clubs].sort((a,b) => a.name.localeCompare(b.name));
       els.clubGrid.innerHTML = orderedClubs.map(c => `
-        <article class="club-card"><div class="club-head">${shirt(c.name)}<div class="club-name"><strong>${esc(c.name)}</strong><span>${esc(c.playersCount)} giocatori nel save</span></div></div>
+        <article class="club-card"><div class="club-head">${shirt(c.name)}<div class="club-name"><strong>${esc(c.name)}</strong><span>${esc(c.playersCount)} giocatori nel save</span><button class="details-btn club-roster-btn" type="button" data-club-uid="${c.uid}">Vedi rosa</button></div></div>
         <div class="club-body"><div class="mini-row"><div class="mini-stat"><span>Prima squadra</span><strong>${esc(c.firstTeamCount)}</strong></div><div class="mini-stat"><span>Riserve / giovanili</span><strong>${esc(c.playersCount-c.firstTeamCount)}</strong></div></div>
         <div class="mini-row"><div class="mini-stat"><span>Crediti medi</span><strong>${esc(c.avgCost)}</strong></div><div class="mini-stat"><span>Età media</span><strong>${esc(c.averageAge)}</strong></div></div>
         <div class="mini-stat wide"><span>Giocatori in evidenza</span>${renderXI((c.topCA || []).map(p => `${p.name} · ${p.cost} cr`))}</div></div></article>`).join('');
     }
+
+    els.clubGrid.addEventListener('click', event => { const button=event.target.closest('[data-club-uid]'); if (!button) return; const club=clubs.find(c=>String(c.uid)===button.dataset.clubUid); if (club) showClubRoster(club.name); });
 
     function populateFilters() {
       clubs.forEach(c => {
@@ -1046,6 +1049,26 @@ function statNumber(value) { return value === null || value === undefined || !Nu
 function playerMV(p) { return statNumber(p.championsStats?.averageRating); }
 function playerFM(p) { return statNumber(p.championsStats?.fantasyAverage ?? p.championsStats?.fantasyAveragePartial); }
 
+    function showClubRoster(name) {
+      els.clubFilter.value = name;
+      els.roleFilter.value = 'all';
+      els.profileFilter.value = 'all';
+      els.search.value = '';
+      renderPlayers();
+      els.playersGrid.scrollIntoView({behavior:'smooth',block:'start'});
+    }
+    function profileDate(value) {
+      if (!value) return '—';
+      const parts = String(value).split('-');
+      return parts.length === 3 ? parts.reverse().join('/') : value;
+    }
+    function renderSaveProfile(p) {
+      const r = p.profile || {};
+      const cells = [ ['Età',r.age == null ? '—' : r.age + ' anni'],['Data di nascita',profileDate(r.birthDate)],['Altezza',r.heightCm ? r.heightCm + ' cm':'—'],['Piede sinistro',r.leftFoot == null ? '—':r.leftFoot + '/20'],['Piede destro',r.rightFoot == null ? '—':r.rightFoot + '/20'],['Al club dal',profileDate(r.clubJoinDate)],['Inizio contratto',profileDate(r.contractStart)],['Scadenza contratto',profileDate(r.contractEnd)],['Gruppo',p.squadGroup || '—'],['Posizioni',p.positions || p.position || '—'] ];
+      const labels = {league:'Campionato nazionale',cup:'Coppe nazionali',continental:'Coppe continentali (totale, inclusi preliminari)',overall:'Totale club'};
+      const rows = (p.seasonStats || []).map(t => `<tr><td>${esc(labels[t.kind] || t.kind)}</td><td>${t.starts + t.substitute_appearances}</td><td>${t.minutes}</td><td>${t.goals}</td><td>${t.assists}</td><td>${statNumber(t.expected_goals)}</td><td>${t.yellow_cards}</td><td>${t.red_cards}</td><td>${p.role==='P'?t.goals_allowed:'—'}</td><td>${statNumber(t.average_rating)}</td></tr>`).join('');
+      return `<h3>Scheda dal salvataggio</h3><p>${esc(r.fullName || p.name)} · ${esc(r.source || '')}</p><section class="profile-grid">${cells.map(([label,value])=>`<div class="profile-card"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('')}</section>${r.onLoan ? `<p>In prestito da ${esc(r.loanParentClub || 'club non risolto')} fino al ${profileDate(r.loanEnd)}</p>`:''}<h3>Statistiche stagionali del profilo</h3><p>I totali continentali possono includere preliminari e altre coppe; la riga Champions separata sotto mantiene la copertura già verificata.</p><div style="overflow-x:auto"><table class="season-table"><thead><tr><th>Competizione</th><th>Pres.</th><th>Min.</th><th>Gol</th><th>Assist</th><th>xG</th><th>Gialli</th><th>Rossi</th><th>Subiti</th><th>MV</th></tr></thead><tbody>${rows || '<tr><td colspan="10">Statistiche non recuperate</td></tr>'}</tbody></table></div><h3>Champions — prima giornata attribuibile</h3>`;
+    }
     function openPlayer(key) {
       const p = players.find(x => x.key === key);
       if (!p) return;
@@ -1073,7 +1096,7 @@ function playerFM(p) { return statNumber(p.championsStats?.fantasyAverage ?? p.c
         </section>
       `).join('');
 
-      els.modalBody.innerHTML = `
+      els.modalBody.innerHTML = `${renderSaveProfile(p)}
         <section class="profile-grid"><div class="profile-card"><span>Media voto Champions</span><strong>${playerMV(p)}</strong></div><div class="profile-card"><span>Fantamedia parziale*</span><strong>${playerFM(p)}</strong></div><div class="profile-card"><span>Presenze</span><strong>${p.championsStats?.appearances ?? '—'}</strong></div><div class="profile-card"><span>Gol / assist</span><strong>${p.championsStats ? p.championsStats.goals + ' / ' + p.championsStats.assists : '—'}</strong></div></section><p>${esc(p.championsStats?.fantasyStatus || 'Statistiche della sola Champions non recuperate per questo giocatore.')}</p><section class="profile-grid">${profiles}</section>
         <section class="attr-groups">${groups}</section>
       `;
