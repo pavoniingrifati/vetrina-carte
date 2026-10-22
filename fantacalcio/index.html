@@ -693,6 +693,106 @@
     .slot:hover .pitch-shirt { transform: translateY(-2px) scale(1.04); }
 
     .load-more-players { width: 100%; padding: 14px; border-radius: 8px; background: #161616; color: #fff; font-weight: 850; margin: 6px 0; }
+
+    /* Nei desktop intermedi evita lo sbordo dell'intera griglia principale. */
+    @media (min-width: 1051px) and (max-width: 1150px) {
+      .app {
+        grid-template-columns: minmax(0, 1fr) 390px;
+        gap: 18px;
+        padding: 32px 20px 24px;
+      }
+    }
+
+    /* Formazione — schede completamente dentro il campo, senza sbordi.
+       Le stesse proporzioni valgono per titolari e panchina. */
+    .pitch { max-width: 100%; }
+    .formation {
+      min-width: 0;
+      grid-template-rows: repeat(4, minmax(0, 1fr));
+      padding: 12px 22px;
+    }
+    .formation .line {
+      width: 100%;
+      min-width: 0;
+      gap: 8px !important;
+      justify-content: space-evenly !important;
+    }
+    .formation .slot {
+      width: min(76px, calc((100% - 36px) / 5));
+      max-width: 100%;
+      min-width: 0;
+      flex: 0 1 auto;
+      padding: 6px 4px;
+    }
+    .slot .pitch-player {
+      width: 100%;
+      min-width: 0;
+      gap: 3px;
+    }
+    .slot .pitch-shirt { max-width: 100%; }
+    .slot .slot-name,
+    .slot .slot-info,
+    .slot .slot-nation {
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+    .slot .slot-name,
+    .slot .slot-nation {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .slot .slot-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .slot .slot-info span { min-width: 0; overflow: hidden; padding: 3px 1px; }
+    .slot .slot-info small { font-size: 7px; line-height: 1.15; }
+    .slot .slot-info strong { font-size: 8px; letter-spacing: -.15px; font-variant-numeric: tabular-nums; line-height: 1.15; }
+    .slot .slot-nation { font-size: 7px; line-height: 1.2; }
+    .bench {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: clamp(4px, 1.4vw, 12px);
+      justify-items: center;
+      align-items: stretch;
+    }
+    .bench .slot { width: min(100%, 76px); min-width: 0; }
+
+    @media (max-width: 760px) {
+      .formation {
+        padding: 11px 8px;
+        grid-template-rows: repeat(4, minmax(0, 1fr));
+      }
+      .formation .line { gap: 3px !important; }
+      .formation .slot {
+        width: min(65px, calc((100% - 16px) / 5));
+        min-height: 0;
+        padding: 5px 3px;
+      }
+      .slot .slot-name { font-size: 7.8px; line-height: 1.12; padding: 3px 2px; }
+      .slot .slot-info small { font-size: 6.6px; }
+      .slot .slot-info strong { font-size: 7.7px; }
+      .slot .slot-nation { font-size: 6.8px; }
+      .bench { display: grid; gap: 6px; }
+      .bench .slot { min-height: 0; }
+    }
+    @media (max-width: 420px) {
+      .formation { padding: 9px 6px; }
+      .formation .slot { width: min(60px, calc((100% - 14px) / 5)); padding: 4px 2px; }
+      .slot .slot-name { font-size: 7.1px; }
+      .slot .slot-info span { padding: 3px 0; }
+      .slot .slot-info small { font-size: 6px; }
+      .slot .slot-info strong { font-size: 7.2px; }
+      .slot .slot-nation { font-size: 6.4px; }
+    }
+    @media (max-width: 350px) {
+      .formation { padding-inline: 4px; }
+      .formation .slot { width: min(51px, calc((100% - 12px) / 5)); padding: 4px 1px; }
+      .slot .slot-info strong { font-size: 6.6px; }
+      .slot .slot-info small { font-size: 5.8px; }
+      .slot .slot-name { font-size: 6.6px; }
+    }
   </style>
 </head>
 <body>
@@ -1056,7 +1156,7 @@ function slotHTML(slot) {
       <div class="pitch-shirt">${shirtMarkup(p)}</div>
       <div class="slot-name" title="${p.name}">${p.name}</div>
       <div class="slot-info" aria-label="MV ${playerMV(p)} e FM ${playerFM(p)}"><span title="Media voto Champions"><small>MV</small><strong>${playerMV(p)}</strong></span><span title="Fantamedia parziale, eventi incompleti"><small>FM*</small><strong>${playerFM(p)}</strong></span></div>
-      <div class="slot-nation">${ROLE_LABEL[p.role]} · ${p.nation}</div>
+      <div class="slot-nation" title="${p.nation}">${p.nation}</div>
     </div>
   </button>`;
 }
@@ -1369,7 +1469,7 @@ function drawPlayerCard(ctx, cx, cy, p) {
   drawRoundedRect(ctx, x + 12, y + 107, w - 24, 22, 6, '#f2f2f2', '#d8d8d8', 1);
   ctx.fillStyle = '#111111';
   ctx.font = '900 10px Inter, Arial';
-  ctx.fillText(`${ROLE_LABEL[p.role]}`, cx, y + 118);
+  ctx.fillText(`MV ${playerMV(p)}  ·  FM* ${playerFM(p)}`, cx, y + 118, w - 32);
 
   ctx.fillStyle = '#606060';
   ctx.font = '900 9px Inter, Arial';
