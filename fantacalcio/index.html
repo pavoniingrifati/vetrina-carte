@@ -699,7 +699,7 @@
   <div class="app">
     <section class="left">
       <div class="topbar simplified-topbar">
-        <h1 class="app-title">Fanta Champions Fantaballa</h1><p style="font-size:12px;max-width:680px">36 club · 1086 giocatori · Save 20/09/2025. Riserve e giovanili incluse; iscrizione UEFA non verificata. MV = media voto Champions attribuibile alla prima giornata. FM* = stima parziale: autogol e rigori parati non disponibili; alcuni altri malus non confermati. — = dato non recuperato o nessun voto. Copertura: 27 club; i totali degli altri 9 non sono separabili.</p>
+        <h1 class="app-title">Fanta Champions Fantaballa</h1><p style="font-size:12px;max-width:680px">Componi la tua rosa con titolari e panchina e clicca invia! La tua rosa così parteciperà al prossimo fantacalcio della champions con te come calciatore!</p>
       </div>
 
       <div class="credits credits-large"><span>Crediti rimanenti</span><strong id="creditsText">350/350</strong></div>
@@ -744,7 +744,7 @@
       <div class="filters">
         <button class="chip active" data-role="all">T1</button><button class="chip" data-role="P">P</button><button class="chip" data-role="D">D</button><button class="chip" data-role="C">C</button><button class="chip" data-role="A">A</button>
         <select class="nation-select" id="nationFilter"><option value="all">Tutti</option></select>
-        <select class="sort-select" id="sortSelect"><option value="cost_desc">Costo ↓</option><option value="cost_asc">Costo ↑</option><option value="name_asc">Nome A-Z</option></select>
+        <select class="sort-select" id="sortSelect"><option value="cost_desc">Costo ↓</option><option value="cost_asc">Costo ↑</option><option value="mv_desc">MV ↓</option><option value="mv_asc">MV ↑</option><option value="fm_desc">FM ↓</option><option value="fm_asc">FM ↑</option><option value="pg_desc">PG ↓</option><option value="pg_asc">PG ↑</option><option value="name_asc">Nome A-Z</option></select>
       </div>
 
       <div class="official-count" id="officialCount"></div><div class="players-list" id="playersList"></div>
@@ -783,7 +783,7 @@ const NATIONAL_TEAMS = [];
 // I giocatori vengono caricati dal file esterno players_stats.json.
 // Manteniamo internamente il campo 'nation' come club per non rompere il resto del sito.
 const FLAGS = ["","","","","",""];
-const ROLE_LABEL = { P: 'P', D: 'D', C: 'C', A: 'A', J: 'ALL' };
+const ROLE_LABEL = { P: 'P', D: 'D', C: 'C', A: 'A', J: 'Jolly' };
 const BUDGET = 350;
 const FORMATIONS = { '442': { A: 2, C: 4, D: 4, P: 1 }, '433': { A: 3, C: 3, D: 4, P: 1 }, '343': { A: 3, C: 4, D: 3, P: 1 }, '352': { A: 2, C: 5, D: 3, P: 1 } };
 const BENCH = ['P','D','C','A','J'];
@@ -1071,6 +1071,17 @@ function renderBench() { els.bench.innerHTML = state.bench.map(slotHTML).join(''
 function sortPlayers(list) {
   const sort = els.sortSelect.value;
   const sorted = [...list];
+  if (/^(mv|fm|pg)_(asc|desc)$/.test(sort)) {
+    const [field,direction] = sort.split('_');
+    const value = p => field === 'mv' ? p.championsStats?.averageRating : field === 'fm' ? (p.championsStats?.fantasyAverage ?? p.championsStats?.fantasyAveragePartial) : p.championsStats?.appearances;
+    return sorted.sort((a,b) => {
+      const av=value(a), bv=value(b);
+      const missingA=av == null || !Number.isFinite(Number(av));
+      const missingB=bv == null || !Number.isFinite(Number(bv));
+      if (missingA || missingB) return Number(missingA)-Number(missingB) || a.name.localeCompare(b.name);
+      return (direction==='asc' ? Number(av)-Number(bv) : Number(bv)-Number(av)) || a.name.localeCompare(b.name);
+    });
+  }
   if (sort === 'cost_asc') sorted.sort((a,b) => a.cost - b.cost || b.rating - a.rating);
   else if (sort === 'rating_desc') sorted.sort((a,b) => b.rating - a.rating || b.cost - a.cost);
   else if (sort === 'rating_asc') sorted.sort((a,b) => a.rating - b.rating || a.cost - b.cost);
