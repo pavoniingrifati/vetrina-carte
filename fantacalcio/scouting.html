@@ -706,11 +706,6 @@
     <section class="dashboard" id="dashboard"></section>
 
     <section class="section-title">
-      <h2>Le 36 squadre della fase campionato</h2>
-    </section>
-    <section class="club-grid" id="clubGrid"></section>
-
-    <section class="section-title">
       <h2>Database giocatori</h2>
     </section>
 
@@ -828,7 +823,6 @@
 
     const els = {
       dashboard: document.getElementById('dashboard'),
-      clubGrid: document.getElementById('clubGrid'),
       playersGrid: document.getElementById('playersGrid'),
       resultCount: document.getElementById('resultCount'),
       search: document.getElementById('search'),
@@ -938,17 +932,6 @@
       if (!players || !players.length) return '<strong>Da inserire</strong>';
       return `<div class="xi-list">${players.map(name => `<span class="xi-chip">${esc(name)}</span>`).join('')}</div>`;
     }
-
-    function renderClubs() {
-      const orderedClubs = [...clubs].sort((a,b) => a.name.localeCompare(b.name));
-      els.clubGrid.innerHTML = orderedClubs.map(c => `
-        <article class="club-card"><div class="club-head">${shirt(c.name)}<div class="club-name"><strong>${esc(c.name)}</strong><span>${esc(c.playersCount)} giocatori nel save</span><button class="details-btn club-roster-btn" type="button" data-club-uid="${c.uid}">Vedi rosa</button></div></div>
-        <div class="club-body"><div class="mini-row"><div class="mini-stat"><span>Prima squadra</span><strong>${esc(c.firstTeamCount)}</strong></div><div class="mini-stat"><span>Riserve / giovanili</span><strong>${esc(c.playersCount-c.firstTeamCount)}</strong></div></div>
-        <div class="mini-row"><div class="mini-stat"><span>Crediti medi</span><strong>${esc(c.avgCost)}</strong></div><div class="mini-stat"><span>Età media</span><strong>${esc(c.averageAge)}</strong></div></div>
-        <div class="mini-stat wide"><span>Giocatori in evidenza</span>${renderXI((c.topCA || []).map(p => `${p.name} · ${p.cost} cr`))}</div></div></article>`).join('');
-    }
-
-    els.clubGrid.addEventListener('click', event => { const button=event.target.closest('[data-club-uid]'); if (!button) return; const club=clubs.find(c=>String(c.uid)===button.dataset.clubUid); if (club) showClubRoster(club.name); });
 
     function populateFilters() {
       clubs.forEach(c => {
@@ -1096,9 +1079,8 @@ function playerFM(p) { return statNumber(p.championsStats?.fantasyAverage ?? p.c
         </section>
       `).join('');
 
-      els.modalBody.innerHTML = `${renderSaveProfile(p)}
-        <section class="profile-grid"><div class="profile-card"><span>Media voto Champions</span><strong>${playerMV(p)}</strong></div><div class="profile-card"><span>Fantamedia parziale*</span><strong>${playerFM(p)}</strong></div><div class="profile-card"><span>Presenze</span><strong>${p.championsStats?.appearances ?? '—'}</strong></div><div class="profile-card"><span>Gol / assist</span><strong>${p.championsStats ? p.championsStats.goals + ' / ' + p.championsStats.assists : '—'}</strong></div></section><p>${esc(p.championsStats?.fantasyStatus || 'Statistiche della sola Champions non recuperate per questo giocatore.')}</p><section class="profile-grid">${profiles}</section>
-        <section class="attr-groups">${groups}</section>
+      els.modalBody.innerHTML = `<section class="attr-groups">${groups}</section><section class="profile-grid">${profiles}</section>${renderSaveProfile(p)}
+        <section class="profile-grid"><div class="profile-card"><span>Media voto Champions</span><strong>${playerMV(p)}</strong></div><div class="profile-card"><span>Fantamedia parziale*</span><strong>${playerFM(p)}</strong></div><div class="profile-card"><span>Presenze</span><strong>${p.championsStats?.appearances ?? '—'}</strong></div><div class="profile-card"><span>Gol / assist</span><strong>${p.championsStats ? p.championsStats.goals + ' / ' + p.championsStats.assists : '—'}</strong></div></section>
       `;
 
       els.modalBackdrop.classList.add('open');
@@ -1143,7 +1125,6 @@ function playerFM(p) { return statNumber(p.championsStats?.fantasyAverage ?? p.c
 
         renderDashboard();
         populateFilters();
-        renderClubs();
         renderPlayers();
       } catch (err) {
         els.resultCount.textContent = 'Errore caricamento dati';
