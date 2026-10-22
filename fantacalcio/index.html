@@ -1307,21 +1307,87 @@ function changeModule(module) {
   render();
 }
 function randomTeam() {
-  const module = state.module;
-  state = newState(module);
-  state.manager = els.managerInput.value.trim();
-  const sorted = [...players].sort((a,b) => b.cost - a.cost);
-  allSlots().forEach(slot => {
-    const candidates = sorted.filter(p => !usedIds().includes(p.id) && (slot.role === 'J' || p.role === slot.role) && remaining() >= p.cost);
-    if (candidates.length) {
-      const index = Math.min(candidates.length - 1, Math.floor(Math.random() * Math.min(candidates.length, 8)));
-      slot.playerId = candidates[index].id;
-    }
-  });
+  if (!players.length) return showToast('Attendi il caricamento dei giocatori');
+
+  // Costruiamo sempre prima una rosa COMPLETA (11 titolari + 5 panchinari).
+  // Solo dopo distribuiamo i crediti disponibili per migliorare i giocatori:
+  // in questo modo nessuno slot rimane vuoto per mancanza di budget.
+  const nextState = newState(state.module);
+  nextState.manager = els.managerInput.value.trim();
+  const slots = [...nextState.starters, ...nextState.bench];
+  const available = players.filter(p => ['P', 'D', 'C', 'A'].includes(p.role) && Number.isFinite(p.cost) && p.cost >= 0);
+  const byRole = Object.fromEntries(['P', 'D', 'C', 'A'].map(role => [role, available.filter(p => p.role === role)]));
+  const byId = new Map(available.map(p => [p.id, p]));
+  const picked = new Set();
+  let totalCost = 0;
+  const randomOf = list => list[Math.floor(Math.random() * list.length)];
+  const shuffle = list => [...list].sort(() => Math.random() - 0.5);
+
+  // Il jolly si riempie dopo gli altri ruoli, scegliendo fra i giocatori rimasti.
+  for (const slot of slots.filter(s => s.role !== 'J').concat(slots.filter(s => s.role === 'J'))) {
+    const pool = slot.role === 'J' ? available : byRole[slot.role];
+    const free = pool.filter(p => !picked.has(p.id));
+    if (!free.length) return showToast('Giocatori insufficienti per completare la rosa');
+    const minCost = Math.min(...free.map(p => p.cost));
+    const chosen = randomOf(free.filter(p => p.cost === minCost));
+    slot.playerId = chosen.id;
+    picked.add(chosen.id);
+    totalCost += chosen.cost;
+  }
+
+  if (totalCost > BUDGET) {
+    return showToast('Budget insufficiente per 11 titolari e 5 panchinari');
+  }
+
+  // Quote indicative: più risorse ai titolari, ma si riserva un budget
+  // anche a ogni panchinaro. Il costo finale include sempre tutti e 16.
+  const weights = {
+    starter: { P: 0.90, D: 1.12, C: 1.25, A: 1.55 },
+    bench:   { P: 0.48, D: 0.57, C: 0.72, A: 0.78, J: 0.70 }
+  };
+  const isBench = slot => slot.key.startsWith('B');
+  const weight = slot => (isBench(slot) ? weights.bench : weights.starter)[slot.role] || 1;
+  const weightSum = slots.reduce((sum, s) => sum + weight(s), 0);
+
+  function upgrade(slot, maximumCost) {
+    const current = byId.get(slot.playerId);
+    const cap = Math.min(Math.floor(maximumCost), current.cost + BUDGET - totalCost);
+    if (cap <= current.cost) return false;
+    const pool = slot.role === 'J' ? available : byRole[slot.role];
+    const options = pool.filter(p => !picked.has(p.id) && p.cost > current.cost && p.cost <= cap);
+    if (!options.length) return false;
+    const highest = Math.max(...options.map(p => p.cost));
+    const chosen = randomOf(options.filter(p => p.cost >= highest - 2));
+    picked.delete(current.id);
+    picked.add(chosen.id);
+    slot.playerId = chosen.id;
+    totalCost += chosen.cost - current.cost;
+    return true;
+  }
+
+  // Panchina per prima: non può restare scoperta anche con molti titolari costosi.
+  const benchFirst = [...shuffle(slots.filter(isBench)), ...shuffle(slots.filter(s => !isBench(s)))];
+  for (const slot of benchFirst) {
+    const ideal = (BUDGET - 5) * weight(slot) / weightSum;
+    upgrade(slot, Math.max(3, Math.round(ideal * (0.90 + Math.random() * 0.18))));
+  }
+
+  // Distribuiamo gli eventuali crediti rimasti con maggiore priorità ai titolari.
+  const prioritySlots = slots.flatMap(s => isBench(s) ? [s] : [s, s, s]);
+  for (let tries = 0; tries < 150 && BUDGET - totalCost > 1; tries++) {
+    const slot = randomOf(prioritySlots);
+    const current = byId.get(slot.playerId);
+    const increase = Math.min(BUDGET - totalCost, 2 + Math.floor(Math.random() * 9));
+    upgrade(slot, current.cost + increase);
+  }
+
+  // Aggiorna la formazione soltanto quando tutte le 16 caselle sono compilate.
+  state = nextState;
+  activeSlot = null;
   saveLocal();
   render();
+  showToast(`Rosa completa: 11 titolari + 5 panchinari · ${totalCost}/${BUDGET} crediti`);
 }
-
 
 function cloneWithoutIds(node) {
   const clone = node.cloneNode(true);
