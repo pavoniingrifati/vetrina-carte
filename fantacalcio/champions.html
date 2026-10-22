@@ -22,7 +22,7 @@
   </section>
   <div class="results-head"><h2 id="listTitle">Prossime partite</h2><span class="count" id="resultCount" aria-live="polite">Caricamento…</span></div>
   <section id="matches" aria-label="Calendario partite"><div class="empty">Caricamento del calendario Champions…</div></section>
-  <footer class="footer"><span id="sourceInfo">Dati del salvataggio Football Manager.</span><br>Il calendario mostra insieme risultati e partite da giocare. I marcatori compaiono solo quando recuperati e verificati; i riferimenti confermati dagli screenshot sono conservati separatamente. Orari come registrati nel calendario del gioco.</footer>
+  <footer class="footer"><span id="sourceInfo">Dati del salvataggio Football Manager.</span><br>Il calendario mostra insieme risultati e partite da giocare. I marcatori compaiono solo quando recuperati e verificati; gli eventi automatici sono validati contro il risultato della partita. Orari come registrati nel calendario del gioco.</footer>
 </main>
 <script>
 'use strict';
@@ -43,8 +43,9 @@ function scorersHTML(f){
   if(!item?.verified || item.homeGoals!==f.home_goals || item.awayGoals!==f.away_goals)return '<div class="goal-note">Marcatori non ancora recuperati</div>';
   const goal=g=>`<div>${esc(g.player)} ${g.ownGoal?'<b>(aut.)</b>':g.penalty?'<b>(rig.)</b>':''} <span>${esc(g.minute)}′</span></div>`;
   const home=item.goals.filter(g=>g.side==='home'),away=item.goals.filter(g=>g.side==='away');
-  const complete=home.length===f.home_goals && away.length===f.away_goals;
-  return `<div class="goal-events" aria-label="Marcatori"><div class="goals-home">${home.map(goal).join('')}</div><div class="goals-away">${away.map(goal).join('')}</div></div>${complete?'':'<div class="goal-note">Elenco marcatori parziale</div>'}`;
+  const complete=home.length===f.home_goals && away.length===f.away_goals && item.goals.every(g=>g.playerResolved!==false);
+  const reds=(item.redCards||[]).map(e=>`<div class="goal-note">Espulsione: ${esc(e.player)} ${esc(e.minute)}′</div>`).join('');
+  return `<div class="goal-events" aria-label="Marcatori"><div class="goals-home">${home.map(goal).join('')}</div><div class="goals-away">${away.map(goal).join('')}</div></div>${complete?'':'<div class="goal-note">Un marcatore non identificato dal lettore del save</div>'}${reds}`;
 }
 function matchHTML(f){
   const scored=f.played&&f.home_goals!=null&&f.away_goals!=null;
