@@ -1,172 +1,168 @@
 (() => {
   'use strict';
-  const world = new URLSearchParams(location.search).get('universo') === 'gothamcity' ? 'gothamcity' : 'fantaballafc';
-  const gothic = world === 'gothamcity';
-  document.body.dataset.league = gothic ? 'gotham' : 'fantaballa';
-  const dataBase = `${world}/`;
-  // Solo dati del mondo attivo: nessuna combinazione di sorgenti o di chiavi player.
-  const clubName = gothic ? 'Gotham City' : 'Fantaballa FC';
-  const locale = 'it-IT';
-  const iconPaths = {
-    'layout-dashboard':'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
-    shirt:'<path d="M16 3h2l4 5-3 3-2-2v12H7V9l-2 2-3-3 4-5h2c.6 2 2 3 4 3s3.4-1 4-3Z"/>',
-    'calendar-days':'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01"/>',
-    'calendar-clock':'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M12 13v4l2 1"/>',
-    'calendar-check':'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18m5 6 2 2 4-4"/>',
-    trophy:'<path d="M8 21h8M12 17v4M7 4h10v7a5 5 0 0 1-10 0V4ZM7 6H4v3a4 4 0 0 0 4 4M17 6h3v3a4 4 0 0 1-4 4"/>',
-    database:'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/>',
-    'scan-eye':'<path d="M7 3H5a2 2 0 0 0-2 2v2m14-4h2a2 2 0 0 1 2 2v2M3 17v2a2 2 0 0 0 2 2h2m14-4v2a2 2 0 0 1-2 2h-2"/><path d="M4 12s3-4 8-4 8 4 8 4-3 4-8 4-8-4-8-4Z"/><circle cx="12" cy="12" r="2"/>',
-    shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>',
-    'users-round':'<path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M16 3.5a4 4 0 0 1 0 8M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9.5" cy="7" r="4"/>',
-    search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
-    'arrow-up-right':'<path d="M7 17 17 7M7 7h10v10"/>',
-    menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
-    'map-pin':'<path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2"/>'
-  };
-  function makeIcon(n) {return `<svg class="lucide" viewBox="0 0 24 24" aria-hidden="true">${iconPaths[n] || iconPaths.shield}</svg>`;}
-  document.querySelectorAll('[data-icon]').forEach(el => el.insertAdjacentHTML('afterbegin', makeIcon(el.dataset.icon)));
-  const $ = id => document.getElementById(id);
-  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const prettyNum = n => new Intl.NumberFormat(locale).format(n);
-  const dateShort = s => { if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return '—'; const [y,m,d] = s.split('-'); return `${d}/${m}/${y}`; };
-  const dateTiny = s => {if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return '—'; const [,m,d] = s.split('-');return `${d}/${m}`;};
-  const shortTeam = s => {const x=String(s||'');return x.replace(/^F\.C\. /,'').replace(/^FC /,'').replace(/^A\.S\. /,'').replace(/^U\.S\. /,'').replace(' Club de Fútbol','').replace(' Hotspur','').replace(' Saint-Germain FC',' SG').replace(' Football Club','');};
-  const teamColor = (club, colorMap) => {const c=colorMap.get(club);return /^#[0-9a-f]{6}$/i.test(c||'') ? c : '#7198b7';};
-  const dot = (club,colorMap) => `<span class="team-dot" style="background:${teamColor(club,colorMap)}" aria-hidden="true"></span>`;
-  const empty = (title, detail) => `<div class="empty-data"><b>${esc(title)}</b>${esc(detail)}</div>`;
-  const state = {results:[], players:[], clubs:[], standings:[], metadata:null, matchMode:'latest', role:'all', query:'', errors:[]};
-  const lastPlayerTotal = 5;
-  const assets = {fantacalcio:'fantacalcio.html',results:'campionato.html?tab=results',standings:'campionato.html?tab=standings',stats:'campionato.html?tab=stats',database:'scouting.html',scouting:'scouting.html'};
-  // Dashboard unica, navigazione e pagine settoriali separate per salvataggio.
-  document.querySelectorAll('a[href]').forEach(link => {
-    const href = link.getAttribute('href');
-    if (/^(fantacalcio\.html|campionato\.html|scouting\.html)(\?|$)/.test(href)) link.setAttribute('href',dataBase+href);
-  });
-  document.querySelector('.identity .mark').textContent=gothic?'GC':'FB';
-  document.querySelector('.identity b').textContent=clubName.toUpperCase();
-  document.querySelector('.main-heading span').textContent=clubName;
-  document.querySelector('.userpill').textContent=gothic?'GC':'FC';
-  document.querySelector('.switchbox .club-option:nth-of-type(1)')?.classList.toggle('current',!gothic);
-  document.querySelector('.switchbox .club-option:nth-of-type(2)')?.classList.toggle('current',gothic);
-  document.querySelectorAll('.switchbox .club-option').forEach(a=>{
-    const selected = a.getAttribute('href')?.includes(world);
-    if(selected)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
-    const tail = a.querySelector('span:last-child');
-    tail.className=selected?'mini-indicator':'';
-    tail.textContent=selected?'':'↗';
-  });
-  $('worldDatabaseTitle').textContent=`${clubName.toUpperCase()} · DATABASE INDIPENDENTE`;
-  $('worldDatabaseDetail').textContent=gothic?'I dati di Gotham City provengono dal suo salvataggio S2 e non da Fantaballa FC.':'I dati di Fantaballa FC provengono dal suo salvataggio S3 e non da Gotham City.';
-  $('worldSourceLink').href=dataBase+'fantacalcio.html';
-  document.title=`Dashboard · ${clubName} | Fantaballa Universe`;
-  const menuToggle=$('menuToggle'), sidebar=$('sidebar'), scrim=$('menuScrim');
-  function closeMenu(){sidebar.classList.remove('open');scrim.classList.remove('visible');menuToggle.setAttribute('aria-expanded','false');}
-  menuToggle.addEventListener('click',()=>{const isOpen=sidebar.classList.toggle('open');scrim.classList.toggle('visible',isOpen);menuToggle.setAttribute('aria-expanded',String(isOpen));});
-  scrim.addEventListener('click',closeMenu);
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
-  function disableLink(link, reason){link.removeAttribute('href');link.setAttribute('aria-disabled','true');link.setAttribute('title',reason);if(link.classList.contains('feature')){link.classList.add('disabled');const subtitle=link.querySelector('span:not(.feature-icon)');if(subtitle)subtitle.textContent='Modulo da collegare';}}
-  async function checkGothamLinks(){
-    if(!gothic)return;
-    const neededFiles={fantacalcio:'fantacalcio.html',results:'campionato.html',standings:'campionato.html',stats:'campionato.html',database:'scouting.html',scouting:'scouting.html'};
-    const exists={};
-    await Promise.all([...new Set(Object.values(neededFiles))].map(async path=>{
-      try{const r=await fetch(path,{method:'HEAD',cache:'no-store'});exists[path]=r.ok&&r.headers.get('content-type')?.includes('html');}catch{exists[path]=false;}
-    }));
-    document.querySelectorAll('[data-dynamic-link]').forEach(link=>{
-      const target=neededFiles[link.dataset.dynamicLink];
-      if(!exists[target])disableLink(link,'Pagina Gotham City non ancora fornita');
-    });
+  const params=new URLSearchParams(location.search);
+  const world=params.get('universo')==='gothamcity'?'gothamcity':'fantaballafc';
+  const gotham=world==='gothamcity';
+  const team=gotham?'Gotham City':'Fantaballa FC';
+  const prefix=world+'/';
+  const $=id=>document.getElementById(id);
+  const htmlEsc=value=>String(value==null?'':value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const trimClub=s=>String(s||'').replace(/^Futbol Club /,'').replace(/^FC /,'').replace(/^A\.S\. /,'').replace(/^A\.C\. /,'').replace(/^Sport Lisboa e /,'').replace(/ Football Club$/,'').replace(/ Hotspur$/,'').replace(/ Saint-Germain FC$/,' SG');
+  const validColor=s=>/^#[0-9a-f]{6}$/i.test(s||'')?s:'#3b7ca5';
+  const shortDate=s=>s&&/^\d{4}-\d{2}-\d{2}$/.test(s)?s.slice(8,10)+'/'+s.slice(5,7):'—';
+  const fullDate=s=>{if(!s)return'—';const d=new Date(s+'T12:00:00');return Number.isNaN(d.valueOf())?s:new Intl.DateTimeFormat('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(d);};
+  const readableDate=s=>{if(!s)return'—';const d=new Date(s+'T12:00:00');return Number.isNaN(d.valueOf())?s:new Intl.DateTimeFormat('it-IT',{day:'numeric',month:'short',year:'numeric'}).format(d);};
+  const matchDayDiff=(a,b)=>a&&b?Math.round((Date.parse(b+'T12:00:00')-Date.parse(a+'T12:00:00'))/86400000):null;
+  const defaults={fantacalcio:'fantacalcio.html',results:'campionato.html?tab=results',calendar:'campionato.html?tab=upcoming',standings:'campionato.html?tab=standings',stats:'campionato.html?tab=stats',database:'scouting.html'};
+  const links=Object.fromEntries(Object.entries(defaults).map(([k,v])=>[k,prefix+v]));
+  document.querySelectorAll('[data-link]').forEach(el=>{const to=links[el.dataset.link];if(to)el.href=to;});
+  $('worldFc').classList.toggle('selected',!gotham);
+  $('worldGc').classList.toggle('selected',gotham);
+  $('worldFc').setAttribute('aria-current',gotham?'false':'page');
+  $('worldGc').setAttribute('aria-current',gotham?'page':'false');
+  document.querySelector('.nav-item.active').href='?universo='+world;
+  document.body.dataset.league=gotham?'gotham':'fantaballa';
+  $('brandCrest').textContent=gotham?'GC':'FB';
+  $('brandLink').href='?universo='+world;
+  $('topSubline').textContent=team.toUpperCase()+' · SUPER LEGA';
+  $('introWorld').textContent=team.toUpperCase();
+  $('mvTeamCaption').textContent='Solo giocatori '+team;
+  $('scorerTeamCaption').textContent='Solo giocatori '+team;
+  document.title='Dashboard '+team+' · Fantaballa Universe';
+  const menu=$('sidebar'),backdrop=$('menuBackdrop'),toggle=$('menuButton');
+  function setMenu(open){menu.classList.toggle('open',open);backdrop.hidden=!open;toggle.setAttribute('aria-expanded',String(open));}
+  toggle.addEventListener('click',()=>setMenu(!menu.classList.contains('open')));
+  backdrop.addEventListener('click',()=>setMenu(false));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false);});
+  let metadata=null,fixtures=[],standings=[],players=[],clubMap=new Map(),ourGames=[],upcoming=[],visibleIndex=0;
+  function dot(name){return `<span class="kit-dot" style="--dot:${validColor(clubMap.get(name)?.kit?.colors?.[0])}" aria-hidden="true"></span>`;}
+  function lastFixture(m){return String(m.date||'')+' '+String(m.kick_off_time||'');}
+  function loadMessage(msg){for(const id of ['standingsRows','resultsRows','ratingRows','scorerRows']) $(id).innerHTML=`<div class="load-placeholder">${htmlEsc(msg)}</div>`;}
+  function setHeader(){
+    const season=metadata?.season!=null?`${metadata.season}/${String(Number(metadata.season)+1).slice(-2)}`:'—';
+    $('seasonPill').textContent=season;
+    $('gameDate').textContent=readableDate(metadata?.saveDate);
+    $('dataInfo').textContent=`${metadata?.clubs||standings.length} SQUADRE · ${(metadata?.players||players.length).toLocaleString('it-IT')} GIOCATORI`;
+    $('competitionLeft').textContent=metadata?.competition||'Campionato';
+    $('competitionCenter').textContent=metadata?.competition||'Campionato';
+    $('saveReference').textContent='SAVE '+readableDate(metadata?.saveDate);
+    $('sourceFooter').textContent=`Fonte: ${metadata?.source||'Salvataggio Football Manager'} · Data nel gioco: ${readableDate(metadata?.saveDate)} · Statistiche non in tempo reale.`;
   }
-  async function getJSON(path) {try{const r=await fetch(path,{cache:'no-store'});if(!r.ok)throw new Error(`${r.status} ${path}`);return await r.json();}catch{return null;}}
-  function applyMetadata(){
-    const meta=state.metadata;
-    const year=meta?.season || (state.results[0]?.season_start_year);
-    const season=year ? `${year}/${String(Number(year)+1).slice(-2)}` : '—';
-    $('topSeason').textContent=`STAGIONE ${season}`;
-    $('savechip').innerHTML=`SAVE DI RIFERIMENTO <b>${esc(dateShort(meta?.saveDate || ''))}</b>`;
-    const comp=meta?.competition||'Campionato';
-    $('heroVenue').innerHTML=`${makeIcon('map-pin')}${esc(comp)}`;
-    $('rankingSub').textContent=comp;
-    $('footerSource').textContent = meta?.saveDate ? `Fonte: ${meta.source || 'Salvataggio Football Manager'} · Snapshot del ${dateShort(meta.saveDate)}. Risultati e classifiche non sono dati in tempo reale.` : 'Dati disponibili solo quando sono presenti i file JSON del rispettivo universo.';
-    if (!meta) $('savechip').textContent='DATABASE DA COLLEGARE';
+  function drawStandings(){
+    const body=$('standingsRows');
+    $('standingsCount').textContent=standings.length+' squadre';
+    if(!standings.length){body.innerHTML='<tr><td colspan="5" class="load-placeholder">Classifica non disponibile.</td></tr>';return;}
+    body.innerHTML=[...standings].sort((a,b)=>Number(a.position||999)-Number(b.position||999)).map(row=>{
+      const mine=row.club===team;
+      const gd=Number(row.goalsFor||0)-Number(row.goalsAgainst||0);
+      return `<tr class="${mine?'ours':''}"><td>${row.position||'—'}°</td><td><div class="team-cell">${dot(row.club)}<span class="truncate" title="${htmlEsc(row.club)}">${htmlEsc(trimClub(row.club))}</span></div></td><td>${Number(row.played||0)}</td><td>${gd>0?'+':''}${gd}</td><td>${Number(row.points||0)}</td></tr>`;
+    }).join('');
+    const mineRow=[...body.querySelectorAll('tr')].find(x=>x.classList.contains('ours'));
+    // Il club selezionato resta evidenziato ma lo scroll iniziale mostra la prima posizione.
   }
-  function renderMetrics(){
-    $('metricClubs').textContent=state.clubs.length?prettyNum(state.clubs.length):(state.standings.length?prettyNum(state.standings.length):'—');
-    $('metricPlayers').textContent=state.players.length?prettyNum(state.players.length):'—';
-    $('metricMatches').textContent=state.results.length?`${prettyNum(state.results.filter(m=>m.played).length)} / ${prettyNum(state.results.length)}`:'—';
-    const row=state.standings.find(s=>s.club?.toLowerCase()===clubName.toLowerCase());
-    $('metricPosition').textContent=row?.position?`${row.position}ª`:row?.rank?`${row.rank}ª`:'—';
+  function resultKind(f){
+    const home=f.home_club_name===team;
+    const mine=Number(home?f.home_goals:f.away_goals),theirs=Number(home?f.away_goals:f.home_goals);
+    return mine>theirs?'win':mine===theirs?'draw':'loss';
   }
-  function renderHero(){
-    if(!state.results.length){$('heroKicker').textContent='DASHBOARD · UNIVERSO CALCISTICO';$('heroTitle').innerHTML = gothic?'GOTHAM CITY.<br>IL TUO UNIVERSO.':'LA TUA SUPER LEGA.<br>IL TUO CAMPIONATO.';$('heroDescription').textContent=gothic?'Una nuova dashboard per la tua lega. Aggiungi i dati e le pagine Gotham City per attivare tutte le sezioni.':'Aggiungi risultati e dati di campionato per visualizzare gli incontri.';$('heroDate').innerHTML=`${makeIcon('calendar-days')}Dati in attesa`;return;}
-    const mine = state.results.filter(f=>f.home_club_name===clubName||f.away_club_name===clubName).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-    const next=mine.find(f=>!f.played);
-    const recent=[...mine].reverse().find(f=>f.played);
-    const feature=next||recent;
-    if(!feature){$('heroKicker').textContent='CAMPIONATO · CALENDARIO';return;}
-    $('heroKicker').textContent=next?'PROSSIMA PARTITA NEL SALVATAGGIO':'ULTIMA PARTITA NEL SALVATAGGIO';
-    $('heroTitle').textContent=`${shortTeam(feature.home_club_name)} - ${shortTeam(feature.away_club_name)}`;
-    const date=dateShort(feature.date);
-    const save=dateShort(state.metadata?.saveDate);
-    $('heroDescription').textContent=next?`Incontro previsto il ${date} nel calendario del save del ${save}. Consulta calendario, risultati e classifica della stagione.`:`Risultato salvato del ${date}. Consulta tutte le partite e le statistiche del campionato.`;
-    $('heroDate').innerHTML=`${makeIcon('calendar-days')}${esc(date)} · ${feature.round_index != null?'Giornata '+(feature.round_index+1):'Campionato'}`;
-    $('heroVenue').innerHTML=`${makeIcon('map-pin')}${esc(state.metadata?.competition||'Campionato')}`;
+  function drawResults(){
+    const played=ourGames.filter(f=>f.played).sort((a,b)=>lastFixture(b).localeCompare(lastFixture(a)));
+    $('resultsCount').textContent=played.length+' gare';
+    $('resultsLabel').textContent='Ultimi incontri di '+team;
+    if(!played.length){$('resultsRows').innerHTML='<div class="load-placeholder">Nessuna partita disputata nel salvataggio.</div>';return;}
+    $('resultsRows').innerHTML=played.map(f=>{
+      const isHome=f.home_club_name===team;
+      const opponent=isHome?f.away_club_name:f.home_club_name;
+      const kind=resultKind(f);
+      // Il punteggio viene mostrato dal punto di vista della squadra selezionata.
+      const goals=isHome?f.home_goals:f.away_goals,against=isHome?f.away_goals:f.home_goals;
+      return `<div class="result-row" title="${htmlEsc(f.home_club_name)} ${f.home_goals}-${f.away_goals} ${htmlEsc(f.away_club_name)}"><span class="result-date">${shortDate(f.date)}</span><span class="home-away">${isHome?'C':'T'}</span><span class="result-opponent">${dot(opponent)}<span title="${htmlEsc(opponent)}">${htmlEsc(trimClub(opponent))}</span></span><span class="result-pill ${kind}">${goals} - ${against}</span><span class="result-indicator ${kind}" aria-label="${kind==='win'?'Vittoria':kind==='draw'?'Pareggio':'Sconfitta'}"></span></div>`;
+    }).join('');
+    const form=played.slice(0,5).reverse();
+    $('recentForm').innerHTML=form.map(f=>{const kind=resultKind(f);return `<span class="form-dot ${kind}" title="${htmlEsc(f.away_club_name)} / ${htmlEsc(f.home_club_name)}">${kind==='win'?'V':kind==='draw'?'P':'S'}</span>`;}).join('');
   }
-  function renderStandings(){
-    const body=$('standingsBody');
-    if(!state.standings.length){body.innerHTML=`<tr><td colspan="4">${empty('Nessuna classifica disponibile','Collega il file league_standings.json del tuo campionato.')}</td></tr>`;return;}
-    const rows=[...state.standings].sort((a,b)=>(a.position||a.rank||99)-(b.position||b.rank||99));
-    let top=rows.slice(0,6);
-    const own=rows.find(r=>r.club===clubName);
-    if(own && !top.includes(own)){top=top.slice(0,5).concat(own);}
-    const colorMap=new Map(state.clubs.map(c=>[c.name,c.kit?.colors?.[0]]));
-    body.innerHTML=top.map(r=>`<tr class="${r.club===clubName?'myteam':''}"><td>${Number(r.position||r.rank)||'—'}°</td><td><div class="standing-team">${dot(r.club,colorMap)}<span title="${esc(r.club)}">${esc(shortTeam(r.club))}</span></div></td><td>${Number(r.played)||0}</td><td>${Number(r.points)||0}</td></tr>`).join('');
-    $('rankFoot').textContent=`${rows.length} squadre · Classifica ricostruita dai risultati del salvataggio.`;
+  function makeShield(nodeName,name){
+    const el=$(nodeName),own=name===team;
+    const kit=clubMap.get(name)?.kit?.colors||[];
+    const fallback=own?(gotham?['#6c55b3','#22183f']:['#d7353e','#121827']):['#26618e','#0c213c'];
+    el.style.setProperty('--badge-a',validColor(kit[0]||fallback[0]));
+    el.style.setProperty('--badge-b',validColor(kit[1]||fallback[1]));
+    el.classList.toggle('own-team',own);
+    const lower=String(name||'').toLowerCase();
+    el.textContent=own?(gotham?'GC':'FB'):lower.includes('barcelona')?'BAR':lower.includes('tottenham')?'TOT':String(trimClub(name)||'?').split(/\s+/).filter(x=>!/^(FC|CF|AC|AFC|AS|Club|de|da|e)$/i.test(x)).slice(0,2).map(s=>s[0]).join('').toUpperCase().slice(0,3)||'FC';
   }
-  function renderMatches(){
-    const body=$('matchFeed');
-    if(!state.results.length){body.innerHTML=empty('Nessun risultato disponibile','Collega il file league_results.json della tua lega.');return;}
-    const matches=state.results.filter(f=>f.home_club_name===clubName||f.away_club_name===clubName);
-    const scoped=matches.length?matches:state.results;
-    const selection=scoped.filter(f=>state.matchMode==='latest'?f.played:!f.played).sort((a,b)=>state.matchMode==='latest'?String(b.date).localeCompare(String(a.date)):String(a.date).localeCompare(String(b.date))).slice(0,5);
-    const colorMap=new Map(state.clubs.map(c=>[c.name,c.kit?.colors?.[0]]));
-    if(!selection.length){body.innerHTML=empty('Nessuna partita trovata',state.matchMode==='latest'?'Nessuna partita ancora disputata.':'Nessuna partita futura nel calendario del save.');return;}
-    $('matchesSubtitle').textContent=matches.length?`Incontri di ${clubName}`:'Incontri del campionato';
-    body.innerHTML=selection.map(m=>{const score=m.played&&m.home_goals!=null&&m.away_goals!=null?`${m.home_goals} : ${m.away_goals}`:'VS';const home=m.home_club_name||'Casa';const away=m.away_club_name||'Trasferta';return `<div class="match-row"><div class="match-date"><b>${dateTiny(m.date)}</b><span>G ${m.round_index==null?'—':m.round_index+1}</span></div><div class="match-team ${home===clubName?'mine':''}">${dot(home,colorMap)}<span class="label-trunc" title="${esc(home)}">${esc(shortTeam(home))}</span></div><div class="result-tag ${m.played?'':'future'}">${score}</div><div class="match-team away ${away===clubName?'mine':''}"><span class="label-trunc" title="${esc(away)}">${esc(shortTeam(away))}</span>${dot(away,colorMap)}</div></div>`;}).join('');
+  function drawUpcoming(){
+    const current=upcoming[visibleIndex];
+    $('previousFixture').disabled=visibleIndex<=0;
+    $('nextFixture').disabled=visibleIndex>=upcoming.length-1;
+    $('fixtureStep').textContent=upcoming.length?String(visibleIndex+1).padStart(2,'0')+' / '+String(upcoming.length).padStart(2,'0'):'—';
+    $('fixtureHeading').textContent=visibleIndex===0?'PROSSIMA PARTITA':'PARTITA IN CALENDARIO';
+    if(!current){
+      $('matchDate').textContent='NESSUNA PARTITA FUTURA';
+      $('matchCountdown').textContent='Calendario del salvataggio terminato';
+      $('homeLabel').textContent=team; $('awayLabel').textContent='—';
+      $('matchTitle').textContent='CALENDARIO COMPLETATO';
+      $('matchRound').textContent='CAMPIONATO';$('matchVenue').textContent='NESSUNA GARA DA GIOCARE';
+      makeShield('homeShield',team);makeShield('awayShield','—');return;
+    }
+    $('matchDate').textContent=fullDate(current.date);
+    const days=matchDayDiff(metadata?.saveDate,current.date);
+    $('matchCountdown').textContent=days!=null?(days===0?'Oggi nel gioco':days>0?`Tra ${days} ${days===1?'giorno':'giorni'} (nel gioco)`:'Partita in calendario'):'Data di gioco';
+    $('homeLabel').textContent=trimClub(current.home_club_name);
+    $('awayLabel').textContent=trimClub(current.away_club_name);
+    $('matchTitle').textContent=trimClub(current.home_club_name)+' — '+trimClub(current.away_club_name);
+    $('matchRound').textContent=current.round_index!=null?'GIORNATA '+(Number(current.round_index)+1):'GIORNATA DA DEFINIRE';
+    $('matchVenue').textContent=current.home_club_name===team?'IN CASA':'IN TRASFERTA';
+    makeShield('homeShield',current.home_club_name);
+    makeShield('awayShield',current.away_club_name);
+    $('calendarAction').href=prefix+'campionato.html?tab=upcoming&team='+encodeURIComponent(team);
   }
-  function renderTopScorers(){
-    const target=$('topPlayers');
-    if(!state.players.length){target.innerHTML=empty('Statistiche da collegare','Collega i dati dei giocatori della lega.');return;}
-    const top=state.players.filter(p=>Number(p.leagueStats?.goals)>0).sort((a,b)=>Number(b.leagueStats?.goals)-Number(a.leagueStats?.goals)||Number(b.leagueStats?.appearances)-Number(a.leagueStats?.appearances)).slice(0,5);
-    if(!top.length){target.innerHTML=empty('Marcatori non disponibili','Nessuna statistica gol valida nel database.');return;}
-    target.innerHTML=top.map((p,i)=>`<div class="player-line"><span class="player-rank">${String(i+1).padStart(2,'0')}</span><div class="player-meta"><strong title="${esc(p.name)}">${esc(p.name)}</strong><small title="${esc(p.club)}">${esc(shortTeam(p.club))}</small></div><b class="player-score">${Number(p.leagueStats.goals)}</b></div>`).join('');
+  function getStat(p,key){return p.leagueStats?.[key]??null;}
+  function clubPlayers(){return players.filter(p=>p.club===team);}
+  function drawRatings(){
+    const teamPlayers=clubPlayers();
+    // Filtriamo i giocatori con almeno il 25% delle presenze possibili con voto,
+    // per non mettere in testa una singola ottima gara. Fonte MV FM, non fantamedia completa.
+    const played=ourGames.filter(f=>f.played).length;
+    const minRated=Math.max(2,Math.ceil(played*0.25));
+    let scored=teamPlayers.filter(p=>Number.isFinite(Number(getStat(p,'averageRating')))&&getStat(p,'averageRating')!=null&&Number(getStat(p,'ratedAppearances')||0)>=minRated);
+    scored.sort((a,b)=>Number(getStat(b,'averageRating'))-Number(getStat(a,'averageRating'))||Number(getStat(b,'ratedAppearances'))-Number(getStat(a,'ratedAppearances')));
+    const selected=scored.slice(0,5);
+    $('ratingNote').textContent=`Media voto FM · almeno ${minRated} ${minRated===1?'partita':'partite'} con voto · solo ${team}.`;
+    if(!selected.length){$('ratingRows').innerHTML='<tr><td colspan="6" class="load-placeholder">Nessun voto sufficiente disponibile.</td></tr>';return;}
+    $('ratingRows').innerHTML=selected.map((p,i)=>`<tr><td>${i+1}</td><td title="${htmlEsc(p.name)}">${htmlEsc(p.name)}</td><td>${Number(getStat(p,'appearances')||0)}</td><td>${Number(getStat(p,'goals')||0)}</td><td>${Number(getStat(p,'assists')||0)}</td><td><span class="rating-chip">${Number(getStat(p,'averageRating')).toFixed(2)}</span></td></tr>`).join('');
   }
-  function normalize(v){return String(v||'').toLocaleLowerCase('it-IT').normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
-  function playerStats(p) {return p.leagueStats||{};}
-  function renderPlayers(){
-    const body=$('playersBody');
-    if(!state.players.length){body.innerHTML=`<tr><td colspan="6">${empty('Database non disponibile','Aggiungi players_stats.json per popolare la ricerca.')}</td></tr>`;$('playerCount').textContent='0 giocatori';return;}
-    const query=normalize(state.query);
-    const matches=state.players.filter(p=>(state.role==='all'||p.role===state.role)&&(!query||normalize(`${p.name} ${p.club} ${p.position} ${p.role}`).includes(query)));
-    matches.sort((a,b)=>Number(playerStats(b).goals||0)-Number(playerStats(a).goals||0)||Number(b.cost||0)-Number(a.cost||0)||a.name.localeCompare(b.name));
-    const shown=matches.slice(0,lastPlayerTotal);
-    body.innerHTML=shown.length?shown.map(p=>{const pg=Number(playerStats(p).appearances||0),mv=playerStats(p).averageRating;return `<tr><td><strong>${esc(p.name||'Sconosciuto')}</strong><small>${esc(shortTeam(p.club))}</small></td><td><span class="role-pill">${esc(p.role||'—')}</span></td><td>${pg||'—'}</td><td>${mv==null?'—':Number(mv).toFixed(2)}</td><td>${Number(playerStats(p).goals||0)}</td><td><strong>${Number(p.cost)||0}</strong></td></tr>`;}).join(''):`<tr><td colspan="6">${empty('Nessun giocatore trovato','Modifica ricerca o filtro ruolo.')}</td></tr>`;
-    $('playerCount').textContent=`${prettyNum(matches.length)} risultati · ${prettyNum(state.players.length)} giocatori totali`;
-    const url=`${dataBase}scouting.html${state.query?'?q='+encodeURIComponent(state.query):''}`;
-    $('allPlayersLink').href=url;
+  function drawScorers(){
+    const ranked=clubPlayers().filter(p=>Number(getStat(p,'goals')||0)>0).sort((a,b)=>Number(getStat(b,'goals')||0)-Number(getStat(a,'goals')||0)||Number(getStat(b,'appearances')||0)-Number(getStat(a,'appearances')||0));
+    const winner=ranked[0];
+    if(!winner){$('scorerFeature').textContent='Nessun marcatore disponibile';$('scorerRows').textContent='—';return;}
+    $('scorerFeature').innerHTML=`<span class="featured-label">MIGLIOR MARCATORE · ${htmlEsc(team.toUpperCase())}</span><strong>${htmlEsc(winner.name)}</strong><span class="scorer-big-number">${Number(getStat(winner,'goals'))} <span>GOL</span></span><span class="scorer-small">${Number(getStat(winner,'appearances')||0)} presenze · ${Number(getStat(winner,'assists')||0)} assist</span>`;
+    $('scorerRows').innerHTML=ranked.slice(0,5).map((p,i)=>`<div class="scorer-item"><span>${i+1}</span><strong title="${htmlEsc(p.name)}">${htmlEsc(p.name)}</strong><b>${Number(getStat(p,'goals'))}</b></div>`).join('');
   }
-  $('tabLatest').addEventListener('click',()=>{state.matchMode='latest';$('tabLatest').classList.add('selected');$('tabUpcoming').classList.remove('selected');renderMatches();});
-  $('tabUpcoming').addEventListener('click',()=>{state.matchMode='upcoming';$('tabUpcoming').classList.add('selected');$('tabLatest').classList.remove('selected');renderMatches();});
-  $('playerSearch').addEventListener('input',e=>{state.query=e.target.value.trim();renderPlayers();});
-  document.querySelectorAll('.role-chip').forEach(chip=>chip.addEventListener('click',()=>{state.role=chip.dataset.role;document.querySelectorAll('.role-chip').forEach(el=>el.classList.toggle('active',el===chip));renderPlayers();}));
+  async function json(file){const response=await fetch(prefix+file,{cache:'no-store'});if(!response.ok)throw Error(file+' HTTP '+response.status);return response.json();}
   async function load(){
-    const [meta,results,standings,players,clubs] = await Promise.all(['database_info.json','league_results.json','league_standings.json','players_stats.json','clubs_data.json'].map(path=>getJSON(dataBase+path)));
-    state.metadata=meta&&typeof meta==='object'?meta:null;
-    state.results=Array.isArray(results)?results:[];
-    state.standings=Array.isArray(standings?.rows)?standings.rows:[];
-    state.players=Array.isArray(players)?players:[];
-    state.clubs=Array.isArray(clubs)?clubs:[];
-    applyMetadata();renderMetrics();renderHero();renderStandings();renderMatches();renderTopScorers();renderPlayers();
+    try{
+      const [meta,res,scores,p,clubs]=await Promise.all(['database_info.json','league_results.json','league_standings.json','players_stats.json','clubs_data.json'].map(json));
+      metadata=meta;
+      fixtures=Array.isArray(res)?res:[];
+      standings=Array.isArray(scores?.rows)?scores.rows:[];
+      players=Array.isArray(p)?p:[];
+      clubMap=new Map((Array.isArray(clubs)?clubs:[]).map(c=>[c.name,c]));
+      ourGames=fixtures.filter(f=>f.home_club_name===team||f.away_club_name===team);
+      upcoming=ourGames.filter(f=>!f.played).sort((a,b)=>lastFixture(a).localeCompare(lastFixture(b)));
+      setHeader();drawStandings();drawResults();drawRatings();drawScorers();drawUpcoming();
+    }catch(error){
+      console.error('Errore di caricamento dashboard:',error);
+      $('gameDate').textContent='Dati non disponibili';
+      $('dataInfo').textContent='Controlla le cartelle JSON del sito';
+      $('matchTitle').textContent='IMPOSSIBILE CARICARE IL DATABASE';
+      $('matchDate').textContent='ERRORE DI CARICAMENTO';
+      $('matchCountdown').textContent='Apri il sito su HTTP, non come file locale';
+      $('matchVenue').textContent='';
+      loadMessage('Non riesco a leggere i file JSON. Apri Avvia_Dashboard.cmd o pubblica il sito su GitHub Pages.');
+    }
   }
+  $('previousFixture').addEventListener('click',()=>{if(visibleIndex>0){visibleIndex--;drawUpcoming();}});
+  $('nextFixture').addEventListener('click',()=>{if(visibleIndex<upcoming.length-1){visibleIndex++;drawUpcoming();}});
   load();
 })();

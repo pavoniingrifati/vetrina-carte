@@ -2,42 +2,79 @@
 <html lang="it">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Fantaballa Universe · Dashboard FC e Gotham City</title><meta name="theme-color" content="#0b1525"><meta name="description" content="Fantaballa FC, dashboard Super Lega: fantacalcio, risultati, classifiche e database giocatori.">
+<meta name="theme-color" content="#071324"><meta name="description" content="Dashboard Fantaballa Universe: partite, classifica, media voto, marcatori e fantacalcio dei salvataggi Fantaballa FC e Gotham City.">
+<title>Fantaballa Universe | Dashboard</title>
 <link rel="stylesheet" href="dashboard.css">
+<script src="dashboard.js" defer></script>
 </head>
 <body data-league="fantaballa">
-<div id="menuScrim" class="menu-scrim"></div>
-<div class="app-shell">
-<aside class="sidebar" id="sidebar" aria-label="Navigazione principale">
-  <a class="identity" href="index.html"><div class="mark" aria-hidden="true">FB</div><div><b>FANTABALLA FC</b><small>FOOTBALL UNIVERSE</small></div></a>
-  <div class="side-section">PRINCIPALE</div>
-  <nav class="side-links">
-    <a class="side-link active" aria-current="page" href="index.html" data-icon="layout-dashboard">Dashboard</a>
-    <a class="side-link" data-icon="shirt" data-dynamic-link="fantacalcio" href="fantacalcio.html">Fantacalcio</a>
-    <a class="side-link" data-icon="calendar-days" data-dynamic-link="results" href="campionato.html?tab=results">Risultati e calendario</a>
-    <a class="side-link" data-icon="trophy" data-dynamic-link="standings" href="campionato.html?tab=standings">Classifiche</a>
-    <a class="side-link" data-icon="database" data-dynamic-link="database" href="scouting.html">Database giocatori</a>
-    <a class="side-link" data-icon="scan-eye" data-dynamic-link="scouting" href="scouting.html">Scouting</a>
+<div class="menu-backdrop" id="menuBackdrop" hidden></div>
+<div class="app-layout">
+<aside class="sidebar" id="sidebar" aria-label="Menu principale">
+  <a href="index.html?universo=fantaballafc" class="brand" id="brandLink" aria-label="Fantaballa Universe: dashboard"><span class="brand-crest" id="brandCrest">FB</span><span class="brand-text"><strong>FANTABALLA</strong><small>UNIVERSE MANAGER</small></span></a>
+  <div class="sidebar-caption">NAVIGAZIONE</div>
+  <nav class="sidebar-nav" aria-label="Sezioni del sito">
+    <a href="index.html" class="nav-item active" aria-current="page"><span class="nav-icon">⌂</span><span>Dashboard</span></a>
+    <a data-link="fantacalcio" href="fantaballafc/fantacalcio.html" class="nav-item"><span class="nav-icon">♜</span><span>Fantacalcio</span></a>
+    <a data-link="results" href="fantaballafc/campionato.html?tab=results" class="nav-item"><span class="nav-icon">▦</span><span>Risultati e calendario</span></a>
+    <a data-link="standings" href="fantaballafc/campionato.html?tab=standings" class="nav-item"><span class="nav-icon">▥</span><span>Classifiche</span></a>
+    <a data-link="database" href="fantaballafc/scouting.html" class="nav-item"><span class="nav-icon">◫</span><span>Database giocatori</span></a>
   </nav>
-  <div class="side-spacer"></div><div class="switchbox"><p class="switch-title">CAMBIA UNIVERSO</p>
-    <a class="club-option current" href="?universo=fantaballafc"><span>Fantaballa FC</span><span class="mini-indicator"></span></a>
-    <a class="club-option" href="?universo=gothamcity"><span>Gotham City</span><span>↗</span></a>
-  </div><div class="side-foot">FANTABALLA UNIVERSE<br>Dashboard unificata · 2 database isolati</div>
+  <div class="sidebar-bottom">
+    <div class="sidebar-caption">SELEZIONA UNIVERSO</div>
+    <div class="universe-list" role="group" aria-label="Universo attivo">
+      <a href="?universo=fantaballafc" id="worldFc" class="universe-link selected"><span class="world-symbol symbol-fc">F</span><span><strong>Fantaballa FC</strong><small>Super Lega · S3</small></span><span class="universe-check" aria-hidden="true">●</span></a>
+      <a href="?universo=gothamcity" id="worldGc" class="universe-link"><span class="world-symbol symbol-gc">G</span><span><strong>Gotham City</strong><small>Super Lega · S2</small></span><span class="universe-check" aria-hidden="true">●</span></a>
+    </div>
+    <div class="sidebar-disclaimer">Universi separati<br>Statistiche e rose indipendenti</div>
+  </div>
 </aside>
-<div class="content">
-  <header class="topbar"><div class="top-left"><button class="mobile-menu" id="menuToggle" type="button" aria-label="Apri menu" aria-expanded="false" data-icon="menu"></button><span class="page-small">FANTABALLA <span style="color:#667f97;margin:0 5px">/</span> <span class="crumb-current">DASHBOARD</span></span></div><div class="top-right"><div class="data-date" data-icon="calendar-clock"><span id="topSeason">STAGIONE 2025/26</span></div><span class="userpill" aria-hidden="true">FC</span></div></header>
-  <main class="main">
-    <div class="head-row"><div><span class="overline">IL TUO CENTRO DI CONTROLLO</span><h1 class="main-heading">Dashboard <span style="color:var(--accent)">Fantaballa FC</span></h1><p class="subhead">Un’unica dashboard, due campionati e due database autonomi.</p></div><div class="savechip" id="savechip">SAVE DI RIFERIMENTO <b>27/12/2025</b></div></div>
-    <section class="hero" aria-label="Partita in evidenza"><div class="hero-inner"><div><span class="hero-eyebrow"><span class="pulse"></span><span id="heroKicker">IN EVIDENZA · SALVATAGGIO FM</span></span><h2 id="heroTitle">LA TUA SUPER LEGA.<br>IL TUO CAMPIONATO.</h2><p id="heroDescription">Risultati, fantacalcio, classifiche e i giocatori del tuo campionato. Tutto a portata di clic.</p><div class="hero-meta"><span data-icon="calendar-days" id="heroDate">Stagione 2025/26</span><span data-icon="map-pin" id="heroVenue">Premier Division Super Lega</span></div></div><div class="hero-side"><div class="vsmatch">VS</div><div class="hero-side-label">DENTRO IL CAMPIONATO</div><a class="hero-btn" href="campionato.html" data-dynamic-link="results">VEDI LE PARTITE <svg class="lucide" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></div></div></section>
-    <div class="isolation-banner"><span class="isolation-dot"></span><span><b id="worldDatabaseTitle">Fantaballa FC · DATABASE INDIPENDENTE</b><small id="worldDatabaseDetail">Le statistiche e le rose non vengono condivise fra i due mondi.</small></span><a href="fantaballafc/fantacalcio.html" id="worldSourceLink" aria-label="Vai alla rosa del mondo selezionato">APRI FANTACALCIO ↗</a></div>
-    <div class="stats-strip" aria-label="Riepilogo dati"><div class="stat-box"><div><label>CLUB IN LEGA</label><strong id="metricClubs">—</strong></div><div class="stat-icon" data-icon="shield"></div></div><div class="stat-box"><div><label>GIOCATORI</label><strong id="metricPlayers">—</strong></div><div class="stat-icon" data-icon="users-round"></div></div><div class="stat-box"><div><label>GARE DISPUTATE</label><strong id="metricMatches">—</strong></div><div class="stat-icon" data-icon="calendar-check"></div></div><div class="stat-box"><div><label>POSIZIONE IN LEGA</label><strong id="metricPosition">—</strong></div><div class="stat-icon" data-icon="trophy"></div></div></div>
-    <div class="section-top"><h3>Esplora la piattaforma</h3><span class="overline" style="color:#7e95b0">ACCESSO RAPIDO</span></div>
-    <nav class="features" aria-label="Accesso rapido"><a class="feature" href="fantacalcio.html" data-dynamic-link="fantacalcio"><span class="feature-icon" data-icon="shirt"></span><strong>Fantacalcio</strong><span>Crea e gestisci la tua rosa</span><svg class="lucide corner" viewBox="0 0 24 24"><path d="m7 17 10-10M7 7h10v10"/></svg></a><a class="feature" href="campionato.html?tab=results" data-dynamic-link="results"><span class="feature-icon" data-icon="calendar-check"></span><strong>Risultati</strong><span>Calendario e marcatori</span><svg class="lucide corner" viewBox="0 0 24 24"><path d="m7 17 10-10M7 7h10v10"/></svg></a><a class="feature" href="campionato.html?tab=standings" data-dynamic-link="standings"><span class="feature-icon" data-icon="trophy"></span><strong>Classifiche</strong><span>Posizioni e punti in lega</span><svg class="lucide corner" viewBox="0 0 24 24"><path d="m7 17 10-10M7 7h10v10"/></svg></a><a class="feature" href="scouting.html" data-dynamic-link="database"><span class="feature-icon" data-icon="database"></span><strong>Database giocatori</strong><span>Statistiche, ricerca e scouting</span><svg class="lucide corner" viewBox="0 0 24 24"><path d="m7 17 10-10M7 7h10v10"/></svg></a></nav>
-    <div class="content-grid"><div class="pane"><div class="pane-head"><div><h3>Partite e risultati</h3><p id="matchesSubtitle">Incontri dal salvataggio</p></div><div class="pill-tabs"><button class="pill-tab selected" id="tabLatest" type="button">Ultime</button><button class="pill-tab" id="tabUpcoming" type="button">In calendario</button></div></div><div class="feed-list" id="matchFeed"><div class="empty-data">Caricamento incontri...</div></div><div class="table-footer" id="matchFoot">Risultati del salvataggio Football Manager, non in tempo reale.</div></div>
-    <div class="content-stack"><div class="pane"><div class="pane-head"><div><h3>Classifica</h3><p id="rankingSub">Premier Division Super Lega</p></div><a class="soft-link" data-dynamic-link="standings" href="campionato.html?tab=standings">COMPLETA <span data-icon="arrow-up-right"></span></a></div><div class="table-wrap"><table class="standings-table"><thead><tr><th>POS</th><th>SQUADRA</th><th>PG</th><th>PT</th></tr></thead><tbody id="standingsBody"><tr><td colspan="4" class="empty-data">Caricamento classifica...</td></tr></tbody></table></div><div class="table-footer" id="rankFoot">Classifica ricostruita dai risultati del save.</div></div><div class="pane"><div class="pane-head"><div><h3>Capocannonieri</h3><p>Dati campionato dal database</p></div><a class="soft-link" href="campionato.html?tab=stats" data-dynamic-link="stats">STATISTICHE <span data-icon="arrow-up-right"></span></a></div><div class="top-players" id="topPlayers"><div class="empty-data">Caricamento statistiche...</div></div></div></div></div>
-    <section class="database" aria-label="Ricerca database giocatori"><div class="section-top database-header"><div><h3>Database giocatori <small>RICERCA RAPIDA</small></h3></div><label class="searchbox"><span data-icon="search"></span><input type="search" id="playerSearch" placeholder="Cerca nome, club o ruolo..." autocomplete="off" aria-label="Cerca un giocatore"></label></div><div class="pane"><div class="db-filter" aria-label="Filtro ruolo"><button class="role-chip active" data-role="all" type="button">TUTTI</button><button class="role-chip" data-role="P" type="button">PORTIERI</button><button class="role-chip" data-role="D" type="button">DIFENSORI</button><button class="role-chip" data-role="C" type="button">CENTROCAMPISTI</button><button class="role-chip" data-role="A" type="button">ATTACCANTI</button></div><div class="table-wrap"><table class="db-table"><thead><tr><th>GIOCATORE</th><th>RUOLO</th><th>PG</th><th>MV</th><th>GOL</th><th>CREDITI</th></tr></thead><tbody id="playersBody"><tr><td colspan="6" class="empty-data">Caricamento giocatori...</td></tr></tbody></table></div><div class="db-end"><span id="playerCount">—</span><a class="soft-link" href="scouting.html" data-dynamic-link="database" id="allPlayersLink">VAI AL DATABASE <span data-icon="arrow-up-right"></span></a></div></div></section>
-    <div class="footer-note" id="footerSource">Dashboard basata sui dati dei file JSON locali. I risultati del save sono uno snapshot storico; nessun aggiornamento live.</div>
+<div class="workspace">
+  <header class="topbar">
+    <div class="topbar-start"><button id="menuButton" class="menu-button" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="Apri navigazione">☰</button><span class="topbar-section">FANTABALLA <span class="slash">/</span> <b>DASHBOARD</b></span></div>
+    <div class="topbar-center"><b>HOME</b><small id="topSubline">FANTABALLA FC · SUPER LEGA</small></div>
+    <div class="topbar-end"><span class="online-tag"><i></i> SAVE FM</span><span class="game-day">DATA NEL GIOCO <b id="gameDate">—</b></span><span class="season-pill" id="seasonPill">2025/26</span></div>
+  </header>
+  <main class="main-area">
+    <div class="intro-line"><span><span class="live-diamond"></span> PANORAMICA DEL CAMPIONATO <b id="introWorld">FANTABALLA FC</b></span><span id="dataInfo">Caricamento dati del salvataggio...</span></div>
+    <section class="fm-grid" aria-label="Dashboard campionato">
+      <section class="panel standings-panel" aria-label="Classifica campionato">
+        <div class="panel-heading"><div class="panel-heading-title"><span class="heading-glyph">▥</span><h2>CLASSIFICA</h2></div><a class="header-link" data-link="standings" href="fantaballafc/campionato.html?tab=standings" aria-label="Apri classifica completa">↗</a></div>
+        <div class="panel-caption"><span id="competitionLeft">Premier Division Super Lega</span><span id="standingsCount">— squadre</span></div>
+        <div class="table-scroll"><table class="league-table"><thead><tr><th>POS</th><th>SQUADRA</th><th>G</th><th>DR</th><th>PT</th></tr></thead><tbody id="standingsRows"><tr><td colspan="5" class="load-placeholder">Caricamento classifica...</td></tr></tbody></table></div>
+        <a class="panel-bottom-link" data-link="standings" href="fantaballafc/campionato.html?tab=standings">CLASSIFICA COMPLETA <span>→</span></a>
+      </section>
+      <section class="panel upcoming-panel" aria-label="Prossima partita">
+        <div class="panel-heading"><div class="panel-heading-title"><span class="heading-glyph">▦</span><h2 id="fixtureHeading">PROSSIMA PARTITA</h2></div><div class="fixture-controls"><button class="arrow-btn" id="previousFixture" type="button" aria-label="Partita precedente" disabled>‹</button><span id="fixtureStep" class="fixture-step">01</span><button class="arrow-btn" id="nextFixture" type="button" aria-label="Partita successiva">›</button></div></div>
+        <div class="stadium-scene"><div class="light-bloom bloom-left"></div><div class="light-bloom bloom-right"></div><div class="stadium-tier"></div><div class="stadium-pitch"></div>
+          <div class="match-content"><div class="match-top"><span class="match-status"><span class="match-status-dot"></span> CALENDARIO DEL SALVATAGGIO</span><h3 id="matchDate">—</h3><p id="matchCountdown">—</p><span class="competition-tag" id="competitionCenter">Premier Division Super Lega</span></div>
+            <div class="versus-row"><div class="team-block"><div class="big-shield" id="homeShield">FC</div><strong id="homeLabel">—</strong><small>CASA</small></div><span class="versus-word">VS</span><div class="team-block"><div class="big-shield" id="awayShield">GC</div><strong id="awayLabel">—</strong><small>TRASFERTA</small></div></div>
+            <div class="match-info"><h4 id="matchTitle">—</h4><div class="meta-row"><span id="matchRound">GIORNATA —</span><span class="meta-separator">•</span><span id="matchVenue">INCONTRO DI CAMPIONATO</span></div></div>
+            <div class="match-actions"><a id="calendarAction" data-link="calendar" href="fantaballafc/campionato.html?tab=upcoming">APRI IL CALENDARIO <span>↗</span></a></div>
+          </div>
+        </div>
+        <div class="hero-bottom"><div><span class="hero-bottom-kicker">FORMA DELLA SQUADRA</span><span id="recentForm" class="recent-form">—</span></div><div class="hero-bottom-secondary" id="saveReference">Snapshot Football Manager</div></div>
+      </section>
+      <section class="panel results-panel" aria-label="Ultimi risultati della squadra">
+        <div class="panel-heading"><div class="panel-heading-title"><span class="heading-glyph">▤</span><h2>PARTITE E RISULTATI</h2></div><a class="header-link" data-link="results" href="fantaballafc/campionato.html?tab=results" aria-label="Apri tutti i risultati">↗</a></div>
+        <div class="panel-caption"><span id="resultsLabel">Ultime partite della squadra</span><span id="resultsCount">—</span></div>
+        <div id="resultsRows" class="results-scroll"><div class="load-placeholder">Caricamento risultati...</div></div>
+        <a class="panel-bottom-link" data-link="results" href="fantaballafc/campionato.html?tab=results">TUTTI I RISULTATI <span>→</span></a>
+      </section>
+      <div class="bottom-stats" aria-label="Statistiche dei giocatori della squadra">
+        <section class="panel mv-panel" aria-label="Migliori medie voto"><div class="panel-heading"><div class="panel-heading-title"><span class="heading-glyph">★</span><h2>MEDIA VOTO GIOCATORI</h2></div><a class="header-link" data-link="database" href="fantaballafc/scouting.html" aria-label="Apri database giocatori">↗</a></div>
+          <div class="panel-caption"><span id="mvTeamCaption">Solo giocatori Fantaballa FC</span><span title="Media voto assegnata da Football Manager">MV FM</span></div>
+          <div class="stats-table-viewport"><table class="stats-table"><thead><tr><th>#</th><th>GIOCATORE</th><th>PR</th><th>GOL</th><th>ASS</th><th>MV</th></tr></thead><tbody id="ratingRows"><tr><td colspan="6" class="load-placeholder">Caricamento voti...</td></tr></tbody></table></div>
+          <div class="stat-note" id="ratingNote">Medie voto del salvataggio per la squadra selezionata.</div>
+        </section>
+        <section class="panel scorer-panel" aria-label="Miglior marcatore della squadra"><div class="panel-heading"><div class="panel-heading-title"><span class="heading-glyph">◎</span><h2>CAPOCANNONIERE</h2></div><a class="header-link" data-link="stats" href="fantaballafc/campionato.html?tab=stats" aria-label="Apri statistiche marcatori">↗</a></div>
+          <div class="panel-caption"><span id="scorerTeamCaption">Solo giocatori Fantaballa FC</span><span>GOL IN CAMPIONATO</span></div>
+          <div class="scorer-flex"><div class="featured-scorer" id="scorerFeature">—</div><div class="scorer-list" id="scorerRows"><div class="load-placeholder">Caricamento marcatori...</div></div></div>
+        </section>
+      </div>
+    </section>
+    <div class="dashboard-footer"><span id="sourceFooter">Dati estratti dai salvataggi Football Manager. Non aggiornati in tempo reale.</span><span>FANTABALLA UNIVERSE · DASHBOARD</span></div>
   </main>
 </div></div>
-<script src="dashboard.js" defer></script>
-</body></html>
+</body>
+</html>
