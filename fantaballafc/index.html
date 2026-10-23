@@ -1,0 +1,2396 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fantaballa FC · FantaSuper Lega FM - Squadra</title>
+  <style>
+    :root {
+      --bg: #111111;
+      --panel: #e7e7e3;
+      --text: #f5f5f5;
+      --dark: #171717;
+      --green: #00c875;
+      --green2: #00a65a;
+      --gold: #d6ff00;
+      --pitch: #03bf6a;
+      --pitch2: #00aa5a;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    button, input, select { font: inherit; }
+    button { cursor: pointer; border: 0; transition: transform .12s ease, opacity .12s ease, background .12s ease; }
+    button:hover { transform: translateY(-1px); }
+    button:disabled { cursor: not-allowed; opacity: .38; transform: none; }
+
+    .app {
+      max-width: 1180px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(640px, 1fr) 410px;
+      gap: 24px;
+      padding: 42px 32px 28px;
+    }
+
+    @media (max-width: 1050px) { .app { grid-template-columns: 1fr; padding: 20px; } }
+    .left { min-width: 0; }
+
+    .topbar {
+      display: grid;
+      place-items: center;
+      margin-bottom: 18px;
+    }
+    .simplified-topbar { text-align: center; }
+    .app-title {
+      margin: 0;
+      color: #fff;
+      font-size: clamp(28px, 5vw, 52px);
+      line-height: .95;
+      font-weight: 1000;
+      letter-spacing: -0.055em;
+      text-transform: uppercase;
+      text-shadow: 0 10px 34px rgba(0,0,0,.38);
+    }
+
+    .top-item {
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-right: 24px;
+      border-right: 1px solid rgba(255,255,255,0.28);
+    }
+    .top-item:last-child { border-right: 0; padding-right: 0; }
+    .top-big { font-size: 18px; line-height: 1; font-weight: 950; letter-spacing: -0.03em; }
+    .top-big .arrow { color: var(--green); font-size: 12px; margin-left: 3px; }
+    .top-label { color: #777; font-size: 9px; line-height: 1; margin-top: 10px; text-transform: uppercase; font-weight: 900; }
+    .status-title { font-size: 17px; font-weight: 950; letter-spacing: .02em; }
+    .status-sub { color: #777; font-size: 9px; margin-top: 9px; font-weight: 900; text-transform: uppercase; }
+    .help {
+      width: 20px; height: 20px; border: 2px solid #fff; border-radius: 50%;
+      display: grid; place-items: center; font-size: 12px; font-weight: 950;
+    }
+
+    .credits {
+      display: inline-grid;
+      align-items: center;
+      justify-items: center;
+      min-width: 190px;
+      min-height: 72px;
+      background: linear-gradient(135deg, #242424, #343434);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      margin: 0 0 22px;
+      padding: 12px 18px;
+      box-shadow: 0 14px 32px rgba(0,0,0,.25);
+      letter-spacing: -0.04em;
+    }
+    .credits strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 28px;
+      line-height: 1;
+      font-weight: 1000;
+      color: var(--green);
+    }
+    .credits span {
+      display: block;
+      color: #bdbdbd;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 950;
+    }
+
+    .score-summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      max-width: 540px;
+      margin: 0 auto 18px;
+    }
+    .score-card {
+      background: linear-gradient(135deg, #1c1c1c, #292929);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      padding: 12px 14px;
+      text-align: center;
+      box-shadow: 0 12px 28px rgba(0,0,0,.22);
+    }
+    .score-card span {
+      display: block;
+      color: #aaa;
+      font-size: 9px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .score-card strong {
+      display: block;
+      color: var(--gold);
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 1000;
+      letter-spacing: -0.04em;
+    }
+    .stat-tag {
+      display: inline-grid;
+      place-items: center;
+      min-width: 48px;
+      height: 20px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: #f0f0f0;
+      color: #333;
+      font-size: 8px;
+      font-weight: 950;
+      letter-spacing: .02em;
+      white-space: nowrap;
+    }
+
+    .teamline { display: flex; justify-content: center; align-items: center; gap: 16px; margin-bottom: 14px; }
+    .captain-box { display: grid; gap: 6px; }
+    .cap-label {
+      background: var(--gold); color: #111; display: inline-grid; place-items: center;
+      width: 42px; height: 32px; font-weight: 950; border-radius: 2px 2px 0 0;
+    }
+    .cap-number {
+      background: #fff; color: #111; display: inline-grid; place-items: center;
+      width: 42px; height: 34px; font-weight: 950; border-radius: 0 0 4px 4px;
+    }
+    .team-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .manager-input {
+      width: 190px; height: 40px; border-radius: 7px; border: 1px solid #3a3a3a;
+      background: #161616; color: #fff; padding: 0 12px; font-weight: 800;
+    }
+    .random-btn {
+      height: 40px; border-radius: 7px; padding: 0 18px; background: transparent;
+      border: 1px solid var(--green); color: var(--green); font-weight: 950; letter-spacing: .02em;
+    }
+
+    .pitch-area { position: relative; min-height: 640px; display: grid; place-items: center; }
+
+    .pitch {
+      width: min(560px, 88vw);
+      height: 540px;
+      position: relative;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0 54px, transparent 54px 108px),
+        linear-gradient(180deg, var(--pitch), var(--pitch2));
+      border-radius: 18px;
+      box-shadow: 0 26px 70px rgba(0,0,0,.35);
+      overflow: hidden;
+      border: 3px solid rgba(255,255,255,.86);
+    }
+    .pitch:before {
+      content: "";
+      position: absolute;
+      inset: 16px;
+      border: 3px solid rgba(255,255,255,.83);
+      border-radius: 12px;
+      pointer-events: none;
+    }
+    .pitch:after {
+      content: "";
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 76px; height: 76px;
+      border: 3px solid rgba(255,255,255,.83);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .midline, .box-top, .box-bottom, .goal-bottom {
+      position: absolute;
+      left: 50%; transform: translateX(-50%);
+      border: 3px solid rgba(255,255,255,.83);
+      pointer-events: none;
+    }
+    .midline { top: 50%; width: 100%; border-width: 3px 0 0 0; }
+    .box-top { top: 16px; width: 210px; height: 58px; border-top: 0; border-radius: 0 0 12px 12px; }
+    .box-bottom { bottom: 16px; width: 250px; height: 84px; border-bottom: 0; border-radius: 12px 12px 0 0; }
+    .goal-bottom { bottom: 16px; width: 124px; height: 46px; border-bottom: 0; border-radius: 8px 8px 0 0; }
+
+    .formation {
+      position: absolute;
+      inset: 0;
+      padding: 18px 34px 18px;
+      display: grid;
+      grid-template-rows: 125px 132px 132px 105px;
+      align-items: center;
+      z-index: 2;
+    }
+    .line { display: flex; justify-content: center; align-items: center; gap: 34px; }
+    .line.def, .line.mid, .line.att { gap: 34px; }
+
+    .slot {
+      width: 76px;
+      min-height: 90px;
+      background: #fff;
+      color: #111;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 7px 5px;
+      box-shadow: 0 10px 20px rgba(0,0,0,.16);
+      position: relative;
+      border: 2px solid transparent;
+    }
+    .slot.active { border-color: var(--gold); box-shadow: 0 0 0 4px rgba(214,255,0,.25), 0 10px 20px rgba(0,0,0,.16); }
+    .slot .plus {
+      width: 19px; height: 19px; background: #191919; color: #fff; border-radius: 50%;
+      display: grid; place-items: center; font-size: 18px; font-weight: 900; line-height: 18px; margin: 0 auto 8px;
+    }
+    .slot-role { font-size: 11px; font-weight: 800; }
+    .remove-mini {
+      position: absolute; right: -9px; top: -9px; width: 22px; height: 22px; border-radius: 50%;
+      background: #fff; color: #111; border: 1px solid #111; display: grid; place-items: center;
+      font-weight: 950; font-size: 13px; z-index: 5;
+    }
+    .pitch-player { width: 100%; display: grid; justify-items: center; gap: 2px; }
+    .pitch-shirt {
+      width: 46px; height: 40px; position: relative; display: block;
+      clip-path: polygon(18% 0, 36% 0, 42% 10%, 58% 10%, 64% 0, 82% 0, 100% 18%, 86% 42%, 86% 100%, 14% 100%, 14% 42%, 0 18%);
+      color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.35); margin-top: -2px;
+      border: 1px solid rgba(255,255,255,.12);
+      overflow: hidden;
+    }
+    .slot-name {
+      background: #111; color: #fff; border-radius: 3px; padding: 3px 5px; margin-top: 1px;
+      max-width: 80px; font-size: 9px; font-weight: 950; line-height: 1.05; text-transform: uppercase;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    /* Formazione: MV sempre a sinistra e FM sempre a destra. */
+    .slot-info {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 72px;
+      background: #fff;
+      color: #111;
+      border: 1px solid #d8d8d8;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .slot-info span {
+      display: grid;
+      justify-items: center;
+      align-content: center;
+      min-width: 0;
+      padding: 2px 0;
+      line-height: 1.1;
+      white-space: nowrap;
+      border-right: 1px solid #ddd;
+    }
+    .slot-info span:last-child { border-right: 0; }
+    .slot-info small { font-size: 7px; font-weight: 850; color: #666; }
+    .slot-info strong { font-size: 8px; font-weight: 1000; }
+    .slot-nation { color: #555; font-size: 8px; font-weight: 900; max-width: 70px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .bench-title { text-align: center; color: #8f8f8f; font-size: 11px; font-weight: 950; margin-top: -2px; }
+    .bench { display: flex; justify-content: space-between; gap: 16px; margin: 14px 0 16px; }
+    @media (max-width: 760px) {
+      body { overflow-x: hidden; }
+      .app { padding: 12px; gap: 18px; }
+      .topbar { margin-bottom: 14px; }
+      .app-title { font-size: 30px; line-height: 1; }
+      .teamline { flex-wrap: wrap; align-items: stretch; gap: 12px; }
+      .team-actions { width: 100%; flex-wrap: wrap; }
+      .manager-input { width: 100%; min-width: 0; }
+      .module-select { min-width: 96px; }
+      .random-btn { flex: 1 1 180px; }
+      .pitch-area { min-height: auto; }
+      .pitch {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        aspect-ratio: 1.3 / 1;
+      }
+      .formation {
+        padding: 10px 10px 8px;
+        grid-template-rows: 76px 92px 92px 76px;
+      }
+      .line {
+        width: 100%;
+        justify-content: space-evenly !important;
+        gap: 8px !important;
+      }
+      .bench { flex-wrap: wrap; justify-content: center; gap: 10px; }
+      .slot { width: 62px; min-height: 78px; padding: 6px 4px; }
+      .slot .plus { margin-bottom: 6px; }
+      .slot-name { max-width: 58px; font-size: 8px; }
+      .slot-info { width: 54px; font-size: 7px; }
+      .slot-nation { max-width: 58px; font-size: 7px; }
+      .pitch-shirt { width: 38px; height: 33px; }
+      .pitch-shirt-code { font-size: 6px; top: 5px; }
+      .pitch-shirt-num { font-size: 10px; bottom: 5px; }
+    }
+
+    @media (max-width: 480px) {
+      .app { padding: 10px; }
+      .topbar { display: grid; place-items: center; }
+      .app-title { font-size: 26px; }
+      .pitch {
+        aspect-ratio: 1.18 / 1;
+      }
+      .formation {
+        padding: 8px 8px 6px;
+        grid-template-rows: 70px 86px 86px 72px;
+      }
+      .line { gap: 6px !important; }
+      .slot { width: 56px; min-height: 72px; padding: 5px 3px; }
+      .slot-role { font-size: 10px; }
+      .slot-name { max-width: 52px; font-size: 7px; }
+      .slot-info { width: 48px; font-size: 6.5px; }
+      .slot-nation { max-width: 50px; font-size: 6.5px; }
+      .pitch-shirt { width: 34px; height: 30px; }
+      .remove-mini { width: 20px; height: 20px; right: -7px; top: -7px; }
+    }
+
+    .bottom-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 540px; margin: 0 auto; }
+    .bottom-actions-three { grid-template-columns: 1fr 1fr; }
+    .bottom-actions-three .share-btn { grid-column: 1 / -1; }
+    .bottom-actions-four { grid-template-columns: 1fr 1fr; }
+    .cancel-btn, .save-btn, .share-btn, .download-btn { height: 42px; border-radius: 6px; font-weight: 950; font-size: 16px; }
+    .cancel-btn { color: #fff; background: #151515; border: 1px solid #555; }
+    .save-btn { color: #fff; background: #747474; }
+    .download-btn { color: #fff; background: #2765ff; border: 1px solid rgba(255,255,255,.12); }
+    .share-btn { color: #07120c; background: var(--green); border: 1px solid rgba(255,255,255,.1); }
+    .save-btn.valid { background: var(--green); color: #07120c; }
+
+    .market {
+      background: var(--panel); color: var(--dark); border-radius: 20px; padding: 18px 20px;
+      min-height: calc(100vh - 84px); display: flex; flex-direction: column; box-shadow: 0 25px 70px rgba(0,0,0,.35);
+    }
+    .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 26px; }
+    .tabs-single { grid-template-columns: 1fr; margin-bottom: 20px; }
+    .tabs-single .tab { justify-content: center; }
+    .tab { display: grid; place-items: center; gap: 5px; color: #333; font-size: 11px; font-weight: 700; }
+    .tab svg { width: 22px; height: 22px; stroke-width: 1.6; }
+    .tab.active { color: var(--green2); }
+
+    .search-row { display: grid; grid-template-columns: 1fr 44px; gap: 8px; margin-bottom: 10px; }
+    .search-box {
+      height: 41px; background: white; border-radius: 6px; display: grid; grid-template-columns: 34px 1fr;
+      align-items: center; padding: 0 10px;
+    }
+    .search-box input { border: 0; outline: 0; background: transparent; font-weight: 700; color: #444; width: 100%; }
+    .filter-btn { height: 41px; border: 1px solid #777; background: transparent; border-radius: 6px; color: #333; display: grid; place-items: center; }
+
+    .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+    .chip { min-width: 31px; height: 31px; border-radius: 6px; border: 1px solid #111; background: transparent; color: #111; font-weight: 900; }
+    .chip.active { background: #111; color: #fff; }
+    .nation-select, .module-select, .sort-select {
+      height: 31px; border-radius: 6px; border: 1px solid #111; background: transparent; color: #111;
+      font-weight: 900; padding: 0 8px; max-width: 145px;
+    }
+    .module-select { background: #fff; }
+
+    .official-count { color:#555; font-size:11px; font-weight:900; text-align:center; margin:-6px 0 8px; }
+    .players-list { display: grid; gap: 10px; overflow: auto; padding-right: 2px; max-height: calc(100vh - 280px); }
+    .player-card {
+      width: 100%;
+      min-height: 112px;
+      background: #fff;
+      border: 1px solid #dededb;
+      border-radius: 12px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+      align-items: stretch;
+      padding: 10px;
+      text-align: left;
+      overflow: hidden;
+      position: relative;
+    }
+    .player-card:hover:not(:disabled) { background: #fcfefa; border-color: #8ccd9f; }
+    .player-card-main {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr) 48px;
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+    }
+    .player-card-main .shirt { width: 54px; height: 52px; }
+    .player-identity { min-width: 0; }
+    .player-stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 5px;
+      border-top: 1px solid #ececeb;
+      padding-top: 8px;
+    }
+    .player-stat {
+      min-width: 0;
+      display: grid;
+      justify-items: center;
+      align-content: center;
+      gap: 3px;
+      padding: 6px 2px;
+      background: #f3f3f1;
+      border-radius: 6px;
+    }
+    .player-stat small {
+      color: #646866;
+      font-size: 8px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: .02em;
+    }
+    .player-stat strong {
+      color: #202321;
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+    .player-stat.mv { background: #e6f5ec; }
+    .player-stat.fm { background: #f3f8dc; }
+    .player-stat.fm strong { color: #526e00; }
+    .player-card.disabled { opacity: .45; }
+    .shirt {
+      height: 60px; width: 64px; position: relative; display: block;
+      clip-path: polygon(18% 0, 36% 0, 42% 10%, 58% 10%, 64% 0, 82% 0, 100% 18%, 86% 42%, 86% 100%, 14% 100%, 14% 42%, 0 18%);
+      color: white; font-weight: 950; text-shadow: 0 1px 4px rgba(0,0,0,.35);
+      overflow: hidden;
+    }
+    .shirt-code, .pitch-shirt-code { position: absolute; left: 50%; transform: translateX(-50%); top: 7px; font-size: 8px; line-height: 1; font-weight: 900; letter-spacing: .08em; }
+    .shirt-num, .pitch-shirt-num { position: absolute; left: 50%; transform: translateX(-50%); bottom: 7px; font-size: 15px; line-height: 1; font-weight: 950; }
+    .pitch-shirt-code { top: 6px; font-size: 7px; }
+    .pitch-shirt-num { bottom: 6px; font-size: 12px; }
+    .pname { font-size: 12px; line-height: 1.2; font-weight: 950; text-transform: uppercase; margin-bottom: 5px; overflow-wrap: anywhere; }
+    .pmeta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px 6px;
+      color: #666;
+      font-size: 9px;
+      font-weight: 850;
+      line-height: 1.25;
+      overflow: visible;
+    }
+    .role-mini {
+      display: inline-grid; place-items: center; min-width: 15px; height: 15px; background: #e8e8e8; color: #777;
+      border-radius: 3px; font-size: 8px; font-weight: 950; margin-right: 5px;
+    }
+    .price {
+      width: 48px;
+      min-height: 48px;
+      border: 1px solid #222;
+      border-radius: 7px;
+      background: #171717;
+      color: white;
+      font-size: 16px;
+      font-weight: 950;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+    .price small { font-size: 8px; font-weight: 850; line-height: 1; color: #bdbdbd; }
+
+    .export-box { margin-top: 14px; display: none; }
+    .export-box textarea {
+      width: 100%; min-height: 120px; resize: vertical; border: 1px solid #aaa; border-radius: 8px;
+      padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px;
+    }
+    .toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #fff; color: #111;
+      padding: 12px 16px; border-radius: 999px; font-weight: 950; opacity: 0; pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease; box-shadow: 0 10px 30px rgba(0,0,0,.25); z-index: 10;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+  
+    /* Mobile final fix */
+    @media (max-width: 760px) {
+      .app { padding: 12px; gap: 18px; }
+      .topbar { margin-bottom: 14px; }
+      .app-title { font-size: 30px; line-height: 1; text-align: center; }
+      .credits { width: 100%; max-width: 260px; margin-left: auto; margin-right: auto; display: grid; }
+      .teamline { display: grid; justify-items: center; gap: 12px; }
+      .team-actions { width: 100%; display: grid; grid-template-columns: 1fr 110px; gap: 10px; justify-items: stretch; }
+      .manager-input { grid-column: 1 / -1; width: 100%; }
+      .module-select { width: 100%; max-width: none; }
+      .random-btn {
+        grid-column: 1 / -1;
+        justify-self: center;
+        width: min(260px, 100%);
+        text-align: center;
+        padding: 0 14px;
+      }
+      .score-summary { grid-template-columns: 1fr 1fr; width: 100%; }
+      .score-card { padding: 10px 8px; }
+      .score-card strong { font-size: 20px; }
+      .pitch-area { width: 100%; min-height: auto; overflow: visible; }
+      .pitch { width: 100%; max-width: 100%; height: auto; aspect-ratio: 0.78 / 1; }
+      .formation { padding: 14px 6px 12px; grid-template-rows: 22% 27% 27% 22%; }
+      .line { width: 100%; justify-content: space-around !important; gap: 3px !important; }
+      .slot { width: 54px; min-height: 68px; padding: 4px 3px; }
+      .slot-name { max-width: 50px; font-size: 6.8px; padding: 2px 3px; }
+      .slot-info { width: 46px; font-size: 6px; }
+      .slot-nation { max-width: 48px; font-size: 6px; }
+      .pitch-shirt { width: 30px; height: 27px; }
+      .pitch-shirt-code { font-size: 5px; top: 4px; }
+      .pitch-shirt-num { font-size: 9px; bottom: 4px; }
+      .remove-mini { width: 18px; height: 18px; right: -6px; top: -6px; font-size: 11px; }
+    }
+    @media (max-width: 420px) {
+      .app { padding: 10px 8px; }
+      .app-title { font-size: 25px; }
+      .pitch { aspect-ratio: 0.70 / 1; }
+      .formation { padding: 12px 4px 10px; }
+      .slot { width: 49px; min-height: 64px; padding: 4px 2px; }
+      .slot-name { max-width: 45px; font-size: 6.1px; }
+      .slot-info { width: 41px; font-size: 5.6px; }
+      .slot-nation { max-width: 42px; font-size: 5.6px; }
+      .pitch-shirt { width: 27px; height: 24px; }
+      .pitch-shirt-code { font-size: 4.5px; }
+      .pitch-shirt-num { font-size: 8px; }
+    }
+
+      /* Player card large fix */
+
+    @media (max-width: 760px) {
+      .player-card { min-height: 108px; padding: 9px; gap: 7px; }
+      .player-card-main { grid-template-columns: 46px minmax(0, 1fr) 44px; gap: 8px; }
+      .player-card-main .shirt { width: 46px; height: 46px; }
+      .pname { font-size: 11px; }
+      .pmeta { gap: 4px 5px; font-size: 8px; }
+      .price { width: 44px; min-height: 44px; font-size: 15px; }
+      .player-stats { gap: 4px; padding-top: 7px; }
+      .player-stat { padding: 6px 1px; }
+      .player-stat strong { font-size: 11px; }
+      .player-stat small { font-size: 7px; }
+      .stat-tag { min-width: 43px; height: 18px; padding: 0 5px; font-size: 7px; }
+    }
+
+  
+    .send-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      place-items: center;
+      padding: 18px;
+    }
+    .send-modal.open { display: grid; }
+    .send-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.68);
+      backdrop-filter: blur(8px);
+    }
+    .send-modal-card {
+      position: relative;
+      width: min(680px, 100%);
+      max-height: 88vh;
+      overflow: auto;
+      background: #f4f4ef;
+      color: #111;
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 28px 90px rgba(0,0,0,.48);
+      border: 1px solid rgba(255,255,255,.25);
+    }
+    .send-modal-card h2 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      letter-spacing: -.04em;
+      font-weight: 1000;
+    }
+    .send-modal-card p {
+      margin: 0 0 14px;
+      color: #333;
+      line-height: 1.45;
+      font-size: 14px;
+      font-weight: 650;
+    }
+    .send-modal-card textarea {
+      width: 100%;
+      min-height: 310px;
+      resize: vertical;
+      border: 1px solid #cfcfcf;
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+      color: #111;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      outline: none;
+    }
+    .send-modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .copy-send-btn, .ghost-send-btn {
+      height: 42px;
+      border-radius: 10px;
+      font-weight: 950;
+    }
+    .copy-send-btn { background: var(--green); color: #07120c; }
+    .ghost-send-btn { background: #111; color: #fff; }
+    .send-modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #111;
+      color: #fff;
+      font-size: 22px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+    }
+    @media (max-width: 640px) {
+      .send-modal-card { padding: 18px; }
+      .send-modal-card textarea { min-height: 360px; }
+      .send-modal-actions { grid-template-columns: 1fr; }
+    }
+
+
+    .scouting-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      border-color: var(--gold);
+      color: #111;
+      background: var(--gold);
+    }
+
+
+    /* Nuove maglie vettoriali: ombra morbida, sagoma sartoriale e dettagli leggibili. */
+    .shirt, .pitch-shirt {
+      clip-path: none !important;
+      border: none !important;
+      background: transparent !important;
+      padding: 0;
+      overflow: visible;
+      filter: drop-shadow(0 3px 2px rgba(0,0,0,.27));
+      flex-shrink: 0;
+    }
+    .kit-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    .player-card .shirt { transition: transform .18s ease, filter .18s ease; }
+    .player-card:hover .shirt { transform: scale(1.07) rotate(-2deg); filter: drop-shadow(0 5px 4px rgba(0,0,0,.24)); }
+    .slot .pitch-shirt { transition: transform .18s ease; }
+    .slot:hover .pitch-shirt { transform: translateY(-2px) scale(1.04); }
+
+    .load-more-players { width: 100%; padding: 14px; border-radius: 8px; background: #161616; color: #fff; font-weight: 850; margin: 6px 0; }
+
+    /* Nei desktop intermedi evita lo sbordo dell'intera griglia principale. */
+    @media (min-width: 1051px) and (max-width: 1150px) {
+      .app {
+        grid-template-columns: minmax(0, 1fr) 390px;
+        gap: 18px;
+        padding: 32px 20px 24px;
+      }
+    }
+
+    /* Formazione — schede completamente dentro il campo, senza sbordi.
+       Le stesse proporzioni valgono per titolari e panchina. */
+    .pitch { max-width: 100%; }
+    .formation {
+      min-width: 0;
+      grid-template-rows: repeat(4, minmax(0, 1fr));
+      padding: 12px 22px;
+    }
+    .formation .line {
+      width: 100%;
+      min-width: 0;
+      gap: 8px !important;
+      justify-content: space-evenly !important;
+    }
+    .formation .slot {
+      width: min(76px, calc((100% - 36px) / 5));
+      max-width: 100%;
+      min-width: 0;
+      flex: 0 1 auto;
+      padding: 6px 4px;
+    }
+    .slot .pitch-player {
+      width: 100%;
+      min-width: 0;
+      gap: 3px;
+    }
+    .slot .pitch-shirt { max-width: 100%; }
+    .slot .slot-name,
+    .slot .slot-info,
+    .slot .slot-nation {
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+    .slot .slot-name,
+    .slot .slot-nation {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .slot .slot-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .slot .slot-info span { min-width: 0; overflow: hidden; padding: 3px 1px; }
+    .slot .slot-info small { font-size: 7px; line-height: 1.15; }
+    .slot .slot-info strong { font-size: 8px; letter-spacing: -.15px; font-variant-numeric: tabular-nums; line-height: 1.15; }
+    .slot .slot-nation { font-size: 7px; line-height: 1.2; }
+    .bench {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: clamp(4px, 1.4vw, 12px);
+      justify-items: center;
+      align-items: stretch;
+    }
+    .bench .slot { width: min(100%, 76px); min-width: 0; }
+
+    @media (max-width: 760px) {
+      .formation {
+        padding: 11px 8px;
+        grid-template-rows: repeat(4, minmax(0, 1fr));
+      }
+      .formation .line { gap: 3px !important; }
+      .formation .slot {
+        width: min(65px, calc((100% - 16px) / 5));
+        min-height: 0;
+        padding: 5px 3px;
+      }
+      .slot .slot-name { font-size: 7.8px; line-height: 1.12; padding: 3px 2px; }
+      .slot .slot-info small { font-size: 6.6px; }
+      .slot .slot-info strong { font-size: 7.7px; }
+      .slot .slot-nation { font-size: 6.8px; }
+      .bench { display: grid; gap: 6px; }
+      .bench .slot { min-height: 0; }
+    }
+    @media (max-width: 420px) {
+      .formation { padding: 9px 6px; }
+      .formation .slot { width: min(60px, calc((100% - 14px) / 5)); padding: 4px 2px; }
+      .slot .slot-name { font-size: 7.1px; }
+      .slot .slot-info span { padding: 3px 0; }
+      .slot .slot-info small { font-size: 6px; }
+      .slot .slot-info strong { font-size: 7.2px; }
+      .slot .slot-nation { font-size: 6.4px; }
+    }
+    @media (max-width: 350px) {
+      .formation { padding-inline: 4px; }
+      .formation .slot { width: min(51px, calc((100% - 12px) / 5)); padding: 4px 1px; }
+      .slot .slot-info strong { font-size: 6.6px; }
+      .slot .slot-info small { font-size: 5.8px; }
+      .slot .slot-name { font-size: 6.6px; }
+    }
+
+
+    /* === RESTYLING PITCH / PLAYER CARDS · FANTABALLA 2026 === */
+    .pitch-heading {
+      width: min(100%, 580px);
+      margin: 20px auto 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .pitch-heading-copy { display: grid; gap: 4px; min-width: 0; }
+    .pitch-heading-kicker {
+      color: var(--green); text-transform: uppercase; font-size: 9px;
+      letter-spacing: .18em; font-weight: 950;
+    }
+    .pitch-heading-title {
+      font-size: clamp(16px, 2.3vw, 22px); color: #f5f6f4;
+      font-weight: 950; line-height: 1.05; letter-spacing: -.035em;
+    }
+    .pitch-heading-pills { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .pitch-heading-pill {
+      display: grid; gap: 2px; justify-items: center;
+      min-width: 62px; padding: 7px 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: linear-gradient(155deg,#222923,#171d1a);
+      border-radius: 10px; color: #fff;
+    }
+    .pitch-heading-pill small {font-size: 8px;color:#9ca8a0;font-weight:900;letter-spacing:.08em}
+    .pitch-heading-pill strong {font-size: 14px; line-height: 1.05; font-weight:950; font-variant-numeric:tabular-nums;}
+    .pitch-heading-pill.lineup-ready strong { color: #d6ff00; }
+    .pitch-area { min-height: 0; display: block; }
+    .pitch {
+      width: min(100%,580px); height: 620px;
+      margin: 0 auto; overflow: hidden; isolation: isolate;
+      border: 2px solid rgba(183,255,209,.68); border-radius: 22px;
+      background:
+        radial-gradient(ellipse at 50% 0%,rgba(190,255,170,.24),transparent 45%),
+        radial-gradient(ellipse at 50% 100%,rgba(0,34,13,.36),transparent 52%),
+        repeating-linear-gradient(180deg,rgba(1,55,31,.05) 0 62px,rgba(255,255,255,.035) 62px 124px),
+        linear-gradient(155deg,#0dc779 0%,#079d5d 44%,#07844f 100%);
+      box-shadow: inset 0 0 42px rgba(0,51,25,.26), 0 28px 68px rgba(0,0,0,.38), 0 0 0 5px rgba(24,169,91,.07);
+    }
+    .pitch:before { inset: 17px; border: 2px solid rgba(234,255,238,.52); border-radius: 13px; }
+    .pitch:after { width: 110px; height: 110px; border-width: 2px; border-color: rgba(234,255,238,.55); }
+    .pitch .midline { border-top-width: 2px; border-color: rgba(234,255,238,.57); }
+    .pitch .box-top, .pitch .box-bottom, .pitch .goal-bottom {border-width: 2px; border-color: rgba(234,255,238,.5);}
+    .pitch .box-top { top: 17px; border-top: 0; }
+    .pitch .box-bottom, .pitch .goal-bottom {bottom: 17px; border-bottom: 0;}
+    .formation {
+      inset: 0; padding: 32px 26px 25px;
+      grid-template-rows: repeat(4,minmax(0,1fr));
+      align-items: center;
+    }
+    .formation .line { gap: 7px !important; justify-content: space-evenly !important; }
+    .formation .slot, .bench .slot {
+      width: min(88px,calc((100% - 36px)/5));
+      height: 128px; min-height: 0; max-width: 100%;
+      border-radius: 13px; padding: 7px 5px 6px;
+      background: linear-gradient(160deg,rgba(12,25,25,.94) 0%,rgba(9,28,26,.88) 60%,rgba(5,16,21,.94) 100%);
+      color: #f8fff9;
+      border: 1px solid rgba(220,255,231,.34);
+      box-shadow: 0 8px 22px rgba(0,27,21,.33), inset 0 1px 0 rgba(255,255,255,.13);
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      transition: transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease;
+      overflow: visible;
+      -webkit-tap-highlight-color:transparent;
+      backdrop-filter: blur(4px);
+    }
+    .formation .slot:hover, .bench .slot:hover {
+      background: linear-gradient(160deg,rgba(16,46,35,.98),rgba(6,27,24,.96));
+      border-color:rgba(210,255,222,.7);
+      transform:translateY(-3px);
+      box-shadow:0 13px 28px rgba(0,23,18,.4);
+    }
+    .formation .slot.active, .bench .slot.active {
+      border: 2px solid #d6ff00;
+      background:linear-gradient(160deg,#213b24,#0d2420);
+      box-shadow:0 0 0 3px rgba(214,255,0,.25),0 0 28px rgba(214,255,0,.34);
+      transform:translateY(-2px);
+    }
+    .slot .pitch-player { width:100%; height:100%; min-width:0; display:flex; flex-direction:column; align-items:stretch; gap:0; }
+    .slot .pitch-shirt {
+      width: 61px; height: 57px; max-width: 100%;
+      margin: -4px auto 0; z-index: 1;
+      filter: drop-shadow(0 4px 5px rgba(0,0,0,.42));
+    }
+    .slot .slot-name {
+      margin: 0; width:100%; height:17px; max-width:100%;
+      padding: 3px 3px 2px;
+      border-radius: 5px; color:#fff;
+      background: rgba(255,255,255,.105);
+      border: 1px solid rgba(255,255,255,.085);
+      font-size: 9px; font-weight: 950; line-height: 1;
+      letter-spacing:-.015em;
+      text-overflow:ellipsis; white-space:nowrap; overflow:hidden;
+    }
+    .slot .slot-nation {
+      height: 16px; margin: 0; padding: 4px 0 1px;
+      width: 100%; max-width:100%;
+      color:#add7bd; font-size:7px; font-weight:750;
+      text-overflow:ellipsis; white-space:nowrap; overflow:hidden;
+      line-height: 1;
+    }
+    .slot .slot-info {
+      width:100%; margin-top:auto; min-width:0;
+      display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 3px;
+      background: transparent; border: 0; border-radius:0; overflow: visible;
+    }
+    .slot .slot-info span {
+      display:grid;justify-items:center;align-content:center;min-width:0;
+      border:1px solid rgba(255,255,255,.14);border-radius:5px;
+      background:rgba(255,255,255,.085);padding:4px 1px 3px;
+      color:#fff;line-height:1.05;
+    }
+    .slot .slot-info span:last-child {border-right:1px solid rgba(214,255,0,.22); background:rgba(214,255,0,.115); }
+    .slot .slot-info small {color:#b9c9c0;font-size:7px;font-weight:900;letter-spacing:.02em;}
+    .slot .slot-info strong {color:#fff;font-size:10px;font-weight:1000;letter-spacing:-.04em;font-variant-numeric:tabular-nums;}
+    .slot .slot-info span:last-child strong {color:#e0ff49;}
+    .slot.is-empty {
+      border:1px dashed rgba(223,255,233,.5);
+      background:rgba(3,36,24,.35);
+      box-shadow:inset 0 0 18px rgba(1,30,22,.17);
+    }
+    .empty-slot-content {display:grid;justify-items:center;gap:7px;width:100%;}
+    .slot.is-empty .plus {
+      display:grid;place-items:center;width:35px;height:35px;
+      border-radius:12px;border:1px solid rgba(255,255,255,.22);
+      background:rgba(255,255,255,.12);color:#e7ffeb;
+      font-size:25px;line-height:1;margin:0;
+    }
+    .slot.is-empty .slot-role {color:#e4f8e8;font-size:9px;font-weight:950;letter-spacing:.09em;}
+    .slot.is-empty .slot-invite {color:rgba(221,246,230,.58);font-size:8px;font-weight:650;}
+    .remove-mini {
+      position:absolute;right:-7px;top:-8px;width:21px;height:21px;
+      border-radius:50%;display:grid;place-items:center;
+      background:#203128;color:#e8fff0;border:1px solid rgba(219,255,227,.7);
+      box-shadow:0 2px 7px rgba(0,0,0,.3);
+      font-size:14px;line-height:1;font-weight:900;z-index:5;
+    }
+    .slot.active .remove-mini {background:#d6ff00;color:#102114;border-color:#d6ff00;}
+    .bench-title {
+      display:flex;justify-content:center;align-items:center;gap:12px;
+      color:#dfece1;letter-spacing:.17em;font-size:10px;
+      font-weight:950;margin:20px auto 10px;
+    }
+    .bench-title::before,.bench-title::after {
+      content:"";height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2));flex:1;max-width:130px;
+    }
+    .bench-title::after {transform:rotate(180deg);}
+    .bench {
+      width: min(100%,580px);margin:0 auto 17px;
+      padding:13px 12px;
+      border:1px solid rgba(255,255,255,.1);border-radius:18px;
+      background:linear-gradient(160deg,#1a241f,#121917);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.055);
+      display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;
+      justify-items:stretch;align-items:stretch;
+    }
+    .bench .slot {width:100%;height:126px;max-width:none;}
+    .bench .slot .pitch-shirt {width:56px;height:52px;}
+    @media(max-width:760px) {
+      .pitch-heading { margin: 19px auto 11px; }
+      .pitch { width:100%;height:auto;aspect-ratio: .73 / 1;border-radius:18px; }
+      .pitch:before {inset:10px;border-radius:10px;}
+      .pitch .box-top {top:10px;}.pitch .box-bottom,.pitch .goal-bottom {bottom:10px;}
+      .formation {padding:19px 10px 16px;grid-template-rows:repeat(4,minmax(0,1fr));}
+      .formation .line {gap:3px !important;}
+      .formation .slot { width:min(74px,calc((100% - 14px)/5));height: min(110px,95%);padding:5px 3px 4px; border-radius:10px;}
+      .slot .pitch-shirt {width:47px;height:43px;margin-top:-3px;}
+      .slot .slot-name {height:15px;font-size:7.6px;padding:3px 2px;}
+      .slot .slot-nation {height:14px;font-size:6.5px;padding-top:3px;}
+      .slot .slot-info {gap:2px;}
+      .slot .slot-info span {padding:3px 0 2px;}
+      .slot .slot-info small {font-size:6.5px;}
+      .slot .slot-info strong {font-size:8px;}
+      .bench {gap:6px;padding:10px 8px;}
+      .bench .slot {height:107px;padding:5px 3px 4px;border-radius:10px;}
+      .bench .slot .pitch-shirt {width:45px;height:41px;}
+      .remove-mini {width:19px;height:19px;font-size:13px;right:-5px;top:-6px;}
+    }
+    @media (max-width:420px) {
+      .pitch {aspect-ratio:.70/1;}
+      .pitch-heading-pill {min-width:53px;padding:6px 7px;}
+      .pitch-heading-title {font-size:17px;}
+      .formation {padding:17px 7px 14px;}
+      .formation .slot {width:min(66px,calc((100% - 10px)/5));height:min(105px,95%);padding:5px 2px 4px;}
+      .slot .pitch-shirt {width:43px;height:40px;}
+      .slot .slot-name {font-size:7.1px;}
+      .slot .slot-nation {font-size:6.2px;}
+      .slot .slot-info small {font-size:6px;}
+      .slot .slot-info strong {font-size:7.7px;}
+      .bench {gap:5px;padding:9px 7px;}
+      .bench .slot {height:104px;padding:4px 2px;}
+      .bench .slot .pitch-shirt {width:41px;height:39px;}
+    }
+    @media(max-width:350px) {
+      .pitch { aspect-ratio:.62/1; }
+      .formation {padding:15px 5px 12px;}
+      .formation .slot {width:min(57px,calc((100% - 10px)/5));height:min(105px,95%);padding:4px 2px;}
+      .slot .slot-name {font-size:6.6px;height:14px;}
+      .slot .slot-nation {font-size:5.8px;}
+      .slot .slot-info span {padding:3px 0 2px;}
+      .slot .slot-info small {font-size:5.9px;}
+      .slot .slot-info strong {font-size:7px;}
+      .slot .pitch-shirt {width:38px;height:36px;}
+      .bench .slot .pitch-shirt {width:35px;height:34px;}
+      .slot.is-empty .plus {width:29px;height:29px;font-size:22px;}
+      .slot.is-empty .slot-invite {font-size:7px;}
+    }
+    @media(prefers-reduced-motion:reduce) {
+      .formation .slot,.bench .slot,.slot .pitch-shirt {transition:none !important;}
+    }
+
+    /* Tablet: evitiamo un campo eccessivamente alto tra 520 e 760 px. */
+    @media (min-width:521px) and (max-width:760px) {
+      .pitch {width:min(100%,580px);height:620px;aspect-ratio:auto;}
+      .formation {padding:32px 26px 25px;}
+      .formation .slot {width:min(88px,calc((100% - 36px)/5));height:128px;padding:7px 5px 6px;}
+      .slot .pitch-shirt {width:61px;height:57px;}
+      .slot .slot-name {font-size:9px;height:17px;}
+      .slot .slot-nation {font-size:7px;height:16px;}
+      .slot .slot-info strong {font-size:10px;}
+      .slot .slot-info small {font-size:7px;}
+      .bench {width:min(100%,580px);}
+      .bench .slot {height:126px;padding:7px 5px 6px;}
+      .bench .slot .pitch-shirt {width:56px;height:52px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="left">
+      <div class="topbar simplified-topbar">
+        <h1 class="app-title">Fantaballa FC · Super Lega</h1><p style="font-size:12px;max-width:680px">Componi la tua rosa con titolari e panchina e clicca invia! La tua rosa così parteciperà al prossimo fantacalcio della Super Lega con te come calciatore!</p>
+      </div>
+
+      <div class="credits credits-large"><span>Crediti rimanenti</span><strong id="creditsText">300/300</strong></div>
+
+
+      <div class="teamline">
+        <div class="team-actions">
+          <input class="manager-input" id="managerInput" placeholder="Nome squadra" />
+          <select class="module-select" id="moduleSelect"><option value="442">4-4-2</option><option value="433">4-3-3</option><option value="343">3-4-3</option><option value="352">3-5-2</option></select>
+          <button class="random-btn" id="randomBtn">Squadra casuale</button>
+          <a class="random-btn scouting-link" href="scouting.html">Scouting giocatori</a>
+          <a class="random-btn scouting-link" href="campionato.html">Risultati e calendario</a>
+        </div>
+      </div>
+
+      <div class="pitch-heading" aria-label="Riepilogo formazione">
+        <div class="pitch-heading-copy"><span class="pitch-heading-kicker">BEST XI · FANTABALLA</span><strong class="pitch-heading-title">La tua formazione</strong></div>
+        <div class="pitch-heading-pills"><span class="pitch-heading-pill"><small>MODULO</small><strong id="pitchModule">4-4-2</strong></span><span class="pitch-heading-pill" id="lineupReady"><small>IN CAMPO</small><strong id="pitchCount">0/11</strong></span></div>
+      </div>
+
+      <div class="pitch-area">
+        <div class="pitch" id="pitch">
+          <div class="box-top"></div><div class="midline"></div><div class="box-bottom"></div><div class="goal-bottom"></div>
+          <div class="formation" id="formation"></div>
+        </div>
+      </div>
+
+      <div class="bench-title" id="benchInfo">PANCHINA</div>
+      <div class="bench" id="bench"></div>
+      <div class="bottom-actions bottom-actions-four">
+        <button class="cancel-btn" id="cancelBtn">Svuota rosa</button>
+        <button class="save-btn" id="sendBtn">Invia</button>
+        <button class="download-btn" id="downloadBtn">Scarica immagine</button>
+        <button class="share-btn" id="shareBtn">Condividi immagine</button>
+      </div>
+    </section>
+
+    <aside class="market">
+      <div class="tabs tabs-single">
+        <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg><span>Giocatori</span></div>
+      </div>
+
+      <div class="search-row">
+        <div class="search-box"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#555"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input id="searchInput" placeholder="Cerca giocatore" /></div>
+        <button class="filter-btn" title="Filtri"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 3H2l8 9v7l4 2v-9l8-9z"/></svg></button>
+      </div>
+
+      <div class="filters">
+        <button class="chip active" data-role="all">T1</button><button class="chip" data-role="P">P</button><button class="chip" data-role="D">D</button><button class="chip" data-role="C">C</button><button class="chip" data-role="A">A</button>
+        <select class="nation-select" id="nationFilter"><option value="all">Tutti</option></select>
+        <select class="sort-select" id="sortSelect"><option value="cost_desc">Costo ↓</option><option value="cost_asc">Costo ↑</option><option value="mv_desc">MV ↓</option><option value="mv_asc">MV ↑</option><option value="fm_desc">FM ↓</option><option value="fm_asc">FM ↑</option><option value="pg_desc">PG ↓</option><option value="pg_asc">PG ↑</option><option value="name_asc">Nome A-Z</option></select>
+      </div>
+
+      <div class="official-count" id="officialCount"></div><div class="players-list" id="playersList"></div>
+      <div class="export-box" id="exportBoxWrap"><textarea id="exportBox"></textarea></div>
+    </aside>
+  </div>
+
+  
+  <div class="send-modal" id="sendModal" aria-hidden="true">
+    <div class="send-modal-backdrop" id="sendBackdrop"></div>
+    <div class="send-modal-card" role="dialog" aria-modal="true" aria-labelledby="sendTitle">
+      <button class="send-modal-close" id="sendClose" aria-label="Chiudi">×</button>
+      <h2 id="sendTitle">Invia formazione</h2>
+      <p>
+        Copia il testo qui sotto e invialo privatamente a <strong>Fantaballa</strong>.
+      </p>
+      <textarea id="sendText" readonly></textarea>
+      <div class="send-modal-actions">
+        <button class="copy-send-btn" id="copySendBtn">Copia testo</button>
+        <button class="ghost-send-btn" id="selectSendBtn">Seleziona tutto</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Salvato</div>
+
+  <div class="share-stage" id="shareStage" aria-hidden="true"></div>
+
+<script>
+let GOOGLE_SHEET_WEB_APP_URL = '';
+const GOOGLE_SHEET_SECRET = 'fantaballafc';
+// Versione club: il campo interno 'nation' viene usato come club per non rompere il resto del sito.
+
+let OFFICIAL_PLAYERS = [];
+const NATIONAL_TEAMS = [];
+// I giocatori vengono caricati dal file esterno players_stats.json.
+// Manteniamo internamente il campo 'nation' come club per non rompere il resto del sito.
+const FLAGS = ["","","","","",""];
+const ROLE_LABEL = { P: 'P', D: 'D', C: 'C', A: 'A', J: 'Jolly' };
+const BUDGET = 300;
+const FORMATIONS = { '442': { A: 2, C: 4, D: 4, P: 1 }, '433': { A: 3, C: 3, D: 4, P: 1 }, '343': { A: 3, C: 4, D: 3, P: 1 }, '352': { A: 2, C: 5, D: 3, P: 1 } };
+const BENCH = ['P','D','C','A','J'];
+
+function normalizeName(name) {
+  return String(name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\.\.\.$/, '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9_\.]+/g, '');
+}
+
+function hashCode(str) { let hash = 0; for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i) | 0; return Math.abs(hash); }
+function buildPlayers() {
+  return OFFICIAL_PLAYERS.map((item, idx) => {
+    const name = String(item.name || '').trim();
+    const nation = String(item.nation || item.club || '').trim();
+    const h = hashCode(name + nation + idx);
+    const role = item.role;
+    const overall = Number(item.overall || item.ca || 0);
+    const position = item.position || item.fmRole || role;
+    const rating = Number(item.rating || Math.round(overall / 2) || 1);
+    const cost = Number(item.cost || calculateImportedPlayerCost(rating, role));
+    const popularity = ((h % 500) / 10).toFixed(1);
+    const fpm = (9 + ((h % 1150) / 100)).toFixed(2).replace('.', ',');
+    return {
+      id: idx + 1,
+      key: item.key || `${normalizeName(name)}_${normalizeName(nation)}`,
+      name,
+      role,
+      nation,
+      club: nation,
+      flag: '',
+      overall,
+      leagueStats: item.leagueStats || null,
+      squadGroup: item.squadGroup || '',
+      position,
+      rating,
+      cost,
+      popularity,
+      fpm,
+      games: Number(item.games || 0),
+      totalPoints: Number(item.totalPoints || 0),
+      avgPoints: Number(item.avgPoints || 0),
+      goals: Number(item.goals || 0),
+      assists: Number(item.assists || 0),
+      yellows: Number(item.yellows || 0),
+      reds: Number(item.reds || 0)
+    };
+  }).sort((a,b) => b.cost - a.cost || b.rating - a.rating || a.name.localeCompare(b.name));
+}
+
+async function loadPlayersDatabase() {
+  const urls = ['players_stats.json', 'players_club_ca.json'];
+  let imported = null;
+
+  for (const url of urls) {
+    try {
+      const response = await fetch(`${url}?v=${Date.now()}`, { cache: 'no-store' });
+      if (!response.ok) continue;
+      const data = await response.json();
+      if (Array.isArray(data) && data.length) {
+        imported = data;
+        break;
+      }
+    } catch (err) {
+      console.info(`${url} non caricato`, err);
+    }
+  }
+
+  if (!Array.isArray(imported) || !imported.length) {
+    showToast('File players_stats.json non trovato');
+    return;
+  }
+
+  OFFICIAL_PLAYERS = imported.map(item => ({
+    ...item,
+    club: item.club || item.nation || '',
+    nation: item.club || item.nation || ''
+  }));
+
+  const clubs = [...new Set(OFFICIAL_PLAYERS.map(p => p.club || p.nation).filter(Boolean))].sort();
+  NATIONAL_TEAMS.splice(0, NATIONAL_TEAMS.length, ...clubs);
+
+  players = buildPlayers();
+  populateNations(true);
+  render();
+}
+
+let players = [];
+let state = JSON.parse(localStorage.getItem('fantaballafc_rose_2025_v1') || 'null') || newState('442');
+let activeSlot = null;
+let roleFilter = 'all';
+
+function newState(module) {
+  const f = FORMATIONS[module];
+  const starters = [];
+  ['A','C','D','P'].forEach(role => { for (let i = 0; i < f[role]; i++) starters.push({ key: `${role}${i}`, role, playerId: null }); });
+  return { manager: '', module, starters, bench: BENCH.map((role, i) => ({ key: `B${i}`, role, playerId: null })) };
+}
+
+const els = {
+  formation: document.getElementById('formation'), bench: document.getElementById('bench'), playersList: document.getElementById('playersList'), officialCount: document.getElementById('officialCount'),
+  searchInput: document.getElementById('searchInput'), nationFilter: document.getElementById('nationFilter'), sortSelect: document.getElementById('sortSelect'),
+  moduleSelect: document.getElementById('moduleSelect'), capNumber: document.getElementById('capNumber'), creditsText: document.getElementById('creditsText'),
+  benchInfo: document.getElementById('benchInfo'), sendBtn: document.getElementById('sendBtn'), managerInput: document.getElementById('managerInput'),
+  exportBoxWrap: document.getElementById('exportBoxWrap'), exportBox: document.getElementById('exportBox'), toast: document.getElementById('toast'), startersProjection: document.getElementById('startersProjection'), rosterProjection: document.getElementById('rosterProjection'), pitch: document.getElementById('pitch'), shareStage: document.getElementById('shareStage'), sendModal: document.getElementById('sendModal'), sendText: document.getElementById('sendText'), copySendBtn: document.getElementById('copySendBtn'), selectSendBtn: document.getElementById('selectSendBtn'), sendClose: document.getElementById('sendClose'), sendBackdrop: document.getElementById('sendBackdrop')
+};
+
+function player(id) { return players.find(p => p.id === id); }
+function allSlots() { return [...state.starters, ...state.bench]; }
+function usedIds() { return allSlots().map(s => s.playerId).filter(Boolean); }
+function usedCost() { return usedIds().reduce((s,id) => s + player(id).cost, 0); }
+function remaining() { return Math.round((BUDGET - usedCost()) * 10) / 10; }
+function playerExpectedPoints(p) {
+  if (!p) return 0;
+  return Number(p.rating || p.overall || 0);
+}
+function slotExpectedPoints(slot) {
+  return slot && slot.playerId ? playerExpectedPoints(player(slot.playerId)) : 0;
+}
+function startersProjection() {
+  return Math.round(state.starters.reduce((sum, s) => sum + slotExpectedPoints(s), 0) * 10) / 10;
+}
+function rosterProjection() {
+  return Math.round(allSlots().reduce((sum, s) => sum + slotExpectedPoints(s), 0) * 10) / 10;
+}
+function formatOneDecimal(value) {
+  return Number(value || 0).toFixed(1);
+}
+function saveLocal() { state.manager = els.managerInput.value.trim(); localStorage.setItem('fantaballafc_rose_2025_v1', JSON.stringify(state)); }
+function isValid() { return state.starters.every(s => s.playerId) && remaining() >= 0; }
+function showToast(text) { els.toast.textContent = text; els.toast.classList.add('show'); setTimeout(() => els.toast.classList.remove('show'), 1600); }
+const SUPERLEGA_KITS = {"AFC Bournemouth": {"type": "vstripes2", "colors": ["#d71920", "#111111"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#d71920 0 20%,#111111 20% 40%,#d71920 40% 60%,#111111 60% 80%,#d71920 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Arsenal": {"type": "split", "colors": ["#ef233c", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#ef233c 0 50%,#ffffff 50% 100%);color:#ffffff;border:2px solid #243247;"}, "Aston Villa": {"type": "split", "colors": ["#7b263a", "#95bfe5"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#7b263a 0 50%,#95bfe5 50% 100%);color:#ffffff;border:2px solid #243247;"}, "Brentford": {"type": "vstripes2", "colors": ["#e30613", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#e30613 0 20%,#ffffff 20% 40%,#e30613 40% 60%,#ffffff 60% 80%,#e30613 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Burnley": {"type": "solid", "colors": ["#6c1d45", "#99d6ea"], "text": "#ffffff", "border": "#243247", "css": "background:#6c1d45;color:#ffffff;border:2px solid #243247;"}, "Chelsea": {"type": "solid", "colors": ["#034694", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:#034694;color:#ffffff;border:2px solid #243247;"}, "Crystal Palace": {"type": "vstripes2", "colors": ["#1b458f", "#c4122e"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#1b458f 0 20%,#c4122e 20% 40%,#1b458f 40% 60%,#c4122e 60% 80%,#1b458f 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Everton": {"type": "solid", "colors": ["#003399", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:#003399;color:#ffffff;border:2px solid #243247;"}, "Leeds United": {"type": "solid", "colors": ["#ffffff", "#ffcd00"], "text": "#111111", "border": "#243247", "css": "background:#ffffff;color:#111111;border:2px solid #243247;"}, "Liverpool": {"type": "solid", "colors": ["#c8102e"], "text": "#ffffff", "border": "#243247", "css": "background:#c8102e;color:#ffffff;border:2px solid #243247;"}, "Manchester City": {"type": "solid", "colors": ["#6cabdd"], "text": "#111827", "border": "#243247", "css": "background:#6cabdd;color:#111827;border:2px solid #243247;"}, "Manchester United": {"type": "band", "colors": ["#da291c", "#151515"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(180deg,#da291c 0 36%,#151515 36% 64%,#da291c 64% 100%);color:#ffffff;border:2px solid #243247;"}, "Newcastle United": {"type": "vstripes2", "colors": ["#111111", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#111111 0 20%,#ffffff 20% 40%,#111111 40% 60%,#ffffff 60% 80%,#111111 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Norwich City": {"type": "solid", "colors": ["#fff200", "#00a650"], "text": "#ffffff", "border": "#243247", "css": "background:#fff200;color:#ffffff;border:2px solid #243247;"}, "Tottenham Hotspur": {"type": "solid", "colors": ["#ffffff", "#132257"], "text": "#111111", "border": "#243247", "css": "background:#ffffff;color:#111111;border:2px solid #243247;"}, "West Ham United": {"type": "solid", "colors": ["#7a263a", "#1bb1e7"], "text": "#ffffff", "border": "#243247", "css": "background:#7a263a;color:#ffffff;border:2px solid #243247;"}, "Wolverhampton Wanderers": {"type": "solid", "colors": ["#fdb913", "#111111"], "text": "#ffffff", "border": "#243247", "css": "background:#fdb913;color:#ffffff;border:2px solid #243247;"}, "Olympique Lyonnais": {"type": "vstripes3", "colors": ["#ffffff", "#e21b3c", "#164194"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#ffffff 0 20%,#e21b3c 20% 40%,#ffffff 40% 60%,#e21b3c 60% 80%,#ffffff 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Paris Saint-Germain FC": {"type": "band", "colors": ["#10234c", "#e30613"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(180deg,#10234c 0 36%,#e30613 36% 64%,#10234c 64% 100%);color:#ffffff;border:2px solid #243247;"}, "Racing Club de Lens": {"type": "vstripes2", "colors": ["#f4d30b", "#c71b2f"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#f4d30b 0 20%,#c71b2f 20% 40%,#f4d30b 40% 60%,#c71b2f 60% 80%,#f4d30b 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Bayer 04 Leverkusen": {"type": "solid", "colors": ["#e32221", "#111111"], "text": "#ffffff", "border": "#243247", "css": "background:#e32221;color:#ffffff;border:2px solid #243247;"}, "Borussia Dortmund": {"type": "vstripes2", "colors": ["#fde100", "#171717"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#fde100 0 20%,#171717 20% 40%,#fde100 40% 60%,#171717 60% 80%,#fde100 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Eintracht Frankfurt": {"type": "vstripes2", "colors": ["#111111", "#e1000f"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#111111 0 20%,#e1000f 20% 40%,#111111 40% 60%,#e1000f 60% 80%,#111111 80% 100%);color:#ffffff;border:2px solid #243247;"}, "FC Bayern München": {"type": "band", "colors": ["#dc052d", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(180deg,#dc052d 0 36%,#ffffff 36% 64%,#dc052d 64% 100%);color:#ffffff;border:2px solid #243247;"}, "SV Werder Bremen": {"type": "solid", "colors": ["#009a44", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:#009a44;color:#ffffff;border:2px solid #243247;"}, "VfB Stuttgart": {"type": "band", "colors": ["#ffffff", "#e32221"], "text": "#111827", "border": "#243247", "css": "background:linear-gradient(180deg,#ffffff 0 36%,#e32221 36% 64%,#ffffff 64% 100%);color:#111827;border:2px solid #243247;"}, "AEK Athens": {"type": "vstripes2", "colors": ["#f8ce22", "#151515"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#f8ce22 0 20%,#151515 20% 40%,#f8ce22 40% 60%,#151515 60% 80%,#f8ce22 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Aris Thessalonikis": {"type": "vstripes2", "colors": ["#f9d616", "#111111"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#f9d616 0 20%,#111111 20% 40%,#f9d616 40% 60%,#111111 60% 80%,#f9d616 80% 100%);color:#ffffff;border:2px solid #243247;"}, "AFC Ajax": {"type": "centerstripe", "colors": ["#ffffff", "#d2122e", "#ffffff"], "text": "#111111", "border": "#243247", "css": "background:linear-gradient(90deg,#ffffff 0 35%,#d2122e 35% 65%,#ffffff 65% 100%);color:#111111;border:2px solid #243247;"}, "A.C. Milan": {"type": "vstripes2", "colors": ["#fb090b", "#111111"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#fb090b 0 20%,#111111 20% 40%,#fb090b 40% 60%,#111111 60% 80%,#fb090b 80% 100%);color:#ffffff;border:2px solid #243247;"}, "A.S. Roma": {"type": "band", "colors": ["#8e1f2f", "#f6b62b"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(180deg,#8e1f2f 0 36%,#f6b62b 36% 64%,#8e1f2f 64% 100%);color:#ffffff;border:2px solid #243247;"}, "ACF Fiorentina": {"type": "solid", "colors": ["#592c82", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:#592c82;color:#ffffff;border:2px solid #243247;"}, "Genoa C.F.C.": {"type": "split", "colors": ["#b5121b", "#003b70"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#b5121b 0 50%,#003b70 50% 100%);color:#ffffff;border:2px solid #243247;"}, "FC Internazionale Milano": {"type": "vstripes2", "colors": ["#0068a8", "#101010"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#0068a8 0 20%,#101010 20% 40%,#0068a8 40% 60%,#101010 60% 80%,#0068a8 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Juventus FC": {"type": "vstripes2", "colors": ["#ffffff", "#111111"], "text": "#111111", "border": "#243247", "css": "background:linear-gradient(90deg,#ffffff 0 20%,#111111 20% 40%,#ffffff 40% 60%,#111111 60% 80%,#ffffff 80% 100%);color:#111111;border:2px solid #243247;"}, "S.S.C. Napoli": {"type": "solid", "colors": ["#12a0d7"], "text": "#ffffff", "border": "#243247", "css": "background:#12a0d7;color:#ffffff;border:2px solid #243247;"}, "Udinese Calcio": {"type": "vstripes2", "colors": ["#111111", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#111111 0 20%,#ffffff 20% 40%,#111111 40% 60%,#ffffff 60% 80%,#111111 80% 100%);color:#ffffff;border:2px solid #243247;"}, "FC do Porto": {"type": "vstripes2", "colors": ["#0054a6", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#0054a6 0 20%,#ffffff 20% 40%,#0054a6 40% 60%,#ffffff 60% 80%,#0054a6 80% 100%);color:#ffffff;border:2px solid #243247;"}, "FC Spartak Moscow": {"type": "band", "colors": ["#d71920", "#ffffff"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(180deg,#d71920 0 36%,#ffffff 36% 64%,#d71920 64% 100%);color:#ffffff;border:2px solid #243247;"}, "Futbol Club Barcelona": {"type": "vstripes2", "colors": ["#a50044", "#004d98"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#a50044 0 20%,#004d98 20% 40%,#a50044 40% 60%,#004d98 60% 80%,#a50044 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Real Madrid Club de Fútbol": {"type": "solid", "colors": ["#ffffff"], "text": "#111827", "border": "#243247", "css": "background:#ffffff;color:#111827;border:2px solid #243247;"}, "Beşiktaş J.K.": {"type": "vstripes2", "colors": ["#ffffff", "#111111"], "text": "#111111", "border": "#243247", "css": "background:linear-gradient(90deg,#ffffff 0 20%,#111111 20% 40%,#ffffff 40% 60%,#111111 60% 80%,#ffffff 80% 100%);color:#111111;border:2px solid #243247;"}, "Fenerbahçe Spor Kulübü": {"type": "vstripes2", "colors": ["#ffed00", "#10234c"], "text": "#ffffff", "border": "#243247", "css": "background:linear-gradient(90deg,#ffed00 0 20%,#10234c 20% 40%,#ffed00 40% 60%,#10234c 60% 80%,#ffed00 80% 100%);color:#ffffff;border:2px solid #243247;"}, "Galatasaray Spor Kulübü": {"type": "solid", "colors": ["#777777", "#dddddd"], "text": "#ffffff", "border": "#444444", "css": "background:#777777;color:#ffffff;border:2px solid #243247;"}, "U.S. Città di Palermo": {"type": "solid", "colors": ["#f5a8c0", "#111111"], "text": "#ffffff", "border": "#243247", "css": "background:#f5a8c0;color:#ffffff;border:2px solid #243247;"}, "FC Augsburg": {"type": "solid", "colors": ["#ffffff", "#ba3733"], "text": "#111111", "border": "#243247", "css": "background:#ffffff;color:#111111;border:2px solid #243247;"}, "RB Leipzig": {"type": "band", "colors": ["#ffffff", "#dd0741"], "text": "#111827", "border": "#243247", "css": "background:linear-gradient(180deg,#ffffff 0 36%,#dd0741 36% 64%,#ffffff 64% 100%);color:#111827;border:2px solid #243247;"}, "Fantaballa FC": {"type": "solid", "colors": ["#777777", "#dddddd"], "text": "#ffffff", "border": "#444444", "css": "background:#777777;color:#ffffff;border:2px solid #243247;"}};
+// Design stilizzati: colori storici riconoscibili, non riproduzioni ufficiali delle divise stagionali.
+const KIT_OVERRIDES = {
+  'A.S. Roma': {type:'solid',colors:['#86172e','#efa92f'],trim:'#e8a83c'},
+  'Arsenal': {type:'solid',colors:['#e41d3e','#f8f8f8'],sleeve:'#f6f6f6',trim:'#fbfbfb'},
+  'Aston Villa': {type:'solid',colors:['#712640','#88c5e8'],sleeve:'#88c5e8',trim:'#94d0ec'},
+  'Borussia Dortmund': {type:'pinstripe',colors:['#ffe100','#171717'],trim:'#121212'},
+  'FC Bayern München': {type:'solid',colors:['#d30d32','#f7f8fb'],trim:'#f5f5f5'},
+  'Liverpool': {type:'solid',colors:['#c8102e','#f0d7a1'],trim:'#f0d7a1'},
+  'Manchester City': {type:'solid',colors:['#7ac1e5','#ffffff'],trim:'#ffffff'},
+  'Manchester United': {type:'solid',colors:['#d91c2c','#ffffff'],trim:'#ffffff'},
+  'Paris Saint-Germain': {type:'centerstripe',colors:['#12214f','#e11937','#ffffff'],trim:'#ffffff'},
+  'Real Madrid C.F.': {type:'solid',colors:['#fcfcff','#c4a164'],trim:'#c4a164'},
+  'S.S.C. Napoli': {type:'solid',colors:['#129fda','#ffffff'],trim:'#ffffff'},
+  'Villarreal C.F.': {type:'solid',colors:['#ffda00','#263b69'],trim:'#263b69'},
+};
+
+function getNationKit(nation) { return {...(SUPERLEGA_KITS[nation] || {type:"solid",colors:["#1c4fb8"],text:"#fff"}), ...(KIT_OVERRIDES[nation] || {})}; }
+function shirtColor(nation) { return getNationKit(nation).colors[0] || '#1c4fb8'; }
+function nationCode(nation) {
+  const map = {
+    'New Team': 'NEW',
+    'Drago Bianco': 'DB',
+    'Kame House': 'KH',
+    'Isotopi di Springfield': 'ISO',
+    'Small Soldiers': 'SS',
+    'Digimon': 'DIG'
+  };
+  return map[nation] || String(nation || '').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase();
+}
+// La stessa grafica SVG viene usata per tutte le miniature. Nessun file esterno o logo ufficiale.
+let kitGraphicSerial = 0;
+function kitGraphicSvg(kit, code) {
+  const colors = kit.colors || ['#1c4fb8'];
+  const a = colors[0];
+  const b = colors[1] || a;
+  const c = colors[2] || b;
+  const trim = kit.trim || (colors.length > 1 ? b : '#f6f6f6');
+  const sleeve = kit.sleeve || a;
+  const shape = 'M30 8 L39 4 Q50 10 61 4 L70 8 L88 15 L98 30 L83 44 L76 38 L76 91 Q50 96 24 91 L24 38 L17 44 L2 30 L12 15 Z';
+  const uid = `fantakit-${++kitGraphicSerial}`;
+  const type = kit.type || 'solid';
+  let pattern = '';
+  if (type === 'vstripes2' || type === 'vstripes3') {
+    const palette = type === 'vstripes3' ? [a,b,c] : [a,b];
+    // Bande sul busto: le maniche vengono dipinte a parte, come sulle maglie vere.
+    for (let i = 0; i < 7; i++) pattern += `<rect x="${24 + i * 8}" y="7" width="8.25" height="90" fill="${palette[i % palette.length]}"/>`;
+  } else if (type === 'hstripes') {
+    for (let i = 0; i < 7; i++) pattern += `<rect x="23" y="${10 + i * 13}" width="54" height="13.25" fill="${i % 2 ? b : a}"/>`;
+  } else if (type === 'split') {
+    pattern = `<rect x="49" y="6" width="29" height="90" fill="${b}"/>`;
+  } else if (type === 'band') {
+    pattern = `<rect x="23" y="36" width="54" height="23" fill="${b}"/>`;
+  } else if (type === 'centerstripe') {
+    pattern = `<rect x="42" y="5" width="16" height="93" fill="${b}"/><rect x="39" y="5" width="3" height="93" fill="${c}"/><rect x="58" y="5" width="3" height="93" fill="${c}"/>`;
+  } else if (type === 'pinstripe') {
+    pattern = `<path d="M38 19V92 M50 20V93 M62 19V92" stroke="${b}" stroke-width="1.8" opacity=".38"/>`;
+  } else if (type === 'check') {
+    for (let row = 0; row < 4; row++) for (let col = 0; col < 4; col++) if ((row+col)%2) pattern += `<rect x="${24 + 13*col}" y="${10+21*row}" width="13" height="21" fill="${b}"/>`;
+  }
+  const safeCode = String(code || 'FC').replace(/[^A-Z0-9]/g,'').slice(0,4);
+  return `<svg class="kit-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <defs>
+      <clipPath id="${uid}-clip"><path d="${shape}"/></clipPath>
+      <linearGradient id="${uid}-light" x1="0" x2="1" y1="0" y2=".2"><stop stop-color="#fff" stop-opacity=".17"/><stop offset=".34" stop-color="#fff" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".24"/></linearGradient>
+      <linearGradient id="${uid}-bottom" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".15"/></linearGradient>
+    </defs>
+    <g clip-path="url(#${uid}-clip)">
+      <path d="${shape}" fill="${a}"/>
+      ${pattern}
+      <path d="M29 9L39 4L42 16L26 41L17 45L2 30L12 15Z" fill="${sleeve}"/>
+      <path d="M61 4L71 9L88 15L98 30L83 45L74 41L58 16Z" fill="${sleeve}"/>
+      <path d="M2 30L17 44L23 36 L14 25Z M98 30L83 44L77 36L86 25Z" fill="#000" opacity=".09"/>
+      <path d="M12 15L2 30L17 44L21 37 M88 15L98 30L83 44L79 37" stroke="${trim}" stroke-width="3" fill="none" opacity=".92"/>
+      <path d="M27 12 Q25 25 24 39 M73 12 Q75 25 76 39" stroke="#fff" stroke-width=".9" stroke-dasharray="2 2.5" opacity=".3" fill="none"/>
+      <path d="M24 86 Q50 91 76 86 L76 96L24 96Z" fill="#000" opacity=".065"/>
+      <path d="${shape}" fill="url(#${uid}-light)"/>
+      <rect x="23" y="46" width="54" height="50" fill="url(#${uid}-bottom)"/>
+    </g>
+    <path d="${shape}" fill="none" stroke="#0e1321" stroke-opacity=".52" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M39 4Q50 17 61 4L58 15Q50 25 42 15Z" fill="#151c29"/>
+    <path d="M39 4Q50 17 61 4" stroke="${trim}" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+    <path d="M41 13Q50 24 59 13" stroke="#fff" stroke-opacity=".3" stroke-width="1.3" fill="none"/>
+    <path d="M31 30 L39 30 L39 40 Q35 44 31 40Z" fill="#f7f7f7" stroke="#101b2b" stroke-width=".75"/>
+    <path d="M33 33H37V38H33Z" fill="${a}"/>
+    <path d="M60 32L65 35L61 35L66 39" fill="none" stroke="#fff" stroke-opacity=".93" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="37" y="51" width="26" height="16" rx="3.5" fill="#10141c" fill-opacity=".78" stroke="#fff" stroke-opacity=".13" stroke-width=".8"/>
+    <text x="50" y="62.4" text-anchor="middle" font-size="10.5" font-family="Arial, sans-serif" font-weight="900" fill="#fff" letter-spacing=".35">${safeCode}</text>
+    <path d="M27 87 Q50 92 73 87" fill="none" stroke="#fff" stroke-opacity=".29" stroke-width="1.15"/>
+  </svg>`;
+}
+
+const kitImageCache = new Map();
+function shirtMarkup(p) {
+  const club = p.nation;
+  if (!kitImageCache.has(club)) {
+    const svg = kitGraphicSvg(getNationKit(club), nationCode(club));
+    const image = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    kitImageCache.set(club, `<img class="kit-svg" src="${image}" alt="" width="100" height="100" decoding="async" draggable="false">`);
+  }
+  return kitImageCache.get(club);
+}
+
+function populateNations(reset = false) {
+  if (reset) {
+    els.nationFilter.innerHTML = '<option value="all">Tutti</option>';
+  }
+
+  const existing = new Set(Array.from(els.nationFilter.options).map(o => o.value));
+
+  NATIONAL_TEAMS.forEach(n => {
+    if (existing.has(n)) return;
+    const opt = document.createElement('option');
+    opt.value = n;
+    opt.textContent = n;
+    els.nationFilter.appendChild(opt);
+  });
+}
+
+
+function statNumber(value) { return value === null || value === undefined || !Number.isFinite(Number(value)) ? '—' : Number(value).toFixed(2).replace('.', ','); }
+function playerMV(p) { return statNumber(p.leagueStats?.averageRating); }
+function playerFM(p) { return statNumber(p.leagueStats?.fantasyAverage ?? p.leagueStats?.fantasyAveragePartial); }
+function playerSuperLegaCount(p, field) {
+  const value = p.leagueStats?.[field];
+  return value === null || value === undefined || !Number.isFinite(Number(value)) ? '—' : String(Number(value));
+}
+
+function slotHTML(slot) {
+  const p = slot.playerId ? player(slot.playerId) : null;
+  const active = activeSlot === slot.key ? ' active' : '';
+  if (!p) {
+    const emptyLabels = {P:'POR',D:'DIF',C:'CEN',A:'ATT',J:'JOLLY'};
+    return `<button class="slot is-empty${active}" type="button" title="Seleziona ${emptyLabels[slot.role] || 'giocatore'}" aria-label="Aggiungi ${emptyLabels[slot.role] || 'giocatore'}" onclick="setActiveSlot('${slot.key}')"><span class="empty-slot-content"><span class="plus">+</span><span class="slot-role">${emptyLabels[slot.role] || ''}</span><span class="slot-invite">Aggiungi</span></span></button>`;
+  }
+  return `<button class="slot${active}" onclick="setActiveSlot('${slot.key}')">
+    <span class="remove-mini" title="Rimuovi ${p.name}" onclick="event.stopPropagation(); removeFromSlot('${slot.key}')">×</span>
+    <div class="pitch-player">
+      <div class="pitch-shirt">${shirtMarkup(p)}</div>
+      <div class="slot-name" title="${p.name}">${p.name}</div>
+      <div class="slot-nation" title="${p.nation}">${p.nation}</div>
+      <div class="slot-info" aria-label="MV ${playerMV(p)} e FM ${playerFM(p)}"><span title="Media voto Super Lega"><small>MV</small><strong>${playerMV(p)}</strong></span><span title="Fantamedia parziale, eventi incompleti"><small>FM*</small><strong>${playerFM(p)}</strong></span></div>
+    </div>
+  </button>`;
+}
+
+function renderFormation() {
+  const groups = { A: [], C: [], D: [], P: [] };
+  state.starters.forEach(s => groups[s.role].push(s));
+  els.formation.innerHTML = `<div class="line att">${groups.A.map(slotHTML).join('')}</div><div class="line mid">${groups.C.map(slotHTML).join('')}</div><div class="line def">${groups.D.map(slotHTML).join('')}</div><div class="line gk">${groups.P.map(slotHTML).join('')}</div>`;
+}
+function renderBench() { els.bench.innerHTML = state.bench.map(slotHTML).join(''); els.benchInfo.textContent = 'PANCHINA'; }
+
+function sortPlayers(list) {
+  const sort = els.sortSelect.value;
+  const sorted = [...list];
+  if (/^(mv|fm|pg)_(asc|desc)$/.test(sort)) {
+    const [field,direction] = sort.split('_');
+    const value = p => field === 'mv' ? p.leagueStats?.averageRating : field === 'fm' ? (p.leagueStats?.fantasyAverage ?? p.leagueStats?.fantasyAveragePartial) : p.leagueStats?.appearances;
+    return sorted.sort((a,b) => {
+      const av=value(a), bv=value(b);
+      const missingA=av == null || !Number.isFinite(Number(av));
+      const missingB=bv == null || !Number.isFinite(Number(bv));
+      if (missingA || missingB) return Number(missingA)-Number(missingB) || a.name.localeCompare(b.name);
+      return (direction==='asc' ? Number(av)-Number(bv) : Number(bv)-Number(av)) || a.name.localeCompare(b.name);
+    });
+  }
+  if (sort === 'cost_asc') sorted.sort((a,b) => a.cost - b.cost || b.rating - a.rating);
+  else if (sort === 'rating_desc') sorted.sort((a,b) => b.rating - a.rating || b.cost - a.cost);
+  else if (sort === 'rating_asc') sorted.sort((a,b) => a.rating - b.rating || a.cost - b.cost);
+  else if (sort === 'name_asc') sorted.sort((a,b) => a.name.localeCompare(b.name));
+  else sorted.sort((a,b) => b.cost - a.cost || b.rating - a.rating);
+  return sorted;
+}
+
+const PLAYER_PAGE_SIZE = 80;
+let playerListLimit = PLAYER_PAGE_SIZE;
+let playerSearchTimer;
+function schedulePlayerSearch() {
+  clearTimeout(playerSearchTimer);
+  playerSearchTimer = setTimeout(() => renderPlayers(), 180);
+}
+function loadMorePlayers() { renderPlayers(true); }
+function renderPlayers(append = false) {
+  clearTimeout(playerSearchTimer);
+  const appendPage = append === true;
+  const previousLimit = appendPage ? playerListLimit : 0;
+  playerListLimit = appendPage ? playerListLimit + PLAYER_PAGE_SIZE : PLAYER_PAGE_SIZE;
+  const q = els.searchInput.value.trim().toLowerCase();
+  const nation = els.nationFilter.value;
+  const active = allSlots().find(s => s.key === activeSlot);
+  let desiredRole = roleFilter;
+  if (active && roleFilter === 'all') desiredRole = active.role === 'J' ? 'all' : active.role;
+
+  const selectedIds = new Set(usedIds());
+  let list = players.filter(p => {
+    if (selectedIds.has(p.id)) return false;
+    if (q && !p.name.toLowerCase().includes(q)) return false;
+    if (nation !== 'all' && p.nation !== nation) return false;
+    if (desiredRole !== 'all' && p.role !== desiredRole) return false;
+    return true;
+  });
+  list = sortPlayers(list);
+  const totalMatches = list.length;
+  const shownList = list.slice(previousLimit, playerListLimit);
+  if (els.officialCount) {
+    els.officialCount.textContent = `${totalMatches} giocatori disponibili · visualizzati ${Math.min(playerListLimit, totalMatches)} · MV e FM* Super Lega · PG = presenze`;
+  }
+
+  const cardsHTML = shownList.map(p => {
+    const canAfford = remaining() >= p.cost;
+    const squadGroup = p.squadGroup ? `<span>${p.squadGroup}</span>` : '';
+    return `<button class="player-card ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'} onclick="pickPlayer(${p.id})">
+      <div class="player-card-main">
+        <div class="shirt">${shirtMarkup(p)}</div>
+        <div class="player-identity">
+          <div class="pname"><span class="role-mini">${p.role}</span>${p.name}</div>
+          <div class="pmeta"><span>${p.nation}</span>${squadGroup}</div>
+        </div>
+        <div class="price" title="Costo in crediti"><small>CR</small>${p.cost}</div>
+      </div>
+      <div class="player-stats" aria-label="Statistiche Super Lega">
+        <span class="player-stat mv" title="Media voto Super Lega"><small>MV</small><strong>${playerMV(p)}</strong></span>
+        <span class="player-stat fm" title="Fantamedia parziale Super Lega"><small>FM*</small><strong>${playerFM(p)}</strong></span>
+        <span class="player-stat" title="Presenze Super Lega"><small>PG</small><strong>${playerSuperLegaCount(p, 'appearances')}</strong></span>
+        <span class="player-stat" title="Gol Super Lega"><small>GOL</small><strong>${playerSuperLegaCount(p, 'goals')}</strong></span>
+        <span class="player-stat" title="Assist Super Lega"><small>ASS</small><strong>${playerSuperLegaCount(p, 'assists')}</strong></span>
+      </div>
+    </button>`;
+  }).join('');
+  document.getElementById('loadMorePlayersBtn')?.remove();
+  const moreHTML = playerListLimit < totalMatches
+    ? `<button id="loadMorePlayersBtn" class="load-more-players" type="button" onclick="loadMorePlayers()">Mostra altri ${Math.min(PLAYER_PAGE_SIZE, totalMatches - playerListLimit)} giocatori (${totalMatches - playerListLimit} rimanenti)</button>`
+    : '';
+  if (appendPage) {
+    els.playersList.insertAdjacentHTML('beforeend', cardsHTML + moreHTML);
+  } else {
+    els.playersList.innerHTML = (cardsHTML || '<div style="color:#555;font-weight:900;text-align:center;padding:30px">Nessun giocatore disponibile</div>') + moreHTML;
+    els.playersList.scrollTop = 0;
+  }
+}
+
+function renderMeta() {
+  els.creditsText.textContent = `${remaining().toString().replace('.', ',')}/${BUDGET}`;
+  els.moduleSelect.value = state.module;
+  document.getElementById('pitchModule').textContent = String(state.module).split('').join('-');
+  const startersFilled = state.starters.filter(s => s.playerId).length;
+  document.getElementById('pitchCount').textContent = `${startersFilled}/11`;
+  document.getElementById('lineupReady').classList.toggle('lineup-ready', startersFilled === 11);
+  if (els.capNumber) els.capNumber.textContent = state.module;
+  els.sendBtn.classList.toggle('valid', isValid());
+  if (els.startersProjection) els.startersProjection.textContent = formatOneDecimal(startersProjection());
+  if (els.rosterProjection) els.rosterProjection.textContent = formatOneDecimal(rosterProjection());
+}
+function render() { renderFormation(); renderBench(); renderPlayers(); renderMeta(); }
+function setActiveSlot(key) {
+  activeSlot = key;
+  const s = allSlots().find(x => x.key === key);
+  if (s && s.role !== 'J') {
+    roleFilter = 'all';
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.role === 'all'));
+  }
+  render();
+}
+function removeFromSlot(key) {
+  const s = allSlots().find(x => x.key === key);
+  if (s) s.playerId = null;
+  saveLocal();
+  render();
+}
+function pickPlayer(id) {
+  const p = player(id);
+  let slot = activeSlot ? allSlots().find(s => s.key === activeSlot) : null;
+  if (!slot || slot.playerId || (slot.role !== 'J' && slot.role !== p.role)) {
+    slot = allSlots().find(s => !s.playerId && (s.role === p.role || s.role === 'J'));
+  }
+  if (!slot) return showToast('Nessuno slot compatibile');
+  if (remaining() < p.cost) return showToast('Crediti insufficienti');
+  slot.playerId = id;
+  activeSlot = null;
+  saveLocal();
+  render();
+}
+function changeModule(module) {
+  const selectedPlayers = usedIds().map(id => player(id));
+  state = newState(module);
+  state.manager = els.managerInput.value.trim();
+  selectedPlayers.forEach(p => {
+    const slot = allSlots().find(s => !s.playerId && (s.role === p.role || s.role === 'J'));
+    if (slot) slot.playerId = p.id;
+  });
+  activeSlot = null;
+  saveLocal();
+  render();
+}
+function randomTeam() {
+  if (!players.length) return showToast('Attendi il caricamento dei giocatori');
+
+  // Costruiamo sempre prima una rosa COMPLETA (11 titolari + 5 panchinari).
+  // Solo dopo distribuiamo i crediti disponibili per migliorare i giocatori:
+  // in questo modo nessuno slot rimane vuoto per mancanza di budget.
+  const nextState = newState(state.module);
+  nextState.manager = els.managerInput.value.trim();
+  const slots = [...nextState.starters, ...nextState.bench];
+  const available = players.filter(p => ['P', 'D', 'C', 'A'].includes(p.role) && Number.isFinite(p.cost) && p.cost >= 0);
+  const byRole = Object.fromEntries(['P', 'D', 'C', 'A'].map(role => [role, available.filter(p => p.role === role)]));
+  const byId = new Map(available.map(p => [p.id, p]));
+  const picked = new Set();
+  let totalCost = 0;
+  const randomOf = list => list[Math.floor(Math.random() * list.length)];
+  const shuffle = list => [...list].sort(() => Math.random() - 0.5);
+
+  // Il jolly si riempie dopo gli altri ruoli, scegliendo fra i giocatori rimasti.
+  for (const slot of slots.filter(s => s.role !== 'J').concat(slots.filter(s => s.role === 'J'))) {
+    const pool = slot.role === 'J' ? available : byRole[slot.role];
+    const free = pool.filter(p => !picked.has(p.id));
+    if (!free.length) return showToast('Giocatori insufficienti per completare la rosa');
+    const minCost = Math.min(...free.map(p => p.cost));
+    const chosen = randomOf(free.filter(p => p.cost === minCost));
+    slot.playerId = chosen.id;
+    picked.add(chosen.id);
+    totalCost += chosen.cost;
+  }
+
+  if (totalCost > BUDGET) {
+    return showToast('Budget insufficiente per 11 titolari e 5 panchinari');
+  }
+
+  // Quote indicative: più risorse ai titolari, ma si riserva un budget
+  // anche a ogni panchinaro. Il costo finale include sempre tutti e 16.
+  const weights = {
+    starter: { P: 0.90, D: 1.12, C: 1.25, A: 1.55 },
+    bench:   { P: 0.48, D: 0.57, C: 0.72, A: 0.78, J: 0.70 }
+  };
+  const isBench = slot => slot.key.startsWith('B');
+  const weight = slot => (isBench(slot) ? weights.bench : weights.starter)[slot.role] || 1;
+  const weightSum = slots.reduce((sum, s) => sum + weight(s), 0);
+
+  function upgrade(slot, maximumCost) {
+    const current = byId.get(slot.playerId);
+    const cap = Math.min(Math.floor(maximumCost), current.cost + BUDGET - totalCost);
+    if (cap <= current.cost) return false;
+    const pool = slot.role === 'J' ? available : byRole[slot.role];
+    const options = pool.filter(p => !picked.has(p.id) && p.cost > current.cost && p.cost <= cap);
+    if (!options.length) return false;
+    const highest = Math.max(...options.map(p => p.cost));
+    const chosen = randomOf(options.filter(p => p.cost >= highest - 2));
+    picked.delete(current.id);
+    picked.add(chosen.id);
+    slot.playerId = chosen.id;
+    totalCost += chosen.cost - current.cost;
+    return true;
+  }
+
+  // Panchina per prima: non può restare scoperta anche con molti titolari costosi.
+  const benchFirst = [...shuffle(slots.filter(isBench)), ...shuffle(slots.filter(s => !isBench(s)))];
+  for (const slot of benchFirst) {
+    const ideal = (BUDGET - 5) * weight(slot) / weightSum;
+    upgrade(slot, Math.max(3, Math.round(ideal * (0.90 + Math.random() * 0.18))));
+  }
+
+  // Distribuiamo gli eventuali crediti rimasti con maggiore priorità ai titolari.
+  const prioritySlots = slots.flatMap(s => isBench(s) ? [s] : [s, s, s]);
+  for (let tries = 0; tries < 150 && BUDGET - totalCost > 1; tries++) {
+    const slot = randomOf(prioritySlots);
+    const current = byId.get(slot.playerId);
+    const increase = Math.min(BUDGET - totalCost, 2 + Math.floor(Math.random() * 9));
+    upgrade(slot, current.cost + increase);
+  }
+
+  // Aggiorna la formazione soltanto quando tutte le 16 caselle sono compilate.
+  state = nextState;
+  activeSlot = null;
+  saveLocal();
+  render();
+  showToast(`Rosa completa: 11 titolari + 5 panchinari · ${totalCost}/${BUDGET} crediti`);
+}
+
+function cloneWithoutIds(node) {
+  const clone = node.cloneNode(true);
+  clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+  return clone;
+}
+
+function buildShareCard() {
+  const teamName = els.managerInput.value.trim() || 'La mia rosa';
+  const moduleText = state.module.replace(/^(\d)(\d)(\d)$/, '$1-$2-$3');
+  const card = document.createElement('div');
+  card.className = 'share-card';
+
+  const pitchClone = cloneWithoutIds(els.pitch);
+  pitchClone.querySelectorAll('.remove-mini').forEach(btn => btn.remove());
+
+  card.innerHTML = `
+    <div class="share-head">
+      <div>
+        <div class="share-title">Fantaballa FC · Super Lega</div>
+        <div class="share-subtitle">${teamName}</div>
+      </div>
+      <div class="share-meta">
+        <div class="share-pill"><span>Modulo</span><strong>${moduleText}</strong></div>
+        <div class="share-pill"><span>Crediti</span><strong>${remaining()}</strong></div>
+        <div class="share-pill"><span>Titolari</span><strong>11</strong></div>
+      </div>
+    </div>
+    <div class="pitch-wrap"></div>
+    <div class="share-footer">Gli 11 titolari · Generato con Fantaballa FC · Super Lega</div>
+  `;
+  card.querySelector('.pitch-wrap').appendChild(pitchClone);
+  return card;
+}
+
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function drawRoundedRect(ctx, x, y, w, h, r, fill, stroke = null, lineWidth = 1) {
+  roundRectPath(ctx, x, y, w, h, r);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
+}
+
+
+function kitCanvasShape(ctx) {
+  ctx.beginPath();
+  ctx.moveTo(30,8);ctx.lineTo(39,4);ctx.quadraticCurveTo(50,10,61,4);
+  ctx.lineTo(70,8);ctx.lineTo(88,15);ctx.lineTo(98,30);ctx.lineTo(83,44);
+  ctx.lineTo(76,38);ctx.lineTo(76,91);ctx.quadraticCurveTo(50,96,24,91);
+  ctx.lineTo(24,38);ctx.lineTo(17,44);ctx.lineTo(2,30);ctx.lineTo(12,15);
+  ctx.closePath();
+}
+function kitCanvasPattern(ctx, kit) {
+  const colors = kit.colors || ['#1c4fb8'];
+  const a=colors[0], b=colors[1]||a, c=colors[2]||b;
+  const t=kit.type || 'solid';
+  if (t === 'vstripes2' || t === 'vstripes3') {
+    const palette=t==='vstripes3'?[a,b,c]:[a,b];
+    for(let i=0;i<7;i++){ctx.fillStyle=palette[i%palette.length];ctx.fillRect(24+i*8,7,8.3,90);}
+  } else if (t === 'hstripes') {
+    for(let i=0;i<7;i++){ctx.fillStyle=i%2?b:a;ctx.fillRect(23,10+i*13,54,13.3);}
+  } else if (t === 'split') {
+    ctx.fillStyle=b;ctx.fillRect(49,6,29,90);
+  } else if (t === 'band') {
+    ctx.fillStyle=b;ctx.fillRect(23,36,54,23);
+  } else if (t === 'centerstripe') {
+    ctx.fillStyle=b;ctx.fillRect(42,5,16,93);ctx.fillStyle=c;ctx.fillRect(39,5,3,93);ctx.fillRect(58,5,3,93);
+  } else if (t === 'pinstripe') {
+    ctx.strokeStyle=b;ctx.globalAlpha=.38;ctx.lineWidth=1.8;
+    [38,50,62].forEach(x=>{ctx.beginPath();ctx.moveTo(x,19);ctx.lineTo(x,92);ctx.stroke();});ctx.globalAlpha=1;
+  }
+}
+function drawShirt(ctx, x, y, w, h, p) {
+  const kit=getNationKit(p.nation), colors=kit.colors||['#1c4fb8'];
+  const primary=colors[0], trim=kit.trim||colors[1]||'#f6f6f6', sleeve=kit.sleeve||primary;
+  ctx.save();ctx.translate(x,y);ctx.scale(w/100,h/100);
+  ctx.shadowColor='rgba(0,0,0,.24)';ctx.shadowBlur=4;ctx.shadowOffsetY=3;
+  kitCanvasShape(ctx);ctx.fillStyle=primary;ctx.fill();
+  ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  ctx.save();kitCanvasShape(ctx);ctx.clip();
+  kitCanvasPattern(ctx,kit);
+  ctx.fillStyle=sleeve;
+  ctx.beginPath();ctx.moveTo(29,9);ctx.lineTo(39,4);ctx.lineTo(42,16);ctx.lineTo(26,41);ctx.lineTo(17,45);ctx.lineTo(2,30);ctx.lineTo(12,15);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(61,4);ctx.lineTo(71,9);ctx.lineTo(88,15);ctx.lineTo(98,30);ctx.lineTo(83,45);ctx.lineTo(74,41);ctx.lineTo(58,16);ctx.closePath();ctx.fill();
+  ctx.strokeStyle=trim;ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(12,15);ctx.lineTo(2,30);ctx.lineTo(17,44);ctx.moveTo(88,15);ctx.lineTo(98,30);ctx.lineTo(83,44);ctx.stroke();
+  const shine=ctx.createLinearGradient(0,0,100,34);
+  shine.addColorStop(0,'rgba(255,255,255,.20)');shine.addColorStop(.40,'rgba(255,255,255,0)');shine.addColorStop(1,'rgba(0,0,0,.18)');
+  ctx.fillStyle=shine;ctx.fillRect(0,0,100,100);
+  const fade=ctx.createLinearGradient(0,25,0,98);
+  fade.addColorStop(0,'rgba(0,0,0,0)');fade.addColorStop(1,'rgba(0,0,0,.16)');
+  ctx.fillStyle=fade;ctx.fillRect(0,25,100,75);
+  ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1;ctx.setLineDash([2,2.5]);
+  ctx.beginPath();ctx.moveTo(27,12);ctx.quadraticCurveTo(25,25,24,39);ctx.moveTo(73,12);ctx.quadraticCurveTo(75,25,76,39);ctx.stroke();ctx.setLineDash([]);
+  ctx.restore();
+  kitCanvasShape(ctx);ctx.lineWidth=2.2;ctx.strokeStyle='rgba(14,19,33,.52)';ctx.stroke();
+  ctx.beginPath();ctx.moveTo(39,4);ctx.quadraticCurveTo(50,17,61,4);ctx.lineTo(58,15);ctx.quadraticCurveTo(50,25,42,15);ctx.closePath();ctx.fillStyle='#151c29';ctx.fill();
+  ctx.beginPath();ctx.moveTo(39,4);ctx.quadraticCurveTo(50,17,61,4);ctx.strokeStyle=trim;ctx.lineWidth=3.6;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(31,30);ctx.lineTo(39,30);ctx.lineTo(39,40);ctx.quadraticCurveTo(35,44,31,40);ctx.closePath();ctx.fillStyle='#f7f7f7';ctx.fill();ctx.strokeStyle='#101b2b';ctx.lineWidth=.75;ctx.stroke();
+  ctx.fillStyle=primary;ctx.fillRect(33,33,4,5);
+  ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(60,32);ctx.lineTo(65,35);ctx.lineTo(61,35);ctx.lineTo(66,39);ctx.stroke();
+  // Pettorina con sigla: sempre ad alto contrasto, anche sulle maglie bianche.
+  ctx.beginPath();ctx.roundRect(37,51,26,16,3.5);ctx.fillStyle='rgba(16,20,28,.82)';ctx.fill();
+  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 10.5px Arial';
+  ctx.fillText(nationCode(p.nation),50,59.3,25);
+  ctx.strokeStyle='rgba(255,255,255,.26)';ctx.lineWidth=1.15;
+  ctx.beginPath();ctx.moveTo(27,87);ctx.quadraticCurveTo(50,92,73,87);ctx.stroke();
+  ctx.restore();
+}
+
+function drawPlayerCard(ctx, cx, cy, p) {
+  // La card nell'immagine condivisa richiama quella scura e luminosa del campo.
+  const w = 138, h = 150;
+  const x = cx - w / 2, y = cy - h / 2;
+  drawRoundedRect(ctx, x, y, w, h, 16, '#102923', 'rgba(210,255,221,.65)', 2);
+  drawRoundedRect(ctx, x + 3, y + 3, w - 6, h - 6, 13, 'rgba(10,28,27,.35)', 'rgba(255,255,255,.08)', 1);
+  drawShirt(ctx, cx - 34, y + 6, 68, 60, p);
+
+  drawRoundedRect(ctx, x + 9, y + 70, w - 18, 22, 6, 'rgba(255,255,255,.12)', 'rgba(255,255,255,.10)', 1);
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = '900 12px Inter, Arial';
+  const cleanName = String(p.name || '').toUpperCase();
+  ctx.fillText(cleanName, cx, y + 81, w - 26);
+  ctx.fillStyle = '#b5dfc7';
+  ctx.font = '800 10px Inter, Arial';
+  ctx.fillText(String(p.nation || ''), cx, y + 104, w - 17);
+
+  const stats = [['MV', playerMV(p)], ['FM*', playerFM(p)]];
+  stats.forEach((stat, i) => {
+    const px = x + 9 + i * 62;
+    drawRoundedRect(ctx, px, y + 115, 58, 27, 6,
+      i ? 'rgba(214,255,0,.17)' : 'rgba(255,255,255,.10)',
+      i ? 'rgba(214,255,0,.35)' : 'rgba(255,255,255,.16)', 1);
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='#b7cec0';ctx.font='900 8px Inter, Arial';ctx.fillText(stat[0], px+29, y+122);
+    ctx.fillStyle=i ? '#dcff35' : '#ffffff';ctx.font='950 12px Inter, Arial';ctx.fillText(stat[1], px+29, y+134);
+  });
+}
+
+function drawBenchSlot(ctx, cx, cy, slot) {
+  const w = 182;
+  const h = 116;
+  const x = cx - w / 2;
+  const y = cy - h / 2;
+  const p = slot && slot.playerId ? player(slot.playerId) : null;
+
+  drawRoundedRect(ctx, x, y, w, h, 16, '#ffffff', 'rgba(0,0,0,.10)', 2);
+
+  drawRoundedRect(ctx, x + 10, y + 10, 54, 24, 8, '#111111');
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '1000 11px Inter, Arial';
+  ctx.fillText(ROLE_LABEL[slot.role] || slot.role || '', x + 37, y + 22);
+
+  if (!p) {
+    ctx.fillStyle = '#8a8a8a';
+    ctx.font = '900 18px Inter, Arial';
+    ctx.fillText('[VUOTO]', cx, y + 64);
+    ctx.font = '800 12px Inter, Arial';
+    ctx.fillText('Slot panchina', cx, y + 88);
+    return;
+  }
+
+  drawShirt(ctx, x + 12, y + 40, 52, 46, p);
+
+  ctx.fillStyle = '#111111';
+  ctx.font = '1000 12px Inter, Arial';
+  const cleanName = String(p.name || '').toUpperCase();
+  const shortName = cleanName.length > 18 ? cleanName.slice(0, 17) + '…' : cleanName;
+  ctx.textAlign = 'left';
+  ctx.fillText(shortName, x + 76, y + 56);
+
+  ctx.fillStyle = '#606060';
+  ctx.font = '900 10px Inter, Arial';
+  const nation = String(p.nation || '');
+  const shortNation = nation.length > 18 ? nation.slice(0, 17) + '…' : nation;
+  ctx.fillText(shortNation, x + 76, y + 76);
+
+  drawRoundedRect(ctx, x + 76, y + 84, 92, 20, 6, '#f2f2f2', '#d8d8d8', 1);
+  ctx.fillStyle = '#111111';
+  ctx.textAlign = 'center';
+  ctx.font = '900 10px Inter, Arial';
+  ctx.fillText(`MV ${playerMV(p)} · FM* ${playerFM(p)}`, x + 122, y + 94);
+}
+
+function drawPitch(ctx, x, y, w, h) {
+  const grad = ctx.createLinearGradient(0, y, 0, y + h);
+  grad.addColorStop(0, '#03bf6a');
+  grad.addColorStop(1, '#00aa5a');
+  drawRoundedRect(ctx, x, y, w, h, 28, grad, 'rgba(255,255,255,.88)', 5);
+
+  ctx.save();
+  ctx.beginPath();
+  roundRectPath(ctx, x, y, w, h, 28);
+  ctx.clip();
+  ctx.fillStyle = 'rgba(255,255,255,.045)';
+  const stripe = w / 8;
+  for (let i = 0; i < 8; i += 2) {
+    ctx.fillRect(x + i * stripe, y, stripe, h);
+  }
+
+  ctx.strokeStyle = 'rgba(255,255,255,.82)';
+  ctx.lineWidth = 4;
+  drawRoundedRect(ctx, x + 28, y + 28, w - 56, h - 56, 18, 'rgba(0,0,0,0)', 'rgba(255,255,255,.82)', 4);
+
+  ctx.beginPath();
+  ctx.moveTo(x + 28, y + h / 2);
+  ctx.lineTo(x + w - 28, y + h / 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(x + w / 2, y + h / 2, 70, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Aree
+  ctx.strokeRect(x + w / 2 - 145, y + 28, 290, 90);
+  ctx.strokeRect(x + w / 2 - 85, y + 28, 170, 54);
+  ctx.strokeRect(x + w / 2 - 170, y + h - 118, 340, 90);
+  ctx.strokeRect(x + w / 2 - 90, y + h - 82, 180, 54);
+  ctx.restore();
+}
+
+function drawCenteredText(ctx, text, x, y, maxWidth, font, fill) {
+  ctx.font = font;
+  ctx.fillStyle = fill;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y, maxWidth);
+}
+
+async function createRosterCanvas() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080;
+  canvas.height = 1840;
+  const ctx = canvas.getContext('2d');
+
+  const bg = ctx.createRadialGradient(540, 0, 120, 540, 300, 1250);
+  bg.addColorStop(0, '#2d2d2d');
+  bg.addColorStop(.45, '#171717');
+  bg.addColorStop(1, '#0d0d0d');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const teamName = els.managerInput.value.trim() || 'La mia rosa';
+  const moduleText = state.module.replace(/^(\d)(\d)(\d)$/, '$1-$2-$3');
+
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '1000 62px Inter, Arial';
+  ctx.fillText('Fanta mondiale', 540, 92);
+  ctx.fillText('Fantaballa', 540, 154);
+
+  ctx.fillStyle = '#bdbdbd';
+  ctx.font = '900 22px Inter, Arial';
+  ctx.fillText(teamName.toUpperCase(), 540, 210);
+
+  const pillY = 250;
+  const pillW = 260;
+  const pillH = 84;
+  const pills = [
+    ['MODULO', moduleText],
+    ['CREDITI', String(remaining())],
+    ['TITOLARI', '11']
+  ];
+  pills.forEach((item, i) => {
+    const px = 110 + i * 305;
+    drawRoundedRect(ctx, px, pillY, pillW, pillH, 20, '#222222', 'rgba(255,255,255,.12)', 2);
+    ctx.fillStyle = '#bdbdbd';
+    ctx.font = '900 15px Inter, Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(item[0], px + pillW / 2, pillY + 24);
+    ctx.fillStyle = item[0] === 'TITOLARI' ? '#d6ff00' : '#ffffff';
+    ctx.font = '1000 34px Inter, Arial';
+    ctx.fillText(item[1], px + pillW / 2, pillY + 58);
+  });
+
+  const pitchX = 90;
+  const pitchY = 375;
+  const pitchW = 900;
+  const pitchH = 960;
+  drawPitch(ctx, pitchX, pitchY, pitchW, pitchH);
+
+  const groups = { A: [], C: [], D: [], P: [] };
+  state.starters.forEach(s => {
+    if (s.playerId) groups[s.role].push(player(s.playerId));
+  });
+
+  const rows = [
+    { players: groups.A, y: pitchY + 145 },
+    { players: groups.C, y: pitchY + 370 },
+    { players: groups.D, y: pitchY + 605 },
+    { players: groups.P, y: pitchY + 825 }
+  ];
+
+  rows.forEach(row => {
+    const count = Math.max(row.players.length, 1);
+    row.players.forEach((p, idx) => {
+      const cx = pitchX + pitchW * ((idx + 1) / (count + 1));
+      drawPlayerCard(ctx, cx, row.y, p);
+    });
+  });
+
+  // Panchina
+  const benchTitleY = pitchY + pitchH + 62;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '1000 30px Inter, Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('PANCHINA', 540, benchTitleY);
+
+  const benchPanelX = 70;
+  const benchPanelY = benchTitleY + 28;
+  const benchPanelW = 940;
+  const benchPanelH = 250;
+  drawRoundedRect(ctx, benchPanelX, benchPanelY, benchPanelW, benchPanelH, 24, 'rgba(255,255,255,.06)', 'rgba(255,255,255,.12)', 2);
+
+  const benchSlots = state.bench;
+  const benchRow1 = benchSlots.slice(0, 3);
+  const benchRow2 = benchSlots.slice(3, 5);
+
+  benchRow1.forEach((slot, idx) => {
+    const cx = benchPanelX + benchPanelW * ((idx + 1) / (benchRow1.length + 1));
+    drawBenchSlot(ctx, cx, benchPanelY + 78, slot);
+  });
+  benchRow2.forEach((slot, idx) => {
+    const cx = benchPanelX + benchPanelW * ((idx + 1) / (benchRow2.length + 1));
+    drawBenchSlot(ctx, cx, benchPanelY + 192, slot);
+  });
+
+  ctx.fillStyle = '#bdbdbd';
+  ctx.font = '800 20px Inter, Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Titolari e panchina · Generato con Fantaballa FC · Super Lega', 540, 1790);
+
+  return canvas;
+}
+
+async function downloadRosterImage() {
+  try {
+    const canvas = await createRosterCanvas();
+    const link = document.createElement('a');
+    const teamName = (els.managerInput.value.trim() || 'rosa').toLowerCase().replace(/[^a-z0-9]+/gi, '_');
+    link.download = `${teamName}_fantamondiale.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('Immagine scaricata');
+  } catch (err) {
+    showToast('Impossibile generare immagine');
+    console.error(err);
+  }
+}
+
+async function shareRoster() {
+  try {
+    const canvas = await createRosterCanvas();
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const file = new File([blob], 'fantamondiale-rosa.png', { type: 'image/png' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+      await navigator.share({
+        title: 'Fantaballa FC · Super Lega',
+        text: 'La mia formazione titolare',
+        files: [file]
+      });
+      return;
+    }
+
+    const link = document.createElement('a');
+    link.download = 'fantamondiale-rosa.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('Immagine pronta: condividila dal telefono');
+  } catch (err) {
+    showToast('Impossibile condividere immagine');
+    console.error(err);
+  }
+}
+
+
+
+function normalizeImportedPlayer(item, nextId) {
+  const name = String(item.name || '').trim();
+  const nation = String(item.nation || '').trim();
+  const roleRaw = String(item.role || '').trim().toUpperCase();
+  const role = ['P', 'D', 'C', 'A'].includes(roleRaw) ? roleRaw : 'C';
+  const overall = Number(item.overall || 0);
+  const rating = Number(item.rating || Math.round(overall / 2) || 1);
+  const cost = Number(item.cost || calculateImportedPlayerCost(rating, role));
+  const h = hashCode(name + nation + nextId);
+
+  return {
+    id: nextId,
+    key: item.key || normalizeName(name),
+    name,
+    role,
+    nation,
+    flag: '',
+    overall,
+    leagueStats: item.leagueStats || null,
+    squadGroup: item.squadGroup || '',
+    position: item.position || role,
+    rating,
+    cost,
+    popularity: item.popularity || ((h % 500) / 10).toFixed(1),
+    fpm: item.fpm || (9 + ((h % 1150) / 100)).toFixed(2).replace('.', ','),
+    games: Number(item.games || 0),
+    totalPoints: Number(item.totalPoints || 0),
+    avgPoints: Number(item.avgPoints || 0),
+    goals: Number(item.goals || 0),
+    assists: Number(item.assists || 0),
+    yellows: Number(item.yellows || 0),
+    reds: Number(item.reds || 0)
+  };
+}
+
+function calculateImportedPlayerCost(rating, role) {
+  const coeff = role === 'A' ? 0.78 : role === 'C' ? 0.62 : role === 'D' ? 0.50 : 0.42;
+  const premium = role === 'A' ? 11 : role === 'C' ? 7 : role === 'D' ? 4 : 2;
+  const raw = ((Number(rating || 0) - 50) * coeff) + premium;
+  return Math.max(3, Math.min(70, Math.round(raw)));
+}
+
+function mergeOfficialStats(importedPlayers) {
+  if (!Array.isArray(importedPlayers)) {
+    throw new Error('players_stats.json deve contenere un array di giocatori');
+  }
+
+  const statsByKey = new Map();
+  importedPlayers.forEach(item => {
+    const key = item.key || normalizeName(item.name);
+    if (!key) return;
+    statsByKey.set(key, item);
+  });
+
+  const existingKeys = new Set(players.map(p => p.key || normalizeName(p.name)));
+  let updated = 0;
+  let added = 0;
+
+  players = players.map(p => {
+    const key = p.key || normalizeName(p.name);
+    const stats = statsByKey.get(key);
+    if (!stats) return { ...p, key };
+
+    updated++;
+    return {
+      ...p,
+      key,
+      leagueStats: stats.leagueStats ?? p.leagueStats ?? null,
+      games: Number(stats.games || 0),
+      totalPoints: Number(stats.totalPoints || 0),
+      avgPoints: Number(stats.avgPoints || 0),
+      goals: Number(stats.goals || 0),
+      assists: Number(stats.assists || 0),
+      yellows: Number(stats.yellows || 0),
+      reds: Number(stats.reds || 0)
+    };
+  });
+
+  importedPlayers.forEach(item => {
+    const key = item.key || normalizeName(item.name);
+    if (!key || existingKeys.has(key)) return;
+
+    const name = String(item.name || '').trim();
+    const nation = String(item.nation || '').trim();
+    if (!name || !nation) return;
+
+    const newPlayer = normalizeImportedPlayer(item, players.length + 1);
+    players.push(newPlayer);
+    existingKeys.add(key);
+    added++;
+
+    if (!NATIONAL_TEAMS.includes(newPlayer.nation)) {
+      NATIONAL_TEAMS.push(newPlayer.nation);
+      NATIONAL_TEAMS.sort();
+      populateNations(true);
+    }
+  });
+
+  players.sort((a,b) => b.cost - a.cost || b.rating - a.rating || a.name.localeCompare(b.name));
+  render();
+  return { updated, added };
+}
+
+async function loadRemoteOfficialStats() {
+  try {
+    const response = await fetch(`players_stats.json?v=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) return;
+    const imported = await response.json();
+    const updated = mergeOfficialStats(imported);
+    if (updated > 0) showToast('Statistiche ufficiali aggiornate');
+  } catch (err) {
+    console.info('players_stats.json non trovato o non caricabile', err);
+  }
+}
+
+
+
+function submissionRole(role) {
+  return role === 'J' ? 'ALL' : role;
+}
+
+function formattedModuleForSubmit() {
+  const value = String(state.module || '').trim();
+  if (value.length === 3) return value.split('').join('-');
+  return value;
+}
+
+function slotToSubmitPlayer(slot) {
+  const p = slot && slot.playerId ? player(slot.playerId) : null;
+  if (!p) return null;
+  return {
+    ruolo: submissionRole(slot.role),
+    key: p.key,
+    giocatore: p.name,
+    nazione: p.nation,
+    club: p.nation,
+    costo: Number(p.cost || 0)
+  };
+}
+
+function buildGoogleSheetPayload() {
+  const squadra = els.managerInput.value.trim();
+  return {
+    secret: GOOGLE_SHEET_SECRET,
+    progetto: 'fantaballafc',
+    competizione: 'Premier Division Super Lega',
+    squadra,
+    utente: '',
+    email: '',
+    modulo: formattedModuleForSubmit(),
+    creditiUsati: usedCost(),
+    titolari: state.starters.map(slotToSubmitPlayer).filter(Boolean),
+    panchina: state.bench.map(slotToSubmitPlayer).filter(Boolean)
+  };
+}
+
+async function submitFormationToGoogleSheet() {
+  if (!GOOGLE_SHEET_WEB_APP_URL) {
+    try { const response=await fetch('config.json',{cache:'no-store'}); const config=await response.json(); GOOGLE_SHEET_WEB_APP_URL=String(config.googleSheetWebAppUrl||'').trim(); } catch(error) {}
+  }
+  if (!/^https:\/\/script.google.com\/macros\/s\/[^/]+\/exec$/.test(GOOGLE_SHEET_WEB_APP_URL)) { alert('Invio rose non ancora attivo. La rosa resta salvata su questo dispositivo.'); return; }
+
+  const squadra = els.managerInput.value.trim();
+  if (!squadra) {
+    alert('Inserisci il nome squadra prima di inviare.');
+    els.managerInput.focus();
+    return;
+  }
+
+  const missing = missingRosterParts();
+  if (missing.length) {
+    alert('Prima di inviare la formazione:\n\n' + missing.join('\n'));
+    showToast('Completa rosa e panchina');
+    return;
+  }
+
+  if (remaining() < 0) {
+    alert('Hai superato il budget massimo di ' + BUDGET + ' crediti.');
+    showToast('Budget superato');
+    return;
+  }
+
+  const payload = buildGoogleSheetPayload();
+  const oldText = els.sendBtn.textContent;
+  els.sendBtn.disabled = true;
+  els.sendBtn.textContent = 'Invio...';
+
+  try {
+    await fetch(GOOGLE_SHEET_WEB_APP_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+
+    localStorage.setItem('fantaballafc_last_submit_v1', JSON.stringify({
+      at: new Date().toISOString(),
+      squadra: payload.squadra,
+      modulo: payload.modulo,
+      creditiUsati: payload.creditiUsati
+    }));
+
+    showToast('Richiesta di invio spedita');
+    alert('Richiesta di invio spedita. Verifica la ricezione nel foglio di Fantaballa FC.');
+  } catch (err) {
+    console.error(err);
+    alert('Invio non riuscito. Controlla la connessione e riprova.');
+    showToast('Errore invio');
+  } finally {
+    els.sendBtn.disabled = false;
+    els.sendBtn.textContent = oldText;
+  }
+}
+
+function buildFormationText() {
+  const teamName = els.managerInput.value.trim() || 'Senza nome';
+
+  const starters = state.starters.map(s => ({
+    slot: ROLE_LABEL[s.role],
+    player: s.playerId ? player(s.playerId) : null
+  }));
+
+  const benchPlayers = state.bench.map(s => ({
+    slot: ROLE_LABEL[s.role],
+    player: s.playerId ? player(s.playerId) : null
+  }));
+
+  const lines = [];
+  lines.push(teamName);
+  lines.push('TITOLARI');
+
+  starters.forEach((item, index) => {
+    if (!item.player) {
+      lines.push(`${index + 1}. ${item.slot} - [VUOTO]`);
+      return;
+    }
+    const p = item.player;
+    lines.push(`${index + 1}. ${item.slot} - ${p.name} - ${p.nation}`);
+  });
+
+  lines.push('PANCHINA');
+
+  benchPlayers.forEach((item, index) => {
+    if (!item.player) {
+      lines.push(`${index + 1}. ${item.slot} - [VUOTO]`);
+      return;
+    }
+    const p = item.player;
+    lines.push(`${index + 1}. ${item.slot} - ${p.name} - ${p.nation}`);
+  });
+
+  return lines.join('\n');
+}
+
+
+function missingRosterParts() {
+  const missing = [];
+
+  const emptyStarters = state.starters.filter(s => !s.playerId).length;
+  const emptyBench = state.bench.filter(s => !s.playerId).length;
+
+  if (emptyStarters > 0) {
+    missing.push(`Completa tutti gli 11 titolari: mancano ${emptyStarters} giocatori.`);
+  }
+
+  if (emptyBench > 0) {
+    missing.push(`Completa tutta la panchina: mancano ${emptyBench} giocatori.`);
+  }
+
+  return missing;
+}
+
+function openSendModal() {
+  const missing = missingRosterParts();
+
+  if (missing.length) {
+    alert('Prima di inviare la formazione:\n\n' + missing.join('\n'));
+    showToast('Completa rosa e panchina');
+    return;
+  }
+
+  els.sendText.value = buildFormationText();
+  els.sendModal.classList.add('open');
+  els.sendModal.setAttribute('aria-hidden', 'false');
+  setTimeout(() => {
+    els.sendText.focus();
+    els.sendText.select();
+  }, 50);
+}
+
+function closeSendModal() {
+  els.sendModal.classList.remove('open');
+  els.sendModal.setAttribute('aria-hidden', 'true');
+}
+
+async function copySendText() {
+  const text = els.sendText.value || buildFormationText();
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Testo copiato');
+  } catch (err) {
+    els.sendText.focus();
+    els.sendText.select();
+    showToast('Testo selezionato: copialo manualmente');
+  }
+}
+
+function selectSendText() {
+  els.sendText.focus();
+  els.sendText.select();
+  showToast('Testo selezionato');
+}
+
+
+function exportRoster() {
+  const data = {
+    competizione: 'FantaSuper Lega FM',
+    squadra: els.managerInput.value.trim() || 'Senza nome',
+    modulo: state.module,
+    budget: BUDGET,
+    creditiResidui: remaining(),
+    punteggioPrevistoTitolari: startersProjection(),
+    punteggioPrevistoRosa: rosterProjection(),
+    titolari: state.starters.map(s => ({ slot: ROLE_LABEL[s.role], giocatore: s.playerId ? player(s.playerId) : null })),
+    panchina: state.bench.map(s => ({ slot: ROLE_LABEL[s.role], giocatore: s.playerId ? player(s.playerId) : null })),
+    regolamento: {
+      voto: 'voto Football Manager',
+      gol: 3,
+      assist: 1,
+      autogol: -3,
+      golSubitoPortiere: -1,
+      rigoreParato: 3,
+      rigoreSbagliato: -3,
+      giallo: -1,
+      rosso: -2,
+      cartellini: 'giallo -1; rosso diretto o doppio giallo -2 complessivi'
+    }
+  };
+  els.exportBoxWrap.style.display = 'block';
+  els.exportBox.value = JSON.stringify(data, null, 2);
+  showToast('Rosa salvata ed esportata');
+}
+els.managerInput.value = state.manager || '';
+loadPlayersDatabase();
+
+document.querySelectorAll('.chip').forEach(chip => chip.addEventListener('click', () => { roleFilter = chip.dataset.role; document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c === chip)); renderPlayers(); }));
+els.searchInput.addEventListener('input', schedulePlayerSearch);
+els.nationFilter.addEventListener('change', renderPlayers);
+els.sortSelect.addEventListener('change', renderPlayers);
+els.moduleSelect.addEventListener('change', e => changeModule(e.target.value));
+els.managerInput.addEventListener('input', saveLocal);
+document.getElementById('randomBtn').addEventListener('click', randomTeam);
+document.getElementById('cancelBtn').addEventListener('click', () => { if (!confirm('Vuoi davvero svuotare tutta la rosa?')) return; state = newState(state.module); state.manager = els.managerInput.value.trim(); activeSlot = null; saveLocal(); render(); });
+els.sendBtn.addEventListener('click', submitFormationToGoogleSheet);
+document.getElementById('downloadBtn').addEventListener('click', downloadRosterImage);
+document.getElementById('shareBtn').addEventListener('click', shareRoster);
+els.copySendBtn.addEventListener('click', copySendText);
+els.selectSendBtn.addEventListener('click', selectSendText);
+els.sendClose.addEventListener('click', closeSendModal);
+els.sendBackdrop.addEventListener('click', closeSendModal);
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeSendModal(); });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</body>
+</html>
+
+

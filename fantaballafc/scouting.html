@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Caratteristiche giocatori - Fantaballa</title>
+  <style>
+    :root {
+      --bg: #101010;
+      --panel: #1b1b1b;
+      --panel2: #242424;
+      --text: #f5f5f5;
+      --muted: #a7a7a7;
+      --green: #00c875;
+      --gold: #d6ff00;
+      --red: #ff4e64;
+      --elite: #ff4e64;
+      --top: #d6ff00;
+      --good: #00c875;
+      --solid: #43a7ff;
+      --line: rgba(255,255,255,.12);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(0,200,117,.15), transparent 38%),
+        radial-gradient(circle at top right, rgba(214,255,0,.10), transparent 34%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; border: 0; }
+
+    .wrap {
+      width: min(1280px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 30px 0 42px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .kicker {
+      color: var(--green);
+      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .12em;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 7vw, 72px);
+      line-height: .88;
+      letter-spacing: -0.065em;
+      text-transform: uppercase;
+      font-weight: 1000;
+    }
+
+    .hero p {
+      color: var(--muted);
+      margin: 14px 0 0;
+      max-width: 690px;
+      font-weight: 650;
+      line-height: 1.4;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 42px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #171717;
+      color: #fff;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .dash-card {
+      background: linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      min-height: 88px;
+    }
+
+    .dash-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 950;
+      margin-bottom: 8px;
+    }
+
+    .dash-card strong {
+      font-size: 30px;
+      line-height: 1;
+      font-weight: 1000;
+      letter-spacing: -0.04em;
+      color: var(--gold);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 26px 0 12px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -0.03em;
+      font-weight: 1000;
+      text-transform: uppercase;
+    }
+
+    .club-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .club-card {
+      background: rgba(24,24,24,.88);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .club-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .shirt {
+      width: 52px;
+      height: 46px;
+      position: relative;
+      flex: 0 0 auto;
+      clip-path: polygon(18% 0, 36% 0, 42% 10%, 58% 10%, 64% 0, 82% 0, 100% 18%, 86% 42%, 86% 100%, 14% 100%, 14% 42%, 0 18%);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 1000;
+      text-shadow: 0 1px 5px rgba(0,0,0,.35);
+    }
+
+    .shirt.small { width: 42px; height: 36px; font-size: 9px; }
+    .club-name { min-width: 0; }
+    .club-name strong { display: block; font-weight: 1000; letter-spacing: -0.03em; }
+    .club-name span { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+    .club-body {
+      padding: 12px 14px 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .mini-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .mini-stat {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 9px 10px;
+      min-width: 0;
+    }
+
+    .mini-stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 950;
+      margin-bottom: 4px;
+    }
+
+    .mini-stat strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 1000;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mini-stat.wide strong {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
+      line-height: 1.35;
+      font-size: 13px;
+    }
+
+    .rank-badge {
+      display: inline-grid;
+      place-items: center;
+      min-width: 34px;
+      height: 30px;
+      border-radius: 999px;
+      padding: 0 10px;
+      background: rgba(214,255,0,.15);
+      color: var(--gold);
+      border: 1px solid rgba(214,255,0,.38);
+      font-weight: 1000;
+      letter-spacing: -0.04em;
+    }
+
+    .xi-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .xi-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      gap: 10px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(16px);
+    }
+
+    input, select {
+      width: 100%;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: #121212;
+      color: #fff;
+      padding: 0 12px;
+      font-weight: 800;
+      outline: none;
+    }
+
+    input:focus, select:focus { border-color: var(--green); }
+
+    .players-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+      margin: 12px 2px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .legend-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 1000;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .legend-pill.elite { color: #fff; background: rgba(255,78,100,.28); border-color: rgba(255,78,100,.42); }
+    .legend-pill.top { color: #111; background: var(--top); border-color: rgba(214,255,0,.55); }
+    .legend-pill.good { color: #111; background: var(--good); border-color: rgba(0,200,117,.55); }
+
+    .players-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    /* Caricamento progressivo: poche schede nel DOM, senza limitare ricerca e filtri. */
+    .load-more-wrap {
+      margin: 22px auto 8px;
+      width: min(460px, 100%);
+      display: grid;
+      justify-items: stretch;
+      gap: 9px;
+      text-align: center;
+    }
+    .load-more-btn {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(115deg, var(--green), #71e6a6);
+      color: #081911;
+      font-size: 14px;
+      font-weight: 1000;
+      box-shadow: 0 10px 28px rgba(0,200,117,.16);
+      transition: transform .15s ease, filter .15s ease;
+    }
+    .load-more-btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+    .load-more-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+    .load-more-info { color: var(--muted); font-size: 12px; font-weight: 750; }
+    [hidden] { display: none !important; }
+
+    .player-card {
+      background: #181818;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 13px;
+      display: grid;
+      gap: 11px;
+      transition: transform .12s ease, border .12s ease, background .12s ease;
+      min-width: 0;
+    }
+
+    .player-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(0,200,117,.45);
+      background: #1d1d1d;
+    }
+
+    .player-head {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .player-name {
+      min-width: 0;
+    }
+
+    .player-name strong {
+      display: block;
+      font-weight: 1000;
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .player-name span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ca-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: var(--gold);
+      color: #111;
+      font-size: 19px;
+      font-weight: 1000;
+      letter-spacing: -0.06em;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.08);
+      font-size: 11px;
+      font-weight: 950;
+    }
+
+    .badge.green { color: #111; background: var(--green); }
+    .badge.gold { color: #111; background: var(--gold); }
+    .badge.dark { background: #0f0f0f; }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 6px;
+    }
+
+    .score {
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 10px;
+      padding: 7px;
+    }
+
+    .score span {
+      display: block;
+      color: var(--muted);
+      font-size: 8px;
+      text-transform: uppercase;
+      font-weight: 1000;
+      letter-spacing: .08em;
+      margin-bottom: 3px;
+    }
+
+    .score strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 1000;
+    }
+
+    .skill-list {
+      display: grid;
+      gap: 5px;
+    }
+
+    .skill-row {
+      display: grid;
+      grid-template-columns: 1fr 34px;
+      gap: 8px;
+      align-items: center;
+      color: #e9e9e9;
+      font-size: 12px;
+      font-weight: 800;
+      min-width: 0;
+    }
+
+    .skill-row.skill-solid,
+    .skill-row.skill-good,
+    .skill-row.skill-top,
+    .skill-row.skill-elite {
+      padding: 5px 7px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .skill-row.skill-solid { background: rgba(67,167,255,.13); border-color: rgba(67,167,255,.26); }
+    .skill-row.skill-good { background: rgba(0,200,117,.15); border-color: rgba(0,200,117,.30); }
+    .skill-row.skill-top { background: rgba(214,255,0,.16); border-color: rgba(214,255,0,.36); color: #fff; }
+    .skill-row.skill-elite { background: linear-gradient(90deg, rgba(255,78,100,.30), rgba(214,255,0,.12)); border-color: rgba(255,78,100,.46); color: #fff; }
+
+    .skill-row span:first-child {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .skill-row b {
+      justify-self: end;
+      color: var(--muted);
+      font-weight: 1000;
+    }
+
+    .skill-row.skill-solid b { color: var(--solid); }
+    .skill-row.skill-good b { color: var(--good); }
+    .skill-row.skill-top b { color: var(--top); }
+    .skill-row.skill-elite b { color: var(--elite); }
+
+    .details-btn {
+      height: 38px;
+      border-radius: 12px;
+      background: #fff;
+      color: #111;
+      font-weight: 1000;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      width: min(1040px, 100%);
+      max-height: 92vh;
+      overflow: auto;
+      background: #171717;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 22px;
+      box-shadow: 0 30px 90px rgba(0,0,0,.45);
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(23,23,23,.96);
+      backdrop-filter: blur(14px);
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .modal-title strong {
+      display: block;
+      font-size: 24px;
+      font-weight: 1000;
+      letter-spacing: -0.04em;
+    }
+
+    .modal-title span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .close {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: #fff;
+      color: #111;
+      font-weight: 1000;
+      font-size: 20px;
+    }
+
+    .modal-body {
+      padding: 16px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .profile-card {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .profile-card span {
+      display: block;
+      font-size: 9px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 1000;
+      letter-spacing: .08em;
+      margin-bottom: 5px;
+    }
+
+    .profile-card strong {
+      display: block;
+      font-size: 18px;
+      font-weight: 1000;
+    }
+
+    .attr-groups {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+    }
+
+    .attr-group {
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 12px;
+    }
+
+    .attr-group h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+      font-weight: 1000;
+      letter-spacing: .05em;
+    }
+
+    .attr {
+      display: grid;
+      grid-template-columns: 116px 1fr 28px;
+      gap: 8px;
+      align-items: center;
+      margin: 7px 0;
+      font-size: 12px;
+      font-weight: 850;
+      color: #e7e7e7;
+    }
+
+    .bar {
+      height: 8px;
+      background: rgba(255,255,255,.10);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--gold));
+      border-radius: 999px;
+    }
+
+    .attr.skill-solid .fill { background: linear-gradient(90deg, var(--solid), rgba(67,167,255,.72)); }
+    .attr.skill-good .fill { background: linear-gradient(90deg, var(--green), rgba(0,200,117,.80)); }
+    .attr.skill-top .fill { background: linear-gradient(90deg, var(--green), var(--gold)); }
+    .attr.skill-elite .fill { background: linear-gradient(90deg, var(--elite), var(--gold)); box-shadow: 0 0 14px rgba(255,78,100,.30); }
+
+    .attr.skill-solid { color: #fff; }
+    .attr.skill-good { color: #fff; }
+    .attr.skill-top { color: #fff; }
+    .attr.skill-elite { color: #fff; }
+
+    .attr b {
+      justify-self: end;
+      color: var(--muted);
+      font-weight: 1000;
+    }
+
+    .attr.skill-solid b { color: var(--solid); }
+    .attr.skill-good b { color: var(--good); }
+    .attr.skill-top b { color: var(--top); }
+    .attr.skill-elite b { color: var(--elite); }
+
+    .empty {
+      color: var(--muted);
+      border: 1px dashed rgba(255,255,255,.18);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      font-weight: 850;
+    }
+
+    @media (max-width: 1050px) {
+      .dashboard { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .club-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .players-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+      .controls { grid-template-columns: 1fr 1fr; }
+      .profile-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .attr-groups { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .wrap { width: min(100% - 20px, 1280px); padding-top: 18px; }
+      .hero { grid-template-columns: 1fr; align-items: start; }
+      .dashboard { grid-template-columns: 1fr 1fr; }
+      .club-grid, .players-grid, .attr-groups { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; position: static; }
+      .profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .modal-header { grid-template-columns: auto 1fr auto; }
+      .attr { grid-template-columns: 98px 1fr 28px; }
+    }
+    .season-table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; } .season-table th,.season-table td { padding:9px; text-align:left; border-bottom:1px solid #d8dee8; white-space:nowrap; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div>
+        <div class="kicker">Fantaballa scouting room</div>
+        <h1>Caratteristiche giocatori</h1>
+        <p>Premier Division Super Lega · 48 club · Save 27/12/2025. Cerca giocatori, confronta skill, crediti, MV e FM di campionato. Riserve e giovanili incluse; FM* parziali dove mancano eventi.</p>
+      </div>
+      <a class="back-btn" href="index.html">← Torna al builder rosa</a>
+    </section>
+
+    <section class="dashboard" id="dashboard"></section>
+
+    <section class="section-title">
+      <h2>Database giocatori</h2>
+    </section>
+
+    <section class="controls">
+      <input id="search" placeholder="Cerca giocatore..." />
+      <select id="clubFilter"><option value="all">Tutti i club</option></select>
+      <select id="roleFilter">
+        <option value="all">Tutti i ruoli</option>
+        <option value="P">Portieri</option>
+        <option value="D">Difensori</option>
+        <option value="C">Centrocampisti</option>
+        <option value="A">Attaccanti</option>
+      </select>
+      <select id="profileFilter">
+        <option value="all">Tutti i profili</option>
+        <option value="Tecnico">Tecnico</option>
+        <option value="Finalizzatore">Finalizzatore</option>
+        <option value="Difensore">Difensore</option>
+        <option value="Fisico">Fisico</option>
+        <option value="Mentale">Mentale</option>
+        <option value="Fascia">Fascia</option>
+        <option value="Piazzati">Piazzati</option><option value="Portiere">Portiere</option>
+      </select>
+      <select id="sortBy">
+        <option value="cost_desc">Costo ↓</option>
+        <option value="value_desc">Valore qualità/prezzo ↓</option>
+        <option value="technical_desc">Tecnica ↓</option>
+        <option value="attacking_desc">Attacco ↓</option>
+        <option value="defending_desc">Difesa ↓</option>
+        <option value="physical_desc">Fisico ↓</option>
+        <option value="name_asc">Nome A-Z</option>
+      </select>
+    </section>
+
+    <div class="players-top">
+      <span id="resultCount">Caricamento...</span>
+      <span class="legend" title="Colori applicati in base al valore della caratteristica">
+        <span class="legend-pill elite">16+ élite</span>
+        <span class="legend-pill top">14-15 top</span>
+        <span class="legend-pill good">12-13 alta</span>
+      </span>
+    </div>
+
+    <section class="players-grid" id="playersGrid"></section>
+    <div class="load-more-wrap" id="loadMoreWrap" hidden>
+      <button class="load-more-btn" id="loadMoreBtn" type="button">Mostra altri giocatori</button>
+      <div class="load-more-info" id="loadMoreInfo"></div>
+    </div>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header" id="modalHeader"></div>
+      <div class="modal-body" id="modalBody"></div>
+    </section>
+  </div>
+
+  <script>
+    const ROLE_LABEL = { P: 'Portiere', D: 'Difensore', C: 'Centrocampista', A: 'Attaccante' };
+    const CLUB_CODES = {
+      'New Team': 'NEW',
+      'Drago Bianco': 'DB',
+      'Kame House': 'KH',
+      'Isotopi di Springfield': 'ISO',
+      'Small Soldiers': 'SS',
+      'Digimon': 'DIG'
+    };
+
+    const ATTR_LABELS = {
+      Corners: "Calci d'angolo",
+      Dribbling: 'Dribbling',
+      Crossing: 'Cross',
+      Finishing: 'Finalizzazione',
+      'First Touch': 'Controllo di palla',
+      Freekicks: 'Calci piazzati',
+      Heading: 'Colpi di testa',
+      Longshots: 'Tiri da lontano',
+      Longthrows: 'Rimesse lunghe',
+      Marking: 'Marcatura',
+      Passing: 'Passaggi',
+      'Penalty Taking': 'Rigori',
+      Tackling: 'Contrasti',
+      Technique: 'Tecnica',
+      Aggression: 'Aggressività',
+      Anticipation: 'Intuito',
+      Bravery: 'Coraggio',
+      Composure: 'Freddezza',
+      Decisions: 'Decisioni',
+      Concentration: 'Concentrazione',
+      Determination: 'Determinazione',
+      Flair: 'Fantasia',
+      Leadership: 'Carisma',
+      Positioning: 'Posizione',
+      'Off The Ball': 'Senza palla',
+      Teamwork: 'Gioco di squadra',
+      Vision: 'Visione di gioco',
+      Workrate: 'Impegno',
+      Acceleration: 'Accelerazione',
+      Agility: 'Agilità',
+      'Balance (E)': 'Equilibrio',
+      Jumping: 'Massima elevazione',
+      'Natural Fitness': 'Integrità fisica',
+      Pace: 'Velocità',
+      Stamina: 'Resistenza',
+      Strength: 'Forza'
+    };
+
+    Object.assign(ATTR_LABELS, {'Handling':'Presa','Aerial Reach':'Estensione aerea','Command of Area':'Comando area','Communication':'Comunicazione','Kicking':'Rinvii','Throwing':'Rimesse','One on Ones':'Uno contro uno','Reflexes':'Riflessi','Rushing Out':'Uscite','Punching':'Respinta di pugno','Eccentricity':'Eccentricità'});
+    const GROUPS = {
+      'Tecniche': ['Corners','Dribbling','Crossing','Finishing','First Touch','Freekicks','Heading','Longshots','Longthrows','Marking','Passing','Penalty Taking','Tackling','Technique'],
+      'Psicologia': ['Aggression','Anticipation','Bravery','Composure','Decisions','Concentration','Determination','Flair','Leadership','Positioning','Off The Ball','Teamwork','Vision','Workrate'],
+      'Portiere': ['Handling','Aerial Reach','Command of Area','Communication','Kicking','Throwing','One on Ones','Reflexes','Rushing Out','Punching','Eccentricity'],
+      'Fisiche': ['Acceleration','Agility','Balance (E)','Jumping','Natural Fitness','Pace','Stamina','Strength']
+    };
+
+    let players = [];
+    let clubs = [];
+    let clubByName = {};
+    const PLAYERS_PER_PAGE = 48;
+    let visiblePlayerCount = 0;
+    let searchDebounceTimer;
+
+    const els = {
+      dashboard: document.getElementById('dashboard'),
+      playersGrid: document.getElementById('playersGrid'),
+      resultCount: document.getElementById('resultCount'),
+      loadMoreWrap: document.getElementById('loadMoreWrap'),
+      loadMoreBtn: document.getElementById('loadMoreBtn'),
+      loadMoreInfo: document.getElementById('loadMoreInfo'),
+      search: document.getElementById('search'),
+      clubFilter: document.getElementById('clubFilter'),
+      roleFilter: document.getElementById('roleFilter'),
+      profileFilter: document.getElementById('profileFilter'),
+      sortBy: document.getElementById('sortBy'),
+      modalBackdrop: document.getElementById('modalBackdrop'),
+      modalHeader: document.getElementById('modalHeader'),
+      modalBody: document.getElementById('modalBody')
+    };
+
+    function esc(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[char]));
+    }
+
+    function normalize(value) {
+      return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function clubKit(club) {
+      return clubByName[club]?.kit || {
+        css: 'background:#1c4fb8;color:#fff;border:2px solid #163d8d;'
+      };
+    }
+
+    function clubCode(club) {
+      return CLUB_CODES[club] || String(club || '').replace(/[^A-Za-z]/g, '').slice(0,3).toUpperCase();
+    }
+
+    function shirt(club, small = false) {
+      return `<span class="shirt ${small ? 'small' : ''}" style="${clubKit(club).css}text-shadow:0 1px 2px #111,0 0 3px #111;">${esc(clubCode(club))}</span>`;
+    }
+
+    function attrLabel(key) {
+      return ATTR_LABELS[key] || key;
+    }
+
+
+    const POSITION_ROLE_LABELS = {
+      GK: 'Portiere',
+      D: 'Difensore',
+      WB: 'Terzino',
+      DM: 'Mediano',
+      M: 'Centrocampista',
+      AM: 'Trequartista',
+      ST: 'Attaccante'
+    };
+
+    const POSITION_SIDE_LABELS = {
+      R: 'Destra',
+      L: 'Sinistra',
+      C: 'Centrale'
+    };
+
+    function positionLabel(value) {
+      const raw = String(value || '').replace(/\u00a0/g, ' ').trim();
+      if (!raw) return '';
+
+      const parts = raw.split(/\s+/);
+      const rolesPart = parts[0] || '';
+      const sidesPart = parts[1] || '';
+
+      const roles = rolesPart
+        .split('/')
+        .filter(Boolean)
+        .map(token => POSITION_ROLE_LABELS[token] || token);
+
+      const sides = sidesPart
+        .split('')
+        .filter(Boolean)
+        .map(token => POSITION_SIDE_LABELS[token] || token);
+
+      if (!roles.length) return raw;
+      return sides.length ? `${roles.join(' / ')} (${sides.join('/')})` : roles.join(' / ');
+    }
+
+
+    function valueClass(value) {
+      const n = Number(value || 0);
+      if (n >= 16) return 'skill-elite';
+      if (n >= 14) return 'skill-top';
+      if (n >= 12) return 'skill-good';
+      if (n >= 10) return 'skill-solid';
+      return 'skill-normal';
+    }
+
+    function renderDashboard() {
+      const total = players.length;
+      const avgCost = total ? (players.reduce((s,p) => s + Number(p.cost || 0), 0) / total).toFixed(1) : '0.0';
+
+      els.dashboard.innerHTML = `
+        <div class="dash-card"><span>Giocatori</span><strong>${total}</strong></div>
+        <div class="dash-card"><span>Club</span><strong>${clubs.length}</strong></div>
+        <div class="dash-card"><span>Costo medio</span><strong>${avgCost}</strong></div>
+      `;
+    }
+
+    function ordinalRank(rank) {
+      const n = Number(rank || 0);
+      return n ? `${n}ª` : 'Da inserire';
+    }
+
+    function renderXI(players) {
+      if (!players || !players.length) return '<strong>Da inserire</strong>';
+      return `<div class="xi-list">${players.map(name => `<span class="xi-chip">${esc(name)}</span>`).join('')}</div>`;
+    }
+
+    function populateFilters() {
+      clubs.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.name;
+        opt.textContent = c.name;
+        els.clubFilter.appendChild(opt);
+      });
+    }
+
+    function filteredPlayers() {
+      const q = normalize(els.search.value);
+      const club = els.clubFilter.value;
+      const role = els.roleFilter.value;
+      const profile = els.profileFilter.value;
+
+      let list = players.filter(p => {
+        const hay = normalize(`${p.name} ${p.club} ${p.position} ${p.bestProfile}`);
+        return (!q || hay.includes(q))
+          && (club === 'all' || p.club === club)
+          && (role === 'all' || p.role === role)
+          && (profile === 'all' || p.bestProfile === profile);
+      });
+
+      const sort = els.sortBy.value;
+      const score = (p, k) => Number(p.scores?.[k] || 0);
+      list.sort((a,b) => {
+        if (sort === 'cost_desc') return Number(b.cost||0) - Number(a.cost||0) || a.name.localeCompare(b.name);
+        if (sort === 'value_desc') {
+          const quality = p => Object.values(p.scores || {}).reduce((sum, val) => sum + Number(val || 0), 0) / Math.max(1, Number(p.cost || 1));
+          return quality(b) - quality(a) || a.name.localeCompare(b.name);
+        }
+        if (sort === 'technical_desc') return score(b,'Tecnico') - score(a,'Tecnico') || a.name.localeCompare(b.name);
+        if (sort === 'attacking_desc') return score(b,'Finalizzatore') - score(a,'Finalizzatore') || a.name.localeCompare(b.name);
+        if (sort === 'defending_desc') return score(b,'Difensore') - score(a,'Difensore') || a.name.localeCompare(b.name);
+        if (sort === 'physical_desc') return score(b,'Fisico') - score(a,'Fisico') || a.name.localeCompare(b.name);
+        if (sort === 'name_asc') return a.name.localeCompare(b.name);
+        return 0;
+      });
+
+      return list;
+    }
+
+    function renderPlayers(append = false) {
+      const list = filteredPlayers();
+      const previousCount = append ? visiblePlayerCount : 0;
+      visiblePlayerCount = Math.min(list.length, previousCount + PLAYERS_PER_PAGE);
+      const shownPlayers = list.slice(previousCount, visiblePlayerCount);
+
+      els.resultCount.textContent = `${visiblePlayerCount} di ${list.length} risultati visibili · ${players.length} giocatori nel database`;
+
+      if (!list.length) {
+        els.playersGrid.innerHTML = '<div class="empty">Nessun giocatore trovato con questi filtri.</div>';
+        els.loadMoreWrap.hidden = true;
+        return;
+      }
+
+      const markup = shownPlayers.map(p => {
+        const topSkills = (p.topSkills || []).slice(0, 4).map(s => `
+          <div class="skill-row ${valueClass(s.value)}"><span>${esc(attrLabel(s.key || s.name))}</span><b>${esc(s.value)}</b></div>
+        `).join('');
+
+        return `
+          <article class="player-card">
+            <div class="player-head">
+              ${shirt(p.club, true)}
+              <div class="player-name">
+                <strong title="${esc(p.name)}">${esc(p.name)}</strong>
+                <span>${esc(p.club)} · ${esc(positionLabel(p.position || p.positions || ''))}</span>
+              </div>
+            </div>
+            <div class="badge-row">
+              <span class="badge green">${esc(ROLE_LABEL[p.role] || p.role)}</span>
+              <span class="badge gold">${esc(p.cost)} crediti</span><span class="badge">MV ${playerMV(p)}</span><span class="badge" title="Stima parziale">FM* ${playerFM(p)}</span><span class="badge">${esc(p.squadGroup)}</span>
+              <span class="badge dark">${esc(p.bestProfile)}</span>
+            </div>
+            <div class="score-grid">
+              <div class="score"><span>Tec</span><strong>${esc(p.scores?.Tecnico ?? '-')}</strong></div>
+              <div class="score"><span>Att</span><strong>${esc(p.scores?.Finalizzatore ?? '-')}</strong></div>
+              <div class="score"><span>Dif</span><strong>${esc(p.scores?.Difensore ?? '-')}</strong></div>
+            </div>
+            <div class="skill-list">${topSkills}</div>
+            <button class="details-btn" type="button" onclick="openPlayer('${esc(p.key)}')">Dettagli</button>
+          </article>
+        `;
+      }).join('');
+
+      if (append) {
+        els.playersGrid.insertAdjacentHTML('beforeend', markup);
+      } else {
+        els.playersGrid.innerHTML = markup;
+      }
+
+      const remaining = list.length - visiblePlayerCount;
+      els.loadMoreWrap.hidden = remaining === 0;
+      if (remaining) {
+        const nextCount = Math.min(PLAYERS_PER_PAGE, remaining);
+        els.loadMoreBtn.textContent = `Mostra altri ${nextCount} giocatori`;
+        els.loadMoreInfo.textContent = `${remaining} ancora disponibili con questi filtri`;
+      }
+    }
+
+    function attrRow(player, key) {
+      const value = Number(player.skills?.[key] || 0);
+      const width = Math.max(0, Math.min(100, value * 5));
+      return `
+        <div class="attr ${valueClass(value)}">
+          <span>${esc(attrLabel(key))}</span>
+          <div class="bar"><div class="fill" style="width:${width}%"></div></div>
+          <b>${value}</b>
+        </div>
+      `;
+    }
+
+
+function statNumber(value) { return value === null || value === undefined || !Number.isFinite(Number(value)) ? '—' : Number(value).toFixed(2).replace('.', ','); }
+function playerMV(p) { return statNumber(p.leagueStats?.averageRating); }
+function playerFM(p) { return statNumber(p.leagueStats?.fantasyAverage ?? p.leagueStats?.fantasyAveragePartial); }
+
+    function showClubRoster(name) {
+      els.clubFilter.value = name;
+      els.roleFilter.value = 'all';
+      els.profileFilter.value = 'all';
+      els.search.value = '';
+      renderPlayers();
+      els.playersGrid.scrollIntoView({behavior:'smooth',block:'start'});
+    }
+    function profileDate(value) {
+      if (!value) return '—';
+      const parts = String(value).split('-');
+      return parts.length === 3 ? parts.reverse().join('/') : value;
+    }
+    function renderSaveProfile(p) {
+      const r = p.profile || {};
+      const cells = [ ['Età',r.age == null ? '—' : r.age + ' anni'],['Data di nascita',profileDate(r.birthDate)],['Altezza',r.heightCm ? r.heightCm + ' cm':'—'],['Piede sinistro',r.leftFoot == null ? '—':r.leftFoot + '/20'],['Piede destro',r.rightFoot == null ? '—':r.rightFoot + '/20'],['Al club dal',profileDate(r.clubJoinDate)],['Inizio contratto',profileDate(r.contractStart)],['Scadenza contratto',profileDate(r.contractEnd)],['Gruppo',p.squadGroup || '—'],['Posizioni',p.positions || p.position || '—'] ];
+      const labels = {league:'Premier Division Super Lega',cup:'Coppe nazionali',continental:'Coppe continentali (totale, inclusi preliminari)',overall:'Totale club'};
+      const rows = (p.seasonStats || []).map(t => `<tr><td>${esc(labels[t.kind] || t.kind)}</td><td>${t.starts + t.substitute_appearances}</td><td>${t.minutes}</td><td>${t.goals}</td><td>${t.assists}</td><td>${statNumber(t.expected_goals)}</td><td>${t.yellow_cards}</td><td>${t.red_cards}</td><td>${p.role==='P'?t.goals_allowed:'—'}</td><td>${statNumber(t.average_rating)}</td></tr>`).join('');
+      return `<h3>Scheda dal salvataggio</h3><p>${esc(r.fullName || p.name)} · ${esc(r.source || '')}</p><section class="profile-grid">${cells.map(([label,value])=>`<div class="profile-card"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('')}</section>${r.onLoan ? `<p>In prestito da ${esc(r.loanParentClub || 'club non risolto')} fino al ${profileDate(r.loanEnd)}</p>`:''}<h3>Statistiche stagionali del profilo</h3><p>I totali continentali possono includere preliminari e altre coppe; la riga Super Lega separata sotto mantiene la copertura già verificata.</p><div style="overflow-x:auto"><table class="season-table"><thead><tr><th>Competizione</th><th>Pres.</th><th>Min.</th><th>Gol</th><th>Assist</th><th>xG</th><th>Gialli</th><th>Rossi</th><th>Subiti</th><th>MV</th></tr></thead><tbody>${rows || '<tr><td colspan="10">Statistiche non recuperate</td></tr>'}</tbody></table></div><h3>Super Lega — statistiche attribuibili</h3><p>Gol subiti portiere: ${p.role === 'P' && p.leagueStats ? p.leagueStats.goalsConceded : '—'} · Autogol confermati: ${p.leagueStats?.ownGoalsConfirmed ?? '—'}</p>`;
+    }
+    function openPlayer(key) {
+      const p = players.find(x => x.key === key);
+      if (!p) return;
+
+      els.modalHeader.innerHTML = `
+        ${shirt(p.club)}
+        <div class="modal-title">
+          <strong>${esc(p.name)}</strong>
+          <span>${esc(p.club)} · ${esc(ROLE_LABEL[p.role] || p.role)} · ${esc(positionLabel(p.position || p.positions))} · ${esc(p.cost)} crediti</span>
+        </div>
+        <button class="close" type="button" onclick="closeModal()">×</button>
+      `;
+
+      const profiles = Object.entries(p.scores || {}).map(([name,value]) => `
+        <div class="profile-card">
+          <span>${esc(name)}</span>
+          <strong>${esc(value)}</strong>
+        </div>
+      `).join('');
+
+      const groups = Object.entries(GROUPS).filter(([group]) => group !== 'Portiere' || p.role === 'P').map(([group, attrs]) => `
+        <section class="attr-group">
+          <h3>${esc(group)}</h3>
+          ${attrs.map(a => attrRow(p, a)).join('')}
+        </section>
+      `).join('');
+
+      els.modalBody.innerHTML = `<section class="attr-groups">${groups}</section><section class="profile-grid">${profiles}</section>${renderSaveProfile(p)}
+        <section class="profile-grid"><div class="profile-card"><span>Media voto Super Lega</span><strong>${playerMV(p)}</strong></div><div class="profile-card"><span>Fantamedia parziale*</span><strong>${playerFM(p)}</strong></div><div class="profile-card"><span>Presenze</span><strong>${p.leagueStats?.appearances ?? '—'}</strong></div><div class="profile-card"><span>Gol / assist</span><strong>${p.leagueStats ? p.leagueStats.goals + ' / ' + p.leagueStats.assists : '—'}</strong></div></section>
+      `;
+
+      els.modalBackdrop.classList.add('open');
+      els.modalBackdrop.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal() {
+      els.modalBackdrop.classList.remove('open');
+      els.modalBackdrop.setAttribute('aria-hidden', 'true');
+    }
+
+    els.modalBackdrop.addEventListener('click', event => {
+      if (event.target === els.modalBackdrop) closeModal();
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeModal();
+    });
+
+    // Ricerca sul database completo, aggiornamento con breve debounce durante la digitazione.
+    els.search.addEventListener('input', () => {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => renderPlayers(), 180);
+    });
+    [els.clubFilter, els.roleFilter, els.profileFilter, els.sortBy].forEach(control => {
+      control.addEventListener('change', () => {
+        clearTimeout(searchDebounceTimer);
+        renderPlayers();
+      });
+    });
+    els.loadMoreBtn.addEventListener('click', () => renderPlayers(true));
+
+    async function loadData() {
+      try {
+        const [playersRes, clubsRes] = await Promise.all([
+          fetch(`players_skills.json?v=${Date.now()}`, { cache: 'no-store' }),
+          fetch(`clubs_data.json?v=${Date.now()}`, { cache: 'no-store' })
+        ]);
+
+        if (!playersRes.ok) throw new Error('players_skills.json non trovato');
+        if (!clubsRes.ok) throw new Error('clubs_data.json non trovato');
+
+        players = await playersRes.json();
+        clubs = await clubsRes.json();
+        clubs.sort((a,b) => Number(a.predictedRank || 999) - Number(b.predictedRank || 999));
+        clubByName = Object.fromEntries(clubs.map(c => [c.name, c]));
+
+        renderDashboard();
+        populateFilters();
+        renderPlayers();
+      } catch (err) {
+        els.resultCount.textContent = 'Errore caricamento dati';
+        els.loadMoreWrap.hidden = true;
+        els.playersGrid.innerHTML = `<div class="empty">Non riesco a caricare i JSON. Controlla che scouting.html, players_skills.json e clubs_data.json siano nella stessa cartella online.<br><br>${esc(err.message)}</div>`;
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
