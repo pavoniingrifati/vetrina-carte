@@ -37,7 +37,7 @@
   let metadata=null,fixtures=[],standings=[],players=[],clubMap=new Map(),ourGames=[],upcoming=[],visibleIndex=0;
   function dot(name){return `<span class="kit-dot" style="--dot:${validColor(clubMap.get(name)?.kit?.colors?.[0])}" aria-hidden="true"></span>`;}
   function lastFixture(m){return String(m.date||'')+' '+String(m.kick_off_time||'');}
-  function loadMessage(msg){for(const id of ['standingsRows','resultsRows','ratingRows','scorerRows']) $(id).innerHTML=`<div class="load-placeholder">${htmlEsc(msg)}</div>`;}
+  function loadMessage(msg){for(const id of ['standingsRows','resultsRows','ratingRows','scorerRows']) $(id).innerHTML=['standingsRows','ratingRows'].includes(id)?`<tr><td colspan="6" class="load-placeholder">${htmlEsc(msg)}</td></tr>`:`<div class="load-placeholder">${htmlEsc(msg)}</div>`;}
   function setHeader(){
     const season=metadata?.season!=null?`${metadata.season}/${String(Number(metadata.season)+1).slice(-2)}`:'—';
     $('seasonPill').textContent=season;
@@ -130,14 +130,14 @@
     const selected=scored.slice(0,5);
     $('ratingNote').textContent=`Media voto FM · almeno ${minRated} ${minRated===1?'partita':'partite'} con voto · solo ${team}.`;
     if(!selected.length){$('ratingRows').innerHTML='<tr><td colspan="6" class="load-placeholder">Nessun voto sufficiente disponibile.</td></tr>';return;}
-    $('ratingRows').innerHTML=selected.map((p,i)=>`<tr><td>${i+1}</td><td title="${htmlEsc(p.name)}">${htmlEsc(p.name)}</td><td>${Number(getStat(p,'appearances')||0)}</td><td>${Number(getStat(p,'goals')||0)}</td><td>${Number(getStat(p,'assists')||0)}</td><td><span class="rating-chip">${Number(getStat(p,'averageRating')).toFixed(2)}</span></td></tr>`).join('');
+    $('ratingRows').innerHTML=selected.map((p,i)=>`<tr><td>${i+1}</td><td title="${htmlEsc(p.name)}"><span class="team-cell">${dot(p.club)}${htmlEsc(p.name)}</span></td><td>${Number(getStat(p,'appearances')||0)}</td><td>${Number(getStat(p,'goals')||0)}</td><td>${Number(getStat(p,'assists')||0)}</td><td><span class="rating-chip">${Number(getStat(p,'averageRating')).toFixed(2).replace('.',',')}</span></td></tr>`).join('');
   }
   function drawScorers(){
     const ranked=clubPlayers().filter(p=>Number(getStat(p,'goals')||0)>0).sort((a,b)=>Number(getStat(b,'goals')||0)-Number(getStat(a,'goals')||0)||Number(getStat(b,'appearances')||0)-Number(getStat(a,'appearances')||0));
     const winner=ranked[0];
     if(!winner){$('scorerFeature').textContent='Nessun marcatore disponibile';$('scorerRows').textContent='—';return;}
     $('scorerFeature').innerHTML=`<span class="featured-label">MIGLIOR MARCATORE · ${htmlEsc(team.toUpperCase())}</span><strong>${htmlEsc(winner.name)}</strong><span class="scorer-big-number">${Number(getStat(winner,'goals'))} <span>GOL</span></span><span class="scorer-small">${Number(getStat(winner,'appearances')||0)} presenze · ${Number(getStat(winner,'assists')||0)} assist</span>`;
-    $('scorerRows').innerHTML=ranked.slice(0,5).map((p,i)=>`<div class="scorer-item"><span>${i+1}</span><strong title="${htmlEsc(p.name)}">${htmlEsc(p.name)}</strong><b>${Number(getStat(p,'goals'))}</b></div>`).join('');
+    $('scorerRows').innerHTML=ranked.slice(0,5).map((p,i)=>`<div class="scorer-item"><span>${i+1}</span><strong title="${htmlEsc(p.name)}">${dot(p.club)}${htmlEsc(p.name)}</strong><b>${Number(getStat(p,'goals'))}</b></div>`).join('');
   }
   async function json(file){const response=await fetch(prefix+file,{cache:'no-store'});if(!response.ok)throw Error(file+' HTTP '+response.status);return response.json();}
   async function load(){
