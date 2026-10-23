@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overlay Convocami + Tifo Nazioni Mondiale 2026</title>
+<style>
+    :root{
+        --team1:#ff3ea5;
+        --team2:#8b5cf6;
+        --team3:#22d3ee;
+        --team4:#ffd166;
+        --team5:#22c55e;
+        --text-glow:rgba(255,255,255,.45);
+    }
+
+    html, body{
+        margin:0;
+        padding:0;
+        width:100%;
+        height:100%;
+        overflow:hidden;
+        background:transparent;
+        font-family:Arial, Helvetica, sans-serif;
+    }
+
+    body{
+        pointer-events:none;
+    }
+
+    #popupWrap{
+        position:fixed;
+        left:50%;
+        bottom:42px;
+        transform:translateX(-50%);
+        width:min(980px, 94vw);
+        display:flex;
+        justify-content:center;
+        align-items:flex-end;
+        perspective:900px;
+    }
+
+    #rolePopup{
+        position:relative;
+        opacity:0;
+        transform:translateY(34px) rotate(-1deg) scale(.88);
+        transition:opacity .22s ease, transform .42s cubic-bezier(.2, 1.35, .35, 1);
+        max-width:100%;
+        padding:20px 30px 22px;
+        border-radius:28px;
+        background:
+            radial-gradient(circle at 12% 18%, rgba(255, 255, 255, .30), transparent 22%),
+            radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--team4) 65%, white 35%), transparent 24%),
+            linear-gradient(135deg, color-mix(in srgb, var(--team1) 88%, black 12%), color-mix(in srgb, var(--team2) 92%, black 8%) 50%, color-mix(in srgb, var(--team3) 88%, black 12%));
+        border:3px solid color-mix(in srgb, white 72%, var(--team2) 28%);
+        color:#fff;
+        box-shadow:
+            0 20px 45px rgba(0,0,0,.34),
+            0 0 34px color-mix(in srgb, var(--team1) 58%, transparent),
+            0 0 48px color-mix(in srgb, var(--team3) 30%, transparent),
+            inset 0 0 0 1px rgba(255,255,255,.28);
+        text-align:center;
+        font-weight:900;
+        font-size:34px;
+        line-height:1.05;
+        word-break:break-word;
+        overflow:visible;
+        text-shadow:0 3px 0 rgba(0,0,0,.16);
+    }
+
+    #rolePopup::before,
+    #rolePopup::after{
+        content:"";
+        position:absolute;
+        inset:-12px;
+        z-index:-1;
+        border-radius:34px;
+        background:linear-gradient(90deg, var(--team4), var(--team1), var(--team2), var(--team3), var(--team5));
+        filter:blur(16px);
+        opacity:.55;
+        animation:partyGlow 1.4s ease-in-out infinite alternate;
+    }
+
+    #rolePopup::after{
+        inset:auto;
+        left:18px;
+        right:18px;
+        bottom:-18px;
+        height:18px;
+        background:rgba(0,0,0,.32);
+        filter:blur(14px);
+        opacity:.65;
+        animation:none;
+    }
+
+    #rolePopup.show{
+        opacity:1;
+        transform:translateY(0) rotate(.7deg) scale(1);
+        animation:popWiggle .72s cubic-bezier(.18, 1.4, .25, 1) both;
+    }
+
+    .topline{
+        display:block;
+        width:max-content;
+        max-width:100%;
+        margin:0 auto 10px;
+        padding:6px 14px;
+        border-radius:999px;
+        background:color-mix(in srgb, var(--team2) 48%, rgba(255,255,255,.18));
+        color:rgba(255,255,255,.97);
+        font-size:16px;
+        font-weight:950;
+        letter-spacing:.02em;
+        text-transform:none;
+        box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);
+    }
+
+    .mainline{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:12px;
+        flex-wrap:wrap;
+    }
+
+    .ball{
+        display:inline-block;
+        margin-right:8px;
+        animation:bounceBall .9s ease-in-out infinite alternate;
+    }
+
+    .name{
+        color:#ffffff;
+        text-shadow:0 3px 0 rgba(0,0,0,.18), 0 0 18px color-mix(in srgb, var(--team4) 55%, white 45%);
+    }
+
+    .role{
+        color:#ffffff;
+        text-transform:uppercase;
+        letter-spacing:.02em;
+        text-shadow:0 4px 0 rgba(0,0,0,.18), 0 0 18px var(--text-glow);
+    }
+
+    .flag{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        width:1.55em;
+        height:1.55em;
+        font-size:1.25em;
+        border-radius:50%;
+        background:color-mix(in srgb, var(--team2) 48%, rgba(255,255,255,.18));
+        box-shadow:0 8px 18px rgba(0,0,0,.22), inset 0 0 0 2px rgba(255,255,255,.22);
+        animation:flagParty .72s ease-in-out infinite alternate;
+    }
+
+    .confetti{
+        position:absolute;
+        top:-18px;
+        width:9px;
+        height:18px;
+        border-radius:3px;
+        opacity:.95;
+        animation:confettiFall 1.2s ease-in-out infinite;
+    }
+
+    .confetti.c1{ left:8%; background:var(--team1); animation-delay:0s; }
+    .confetti.c2{ left:22%; background:var(--team2); animation-delay:.16s; height:12px; }
+    .confetti.c3{ left:38%; background:var(--team3); animation-delay:.28s; }
+    .confetti.c4{ left:61%; background:var(--team4); animation-delay:.08s; height:13px; }
+    .confetti.c5{ left:78%; background:var(--team5); animation-delay:.22s; }
+    .confetti.c6{ left:91%; background:var(--team2); animation-delay:.34s; height:12px; }
+
+    @keyframes popWiggle{
+        0%{ transform:translateY(34px) rotate(-3deg) scale(.75); }
+        58%{ transform:translateY(-8px) rotate(2deg) scale(1.08); }
+        100%{ transform:translateY(0) rotate(.7deg) scale(1); }
+    }
+
+    @keyframes partyGlow{
+        from{ opacity:.38; transform:scale(.98); }
+        to{ opacity:.72; transform:scale(1.03); }
+    }
+
+    @keyframes bounceBall{
+        from{ transform:translateY(0) rotate(-8deg); }
+        to{ transform:translateY(-5px) rotate(8deg); }
+    }
+
+    @keyframes flagParty{
+        from{ transform:rotate(-7deg) scale(1); }
+        to{ transform:rotate(7deg) scale(1.08); }
+    }
+
+    @keyframes confettiFall{
+        0%{ transform:translateY(0) rotate(0deg); opacity:0; }
+        25%{ opacity:1; }
+        100%{ transform:translateY(78px) rotate(210deg); opacity:0; }
+    }
+
+
+
+    #status{
+        position:fixed;
+        top:18px;
+        right:18px;
+        padding:8px 12px;
+        border-radius:999px;
+        font-size:14px;
+        font-weight:800;
+        background:rgba(10,13,26,.78);
+        color:#fca5a5;
+        border:1px solid rgba(239,68,68,.5);
+        letter-spacing:.3px;
+        box-shadow:0 8px 20px rgba(0,0,0,.22);
+    }
+
+    #status.online{
+        color:#86efac;
+        border-color:rgba(34,197,94,.55);
+    }
+
+    @media (max-width: 650px){
+        #popupWrap{
+            bottom:28px;
+        }
+
+        #rolePopup{
+            font-size:27px;
+            padding:17px 20px 19px;
+            border-radius:24px;
+        }
+
+        .topline{
+            font-size:13px;
+            padding:5px 11px;
+        }
+    }
+</style>
+</head>
+<body>
+    <div id="status">TikTok WS: OFFLINE</div>
+
+    <div id="popupWrap">
+        <div id="rolePopup"></div>
+    </div>
+
+<script>
+const query = new URLSearchParams(window.location.search);
+const CONFIG = {
+    // WebSocket del TikTok Live Connector / TikTokLiveConnector
+    // Esempio OBS browser source: file:///.../nonenazionale_tiktok.html?ws=ws://localhost:21213/
+    ws: query.get('ws') || 'ws://localhost:21213/',
+    popupMs: Math.max(1000, Number(query.get('popupMs') || 3500)),
+    // 0 = ogni utente può usare !convocami una sola volta. 1 = può ripeterlo.
+    allowRepeatConvocami: query.get('allowRepeatConvocami') === '1',
+    // 1 = mostra il badge ONLINE/OFFLINE. 0 = nasconde il badge.
+    showStatus: query.get('showStatus') !== '0'
+};
+
+let ws = null;
+let reconnectTimer = null;
+const usedUsers = new Set();
+
+const SOUNDS = [
+    "sound1.wav",
+    "sound2.wav",
+    "sound3.wav",
+    "sound4.wav",
+    "sound5.wav",
+    "sound6.wav",
+    "sound7.wav",
+    "sound8.wav"
+];
+
+const WORLD_CUP_2026_TEAMS = [
+    { flag: "🇨🇦", name: "Canada", aliases: ["canada"], colors: ["#d80621", "#ffffff", "#d80621"] },
+    { flag: "🇲🇽", name: "Messico", aliases: ["messico", "mexico"], colors: ["#006847", "#ffffff", "#ce1126"] },
+    { flag: "🇺🇸", name: "Stati Uniti", aliases: ["usa", "statiuniti", "stati uniti", "statouniti", "unitedstates", "united states", "america"], colors: ["#b22234", "#ffffff", "#3c3b6e"] },
+
+    { flag: "🇦🇺", name: "Australia", aliases: ["australia"], colors: ["#012169", "#ffffff", "#e4002b"] },
+    { flag: "🇮🇶", name: "Iraq", aliases: ["iraq"], colors: ["#ce1126", "#ffffff", "#000000"] },
+    { flag: "🇮🇷", name: "Iran", aliases: ["iran"], colors: ["#239f40", "#ffffff", "#da0000"] },
+    { flag: "🇯🇵", name: "Giappone", aliases: ["giappone", "japan"], colors: ["#ffffff", "#bc002d", "#f3f4f6"] },
+    { flag: "🇯🇴", name: "Giordania", aliases: ["giordania", "jordan"], colors: ["#000000", "#ffffff", "#007a3d", "#ce1126"] },
+    { flag: "🇰🇷", name: "Corea del Sud", aliases: ["coreadelsud", "corea del sud", "corea", "southkorea", "south korea", "korearepublic", "korea republic"], colors: ["#ffffff", "#c60c30", "#003478"] },
+    { flag: "🇶🇦", name: "Qatar", aliases: ["qatar"], colors: ["#8a1538", "#ffffff", "#8a1538"] },
+    { flag: "🇸🇦", name: "Arabia Saudita", aliases: ["arabiasaudita", "arabia saudita", "saudiarabia", "saudi arabia"], colors: ["#006c35", "#ffffff", "#006c35"] },
+    { flag: "🇺🇿", name: "Uzbekistan", aliases: ["uzbekistan"], colors: ["#1eb53a", "#ffffff", "#0099b5", "#ce1126"] },
+
+    { flag: "🇩🇿", name: "Algeria", aliases: ["algeria"], colors: ["#006233", "#ffffff", "#d21034"] },
+    { flag: "🇨🇻", name: "Capo Verde", aliases: ["capoverde", "capo verde", "caboverde", "cabo verde"], colors: ["#003893", "#ffffff", "#cf2027", "#f7d116"] },
+    { flag: "🇨🇩", name: "RD Congo", aliases: ["rdcongo", "rd congo", "drcongo", "dr congo", "congodr", "congo dr", "repubblicademocraticadelcongo", "repubblica democratica del congo", "congo"], colors: ["#00a3e0", "#ce1021", "#f7d618"] },
+    { flag: "🇨🇮", name: "Costa d’Avorio", aliases: ["costadavorio", "costa d'avorio", "costa d avorio", "cotedivoire", "cote d'ivoire", "cote d ivoire", "ivorycoast", "ivory coast"], colors: ["#f77f00", "#ffffff", "#009e60"] },
+    { flag: "🇪🇬", name: "Egitto", aliases: ["egitto", "egypt"], colors: ["#ce1126", "#ffffff", "#000000"] },
+    { flag: "🇬🇭", name: "Ghana", aliases: ["ghana"], colors: ["#ce1126", "#fcd116", "#006b3f"] },
+    { flag: "🇲🇦", name: "Marocco", aliases: ["marocco", "morocco"], colors: ["#c1272d", "#006233", "#c1272d"] },
+    { flag: "🇸🇳", name: "Senegal", aliases: ["senegal"], colors: ["#00853f", "#fdef42", "#e31b23"] },
+    { flag: "🇿🇦", name: "Sudafrica", aliases: ["sudafrica", "sud africa", "southafrica", "south africa"], colors: ["#007749", "#ffb612", "#de3831", "#002395", "#ffffff", "#000000"] },
+    { flag: "🇹🇳", name: "Tunisia", aliases: ["tunisia"], colors: ["#e70013", "#ffffff", "#e70013"] },
+
+    { flag: "🇨🇼", name: "Curaçao", aliases: ["curacao", "curaçao"], colors: ["#002b7f", "#fcd116", "#ffffff"] },
+    { flag: "🇭🇹", name: "Haiti", aliases: ["haiti", "haitï"], colors: ["#00209f", "#d21034", "#ffffff"] },
+    { flag: "🇵🇦", name: "Panama", aliases: ["panama"], colors: ["#ffffff", "#005293", "#d21034"] },
+
+    { flag: "🇦🇷", name: "Argentina", aliases: ["argentina"], colors: ["#74acdf", "#ffffff", "#f6b40e"] },
+    { flag: "🇧🇷", name: "Brasile", aliases: ["brasile", "brazil"], colors: ["#009c3b", "#ffdf00", "#002776"] },
+    { flag: "🇨🇴", name: "Colombia", aliases: ["colombia"], colors: ["#fcd116", "#003893", "#ce1126"] },
+    { flag: "🇪🇨", name: "Ecuador", aliases: ["ecuador"], colors: ["#fcd116", "#003893", "#ce1126"] },
+    { flag: "🇵🇾", name: "Paraguay", aliases: ["paraguay"], colors: ["#d52b1e", "#ffffff", "#0038a8"] },
+    { flag: "🇺🇾", name: "Uruguay", aliases: ["uruguay"], colors: ["#ffffff", "#55b7ff", "#fcd116"] },
+
+    { flag: "🇳🇿", name: "Nuova Zelanda", aliases: ["nuovazelanda", "nuova zelanda", "newzealand", "new zealand"], colors: ["#012169", "#ffffff", "#c8102e"] },
+
+    { flag: "🇦🇹", name: "Austria", aliases: ["austria"], colors: ["#ed2939", "#ffffff", "#ed2939"] },
+    { flag: "🇧🇪", name: "Belgio", aliases: ["belgio", "belgium"], colors: ["#000000", "#ffd90c", "#ef3340"] },
+    { flag: "🇧🇦", name: "Bosnia ed Erzegovina", aliases: ["bosnia", "bosniaerzegovina", "bosnia erzegovina", "bosniaed erzegovina", "bosnia ed erzegovina", "bosniaandherzegovina", "bosnia and herzegovina"], colors: ["#002f6c", "#fcd116", "#ffffff"] },
+    { flag: "🇭🇷", name: "Croazia", aliases: ["croazia", "croatia"], colors: ["#ff0000", "#ffffff", "#171796"] },
+    { flag: "🇨🇿", name: "Cechia", aliases: ["cechia", "repubblicaceca", "repubblica ceca", "czechia", "czechrepublic", "czech republic"], colors: ["#ffffff", "#11457e", "#d7141a"] },
+    { flag: "🏴", name: "Inghilterra", aliases: ["inghilterra", "england"], colors: ["#ffffff", "#cf142b", "#ffffff"] },
+    { flag: "🇫🇷", name: "Francia", aliases: ["francia", "france"], colors: ["#0055a4", "#ffffff", "#ef4135"] },
+    { flag: "🇩🇪", name: "Germania", aliases: ["germania", "germany"], colors: ["#000000", "#dd0000", "#ffce00"] },
+    { flag: "🇳🇱", name: "Paesi Bassi", aliases: ["paesibassi", "paesi bassi", "olanda", "netherlands", "holland"], colors: ["#ae1c28", "#ffffff", "#21468b"] },
+    { flag: "🇳🇴", name: "Norvegia", aliases: ["norvegia", "norway"], colors: ["#ba0c2f", "#ffffff", "#00205b"] },
+    { flag: "🇵🇹", name: "Portogallo", aliases: ["portogallo", "portugal"], colors: ["#046a38", "#da291c", "#ffcc29"] },
+    { flag: "🏴", name: "Scozia", aliases: ["scozia", "scotland"], colors: ["#0065bd", "#ffffff", "#0065bd"] },
+    { flag: "🇪🇸", name: "Spagna", aliases: ["spagna", "spain"], colors: ["#aa151b", "#f1bf00", "#aa151b"] },
+    { flag: "🇸🇪", name: "Svezia", aliases: ["svezia", "sweden"], colors: ["#006aa7", "#fecc02", "#006aa7"] },
+    { flag: "🇨🇭", name: "Svizzera", aliases: ["svizzera", "switzerland"], colors: ["#d52b1e", "#ffffff", "#d52b1e"] },
+    { flag: "🇹🇷", name: "Turchia", aliases: ["turchia", "turkiye", "turkey", "türkiye"], colors: ["#e30a17", "#ffffff", "#e30a17"] }
+];
+
+const TEAM_COMMANDS = new Map();
+const DEFAULT_THEME = {
+    colors: ["#ff3ea5", "#8b5cf6", "#22d3ee", "#ffd166", "#22c55e"],
+    glow: "rgba(255,255,255,.45)"
+};
+
+function applyPopupTheme(theme = DEFAULT_THEME) {
+    const popup = document.getElementById('rolePopup');
+    if (!popup) return;
+
+    const colors = Array.isArray(theme.colors) && theme.colors.length ? theme.colors : DEFAULT_THEME.colors;
+    const palette = [
+        colors[0] || DEFAULT_THEME.colors[0],
+        colors[1] || colors[0] || DEFAULT_THEME.colors[1],
+        colors[2] || colors[1] || colors[0] || DEFAULT_THEME.colors[2],
+        colors[3] || colors[1] || colors[0] || "#ffffff",
+        colors[4] || colors[2] || colors[0] || DEFAULT_THEME.colors[4],
+    ];
+
+    popup.style.setProperty('--team1', palette[0]);
+    popup.style.setProperty('--team2', palette[1]);
+    popup.style.setProperty('--team3', palette[2]);
+    popup.style.setProperty('--team4', palette[3]);
+    popup.style.setProperty('--team5', palette[4]);
+    popup.style.setProperty('--text-glow', theme.glow || 'rgba(255,255,255,.45)');
+}
+
+function normalizeCommand(value) {
+    return String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[’'`´]/g, '')
+        .replace(/[^a-z0-9]/g, '');
+}
+
+for (const team of WORLD_CUP_2026_TEAMS) {
+    for (const alias of team.aliases) {
+        TEAM_COMMANDS.set(normalizeCommand(alias), team);
+    }
+}
+
+function pickFirstString(...values) {
+    for (const v of values) {
+        if (typeof v === 'string' && v.trim()) return v.trim();
+    }
+    return '';
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+function setStatus(isOnline) {
+    const status = document.getElementById('status');
+    if (!status) return;
+
+    if (!CONFIG.showStatus) {
+        status.style.display = 'none';
+        return;
+    }
+
+    status.style.display = 'block';
+    status.textContent = isOnline ? 'TikTok WS: ONLINE' : 'TikTok WS: OFFLINE';
+    status.classList.toggle('online', isOnline);
+}
+
+function normalizeTikTokMessage(payload) {
+    const root = payload?.data || payload || {};
+
+    const text = pickFirstString(
+        root?.comment,
+        root?.text,
+        root?.message,
+        root?.content,
+        root?.data?.comment,
+        payload?.comment,
+        payload?.text
+    );
+
+    const user = pickFirstString(
+        root?.uniqueId,
+        root?.user?.uniqueId,
+        root?.username,
+        root?.user?.username,
+        root?.nickname,
+        root?.user?.nickname,
+        payload?.uniqueId
+    ) || 'utente';
+
+    const displayName = pickFirstString(
+        root?.nickname,
+        root?.user?.nickname,
+        root?.uniqueId,
+        root?.user?.uniqueId,
+        root?.username,
+        user
+    ) || user;
+
+    const eventType = pickFirstString(
+        payload?.event,
+        payload?.type,
+        root?.event,
+        root?.type
+    ).toLowerCase();
+
+    return { text, user, displayName, eventType };
+}
+
+function isCommentEvent(normalized) {
+    if (!normalized.text) return false;
+    if (!normalized.eventType) return true;
+    return ['comment', 'chat', 'message'].some(type => normalized.eventType.includes(type));
+}
+
+function playRandomSound() {
+    const randomSound = SOUNDS[Math.floor(Math.random() * SOUNDS.length)];
+    const audio = new Audio(randomSound);
+    audio.volume = 1;
+    audio.play().catch(() => {});
+}
+
+function showCallupPopup(user) {
+    const popup = document.getElementById('rolePopup');
+    if (!popup) return;
+
+    applyPopupTheme(DEFAULT_THEME);
+
+    popup.innerHTML = `
+        <span class="confetti c1"></span>
+        <span class="confetti c2"></span>
+        <span class="confetti c3"></span>
+        <span class="confetti c4"></span>
+        <span class="confetti c5"></span>
+        <span class="confetti c6"></span>
+        <span class="topline">World Cup 2026 Provini</span>
+        <span class="mainline"><span class="ball">⚽</span><span class="name">${escapeHtml(user)}</span> vuole essere convocato!</span>
+    `;
+    popup.classList.add('show');
+
+    playRandomSound();
+
+    clearTimeout(showCallupPopup._timer);
+    showCallupPopup._timer = setTimeout(() => {
+        popup.classList.remove('show');
+    }, CONFIG.popupMs);
+}
+
+function showTeamPopup(team, user) {
+    const popup = document.getElementById('rolePopup');
+    if (!popup) return;
+
+    applyPopupTheme({ colors: team.colors, glow: 'rgba(255,255,255,.5)' });
+
+    popup.innerHTML = `
+        <span class="confetti c1"></span>
+        <span class="confetti c2"></span>
+        <span class="confetti c3"></span>
+        <span class="confetti c4"></span>
+        <span class="confetti c5"></span>
+        <span class="confetti c6"></span>
+        <span class="topline"><span class="name">${escapeHtml(user)}</span> esclama</span>
+        <span class="mainline"><span class="flag">${team.flag}</span>Forza <span class="role">${escapeHtml(team.name)}</span>!</span>
+    `;
+    popup.classList.add('show');
+
+    playRandomSound();
+
+    clearTimeout(showTeamPopup._timer);
+    showTeamPopup._timer = setTimeout(() => {
+        popup.classList.remove('show');
+    }, CONFIG.popupMs);
+}
+
+function handleTikTokChatMessage({ text, user, displayName }) {
+    const raw = String(text || '').trim();
+    const lower = raw.toLowerCase();
+
+    if (lower === '!convocami') {
+        const normalizedUser = user.toLowerCase();
+        if (!CONFIG.allowRepeatConvocami && usedUsers.has(normalizedUser)) return;
+
+        usedUsers.add(normalizedUser);
+        showCallupPopup(displayName);
+        return;
+    }
+
+    if (!raw.startsWith('!')) return;
+
+    const command = normalizeCommand(raw.slice(1));
+    const team = TEAM_COMMANDS.get(command);
+    if (!team) return;
+
+    showTeamPopup(team, displayName);
+}
+
+function processTikTokPayload(payload) {
+    const normalized = normalizeTikTokMessage(payload);
+    if (!isCommentEvent(normalized)) return;
+    handleTikTokChatMessage(normalized);
+}
+
+function connectTikTokWS() {
+    try {
+        ws = new WebSocket(CONFIG.ws);
+
+        ws.addEventListener('open', () => {
+            clearTimeout(reconnectTimer);
+            setStatus(true);
+        });
+
+        ws.addEventListener('message', (event) => {
+            let payload;
+            try {
+                payload = JSON.parse(event.data);
+            } catch {
+                return;
+            }
+            processTikTokPayload(payload);
+        });
+
+        ws.addEventListener('close', () => {
+            setStatus(false);
+            clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(connectTikTokWS, 2500);
+        });
+
+        ws.addEventListener('error', () => {
+            setStatus(false);
+        });
+    } catch {
+        setStatus(false);
+        clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(connectTikTokWS, 3000);
+    }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    setStatus(false);
+    connectTikTokWS();
+});
+</script>
+</body>
+</html>
