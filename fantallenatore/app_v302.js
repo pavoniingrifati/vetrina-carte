@@ -2572,10 +2572,13 @@
   const originalSerieAClubs=(window.FANTA_CLUBS||[]).map(c=>({...c}));
   const serieBClubs=(window.FANTA_SERIE_B?.clubs||[]).filter(c=>!originalSerieAClubs.some(a=>a.id===c.id));
   const clubMap = new Map([...originalSerieAClubs,...serieBClubs].map(c => [c.id, c]));
+  const historicalCatalogs=window.FANTA_HISTORICAL_CATALOGS||{};
+  Object.values(historicalCatalogs).forEach(catalog=>(catalog.clubs||[]).forEach(club=>clubMap.set(club.id,club)));
+  const historicalSeasonClubs=season=>historicalCatalogs[season]?.clubs||originalSerieAClubs;
   const serieBPlayers=(window.FANTA_SERIE_B?.players||[]).map(p=>({...p,id:`serie-b-${p.id}`,originalClub:p.club,marketStatus:'serie_a',hidden:false}));
 
   function ensureRealLeague(source){
-    if(!source.realLeague) source.realLeague={serieA:originalSerieAClubs.map(c=>c.id),serieB:serieBClubs.map(c=>c.id),lastCompletedSeason:0,lastChanges:null};
+    if(!source.realLeague) source.realLeague={serieA:historicalSeasonClubs(source.catalogSeason).map(c=>c.id),serieB:serieBClubs.filter(c=>!historicalSeasonClubs(source.catalogSeason).some(a=>a.id===c.id)).map(c=>c.id),lastCompletedSeason:0,lastChanges:null};
     return source.realLeague;
   }
 
@@ -2641,9 +2644,10 @@
       const missing=league.serieA.filter(id=>!originalSerieAClubs.some(c=>c.id===id));
       league.pokemonInitialClubs=originalSerieAClubs.map(c=>league.serieA.includes(c.id)?c.id:missing.shift());
     }
-    const key=mode==='pokemon'?`pokemon:${seed}:${league.pokemonInitialClubs.join(',')}`:'base-with-serie-b';
+    const season=source?.catalogSeason||'2026/27';
+    const key=mode==='pokemon'?`pokemon:${seed}:${league.pokemonInitialClubs.join(',')}`:`base:${season}`;
     if(key===activeCatalogKey) return;
-    const base=mode==='pokemon'?pokemonBasePlayers(seed).map(p=>({...p,club:league.pokemonInitialClubs[originalSerieAClubs.findIndex(c=>c.id===p.club)],originalClub:league.pokemonInitialClubs[originalSerieAClubs.findIndex(c=>c.id===p.club)]})):[...originalSerieAPlayers,...serieBPlayers];
+    const base=mode==='pokemon'?pokemonBasePlayers(seed).map(p=>({...p,club:league.pokemonInitialClubs[originalSerieAClubs.findIndex(c=>c.id===p.club)],originalClub:league.pokemonInitialClubs[originalSerieAClubs.findIndex(c=>c.id===p.club)]})):(historicalCatalogs[season]?[...historicalCatalogs[season].players.map(p=>({...p,originalClub:p.club,marketStatus:'serie_a',hidden:false})),...serieBPlayers.filter(p=>!historicalCatalogs[season].clubs.some(c=>c.id===p.club))]:[...originalSerieAPlayers,...serieBPlayers]);
     baseSerieAPlayers.splice(0,baseSerieAPlayers.length,...base);
     basePlayerValueReference.clear();
     base.forEach(player=>basePlayerValueReference.set(String(player.id),{...player}));
@@ -2653,7 +2657,7 @@
   function applyCatalogDecision(draft){
     const rules=leagueRulesFor(draft);
     const oldMode=draft.catalogMode==='pokemon'?'pokemon':'base';
-    if(!rules.selectedCategories.includes('alternateCatalog') || rules.catalogDecision!=='accept') return;
+    if(!rules.selectedCategories.includes('alternateCatalog') || rules.catalogDecision!=='accept' || historicalCatalogs[draft.catalogSeason]) return;
     draft.catalogWorlds ||= {};
     draft.catalogWorlds[oldMode]={transferMarket:JSON.parse(JSON.stringify(draft.transferMarket)),playerBaseOvr:{...(draft.playerBaseOvr||{})}};
     const nextMode=oldMode==='pokemon'?'base':'pokemon';
@@ -5087,6 +5091,8 @@
     next.leagueRules=clone(old.leagueRules||next.leagueRules);
     next.transferMarket=clone(old.transferMarket||next.transferMarket);
     next.catalogMode=old.catalogMode;
+    next.catalogSeason=old.catalogSeason;
+    if(old.realLeague) next.realLeague=clone(old.realLeague);
     if(old.pokemonCatalogSeed) next.pokemonCatalogSeed=old.pokemonCatalogSeed;
     if(old.catalogWorlds) next.catalogWorlds=clone(old.catalogWorlds);
     if(old.playerBaseOvr) next.playerBaseOvr=clone(old.playerBaseOvr);
@@ -5316,6 +5322,19 @@
     coachInput.focus();
   });
   $('careerPokemonToggle')?.addEventListener('change',event=>setInitialCareerCatalog(!!event.target.checked));
+  $('careerSeasonSelect')?.addEventListener('change',event=>{
+    if(!careerDraft || nextSeasonSetupMode)return;
+    const season=historicalCatalogs[event.target.value]?event.target.value:'2026/27';
+    careerDraft.catalogSeason=season;
+    delete careerDraft.realLeague;
+    careerDraft.catalogMode='base';
+    if($('careerPokemonToggle')){$('careerPokemonToggle').checked=false;$('careerPokemonToggle').disabled=season!=='2026/27';}
+    if($('careerCatalogModeHint'))$('careerCatalogModeHint').textContent=season==='2026/27'?'OFF · Campionato classico':'Pokémon disponibile solo con il listone attuale';
+    careerDraft.transferMarket=TransferEngine.createMarketState(`${careerDraft.marketSeed}|${season}`);
+    careerDraft.playerBaseOvr={};
+    activateCatalogBase(careerDraft);
+    syncSerieATransferWorld(careerDraft);
+  });
   $('careerIdentityNextBtn')?.addEventListener('click',advanceCareerIdentityStep);
   $('careerAvatarBackBtn')?.addEventListener('click',()=>showCareerTeamSubstep('identity'));
   $('careerAvatarNextBtn')?.addEventListener('click',()=>showCareerTeamSubstep('launch'));

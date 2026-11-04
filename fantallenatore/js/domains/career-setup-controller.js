@@ -107,7 +107,8 @@
     $runtime.applyGameConfiguration();
     $runtime.$('careerTeamNameInput').value='';
     $runtime.$('coachNameInput').value='';
-    if($runtime.$('careerPokemonToggle')) $runtime.$('careerPokemonToggle').checked=false;
+    if($runtime.$('careerPokemonToggle')) {$runtime.$('careerPokemonToggle').checked=false;$runtime.$('careerPokemonToggle').disabled=false;}
+    if($runtime.$('careerSeasonSelect')) $runtime.$('careerSeasonSelect').value='2026/27';
     if($runtime.$('careerCatalogModeHint')) $runtime.$('careerCatalogModeHint').textContent='OFF · Campionato classico';
     $runtime.updateCareerIdentityControls();
     $runtime.renderCareerAvatarEditor();
