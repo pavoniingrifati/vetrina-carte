@@ -511,6 +511,8 @@
       playerBaseOvr:{...($runtime.state.playerBaseOvr||{})},
       realLeague:JSON.parse(JSON.stringify($runtime.ensureRealLeague($runtime.state))),
       catalogMode:$runtime.state.catalogMode||'base',
+      // Il database della carriera non deve tornare al 2026/27 nelle stagioni successive.
+      catalogSeason:$runtime.state.catalogSeason||'2026/27',
       pokemonCatalogSeed:$runtime.state.pokemonCatalogSeed||null,
       catalogWorlds:JSON.parse(JSON.stringify($runtime.state.catalogWorlds||{})),
       pendingKeeper:$runtime.leagueRulesFor($runtime.state).keeperConfirmation ? (()=>{const p=$runtime.managerById('user')?.roster?.find(p=>String(p.id)===String(season.keeperPlayerId||''));return p?{id:String(p.id),price:Number(p.price||1)}:null;})():null,

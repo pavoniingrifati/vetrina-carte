@@ -2636,6 +2636,19 @@
   }
 
   function activateCatalogBase(source){
+    // Recupera i salvataggi storici già passati alla seconda stagione con una
+    // versione che non copiava catalogSeason nel nuovo draft. Gli ID dei
+    // calciatori storici sono univoci e permettono una migrazione sicura.
+    if(source && !historicalCatalogs[source.catalogSeason] && !source.catalogSeason && source.catalogMode!=='pokemon'){
+      const ids=[...(source.availableIds||[]),...(source.managers||[]).flatMap(m=>(m.roster||[]).map(p=>p.id))];
+      const count={};
+      ids.forEach(id=>{
+        const match=/^hist-(\d{4})-(\d{2})-/.exec(String(id));
+        if(match){const season=match[1]+'/'+match[2];if(historicalCatalogs[season]) count[season]=(count[season]||0)+1;}
+      });
+      const match=Object.entries(count).sort((a,b)=>b[1]-a[1])[0];
+      if(match)source.catalogSeason=match[0];
+    }
     const mode=source?.catalogMode==='pokemon'?'pokemon':'base';
     const seed=String(source?.pokemonCatalogSeed||source?.marketSeed||'pokemon');
     syncRealLeagueClubs(source);
