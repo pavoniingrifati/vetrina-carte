@@ -25,8 +25,8 @@ window.FUTTU_CONFIG = {
   homeUrl: 'index.html',
   myCardsUrl: 'my-cards/',
   sections: {
-    featured: ['Patatine','Dannazione','Gotham Tots','World Cup','Fantacalcio','Legend','Fusion2','Gold','Silver','Bronze'],
-    stock: ['Gotham Tots','World Cup','Fantacalcio','Legend','Fusion2','Strumenti'],
+    featured: ['Patatine','Dannazione','Gotham Tots','World Cup','Fantacalcio','Halloween','Legend','Fusion2','Gold','Silver','Bronze'],
+    stock: ['Gotham Tots','World Cup','Fantacalcio','Halloween','Legend','Fusion2','Strumenti'],
     foryou: ['Patatine','Dannazione','Legend','Fusion2'],
     classic: ['Gold','Silver','Bronze'],
     stadium: ['Oggetti','Cosmetic','Strumenti'],
@@ -38,6 +38,7 @@ window.FUTTU_CONFIG = {
     { name:'Gotham Tots', kind:'finite', size:3, cost:0, referenceCost:1000, referenceCurrency:'coins', scope:'mode', anyOf:[{tagsAny:['Tots12','Tots13']},{nameIncludesAny:['tots12','tots13']}], cover:'img/Deck%20back%20Tots.webp', description:'Contiene 3 carte TOTS12 o TOTS13 di Gotham City FC.' },
     { name:'World Cup', kind:'finite', size:3, cost:0, referenceCost:1500, referenceCurrency:'coins', scope:'mode', series:['World Cup'], uniqueWithinPack:true, cover:'img/back%20world.webp', description:'Contiene carte World Cup di Gotham City FC. Nessun doppione: ogni carta compare una sola volta nella sequenza dei pacchetti.' },
     { name:'Fantacalcio', kind:'finite', size:3, cost:0, referenceCost:1500, referenceCurrency:'coins', scope:'mode', series:['Fantacalcio'], uniqueWithinPack:true, cover:'img/Back%20Fanta.webp', description:'Contiene 3 carte Fantacalcio di Gotham City FC. Nessun doppione: ogni carta compare una sola volta nella sequenza dei pacchetti.' },
+    { name:'Halloween', kind:'finite', size:3, cost:0, referenceCost:1500, referenceCurrency:'coins', scope:'mode', series:['Halloween'], uniqueWithinPack:true, cover:'img/back%20halloween.webp', description:'Contiene 3 carte Halloween di Gotham City FC. Nessun doppione: ogni carta compare una sola volta nella sequenza dei pacchetti.' },
     { name:'Legend', kind:'gotham-legend-infinite', size:3, cost:0, referenceCost:4000, referenceCurrency:'coins', scope:'mode', cover:'img/Back%20legend.webp', description:'Contiene 2 carte normali e una carta finale speciale.' },
     { name:'Fusion2', kind:'finite', size:3, cost:0, scope:'mode', anyOf:[{series:['Fusion2']},{tagsAny:['Fusion2']}], cover:'img/fusione2%20back.webp', description:'Contiene 3 carte Fusion2 di Gotham City FC.' },
     { name:'Oggetti', kind:'infinite', size:3, cost:0, scope:'mode-or-shared', series:['Oggetto'], cover:'img/Deck%20back%20tactcs.webp', description:'Contiene 3 carte Oggetto utilizzabili nella tua collezione.' },
