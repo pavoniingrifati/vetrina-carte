@@ -1485,7 +1485,7 @@ async function loadAll(uid) {
 
   // La stagione mostrata nella hero segue sempre config/gamepass.season.
   const seasonChip = document.querySelector(".season-chip");
-  if (seasonChip) seasonChip.textContent = `STAGIONE ${season} · HALLOWEEN`;
+  if (seasonChip) seasonChip.textContent = `STAGIONE ${season} · MASTER OF ROLES`;
 
   const achSnap = await getDocs(
     collection(db, "achievements")
